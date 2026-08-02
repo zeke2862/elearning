@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>打字賽車・班級賽</title>
+<script src="./race-common.js"></script>
+<style>
+:root{
+  --void:#05070a; --panel:#0b1018; --panel-2:#0f1622; --line:#1c2836;
+  --text:#d7e4ee; --text-dim:#6c7d8f; --accent:#ffd23f; --good:#39ff9d; --danger:#ff5c5c;
+  --mono:'JetBrains Mono','Noto Sans Mono TC','Courier New',monospace;
+  --disp:'Orbitron','Noto Sans TC',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{width:100%;min-height:100%;background:var(--void);color:var(--text);font-family:var(--mono);}
+body{padding:20px;}
+.disp{font-family:var(--disp);letter-spacing:.03em;}
+.wrap{max-width:760px;margin:0 auto;}
+.topbar{display:flex;justify-content:space-between;font-size:12px;color:var(--text-dim);margin-bottom:16px;}
+.topbar a{color:var(--text-dim);text-decoration:none;}
+h1.title{font-size:20px;text-align:center;margin-bottom:6px;}
+.sub{font-size:12px;color:var(--text-dim);text-align:center;margin-bottom:20px;}
+
+.panel{border:1px solid var(--line);background:var(--panel);padding:20px;margin-bottom:14px;text-align:center;}
+.btn{width:100%;padding:12px;background:var(--accent);color:#05070a;border:none;font-weight:bold;cursor:pointer;font-family:var(--mono);}
+.btn:disabled{opacity:.4;cursor:not-allowed;}
+.status-line{font-size:12px;text-align:center;color:var(--text-dim);margin-top:10px;}
+
+.waiting-box{text-align:center;padding:40px 20px;color:var(--text-dim);font-size:13px;}
+
+/* 比賽畫面 */
+.race-area{display:none;}
+.race-area.active{display:block;}
+.info-row{display:flex;justify-content:space-between;font-size:12px;color:var(--text-dim);margin-bottom:10px;flex-wrap:wrap;gap:6px;}
+.info-row .timer{font-size:16px;color:var(--accent);font-weight:bold;}
+.info-row .timer.warn{color:var(--danger);}
+
+.passage{border:1px solid var(--line);background:var(--panel-2);padding:18px;font-size:20px;line-height:1.9;letter-spacing:.03em;margin-bottom:8px;word-break:break-all;text-align:center;}
+.passage .done{color:var(--good);}
+.passage .cur{color:var(--void);background:var(--accent);}
+.passage .todo{color:var(--text-dim);}
+.line-counter{text-align:center;font-size:11px;color:var(--text-dim);margin-bottom:12px;}
+
+.stats-row{display:flex;justify-content:space-around;background:var(--panel);border:1px solid var(--line);padding:12px;margin-bottom:10px;font-size:13px;}
+.stats-row .stat b{display:block;font-size:18px;color:var(--accent);}
+.stats-row .stat span{color:var(--text-dim);font-size:10px;}
+
+.controls{display:flex;justify-content:center;align-items:center;font-size:11px;color:var(--text-dim);margin-bottom:6px;}
+.toggle-btn{background:none;border:1px solid var(--line);color:var(--text);padding:8px 14px;font-size:12px;cursor:pointer;}
+.toggle-btn.off{border-color:var(--danger);color:var(--danger);}
+.hidden-input{position:absolute;opacity:0;pointer-events:none;}
+
+.overlay{display:none;position:fixed;inset:0;background:rgba(5,7,10,.88);z-index:50;align-items:center;justify-content:center;}
+.overlay.active{display:flex;}
+.result-card{background:var(--panel);border:1px solid var(--line);padding:28px 32px;min-width:280px;text-align:center;}
+.result-row{display:flex;justify-content:space-between;font-size:13px;margin:6px 0;color:var(--text-dim);}
+.result-row b{color:var(--text);}
+.award-badge{margin-top:14px;padding:10px;border-radius:6px;font-weight:bold;font-size:14px;}
+.award-badge.top{background:rgba(57,255,157,.15);color:var(--good);border:1px solid var(--good);}
+.award-badge.bottom{background:rgba(255,92,92,.15);color:var(--danger);border:1px solid var(--danger);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <a href="../index.html">🏠 回登入首頁</a>
+    <span id="whoLine"></span>
+  </div>
+  <h1 class="title disp">🏁 打字賽車・班級賽</h1>
+  <div class="sub">老師開賽後，全班同場競速，時間到自動結束，代幣由老師結算後直接發放</div>
+
+  <!-- 加入畫面：車隊由系統依這台電腦的IP自動分配，不用自己選 -->
+  <div class="panel" id="joinPanel">
+    <button class="btn" id="joinBtn" disabled>加入比賽</button>
+    <div class="status-line" id="joinStatus">正在確認比賽狀態…</div>
+  </div>
+
+  <div class="waiting-box" id="waitingBox" style="display:none;"></div>
+
+  <!-- 比賽畫面 -->
+  <div class="race-area" id="raceArea">
+    <div class="info-row">
+      <span id="raceInfo"></span>
+      <span class="timer" id="raceTimer">--:--</span>
+    </div>
+    <div class="stats-row">
+      <div class="stat"><b id="statWpm">0</b><span>即時 WPM</span></div>
+      <div class="stat"><b id="statContribution">0%</b><span>團隊貢獻值</span></div>
+      <div class="stat"><b id="statChars">0</b><span>累計完成字元</span></div>
+    </div>
+    <div class="passage" id="passageDisplay"></div>
+    <div class="line-counter" id="lineCounter"></div>
+    <div id="vkContainer"></div>
+    <div class="controls">
+      <button class="toggle-btn" id="kbToggleBtn" onclick="toggleKeyboard()">虛擬鍵盤提示：顯示中</button>
+    </div>
+    <input type="text" class="hidden-input" id="hiddenInput" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
+  </div>
+</div>
+
+<div class="overlay" id="resultOverlay">
+  <div class="result-card">
+    <h2 class="disp" style="margin-bottom:14px;">🏁 比賽結束！</h2>
+    <div class="result-row"><span>WPM</span><b id="rWpm"></b></div>
+    <div class="result-row"><span>正確率</span><b id="rAcc"></b></div>
+    <div class="result-row"><span>完成字元</span><b id="rChars"></b></div>
+    <div class="result-row"><span>本場分數</span><b id="rScore"></b></div>
+    <div class="result-row"><span>團隊貢獻值</span><b id="rContribution"></b></div>
+    <div class="result-row"><span>名次</span><b id="rRank"></b></div>
+    <div class="result-row"><span>獲得代幣</span><b id="rTokens" style="color:var(--accent);"></b></div>
+    <div id="rAward"></div>
+  </div>
+</div>
+
+<script>
+// 學校主機位置，跟其他頁面（index.html/ETP/看打）用同一個設定
+const SCHOOL_HOST = "http://192.168.1.1:3000";
+const TEAM_NAMES = { 1: "🔴 紅隊", 2: "🔵 藍隊", 3: "🟢 綠隊", 4: "🟡 黃隊", 5: "🟣 紫隊" };
+
+const studentNumber = raceGetActiveStudent();
+document.getElementById("whoLine").textContent = studentNumber ? `學號 ${studentNumber}` : "訪客模式";
+
+let raceLines = [];
+let lineIndex = 0;
+let posInLine = 0;
+let correctTotal = 0, wrongTotal = 0;
+let raceStartTime = 0, raceEndTime = 0;
+let raceTimerHandle = null, pollHandle = null;
+let showKeyboard = true;
+let raceFinished = false;
+let myTeam = null;
+let joinedRoomId = null;
+let currentScore = 0;
+
+async function pollState() {
+  try {
+    const res = await fetch(`${SCHOOL_HOST}/race/state`);
+    const data = await res.json();
+    if (!data.active) {
+      document.getElementById("joinBtn").disabled = true;
+      document.getElementById("joinStatus").textContent = raceFinished ? document.getElementById("joinStatus").textContent : "目前老師還沒開賽，請稍候…";
+      return;
+    }
+    document.getElementById("joinBtn").disabled = raceStartTime > 0;
+    document.getElementById("joinStatus").textContent = `比賽進行中：${RACE_CATEGORY_DEFS[data.category].label}・${data.durationMinutes} 分鐘`;
+
+    // 已加入的話，每次輪詢順便更新自己的即時團隊貢獻值（不影響自己的輸入狀態）
+    if (raceStartTime && !raceFinished) updateLiveContribution(data.racers);
+  } catch (err) {
+    document.getElementById("joinStatus").textContent = "連不到學校主機，請確認是否在教室內網";
+  }
+}
+pollHandle = setInterval(pollState, 1000);
+pollState();
+
+document.getElementById("joinBtn").addEventListener("click", async () => {
+  try {
+    const res = await fetch(`${SCHOOL_HOST}/race/join`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ studentNumber: studentNumber || `guest-${Date.now()}` })
+    });
+    const data = await res.json();
+    if (data.success) {
+      joinedRoomId = data.roomId;
+      myTeam = data.team;
+      document.getElementById("joinPanel").style.display = "none";
+      document.getElementById("waitingBox").style.display = "block";
+      document.getElementById("waitingBox").textContent = `✅ 已加入 ${TEAM_NAMES[myTeam] || ""}！`;
+      beginTyping(data);
+    } else {
+      document.getElementById("joinStatus").textContent = data.message || "加入失敗，請確認老師是否已開賽";
+    }
+  } catch (err) {
+    document.getElementById("joinStatus").textContent = "連不到學校主機";
+  }
+});
+
+function beginTyping(data) {
+  raceLines = data.lines;
+  lineIndex = 0; posInLine = 0; correctTotal = 0; wrongTotal = 0; raceFinished = false; currentScore = 0;
+  raceStartTime = data.startedAt; // 全班統一以老師開賽的時間為準，才能同時倒數、同時結束
+  raceEndTime = raceStartTime + data.durationMinutes * 60000;
+
+  document.getElementById("waitingBox").style.display = "none";
+  document.getElementById("raceArea").classList.add("active");
+  document.getElementById("raceInfo").textContent = `你的車隊：${TEAM_NAMES[myTeam] || ""}`;
+  renderLine();
+  raceRenderKeyboard(document.getElementById("vkContainer"));
+  raceUpdateKeyboardHighlight(document.getElementById("vkContainer"), raceLines[0][0]);
+
+  const input = document.getElementById("hiddenInput");
+  input.value = ""; input.focus();
+
+  if (raceTimerHandle) clearInterval(raceTimerHandle);
+  raceTimerHandle = setInterval(tickRace, 200);
+}
+
+function currentLine() {
+  return raceLines[lineIndex] || raceGenerateLine("home", 40); // 題庫萬一用完，臨時再生一行，比賽不會中斷
+}
+
+function renderLine() {
+  const line = currentLine();
+  let html = "";
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i] === " " ? "␣" : line[i];
+    if (i < posInLine) html += `<span class="done">${ch}</span>`;
+    else if (i === posInLine) html += `<span class="cur">${ch}</span>`;
+    else html += `<span class="todo">${ch}</span>`;
+  }
+  document.getElementById("passageDisplay").innerHTML = html;
+  document.getElementById("lineCounter").textContent = `已完成第 ${lineIndex} 行（每行 40 字元，不含空格）`;
+}
+
+function tickRace() {
+  if (raceFinished) return;
+  const now = Date.now();
+  const remainMs = raceEndTime - now;
+  if (remainMs <= 0) { finishRace(); return; }
+
+  const totalSec = Math.ceil(remainMs / 1000);
+  const mm = String(Math.floor(totalSec / 60)).padStart(2, "0");
+  const ss = String(totalSec % 60).padStart(2, "0");
+  const timerEl = document.getElementById("raceTimer");
+  timerEl.textContent = `${mm}:${ss}`;
+  timerEl.classList.toggle("warn", totalSec <= 10);
+
+  const elapsedMs = now - raceStartTime;
+  const liveWpm = raceCalcWpm(correctTotal, elapsedMs);
+  currentScore = raceCalcScore(liveWpm, correctTotal, showKeyboard);
+  document.getElementById("statWpm").textContent = liveWpm;
+  document.getElementById("statChars").textContent = correctTotal;
+
+  reportProgress(liveWpm, false);
+}
+
+async function reportProgress(wpm, finished) {
+  try {
+    await fetch(`${SCHOOL_HOST}/race/progress`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ studentNumber: studentNumber || "guest", charsTyped: correctTotal, wpm, finished, score: currentScore })
+    });
+  } catch (err) { /* 偶爾漏一次回報不影響比賽，下一輪會補上 */ }
+}
+
+function updateLiveContribution(racers) {
+  if (!racers || !myTeam) return;
+  const mine = racers[studentNumber || "guest"];
+  const teamTotal = Object.values(racers).filter(r => r.team === myTeam).reduce((s, r) => s + (r.score || 0), 0);
+  const pct = teamTotal > 0 && mine ? Math.round(((mine.score || 0) / teamTotal) * 1000) / 10 : 0;
+  document.getElementById("statContribution").textContent = pct + "%";
+}
+
+document.getElementById("hiddenInput").addEventListener("input", (e) => {
+  if (raceFinished) return;
+  const val = e.target.value;
+  if (!val) return;
+  const ch = val[val.length - 1];
+  e.target.value = "";
+  handleKey(ch);
+});
+
+function handleKey(ch) {
+  const line = currentLine();
+  if (posInLine >= line.length) return;
+  const expected = line[posInLine];
+  if (ch === expected) {
+    correctTotal++;
+    posInLine++;
+  } else {
+    wrongTotal++;
+  }
+  if (posInLine >= line.length) {
+    // 打完一行（40個非空白字元）直接換下一行
+    lineIndex++;
+    posInLine = 0;
+  }
+  renderLine();
+  const nextLine = currentLine();
+  raceUpdateKeyboardHighlight(document.getElementById("vkContainer"), nextLine[posInLine]);
+}
+
+async function finishRace() {
+  if (raceFinished) return;
+  raceFinished = true;
+  clearInterval(raceTimerHandle);
+  document.getElementById("hiddenInput").blur();
+  document.getElementById("raceTimer").textContent = "00:00";
+
+  const elapsedMs = raceEndTime - raceStartTime;
+  const wpm = raceCalcWpm(correctTotal, elapsedMs);
+  const totalAttempts = correctTotal + wrongTotal;
+  const accuracy = totalAttempts > 0 ? Math.round((correctTotal / totalAttempts) * 100) : 100;
+  const score = raceCalcScore(wpm, correctTotal, showKeyboard);
+  currentScore = score;
+
+  await reportProgress(wpm, true);
+
+  document.getElementById("rWpm").textContent = wpm;
+  document.getElementById("rAcc").textContent = accuracy + "%";
+  document.getElementById("rChars").textContent = correctTotal;
+  document.getElementById("rScore").textContent = score;
+  document.getElementById("rContribution").textContent = "結算中…";
+  document.getElementById("rRank").textContent = "等待老師結算…";
+  document.getElementById("rTokens").textContent = "等待老師結算…";
+  document.getElementById("resultOverlay").classList.add("active");
+
+  // 老師端按「結束比賽」後，代幣/名次/團隊貢獻值/獎項會由伺服器結算好，這裡每2秒查一次補上結果
+  const checkResult = setInterval(async () => {
+    try {
+      const res = await fetch(`${SCHOOL_HOST}/race/state`);
+      const data = await res.json();
+      if (!data.active && data.lastResult) {
+        const mine = data.lastResult.rankings.find(r => r.studentNumber === (studentNumber || "guest"));
+        if (mine) {
+          document.getElementById("rRank").textContent = `第 ${mine.rank} 名`;
+          document.getElementById("rTokens").textContent = "+" + mine.tokens;
+          document.getElementById("rContribution").textContent = (mine.contributionPct || 0) + "%";
+          const awardBox = document.getElementById("rAward");
+          if (mine.award === "踩油門王者") {
+            awardBox.innerHTML = `<div class="award-badge top">🚀 你是踩油門王者！本隊貢獻度最高</div>`;
+          } else if (mine.award === "踩煞車高手") {
+            awardBox.innerHTML = `<div class="award-badge bottom">🛑 你是踩煞車高手！下次再加把勁</div>`;
+          }
+        }
+        clearInterval(checkResult);
+      }
+    } catch (err) {}
+  }, 2000);
+}
+
+function toggleKeyboard() {
+  showKeyboard = !showKeyboard;
+  const btn = document.getElementById("kbToggleBtn");
+  const vk = document.getElementById("vkContainer");
+  if (showKeyboard) { btn.textContent = "虛擬鍵盤提示：顯示中"; btn.classList.remove("off"); vk.style.display = "block"; }
+  else { btn.textContent = "虛擬鍵盤提示：已隱藏（分數 ×1.5）"; btn.classList.add("off"); vk.style.display = "none"; }
+}
+
+document.getElementById("raceArea").addEventListener("click", () => {
+  if (!raceFinished) document.getElementById("hiddenInput").focus();
+});
+</script>
+</body>
+</html>

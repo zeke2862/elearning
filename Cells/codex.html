@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>怪物 ／ 塔圖鑑</title>
+<style>
+:root{
+  --void:#05070a;
+  --panel:#0b1018;
+  --panel-2:#0f1622;
+  --line:#1c2836;
+  --text:#d7e4ee;
+  --text-dim:#6c7d8f;
+  --ch2:#4fc3ff;
+  --ch4:#ffd23f;
+  --ch5:#ff8a3d;
+  --accent: var(--ch4);
+  --mono:'JetBrains Mono','Noto Sans Mono TC','Courier New',monospace;
+  --disp:'Orbitron','Noto Sans TC',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{width:100%;height:100%;background:var(--void);color:var(--text);font-family:var(--mono);-webkit-font-smoothing:antialiased;}
+body{padding:26px 4vw;overflow-y:auto;}
+.disp{font-family:var(--disp);letter-spacing:.04em;}
+.eyebrow{font-size:11px;letter-spacing:.35em;text-transform:uppercase;color:var(--text-dim);}
+button{font-family:var(--mono);cursor:pointer;background:none;border:none;color:inherit;}
+
+.header-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;flex-wrap:wrap;gap:12px;}
+.flex-row{display:flex;align-items:center;gap:10px;}
+.icon-btn{width:34px;height:34px;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--text-dim);}
+.icon-btn:hover{color:var(--accent);border-color:var(--accent);}
+
+.comp-tabs{display:flex;gap:10px;margin-bottom:18px;}
+.comp-tab{
+  padding:8px 22px;border:1px solid var(--line);background:none;
+  color:var(--text-dim);font-family:var(--mono);font-size:12px;cursor:pointer;
+  transition:all .15s;
+}
+.comp-tab:hover{color:var(--text);}
+.comp-tab.active{border-color:var(--accent);color:var(--accent);}
+.comp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;padding-bottom:24px;}
+.comp-card{
+  border:1px solid var(--line);background:var(--panel);padding:12px;
+  display:flex;gap:10px;align-items:flex-start;
+  clip-path:polygon(0 0,calc(100% - 10px) 0,100% 10px,100% 100%,10px 100%,0 calc(100% - 10px));
+}
+.comp-card.locked{opacity:.28;filter:grayscale(1);}
+.comp-card-icon{
+  width:44px;height:44px;font-size:22px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--panel-2);border:1px solid var(--line);border-radius:3px;
+}
+.comp-card-body h4{font-size:11px;font-family:var(--disp);margin-bottom:2px;}
+.comp-card-body .comp-tag{font-size:9px;color:var(--text-dim);letter-spacing:.12em;text-transform:uppercase;margin-bottom:4px;}
+.comp-card-body p{font-size:10px;color:var(--text-dim);line-height:1.45;}
+.comp-card.mob-card.unlocked{border-color:rgba(57,255,157,.3);}
+.comp-card.tower-card.unlocked{border-color:rgba(255,210,63,.3);}
+</style>
+</head>
+<body>
+
+<div class="header-row">
+  <div class="flex-row">
+    <button class="icon-btn" id="btnBack">←</button>
+    <div>
+      <div class="eyebrow">DATA ARCHIVE</div>
+      <div class="disp" style="font-size:20px;">圖鑑</div>
+    </div>
+  </div>
+</div>
+
+<div class="comp-tabs">
+  <button class="comp-tab active" id="tabMobs">👾 怪物圖鑑</button>
+  <button class="comp-tab" id="tabTowers">🏰 防禦塔圖鑑</button>
+</div>
+<div class="comp-grid" id="compGrid"></div>
+
+<script>
+/* ---------- postMessage bridge with parent page ----------
+   This page holds no game state of its own. The parent (main game
+   page) is the single source of truth for SAVE/progress; this page
+   only renders whatever state it's given. There are no mutating
+   actions here (read-only codex), so the bridge is one-directional
+   aside from "ready" and "back". */
+let STATE = null;
+let activeTab = "mobs";
+
+function post(msg){ parent.postMessage(msg, "*"); }
+
+window.addEventListener("message", (e)=>{
+  const msg = e.data;
+  if(!msg || typeof msg !== "object") return;
+  if(msg.type === "codex:state"){
+    STATE = msg.state;
+    render();
+  }
+});
+
+document.getElementById("btnBack").addEventListener("click", ()=> post({type:"codex:back"}));
+
+document.getElementById("tabMobs").addEventListener("click", ()=>{
+  activeTab = "mobs";
+  document.getElementById("tabMobs").classList.add("active");
+  document.getElementById("tabTowers").classList.remove("active");
+  render();
+});
+document.getElementById("tabTowers").addEventListener("click", ()=>{
+  activeTab = "towers";
+  document.getElementById("tabTowers").classList.add("active");
+  document.getElementById("tabMobs").classList.remove("active");
+  render();
+});
+
+function render(){
+  if(!STATE) return;
+  const grid = document.getElementById("compGrid");
+  grid.innerHTML = "";
+
+  if(activeTab === "mobs"){
+    STATE.mobs.forEach(mt=>{
+      const card = document.createElement("div");
+      card.className = `comp-card mob-card ${mt.unlocked?"unlocked":"locked"}`;
+      card.innerHTML = `
+        <div class="comp-card-icon">${mt.unlocked? mt.icon : "🔒"}</div>
+        <div class="comp-card-body">
+          <div class="comp-tag">第 ${mt.chapter} 章 · ${mt.unlocked?"已解鎖":"待解鎖"}</div>
+          <h4>${mt.unlocked? mt.label : "???"}</h4>
+          <p>${mt.unlocked? mt.desc : "通關對應章節後解鎖圖鑑資料。"}</p>
+          ${mt.unlocked?`<p style="margin-top:4px;color:var(--ch4);font-size:9px;">⚔攻擊 ${mt.atk||0}　🛡防禦 ${mt.def||0}　❤血量 ${mt.hp||100}　☠需擊殺 ${mt.hitsToKill||1} 次　🏃速度 ×${mt.speedMult||1}</p>`:""}
+        </div>
+      `;
+      grid.appendChild(card);
+    });
+  } else {
+    STATE.towers.forEach(t=>{
+      const typeLabel = t.type==="freeze"?"冰凍型":t.type==="erase"?"消字型":"傷害型";
+      const card = document.createElement("div");
+      card.className = `comp-card tower-card ${t.unlocked?"unlocked":"locked"}`;
+      card.innerHTML = `
+        <div class="comp-card-icon">${t.unlocked? t.icon : "🔒"}</div>
+        <div class="comp-card-body">
+          <div class="comp-tag">第 ${t.chapter} 章解鎖 · ${typeLabel}</div>
+          <h4>${t.unlocked? t.name : "???"}</h4>
+          <p>${t.unlocked? (t.lore||t.desc) : "通關對應章節後解鎖圖鑑資料。"}</p>
+          ${t.unlocked?`<p style="margin-top:4px;color:var(--ch4);font-size:9px;">⚔攻擊 ${t.dmg||0}　⏱頻率 ${t.atkSpeed||1000}ms　🎯範圍 ${t.range||1}　✨效果 ${t.effect||t.type}　❤血量 ${t.hp||70}</p>
+          <p style="margin-top:2px;color:var(--ch4);font-size:9px;">建造費用 ${t.cost} Bit　L2: ${t.upgradeT2} Bit　L3: ${t.upgradeT3} Bit</p>`:""}
+        </div>
+      `;
+      grid.appendChild(card);
+    });
+  }
+}
+
+// Ask the parent for the initial state as soon as this page is ready.
+post({type:"codex:ready"});
+</script>
+</body>
+</html>

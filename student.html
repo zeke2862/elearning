@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <title>華雲學校英打測驗</title>
+  <style>
+    body { font-family: sans-serif; text-align: center; margin-top: 50px; }
+    #testArea { margin: 20px; }
+    input { margin: 5px; padding: 5px; }
+    button { margin: 10px; padding: 8px 16px; }
+  </style>
+</head>
+<body>
+  <h1>華雲學校英打測驗</h1>
+  <div id="testArea">
+    <p>請輸入座號、選擇測驗類別，完成測驗後送出分數。</p>
+    <input type="number" id="studentId" placeholder="學生 ID (資料庫的 id)">
+    <select id="category">
+      <option value="上">上</option>
+      <option value="中">中</option>
+      <option value="下">下</option>
+      <option value="綜">綜</option>
+      <option value="ETP-上">ETP-上</option>
+      <option value="ETP-中">ETP-中</option>
+      <option value="ETP-下">ETP-下</option>
+      <option value="ETP-綜">ETP-綜</option>
+    </select>
+    <input type="number" id="score" placeholder="分數 (例如 95)">
+    <br>
+    <button onclick="finishTest()">完成測驗並送出</button>
+  </div>
+
+<script>
+function finishTest() {
+  const studentId = document.getElementById('studentId').value;
+  const category = document.getElementById('category').value;
+  const score = document.getElementById('score').value;
+
+  if (!studentId || !category || !score) {
+    alert("請完整輸入資料！");
+    return;
+  }
+
+  fetch('/submit-score', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      student_id: parseInt(studentId),
+      date: new Date().toISOString().split('T')[0],
+      category: category,
+      best_score: parseInt(score)
+    })
+  })
+  .then(res => res.text())
+  .then(msg => alert("送分成功：" + msg))
+  .catch(err => alert("提交失敗：" + err));
+}
+</script>
+</body>
+</html>

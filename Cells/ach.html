@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>成就區</title>
+<style>
+:root{
+  --void:#05070a;
+  --panel:#0b1018;
+  --panel-2:#0f1622;
+  --line:#1c2836;
+  --text:#d7e4ee;
+  --text-dim:#6c7d8f;
+  --ch2:#4fc3ff;
+  --ch4:#ffd23f;
+  --ch5:#ff8a3d;
+  --accent: var(--ch4);
+  --mono:'JetBrains Mono','Noto Sans Mono TC','Courier New',monospace;
+  --disp:'Orbitron','Noto Sans TC',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{width:100%;height:100%;background:var(--void);color:var(--text);font-family:var(--mono);-webkit-font-smoothing:antialiased;}
+body{padding:26px 4vw;overflow-y:auto;}
+.disp{font-family:var(--disp);letter-spacing:.04em;}
+.eyebrow{font-size:11px;letter-spacing:.35em;text-transform:uppercase;color:var(--text-dim);}
+button{font-family:var(--mono);cursor:pointer;background:none;border:none;color:inherit;}
+
+.header-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;flex-wrap:wrap;gap:12px;}
+.flex-row{display:flex;align-items:center;gap:10px;}
+.icon-btn{width:34px;height:34px;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--text-dim);}
+.icon-btn:hover{color:var(--accent);border-color:var(--accent);}
+
+.ach-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;padding-bottom:30px;}
+.ach-card{
+  border:1px solid var(--line);background:var(--panel);padding:16px;
+  display:flex;gap:14px;align-items:flex-start;
+  clip-path:polygon(0 0,calc(100% - 12px) 0,100% 12px,100% 100%,12px 100%,0 calc(100% - 12px));
+}
+.ach-card.locked{opacity:.35;}
+.ach-card.unlocked{border-color:var(--ch4);}
+.ach-icon{font-size:26px;width:40px;text-align:center;}
+.ach-body h4{font-size:13px;margin-bottom:4px;}
+.ach-body p{font-size:11px;color:var(--text-dim);line-height:1.5;}
+.ach-date{font-size:10px;color:var(--ch4);margin-top:6px;}
+.ach-actions{display:flex;gap:6px;margin-top:8px;}
+.ach-mini-btn{font-size:10px;padding:4px 8px;border:1px solid var(--line);color:var(--text-dim);}
+.ach-mini-btn:hover{color:var(--accent);border-color:var(--accent);}
+
+#toast{
+  position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(20px);
+  background:var(--panel-2);border:1px solid var(--line);padding:10px 18px;font-size:12px;
+  opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;z-index:10;white-space:nowrap;
+}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+
+<div class="header-row">
+  <div class="flex-row">
+    <button class="icon-btn" id="btnBack">←</button>
+    <div>
+      <div class="eyebrow">RECORDS ARCHIVE</div>
+      <div class="disp" style="font-size:20px;">成就區</div>
+    </div>
+  </div>
+</div>
+
+<div class="ach-grid" id="achGrid"></div>
+<div id="toast"></div>
+<canvas id="shareCanvas" width="900" height="500" style="display:none;"></canvas>
+
+<script>
+/* ---------- postMessage bridge with parent page ----------
+   This page holds no game state of its own. The parent (main game
+   page) is the single source of truth for SAVE/achievements; this page
+   only renders whatever state it's given. Downloading a share-card is
+   pure client-side canvas rendering from the state already received,
+   so it never needs to round-trip through the parent — the bridge is
+   read-only aside from "ready" and "back", same as codex.html. */
+let STATE = null;
+
+function post(msg){ parent.postMessage(msg, "*"); }
+
+function toast(msg){
+  const el = document.getElementById("toast");
+  el.textContent = msg;
+  el.classList.add("show");
+  clearTimeout(toast._t);
+  toast._t = setTimeout(()=> el.classList.remove("show"), 1800);
+}
+
+window.addEventListener("message", (e)=>{
+  const msg = e.data;
+  if(!msg || typeof msg !== "object") return;
+  if(msg.type === "ach:state"){
+    STATE = msg.state;
+    render();
+  }
+});
+
+document.getElementById("btnBack").addEventListener("click", ()=> post({type:"ach:back"}));
+
+function render(){
+  if(!STATE) return;
+  const grid = document.getElementById("achGrid");
+  grid.innerHTML = "";
+
+  STATE.achievements.forEach(a=>{
+    const card = document.createElement("div");
+    card.className = "ach-card "+(a.unlocked?"unlocked":"locked");
+    card.innerHTML = `
+      <div class="ach-icon">${a.unlocked? a.icon : "🔒"}</div>
+      <div class="ach-body">
+        <h4>${a.unlocked? a.name : "???"}</h4>
+        <p>${a.unlocked? a.desc : "尚未解鎖此成就"}</p>
+        ${a.unlocked?`<div class="ach-date">解鎖於 ${new Date(a.unlockedAt).toLocaleDateString()}</div>
+        <div class="ach-actions">
+          <button class="ach-mini-btn" data-share="${a.id}">下載卡片</button>
+        </div>`:""}
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+
+  grid.querySelectorAll("[data-share]").forEach(btn=>{
+    btn.addEventListener("click", (e)=>{
+      e.stopPropagation();
+      downloadAchievementCard(btn.dataset.share);
+    });
+  });
+}
+
+function downloadAchievementCard(achId){
+  const a = STATE.achievements.find(x=>x.id===achId);
+  if(!a || !a.unlocked) return;
+  const canvas = document.getElementById("shareCanvas");
+  const ctx = canvas.getContext("2d");
+  const W = canvas.width, H = canvas.height;
+  const grad = ctx.createLinearGradient(0,0,W,H);
+  grad.addColorStop(0,"#0b1018"); grad.addColorStop(1,"#05070a");
+  ctx.fillStyle = grad; ctx.fillRect(0,0,W,H);
+  ctx.strokeStyle = "#39ff9d"; ctx.lineWidth = 2;
+  ctx.strokeRect(20,20,W-40,H-40);
+  ctx.fillStyle = "#6c7d8f"; ctx.font = "16px monospace";
+  ctx.fillText("KEY AGENT: THE LAST FIREWALL — ACHIEVEMENT UNLOCKED", 50, 70);
+  ctx.font = "90px sans-serif"; ctx.fillText(a.icon, 50, 200);
+  ctx.fillStyle = "#d7e4ee"; ctx.font = "bold 40px sans-serif";
+  ctx.fillText(a.name, 50, 270);
+  ctx.fillStyle = "#9fb0c0"; ctx.font = "18px sans-serif";
+  ctx.fillText(a.desc, 50, 310);
+  ctx.fillStyle = "#39ff9d"; ctx.font = "14px monospace";
+  ctx.fillText(`AGENT ${STATE.agentId}　解鎖於 ${new Date(a.unlockedAt).toLocaleDateString()}`, 50, H-50);
+  canvas.toBlob(blob=>{
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url; link.download = `keyagent_achievement_${achId}.png`;
+    link.click(); URL.revokeObjectURL(url);
+    toast("🖼 成就卡片已下載");
+  });
+}
+
+// Ask the parent for the initial state as soon as this page is ready.
+post({type:"ach:ready"});
+</script>
+</body>
+</html>

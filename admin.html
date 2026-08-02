@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <title>美賽華雲學校英文輸入系統 - 管理後台</title>
+  <style>
+    body { font-family: sans-serif; text-align: center; background: #f4f4f9; padding: 20px; }
+    .container { max-width: 900px; margin: auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+    h1 { color: #333; margin-bottom: 5px; }
+    h3 { color: #444; }
+    button { padding: 12px; font-size: 1rem; cursor: pointer; border: none; border-radius: 5px; }
+    button.main { background: #007bff; color: white; }
+    button.main:hover { background: #0056b3; }
+    button.danger { background: #dc3545; color: white; font-size: 0.9rem; padding: 8px 12px; }
+    button.danger:hover { background: #a71d2a; }
+    button.ghost { background: #6c757d; color: white; font-size: 0.9rem; padding: 8px 14px; }
+    button.ghost:hover { background: #545b62; }
+    button:disabled { background: #ccc !important; cursor: not-allowed; }
+    input[type=text] { padding: 8px; font-size: 1rem; border: 1px solid #ccc; border-radius: 5px; }
+    .class-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 10px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+    th { background: #f0f0f0; }
+    .flex-row { display: flex; justify-content: center; align-items: center; gap: 15px; margin-top: 10px; flex-wrap: wrap; }
+    .active-banner {
+      background: #e7f3ff; border: 1px solid #007bff; border-radius: 8px;
+      padding: 12px; margin-bottom: 20px; font-size: 1.1rem; color: #004085;
+    }
+    .active-banner.empty { background: #fff3cd; border-color: #ffc107; color: #856404; }
+    a.name-link { color: #007bff; cursor: pointer; text-decoration: underline; }
+    .section { margin: 25px 0; }
+    .hint { color: #888; font-size: 0.85rem; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>美賽華雲學校英文輸入系統</h1>
+  <p class="hint">管理後台：上傳名單、確認資料、選擇今天的上課班級</p>
+
+  <!-- 目前上課班級狀態 -->
+  <div id="activeBanner" class="active-banner empty">尚未設定上課班級（成績上傳會用 IP 比對「唯一符合」的學生，如果同一台電腦在不同班級都有登記，會找不到人）</div>
+
+  <div class="flex-row">
+    <label>年度：<input type="text" id="yearInput" value="2026" style="width:80px;"></label>
+    <span class="hint">（要跟名單 CSV 裡的「年度」欄位一致，不確定的話用班級查詢驗證一下）</span>
+  </div>
+
+  <hr>
+
+  <!-- 一、上傳資料 + 清空資料 -->
+  <div class="section">
+    <h3>一、開學前請先上傳資料</h3>
+    <p class="hint">CSV 欄位順序：年度、班級、學號、姓名、座號、IP</p>
+    <div class="flex-row">
+      <form id="uploadForm" enctype="multipart/form-data">
+        <input type="file" name="file" accept=".csv" required>
+        <button type="submit" class="main">上傳全校名單</button>
+      </form>
+      <button onclick="clearStudents()" class="danger">清空所有資料</button>
+      <form id="articleUploadForm" enctype="multipart/form-data">
+        <input type="file" name="files" accept=".txt" multiple required>
+        <button type="submit" class="main">匯入文章</button>
+      </form>
+    </div>
+    <p class="hint">「匯入文章」可一次選取多個 TXT 檔案批次上傳，檔名即為題目名稱，供「英文看打」測驗使用。</p>
+  </div>
+
+  <hr>
+
+  <!-- 二、班級查詢 -->
+  <div class="section">
+    <h3>二、班級查詢（確認資料是否正確）</h3>
+    <div class="class-grid">
+      <button class="main" onclick="openClassReport('國一忠')">國一忠</button>
+      <button class="main" onclick="openClassReport('國一孝')">國一孝</button>
+      <button class="main" onclick="openClassReport('國二忠')">國二忠</button>
+      <button class="main" onclick="openClassReport('國二孝')">國二孝</button>
+      <button class="main" onclick="openClassReport('國三忠')">國三忠</button>
+      <button class="main" onclick="openClassReport('國三孝')">國三孝</button>
+      <button class="main" onclick="openClassReport('高一')">高一</button>
+      <button class="main" onclick="selectClass('高二')">高二</button>
+      <button class="main" onclick="openClassReport('高三')">高三</button>
+    </div>
+    
+    <!-- 學生名單顯示區 -->
+    <div id="result"></div>
+    
+    <!-- 批次刪除按鈕 (預設隱藏) -->
+    <div id="bulkActions" style="margin-top: 15px; display: none;">
+        <button class="danger" onclick="bulkDeleteStudents()">刪除所選學生</button>
+    </div>
+
+    <!-- 個人歷史成績顯示區 -->
+    <div id="historyResult"></div>
+<!-- 批次刪除按鈕 (預設隱藏) -->
+    <div id="bulkActions" style="margin-top: 15px; display: none;">
+        <button class="danger" onclick="bulkDeleteStudents()">刪除所選學生</button>
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- 三、選擇上課班級 -->
+  <div class="section">
+    <h3>三、選擇上課班級</h3>
+    <p class="hint">點下去之後，這節課學生送出的成績都會用 IP 自動歸給這個班級的名單，不用學生自己輸入姓名。</p>
+    <div class="class-grid">
+      <button class="main" onclick="startClass('國一忠')">國一忠</button>
+      <button class="main" onclick="startClass('國一孝')">國一孝</button>
+      <button class="main" onclick="startClass('國二忠')">國二忠</button>
+      <button class="main" onclick="startClass('國二孝')">國二孝</button>
+      <button class="main" onclick="startClass('國三忠')">國三忠</button>
+      <button class="main" onclick="startClass('國三孝')">國三孝</button>
+      <button class="main" onclick="startClass('高一')">高一</button>
+      <button class="main" onclick="startClass('高二')">高二</button>
+      <button class="main" onclick="startClass('高三')">高三</button>
+      <button class="main" style="background-color: #d29922; color: white;" onclick="startClass('班際競賽')">🏆 班際競賽</button>
+    </div>
+    <div class="flex-row" style="margin-top:15px;">
+      <button class="danger" onclick="endClass()">🔔 下課（解除所有電腦的臨時換座位）</button>
+    </div>
+    <p class="hint">下課時按這個按鈕：① 讓有「臨時換座位」的電腦恢復成座位表原本登記的人 ② 同時解除目前「上課班級」的IP鎖定，避免下課後這幾台電腦還被算進上一節課的班級（下一節課要開始前，記得回到上面「三、選擇上課班級」重新點選）。換到別的班級（點選上面的班級按鈕）時系統也會自動解除，不用擔心忘記按。</p>
+  </div>
+
+<!-- 班際競賽狀態顯示區（啟動請用上方「三、選擇上課班級」的 🏆 班際競賽按鈕） -->
+<div class="admin-card" id="competition-section">
+    <h3>📢 班際競賽模式</h3>
+    <p class="hint">啟動請點選上方「三、選擇上課班級」裡的 🏆 班際競賽按鈕。這裡只顯示目前狀態，並提供關閉按鈕。</p>
+    <button onclick="deactivateCompetitionMode()" class="danger">
+        ⛔ 關閉班際競賽
+    </button>
+    <p id="comp-status" style="margin-top:10px; font-weight:bold;"></p>
+</div>
+  
+  <hr>
+
+  <!-- 四、排行榜 -->
+  <div class="section">
+    <h3>四、查看排行榜</h3>
+    <p class="hint">請先在上面「三、選擇上課班級」點選班級，這裡才知道要開哪個班的排行榜。</p>
+    <div class="flex-row">
+      <button id="btnSingleBoard" class="main" onclick="openLeaderboard('single')" disabled>單人排行榜</button>
+      <button id="btnEtpBoard" class="main" onclick="openLeaderboard('etp')" disabled>ETP排行榜</button>
+      <button class="main" style="background-color:#6f42c1;" onclick="openLookTypeLeaderboard()">英文看打排行榜</button>
+      <button class="main" style="background-color:#d29922;" onclick="openRaceLeaderboard()">🏎️ 打字賽車排行榜</button>
+      <button class="main" style="background-color:#8e44ad;" onclick="openGodLeaderboard()">⚔️ 打字修仙傳排行榜</button>
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- 五、IP 辨識小工具 -->
+  <div class="section">
+    <h3>五、IP 辨識測試（除錯用）</h3>
+    <p class="hint">確認「上課班級」設定得對不對：輸入一個 IP，看系統目前會認成哪位學生。需要先做過上面的「二、班級查詢」，這裡才有資料可以比對。</p>
+    <div class="flex-row">
+      <input type="text" id="ipTestInput" placeholder="例如 192.168.1.201">
+      <button class="ghost" onclick="testIp()">查詢</button>
+    </div>
+    <div id="ipTestResult" class="hint"></div>
+  </div>
+
+  <hr>
+
+  <!-- 六、雲端同步（在家練習資料匯入） -->
+  <div class="section">
+    <h3>六、雲端同步（把學生在家練習的資料匯入校內資料庫）</h3>
+    <p class="hint">
+      學生在家用自己的裝置練習時，資料會先寄到雲端中繼站（Google 試算表）。
+      這台電腦要「同時連得到網路、也連得到校內主機」才能當橋樑，把雲端中繼站
+      裡還沒處理的資料領過來、寫進本機的 SQLite 資料庫。第一次用之前，要先照
+      專案附的「雲端同步部署說明.md」部署好 Apps Script，把網址貼進下面。
+    </p>
+    <div class="flex-row">
+      <input type="text" id="cloudRelayUrlInput" placeholder="貼上 Apps Script Web App 網址（https://script.google.com/macros/s/.../exec）" style="flex:1; min-width:320px;">
+      <button class="ghost" onclick="saveCloudRelayUrl()">記住這個網址</button>
+    </div>
+    <div class="flex-row" style="margin-top:10px;">
+      <button class="main" onclick="runCloudImport()">☁️ 從雲端匯入待處理資料</button>
+    </div>
+    <div id="cloudImportResult" class="hint" style="white-space:pre-wrap;"></div>
+  </div>
+
+  <hr>
+
+  <!-- 七、匯出名單與成績 -->
+  <div class="section">
+    <h3>七、匯出各班名單與成績</h3>
+    <p class="hint">勾選要匯出的班級（可複選、也可以全選），會下載一份 CSV（可直接用 Excel 開），
+      內容是這幾個班每位學生的名單，以及他們的每一筆成績紀錄；完全沒有成績的學生也會列出來，
+      不會漏掉人。</p>
+    <div class="class-grid" id="exportClassGrid">
+      <label class="ghost" style="display:flex; align-items:center; gap:6px; padding:8px 12px;"><input type="checkbox" class="export-class-checkbox" value="國一忠"> 國一忠</label>
+      <label class="ghost" style="display:flex; align-items:center; gap:6px; padding:8px 12px;"><input type="checkbox" class="export-class-checkbox" value="國一孝"> 國一孝</label>
+      <label class="ghost" style="display:flex; align-items:center; gap:6px; padding:8px 12px;"><input type="checkbox" class="export-class-checkbox" value="國二忠"> 國二忠</label>
+      <label class="ghost" style="display:flex; align-items:center; gap:6px; padding:8px 12px;"><input type="checkbox" class="export-class-checkbox" value="國二孝"> 國二孝</label>
+      <label class="ghost" style="display:flex; align-items:center; gap:6px; padding:8px 12px;"><input type="checkbox" class="export-class-checkbox" value="國三忠"> 國三忠</label>
+      <label class="ghost" style="display:flex; align-items:center; gap:6px; padding:8px 12px;"><input type="checkbox" class="export-class-checkbox" value="國三孝"> 國三孝</label>
+      <label class="ghost" style="display:flex; align-items:center; gap:6px; padding:8px 12px;"><input type="checkbox" class="export-class-checkbox" value="高一"> 高一</label>
+      <label class="ghost" style="display:flex; align-items:center; gap:6px; padding:8px 12px;"><input type="checkbox" class="export-class-checkbox" value="高二"> 高二</label>
+      <label class="ghost" style="display:flex; align-items:center; gap:6px; padding:8px 12px;"><input type="checkbox" class="export-class-checkbox" value="高三"> 高三</label>
+    </div>
+    <div class="flex-row" style="margin-top:10px;">
+      <button class="ghost" onclick="toggleAllExportClasses(true)">全選</button>
+      <button class="ghost" onclick="toggleAllExportClasses(false)">全不選</button>
+      <button class="main" onclick="exportSelectedClasses()">📥 匯出 CSV</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  let activeClass = null;   // 目前「已設定」的上課班級（跟伺服器的 activeSession 對齊）
+  let lastQueriedRoster = []; // 「二、班級查詢」最近一次查到的名單，給IP測試小工具用
+// --- 批次刪除功能邏輯 ---
+// 💡 關閉班際競賽：呼叫既有的 /set-competition-mode（action: 'stop'），
+// 伺服器會把回合ID清空、並在目前上課班級是「班際競賽」時一併清除上課班級設定，
+// 但所有學生資料與成績歷史完整保留，供 admin.html / class-report.html 事後查閱。
+function deactivateCompetitionMode() {
+    const statusText = document.getElementById('comp-status');
+    statusText.innerText = "正在關閉中...";
+    statusText.style.color = "orange";
+
+    fetch('/set-competition-mode', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'stop' })
+    })
+    .then(response => {
+        if (!response.ok) throw new Error(`伺服器回應 ${response.status}`);
+        return response.text();
+    })
+    .then(msg => {
+        statusText.innerText = "⛔ 班際競賽模式已關閉";
+        statusText.style.color = "#dc3545";
+        refreshActiveBanner(); // 重新載入目前班級橫幅（班際競賽關閉後會回到「尚未設定上課班級」）
+    })
+    .catch(err => {
+        console.error("關閉失敗:", err);
+        statusText.innerText = "❌ 關閉失敗（請確認 server.js 是否為最新版本）";
+        statusText.style.color = "red";
+    });
+}
+// 全選/取消全選
+function toggleSelectAll(source) {
+    const checkboxes = document.querySelectorAll('.student-checkbox');
+    checkboxes.forEach(cb => cb.checked = source.checked);
+    document.getElementById('bulkActions').style.display = source.checked ? 'block' : 'none';
+}
+
+// 監聽勾選狀態以顯示刪除按鈕
+document.addEventListener('change', (e) => {
+    if (e.target.classList.contains('student-checkbox')) {
+        const anyChecked = document.querySelectorAll('.student-checkbox:checked').length > 0;
+        document.getElementById('bulkActions').style.display = anyChecked ? 'block' : 'none';
+    }
+});
+
+// 批次刪除呼叫
+async function bulkDeleteStudents() {
+    if (!confirm('確定要刪除勾選的學生嗎？（此動作不可復原，且會刪除其所有成績）')) return;
+
+    const selectedIds = Array.from(document.querySelectorAll('.student-checkbox:checked'))
+                             .map(cb => parseInt(cb.value));
+
+    try {
+        const res = await fetch('/delete-students', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ids: selectedIds })
+        });
+        const msg = await res.text();
+        alert(msg);
+        // 重新整理名單
+        if (activeClass) selectClass(activeClass.className);
+        // 隱藏按鈕
+        document.getElementById('bulkActions').style.display = 'none';
+    } catch (err) {
+        alert("刪除失敗：" + err.message);
+    }
+}
+  function getYear() {
+    return document.getElementById('yearInput').value.trim() || '2026';
+  }
+
+  function refreshActiveBanner() {
+    fetch('/active-class')
+      .then(res => {
+        if (!res.ok) throw new Error(`伺服器回應 ${res.status}，可能是 server.js 版本太舊、還沒有 /active-class 這個路徑`);
+        return res.json();
+      })
+      .then(data => {
+        const banner = document.getElementById('activeBanner');
+        if (data && data.className) {
+          activeClass = data;
+          banner.className = 'active-banner';
+          banner.innerText = `✅ 目前上課班級：${data.year} 年度 / ${data.className}（成績上傳會自動歸到這個班級的名單）`;
+          document.getElementById('btnSingleBoard').disabled = false;
+          document.getElementById('btnEtpBoard').disabled = false;
+        } else {
+          activeClass = null;
+          banner.className = 'active-banner empty';
+          banner.innerText = '尚未設定上課班級（成績上傳會用 IP 比對「唯一符合」的學生，如果同一台電腦在不同班級都有登記，會找不到人）';
+          document.getElementById('btnSingleBoard').disabled = true;
+          document.getElementById('btnEtpBoard').disabled = true;
+        }
+      })
+      .catch(err => {
+        // 💡 之前這裡是「安靜略過」，問題發生時排行榜按鈕會永遠打不開、卻沒有任何提示。
+        // 改成明確顯示錯誤，才不會誤以為是自己操作有問題。
+        const banner = document.getElementById('activeBanner');
+        banner.className = 'active-banner empty';
+        banner.innerText = `⚠️ 無法連接伺服器的 /active-class（${err.message}）。請確認 server.js 是不是還在執行、而且是最新版本。`;
+        document.getElementById('btnSingleBoard').disabled = true;
+        document.getElementById('btnEtpBoard').disabled = true;
+      });
+  }
+
+  // 上傳 CSV
+  document.getElementById('uploadForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    fetch('/upload-csv', { method: 'POST', body: formData })
+      .then(res => res.text())
+      .then(msg => alert(msg))
+      .catch(err => alert("上傳失敗：" + err));
+  });
+
+  // 匯入文章（可一次選多個 TXT 檔）
+  document.getElementById('articleUploadForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const formEl = this;
+    const formData = new FormData(formEl);
+    fetch('/upload-articles', { method: 'POST', body: formData })
+      .then(res => res.text())
+      .then(msg => { alert(msg); formEl.reset(); })
+      .catch(err => alert("匯入文章失敗：" + err));
+  });
+
+  // 開啟英文看打排行榜（獨立視窗，不依賴「三、選擇上課班級」）
+  function openLookTypeLeaderboard() {
+    window.open('/look-type-leaderboard.html', '_blank');
+  }
+
+  // 開啟打字賽車控制台（獨立視窗；跟單人/ETP排行榜一樣，要先選好上課班級，
+  // 這樣頁面才知道要在標題顯示「目前比賽班級」——比賽本身仍以學號/IP辨識，不受班級限制）
+  function openRaceLeaderboard() {
+    if (!activeClass) {
+      alert("請先在「三、選擇上課班級」點選班級！");
+      return;
+    }
+    const q = `year=${activeClass.year}&className=${encodeURIComponent(activeClass.className)}`;
+    window.open(`./CarRace/race-leaderboard.html?${q}`, '_blank');
+  }
+
+  // 開啟打字修仙傳排行榜（獨立視窗；要先選好上課班級，頁面才知道要顯示哪個班級的資料）
+  function openGodLeaderboard() {
+    if (!activeClass) {
+      alert("請先在「三、選擇上課班級」點選班級！");
+      return;
+    }
+    const q = `year=${activeClass.year}&className=${encodeURIComponent(activeClass.className)}`;
+    window.open(`./god-leaderboard.html?${q}`, '_blank');
+  }
+
+  // 清空資料
+  function clearStudents() {
+    if (!confirm('確定要清空所有名單與成績嗎？這個動作沒辦法復原。')) return;
+    fetch('/clear-students', { method: 'POST' })
+      .then(res => res.text())
+      .then(msg => { alert(msg); refreshActiveBanner(); })
+      .catch(err => alert("清空失敗：" + err));
+  }
+
+  function selectClass(className) {
+    document.getElementById('historyResult').innerHTML = ''; // 清除舊成績
+    document.getElementById('bulkActions').style.display = 'none'; // 隱藏批次刪除按鈕
+    
+    fetch(`/students?year=${getYear()}&className=${encodeURIComponent(className)}`)
+      .then(res => res.json())
+      .then(data => {
+        lastQueriedRoster = data;
+        let html = "<h4>" + className + " 學生名單（共 " + data.length + " 人）</h4>";
+        if (data.length > 0) {
+          html += "<table><tr><th><input type='checkbox' id='selectAll' onclick='toggleSelectAll(this)'></th><th>座號</th><th>學號</th><th>姓名</th><th>IP</th><th>操作</th></tr>";
+          data.forEach(stu => {
+            html += `<tr>
+              <td><input type="checkbox" class="student-checkbox" value="${stu.id}"></td>
+              <td>${stu.seat_number}</td>
+              <td>${stu.student_number}</td>
+              <td><a class="name-link" onclick="viewHistory(${stu.id}, '${stu.name}')">${stu.name}</a></td>
+              <td>${stu.ip_address}</td>
+              <td>
+                <button class="ghost" onclick='editStudent(${JSON.stringify(stu)})'>編輯</button>
+                <button class="danger" onclick="deleteStudent(${stu.id})">刪除</button>
+              </td>
+            </tr>`;
+          });
+          html += "</table>";
+        }
+        document.getElementById('result').innerHTML = html;
+      });
+}
+
+function openClassReport(className) {
+    const year = getYear();
+
+    window.open(
+        `/class-report.html?year=${encodeURIComponent(year)}&className=${encodeURIComponent(className)}`,
+        "_blank"
+    );
+}
+// 刪除學生
+function deleteStudent(studentId) {
+  if (!confirm('確定要刪除這位學生嗎？（此學生所有成績也會一併刪除）')) return;
+  
+  fetch(`/student/${studentId}`, { method: 'DELETE' })
+    .then(res => res.text())
+    .then(msg => {
+      alert(msg);
+      // 重新整理目前班級的名單
+      if (activeClass) selectClass(activeClass.className);
+    })
+    .catch(err => alert("刪除失敗：" + err));
+}
+
+// 💡 手動修正學生資料：姓名、IP、班級、座號、學號，用簡單的連續 prompt() 依序詢問，
+// 跟頁面上其他操作（alert/confirm）維持一致的簡單風格，不用額外做彈窗表單。
+// 每個欄位都可以直接按「取消」或留空來跳過（維持原值）。
+function editStudent(stu) {
+  const name = prompt('姓名：', stu.name);
+  if (name === null) return;
+  const ip_address = prompt('IP：', stu.ip_address);
+  if (ip_address === null) return;
+  const className = prompt('班級：', stu.class);
+  if (className === null) return;
+  const seat_number = prompt('座號：', stu.seat_number);
+  if (seat_number === null) return;
+  const student_number = prompt('學號：', stu.student_number);
+  if (student_number === null) return;
+
+  fetch('/admin/update-student', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ studentId: stu.id, name, ip_address, className, seat_number, student_number })
+  })
+    .then(res => res.text())
+    .then(msg => {
+      alert(msg);
+      // 重新整理目前班級的名單（班級可能被改掉了，這裡用改之前查詢時的班級重新整理原本畫面）
+      if (activeClass) selectClass(activeClass.className);
+      else if (lastQueriedRoster.length > 0) selectClass(stu.class);
+    })
+    .catch(err => alert('更新失敗：' + err.message));
+}
+
+// 刪除成績
+function deleteScore(scoreId, studentId, studentName) {
+  if (!confirm('確定要刪除這筆成績嗎？')) return;
+  
+  fetch(`/score/${scoreId}`, { method: 'DELETE' })
+    .then(res => res.text())
+    .then(msg => {
+      alert(msg);
+      // 重新整理該學生的歷史成績畫面
+      viewHistory(studentId, studentName);
+    })
+    .catch(err => alert("刪除失敗：" + err));
+}
+  // 查看單一學生的歷史成績（改用表格顯示，不依賴外部圖表套件）
+  function viewHistory(studentId, studentName) {
+  fetch(`/scores/${studentId}`)
+    .then(res => res.json())
+    .then(data => {
+      let html = `<h4>${studentName} 的歷史成績</h4>`;
+      if (data.length === 0) {
+        html += `<p class="hint">目前還沒有任何成績紀錄。</p>`;
+      } else {
+        // 1. 標頭加入全選框
+        html += `<table><tr><th><input type="checkbox" onclick="toggleSelectAllScores(this)"></th><th>日期</th><th>類別</th><th>分數</th><th>操作</th></tr>`;
+        
+        data.slice().reverse().forEach(s => {
+          // 💡 英文看打成績原本只顯示 "ENGLISH_Look"，看不出打的是哪一篇文章，補上文章檔名
+          let displayCategory = s.category === 'ENGLISH_Look' && s.article_filename
+            ? `${s.category}（${s.article_filename}）`
+            : (s.sub_category ? `${s.category}(${s.sub_category})` : s.category);
+          let displayScore = (s.best_score == -1) ? "(未完成)" : (s.wpm ? `${s.best_score} (WPM ${s.wpm})` : s.best_score);
+
+          // 2. 每一列加入勾選框，並加上 score-checkbox class
+          html += `<tr>
+            <td><input type="checkbox" class="score-checkbox" value="${s.id}"></td>
+            <td>${new Date(s.date).toLocaleString()}</td>
+            <td>${displayCategory}</td>
+            <td>${displayScore}</td>
+            <td>
+              <button class="ghost" onclick='editScore(${JSON.stringify(s)}, ${studentId}, "${studentName}")'>編輯</button>
+              <button class="danger" onclick="deleteScore(${s.id}, ${studentId}, '${studentName}')">刪除</button>
+            </td>
+          </tr>`;
+        });
+        html += "</table>";
+
+        // 3. 加入批次刪除按鈕 (預設隱藏，勾選後透過 JS 顯示)
+        html += `<div id="bulkScoreActions" style="margin-top:10px; display:none;">
+                   <button class="danger" onclick="bulkDeleteScores(${studentId}, '${studentName}')">刪除選取成績</button>
+                 </div>`;
+      }
+      document.getElementById('historyResult').innerHTML = html;
+    })
+    .catch(err => alert("查詢分數失敗：" + err));
+}
+// 💡 手動修正單筆成績：分數、WPM、正確率、時間、錯誤數，同樣用連續 prompt() 依序詢問。
+function editScore(s, studentId, studentName) {
+  const best_score = prompt('分數：', s.best_score);
+  if (best_score === null) return;
+  const wpm = prompt('WPM：', s.wpm);
+  if (wpm === null) return;
+  const accuracy = prompt('正確率（例如 95%）：', s.accuracy);
+  if (accuracy === null) return;
+  const time_str = prompt('花費時間：', s.time_str);
+  if (time_str === null) return;
+  const wrong_count = prompt('錯誤數：', s.wrong_count);
+  if (wrong_count === null) return;
+
+  fetch('/admin/update-score', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ scoreId: s.id, best_score, wpm, accuracy, time_str, wrong_count })
+  })
+    .then(res => res.text())
+    .then(msg => {
+      alert(msg);
+      viewHistory(studentId, studentName); // 重新整理這位學生的成績列表
+    })
+    .catch(err => alert('更新失敗：' + err.message));
+}
+
+// 全選成績的 checkbox
+function toggleSelectAllScores(source) {
+    const checkboxes = document.querySelectorAll('.score-checkbox');
+    checkboxes.forEach(cb => cb.checked = source.checked);
+    document.getElementById('bulkScoreActions').style.display = source.checked ? 'block' : 'none';
+}
+
+// 監聽勾選狀態以顯示刪除按鈕 (使用事件委派)
+document.addEventListener('change', (e) => {
+    if (e.target.classList.contains('score-checkbox')) {
+        const anyChecked = document.querySelectorAll('.score-checkbox:checked').length > 0;
+        document.getElementById('bulkScoreActions').style.display = anyChecked ? 'block' : 'none';
+    }
+});
+async function bulkDeleteScores(studentId, studentName) {
+    if (!confirm('確定要刪除選取的成績紀錄嗎？')) return;
+
+    const selectedIds = Array.from(document.querySelectorAll('.score-checkbox:checked'))
+                             .map(cb => parseInt(cb.value));
+
+    try {
+        const res = await fetch('/delete-scores', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ids: selectedIds })
+        });
+        const msg = await res.text();
+        alert(msg);
+        // 刪除完成後，重新整理該學生的歷史紀錄頁面
+        viewHistory(studentId, studentName);
+    } catch (err) {
+        alert("刪除失敗：" + err.message);
+    }
+}
+  // 選擇上課班級：真正呼叫伺服器設定，不是只在網頁上記著而已
+  function startClass(className) {
+    fetch('/set-active-class', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ year: getYear(), className })
+    })
+      .then(res => {
+        if (!res.ok) throw new Error(`伺服器回應 ${res.status}，可能是 server.js 版本太舊、還沒有 /set-active-class 這個路徑`);
+        return res.text();
+      })
+      .then(msg => {
+        alert(msg);
+        refreshActiveBanner();
+        selectClass(className); // 順便把這個班的名單列出來，當作「今天上課名單」的確認畫面
+        
+        // 💡 點選普通班級時，清除班際競賽的狀態提示，若是選擇班際競賽則同步更新狀態
+        const statusText = document.getElementById('comp-status');
+        if (statusText) {
+          if (className === '班際競賽') {
+            statusText.innerText = "✅ 班際競賽模式已啟動！";
+            statusText.style.color = "green";
+          } else {
+            statusText.innerText = "";
+          }
+        }
+      })
+      .catch(err => alert("設定上課班級失敗：" + err.message));
+  }
+
+  // 💡 下課按鈕：解除所有電腦目前的「臨時換座位」設定，讓每台電腦下一堂課恢復成
+  // 座位表原本登記的人。換班級時系統會自動做這件事，這個按鈕是給同一班「下課」時
+  // 也能主動清一次（例如這堂課中有人臨時換座位，下課後不想帶到下一堂）。
+  function endClass() {
+    fetch('/admin/end-class', { method: 'POST' })
+      .then(res => res.text())
+      .then(msg => {
+        alert(msg);
+        refreshActiveBanner(); // 下課後 activeSession 也被清空了，橫幅要跟著變回「尚未設定上課班級」
+      })
+      .catch(err => alert('下課操作失敗：' + err.message));
+  }
+
+  // 💡 七、匯出各班名單與成績：勾選班級後直接用瀏覽器導向下載網址，
+  // 讓瀏覽器原生的「下載檔案」機制處理存檔，不用另外寫 blob/a 標籤下載的邏輯。
+  function toggleAllExportClasses(checked) {
+    document.querySelectorAll('.export-class-checkbox').forEach(cb => cb.checked = checked);
+  }
+
+  function exportSelectedClasses() {
+    const selected = Array.from(document.querySelectorAll('.export-class-checkbox:checked')).map(cb => cb.value);
+    if (selected.length === 0) {
+      alert('請至少勾選一個班級');
+      return;
+    }
+    const url = `/admin/export-scores?year=${encodeURIComponent(getYear())}&classes=${encodeURIComponent(selected.join(','))}`;
+    window.location.href = url;
+  }
+
+  // 開啟排行榜（用目前已設定的上課班級，不用另外再選一次）
+  function openLeaderboard(mode) {
+    if (!activeClass) {
+      alert("請先在「三、選擇上課班級」點選班級！");
+      return;
+    }
+    const q = `year=${activeClass.year}&className=${encodeURIComponent(activeClass.className)}`;
+    if (mode === 'single') {
+      window.open(`/leaderboard.html?${q}`, '_blank');
+    } else if (mode === 'etp') {
+      window.open(`/etp-leaderboard.html?${q}`, '_blank');
+    }
+  }
+
+  // IP 辨識測試：直接用「二、班級查詢」抓回來的名單做比對，純前端顯示用，不影響伺服器實際判斷邏輯
+  function testIp() {
+    const ip = document.getElementById('ipTestInput').value.trim();
+    const box = document.getElementById('ipTestResult');
+    if (!ip) { box.innerText = '請輸入 IP'; return; }
+    if (lastQueriedRoster.length === 0) {
+      box.innerText = '請先在「二、班級查詢」點一個班級，才有名單可以比對';
+      return;
+    }
+    const matches = lastQueriedRoster.filter(s => s.ip_address === ip);
+    if (matches.length === 0) {
+      box.innerText = `⚠️ 這個 IP 不在「${lastQueriedRoster[0] ? lastQueriedRoster[0].class : ''}」的名單裡（只比對目前查詢出來的這個班級，不是全校）`;
+    } else if (matches.length === 1) {
+      box.innerText = `✅ 會被認成：座號 ${matches[0].seat_number}　${matches[0].name}`;
+    } else {
+      box.innerText = `⚠️ 這個 IP 在名單裡對到 ${matches.length} 筆資料，可能有重複，請檢查名單`;
+    }
+  }
+
+  // ============================================================
+  // 💡 六、雲端同步：把 Google Apps Script 中繼站裡「還沒處理」的資料領過來，
+  // 一筆一筆送進本機的 /sync-import，寫進校內資料庫；成功的話回頭跟中繼站
+  // 說「這幾筆處理完了」，下次就不會重複匯入。
+  // ============================================================
+  const CLOUD_RELAY_URL_STORAGE_KEY = "keyagent_admin_cloud_relay_url";
+
+  function saveCloudRelayUrl() {
+    const url = document.getElementById('cloudRelayUrlInput').value.trim();
+    if (!url) { alert('請先貼上 Apps Script Web App 網址'); return; }
+    localStorage.setItem(CLOUD_RELAY_URL_STORAGE_KEY, url);
+    alert('已記住，下次開這個頁面會自動帶入');
+  }
+
+  async function runCloudImport() {
+    const url = document.getElementById('cloudRelayUrlInput').value.trim();
+    const box = document.getElementById('cloudImportResult');
+    if (!url) { box.innerText = '請先貼上 Apps Script Web App 網址'; return; }
+
+    box.innerText = '正在向雲端中繼站要待處理資料…';
+    let items = [];
+    try {
+      const res = await fetch(url, { method: 'GET' });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.message || '中繼站回應失敗');
+      items = data.items || [];
+    } catch (err) {
+      box.innerText = `❌ 連不到雲端中繼站：${err.message}\n請確認網址正確、Apps Script 有部署成「Anyone」可存取，且這台電腦目前連得到網路。`;
+      return;
+    }
+
+    if (items.length === 0) {
+      box.innerText = '✅ 雲端中繼站目前沒有待處理的資料。';
+      return;
+    }
+
+    box.innerText = `找到 ${items.length} 筆待處理資料，開始匯入本機資料庫…`;
+    let okCount = 0, failCount = 0;
+    const doneRowIndexes = [];
+    const failLines = [];
+
+    for (const item of items) {
+      let payload;
+      try {
+        payload = JSON.parse(item.payload);
+      } catch (err) {
+        failCount++;
+        failLines.push(`第 ${item.rowIndex} 列：資料格式錯誤，略過`);
+        continue;
+      }
+      try {
+        const res = await fetch('/sync-import', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const result = await res.json();
+        if (result.success) {
+          okCount++;
+          doneRowIndexes.push(item.rowIndex);
+        } else {
+          failCount++;
+          failLines.push(`學號 ${item.studentNumber}：${result.message || '匯入失敗'}`);
+        }
+      } catch (err) {
+        failCount++;
+        failLines.push(`學號 ${item.studentNumber}：連不到本機伺服器（${err.message}）`);
+      }
+    }
+
+    // 成功的那幾筆回頭跟雲端中繼站說「處理完了」，下次匯入才不會重複
+    if (doneRowIndexes.length > 0) {
+      try {
+        await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({ action: 'markDone', rowIndexes: doneRowIndexes })
+        });
+      } catch (err) {
+        failLines.push(`（已成功匯入的 ${doneRowIndexes.length} 筆，但回報雲端「已處理」時失敗，下次可能會重複匯入一次，資料本身不會壞——${err.message}）`);
+      }
+    }
+
+    let summary = `✅ 匯入完成：成功 ${okCount} 筆，失敗 ${failCount} 筆`;
+    if (failLines.length > 0) summary += `\n\n失敗明細：\n` + failLines.join('\n');
+    box.innerText = summary;
+  }
+
+  // 頁面載入時，把上次記住的雲端中繼站網址帶回輸入框
+  (function restoreCloudRelayUrl() {
+    const saved = localStorage.getItem(CLOUD_RELAY_URL_STORAGE_KEY);
+    if (saved) document.getElementById('cloudRelayUrlInput').value = saved;
+  })();
+
+  // 頁面載入時，先看看伺服器現在有沒有已經設定好的上課班級
+  refreshActiveBanner();
+</script>
+</body>
+</html>

@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<title>英文看打排行榜</title>
+<style>
+  body { font-family: sans-serif; background: #f4f4f9; padding: 20px; }
+  .container { max-width: 1400px; margin: auto; background: white; padding: 25px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+  h1 { color: #333; display: inline-block; margin-right: 15px; }
+  .header-row { display: flex; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 15px; }
+  select { padding: 8px; font-size: 1rem; border: 1px solid #ccc; border-radius: 5px; }
+  table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.9rem; }
+  th, td { border: 1px solid #ccc; padding: 6px 8px; text-align: center; white-space: nowrap; }
+  th { background: #6f42c1; color: white; position: sticky; top: 0; }
+  tr:nth-child(even) { background: #f8f8f8; }
+  tr:hover { background: #f0e9fb; }
+  td.rank { font-weight: bold; }
+  tr:nth-child(1) td.rank { color: #d4af37; }
+  tr:nth-child(2) td.rank { color: #a8a8a8; }
+  tr:nth-child(3) td.rank { color: #cd7f32; }
+  .hint { color: #888; font-size: 0.85rem; margin-top: 10px; }
+  .table-wrap { overflow-x: auto; }
+  .empty { text-align: center; color: #888; padding: 30px; }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header-row">
+    <h1>🏆 英文看打排行榜</h1>
+    <select id="articleFilter" onchange="onArticleFilterChange()">
+      <option value="">全部文章</option>
+    </select>
+    <select id="dateSelect" onchange="onDateChange()"></select>
+  </div>
+
+  <div class="table-wrap">
+    <table id="boardTable">
+      <thead>
+        <tr>
+          <th>名次</th>
+          <th>姓名</th>
+          <th>生日</th>
+          <th>身分證</th>
+          <th>題目</th>
+          <th>速度</th>
+          <th>等級</th>
+          <th>班級</th>
+          <th>座號</th>
+          <th>測驗時間</th>
+          <th>使用時間</th>
+          <th>正確率</th>
+          <th>錯誤率</th>
+          <th>輸入法</th>
+          <th>測驗日期</th>
+          <th>代碼</th>
+          <th>總分</th>
+          <th>得分</th>
+          <th>IP</th>
+        </tr>
+      </thead>
+      <tbody id="boardBody">
+        <tr><td colspan="19" class="empty">載入中...</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="hint">選一篇文章：篩選出只打過該篇的成績（同一篇可比較不同學生的兩次表現）。選「全部文章」：顯示所有看打成績，依得分高到低排序。</p>
+</div>
+
+<script>
+  // 載入文章清單到下拉選單
+  function loadArticleOptions() {
+    fetch('/articles')
+      .then(res => res.json())
+      .then(articles => {
+        const select = document.getElementById('articleFilter');
+        articles.forEach(a => {
+          const opt = document.createElement('option');
+          opt.value = a.filename;
+          opt.textContent = a.filename;
+          select.appendChild(opt);
+        });
+      })
+      .catch(err => console.error('載入文章清單失敗:', err));
+  }
+
+  // 💡 目前選的日期（預設今天；只列出真的有資料的日期，配合文章篩選一起變動）
+  let currentDate = null;
+
+  function loadAvailableDates() {
+    const articleFilename = document.getElementById('articleFilter').value;
+    const url = articleFilename
+      ? `/look-type-leaderboard-dates?articleFilename=${encodeURIComponent(articleFilename)}`
+      : `/look-type-leaderboard-dates`;
+    fetch(url)
+      .then(res => res.json())
+      .then(dates => {
+        const select = document.getElementById('dateSelect');
+        const today = new Date().toISOString().slice(0, 10);
+        if (!Array.isArray(dates) || dates.length === 0) {
+          select.innerHTML = `<option value="${today}">${today}（尚無資料）</option>`;
+          currentDate = today;
+        } else {
+          select.innerHTML = dates.map(d => `<option value="${d}">${d}${d === today ? '（今天）' : ''}</option>`).join('');
+          currentDate = dates.includes(currentDate) ? currentDate : dates[0];
+          select.value = currentDate;
+        }
+        loadLeaderboard();
+      })
+      .catch(err => console.warn('無法取得日期清單:', err));
+  }
+
+  function onArticleFilterChange() {
+    loadAvailableDates(); // 換了文章，有資料的日期也要重新抓
+  }
+  function onDateChange() {
+    currentDate = document.getElementById('dateSelect').value;
+    loadLeaderboard();
+  }
+
+  function loadLeaderboard() {
+    if (!currentDate) return;
+    const articleFilename = document.getElementById('articleFilter').value;
+    const params = new URLSearchParams({ date: currentDate });
+    if (articleFilename) params.set('articleFilename', articleFilename);
+    const url = `/look-type-leaderboard?${params.toString()}`;
+
+    fetch(url)
+      .then(res => res.json())
+      .then(data => {
+        const tbody = document.getElementById('boardBody');
+        if (!data || data.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="19" class="empty">目前還沒有任何看打成績紀錄</td></tr>';
+          return;
+        }
+        tbody.innerHTML = data.map(r => {
+          // 💡 obtainedScore === -999：學生於測驗/練習進行中提前關閉頁面（比照 ETP 模式）
+          const isAborted = r.obtainedScore === -999;
+          return `
+          <tr${isAborted ? ' style="background:#3a1f1f;"' : ''}>
+            <td class="rank">${r.rank}</td>
+            <td>${r.name}</td>
+            <td>${r.birthdate || '-'}</td>
+            <td>${r.idNumber || '-'}</td>
+            <td>${r.articleFilename || '-'}</td>
+            <td>${r.speed || '-'}</td>
+            <td>${isAborted ? '<span style="color:#ff6b6b;">⚠️ 提前關閉</span>' : (r.level || '-')}</td>
+            <td>${r.class || '-'}</td>
+            <td>${r.seatNumber || '-'}</td>
+            <td>${r.timeLimit || '-'}</td>
+            <td>${r.timeUsed || '-'}</td>
+            <td>${r.accuracy || '-'}</td>
+            <td>${r.wrongRate !== '' && r.wrongRate !== null ? r.wrongRate + '%' : '-'}</td>
+            <td>${r.inputMethod || '-'}</td>
+            <td>${r.testDate || '-'}</td>
+            <td>${r.code || '-'}</td>
+            <td>${r.totalScore}</td>
+            <td>${r.obtainedScore}</td>
+            <td>${r.ip || '-'}</td>
+          </tr>
+        `;
+        }).join('');
+      })
+      .catch(err => {
+        document.getElementById('boardBody').innerHTML =
+          `<tr><td colspan="19" class="empty">載入失敗：${err.message}</td></tr>`;
+      });
+  }
+
+  loadArticleOptions();
+  loadAvailableDates();
+</script>
+
+</body>
+</html>

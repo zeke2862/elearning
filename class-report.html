@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<meta charset="UTF-8">
+<title>班級報表</title>
+
+<style>
+
+*{
+    box-sizing:border-box;
+    font-family:"Microsoft JhengHei",sans-serif;
+}
+
+body{
+    margin:20px;
+    background:#f3f5f7;
+}
+
+.container{
+    width:95%;
+    margin:auto;
+}
+
+h1{
+    text-align:center;
+    margin-bottom:10px;
+}
+
+.info{
+    text-align:center;
+    font-size:18px;
+    margin-bottom:25px;
+}
+
+.section{
+    background:white;
+    border-radius:10px;
+    padding:20px;
+    margin-bottom:25px;
+    box-shadow:0 2px 6px rgba(0,0,0,.15);
+}
+
+.section h2{
+    margin-top:0;
+    color:#0056b3;
+}
+
+.table-wrapper{
+    overflow-x:auto;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+}
+
+th{
+    background:#007bff;
+    color:white;
+    padding:10px;
+    border:1px solid #ddd;
+}
+
+td{
+    padding:8px;
+    border:1px solid #ddd;
+    text-align:center;
+}
+
+tbody tr:nth-child(even){
+    background:#f8f8f8;
+}
+
+button{
+    padding:10px 20px;
+    font-size:16px;
+    margin:5px;
+    cursor:pointer;
+}
+
+.footer{
+    text-align:center;
+    margin-top:20px;
+}
+
+.notice{
+    color:#777;
+    font-size:16px;
+    text-align:center;
+    padding:30px;
+}
+
+</style>
+
+</head>
+<body>
+
+<div class="container">
+
+<h1 id="title">班級報表</h1>
+
+<div class="info">
+
+年度：
+<b id="year"></b>
+
+&nbsp;&nbsp;&nbsp;
+
+班級：
+<b id="class"></b>
+
+&nbsp;&nbsp;&nbsp;
+
+學生人數：
+<b id="count">0</b>
+
+人
+
+</div>
+<!-- 顯示詳細資料的 Modal -->
+<div id="detailModal" style="display:none; position:fixed; top:10%; left:10%; width:80%; height:80%; background:white; border:2px solid #ccc; padding:20px; z-index:100; overflow-y:auto;">
+    <h2 id="modalTitle">學生詳細紀錄</h2>
+    <div id="modalContent"></div>
+    <button onclick="document.getElementById('detailModal').style.display='none'">關閉</button>
+</div>
+
+<div class="section">
+
+<h2>學生資料</h2>
+
+<div class="table-wrapper">
+
+<table id="studentTable">
+
+<thead>
+
+<tr>
+
+<th width="80">座號</th>
+
+<th width="150">學號</th>
+
+<th>姓名</th>
+
+<th width="180">IP位址</th>
+
+<th width="120">臨時換座位</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+</tbody>
+
+</table>
+
+</div>
+
+</div>
+
+<div class="section">
+
+<h2>歷次上課最佳成績</h2>
+
+<div class="table-wrapper">
+
+<table id="scoreTable">
+
+<thead id="scoreHead">
+
+<tr>
+
+<th>座號</th>
+
+<th>姓名</th>
+
+</tr>
+
+</thead>
+
+<tbody id="scoreBody">
+
+</tbody>
+
+</table>
+
+</div>
+
+</div>
+
+<div class="footer">
+    <button onclick="downloadExcel()">
+        📊 下載 Excel 報表
+    </button>
+    <button onclick="window.location.href='/admin.html'">
+        ⬅ 返回主頁
+    </button>
+</div>
+
+</div>
+
+<script>
+
+const params=new URLSearchParams(location.search);
+
+const year=params.get("year");
+
+const className=params.get("className");
+
+document.getElementById("title").innerHTML=
+`${year} 年度 ${className} 班級報表`;
+
+document.getElementById("year").innerHTML=year;
+
+document.getElementById("class").innerHTML=className;
+
+loadStudents();
+loadScoreTable();
+async function loadStudents(){
+
+    try{
+
+        const response=await fetch(`/students?year=${encodeURIComponent(year)}&className=${encodeURIComponent(className)}`);
+
+        const students=await response.json();
+
+        document.getElementById("count").innerHTML=students.length;
+
+        // 💡 順便抓目前有哪些臨時換座位設定，才知道這個班級裡誰現在被覆寫了
+        const overrideRes = await fetch('/seat-overrides');
+        const overrides = await overrideRes.json(); // [{ip, studentId}, ...]
+
+        // 用IP反查是「座號幾號」的電腦，畫面上顯示比較直覺
+        const ipToSeat = {};
+        students.forEach(s => { ipToSeat[s.ip_address] = s.seat_number; });
+
+        const overrideByStudentId = {};
+        overrides.forEach(o => {
+            if (ipToSeat[o.ip] !== undefined) overrideByStudentId[o.studentId] = ipToSeat[o.ip];
+        });
+
+        const tbody=document.querySelector("#studentTable tbody");
+
+        tbody.innerHTML="";
+
+        students.sort((a,b)=>a.seat_number-b.seat_number);
+
+        students.forEach(student=>{
+
+            const overrideSeat = overrideByStudentId[student.id];
+            const overrideCell = overrideSeat !== undefined
+                ? `目前使用座號 ${overrideSeat} 的電腦
+                   <button onclick="clearSeatOverride(${student.id}, '${student.name}')" style="background:#dc3545; color:white; border:none; border-radius:4px; padding:3px 8px; font-size:0.8rem; cursor:pointer; margin-left:4px;">取消</button>`
+                : `<input type="number" id="seatInput-${student.id}" placeholder="座號" style="width:60px; padding:4px;">
+                   <button onclick="setSeatOverride(${student.id}, '${student.name}')" style="background:#007bff; color:white; border:none; border-radius:4px; padding:4px 10px; font-size:0.85rem; cursor:pointer; margin-left:4px;">套用</button>`;
+
+            tbody.innerHTML+=`
+
+            <tr>
+
+            <td>${student.seat_number}</td>
+
+            <td>${student.student_number}</td>
+
+            <td>${student.name}</td>
+
+            <td>${student.ip_address}</td>
+
+            <td>${overrideCell}</td>
+
+            </tr>
+
+            `;
+
+        });
+
+    }
+
+    catch(err){
+
+        alert("無法讀取學生資料");
+
+        console.error(err);
+
+    }
+
+}
+async function loadScoreTable(){
+
+    try{
+
+        const response = await fetch(
+            `/class-report?year=${encodeURIComponent(year)}&className=${encodeURIComponent(className)}`
+        );
+
+        const data = await response.json();
+
+        const head = document.querySelector("#scoreHead tr");
+        const body = document.querySelector("#scoreBody");
+
+        // 清空
+        head.innerHTML = `
+            <th width="80">座號</th>
+            <th width="150">姓名</th>
+        `;
+
+        body.innerHTML = "";
+
+        // ===== 建立日期欄 =====
+        data.dates.forEach(date=>{
+
+            const d = new Date(date);
+
+            const title =
+                (d.getMonth()+1)+"/"+d.getDate();
+
+            head.innerHTML += `
+                <th>${title}</th>
+            `;
+
+        });
+
+        // ===== 最後增加統計欄 =====
+
+        head.innerHTML += `
+            <th>平均</th>
+            <th>最高</th>
+        `;
+
+        // ===== 建立學生資料 =====
+
+        data.students.forEach(student=>{
+
+            let total = 0;
+            let count = 0;
+            let best = 0;
+
+            let html = `
+    <tr>
+        <td>${student.seat_number}</td>
+        <td><a href="#" onclick="showStudentDetails(${student.id}, '${student.name}'); return false;">${student.name}</a></td>
+`;
+
+            data.dates.forEach(date => {
+                const val = student.scores[date];
+
+                // 1. 顯示邏輯：決定表格格子要顯示什麼
+                let displayVal = "";
+                if (val && typeof val === 'object') {
+                    displayVal = `${val.wpm} (${val.score})`; // 顯示 WPM(分數)
+                } else if (val !== null && val !== undefined && val !== "") {
+                    displayVal = val; // 舊資料備援
+                }
+                
+                html += `<td>${displayVal}</td>`;
+
+                // 2. 計算邏輯：統一從 val.wpm 取值來計算平均與最高
+                // 如果是新資料(物件)，就取 wpm；否則如果是舊資料，就拿舊資料本身
+                const wpmForCalc = (val && typeof val === 'object') ? Number(val.wpm) : Number(val);
+
+                if (!isNaN(wpmForCalc) && wpmForCalc > 0) {
+                    total += wpmForCalc; // 把 WPM 加入總和
+                    count++;
+                    if (wpmForCalc > best) {
+                        best = wpmForCalc; // 比較基準也改為 WPM
+                    }
+                }
+            });
+
+            const avg =
+                count==0 ? "" : (total/count).toFixed(1);
+
+            html += `
+
+                <td>${avg}</td>
+
+                <td>${best==0?"":best}</td>
+
+                </tr>
+
+            `;
+
+            body.innerHTML += html;
+
+        });
+
+    }
+
+    catch(err){
+
+        console.error(err);
+
+        alert("讀取成績失敗");
+
+    }
+
+}
+async function showStudentDetails(studentId, name) {
+    const modal = document.getElementById('detailModal');
+    const content = document.getElementById('modalContent');
+    document.getElementById('modalTitle').innerText = name + " 的詳細練習紀錄";
+
+    const res = await fetch(`/scores/${studentId}`);
+    const data = await res.json();
+
+    let html = `<table><tr><th>日期</th><th>類別</th><th>WPM (分數)</th><th>操作</th></tr>`;
+
+    data.reverse().forEach(s => {
+        const displayWpm = (s.wpm === null || s.wpm === undefined || s.wpm === "null") ? 0 : s.wpm;
+        html += `<tr>
+            <td>${new Date(s.date).toLocaleString()}</td>
+            <td>${s.category}${s.sub_category ? '('+s.sub_category+')' : ''}</td>
+            <td>${displayWpm} (${s.best_score})</td>
+            <td><button onclick="deleteScoreFromReport(${s.id}, ${studentId}, '${name}')" style="background:#dc3545; color:white; padding:4px 10px; font-size:0.85rem; border:none; border-radius:4px; cursor:pointer;">刪除</button></td>
+        </tr>`;
+    });
+    html += `</table>`;
+
+    content.innerHTML = html;
+    modal.style.display = 'block';
+}
+
+// 💡 補回之前有、後來不見的「單獨刪除一筆成績」功能，跟 admin.html 用同一個後端路徑 /score/:id
+// 刪除後同時重整明細視窗（看得到那筆記錄立刻消失）跟主表格（平均/最高分會跟著重新計算）
+async function deleteScoreFromReport(scoreId, studentId, studentName) {
+    if (!confirm('確定要刪除這筆成績嗎？這個動作沒辦法復原。')) return;
+    try {
+        const res = await fetch(`/score/${scoreId}`, { method: 'DELETE' });
+        if (!res.ok) throw new Error(`伺服器回應 ${res.status}`);
+        await showStudentDetails(studentId, studentName); // 重整明細視窗
+        await loadScoreTable(); // 重整主表格，平均/最高分才會跟著更新
+    } catch (err) {
+        alert("刪除失敗：" + err.message);
+    }
+}
+// 💡 臨時換座位：輸入座號後，把「那個座號的電腦」暫時歸到這位學生名下
+async function setSeatOverride(studentId, studentName) {
+    const input = document.getElementById(`seatInput-${studentId}`);
+    const tempSeatNumber = input.value.trim();
+    if (!tempSeatNumber) { alert('請輸入座號'); return; }
+
+    try {
+        const res = await fetch('/set-seat-override', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ studentId, tempSeatNumber })
+        });
+        const msg = await res.text();
+        if (!res.ok) throw new Error(msg);
+        alert(msg);
+        await loadStudents(); // 重新整理表格，顯示最新的覆寫狀態
+    } catch (err) {
+        alert('設定失敗：' + err.message);
+    }
+}
+
+async function clearSeatOverride(studentId, studentName) {
+    if (!confirm(`確定要取消 ${studentName} 的臨時換座位設定嗎？`)) return;
+    try {
+        const res = await fetch('/clear-seat-override', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ studentId })
+        });
+        const msg = await res.text();
+        if (!res.ok) throw new Error(msg);
+        await loadStudents();
+    } catch (err) {
+        alert('取消失敗：' + err.message);
+    }
+}
+
+// 下載 Excel 功能
+function downloadExcel() {
+    // 建立一個新的 Excel 工作簿
+    const wb = XLSX.utils.book_new();
+
+    // 取得兩個表格的內容
+    const table1 = document.getElementById('studentTable');
+    const table2 = document.getElementById('scoreTable');
+
+    // 將 HTML 表格轉為 Excel 工作表
+    const ws1 = XLSX.utils.table_to_sheet(table1);
+    const ws2 = XLSX.utils.table_to_sheet(table2);
+
+    // 加入工作簿
+    XLSX.utils.book_append_sheet(wb, ws1, "學生資料");
+    XLSX.utils.book_append_sheet(wb, ws2, "成績報表");
+
+    // 匯出檔案
+    const fileName = `${year}年度_${className}_班級報表.xlsx`;
+    XLSX.writeFile(wb, fileName);
+}
+</script>
+
+</body>
+
+</html>

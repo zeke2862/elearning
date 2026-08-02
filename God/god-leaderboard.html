@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>打字修仙傳 排行榜</title>
+<style>
+:root{
+  --void:#05070a;
+  --panel:#0b1018;
+  --panel-2:#0f1622;
+  --line:#1c2836;
+  --text:#d7e4ee;
+  --text-dim:#6c7d8f;
+  --accent:#ffd23f;
+  --good:#39ff9d;
+  --danger:#ff5c5c;
+  --mono:'JetBrains Mono','Noto Sans Mono TC','Courier New',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{width:100%;min-height:100%;background:var(--void);color:var(--text);font-family:var(--mono);}
+body{padding:24px;max-width:960px;margin:0 auto;}
+h1{font-size:20px;margin-bottom:4px;}
+.sub{font-size:12px;color:var(--text-dim);margin-bottom:20px;}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:18px 20px;margin-bottom:18px;}
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:center;}
+label{font-size:12px;color:var(--text-dim);margin-right:6px;}
+select,input{background:var(--panel-2);border:1px solid var(--line);color:var(--text);padding:8px 10px;font-family:var(--mono);font-size:13px;border-radius:4px;}
+button{background:var(--accent);color:#05070a;border:none;padding:8px 16px;font-size:13px;font-weight:bold;border-radius:4px;cursor:pointer;}
+button:hover{opacity:.9;}
+button.ghost{background:var(--panel-2);color:var(--text);border:1px solid var(--line);}
+.section-title{font-size:14px;letter-spacing:.05em;color:var(--accent);margin-bottom:12px;}
+.hof-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+@media (max-width:720px){.hof-grid{grid-template-columns:1fr;}}
+.hof-card{background:var(--panel-2);border:1px solid var(--line);border-radius:8px;padding:14px;text-align:center;}
+.hof-card .tag{font-size:11px;color:var(--text-dim);letter-spacing:.1em;margin-bottom:8px;}
+.hof-card .score{font-size:30px;font-weight:bold;color:var(--good);}
+.hof-card .who{font-size:13px;margin-top:6px;}
+.hof-card .meta{font-size:11px;color:var(--text-dim);margin-top:2px;}
+.hof-card.empty .score{color:var(--text-dim);font-size:16px;}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);}
+th{color:var(--text-dim);font-weight:normal;font-size:11px;letter-spacing:.05em;}
+tr:hover td{background:var(--panel-2);}
+.no-score{color:var(--text-dim);}
+.status-line{font-size:12px;color:var(--text-dim);margin-top:8px;}
+.status-line.err{color:var(--danger);}
+</style>
+</head>
+<body>
+
+<h1>⚔️ 打字修仙傳：五鍵飛升 排行榜</h1>
+<div class="sub">先選遊戲項目，上方是歷史最高分（全校／年級／班級），下方是今天這個班的練習狀態</div>
+
+<div class="panel">
+  <div class="row" style="margin-bottom:10px;">
+    <div>
+      <label for="selCategory">遊戲項目</label>
+      <select id="selCategory"></select>
+    </div>
+    <div>
+      <label for="inpYear">學年度</label>
+      <input id="inpYear" type="text" style="width:80px;" placeholder="2026">
+    </div>
+    <div>
+      <label for="inpClass">班級</label>
+      <input id="inpClass" type="text" style="width:120px;" placeholder="例如 701">
+    </div>
+    <button id="btnQuery">查詢</button>
+  </div>
+  <div class="status-line" id="topStatus"></div>
+</div>
+
+<div class="panel">
+  <div class="section-title">🏆 歷史最高分（置頂・不分日期，永久保留直到被打破）</div>
+  <div class="hof-grid" id="hofGrid">
+    <div class="hof-card empty"><div class="tag">全校</div><div class="score">--</div></div>
+    <div class="hof-card empty"><div class="tag">年級</div><div class="score">--</div></div>
+    <div class="hof-card empty"><div class="tag">班級</div><div class="score">--</div></div>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="section-title" id="todayTitle">📅 當日班級練習狀態</div>
+  <table>
+    <thead>
+      <tr><th>座號</th><th>姓名</th><th>分數</th><th>評價</th></tr>
+    </thead>
+    <tbody id="todayBody">
+      <tr><td colspan="4" class="no-score">請先在上面選擇學年度與班級，再按查詢</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<script>
+// 💡 這個頁面本身就是由 server.js 提供的靜態檔案（public 資料夾），
+// 所以直接用相對路徑呼叫 API 即可，不用像遊戲本體那樣寫死學校主機網址。
+
+function qs(name) {
+  return new URLSearchParams(location.search).get(name) || "";
+}
+
+function setStatus(text, isErr) {
+  const el = document.getElementById("topStatus");
+  el.textContent = text || "";
+  el.className = "status-line" + (isErr ? " err" : "");
+}
+
+async function loadCategories() {
+  const sel = document.getElementById("selCategory");
+  try {
+    const res = await fetch(`/god-categories`);
+    const list = await res.json();
+    sel.innerHTML = list.map(c => `<option value="${c.key}">${c.label}</option>`).join("");
+    const preset = qs("category");
+    if (preset) sel.value = preset;
+  } catch (err) {
+    sel.innerHTML = `<option value="1">第一關【紮馬步】基準鍵</option>
+      <option value="2">第二關【梯雲縱】上排鍵</option>
+      <option value="3">第三關【掃堂腿】下排鍵</option>
+      <option value="4">第四關【劍氣縱橫】單字連段</option>
+      <option value="5">第五關【決戰魔教】盲打總決賽</option>
+      <option value="endless">魔王模式（無盡）</option>`;
+    setStatus("連不到學校主機，項目清單先用預設值顯示", true);
+  }
+}
+
+function renderHofCard(label, entry) {
+  if (!entry) {
+    return `<div class="hof-card empty"><div class="tag">${label}</div><div class="score">尚無紀錄</div></div>`;
+  }
+  return `<div class="hof-card">
+    <div class="tag">${label}</div>
+    <div class="score">${entry.score}</div>
+    <div class="who">${entry.name || "匿名"}（${entry.className || ""} ${entry.seatNumber || ""}）</div>
+    <div class="meta">${entry.date ? entry.date.split("T")[0] : ""}</div>
+  </div>`;
+}
+
+async function loadHallOfFame(category, year, className) {
+  const grid = document.getElementById("hofGrid");
+  try {
+    const url = `/god-hall-of-fame?category=${encodeURIComponent(category)}&year=${encodeURIComponent(year)}&className=${encodeURIComponent(className)}`;
+    const res = await fetch(url);
+    const data = await res.json();
+    grid.innerHTML = renderHofCard("全校", data.school)
+      + renderHofCard(`年級（${data.derivedGrade || "?"}）`, data.grade)
+      + renderHofCard("班級", data.class);
+  } catch (err) {
+    grid.innerHTML = renderHofCard("全校", null) + renderHofCard("年級", null) + renderHofCard("班級", null);
+    setStatus("歷史最高分載入失敗：" + err.message, true);
+  }
+}
+
+async function loadToday(category, year, className) {
+  const body = document.getElementById("todayBody");
+  const today = new Date().toISOString().split("T")[0];
+  document.getElementById("todayTitle").textContent = `📅 當日（${today}）班級練習狀態：${year} ${className}`;
+  try {
+    const url = `/god-leaderboard-today?year=${encodeURIComponent(year)}&className=${encodeURIComponent(className)}&category=${encodeURIComponent(category)}`;
+    const res = await fetch(url);
+    const rows = await res.json();
+    if (!rows.length) {
+      body.innerHTML = `<tr><td colspan="4" class="no-score">這個班級目前沒有名單資料</td></tr>`;
+      return;
+    }
+    body.innerHTML = rows.map(r => `<tr>
+      <td>${r.seatNumber ?? ""}</td>
+      <td>${r.name ?? ""}</td>
+      <td>${r.score != null ? r.score : '<span class="no-score">今天還沒練習</span>'}</td>
+      <td>${r.grade || ""}</td>
+    </tr>`).join("");
+  } catch (err) {
+    body.innerHTML = `<tr><td colspan="4" class="no-score">載入失敗：${err.message}</td></tr>`;
+  }
+}
+
+async function runQuery() {
+  const category = document.getElementById("selCategory").value;
+  const year = document.getElementById("inpYear").value.trim();
+  const className = document.getElementById("inpClass").value.trim();
+  if (!year || !className) {
+    setStatus("請輸入學年度與班級", true);
+    return;
+  }
+  setStatus("查詢中…");
+  await Promise.all([
+    loadHallOfFame(category, year, className),
+    loadToday(category, year, className)
+  ]);
+  setStatus("");
+}
+
+document.getElementById("btnQuery").addEventListener("click", runQuery);
+document.getElementById("selCategory").addEventListener("change", runQuery);
+
+(async function init() {
+  await loadCategories();
+  const presetYear = qs("year");
+  const presetClass = qs("className");
+  if (presetYear) document.getElementById("inpYear").value = presetYear;
+  if (presetClass) document.getElementById("inpClass").value = presetClass;
+  if (presetYear && presetClass) runQuery();
+})();
+</script>
+</body>
+</html>

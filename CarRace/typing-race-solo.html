@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>打字賽車・個人賽</title>
+<script src="./race-common.js"></script>
+<style>
+:root{
+  --void:#05070a; --panel:#0b1018; --panel-2:#0f1622; --line:#1c2836;
+  --text:#d7e4ee; --text-dim:#6c7d8f; --accent:#ffd23f; --good:#39ff9d; --danger:#ff5c5c;
+  --mono:'JetBrains Mono','Noto Sans Mono TC','Courier New',monospace;
+  --disp:'Orbitron','Noto Sans TC',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{width:100%;min-height:100%;background:var(--void);color:var(--text);font-family:var(--mono);}
+body{padding:20px;}
+.disp{font-family:var(--disp);letter-spacing:.03em;}
+.wrap{max-width:820px;margin:0 auto;}
+.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;font-size:12px;color:var(--text-dim);}
+.topbar a{color:var(--text-dim);text-decoration:none;}
+.topbar a:hover{color:var(--accent);}
+.gbit{color:var(--accent);font-weight:bold;}
+
+h1.title{font-size:22px;text-align:center;margin-bottom:4px;}
+.sub{font-size:12px;color:var(--text-dim);text-align:center;margin-bottom:24px;}
+
+/* ---- 分類選單 ---- */
+.cat-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.cat-card{
+  border:1px solid var(--line);background:var(--panel);padding:18px;cursor:pointer;
+  transition:border-color .15s;
+}
+.cat-card:hover{border-color:var(--cat-color,var(--accent));}
+.cat-card .name{font-size:15px;font-weight:bold;margin-bottom:4px;color:var(--cat-color,var(--text));}
+.cat-card .lv{font-size:11px;color:var(--text-dim);}
+
+/* ---- 關卡選單 ---- */
+.level-panel{display:none;}
+.level-panel.active{display:block;}
+.level-head{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+.btn-back{background:none;border:1px solid var(--line);color:var(--text-dim);padding:6px 12px;font-size:11px;cursor:pointer;}
+.btn-back:hover{color:var(--accent);border-color:var(--accent);}
+.level-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-top:12px;}
+.lv-btn{
+  aspect-ratio:1;border:1px solid var(--line);background:var(--panel-2);color:var(--text);
+  font-family:var(--mono);font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;
+}
+.lv-btn.locked{opacity:.3;cursor:not-allowed;}
+.lv-btn.cleared{border-color:var(--good);color:var(--good);}
+.lv-btn:not(.locked):hover{border-color:var(--accent);}
+
+/* ---- 賽車畫面 ---- */
+.race-panel{display:none;}
+.race-panel.active{display:block;}
+.race-info{display:flex;justify-content:space-between;font-size:12px;color:var(--text-dim);margin-bottom:10px;}
+.track{border:1px solid var(--line);background:var(--panel);padding:14px;margin-bottom:8px;position:relative;}
+.track .lane-label{font-size:11px;color:var(--text-dim);margin-bottom:4px;}
+.lane{height:34px;background:var(--panel-2);position:relative;margin-bottom:14px;border-radius:4px;overflow:hidden;}
+.lane .car{position:absolute;top:2px;font-size:26px;transition:left .12s linear;left:0;}
+.lane .finish{position:absolute;right:6px;top:0;bottom:0;display:flex;align-items:center;font-size:16px;color:var(--text-dim);}
+.lane.you .car{filter:none;}
+.lane.ai .car{filter:grayscale(.3);}
+
+.passage{
+  border:1px solid var(--line);background:var(--panel-2);padding:16px;font-size:19px;line-height:1.9;
+  letter-spacing:.03em;margin-bottom:14px;word-break:break-all;
+}
+.passage .done{color:var(--good);}
+.passage .wrong{color:var(--danger);background:rgba(255,92,92,.15);}
+.passage .cur{color:var(--void);background:var(--accent);}
+.passage .todo{color:var(--text-dim);}
+
+.controls{display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--text-dim);}
+.toggle-btn{background:none;border:1px solid var(--line);color:var(--text);padding:8px 14px;font-size:12px;cursor:pointer;}
+.toggle-btn.off{border-color:var(--danger);color:var(--danger);}
+
+.hidden-input{position:absolute;opacity:0;pointer-events:none;}
+
+/* ---- 結果視窗 ---- */
+.overlay{display:none;position:fixed;inset:0;background:rgba(5,7,10,.88);z-index:50;align-items:center;justify-content:center;}
+.overlay.active{display:flex;}
+.result-card{background:var(--panel);border:1px solid var(--line);padding:28px 32px;min-width:280px;text-align:center;}
+.result-card h2{margin-bottom:14px;}
+.result-card .win{color:var(--good);}
+.result-card .lose{color:var(--danger);}
+.result-row{display:flex;justify-content:space-between;font-size:13px;margin:6px 0;color:var(--text-dim);}
+.result-row b{color:var(--text);}
+.result-actions{display:flex;gap:10px;margin-top:18px;}
+.result-actions button{flex:1;padding:10px;font-family:var(--mono);cursor:pointer;border:1px solid var(--line);background:var(--panel-2);color:var(--text);}
+.result-actions .primary{background:var(--accent);color:#05070a;border:none;font-weight:bold;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="topbar">
+    <a href="../index.html">🏠 回登入首頁</a>
+    <span>目前代幣：<span class="gbit" id="gbitDisplay">0</span> GBit</span>
+  </div>
+
+  <h1 class="title disp">🏎️ 打字賽車・個人賽</h1>
+  <div class="sub" id="whoLine">尚未登入</div>
+
+  <!-- ====== 分類選單 ====== -->
+  <div id="catPanel">
+    <div class="cat-grid" id="catGrid"></div>
+  </div>
+
+  <!-- ====== 關卡選單 ====== -->
+  <div class="level-panel" id="levelPanel">
+    <div class="level-head">
+      <button class="btn-back" onclick="showCatPanel()">← 返回分類</button>
+      <div class="disp" id="levelCatName" style="font-size:16px;"></div>
+    </div>
+    <div class="sub" style="margin:0 0 6px;text-align:left;">每一關對手的電腦車速固定，從 1 WPM 開始，每關 +1 WPM，全程 100 字元。贏過對手就解鎖下一關！</div>
+    <div class="level-grid" id="levelGrid"></div>
+  </div>
+
+  <!-- ====== 比賽畫面 ====== -->
+  <div class="race-panel" id="racePanel">
+    <div class="race-info">
+      <span id="raceLevelInfo"></span>
+      <span id="raceTimer">0.0 秒</span>
+    </div>
+    <div class="track">
+      <div class="lane-label">🚗 你</div>
+      <div class="lane you"><div class="car" id="carYou">🚗</div><div class="finish">🏁</div></div>
+      <div class="lane-label">🤖 電腦對手（<span id="aiWpmLabel"></span> WPM）</div>
+      <div class="lane ai"><div class="car" id="carAi">🚙</div><div class="finish">🏁</div></div>
+    </div>
+    <div class="passage" id="passageDisplay"></div>
+    <div id="vkContainer"></div>
+    <div class="controls">
+      <button class="toggle-btn" id="kbToggleBtn" onclick="toggleKeyboard()">虛擬鍵盤提示：顯示中</button>
+      <span id="liveStats"></span>
+    </div>
+    <input type="text" class="hidden-input" id="hiddenInput" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
+  </div>
+
+</div>
+
+<!-- ====== 結果彈窗 ====== -->
+<div class="overlay" id="resultOverlay">
+  <div class="result-card">
+    <h2 id="resultTitle" class="disp"></h2>
+    <div class="result-row"><span>WPM</span><b id="rWpm"></b></div>
+    <div class="result-row"><span>正確率</span><b id="rAcc"></b></div>
+    <div class="result-row"><span>完成字元</span><b id="rChars"></b></div>
+    <div class="result-row"><span>本場分數</span><b id="rScore"></b></div>
+    <div class="result-row"><span>獲得代幣</span><b id="rTokens" style="color:var(--accent);"></b></div>
+    <div class="result-actions">
+      <button onclick="retryLevel()">再挑戰一次</button>
+      <button class="primary" onclick="backToLevels()">返回關卡選單</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const studentNumber = raceGetActiveStudent();
+document.getElementById("whoLine").textContent = studentNumber ? `學號 ${studentNumber}` : "本機練習模式（未登入也可以玩，代幣只會存在這台裝置）";
+refreshGbitDisplay();
+
+function refreshGbitDisplay() {
+  const save = raceLoadSave(studentNumber);
+  document.getElementById("gbitDisplay").textContent = save.gbit || 0;
+}
+
+// ---- 分類選單 ----
+const catGrid = document.getElementById("catGrid");
+RACE_CATEGORY_ORDER.forEach(key => {
+  const def = RACE_CATEGORY_DEFS[key];
+  const unlocked = raceUnlockedLevel(studentNumber, key);
+  const div = document.createElement("div");
+  div.className = "cat-card";
+  div.style.setProperty("--cat-color", def.color);
+  div.innerHTML = `<div class="name">${def.label}</div><div class="lv">目前解鎖到第 ${unlocked} 關</div>`;
+  div.onclick = () => openLevelPanel(key);
+  catGrid.appendChild(div);
+});
+
+let currentCategory = null;
+let currentLevel = 1;
+const MAX_LEVEL = 24; // 對手最快 24 WPM，已經是相當快的手速，超過這個給學生一個「已練到頂」的終點感
+
+function showCatPanel() {
+  document.getElementById("catPanel").style.display = "block";
+  document.getElementById("levelPanel").classList.remove("active");
+  document.getElementById("racePanel").classList.remove("active");
+  // 重新整理每個分類卡片顯示的解鎖進度
+  Array.from(catGrid.children).forEach((div, i) => {
+    const key = RACE_CATEGORY_ORDER[i];
+    div.querySelector(".lv").textContent = `目前解鎖到第 ${raceUnlockedLevel(studentNumber, key)} 關`;
+  });
+}
+
+function openLevelPanel(key) {
+  currentCategory = key;
+  document.getElementById("catPanel").style.display = "none";
+  document.getElementById("levelPanel").classList.add("active");
+  document.getElementById("levelCatName").textContent = RACE_CATEGORY_DEFS[key].label;
+  renderLevelGrid();
+}
+
+function renderLevelGrid() {
+  const unlocked = raceUnlockedLevel(studentNumber, currentCategory);
+  const grid = document.getElementById("levelGrid");
+  grid.innerHTML = "";
+  for (let lv = 1; lv <= MAX_LEVEL; lv++) {
+    const btn = document.createElement("button");
+    btn.className = "lv-btn" + (lv > unlocked ? " locked" : lv < unlocked ? " cleared" : "");
+    btn.textContent = lv;
+    btn.disabled = lv > unlocked;
+    btn.onclick = () => startRace(currentCategory, lv);
+    grid.appendChild(btn);
+  }
+}
+
+// ---- 比賽狀態 ----
+let raceText = "";
+let typedCount = 0;
+let wrongTotal = 0;
+let correctTotal = 0;
+let raceStartTime = 0;
+let raceTimerHandle = null;
+let aiWpm = 1;
+let showKeyboard = true;
+let raceFinished = false;
+
+function startRace(category, level) {
+  currentCategory = category;
+  currentLevel = level;
+  aiWpm = level; // 從 WPM=1 開始，每關 +1
+  raceText = raceGenerateText(category, 100);
+  typedCount = 0; wrongTotal = 0; correctTotal = 0; raceFinished = false;
+
+  document.getElementById("levelPanel").classList.remove("active");
+  document.getElementById("racePanel").classList.add("active");
+  document.getElementById("raceLevelInfo").textContent = `${RACE_CATEGORY_DEFS[category].label}・第 ${level} 關`;
+  document.getElementById("aiWpmLabel").textContent = aiWpm;
+  document.getElementById("carYou").style.left = "0%";
+  document.getElementById("carAi").style.left = "0%";
+  renderPassage();
+  raceRenderKeyboard(document.getElementById("vkContainer"));
+  raceUpdateKeyboardHighlight(document.getElementById("vkContainer"), raceText[0]);
+  document.getElementById("vkContainer").style.display = showKeyboard ? "block" : "none";
+
+  const input = document.getElementById("hiddenInput");
+  input.value = "";
+  input.focus();
+
+  raceStartTime = Date.now();
+  if (raceTimerHandle) clearInterval(raceTimerHandle);
+  raceTimerHandle = setInterval(tickRace, 100);
+}
+
+function renderPassage() {
+  let html = "";
+  for (let i = 0; i < raceText.length; i++) {
+    const ch = raceText[i] === " " ? "␣" : raceText[i];
+    if (i < typedCount) html += `<span class="done">${ch}</span>`;
+    else if (i === typedCount) html += `<span class="cur">${ch}</span>`;
+    else html += `<span class="todo">${ch}</span>`;
+  }
+  document.getElementById("passageDisplay").innerHTML = html;
+}
+
+function tickRace() {
+  if (raceFinished) return;
+  const elapsedMs = Date.now() - raceStartTime;
+  document.getElementById("raceTimer").textContent = (elapsedMs / 1000).toFixed(1) + " 秒";
+
+  // 電腦車：以固定 WPM 前進（charsByAi = wpm * 5 * 分鐘）
+  const aiChars = Math.min(100, aiWpm * 5 * (elapsedMs / 60000));
+  document.getElementById("carAi").style.left = Math.min(96, aiChars) + "%";
+  const youChars = Math.min(100, typedCount);
+  document.getElementById("carYou").style.left = Math.min(96, youChars) + "%";
+
+  const liveWpm = raceCalcWpm(correctTotal, elapsedMs);
+  document.getElementById("liveStats").textContent = `即時 WPM：${liveWpm}`;
+
+  if (aiChars >= 100 && !raceFinished) {
+    finishRace(false, elapsedMs);
+  }
+}
+
+document.getElementById("hiddenInput").addEventListener("input", (e) => {
+  if (raceFinished) return;
+  const val = e.target.value;
+  if (!val) return;
+  const ch = val[val.length - 1];
+  e.target.value = "";
+  handleKey(ch);
+});
+
+function handleKey(ch) {
+  if (typedCount >= raceText.length) return;
+  const expected = raceText[typedCount];
+  if (ch === expected) {
+    correctTotal++;
+    typedCount++;
+  } else {
+    wrongTotal++;
+  }
+  renderPassage();
+  raceUpdateKeyboardHighlight(document.getElementById("vkContainer"), raceText[typedCount]);
+  if (typedCount >= raceText.length) {
+    finishRace(true, Date.now() - raceStartTime);
+  }
+}
+
+function finishRace(playerWon, elapsedMs) {
+  if (raceFinished) return;
+  raceFinished = true;
+  clearInterval(raceTimerHandle);
+  document.getElementById("hiddenInput").blur();
+
+  const wpm = raceCalcWpm(correctTotal, elapsedMs);
+  const totalAttempts = correctTotal + wrongTotal;
+  const accuracy = totalAttempts > 0 ? Math.round((correctTotal / totalAttempts) * 100) : 100;
+  const score = raceCalcScore(wpm, typedCount, showKeyboard);
+  const tokens = raceCalcTokens(score);
+
+  if (playerWon) {
+    raceClearLevel(studentNumber, currentCategory, currentLevel);
+  }
+  raceAwardTokens(studentNumber, tokens);
+  refreshGbitDisplay();
+
+  document.getElementById("resultTitle").innerHTML = playerWon
+    ? `<span class="win">🏆 贏了！解鎖下一關</span>`
+    : `<span class="lose">💨 被電腦超車了，再試一次！</span>`;
+  document.getElementById("rWpm").textContent = wpm;
+  document.getElementById("rAcc").textContent = accuracy + "%";
+  document.getElementById("rChars").textContent = typedCount + " / 100";
+  document.getElementById("rScore").textContent = score;
+  document.getElementById("rTokens").textContent = "+" + tokens;
+  document.getElementById("resultOverlay").classList.add("active");
+}
+
+function retryLevel() {
+  document.getElementById("resultOverlay").classList.remove("active");
+  startRace(currentCategory, currentLevel);
+}
+
+function backToLevels() {
+  document.getElementById("resultOverlay").classList.remove("active");
+  document.getElementById("racePanel").classList.remove("active");
+  document.getElementById("levelPanel").classList.add("active");
+  renderLevelGrid();
+}
+
+function toggleKeyboard() {
+  showKeyboard = !showKeyboard;
+  const btn = document.getElementById("kbToggleBtn");
+  const vk = document.getElementById("vkContainer");
+  if (showKeyboard) {
+    btn.textContent = "虛擬鍵盤提示：顯示中";
+    btn.classList.remove("off");
+    vk.style.display = "block";
+  } else {
+    btn.textContent = "虛擬鍵盤提示：已隱藏（分數 ×1.5）";
+    btn.classList.add("off");
+    vk.style.display = "none";
+  }
+}
+
+// 讓玩家點畫面任一處都能重新聚焦到隱藏輸入框（手機/平板較常需要）
+document.getElementById("racePanel").addEventListener("click", () => {
+  if (!raceFinished) document.getElementById("hiddenInput").focus();
+});
+</script>
+</body>
+</html>

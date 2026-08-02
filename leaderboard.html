@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>班級英打挑戰賽排行榜</title>
+    <style>
+        body { background: #0b0f19; color: white; font-family: sans-serif; text-align: center; }
+        h1 { margin-bottom: 0; }
+        .subtitle { color: #8b949e; margin-top: 5px; }
+
+        /* 💡 分類切換工具列 */
+        .category-bar {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin: 20px auto 0;
+        }
+        .category-btn {
+            background: #161b22;
+            color: #c9d1d9;
+            border: 1px solid #30363d;
+            border-radius: 20px;
+            padding: 8px 18px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        .category-btn:hover {
+            background: #21262d;
+            border-color: #58a6ff;
+        }
+        .category-btn.active {
+            background: #1f6feb;
+            border-color: #58a6ff;
+            color: #fff;
+            font-weight: bold;
+        }
+
+        table { width: 60%; margin: 25px auto; border-collapse: collapse; background: #161b22; }
+        th, td { padding: 15px; border-bottom: 1px solid #333; font-size: 1.4rem; }
+        th { color: #58a6ff; }
+        .rank-1 { color: #ffd700; font-weight: bold; }
+        .rank-2 { color: #c0c0c0; font-weight: bold; }
+        .rank-3 { color: #cd7f32; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h1>🏆 即時英雄榜 🏆</h1>
+    <div class="subtitle" id="subtitle">讀取中...</div>
+
+    <!-- 💡 分類切換按鈕：上/中/下/綜/符/混/單，各分類的成績分開統計，不互相混算 -->
+    <div class="category-bar" id="categoryBar"></div>
+
+    <!-- 💡 日期選單：只列出「真的有資料」的日期，選哪天就看哪天的排行 -->
+    <div style="margin-top:14px;">
+        <select id="dateSelect" style="background:#161b22; color:#c9d1d9; border:1px solid #30363d; border-radius:6px; padding:6px 12px; font-size:1rem;"></select>
+    </div>
+
+    <table id="scoreTable">
+    <tr>
+        <th>排名</th>
+        <th>座號</th>
+        <th>姓名</th>
+        <th>最佳得分</th>
+    </tr>
+    </table>
+
+<script>
+    // 💡 從自己的網址讀取 year / className，不要寫死，這樣從 admin.html 點過來才會顯示對的班級
+    const params = new URLSearchParams(window.location.search);
+    const year = params.get('year') || '2026';
+    const className = params.get('className') || '';
+
+    document.getElementById('subtitle').innerText = className
+        ? `${year} 年度 ／ ${className}`
+        : '⚠️ 網址缺少班級參數，請從 admin.html 的「開啟排行榜」按鈕進入';
+
+    // 💡 分類清單改用固定表（跟後端 /leaderboard-categories 對齊），先寫死一份預設值，
+    // 頁面載入時再向伺服器確認一次，若伺服器有調整分類名稱也能自動同步，不用改前端程式碼。
+    let CATEGORIES = [
+        { key: '上列字母', short: '上' },
+        { key: '中列字母', short: '中' },
+        { key: '下列字母', short: '下' },
+        { key: '綜合練習', short: '綜' },
+        { key: '符號專攻', short: '符' },
+        { key: '混合進階', short: '混' },
+        { key: '常用英單', short: '單' }
+    ];
+
+    // 💡 記住上次選的分類（存在這個班級網址的 localStorage），重新整理頁面不會跳回預設分類
+    const CATEGORY_STORAGE_KEY = `leaderboard_category_${year}_${className}`;
+    let currentCategory = localStorage.getItem(CATEGORY_STORAGE_KEY) || CATEGORIES[0].key;
+
+    function renderCategoryBar() {
+        const bar = document.getElementById('categoryBar');
+        bar.innerHTML = CATEGORIES.map(cat => {
+            const activeClass = (cat.key === currentCategory) ? 'active' : '';
+            return `<button class="category-btn ${activeClass}" data-key="${cat.key}">${cat.short}</button>`;
+        }).join('');
+
+        bar.querySelectorAll('.category-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                currentCategory = btn.dataset.key;
+                localStorage.setItem(CATEGORY_STORAGE_KEY, currentCategory);
+                renderCategoryBar(); // 重畫按鈕，讓 active 狀態立即反應
+                loadAvailableDates(); // 分類換了，有資料的日期也要跟著重新抓
+            });
+        });
+    }
+
+    // 💡 目前選的日期（預設今天；只會列出真的有資料的日期，不會出現空白的一天）
+    let currentDate = null;
+
+    function loadAvailableDates() {
+        if (!className) return;
+        const url = `/leaderboard-dates?year=${encodeURIComponent(year)}&className=${encodeURIComponent(className)}&category=${encodeURIComponent(currentCategory)}`;
+        fetch(url)
+            .then(res => res.json())
+            .then(dates => {
+                const select = document.getElementById('dateSelect');
+                const today = new Date().toISOString().slice(0, 10);
+                if (!Array.isArray(dates) || dates.length === 0) {
+                    select.innerHTML = `<option value="${today}">${today}（尚無資料）</option>`;
+                    currentDate = today;
+                } else {
+                    select.innerHTML = dates.map(d => `<option value="${d}">${d}${d === today ? '（今天）' : ''}</option>`).join('');
+                    // 記得上次選的日期；不在清單裡（例如換了分類）就退回最新一天
+                    currentDate = dates.includes(currentDate) ? currentDate : dates[0];
+                    select.value = currentDate;
+                }
+                updateLeaderboard();
+            })
+            .catch(err => console.warn('無法取得日期清單:', err));
+    }
+
+    document.getElementById('dateSelect').addEventListener('change', (e) => {
+        currentDate = e.target.value;
+        updateLeaderboard();
+    });
+
+    // 💡 先用寫死的預設清單畫一次按鈕，避免第一時間畫面空白；
+    // 之後再跟伺服器確認正式清單，若有差異就重畫一次（分類名稱通常不會變動，這裡只是保險）
+    renderCategoryBar();
+    fetch('/leaderboard-categories')
+        .then(res => res.json())
+        .then(list => {
+            if (Array.isArray(list) && list.length > 0) {
+                CATEGORIES = list;
+                if (!CATEGORIES.some(c => c.key === currentCategory)) {
+                    currentCategory = CATEGORIES[0].key; // 記住的分類已經不存在了，退回第一個
+                }
+                renderCategoryBar();
+            }
+        })
+        .catch(err => console.warn('無法取得分類清單，使用預設值:', err));
+
+    function updateLeaderboard() {
+        if (!className || !currentDate) return;
+        const url = `/leaderboard?year=${encodeURIComponent(year)}&className=${encodeURIComponent(className)}&category=${encodeURIComponent(currentCategory)}&date=${encodeURIComponent(currentDate)}`;
+        fetch(url)
+            .then(res => res.json())
+            .then(data => {
+                // 💡 若後端未排序，可在前端強制定序 (依照綜合得分由大到小)
+                data.sort((a, b) => (b.composite_score || 0) - (a.composite_score || 0));
+
+                const table = document.getElementById('scoreTable');
+                let html = '<tr><th>排名</th><th>座號</th><th>姓名</th><th>綜合得分</th><th>最佳得分</th><th>WPM</th></tr>';
+
+                if (data.length === 0) {
+                    html += `<tr><td colspan="6" style="color:#8b949e;">目前還沒有任何學生在「${currentCategory}」送出成績</td></tr>`;
+                } else {
+                    data.forEach((entry, index) => {
+                        html += `<tr>
+                <td>${index + 1}</td>
+                <td>${entry.seat_number}</td>
+                <td>${entry.name}</td>
+                <td style="color:#00ff87;">${entry.composite_score || 0}</td>
+                <td>${entry.best_score || 0}</td>
+                <td>${entry.wpm || 0}</td>
+            </tr>`;
+                    });
+                }
+                table.innerHTML = html;
+            })
+            .catch(err => {
+                console.warn('無法連接伺服器', err);
+                document.getElementById('scoreTable').innerHTML = '<tr><th>排名</th><th>座號</th><th>姓名</th><th>綜合得分</th><th>最佳得分</th><th>WPM</th></tr><tr><td colspan="6" style="color:#ff7b72;">⚠️ 無法連接伺服器</td></tr>';
+            });
+    }
+
+    loadAvailableDates();
+    setInterval(updateLeaderboard, 3000);
+</script>
+</body>
+</html>

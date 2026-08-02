@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>心靈戰寵</title>
+  <!--
+    pet-view.html — 寵物養成區的完整功能頁
+    ============================================================
+    畫面設計沿用 Eric 提供的 養.html（卡片＋光暈＋讚美對話框＋進度條），
+    資料改成讀寫跟塔防遊戲共用的存檔（keyagent_save_v1:<學號>）。
+
+    這頁現在是寵物系統唯一的功能入口：開蛋認養、餵食、復活、封存、
+    英雄殿堂全部都在這一頁完成。index.html 只留「寵物養成區」入口
+    （顯示 GBit 餘額 + 一個連結），點進來才看得到其他內容。
+
+    進入方式：從 index.html 的寵物養成區點進來，網址會帶 ?student=<學號>，
+    跟 鍵位特工-8線上功能.html／ETP 用同一種方式。也可以不帶學號直接開，
+    會自動退回讀 localStorage 目前登入中的學號。
+
+    需要 pet-catalog-data.js + pet-engine.js 放在同一個資料夾。
+  -->
+  <script src="./pet-catalog-data.js"></script>
+  <script src="./pet-engine.js"></script>
+  <style>
+    :root {
+      --primary-color: #2a2a3e;
+      --accent-gold: #ffd700;
+      --bg-dark: #12121c;
+      --card-bg: #1e1e2f;
+      --text-light: #f0f0f8;
+    }
+
+    body {
+      font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-light);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+
+    .back-link {
+      position: fixed;
+      top: 16px;
+      left: 16px;
+      color: #aaa;
+      text-decoration: none;
+      font-size: 0.85rem;
+      background: rgba(255,255,255,0.06);
+      padding: 8px 14px;
+      border-radius: 20px;
+    }
+    .back-link:hover { color: var(--accent-gold); }
+
+    .pet-card {
+      background: var(--card-bg);
+      border-radius: 20px;
+      padding: 25px;
+      width: 350px;
+      max-width: 100%;
+      text-align: center;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      border: 1px solid #333;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .user-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.05);
+      padding: 10px 15px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+    }
+
+    .token-badge {
+      color: var(--accent-gold);
+      font-weight: bold;
+      font-size: 1.1rem;
+    }
+
+    .pet-avatar-container {
+      position: relative;
+      width: 180px;
+      height: 180px;
+      margin: 0 auto 15px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      border-radius: 50%;
+      background: #181824;
+      transition: all 0.5s ease;
+    }
+
+    .pet-avatar {
+      font-size: 90px;
+      transition: filter 0.5s ease, transform 0.3s ease;
+    }
+
+    .stage-egg { filter: none; }
+    .stage-bw { filter: grayscale(100%) contrast(120%); }
+    .stage-vibrant { filter: grayscale(0%) saturate(130%); }
+    .stage-gold-aura {
+      filter: grayscale(0%) saturate(150%);
+      box-shadow: 0 0 25px var(--accent-gold);
+      animation: pulseAura 1.5s infinite alternate;
+    }
+    @keyframes pulseAura {
+      from { box-shadow: 0 0 15px rgba(255, 215, 0, 0.4); }
+      to { box-shadow: 0 0 35px rgba(255, 215, 0, 0.9); }
+    }
+    .stage-petrified {
+      filter: grayscale(100%) opacity(0.5) !important;
+      animation: none !important;
+      box-shadow: none !important;
+    }
+
+    .status-tag {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: bold;
+    }
+    .status-healthy { background: #2e7d32; color: #fff; }
+    .status-dried { background: #ef6c00; color: #fff; }
+    .status-shrunk { background: #e65100; color: #fff; }
+    .status-petrified { background: #616161; color: #aaa; }
+
+    .avatar-badge {
+      position: absolute;
+      bottom: 4px;
+      right: 4px;
+      font-size: 26px;
+      text-shadow: 0 0 6px rgba(0,0,0,.6);
+    }
+
+    .praise-bubble {
+      background: #34495e;
+      color: #fff;
+      padding: 10px 15px;
+      border-radius: 12px;
+      font-size: 0.9rem;
+      margin-bottom: 15px;
+      min-height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-left: 4px solid var(--accent-gold);
+    }
+
+    .progress-box { margin-bottom: 20px; }
+    .progress-bar-bg {
+      background: #333;
+      height: 12px;
+      border-radius: 6px;
+      overflow: hidden;
+      margin-top: 5px;
+    }
+    .progress-bar-fill {
+      background: linear-gradient(90deg, #ff9800, var(--accent-gold));
+      height: 100%;
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: transform 0.1s ease, background 0.2s ease;
+      margin-top: 8px;
+      font-family: inherit;
+    }
+    .btn:active { transform: scale(0.98); }
+
+    .btn-feed {
+      background: linear-gradient(135deg, #ff9800, #f57c00);
+      color: white;
+      box-shadow: 0 4px 15px rgba(245, 124, 0, 0.4);
+    }
+    .btn-feed:disabled { background: #555; cursor: not-allowed; box-shadow: none; }
+
+    .btn-revive { background: #8e44ad; color: white; }
+
+    .btn-archive {
+      background: transparent;
+      border: 1px solid #555;
+      color: #aaa;
+      font-size: 0.85rem;
+    }
+    .btn-archive:hover:not(:disabled) { border-color: #e74c3c; color: #e74c3c; }
+
+    .btn-hof {
+      background: transparent;
+      border: 1px solid #555;
+      color: #aaa;
+      font-size: 0.85rem;
+    }
+    .btn-hof:hover { border-color: var(--accent-gold); color: var(--accent-gold); }
+
+    .item-badge {
+      display: inline-block;
+      margin-top: 5px;
+      background: rgba(255, 215, 0, 0.2);
+      color: var(--accent-gold);
+      border: 1px solid var(--accent-gold);
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+    }
+
+    /* ---- 開蛋認養（尚未養寵物時顯示）---- */
+    .buy-egg-icon { font-size: 60px; text-align: center; margin-bottom: 6px; }
+    .buy-egg-title { text-align: center; margin: 0 0 6px; }
+    .buy-egg-sub { color: #aaa; font-size: 0.85rem; text-align: center; margin-bottom: 16px; line-height: 1.6; }
+
+    .demo-strip { display: flex; gap: 6px; overflow-x: auto; margin-bottom: 8px; padding-bottom: 4px; }
+    .demo-item { flex: 0 0 auto; width: 68px; text-align: center; }
+    .demo-item img { width: 68px; height: 68px; object-fit: cover; border-radius: 8px; border: 1px solid #333; display: block; }
+    .demo-item .cap { font-size: 9px; color: #999; margin-top: 3px; }
+    .demo-arrow { flex: 0 0 auto; display: flex; align-items: center; color: #777; font-size: 13px; }
+    .demo-caption { font-size: 0.7rem; color: #888; text-align: center; margin-bottom: 16px; line-height: 1.6; }
+
+    .cat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+    .cat-opt {
+      border: 1px solid #333; background: #181824; color: var(--text-light);
+      padding: 10px 6px; border-radius: 8px; font-size: 0.8rem; text-align: center;
+      cursor: pointer; font-family: inherit;
+    }
+    .cat-opt .ic { font-size: 20px; display: block; margin-bottom: 4px; }
+    .cat-opt.sel { border-color: var(--accent-gold); color: var(--accent-gold); }
+
+    .gender-row { display: flex; gap: 8px; margin-bottom: 6px; }
+    .gender-row button {
+      flex: 1; padding: 10px; border: 1px solid #333; background: #181824;
+      color: var(--text-light); border-radius: 8px; font-size: 0.85rem;
+      cursor: pointer; font-family: inherit;
+    }
+    .gender-row button.sel { border-color: var(--accent-gold); color: var(--accent-gold); }
+
+    .status-line { font-size: 0.78rem; min-height: 18px; margin: 6px 0; text-align: center; color: #aaa; }
+    .status-line.err { color: #e74c3c; }
+
+    /* ---- 彈窗（封存確認／英雄殿堂共用）---- */
+    .modal-mask {
+      display: none; position: fixed; inset: 0; background: rgba(5,7,10,.85);
+      z-index: 500; justify-content: center; align-items: center; padding: 20px;
+    }
+    .modal-box {
+      background: var(--card-bg); border: 1px solid #333; border-radius: 14px;
+      padding: 24px; max-width: 320px; width: 100%; max-height: 80vh; overflow-y: auto; text-align: center;
+    }
+    .modal-box h3 { margin-top: 0; }
+    .modal-box p { color: #aaa; font-size: 0.85rem; line-height: 1.6; margin-bottom: 18px; }
+    .modal-actions { display: flex; gap: 10px; }
+    .modal-actions button { flex: 1; }
+
+    .hof-item {
+      border: 1px solid #333; background: #181824; border-radius: 8px;
+      padding: 10px; margin-bottom: 8px; font-size: 0.78rem; text-align: left; line-height: 1.6;
+    }
+    .hof-item .n { font-size: 0.95rem; font-weight: bold; color: var(--text-light); }
+    .hof-empty { font-size: 0.8rem; color: #888; text-align: center; padding: 20px 0; }
+  </style>
+</head>
+<body>
+
+  <a class="back-link" href="../index.html">← 返回選單</a>
+
+  <div class="pet-card" id="mainCard">
+    <div class="user-header">
+      <span>👤 學生：<span id="studentLabel"></span></span>
+      <span class="token-badge">💎 GBit：<span id="tokenCount">0</span></span>
+    </div>
+
+    <!-- ====== 還沒有寵物：開蛋認養 ====== -->
+    <div id="noPetSection" style="display:none;">
+      <div class="buy-egg-icon">🥚</div>
+      <h2 class="buy-egg-title">開蛋認養</h2>
+      <div class="buy-egg-sub">選一個屬性、選一個性別，花 <b id="eggCostLabel"></b> GBit 開一顆蛋（開出哪一隻是隨機的驚喜！）</div>
+
+      <!-- 示範進化模組：用「數理」屬性的參考美術，先讓學生看到認真練習
+           會讓寵物長成什麼樣子（蛋→黑白→彩色→成熟體）。 -->
+      <div class="demo-strip">
+        <div class="demo-item"><img src="./pet-demo-1-egg.png" alt="蛋"><div class="cap">🥚 蛋</div></div>
+        <div class="demo-arrow">→</div>
+        <div class="demo-item"><img src="./pet-demo-2-baby.png" alt="黑白"><div class="cap">黑白</div></div>
+        <div class="demo-arrow">→</div>
+        <div class="demo-item"><img src="./pet-demo-3-mature.png" alt="彩色/成熟"><div class="cap">彩色・成熟</div></div>
+        <div class="demo-arrow">→</div>
+        <div class="demo-item"><img src="./pet-demo-4-ultimate.png" alt="究極體"><div class="cap">究極體</div></div>
+      </div>
+      <div class="demo-caption">（示範圖以「數理」屬性為例，認真練習賺 GBit 餵養，寵物就會像這樣一路進化！）</div>
+
+      <div class="cat-grid" id="catGrid"></div>
+      <div class="gender-row" id="genderRow">
+        <button type="button" data-g="MALE">♂ 雄性</button>
+        <button type="button" data-g="FEMALE">♀ 雌性</button>
+      </div>
+      <div class="status-line" id="eggStatus"></div>
+      <button class="btn btn-feed" id="confirmEggBtn">確認開蛋</button>
+    </div>
+
+    <!-- ====== 已經有寵物：大畫面 ====== -->
+    <div id="hasPetSection" style="display:none;">
+      <div class="pet-avatar-container" id="avatarBox">
+        <span class="status-tag" id="healthTag">健康狀態</span>
+        <div class="pet-avatar" id="petAvatar">🐾</div>
+        <span class="avatar-badge" id="avatarBadge"></span>
+      </div>
+
+      <h2 id="petName"></h2>
+      <p style="color:#aaa; font-size:0.85rem;" id="stageLabel"></p>
+
+      <div id="bookContainer"></div>
+
+      <div class="praise-bubble" id="praiseBox">
+        「點擊下方餵食按鈕，開始今天的自主練習訓練吧！」
+      </div>
+
+      <div class="progress-box">
+        <div style="display:flex; justify-content:space-between; font-size:0.8rem;">
+          <span>演化進度</span>
+          <span id="progressText"></span>
+        </div>
+        <div class="progress-bar-bg">
+          <div class="progress-bar-fill" id="progressFill"></div>
+        </div>
+      </div>
+
+      <button class="btn btn-feed" id="feedBtn">🍖 手動餵食（花費 <span id="feedCostLabel"></span> GBit）</button>
+      <button class="btn btn-revive" id="reviveBtn" style="display:none;">🧪 使用重燃魔藥（<span id="reviveCostLabel"></span> GBit）</button>
+      <button class="btn btn-archive" id="archiveBtn">📦 封存並認養新蛋</button>
+    </div>
+
+    <button class="btn btn-hof" id="hofBtn" style="margin-top:10px;">🏆 英雄殿堂（<span id="hofCount">0</span>）</button>
+  </div>
+
+  <!-- 封存確認視窗 -->
+  <div class="modal-mask" id="archiveModal">
+    <div class="modal-box">
+      <h3 style="color:#e74c3c;">📦 封存目前的寵物？</h3>
+      <p>封存後會進入「英雄殿堂」紀念，無法繼續養成，之後才能開新的蛋。確定要封存嗎？</p>
+      <div class="modal-actions">
+        <button class="btn btn-archive" id="archiveCancelBtn">取消</button>
+        <button class="btn btn-revive" id="archiveConfirmBtn" style="background:#e74c3c;">確定封存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 英雄殿堂視窗 -->
+  <div class="modal-mask" id="hofModal">
+    <div class="modal-box">
+      <h3 style="color:var(--accent-gold);">🏆 英雄殿堂</h3>
+      <p>歷屆封存的寵物紀錄</p>
+      <div id="hofList"></div>
+      <button class="btn btn-archive" id="hofCloseBtn">關閉</button>
+    </div>
+  </div>
+
+  <script>
+    const ACTIVE_STUDENT_KEY = "keyagent_active_student";
+
+    // 學號優先順序：網址的 ?student= 參數 > localStorage 目前登入中的學號
+    function resolveStudentNumber() {
+      const fromUrl = new URLSearchParams(window.location.search).get("student");
+      if (fromUrl) return fromUrl;
+      try {
+        const raw = localStorage.getItem(ACTIVE_STUDENT_KEY);
+        const identity = raw ? JSON.parse(raw) : null;
+        return identity ? identity.studentNumber : null;
+      } catch (err) {
+        return null;
+      }
+    }
+
+    const studentNumber = resolveStudentNumber();
+    let selectedCategory = null;
+    let selectedGender = null;
+
+    function showToast(msg) {
+      const el = document.getElementById("praiseBox");
+      if (el) el.textContent = `「${msg}」`;
+    }
+
+    /* ============================================================
+       主渲染：依存檔狀態切換「開蛋認養」／「寵物大畫面」
+       ============================================================ */
+    function render() {
+      document.getElementById("studentLabel").textContent = studentNumber || "（尚未登入）";
+
+      if (!studentNumber) {
+        document.getElementById("noPetSection").style.display = "none";
+        document.getElementById("hasPetSection").style.display = "none";
+        document.getElementById("tokenCount").textContent = 0;
+        document.getElementById("hofCount").textContent = 0;
+        return;
+      }
+
+      const save = petLoadSave(studentNumber);
+      document.getElementById("tokenCount").textContent = save.gbit || 0;
+      document.getElementById("hofCount").textContent = save.pet.hallOfFame.length;
+      document.getElementById("eggCostLabel").textContent = PET_EGG_COST_GBIT;
+
+      const pet = save.pet.active;
+      if (!pet) {
+        document.getElementById("noPetSection").style.display = "block";
+        document.getElementById("hasPetSection").style.display = "none";
+        return;
+      }
+      document.getElementById("noPetSection").style.display = "none";
+      document.getElementById("hasPetSection").style.display = "block";
+      renderPetCard(save, pet);
+    }
+
+    function renderPetCard(save, pet) {
+      document.getElementById("reviveCostLabel").textContent = PET_REVIVE_COST_GBIT;
+
+      const catMeta = petCategoryMeta(pet.category);
+      const health = MindPetEngine.getHealthStatus(pet);
+      const stage = MindPetEngine.getVisualStage(pet.feedCount);
+      const isEgg = stage === "EGG";
+
+      const avatarBox = document.getElementById("avatarBox");
+      const petAvatar = document.getElementById("petAvatar");
+      const healthTag = document.getElementById("healthTag");
+      const feedBtn = document.getElementById("feedBtn");
+      const reviveBtn = document.getElementById("reviveBtn");
+      const bookContainer = document.getElementById("bookContainer");
+
+      // (A) 健康狀態標籤 + 光暈
+      avatarBox.className = "pet-avatar-container";
+      const healthClassMap = { HEALTHY: "status-healthy", DRIED: "status-dried", SHRUNK: "status-shrunk", PETRIFIED: "status-petrified" };
+      healthTag.className = "status-tag " + healthClassMap[health];
+      healthTag.textContent = PET_HEALTH_LABEL[health];
+
+      const feedCost = petNextManualFeedCost(save);
+      document.getElementById("feedCostLabel").textContent = feedCost;
+
+      if (health === "PETRIFIED") {
+        avatarBox.classList.add("stage-petrified");
+        reviveBtn.style.display = "block";
+        reviveBtn.disabled = (save.gbit || 0) < PET_REVIVE_COST_GBIT;
+        feedBtn.disabled = true;
+      } else {
+        reviveBtn.style.display = "none";
+        feedBtn.disabled = (save.gbit || 0) < feedCost;
+        // (B) 演化視覺階段：蛋／黑白／彩色／金色光暈（成熟體以上）
+        if (isEgg) avatarBox.classList.add("stage-egg");
+        else if (stage === "STAGE_0_BW") avatarBox.classList.add("stage-bw");
+        else if (stage === "STAGE_0_VIBRANT") avatarBox.classList.add("stage-vibrant");
+        else avatarBox.classList.add("stage-gold-aura"); // MATURE / ULTIMATE / WITH_BOOK
+      }
+
+      // (C) 頭像：還在蛋階段一律顯示 🥚（保留孵化的驚喜感，連自己都還看不到）；
+      //     孵化後優先載入正式縮圖，還沒上傳的自動退回類別 icon 佔位。
+      if (isEgg) {
+        petAvatar.textContent = "🥚";
+      } else {
+        const fallbackEmoji = catMeta ? catMeta.icon : "🐾";
+        petRenderAvatarInto(petAvatar, pet.petDefId, "./thumbs/", fallbackEmoji);
+      }
+      document.getElementById("avatarBadge").textContent =
+        (stage === "STAGE_2_ULTIMATE" || stage === "STAGE_2_WITH_BOOK") && health !== "PETRIFIED" ? "👑" : "";
+
+      // (D) 名稱與階段文字（蛋階段顯示「神秘的蛋」，孵化後才會顯示屬性/性別跟稱號）
+      document.getElementById("petName").textContent = isEgg
+        ? petDisplayName(pet)
+        : petDisplayName(pet) + (pet.gender === "MALE" ? "（♂）" : "（♀）");
+      document.getElementById("stageLabel").textContent = isEgg
+        ? "目前階段：" + PET_STAGE_LABEL.EGG
+        : (catMeta ? catMeta.name + "・" + catMeta.epithet + "　" : "") + "目前階段：" + PET_STAGE_LABEL[stage];
+
+      // (E) 400 次解鎖智慧奧義之書
+      bookContainer.innerHTML = pet.unlockedBookItem ? `<span class="item-badge">📖 裝備：智慧奧義之書</span>` : "";
+
+      // (F) 演化進度條：50 孵化／100 上色／150 進化成熟體／250 究極體／400 奧義之書
+      const goals = [50, 100, 150, 250, 400];
+      let prevGoal = 0, nextGoal = null;
+      for (const g of goals) {
+        if (pet.feedCount < g) { nextGoal = g; break; }
+        prevGoal = g;
+      }
+      const pct = nextGoal ? Math.min(100, Math.round(((pet.feedCount - prevGoal) / (nextGoal - prevGoal)) * 100)) : 100;
+      document.getElementById("progressFill").style.width = pct + "%";
+      const actionWord = isEgg ? "孵化" : "進化";
+      document.getElementById("progressText").textContent = nextGoal
+        ? `${pet.feedCount} / ${nextGoal} 次（再餵 ${nextGoal - pet.feedCount} 次${actionWord}）`
+        : `${pet.feedCount} 次（已達最終型態🎉）`;
+    }
+
+    // 判斷這次餵食是否跨過某個門檻（例如跨過 50 = 剛好孵化），
+    // 用「跨越門檻」而不是「等於某個值」判斷，因為一次可能補很多次餵食
+    // （例如自動餵食一次補了 80 次），不會剛好停在那個數字上。
+    function crossedThreshold(feedCountBefore, feedCountAfter, threshold) {
+      return feedCountBefore < threshold && feedCountAfter >= threshold;
+    }
+
+    function evolveToast(pet, feedCountBefore, result) {
+      if (!result.evolved) {
+        showToast(result.praise || "練習賺到的 GBit 幫寵物增加了餵養次數！");
+        return;
+      }
+      if (crossedThreshold(feedCountBefore, pet.feedCount, 50)) {
+        showToast("🎉 蛋孵化了！" + petDisplayName(pet) + " 誕生了！");
+      } else {
+        showToast("🎉 進化了！目前階段：" + PET_STAGE_LABEL[MindPetEngine.getVisualStage(pet.feedCount)]);
+      }
+    }
+
+    /* ============================================================
+       開蛋認養
+       ============================================================ */
+    function renderCatGrid() {
+      const grid = document.getElementById("catGrid");
+      grid.innerHTML = "";
+      PET_CATEGORIES.forEach((cat) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "cat-opt";
+        btn.innerHTML = `<span class="ic">${cat.icon}</span>${cat.name}`;
+        btn.onclick = () => {
+          selectedCategory = cat.id;
+          grid.querySelectorAll(".cat-opt").forEach((b) => b.classList.remove("sel"));
+          btn.classList.add("sel");
+        };
+        grid.appendChild(btn);
+      });
+      document.querySelectorAll("#genderRow button").forEach((b) => {
+        b.classList.remove("sel");
+        b.onclick = () => {
+          selectedGender = b.dataset.g;
+          document.querySelectorAll("#genderRow button").forEach((x) => x.classList.remove("sel"));
+          b.classList.add("sel");
+        };
+      });
+    }
+
+    function confirmEgg() {
+      const statusEl = document.getElementById("eggStatus");
+      if (!studentNumber) { statusEl.textContent = "還沒登入，請先回選單登入。"; statusEl.className = "status-line err"; return; }
+      if (!selectedCategory || !selectedGender) {
+        statusEl.textContent = "請選擇屬性和性別喔！";
+        statusEl.className = "status-line err";
+        return;
+      }
+      const save = petLoadSave(studentNumber);
+      const result = petBuyEgg(save, studentNumber, selectedCategory, selectedGender);
+      if (!result.success) {
+        statusEl.textContent = result.message;
+        statusEl.className = "status-line err";
+        return;
+      }
+      petPersistSave(studentNumber, save);
+      statusEl.textContent = "";
+      selectedCategory = null;
+      selectedGender = null;
+      render();
+    }
+
+    /* ============================================================
+       手動餵食／復活／封存
+       ============================================================ */
+    function doFeed() {
+      if (!studentNumber) return;
+      const save = petLoadSave(studentNumber);
+      const pet = save.pet.active;
+      if (!pet) return;
+      const feedCountBefore = pet.feedCount;
+      const result = petManualFeed(save);
+      petPersistSave(studentNumber, save);
+      render();
+      if (result.success) {
+        evolveToast(save.pet.active, feedCountBefore, result);
+      } else {
+        showToast(result.message);
+      }
+    }
+
+    function doRevive() {
+      if (!studentNumber) return;
+      const save = petLoadSave(studentNumber);
+      const result = petRevive(save);
+      petPersistSave(studentNumber, save);
+      render();
+      showToast(result.message);
+    }
+
+    function openArchiveModal() { document.getElementById("archiveModal").style.display = "flex"; }
+    function closeArchiveModal() { document.getElementById("archiveModal").style.display = "none"; }
+    function confirmArchive() {
+      if (!studentNumber) return;
+      const save = petLoadSave(studentNumber);
+      const result = petArchiveActive(save, "");
+      petPersistSave(studentNumber, save);
+      closeArchiveModal();
+      render();
+      if (result) showToast(`「${result.record.petName}」已封存進英雄殿堂！`);
+    }
+
+    /* ============================================================
+       英雄殿堂
+       ============================================================ */
+    function openHofModal() {
+      const listEl = document.getElementById("hofList");
+      listEl.innerHTML = "";
+      if (!studentNumber) {
+        listEl.innerHTML = `<div class="hof-empty">還沒有登入</div>`;
+      } else {
+        const save = petLoadSave(studentNumber);
+        if (!save.pet.hallOfFame.length) {
+          listEl.innerHTML = `<div class="hof-empty">還沒有封存過的寵物</div>`;
+        } else {
+          save.pet.hallOfFame.slice().reverse().forEach((r) => {
+            const catMeta = petCategoryMeta(r.category);
+            const div = document.createElement("div");
+            div.className = "hof-item";
+            div.innerHTML = `<div class="n">${catMeta ? catMeta.icon : "🐾"} ${r.petName}</div>
+              <div>${catMeta ? catMeta.name : r.category}・${r.gender === "MALE" ? "雄性" : "雌性"}・最終型態：${PET_STAGE_LABEL[r.finalStage]}</div>
+              <div>累積餵養 ${r.finalFeedCount} 次</div>`;
+            listEl.appendChild(div);
+          });
+        }
+      }
+      document.getElementById("hofModal").style.display = "flex";
+    }
+    function closeHofModal() { document.getElementById("hofModal").style.display = "none"; }
+
+    document.getElementById("confirmEggBtn").addEventListener("click", confirmEgg);
+    document.getElementById("feedBtn").addEventListener("click", doFeed);
+    document.getElementById("reviveBtn").addEventListener("click", doRevive);
+    document.getElementById("archiveBtn").addEventListener("click", openArchiveModal);
+    document.getElementById("archiveCancelBtn").addEventListener("click", closeArchiveModal);
+    document.getElementById("archiveConfirmBtn").addEventListener("click", confirmArchive);
+    document.getElementById("hofBtn").addEventListener("click", openHofModal);
+    document.getElementById("hofCloseBtn").addEventListener("click", closeHofModal);
+
+    // 進頁面先補算離線期間賺到的 GBit 換來的自動餵食，再畫面
+    (function init() {
+      renderCatGrid();
+      if (!studentNumber) { render(); return; }
+      const save = petLoadSave(studentNumber);
+      const pet = save.pet.active;
+      const feedCountBefore = pet ? pet.feedCount : 0;
+      const feedResult = petSyncAutoFeed(save);
+      petPersistSave(studentNumber, save);
+      render();
+      if (feedResult && feedResult.success && save.pet.active) {
+        evolveToast(save.pet.active, feedCountBefore, feedResult);
+      }
+    })();
+  </script>
+</body>
+</html>

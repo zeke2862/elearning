@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>打字賽車・教師控制台與排行榜</title>
+<script src="./race-common.js"></script>
+<style>
+:root{
+  --void:#05070a; --panel:#0b1018; --panel-2:#0f1622; --line:#1c2836;
+  --text:#d7e4ee; --text-dim:#6c7d8f; --accent:#ffd23f; --good:#39ff9d; --danger:#ff5c5c;
+  --mono:'JetBrains Mono','Noto Sans Mono TC','Courier New',monospace;
+  --disp:'Orbitron','Noto Sans TC',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{width:100%;min-height:100%;background:var(--void);color:var(--text);font-family:var(--mono);}
+body{padding:26px;}
+.disp{font-family:var(--disp);letter-spacing:.03em;}
+.wrap{max-width:1200px;margin:0 auto;}
+h1.title{font-size:26px;text-align:center;margin-bottom:6px;}
+.class-line{text-align:center;font-size:12px;color:var(--accent);margin-bottom:20px;}
+
+.setup{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;align-items:flex-end;margin-bottom:14px;background:var(--panel);border:1px solid var(--line);padding:20px;}
+.field{display:flex;flex-direction:column;gap:6px;}
+.field label{font-size:11px;color:var(--text-dim);}
+select{padding:10px;background:var(--panel-2);border:1px solid var(--line);color:var(--text);font-family:var(--mono);min-width:160px;}
+button.big{padding:12px 26px;background:var(--accent);color:#05070a;border:none;font-weight:bold;font-family:var(--mono);cursor:pointer;font-size:14px;}
+button.big.stop{background:var(--danger);color:#fff;}
+button.big:disabled{opacity:.4;cursor:not-allowed;}
+
+.status-line{text-align:center;font-size:13px;color:var(--text-dim);margin-bottom:20px;}
+
+.grid{display:grid;grid-template-columns:1.4fr 1fr;gap:20px;}
+.team-panel, .leader-panel{background:var(--panel);border:1px solid var(--line);padding:20px;}
+.team-panel h2, .leader-panel h2{font-size:15px;margin-bottom:16px;}
+
+.team-row{margin-bottom:16px;}
+.team-row .lbl{font-size:12px;margin-bottom:6px;display:flex;justify-content:space-between;}
+.team-track{height:36px;background:var(--panel-2);border-radius:4px;position:relative;overflow:hidden;}
+.team-track .car{position:absolute;top:3px;font-size:26px;transition:left .3s linear;left:0;}
+
+.leader-list{list-style:none;font-size:13px;}
+.leader-list li{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--line);}
+.leader-list li .rank{color:var(--accent);width:26px;}
+.leader-list li .wpm{color:var(--text-dim);}
+
+/* ====== 底部：排行文字敘述區，預設隱藏，等比賽結束才會出現 ====== */
+.history-toggle{text-align:center;margin:30px 0 10px;}
+.history-toggle a{color:var(--text-dim);font-size:12px;text-decoration:underline;cursor:pointer;}
+.history-toggle a:hover{color:var(--accent);}
+
+#historySection{display:none;margin-top:10px;}
+#historySection.revealed{display:block;}
+
+.section-block{background:var(--panel);border:1px solid var(--line);padding:20px;margin-bottom:20px;}
+.section-block h2{font-size:16px;margin-bottom:14px;color:var(--accent);}
+
+table{width:100%;border-collapse:collapse;font-size:13px;}
+th, td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:center;}
+th{color:var(--text-dim);font-weight:normal;}
+.award-top{color:var(--good);font-weight:bold;}
+.award-bottom{color:var(--danger);font-weight:bold;}
+
+.query-row{display:flex;gap:14px;justify-content:center;align-items:flex-end;flex-wrap:wrap;margin-bottom:16px;}
+.query-row button{padding:10px 18px;background:var(--panel-2);border:1px solid var(--line);color:var(--text);font-family:var(--mono);cursor:pointer;}
+.query-row button:hover{border-color:var(--accent);color:var(--accent);}
+.empty-hint{text-align:center;color:var(--text-dim);padding:20px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1 class="title disp">🏁 打字賽車・教師控制台</h1>
+  <div class="class-line" id="classLine"></div>
+
+  <div class="setup" id="setupPanel">
+    <div class="field">
+      <label>選擇練習分類</label>
+      <select id="categorySelect"></select>
+    </div>
+    <div class="field">
+      <label>比賽時間（無限量字數，時間到自動結束）</label>
+      <select id="durationSelect">
+        <option value="1">1 分鐘</option>
+        <option value="5" selected>5 分鐘</option>
+        <option value="10">10 分鐘</option>
+      </select>
+    </div>
+    <button class="big" id="startBtn">🚦 開始比賽</button>
+    <button class="big stop" id="endBtn" style="display:none;">🏁 結束比賽並結算代幣</button>
+  </div>
+  <div class="status-line" id="statusLine">尚未開始，選好分類與時間後按「開始比賽」，學生就能在自己的裝置上看到比賽開始</div>
+
+  <div class="grid">
+    <div class="team-panel">
+      <h2>🏎️ 車隊即時戰況（5隊，車速＝隊上目前線上成員的平均完成度）</h2>
+      <div id="teamTracks"></div>
+    </div>
+    <div class="leader-panel">
+      <h2>🏆 個人即時排行榜（前 10 名）</h2>
+      <ul class="leader-list" id="leaderList"></ul>
+    </div>
+  </div>
+
+  <!-- 手動查看歷史排行榜的小連結（沒比賽也能查以前的紀錄） -->
+  <div class="history-toggle"><a onclick="revealHistory()">📜 查看排行榜／歷史比賽紀錄</a></div>
+
+  <!-- ====== 排行文字敘述區：預設隱藏，比賽結束後自動出現，放在整個頁面最下面 ====== -->
+  <div id="historySection">
+
+    <div class="section-block" id="lastResultBlock" style="display:none;">
+      <h2>✅ 剛結束的這場比賽（代幣已直接發放到每位學生的帳戶）</h2>
+      <table>
+        <thead><tr><th>名次</th><th>學號</th><th>車隊</th><th>WPM</th><th>分數</th><th>貢獻值</th><th>獎項</th><th>獲得代幣</th></tr></thead>
+        <tbody id="resultTbody"></tbody>
+      </table>
+    </div>
+
+    <div class="section-block">
+      <h2>📊 歷史比賽排行榜查詢</h2>
+      <div class="query-row">
+        <div class="field"><label>日期</label><select id="dateSelect"></select></div>
+        <div class="field"><label>分類</label>
+          <select id="historyCategorySelect">
+            <option value="">全部分類</option>
+            <option value="top">上列字母</option>
+            <option value="home">中列字母</option>
+            <option value="bottom">下列字母</option>
+            <option value="all">綜合練習</option>
+            <option value="symbols">符號專攻</option>
+            <option value="caseSymbols">混合進階</option>
+          </select>
+        </div>
+        <button onclick="loadHistoryLeaderboard()">🔍 查詢</button>
+      </div>
+      <div id="historyTableArea"></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const SCHOOL_HOST = "http://192.168.1.1:3000";
+const TEAM_NAMES = { 1: "🔴 紅隊", 2: "🔵 藍隊", 3: "🟢 綠隊", 4: "🟡 黃隊", 5: "🟣 紫隊" };
+const TEAM_LABELS = { team1: "🔴 紅隊", team2: "🔵 藍隊", team3: "🟢 綠隊", team4: "🟡 黃隊", team5: "🟣 紫隊" };
+
+// 從 admin.html「三、選擇上課班級」帶過來的班級資訊，純顯示用（比賽本身以學號/IP辨識，不受班級篩選）
+const urlParams = new URLSearchParams(window.location.search);
+const qYear = urlParams.get('year'), qClassName = urlParams.get('className');
+document.getElementById('classLine').textContent = (qYear && qClassName)
+  ? `目前上課班級：${qYear} 年度・${qClassName}`
+  : '（未帶入班級資訊，仍可直接開賽，不影響功能）';
+
+const catSelect = document.getElementById("categorySelect");
+RACE_CATEGORY_ORDER.forEach(key => {
+  const opt = document.createElement("option");
+  opt.value = key; opt.textContent = RACE_CATEGORY_DEFS[key].label;
+  catSelect.appendChild(opt);
+});
+
+const teamTracksEl = document.getElementById("teamTracks");
+Object.entries(TEAM_NAMES).forEach(([id, name]) => {
+  const row = document.createElement("div");
+  row.className = "team-row";
+  row.innerHTML = `<div class="lbl"><span>${name}</span><span id="teamPct-${id}">0%</span></div>
+    <div class="team-track"><div class="car" id="teamCar-${id}">🚗</div></div>`;
+  teamTracksEl.appendChild(row);
+});
+
+let raceActive = false;
+let pollHandle = null;
+let raceEndAt = 0;
+
+document.getElementById("startBtn").addEventListener("click", async () => {
+  const category = catSelect.value;
+  const durationMinutes = Number(document.getElementById("durationSelect").value);
+  try {
+    const res = await fetch(`${SCHOOL_HOST}/race/start`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ category, durationMinutes, className: qClassName || null })
+    });
+    const data = await res.json();
+    if (data.success) {
+      raceActive = true;
+      raceEndAt = data.startedAt + durationMinutes * 60000;
+      document.getElementById("statusLine").textContent = `比賽進行中：${RACE_CATEGORY_DEFS[category].label}・${durationMinutes} 分鐘倒數，學生請在自己的裝置開啟「打字賽車・班級賽」加入`;
+      document.getElementById("startBtn").style.display = "none";
+      document.getElementById("endBtn").style.display = "inline-block";
+      document.getElementById("lastResultBlock").style.display = "none";
+      startPolling();
+    }
+  } catch (err) {
+    document.getElementById("statusLine").textContent = "連不到伺服器，請確認 server.js 是否已啟動";
+  }
+});
+
+document.getElementById("endBtn").addEventListener("click", endRace);
+
+async function endRace() {
+  if (!raceActive) return;
+  raceActive = false;
+  try {
+    const res = await fetch(`${SCHOOL_HOST}/race/end`, { method: "POST" });
+    const data = await res.json();
+    clearInterval(pollHandle);
+    document.getElementById("startBtn").style.display = "inline-block";
+    document.getElementById("endBtn").style.display = "none";
+    document.getElementById("statusLine").textContent = "比賽已結束";
+    if (data.success) {
+      renderLastResult(data.result);
+      revealHistory(); // 💡 比賽結束才自動打開最下面的排行文字敘述區
+      loadHistoryDates(); // 順便把日期選單刷新，剛結算的這一天會出現在選項裡
+    }
+  } catch (err) {
+    document.getElementById("statusLine").textContent = "結算失敗，請確認伺服器連線";
+    raceActive = true;
+  }
+}
+
+function startPolling() {
+  if (pollHandle) clearInterval(pollHandle);
+  pollHandle = setInterval(refreshState, 800);
+  refreshState();
+}
+
+async function refreshState() {
+  if (raceActive && raceEndAt && Date.now() >= raceEndAt) {
+    endRace();
+    return;
+  }
+  try {
+    const res = await fetch(`${SCHOOL_HOST}/race/state`);
+    const data = await res.json();
+    if (!data.active) return;
+    if (raceEndAt) {
+      const remainSec = Math.max(0, Math.ceil((raceEndAt - Date.now()) / 1000));
+      const mm = String(Math.floor(remainSec / 60)).padStart(2, "0");
+      const ss = String(remainSec % 60).padStart(2, "0");
+      document.getElementById("statusLine").textContent = `比賽進行中：${RACE_CATEGORY_DEFS[data.category].label}・剩餘 ${mm}:${ss}`;
+    }
+    const racers = Object.entries(data.racers || {}).map(([sn, r]) => ({ studentNumber: sn, ...r }));
+
+    racers.sort((a, b) => (b.score || 0) - (a.score || 0));
+    const list = document.getElementById("leaderList");
+    list.innerHTML = "";
+    racers.slice(0, 10).forEach((r, i) => {
+      const li = document.createElement("li");
+      li.innerHTML = `<span><span class="rank">#${i + 1}</span>${r.name || r.studentNumber}${r.team ? ` <small>${TEAM_NAMES[r.team] || ""}</small>` : ""}</span><span class="wpm">${r.wpm || 0} WPM</span>`;
+      list.appendChild(li);
+    });
+
+    const teamBuckets = { 1: [], 2: [], 3: [], 4: [], 5: [] };
+    racers.forEach(r => { if (teamBuckets[r.team]) teamBuckets[r.team].push(r); });
+    Object.entries(teamBuckets).forEach(([id, members]) => {
+      const avgPct = members.length ? members.reduce((s, m) => s + Math.min(100, m.charsTyped || 0), 0) / members.length : 0;
+      document.getElementById(`teamPct-${id}`).textContent = Math.round(avgPct) + "%";
+      document.getElementById(`teamCar-${id}`).style.left = Math.min(92, avgPct) + "%";
+    });
+  } catch (err) { /* 偶爾漏一次刷新沒關係，下一輪會補上 */ }
+}
+
+function renderLastResult(result) {
+  document.getElementById("lastResultBlock").style.display = "block";
+  const tbody = document.getElementById("resultTbody");
+  tbody.innerHTML = "";
+  result.rankings.forEach((r, i) => {
+    const tr = document.createElement("tr");
+    const awardText = r.award === "踩油門王者" ? "🚀 踩油門王者" : r.award === "踩煞車高手" ? "🛑 踩煞車高手" : "-";
+    tr.innerHTML = `<td>#${i + 1}</td><td>${r.studentNumber}</td><td>${TEAM_NAMES[r.team] || "-"}</td><td>${r.wpm || 0}</td><td>${r.score || 0}</td><td>${r.contributionPct || 0}%</td><td>${awardText}</td><td style="color:var(--accent);">+${r.tokens || 0}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+// ====== 排行文字敘述區的顯示/隱藏 + 歷史查詢 ======
+function revealHistory() {
+  document.getElementById("historySection").classList.add("revealed");
+  document.getElementById("historySection").scrollIntoView({ behavior: "smooth" });
+}
+
+async function loadHistoryDates() {
+  const sel = document.getElementById('dateSelect');
+  try {
+    const res = await fetch(`${SCHOOL_HOST}/race-leaderboard-dates`);
+    const dates = await res.json();
+    sel.innerHTML = '';
+    if (dates.length === 0) {
+      const opt = document.createElement('option');
+      opt.textContent = '（尚無資料）';
+      sel.appendChild(opt);
+      return;
+    }
+    dates.forEach(d => {
+      const opt = document.createElement('option');
+      opt.value = d; opt.textContent = d;
+      sel.appendChild(opt);
+    });
+  } catch (err) {
+    sel.innerHTML = '<option>讀取日期失敗</option>';
+  }
+}
+
+async function loadHistoryLeaderboard() {
+  const date = document.getElementById('dateSelect').value;
+  const category = document.getElementById('historyCategorySelect').value;
+  const area = document.getElementById('historyTableArea');
+  area.innerHTML = '<p class="empty-hint">查詢中…</p>';
+  try {
+    const res = await fetch(`${SCHOOL_HOST}/race-leaderboard?date=${encodeURIComponent(date || '')}`);
+    let rows = await res.json();
+    if (category) rows = rows.filter(r => r.category === category);
+    if (rows.length === 0) {
+      area.innerHTML = '<p class="empty-hint">這個日期／分類目前沒有比賽紀錄</p>';
+      return;
+    }
+    let html = `<table><thead><tr>
+      <th>名次</th><th>班級</th><th>座號</th><th>姓名</th><th>車隊</th><th>分類</th>
+      <th>WPM</th><th>分數</th><th>團隊貢獻值</th><th>獎項</th><th>日期</th>
+    </tr></thead><tbody>`;
+    rows.forEach((r, idx) => {
+      const awardHtml = r.award === '踩油門王者' ? '<span class="award-top">🚀 踩油門王者</span>'
+        : r.award === '踩煞車高手' ? '<span class="award-bottom">🛑 踩煞車高手</span>' : '-';
+      html += `<tr>
+        <td>${idx + 1}</td><td>${r.class || ''}</td><td>${r.seatNumber || ''}</td><td>${r.name || ''}</td>
+        <td>${TEAM_LABELS[r.team] || r.team || '-'}</td><td>${RACE_CATEGORY_DEFS[r.category] ? RACE_CATEGORY_DEFS[r.category].label : r.category}</td>
+        <td>${r.wpm}</td><td>${r.score}</td><td>${r.contributionPct}%</td><td>${awardHtml}</td><td>${r.testDate}</td>
+      </tr>`;
+    });
+    html += '</tbody></table>';
+    area.innerHTML = html;
+  } catch (err) {
+    area.innerHTML = `<p class="empty-hint">查詢失敗：${err.message}</p>`;
+  }
+}
+
+// 頁面載入時先把日期選單準備好（等使用者按「查看歷史排行榜」或比賽結束時就能直接用）
+loadHistoryDates();
+</script>
+</body>
+</html>

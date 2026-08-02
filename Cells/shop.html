@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>特工商店</title>
+<style>
+:root{
+  --void:#05070a;
+  --panel:#0b1018;
+  --panel-2:#0f1622;
+  --line:#1c2836;
+  --text:#d7e4ee;
+  --text-dim:#6c7d8f;
+  --ch2:#4fc3ff;
+  --ch4:#ffd23f;
+  --ch5:#ff8a3d;
+  --accent: var(--ch4);
+  --mono:'JetBrains Mono','Noto Sans Mono TC','Courier New',monospace;
+  --disp:'Orbitron','Noto Sans TC',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{width:100%;height:100%;background:var(--void);color:var(--text);font-family:var(--mono);-webkit-font-smoothing:antialiased;}
+body{padding:26px 4vw;overflow-y:auto;}
+.disp{font-family:var(--disp);letter-spacing:.04em;}
+.eyebrow{font-size:11px;letter-spacing:.35em;text-transform:uppercase;color:var(--text-dim);}
+button{font-family:var(--mono);cursor:pointer;background:none;border:none;color:inherit;}
+
+.header-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;flex-wrap:wrap;gap:12px;}
+.flex-row{display:flex;align-items:center;gap:10px;}
+.icon-btn{width:34px;height:34px;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--text-dim);}
+.icon-btn:hover{color:var(--accent);border-color:var(--accent);}
+.hud-stat{display:flex;flex-direction:column;gap:2px;min-width:64px;}
+.hud-stat .hs-label{font-size:9px;color:var(--text-dim);letter-spacing:.15em;text-transform:uppercase;}
+.hud-stat .hs-val{font-size:15px;font-family:var(--disp);}
+
+.shop-section-title{
+  font-family:var(--disp);font-size:12px;letter-spacing:.25em;
+  color:var(--text-dim);text-transform:uppercase;margin:18px 0 10px;border-bottom:1px solid var(--line);padding-bottom:6px;
+}
+.shop-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:12px;margin-bottom:8px;}
+.shop-card{
+  border:1px solid var(--line);background:var(--panel);padding:14px;
+  display:flex;gap:12px;align-items:flex-start;
+  clip-path:polygon(0 0,calc(100% - 12px) 0,100% 12px,100% 100%,12px 100%,0 calc(100% - 12px));
+  transition:border-color .15s;
+}
+.shop-card.perm{border-color:rgba(255,210,63,.4);}
+.shop-card.perm:hover:not(.maxed){border-color:var(--ch4);}
+.shop-card.consumable{border-color:rgba(79,195,255,.3);}
+.shop-card.consumable:hover:not(.maxed){border-color:var(--ch2);}
+.shop-card.tower{border-color:rgba(255,138,61,.35);}
+.shop-card.tower:hover:not(.maxed){border-color:var(--ch5);}
+.shop-card.maxed{opacity:.4;}
+.shop-icon{font-size:28px;width:44px;text-align:center;flex-shrink:0;}
+.shop-body{flex:1;}
+.shop-body h4{font-size:12px;font-family:var(--disp);margin-bottom:3px;}
+.shop-body p{font-size:10px;color:var(--text-dim);line-height:1.5;margin-bottom:8px;}
+.shop-footer{display:flex;justify-content:space-between;align-items:center;}
+.shop-price{color:var(--ch4);font-family:var(--disp);font-size:12px;}
+.shop-price.blue{color:var(--ch2);}
+.shop-btn{padding:5px 12px;font-size:10px;border:1px solid currentColor;background:none;cursor:pointer;font-family:var(--mono);transition:background .15s;}
+.shop-btn.perm{color:var(--ch4);}
+.shop-btn.perm:hover:not(:disabled){background:rgba(255,210,63,.12);}
+.shop-btn.cons{color:var(--ch2);}
+.shop-btn.cons:hover:not(:disabled){background:rgba(79,195,255,.12);}
+.shop-btn.tower-btn-buy{color:var(--ch5);}
+.shop-btn.tower-btn-buy:hover:not(:disabled){background:rgba(255,138,61,.12);}
+.shop-btn:disabled{opacity:.4;cursor:not-allowed;}
+.shop-stack{font-size:10px;color:var(--text-dim);margin-top:2px;}
+
+#toast{
+  position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(20px);
+  background:var(--panel-2);border:1px solid var(--line);padding:10px 18px;font-size:12px;
+  opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;z-index:10;white-space:nowrap;
+}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+
+<div class="header-row">
+  <div class="flex-row">
+    <button class="icon-btn" id="btnBack">←</button>
+    <div>
+      <div class="eyebrow">GBIT EXCHANGE</div>
+      <div class="disp" style="font-size:20px;">特工商店</div>
+    </div>
+  </div>
+  <div class="hud-stat">
+    <span class="hs-label">💎 GBit 餘額</span>
+    <span class="hs-val" id="shopGbitDisplay" style="color:var(--ch4);">0</span>
+  </div>
+</div>
+
+<div id="shopContent"></div>
+<div id="toast"></div>
+
+<script>
+/* ---------- postMessage bridge with parent page ----------
+   This page holds no game state of its own. The parent (main game
+   page) is the single source of truth for SAVE/GBit; this page only
+   renders whatever state it's given and asks the parent to perform
+   purchases, then waits for the refreshed state. */
+let STATE = null;
+
+function post(msg){ parent.postMessage(msg, "*"); }
+
+function toast(msg){
+  const el = document.getElementById("toast");
+  el.textContent = msg;
+  el.classList.add("show");
+  clearTimeout(toast._t);
+  toast._t = setTimeout(()=> el.classList.remove("show"), 1800);
+}
+
+window.addEventListener("message", (e)=>{
+  const msg = e.data;
+  if(!msg || typeof msg !== "object") return;
+  if(msg.type === "shop:state"){
+    STATE = msg.state;
+    render();
+  }
+});
+
+document.getElementById("btnBack").addEventListener("click", ()=> post({type:"shop:back"}));
+
+function render(){
+  if(!STATE) return;
+  document.getElementById("shopGbitDisplay").textContent = STATE.gbit;
+  const content = document.getElementById("shopContent");
+  content.innerHTML = "";
+
+  const sections = [
+    { label:"永久性升級", items: STATE.shopItems.filter(i=>i.type==="perm") },
+    { label:"一次性道具（儲備型）", items: STATE.shopItems.filter(i=>i.type==="consumable") }
+  ];
+
+  sections.forEach(sec=>{
+    const title = document.createElement("div");
+    title.className = "shop-section-title";
+    title.textContent = sec.label;
+    content.appendChild(title);
+
+    const grid = document.createElement("div");
+    grid.className = "shop-grid";
+
+    sec.items.forEach(item=>{
+      const maxed = item.maxStack !== null && item.owned >= item.maxStack;
+      const card = document.createElement("div");
+      card.className = `shop-card ${item.type}${maxed?" maxed":""}`;
+
+      let stackInfo = "";
+      if(item.maxStack !== null) stackInfo = `<div class="shop-stack">已購 ${item.owned} / ${item.maxStack}</div>`;
+      else if(item.type==="consumable") stackInfo = `<div class="shop-stack">庫存 ${item.owned} 個</div>`;
+
+      card.innerHTML = `
+        <div class="shop-icon">${item.icon}</div>
+        <div class="shop-body">
+          <h4>${item.name}</h4>
+          <p>${item.desc}</p>
+          ${stackInfo}
+          <div class="shop-footer">
+            <span class="shop-price ${item.type==="consumable"?"blue":""}">💎 ${item.cost} GBit</span>
+            <button class="shop-btn ${item.type==="perm"?"perm":"cons"}" data-id="${item.id}" ${maxed||STATE.gbit<item.cost?"disabled":""}>
+              ${maxed?"已達上限":"購買"}
+            </button>
+          </div>
+        </div>
+      `;
+      grid.appendChild(card);
+    });
+    content.appendChild(grid);
+  });
+
+  // ── 防禦塔研發（永久，通關特定關卡後解鎖，等級上限＝已通關節數）──
+  const towerTitle = document.createElement("div");
+  towerTitle.className = "shop-section-title";
+  towerTitle.textContent = "防禦塔研發（戰場永久強化）";
+  content.appendChild(towerTitle);
+
+  const towerGrid = document.createElement("div");
+  towerGrid.className = "shop-grid";
+
+  STATE.towers.forEach(t=>{
+    const card = document.createElement("div");
+    card.className = `shop-card tower${(!t.unlocked||t.maxed)?" maxed":""}`;
+
+    const statusLine = t.unlocked
+      ? `<div class="shop-stack">研發等級 Lv.${t.level} ／ 上限 Lv.${t.cap}（依目前已通關節數）</div>`
+      : `<div class="shop-stack">🔒 ${t.unlockLevelId ? `通關關卡 ${t.unlockLevelId} 解鎖` : `通關第 ${t.chapter} 章解鎖`}</div>`;
+
+    card.innerHTML = `
+      <div class="shop-icon">${t.icon}</div>
+      <div class="shop-body">
+        <h4>${t.name}</h4>
+        <p>${t.desc}</p>
+        ${statusLine}
+        <div class="shop-footer">
+          <span class="shop-price">💎 ${t.unlocked ? t.nextCost+" GBit" : "—"}</span>
+          <button class="shop-btn tower-btn-buy" data-tower="${t.key}" ${(!t.unlocked||t.maxed||STATE.gbit<t.nextCost)?"disabled":""}>
+            ${!t.unlocked?"未解鎖":t.maxed?"已達上限":(t.level===0?"購買":"升級")}
+          </button>
+        </div>
+      </div>
+    `;
+    towerGrid.appendChild(card);
+  });
+  content.appendChild(towerGrid);
+
+  content.querySelectorAll(".shop-btn[data-id]:not([disabled])").forEach(btn=>{
+    btn.addEventListener("click", ()=> post({type:"shop:buyItem", id:btn.dataset.id}));
+  });
+  content.querySelectorAll(".shop-btn[data-tower]:not([disabled])").forEach(btn=>{
+    btn.addEventListener("click", ()=> post({type:"shop:buyTower", key:btn.dataset.tower}));
+  });
+}
+
+// Ask the parent for the initial state as soon as this page is ready.
+post({type:"shop:ready"});
+</script>
+</body>
+</html>

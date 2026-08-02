@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>章節挑選 ／ 劇情</title>
+<style>
+:root{
+  --void:#05070a;
+  --panel:#0b1018;
+  --panel-2:#0f1622;
+  --line:#1c2836;
+  --text:#d7e4ee;
+  --text-dim:#6c7d8f;
+  --ch1:#39ff9d; --ch2:#4fc3ff; --ch3:#a86bff; --ch4:#ffd23f; --ch5:#ff8a3d;
+  --ch6:#ff5c7a; --ch7:#5cffe0; --ch8:#ff5cf0; --ch9:#ff3b3b;
+  --accent: var(--ch1);
+  --danger:#ff3b3b; --good:#39ff9d;
+  --mono:'JetBrains Mono','Noto Sans Mono TC','Courier New',monospace;
+  --disp:'Orbitron','Noto Sans TC',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{width:100%;height:100%;background:var(--void);color:var(--text);font-family:var(--mono);-webkit-font-smoothing:antialiased;}
+body{padding:26px 4vw;overflow-y:auto;}
+.disp{font-family:var(--disp);letter-spacing:.04em;}
+.eyebrow{font-size:11px;letter-spacing:.35em;text-transform:uppercase;color:var(--text-dim);}
+button{font-family:var(--mono);cursor:pointer;background:none;border:none;color:inherit;}
+.btn{padding:12px 26px;border:1px solid var(--accent);color:var(--accent);font-family:var(--mono);font-size:13px;letter-spacing:.05em;background:none;cursor:pointer;transition:background .15s;}
+.btn:hover{background:rgba(255,255,255,0.06);}
+.btn.ghost{border-color:var(--line);color:var(--text-dim);}
+.btn.ghost:hover{color:var(--text);border-color:var(--text-dim);}
+
+.header-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;flex-wrap:wrap;gap:12px;}
+.flex-row{display:flex;align-items:center;gap:10px;}
+.icon-btn{width:34px;height:34px;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--text-dim);}
+.icon-btn:hover{color:var(--accent);border-color:var(--accent);}
+.hud-stat{display:flex;flex-direction:column;gap:2px;min-width:64px;}
+.hud-stat .hs-label{font-size:9px;color:var(--text-dim);letter-spacing:.15em;text-transform:uppercase;}
+.hud-stat .hs-val{font-size:15px;font-family:var(--disp);}
+
+/* ================= CHAPTER SELECT ================= */
+.chapter-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(230px,1fr));
+  gap:16px;padding-bottom:30px;
+}
+.chapter-card{
+  border:1px solid var(--line);
+  background:var(--panel);
+  padding:18px;
+  display:flex;flex-direction:column;gap:8px;
+  clip-path:polygon(0 0,calc(100% - 14px) 0,100% 14px,100% 100%,14px 100%,0 calc(100% - 14px));
+  transition:all .18s ease;
+  --cc: var(--ch1);
+}
+.chapter-card:not(.locked){cursor:pointer;}
+.chapter-card:not(.locked):hover{border-color:var(--cc);box-shadow:0 0 22px color-mix(in srgb, var(--cc) 30%, transparent);}
+.chapter-card.locked{opacity:.35;}
+.chapter-num{font-size:11px;color:var(--cc);letter-spacing:.2em;text-transform:uppercase;}
+.chapter-title{font-family:var(--disp);font-size:16px;}
+.chapter-desc{font-size:11px;color:var(--text-dim);line-height:1.5;flex:1;}
+.chapter-stars{font-size:12px;color:var(--cc);letter-spacing:.1em;}
+.chapter-progress-bar{height:4px;background:var(--line);border-radius:2px;overflow:hidden;}
+.chapter-progress-fill{height:100%;background:var(--cc);}
+
+/* ================= LEVEL SELECT (within chapter) ================= */
+.level-list{display:flex;flex-direction:column;gap:10px;max-width:720px;}
+.level-row{
+  display:flex;align-items:center;gap:16px;
+  border:1px solid var(--line);background:var(--panel);
+  padding:14px 18px;
+  clip-path:polygon(0 0,calc(100% - 12px) 0,100% 12px,100% 100%,12px 100%,0 calc(100% - 12px));
+}
+.level-row:not(.locked){cursor:pointer;}
+.level-row:not(.locked):hover{border-color:var(--accent);}
+.level-row.locked{opacity:.35;}
+.level-idx{font-family:var(--disp);font-size:20px;color:var(--accent);width:44px;}
+.level-info{flex:1;}
+.level-info .lname{font-size:14px;}
+.level-info .lsub{font-size:11px;color:var(--text-dim);margin-top:2px;}
+.level-stars{font-size:13px;color:var(--ch1);width:60px;text-align:right;}
+
+/* ================= STORY SCREEN ================= */
+#viewStory{
+  display:flex;align-items:center;justify-content:center;
+  min-height:70vh;
+  padding:5vh 2vw;
+  text-align:left;
+}
+.story-box{
+  max-width:680px;width:100%;
+  border:1px solid var(--line);
+  background:linear-gradient(160deg, rgba(11,16,24,0.9), rgba(15,22,34,0.9));
+  padding:32px 36px;
+  clip-path:polygon(0 0,calc(100% - 24px) 0,100% 24px,100% 100%,24px 100%,0 calc(100% - 24px));
+}
+.story-chapter-tag{font-size:11px;letter-spacing:.3em;color:var(--accent);text-transform:uppercase;margin-bottom:6px;}
+.story-title{font-family:var(--disp);font-size:24px;margin-bottom:18px;}
+.story-body{font-size:14px;line-height:2;color:var(--text);white-space:pre-wrap;min-height:160px;}
+.story-quote{
+  margin-top:18px;padding:14px 18px;border-left:3px solid var(--accent);
+  font-size:13px;color:var(--accent);background:rgba(255,255,255,0.02);
+  font-style:italic;line-height:1.7;
+}
+.story-nav{display:flex;justify-content:flex-end;gap:12px;margin-top:24px;}
+
+.view{display:none;}
+.view.active{display:block;}
+</style>
+</head>
+<body>
+
+<!-- CHAPTER SELECT -->
+<div class="view" id="viewChapters">
+  <div class="header-row">
+    <div class="flex-row">
+      <button class="icon-btn" id="btnBackToMenu">←</button>
+      <div>
+        <div class="eyebrow">CHAPTER SELECT</div>
+        <div class="disp" style="font-size:20px;">章節挑選</div>
+      </div>
+    </div>
+    <div class="flex-row">
+      <div class="hud-stat"><span class="hs-label">Core 核心代幣</span><span class="hs-val" id="coreDisplay">0</span></div>
+    </div>
+  </div>
+  <div class="chapter-grid" id="chapterGrid"></div>
+</div>
+
+<!-- LEVEL SELECT -->
+<div class="view" id="viewLevels">
+  <div class="header-row">
+    <div class="flex-row">
+      <button class="icon-btn" id="btnBackToChapters">←</button>
+      <div>
+        <div class="eyebrow" id="levelChapterTag">CHAPTER 1</div>
+        <div class="disp" style="font-size:20px;" id="levelChapterName">中列 - 核心機房重啟</div>
+      </div>
+    </div>
+  </div>
+  <div class="level-list" id="levelList"></div>
+</div>
+
+<!-- STORY -->
+<div class="view" id="viewStory">
+  <div class="story-box">
+    <div class="story-chapter-tag" id="storyTag">第一章</div>
+    <div class="story-title disp" id="storyTitle">中列 - 核心機房重啟</div>
+    <div class="story-body" id="storyBody"></div>
+    <div class="story-quote" id="storyQuote"></div>
+    <div class="story-nav">
+      <button class="btn ghost" id="btnSkipStory">略過 SKIP</button>
+      <button class="btn" id="btnEnterLevel">進入關卡 →</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ---------- postMessage bridge with parent page ----------
+   This page holds no *save* state of its own — the parent (main game page)
+   remains the single source of truth for SAVE/unlock progress and only ever
+   pushes this page a fully-computed render payload ("story:render").
+
+   What THIS page does own is the heavy part: Chapters 2-9 and the ENDLESS
+   definition (story text + level/wave configs), which used to live inline
+   in the main page. On load we hand that data back to the parent once
+   ("story:dataInit") so it can merge it into its own CHAPTERS/ENDLESS and
+   every existing save/achievement/config-io function keeps working
+   unchanged — this page is purely a weight-offload + UI split, not a new
+   source of truth for progress. */
+let STATE = null;
+
+function post(msg){ parent.postMessage(msg, "*"); }
+
+// 💡 pools 現在放的是 wordbank.js 共用字庫的 stage key（如 "home-left"／"all-both"），
+// 不再是本檔案自帶的單字池名稱。實際出字邏輯在主程式（鍵位特工 HTML）的
+// Game.pickStageWord() 裡，會拿這個 key 去問 wordbank.js 要字元集/單字/隨機組合。
+// "sentence" 是唯一例外：代表直接從看打 42 篇文章擷取的句子池（第九章專用）。
+function lvl(id, name, pools, mobType, opts={}){
+  return Object.assign({
+    id, name, pools, mobType,
+    waveCount: 5,
+    spawnInterval: 2200,
+    mobSpeed: 26,
+    baseHp: 100,
+    keys: opts.keys || ""
+  }, opts);
+}
+
+const CHAPTERS_EXT = [
+{
+  id:2, key:"ch2", color:"var(--ch2)",
+  name:"上列 - 雲端防空戰", short:"第二章 · 上列",
+  keysFocus:"Q W E R T / Y U I O P",
+  unlockTower:"radar", unlockSkill:"OUT",
+  story:{
+    title:"上列 - 雲端防空戰",
+    body:"基地地面暫時安全，但病毒派出了「飛行探針」從高空矩陣襲來。你必須將代碼訊號「向上延伸」至雷達高射砲。\n\n地圖轉為基地頂樓，面對藍天，手指必須向上彈跳，擊落空中的代碼飛彈。",
+    quote:"「飛行單位免疫地面攻擊——立刻建造雷達高射砲，Agent！」"
+  },
+  levels:[
+    lvl("2-1","食指中指上繞", ["top-left"], "flying", {keys:"R T Y U", waveCount:5, spawnInterval:2300, mobSpeed:24}),
+    lvl("2-2","小指無名指外擴", ["top-right"], "flying", {keys:"Q W I O P", waveCount:5, spawnInterval:2200, mobSpeed:25}),
+    lvl("2-3","上列總體戰", ["top-both"], "flying", {keys:"上排全字母（封印中排）", waveCount:6, spawnInterval:2000, mobSpeed:27}),
+    lvl("2-4","雙線齊發", ["top-both"], "flying", {keys:"上排混合", waveCount:6, spawnInterval:1900, mobSpeed:28}),
+    lvl("2-5","雲端總攻", ["top-both"], "flying", {keys:"上排長字隨機", waveCount:7, spawnInterval:1700, mobSpeed:30})
+  ]
+},
+{
+  id:3, key:"ch3", color:"var(--ch3)",
+  name:"下列 - 深淵地底防禦", short:"第三章 · 下列",
+  keysFocus:"Z X C V B / N M , .",
+  unlockTower:"trap", unlockSkill:"MIN",
+  story:{
+    title:"下列 - 深淵地底防禦",
+    body:"狡猾的病毒轉由地底電纜、地下水路爬行突襲。防禦系統面臨低部負載。\n\n黑暗的地下管道，綠色螢光液體。玩家必須向下捲曲手指啟動地刺陷阱，消滅爬行蠕蟲病毒。",
+    quote:"「它們躲在地底……只有地刺重力陷阱能讓牠們現形！」"
+  },
+  levels:[
+    lvl("3-1","左手下收", ["bottom-left"], "worm", {keys:"Z X C V B", waveCount:5, spawnInterval:2300, mobSpeed:24}),
+    lvl("3-2","右手下收", ["bottom-right"], "worm", {keys:"N M , .", waveCount:5, spawnInterval:2200, mobSpeed:25}),
+    lvl("3-3","下列總體戰", ["bottom-both"], "worm", {keys:"下排全字母", waveCount:6, spawnInterval:2000, mobSpeed:27}),
+    lvl("3-4","潛伏突襲", ["bottom-both"], "worm", {keys:"下排＋左手混合", waveCount:6, spawnInterval:1900, mobSpeed:28}),
+    lvl("3-5","深淵總攻", ["bottom-both"], "worm", {keys:"下排長字隨機", waveCount:7, spawnInterval:1700, mobSpeed:30})
+  ]
+},
+{
+  id:4, key:"ch4", color:"var(--ch4)",
+  name:"中上列 - 數據風暴降臨", short:"第四章 · 中上列",
+  keysFocus:"中排＋上排",
+  unlockTower:null, unlockSkill:"GATE",
+  story:{
+    title:"中上列 - 數據風暴降臨",
+    body:"病毒開始進化，合成了中排與上排的混合代碼。天氣系統被駭，天空降下代碼雨。\n\n雨夜中的賽博都市。防禦塔升級為雙層電磁塔，考驗手指在上下中排的快速縱向移動。",
+    quote:"「跳躍跳蚤怪很狡猾——它們會誘導你打錯，一旦跳走，輸入就會重置！」"
+  },
+  levels:[
+    lvl("4-1","縱向直線", ["all-left"], "jump", {keys:"R-F-V 軸縱向", waveCount:5, spawnInterval:2200, mobSpeed:25}),
+    lvl("4-2","跨手斜線", ["all-both"], "jump", {keys:"左中右上交錯", waveCount:5, spawnInterval:2100, mobSpeed:26}),
+    lvl("4-3","中上列長字", ["all-both"], "jump", {keys:"中上列長單字", waveCount:6, spawnInterval:2000, mobSpeed:27}),
+    lvl("4-4","風暴前線", ["all-both"], "jump", {keys:"混合縱橫", waveCount:6, spawnInterval:1900, mobSpeed:28}),
+    lvl("4-5","數據總攻", ["all-both"], "jump", {keys:"中上列全隨機", waveCount:7, spawnInterval:1700, mobSpeed:30})
+  ]
+},
+{
+  id:5, key:"ch5", color:"var(--ch5)",
+  name:"中下列 - 機械重組危機", short:"第五章 · 中下列",
+  keysFocus:"中排＋下排",
+  unlockTower:null, unlockSkill:"SLOW",
+  story:{
+    title:"中下列 - 機械重組危機",
+    body:"廢棄的工廠流水線被駭客控制，巨大的機械怪物（由底排與中排代碼組成）正試圖破壞基地的供電廠。\n\n充滿齒輪、岩漿與廢鐵的工業風地圖。",
+    quote:"「分裂軟泥怪打完後會一分為二——小心，別讓它們越打越多！」"
+  },
+  levels:[
+    lvl("5-1","手掌內縮", ["all-both"], "split", {keys:"中下排跨度", waveCount:5, spawnInterval:2200, mobSpeed:25}),
+    lvl("5-2","跨行突擊", ["all-both"], "split", {keys:"高密度短字海", waveCount:5, spawnInterval:2000, mobSpeed:27}),
+    lvl("5-3","節奏控制", ["all-both"], "split", {keys:"長音節字", waveCount:6, spawnInterval:2100, mobSpeed:26}),
+    lvl("5-4","流水線危機", ["all-both"], "split", {keys:"中下排混合", waveCount:6, spawnInterval:1900, mobSpeed:28}),
+    lvl("5-5","重組總攻", ["all-both"], "split", {keys:"中下排全隨機", waveCount:7, spawnInterval:1700, mobSpeed:30})
+  ]
+},
+{
+  id:6, key:"ch6", color:"var(--ch6)",
+  name:"全鍵盤 - 總體戰：記憶體保衛戰", short:"第六章 · 全鍵盤",
+  keysFocus:"26 字母全開",
+  unlockTower:null, unlockSkill:"BOMB",
+  story:{
+    title:"全鍵盤 - 總體戰：記憶體保衛戰",
+    body:"病毒發動總攻擊，目標是人類最後的記憶儲存庫「RAM」。26 個英文字母代碼全面解鎖，戰況進入白熱化。\n\n巨大的發光水晶（記憶核心）位於地圖中央，四面八方湧入形形色色的完整單字怪。",
+    quote:"「干擾霧怪會遮蔽視線——這時只能靠肌肉記憶盲打了！」"
+  },
+  levels:[
+    lvl("6-1","短字總動員", ["all-both"], "fog", {keys:"4字母以下短字", waveCount:5, spawnInterval:2000, mobSpeed:27}),
+    lvl("6-2","常用單字海", ["all-both"], "fog", {keys:"國中1200初級字", waveCount:6, spawnInterval:1900, mobSpeed:28}),
+    lvl("6-3","全鍵盤躍進", ["all-both"], "fog", {keys:"高難度長單字", waveCount:6, spawnInterval:1900, mobSpeed:26}),
+    lvl("6-4","記憶保衛戰", ["all-both"], "fog", {keys:"混合單字海", waveCount:7, spawnInterval:1700, mobSpeed:29}),
+    lvl("6-5","RAM 總攻防", ["all-both"], "fog", {keys:"全鍵盤全隨機", waveCount:8, spawnInterval:1500, mobSpeed:31})
+  ]
+},
+{
+  id:7, key:"ch7", color:"var(--ch7)",
+  name:"符號 - 防火牆解碼", short:"第七章 · 符號",
+  keysFocus:", . ! ? '",
+  unlockTower:null, unlockSkill:"SCAN",
+  story:{
+    title:"符號 - 防火牆解碼",
+    body:"你殺到了病毒總部外圍，但總部大門被高度加密的「標點符號鎖」封印。同時，門衛怪物帶有代碼護盾。\n\n科幻感十足的矩陣大門，玩家必須精準敲擊標點符號來「破盾」解鎖。",
+    quote:"「符號魔像必須依序敲對身上所有符號——一個打錯，順序全部重來！」"
+  },
+  levels:[
+    lvl("7-1","標點破盾", ["symbols-right"], "golem", {keys:", .", waveCount:5, spawnInterval:2300, mobSpeed:24}),
+    lvl("7-2","情緒代碼", ["symbols-both"], "golem", {keys:"! ?", waveCount:5, spawnInterval:2200, mobSpeed:25}),
+    lvl("7-3","縮寫考驗", ["symbols-right"], "golem", {keys:"'（撇號）", waveCount:6, spawnInterval:2100, mobSpeed:26}),
+    lvl("7-4","雙重加密", ["symbols-both"], "golem", {keys:"標點混合", waveCount:6, spawnInterval:2000, mobSpeed:27}),
+    lvl("7-5","解碼總決", ["symbols-both"], "golem", {keys:"全符號隨機", waveCount:7, spawnInterval:1800, mobSpeed:28})
+  ]
+},
+{
+  id:8, key:"ch8", color:"var(--ch8)",
+  name:"大小寫 - 秩序與混亂", short:"第八章 · 大小寫",
+  keysFocus:"Shift ＋ 全鍵盤",
+  unlockTower:"prism", unlockSkill:"HEAL",
+  story:{
+    title:"大小寫 - 秩序與混亂",
+    body:"踏入病毒核心，空間開始扭曲。病毒 boss 分裂成「秩序（小寫）」與「混亂（大寫）」兩種形態交替進攻。\n\n黑白交替、上下顛倒的超現實魔幻空間。玩家必須熟練運用 Shift 鍵切換光譜。",
+    quote:"「雙色幽靈怪紅色時只吃大寫攻擊——打錯顏色反而會幫它補血！」"
+  },
+  levels:[
+    lvl("8-1","左手 Shift", ["caseMix-left"], "ghost", {keys:"右手打字＋左手Shift", waveCount:5, spawnInterval:2200, mobSpeed:25}),
+    lvl("8-2","右手 Shift", ["caseMix-right"], "ghost", {keys:"左手打字＋右手Shift", waveCount:5, spawnInterval:2100, mobSpeed:26}),
+    lvl("8-3","複合專有名詞", ["caseMix-both"], "ghost", {keys:"月份／星期／節日", waveCount:6, spawnInterval:2000, mobSpeed:27}),
+    lvl("8-4","秩序交替", ["caseMix-both"], "ghost", {keys:"大小寫混合", waveCount:6, spawnInterval:1900, mobSpeed:28}),
+    lvl("8-5","混沌總決", ["caseMix-both"], "ghost", {keys:"全大小寫隨機", waveCount:7, spawnInterval:1700, mobSpeed:29})
+  ]
+},
+{
+  id:9, key:"ch9", color:"var(--ch9)",
+  name:"終局之戰：重寫世界線", short:"第九章 · 終局",
+  keysFocus:"完整句子＋Space",
+  unlockTower:null, unlockSkill:"RESET",
+  story:{
+    title:"終局之戰：重寫世界線",
+    body:"你面對病毒的終極本體——「毀滅者·Omega」。此時你不再只是打出單字，而是將人類歷史上的經典文學、科學定律、日常對話化為代碼，重新寫入世界核心，徹底淨化病毒。\n\n震撼的星空矩陣背景，巨型 Boss 在螢幕上方發射彈幕台詞，玩家必須在彈幕墜落前將其整句敲完。",
+    quote:"「這是最後一戰了，Agent。把整個世界，重新寫回來。」"
+  },
+  levels:[
+    lvl("9-1","短句矩陣 I", ["sentence"], "basic", {keys:"完整短句", waveCount:4, spawnInterval:3200, mobSpeed:18}),
+    lvl("9-2","短句矩陣 II", ["sentence"], "basic", {keys:"完整短句", waveCount:4, spawnInterval:3000, mobSpeed:19}),
+    lvl("9-3","短句矩陣 III", ["sentence"], "basic", {keys:"完整短句", waveCount:5, spawnInterval:2900, mobSpeed:20}),
+    lvl("9-4","短句矩陣 IV", ["sentence"], "basic", {keys:"完整短句", waveCount:5, spawnInterval:2800, mobSpeed:21}),
+    lvl("9-5","文學與語法 I", ["sentence"], "basic", {keys:"經典課文段落", waveCount:4, spawnInterval:3600, mobSpeed:16}),
+    lvl("9-6","文學與語法 II", ["sentence"], "basic", {keys:"經典課文段落", waveCount:4, spawnInterval:3400, mobSpeed:17}),
+    lvl("9-7","文學與語法 III", ["sentence"], "basic", {keys:"經典課文段落", waveCount:5, spawnInterval:3300, mobSpeed:18}),
+    lvl("9-8","毀滅者·Omega", ["sentence"], "boss", {keys:"最終決戰", waveCount:1, spawnInterval:99999, mobSpeed:12, isBoss:true})
+  ]
+}
+];
+
+const ENDLESS_EXT = {
+  id:"endless", key:"endless", color:"var(--ch9)",
+  name:"深淵矩陣：無盡的駭客任務", short:"無限極限關卡",
+  story:{
+    title:"深淵矩陣：無盡的駭客任務",
+    body:"雖然主要病毒被清除，但網際網路的深處仍存在著無窮無盡的殘留垃圾代碼與未知變種病毒。\n\n作為拯救世界的「傳奇黑客」，你自願將意識永久駐留在「深淵矩陣」中，成為守護人類世界永遠不倒的「最後一塊晶片」。",
+    quote:"[WARNING: SYSTEM OVERLOAD - CURRENT SPEED: 120WPM]"
+  },
+  ranks:[
+    {min:0,   name:"初級代碼清洗工", grade:"B"},
+    {min:180, name:"防火牆幽靈",     grade:"A"},
+    {min:420, name:"神經網絡主宰者", grade:"S"}
+  ]
+};
+
+function formatTime(sec){
+  sec = Math.floor(sec||0);
+  const m = Math.floor(sec/60), s = sec%60;
+  return `${m}:${String(s).padStart(2,"0")}`;
+}
+
+window.addEventListener("message", (e)=>{
+  const msg = e.data;
+  if(!msg || typeof msg !== "object") return;
+  if(msg.type === "story:render"){
+    STATE = msg;
+    render();
+  }
+});
+
+function showView(id){
+  document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+}
+
+document.getElementById("btnBackToMenu").addEventListener("click", ()=> post({type:"story:back"}));
+document.getElementById("btnBackToChapters").addEventListener("click", ()=> post({type:"story:backToChapters"}));
+document.getElementById("btnSkipStory").addEventListener("click", ()=> post({type:"story:enterLevel"}));
+document.getElementById("btnEnterLevel").addEventListener("click", ()=> post({type:"story:enterLevel"}));
+
+function render(){
+  if(!STATE) return;
+  if(STATE.view === "chapters") renderChapters();
+  else if(STATE.view === "levels") renderLevels();
+  else if(STATE.view === "story") renderStory();
+}
+
+function renderChapters(){
+  document.getElementById("coreDisplay").textContent = STATE.core;
+  const grid = document.getElementById("chapterGrid");
+  grid.innerHTML = "";
+  STATE.chapterInfo.forEach(ch=>{
+    const unlocked = ch.unlocked;
+    const div = document.createElement("div");
+    div.className = "chapter-card"+(unlocked?"":" locked");
+    div.style.setProperty("--cc", ch.color);
+    div.innerHTML = `
+      <div class="chapter-num">${ch.short}</div>
+      <div class="chapter-title">${unlocked? ch.name : "🔒 未解鎖"}</div>
+      <div class="chapter-desc">${unlocked? ch.keysFocus : "完成前一章劇情以解鎖"}</div>
+      ${unlocked?`
+      <div class="chapter-stars">★ ${ch.totalStars} / ${ch.maxStars}</div>
+      <div class="chapter-progress-bar"><div class="chapter-progress-fill" style="width:${(ch.totalStars/ch.maxStars*100)||0}%;background:${ch.color};"></div></div>
+      `:""}
+    `;
+    if(unlocked){ div.addEventListener("click", ()=> post({type:"story:selectChapter", chapterId: ch.id})); }
+    grid.appendChild(div);
+  });
+
+  const ei = STATE.endlessInfo;
+  const div = document.createElement("div");
+  div.className = "chapter-card"+(ei.unlocked?"":" locked");
+  div.style.setProperty("--cc", ei.color);
+  div.innerHTML = `
+    <div class="chapter-num">♾️ 無限模式</div>
+    <div class="chapter-title">${ei.unlocked? ei.name : "🔒 通關第九章後解鎖"}</div>
+    <div class="chapter-desc">${ei.unlocked? "深淵矩陣：無盡的駭客任務" : "完成劇情模式終局之戰"}</div>
+    ${ei.unlocked?`<div class="chapter-stars">最佳存活：${formatTime(ei.bestTime)}　評級：${ei.bestGrade}</div>`:""}
+  `;
+  if(ei.unlocked){ div.addEventListener("click", ()=> post({type:"story:selectEndless"})); }
+  grid.appendChild(div);
+
+  showView("viewChapters");
+}
+
+function renderLevels(){
+  const meta = STATE.chapterMeta;
+  if(!meta) return;
+  document.getElementById("levelChapterTag").textContent = meta.short;
+  document.getElementById("levelChapterName").textContent = meta.name;
+  const list = document.getElementById("levelList");
+  list.innerHTML = "";
+  (STATE.levels||[]).forEach(lv=>{
+    const unlocked = lv.unlocked;
+    const rec = lv.rec;
+    const row = document.createElement("div");
+    row.className = "level-row"+(unlocked?"":" locked");
+    row.innerHTML = `
+      <div class="level-idx" style="color:${meta.color};">${lv.id}</div>
+      <div class="level-info">
+        <div class="lname">${unlocked?lv.name:"🔒 未解鎖"}</div>
+        <div class="lsub">${unlocked? (lv.keys||"") + (rec.cleared? `　最佳 WPM ${rec.bestWpm} / 正確率 ${rec.bestAcc}%` : "") : "先通關上一關"}</div>
+      </div>
+      <div class="level-stars" style="color:${meta.color};">${unlocked? "★".repeat(rec.stars)+"☆".repeat(3-rec.stars) : ""}</div>
+    `;
+    if(unlocked){ row.addEventListener("click", ()=> post({type:"story:selectLevel", chapterId: meta.id, levelIdx: lv.idx})); }
+    list.appendChild(row);
+  });
+
+  // 番外篇：只有本章節全破（bonusLevel.unlocked）才會顯示成可點擊，
+  // 否則顯示鎖定提示，跟一般關卡的鎖定樣式一致但文字提醒是「全破本章」。
+  const bonus = STATE.bonusLevel;
+  if(bonus){
+    const row = document.createElement("div");
+    row.className = "level-row"+(bonus.unlocked?"":" locked");
+    row.style.marginTop = "18px";
+    row.style.borderColor = bonus.unlocked ? meta.color : "";
+    const timeLabel = bonus.timeLimitSec ? `限時 ${Math.floor(bonus.timeLimitSec/60)}:${String(bonus.timeLimitSec%60).padStart(2,"0")}` : "";
+    row.innerHTML = `
+      <div class="level-idx" style="color:${meta.color};">✦</div>
+      <div class="level-info">
+        <div class="lname">${bonus.unlocked? bonus.name : "🔒 番外篇（全破本章解鎖）"}</div>
+        <div class="lsub">${bonus.unlocked? `${bonus.keys||""}　${timeLabel}　正確率需達 ${bonus.minAccuracy}% 以上${bonus.rec && bonus.rec.cleared? "　✅ 已通過" : ""}` : "先通關本章全部關卡"}</div>
+      </div>
+      <div class="level-stars" style="color:${meta.color};">${bonus.unlocked && bonus.rec && bonus.rec.cleared ? "✅" : ""}</div>
+    `;
+    if(bonus.unlocked){ row.addEventListener("click", ()=> post({type:"story:selectBonusLevel", chapterId: meta.id})); }
+    list.appendChild(row);
+  }
+
+  showView("viewLevels");
+}
+
+function renderStory(){
+  const sd = STATE.storyData;
+  if(!sd) return;
+  document.getElementById("storyTag").textContent = sd.short;
+  document.getElementById("storyTitle").textContent = sd.title;
+  document.getElementById("storyBody").textContent = sd.body;
+  document.getElementById("storyQuote").textContent = sd.quote;
+  document.documentElement.style.setProperty("--accent", sd.color);
+  showView("viewStory");
+}
+
+// Hand the heavy chapter/endless data back to the parent once, then ask for
+// the initial render state (queued by the parent until this fires).
+post({type:"story:dataInit", chapters: CHAPTERS_EXT, endless: ENDLESS_EXT});
+post({type:"story:ready"});
+</script>
+</body>
+</html>

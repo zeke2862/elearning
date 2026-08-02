@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>SaveSys</title>
+</head>
+<body>
+<!--
+  savesys.html — 共用資料與存檔系統 (Shared Data & Save System)
+
+  This page holds no UI. It is loaded by the main game page in a hidden
+  <iframe id="saveFrame"> purely to move weight off the main document:
+
+    - all localStorage access for the player's save file and for any
+      previously-imported Excel config override
+    - the SheetJS (XLSX) library and all Excel parsing/building, which the
+      main page no longer needs to load at all
+
+  The main page remains the single source of truth for the *live* game
+  session (SAVE mirror in memory, ACHIEVEMENTS/SHOP_ITEMS/MOB_TYPES/TOWERS/
+  CHAPTERS/DIFFICULTY_PRESETS config objects) — this page never mutates
+  those directly since it has no access to them. It only ever reads/writes
+  the two localStorage keys and turns files into plain data (and back).
+
+  ---------------------------------------------------------------------------
+  postMessage protocol
+  ---------------------------------------------------------------------------
+  Parent -> child:
+    savesys:persistSave      { save }              fire-and-forget
+    savesys:resetSave        {}                     -> savesys:resetDone
+    savesys:exportSave       { save }               triggers a JSON download
+    savesys:importSave       { file }               -> savesys:importSaveResult
+    savesys:importConfig     { file }               -> savesys:importConfigResult
+    savesys:exportConfig     { achievements, shopItems, monsters, towers, chapters,
+                                levels, difficulty } triggers an .xlsx download
+                                                      (or savesys:exportConfigFailed)
+
+  Child -> parent:
+    savesys:init              { save, hasExistingSave, configOverride }
+                               sent once, automatically, as soon as this
+                               page has read localStorage
+    savesys:resetDone         { save }
+    savesys:importSaveResult  { success, save }
+    savesys:importConfigResult{ success, parsed }
+    savesys:exportConfigFailed {}   (XLSX library failed to load)
+-->
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script>
+const GAME_VERSION = "1.0.0";
+const BASE_SAVE_KEY = "keyagent_save_v1";
+const ACTIVE_STUDENT_KEY = "keyagent_active_student"; // 由 index.html 寫入
+const CONFIG_OVERRIDE_KEY = "keyagent_config_override_v1";
+
+// 💡 學號登入整合：如果這台瀏覽器已經透過 index.html 登入過，存檔 key 會
+// 加上學號後綴（如 "keyagent_save_v1:20301"），讓同一台電腦上不同學生的
+// 進度分開存放，不會互相覆蓋。沒有登入過（例如直接開這個遊戲測試）就沿用
+// 原本沒有後綴的 key，行為跟改版前完全一樣。
+function currentSaveKey(){
+  try{
+    const raw = localStorage.getItem(ACTIVE_STUDENT_KEY);
+    if(!raw) return BASE_SAVE_KEY;
+    const identity = JSON.parse(raw);
+    if(identity && identity.studentNumber) return `${BASE_SAVE_KEY}:${identity.studentNumber}`;
+  }catch(err){ /* 格式壞掉就當作沒登入 */ }
+  return BASE_SAVE_KEY;
+}
+
+function post(msg){ parent.postMessage(msg, "*"); }
+
+/* ---------------- save file ---------------- */
+
+function defaultSave(){
+  return {
+    version: GAME_VERSION,
+    agentId: "#" + String(Math.floor(1000 + Math.random()*8999)),
+    playerName: "",       // set during first-launch onboarding
+    difficulty: "normal", // "easy" | "normal" | "hard" — locked until a full clear
+    createdAt: Date.now(),
+    core: 0,
+    gbit: 0,   // permanent cross-run currency (= cumulative Bit at victory)
+    // 💡 同步機制用：終身累積賺取/花費量，只增不減。雲端同步合併兩台裝置的
+    // 存檔時，靠這兩個數字（而不是直接比較 gbit 餘額）算出正確的合併餘額，
+    // 見 sync-client.js 的 keyagentMergeSaveInto()。
+    gbitEarnedLifetime: 0,
+    gbitSpentLifetime: 0,
+    shop: {
+      starter_bit: 0,      // permanent, max 3
+      max_hp_up: 0,        // permanent, max 2
+      bit_boost: 0,        // permanent, max 2
+      tower_discount: 0,   // permanent, max 1
+      revive_tokens: 0,    // consumable stock
+      wave_skip_tokens: 0, // consumable stock
+      // 💡 新增 6 個「打字指令型」消耗品的庫存欄位（見主頁面 CONSUMABLE_COMMANDS）。
+      // 舊存檔沒有這些欄位沒關係——loadSaveFromStorage() 下面用
+      // Object.assign({}, d.shop, parsed.shop||{}) 合併，缺少的欄位會自動
+      // 補上這裡的預設值 0，不會讓舊玩家的存檔壞掉或噴錯。
+      slow_all_tokens: 0,
+      freeze_all_tokens: 0,
+      stun_random_tokens: 0,
+      slow_random_tokens: 0,
+      capture_tokens: 0,
+      summon_tokens: 0
+    },
+    storyUnlockedChapter: 1,
+    storyClearedChapter: 0,
+    towerResearch: {},  // permanent per-tower research level, bought with GBit in the shop
+    chapters: {},
+    endless: { bestTime:0, bestScore:0, bestGrade:null, plays:0 },
+    achievements: {},
+    stats: { pinkySymbolHits: 0, totalBoots: 0 },
+    lastPlayed: Date.now()
+  };
+}
+
+/* Returns {save, existed} — existed reflects whether a save was already
+   present in localStorage at load time (used by the parent's "continue"
+   button on the title screen). */
+function loadSaveFromStorage(){
+  const raw = localStorage.getItem(currentSaveKey());
+  if(!raw) return { save: defaultSave(), existed: false };
+  try{
+    const parsed = JSON.parse(raw);
+    const d = defaultSave();
+    const save = Object.assign({}, d, parsed);
+    save.stats = Object.assign({}, d.stats, parsed.stats||{});
+    save.endless = Object.assign({}, d.endless, parsed.endless||{});
+    save.shop = Object.assign({}, d.shop, parsed.shop||{});
+    save.towerResearch = Object.assign({}, d.towerResearch, parsed.towerResearch||{});
+    if(typeof save.gbit !== "number") save.gbit = 0;
+    return { save, existed: true };
+  }catch(e){
+    return { save: defaultSave(), existed: false };
+  }
+}
+
+function persist(save){
+  try{ localStorage.setItem(currentSaveKey(), JSON.stringify(save)); }catch(e){}
+}
+
+function resetToDefault(){
+  localStorage.removeItem(currentSaveKey());
+  const s = defaultSave();
+  persist(s);
+  return s;
+}
+
+function downloadSaveJson(save){
+  const blob = new Blob([JSON.stringify(save, null, 2)], {type:"application/json"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `keyagent_save_${String(save.agentId||"").replace('#','')}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function importSaveFile(file, cb){
+  const reader = new FileReader();
+  reader.onload = (e)=>{
+    try{
+      const parsed = JSON.parse(e.target.result);
+      const d = defaultSave();
+      const save = Object.assign({}, d, parsed);
+      save.stats = Object.assign({}, d.stats, parsed.stats||{});
+      save.endless = Object.assign({}, d.endless, parsed.endless||{});
+      save.towerResearch = Object.assign({}, d.towerResearch, parsed.towerResearch||{});
+      persist(save);
+      cb(true, save);
+    }catch(err){ cb(false, null); }
+  };
+  reader.onerror = ()=> cb(false, null);
+  reader.readAsText(file);
+}
+
+/* ---------------- config override (imported Excel game-balance data) ---------------- */
+
+function loadConfigOverrideFromStorage(){
+  try{
+    const raw = localStorage.getItem(CONFIG_OVERRIDE_KEY);
+    if(!raw) return null;
+    return JSON.parse(raw);
+  }catch(err){
+    return null;
+  }
+}
+
+function persistConfigOverride(parsed){
+  try{ localStorage.setItem(CONFIG_OVERRIDE_KEY, JSON.stringify(parsed)); }catch(err){}
+}
+
+function importConfigXlsx(file, cb){
+  if(typeof XLSX === "undefined"){ cb(false, null); return; }
+  const reader = new FileReader();
+  reader.onload = (e)=>{
+    try{
+      const data = new Uint8Array(e.target.result);
+      const wb = XLSX.read(data, {type:"array"});
+      const sheet = (name)=> wb.Sheets[name] ? XLSX.utils.sheet_to_json(wb.Sheets[name]) : null;
+      const parsed = {
+        achievements: sheet("成就"),
+        shopItems: sheet("商店物品"),
+        monsters: sheet("怪物"),
+        towers: sheet("防禦塔"),
+        chapters: sheet("章節"),
+        levels: sheet("關卡地圖(第二章起)"),
+        difficulty: sheet("難度設定")
+      };
+      // Persist the raw parsed rows so the override survives a page reload
+      persistConfigOverride(parsed);
+      cb(true, parsed);
+    }catch(err){
+      console.error("設定檔匯入失敗", err);
+      cb(false, null);
+    }
+  };
+  reader.onerror = ()=> cb(false, null);
+  reader.readAsArrayBuffer(file);
+}
+
+function exportConfigXlsx(payload){
+  if(typeof XLSX === "undefined"){ post({type:"savesys:exportConfigFailed"}); return; }
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(payload.achievements||[]), "成就");
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(payload.shopItems||[]), "商店物品");
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(payload.monsters||[]), "怪物");
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(payload.towers||[]), "防禦塔");
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(payload.chapters||[]), "章節");
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(payload.levels||[]), "關卡地圖(第二章起)");
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(payload.difficulty||[]), "難度設定");
+  XLSX.writeFile(wb, "鍵位特工_遊戲設定.xlsx");
+}
+
+/* ---------------- postMessage bridge with parent page ---------------- */
+
+window.addEventListener("message", (e)=>{
+  const msg = e.data;
+  if(!msg || typeof msg !== "object") return;
+  switch(msg.type){
+    case "savesys:persistSave":
+      if(msg.save) persist(msg.save);
+      break;
+    case "savesys:resetSave": {
+      const s = resetToDefault();
+      post({type:"savesys:resetDone", save: s});
+      break;
+    }
+    case "savesys:exportSave":
+      if(msg.save) downloadSaveJson(msg.save);
+      break;
+    case "savesys:importSave":
+      importSaveFile(msg.file, (success, save)=>{
+        post({type:"savesys:importSaveResult", success, save});
+      });
+      break;
+    case "savesys:importConfig":
+      importConfigXlsx(msg.file, (success, parsed)=>{
+        post({type:"savesys:importConfigResult", success, parsed});
+      });
+      break;
+    case "savesys:exportConfig":
+      exportConfigXlsx(msg);
+      break;
+  }
+});
+
+/* As soon as this page can read localStorage, push the initial state to
+   the parent — the parent has nothing to give us first (unlike shop.html/
+   codex.html/ach.html, which wait for the parent's live game state), so
+   there is no separate "ready" round-trip here. */
+(function boot(){
+  const { save, existed } = loadSaveFromStorage();
+  const configOverride = loadConfigOverrideFromStorage();
+  post({type:"savesys:init", save, hasExistingSave: existed, configOverride});
+})();
+</script>
+</body>
+</html>

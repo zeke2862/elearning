@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>學號登入</title>
+<script src="./sync-client.js"></script>
+<script src="./pet/pet-catalog-data.js"></script>
+<script src="./pet/pet-engine.js"></script>
+<style>
+:root{
+  --void:#05070a;
+  --panel:#0b1018;
+  --panel-2:#0f1622;
+  --line:#1c2836;
+  --text:#d7e4ee;
+  --text-dim:#6c7d8f;
+  --ch2:#4fc3ff;
+  --ch4:#ffd23f;
+  --ch5:#ff8a3d;
+  --danger:#ff5c5c;
+  --good:#39ff9d;
+  --accent: var(--ch4);
+  --mono:'JetBrains Mono','Noto Sans Mono TC','Courier New',monospace;
+  --disp:'Orbitron','Noto Sans TC',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{width:100%;min-height:100%;background:var(--void);color:var(--text);font-family:var(--mono);-webkit-font-smoothing:antialiased;}
+body{display:flex;align-items:center;justify-content:center;padding:24px;}
+.disp{font-family:var(--disp);letter-spacing:.04em;}
+.eyebrow{font-size:11px;letter-spacing:.35em;text-transform:uppercase;color:var(--text-dim);}
+button{font-family:var(--mono);cursor:pointer;}
+
+.card{
+  width:100%;max-width:420px;border:1px solid var(--line);background:var(--panel);
+  padding:32px 28px;
+  clip-path:polygon(0 0,calc(100% - 16px) 0,100% 16px,100% 100%,16px 100%,0 calc(100% - 16px));
+}
+.title{font-size:22px;text-align:center;margin-bottom:6px;}
+.sub{font-size:12px;color:var(--text-dim);text-align:center;margin-bottom:28px;}
+
+.field-label{font-size:11px;color:var(--text-dim);letter-spacing:.1em;margin-bottom:6px;display:block;}
+input#codeInput{
+  width:100%;padding:14px;font-size:20px;text-align:center;letter-spacing:.08em;
+  background:var(--panel-2);border:1px solid var(--line);color:var(--text);
+  font-family:var(--mono);margin-bottom:16px;
+}
+input#codeInput:focus{outline:none;border-color:var(--accent);}
+
+.btn-primary{
+  width:100%;padding:14px;background:var(--accent);color:#05070a;border:none;
+  font-size:14px;font-weight:bold;letter-spacing:.05em;
+}
+.btn-primary:hover{opacity:.9;}
+.btn-primary:disabled{opacity:.4;cursor:not-allowed;}
+
+.status-line{margin-top:14px;font-size:12px;text-align:center;min-height:18px;color:var(--text-dim);}
+.status-line.err{color:var(--danger);}
+.status-line.ok{color:var(--good);}
+
+.conn-dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:6px;background:var(--text-dim);}
+.conn-dot.on{background:var(--good);}
+.conn-dot.off{background:var(--text-dim);}
+.conn-row{font-size:10px;color:var(--text-dim);text-align:center;margin-top:18px;letter-spacing:.05em;}
+
+/* ---- hub (after login) ---- */
+.hub{display:none;}
+.hub.active{display:block;}
+.hub .who{text-align:center;margin-bottom:22px;}
+.hub .who .name{font-size:20px;}
+.hub .who .tag{font-size:11px;color:var(--text-dim);margin-top:4px;}
+.hub .who .tag.verified{color:var(--good);}
+.hub .who .tag.local{color:var(--ch4);}
+
+/* ---- 科目分類（電腦科／數學科…）：每個科目一個區塊，底下放該科目的功能連結 ---- */
+.subject-group{margin-bottom:18px;}
+.subject-group:last-child{margin-bottom:0;}
+.subject-title{
+  font-size:12px;letter-spacing:.1em;color:var(--text-dim);
+  margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--line);
+  display:flex;align-items:center;gap:6px;
+}
+.subject-title .subject-ic{font-size:14px;}
+
+.hub-links{display:flex;flex-direction:column;gap:10px;}
+.hub-link{
+  display:flex;align-items:center;gap:14px;padding:16px;border:1px solid var(--line);
+  background:var(--panel-2);color:var(--text);text-decoration:none;
+  transition:border-color .15s;
+}
+.hub-link:hover{border-color:var(--accent);}
+.hub-link .ic{font-size:24px;width:34px;text-align:center;}
+.hub-link .lbl{font-size:14px;}
+.hub-link .desc{font-size:10px;color:var(--text-dim);margin-top:2px;}
+
+.btn-switch{
+  width:100%;margin-top:18px;padding:10px;background:none;border:1px solid var(--line);
+  color:var(--text-dim);font-size:11px;
+}
+.btn-switch:hover{color:var(--accent);border-color:var(--accent);}
+
+/* ---- 寵物養成區（心靈戰寵）：只是個入口連結，其餘畫面都在 pet/pet-view.html ---- */
+.pet-zone{
+  margin-top:18px;border:1px solid var(--line);background:var(--panel-2);padding:16px;
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  text-decoration:none;color:var(--text);
+}
+.pet-zone:hover{border-color:var(--accent);}
+.pet-zone-title{font-size:13px;letter-spacing:.05em;}
+.pet-gbit{font-size:12px;color:var(--text-dim);flex:1;text-align:right;}
+.pet-gbit b{color:var(--ch4);}
+.pet-zone-arrow{color:var(--text-dim);font-size:16px;}
+.pet-zone:hover .pet-zone-arrow{color:var(--accent);}
+</style>
+</head>
+<body>
+
+<div class="card">
+
+  <!-- ====== 登入表單 ====== -->
+  <div id="loginView">
+    <div class="eyebrow" style="text-align:center;">KEY AGENT SYSTEM</div>
+    <div class="title disp">學號登入</div>
+    <div class="sub">塔防特工 / ETP 檢定 / 看打檢定 共用一組進度</div>
+
+    <span class="field-label">請輸入學號</span>
+    <input id="codeInput" type="text" inputmode="numeric" placeholder="例如 20301" autocomplete="off">
+    <button class="btn-primary" id="btnLogin">登入</button>
+    <div class="status-line" id="statusLine"></div>
+
+    <div class="conn-row">
+      <span class="conn-dot" id="connDot"></span><span id="connText">正在偵測學校主機…</span>
+    </div>
+  </div>
+
+  <!-- ====== 登入後的入口選單 ====== -->
+  <div class="hub" id="hubView">
+    <div class="who">
+      <div class="name disp" id="hubName"></div>
+      <div class="tag" id="hubTag"></div>
+    </div>
+
+    <!-- ====== 電腦科 ====== -->
+    <div class="subject-group">
+      <div class="subject-title"><span class="subject-ic">💻</span>電腦科</div>
+      <div class="hub-links">
+        <a class="hub-link" id="linkTower" href="#">
+          <div class="ic">🛡️</div>
+          <div><div class="lbl">鍵位特工：最後的防火牆</div><div class="desc">塔防遊戲・自主練習</div></div>
+        </a>
+        <a class="hub-link" id="linkEtp" href="#">
+          <div class="ic">🎯</div>
+          <div><div class="lbl">ETP 檢定</div><div class="desc">4 篇固定文章・正式評分</div></div>
+        </a>
+        <a class="hub-link" id="linkLookType" href="#" onclick="return openLookTypeChoice(event);">
+          <div class="ic">⌨️</div>
+          <div><div class="lbl">英文看打</div><div class="desc">選擇「練習」或「測驗」</div></div>
+        </a>
+        <a class="hub-link" id="linkRace" href="#" onclick="return openRaceChoice(event);">
+          <div class="ic">🏎️</div>
+          <div><div class="lbl">打字賽車</div><div class="desc">選擇「個人賽」或「班級賽」</div></div>
+        </a>
+        <a class="hub-link" id="linkGod" href="#">
+          <div class="ic">⚔️</div>
+          <div><div class="lbl">打字修仙傳：五鍵飛升</div><div class="desc">武俠闖關・五大試煉＋魔王模式</div></div>
+        </a>
+      </div>
+    </div>
+
+    <!-- ====== 數學科 ====== -->
+    <div class="subject-group">
+      <div class="subject-title"><span class="subject-ic">➕</span>數學科</div>
+      <div class="hub-links">
+        <a class="hub-link" id="linkAdditionHero" href="./math/加法勇者4_0.html">
+          <div class="ic">🗡️</div>
+          <div><div class="lbl">加法勇者傳說</div><div class="desc">RPG 闖關・加法練習</div></div>
+        </a>
+      </div>
+    </div>
+
+    <div id="syncRow" style="display:none; margin-bottom:14px;">
+      <button class="btn-switch" id="btnSyncNow" style="border-color:var(--ch2); color:var(--ch2);">☁️ 立即同步雲端</button>
+      <div id="syncStatus" class="tag" style="margin-top:6px;"></div>
+    </div>
+
+    <!-- ====== 寵物養成區（心靈戰寵）：只留入口，功能都在 pet/pet-view.html ====== -->
+    <a class="pet-zone" id="petZone" href="./pet/pet-view.html">
+      <span class="pet-zone-title disp">🥚 寵物養成區</span>
+      <span class="pet-gbit">GBit：<b id="petGbitVal">0</b></span>
+      <span class="pet-zone-arrow">›</span>
+    </a>
+
+    <button class="btn-switch" id="btnSwitchUser">不是我，換人登入</button>
+  </div>
+
+</div>
+
+<!-- 💡 英文看打：練習／測驗 選擇小視窗（比照鍵位特工檔案的樣式：練習黑字／測驗紅字） -->
+<div id="looktype-choice-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(5,7,10,0.85); z-index:500; justify-content:center; align-items:center;">
+  <div style="background:var(--panel); border:1px solid var(--line); border-radius:6px; padding:30px 36px; text-align:center; min-width:260px; box-shadow:0 8px 32px rgba(0,0,0,0.5);">
+    <h3 class="disp" style="color:var(--accent); margin-top:0;">⌨️ 英文看打</h3>
+    <p style="color:var(--text-dim); font-size:12px; margin-bottom:20px;">請選擇要進行「練習」還是「測驗」</p>
+    <div style="display:flex; flex-direction:column; gap:12px;">
+      <button class="btn-switch" style="background:var(--panel-2); color:var(--text); padding:14px; font-size:13px;" onclick="launchLookType('practice')">英文看打練習</button>
+      <button class="btn-switch" style="background:var(--panel-2); border-color:var(--danger); color:var(--danger); padding:14px; font-size:13px;" onclick="launchLookType('test')">英文看打測驗</button>
+    </div>
+    <button class="btn-switch" style="background:transparent; margin-top:20px; padding:8px 16px; font-size:11px;" onclick="closeLookTypeChoice()">取消</button>
+  </div>
+</div>
+
+<!-- 💡 打字賽車：個人賽／班級賽 選擇小視窗 -->
+<div id="race-choice-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(5,7,10,0.85); z-index:500; justify-content:center; align-items:center;">
+  <div style="background:var(--panel); border:1px solid var(--line); border-radius:6px; padding:30px 36px; text-align:center; min-width:260px; box-shadow:0 8px 32px rgba(0,0,0,0.5);">
+    <h3 class="disp" style="color:var(--accent); margin-top:0;">🏎️ 打字賽車</h3>
+    <p style="color:var(--text-dim); font-size:12px; margin-bottom:20px;">請選擇要進行「個人賽」還是「班級賽」</p>
+    <div style="display:flex; flex-direction:column; gap:12px;">
+      <button class="btn-switch" style="background:var(--panel-2); color:var(--text); padding:14px; font-size:13px;" onclick="launchRace('solo')">🏁 個人賽（挑戰電腦對手）</button>
+      <button class="btn-switch" style="background:var(--panel-2); border-color:var(--ch2); color:var(--ch2); padding:14px; font-size:13px;" onclick="launchRace('class')">🏟️ 班級賽（老師開賽，全班連線）</button>
+    </div>
+    <button class="btn-switch" style="background:transparent; margin-top:20px; padding:8px 16px; font-size:11px;" onclick="closeRaceChoice()">取消</button>
+  </div>
+
+<script>
+/* ============================================================
+   共用登入身分：這個頁面登入成功後，會把身分資訊寫進
+   localStorage 的 "keyagent_active_student"，供塔防遊戲
+   (savesys.html)、ETP、看打三邊讀取，讓代幣/進度用同一個
+   學號累積。三邊各自的整合方式：
+     - savesys.html：把存檔用的 localStorage key 從固定的
+       "keyagent_save_v1" 改成依學號分開的
+       "keyagent_save_v1:<學號>"，同一台電腦上不同學生互不干擾。
+     - ETP / 看打：交卷發代幣時，一樣依這個學號寫進對應的
+       "keyagent_save_v1:<學號>"。
+
+   身分驗證策略（依 Eric 的決定）：
+     - 學校電腦：呼叫學校主機的 /login-code，用「學號 + 這台電腦
+       的 IP」比對學生資料庫，比對成功才算「已驗證」。
+     - 家裡/連不到學校主機：直接用打的學號本機登入，不驗證身分
+       （之後「在家/在校同步機制」上線後才會真正核對）。
+   ============================================================ */
+
+// 如果學校主機不是這個 IP，改這裡就好（跟 ETP 測驗檔用的預設一致）
+const SCHOOL_HOST = "http://192.168.1.1:3000";
+const PING_TIMEOUT_MS = 2000;
+
+// 登入後三個入口實際指向的檔名——如果你重新命名了檔案，改這三個常數就好
+const TOWER_DEFENSE_URL = "./Cells/鍵位特工-8線上功能.html";
+const ETP_URL = "./英打測試36線上功能.html";
+const LOOK_TYPE_URL = "./look-type.html";
+// 數學科・加法勇者：跟其他遊戲一樣共用學號登入身分與存檔（見 sync-client.js），
+// 這裡一樣統一放常數方便之後改檔名/路徑。
+const ADDITION_HERO_URL = "./math/加法勇者4_0.html";
+
+const ACTIVE_STUDENT_KEY = "keyagent_active_student";
+
+function fetchWithTimeout(url, opts, ms) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), ms);
+  return fetch(url, { ...opts, signal: controller.signal }).finally(() => clearTimeout(timer));
+}
+
+function setConn(text, state) {
+  document.getElementById("connText").textContent = text;
+  document.getElementById("connDot").className = "conn-dot" + (state ? " " + state : "");
+}
+
+function setStatus(text, cls) {
+  const el = document.getElementById("statusLine");
+  el.textContent = text || "";
+  el.className = "status-line" + (cls ? " " + cls : "");
+}
+
+let schoolHostReachable = false;
+
+// 頁面一開啟就先安靜偵測一次學校主機在不在（純顯示用，不影響登入按鈕能不能按）
+(async function detectHost() {
+  try {
+    const res = await fetchWithTimeout(`${SCHOOL_HOST}/ping`, {}, PING_TIMEOUT_MS);
+    if (res.ok) {
+      schoolHostReachable = true;
+      setConn("已連線學校主機，登入會比對座位", "on");
+      return;
+    }
+    throw new Error("no ok");
+  } catch (err) {
+    schoolHostReachable = false;
+    setConn("連不到學校主機，將以本機模式登入（在家練習正常）", "off");
+  }
+})();
+
+function saveActiveStudent(identity) {
+  localStorage.setItem(ACTIVE_STUDENT_KEY, JSON.stringify(identity));
+}
+
+function loadActiveStudent() {
+  try {
+    const raw = localStorage.getItem(ACTIVE_STUDENT_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch (err) {
+    return null;
+  }
+}
+
+async function doLogin() {
+  const code = document.getElementById("codeInput").value.trim();
+  if (!code) { setStatus("請先輸入學號", "err"); return; }
+
+  const btn = document.getElementById("btnLogin");
+  btn.disabled = true;
+  setStatus("登入中…");
+
+  try {
+    if (schoolHostReachable) {
+      const res = await fetchWithTimeout(`${SCHOOL_HOST}/login-code`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code })
+      }, PING_TIMEOUT_MS);
+
+      if (res.status === 409) {
+        const data = await res.json();
+        setStatus(data.message || "這台電腦座位登記的是別人，請找老師處理", "err");
+        btn.disabled = false;
+        return;
+      }
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success) {
+          const identity = {
+            studentNumber: data.student.studentNumber,
+            name: data.student.name,
+            verified: true,
+            dbId: data.student.id,
+            className: data.student.class,
+            seatNumber: data.student.seatNumber,
+            loginAt: Date.now()
+          };
+          // 💡 先把身分存起來，這樣 keyagentPullCloudSave 合併存檔時才知道要合併到哪個
+          // localStorage key（keyagentSaveKeyFor 靠讀 keyagent_active_student 判斷）。
+          saveActiveStudent(identity);
+          if (typeof keyagentPullCloudSave === "function") {
+            await keyagentPullCloudSave(SCHOOL_HOST, data.student.id);
+          }
+          showHub(identity);
+          return;
+        }
+      }
+      // 連得到主機，但學號查無資料（例如名單還沒建齊）——退回本機模式，不擋登入
+      showHub({
+        studentNumber: code,
+        name: null,
+        verified: false,
+        dbId: null,
+        className: null,
+        seatNumber: null,
+        loginAt: Date.now()
+      });
+      return;
+    }
+  } catch (err) {
+    // 連線失敗（在家、或學校主機沒開），退回本機模式
+  }
+
+  // 本機模式：不驗證，直接用打的學號登入
+  showHub({
+    studentNumber: code,
+    name: null,
+    verified: false,
+    dbId: null,
+    className: null,
+    seatNumber: null,
+    loginAt: Date.now()
+  });
+}
+
+function showHub(identity) {
+  saveActiveStudent(identity);
+
+  document.getElementById("loginView").style.display = "none";
+  const hub = document.getElementById("hubView");
+  hub.classList.add("active");
+
+  document.getElementById("hubName").textContent = identity.name || `學號 ${identity.studentNumber}`;
+  const tag = document.getElementById("hubTag");
+  if (identity.verified) {
+    tag.textContent = `✅ 已核對座位（${identity.className || ""} 座號 ${identity.seatNumber || ""}）`;
+    tag.className = "tag verified";
+  } else {
+    tag.textContent = "⚠ 本機模式，未核對身分";
+    tag.className = "tag local";
+  }
+
+  const suffix = encodeURIComponent(identity.studentNumber);
+  document.getElementById("linkTower").href = `${TOWER_DEFENSE_URL}?student=${suffix}`;
+  document.getElementById("linkEtp").href = `${ETP_URL}?student=${suffix}`;
+  document.getElementById("linkAdditionHero").href = `${ADDITION_HERO_URL}?student=${suffix}`;
+  // linkLookType 不再直接用 href 跳轉，改成先跳「練習/測驗」選擇視窗（見 openLookTypeChoice）
+
+  // 💡 雲端同步：有設定中繼站（sync-client.js 的 CLOUD_RELAY_URL）才顯示按鈕，
+  // 沒設定就整排隱藏，不會讓還沒部署同步機制的人看到用不了的按鈕。
+  const syncRow = document.getElementById("syncRow");
+  if (typeof CLOUD_RELAY_URL !== "undefined" && CLOUD_RELAY_URL) {
+    syncRow.style.display = "block";
+    runCloudSync(true); // 進選單就順手同步一次（背景執行，不擋畫面）
+  } else {
+    syncRow.style.display = "none";
+  }
+
+  // 🥚 每次進選單都刷新一次寵物養成區入口顯示的 GBit 餘額
+  if (typeof petUpdateZoneEntry === "function") {
+    petUpdateZoneEntry();
+  }
+}
+
+async function runCloudSync(silent) {
+  if (typeof keyagentCloudSyncNow !== "function") return;
+  const statusEl = document.getElementById("syncStatus");
+  if (!silent && statusEl) statusEl.textContent = "同步中…";
+  const result = await keyagentCloudSyncNow();
+  if (!statusEl) return;
+  if (result.success) {
+    statusEl.textContent = "✅ 已同步到雲端";
+  } else if (!silent) {
+    const msg = result.reason === "network-error" ? "目前連不到網路，稍後會自動再試"
+      : result.reason === "nothing-to-sync" ? "目前沒有新進度需要同步"
+      : "同步失敗，稍後再試";
+    statusEl.textContent = msg;
+  }
+}
+
+// 💡 英文看打：點連結先跳「練習／測驗」選擇小視窗，不直接跳轉。
+// 要跳去哪個學號，直接從目前登入身分（loadActiveStudent）現讀，
+// 不用另外存變數，避免跟 showHub() 設定 hrefs 的邏輯重複、之後改壞。
+function openLookTypeChoice(evt) {
+  if (evt) evt.preventDefault();
+  document.getElementById("looktype-choice-modal").style.display = "flex";
+  return false;
+}
+
+function closeLookTypeChoice() {
+  document.getElementById("looktype-choice-modal").style.display = "none";
+}
+
+function launchLookType(mode) {
+  closeLookTypeChoice();
+  const identity = loadActiveStudent();
+  const suffix = encodeURIComponent(identity ? identity.studentNumber : "");
+  window.location.href = `${LOOK_TYPE_URL}?student=${suffix}&mode=${mode}`;
+}
+// 💡 打字賽車：跟英文看打一樣，先跳「個人賽／班級賽」選擇小視窗再跳轉
+function openRaceChoice(evt) {
+  if (evt) evt.preventDefault();
+  document.getElementById("race-choice-modal").style.display = "flex";
+  return false;
+}
+
+function closeRaceChoice() {
+  document.getElementById("race-choice-modal").style.display = "none";
+}
+
+function launchRace(mode) {
+  closeRaceChoice();
+  const identity = loadActiveStudent();
+  const suffix = encodeURIComponent(identity ? identity.studentNumber : "");
+  const url = mode === "class" ? "./CarRace/typing-race-class.html" : "./CarRace/typing-race-solo.html";
+  window.location.href = `${url}?student=${suffix}`;
+}
+
+
+function showLoginForm() {
+  document.getElementById("hubView").classList.remove("active");
+  document.getElementById("loginView").style.display = "block";
+  document.getElementById("codeInput").value = "";
+  setStatus("");
+  document.getElementById("btnLogin").disabled = false;
+}
+
+document.getElementById("btnLogin").addEventListener("click", doLogin);
+document.getElementById("codeInput").addEventListener("keydown", (e) => {
+  if (e.key === "Enter") doLogin();
+});
+// 💡 換人登入 = 這個學生的登出動作。在清掉本機身分之前，先把這位學生
+// 最新的存檔/待同步紀錄同步到雲端一次，避免「忘記按立即同步就走人」
+// 導致這幾局賺到的代幣沒同步到。同步本身有自己的錯誤處理（見
+// keyagentCloudSyncNow），這裡不論成功與否都會照常換人登入，不會卡住。
+document.getElementById("btnSwitchUser").addEventListener("click", async () => {
+  const btn = document.getElementById("btnSwitchUser");
+  const originalLabel = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = "同步中，請稍候…";
+  if (typeof keyagentCloudSyncNow === "function") {
+    await keyagentCloudSyncNow();
+  }
+  localStorage.removeItem(ACTIVE_STUDENT_KEY);
+  showLoginForm();
+  btn.disabled = false;
+  btn.textContent = originalLabel;
+});
+document.getElementById("btnSyncNow").addEventListener("click", () => runCloudSync(false));
+
+// 💡 防止學生直接關分頁/關瀏覽器（沒點「換人登入」）就走人：只要選單頁還
+// 開著（代表已登入），離開頁面前用 sendBeacon 盡力送一次同步。pagehide 在
+// 分頁被關閉、換頁、甚至手機切到背景時都會觸發，比 beforeunload 更可靠。
+window.addEventListener("pagehide", () => {
+  const hubActive = document.getElementById("hubView").classList.contains("active");
+  if (hubActive && typeof keyagentCloudSyncBeacon === "function") {
+    keyagentCloudSyncBeacon();
+  }
+});
+
+// 如果之前已經登入過（同一台裝置沒登出），直接跳到選單，不用重打一次學號
+(function restoreSession() {
+  const existing = loadActiveStudent();
+  if (existing && existing.studentNumber) {
+    showHub(existing);
+  }
+})();
+
+/* ============================================================
+   🥚 寵物養成區（心靈戰寵）—— login.html 只是入口
+   實際功能（開蛋、餵食、復活、封存、英雄殿堂）都在 pet/pet-view.html，
+   這裡只負責：(1) 顯示目前 GBit 餘額 (2) 把連結網址帶上 ?student=學號。
+   存檔讀取沿用 pet-engine.js 提供的 petLoadSave()，讀了就好，不寫入。
+   ============================================================ */
+function petUpdateZoneEntry() {
+  const identity = loadActiveStudent();
+  const studentNumber = identity ? identity.studentNumber : null;
+  const zoneLink = document.getElementById("petZone");
+  if (!studentNumber || typeof petLoadSave !== "function") return;
+  zoneLink.href = `./pet/pet-view.html?student=${encodeURIComponent(studentNumber)}`;
+  const save = petLoadSave(studentNumber);
+  document.getElementById("petGbitVal").textContent = save.gbit || 0;
+}
+</script>
+
+</body>
+</html>
