@@ -2,15 +2,16 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>乘法極速跑酷</title>
-    <script src="./sync-client.js"></script>
     <style>
-        /* ================= 遊戲全域與字體 ================= */
-        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@700;900&family=Noto+Sans+TC:wght@700;900&display=swap');
-        
-        * { box-sizing: border-box; user-select: none; }
-
+        :root {
+            --primary-color: #ffd700;
+            --bg-color: #1a1a2e;
+            --text-color: #fff;
+            --danger-color: #ff3366;
+            --success-color: #00ffcc;
+        }
 
         body {
             margin: 0;
@@ -34,12 +35,6 @@
             border-radius: 10px;
             box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
             overflow: hidden;
-
-	    /* 🚀 新增手機端自適應縮放核心 CSS */
-            transform: scale(var(--scale, 1));
-            transform-origin: center center;
-            flex-shrink: 0; /* 防止被 flex 壓縮變形 */
-
         }
 
         /* 背景與環境 */
@@ -246,10 +241,6 @@
 <body>
 
 <div id="game-container">
-    <!-- 💰 代幣餘額徽章：兩個畫面都看得到，沒登入學號時會自動隱藏 -->
-    <div id="gbit-badge" style="position:absolute; top:12px; right:12px; z-index:20; background:rgba(255,255,255,0.92); padding:6px 16px; border-radius:20px; font-weight:900; color:#8E44AD; box-shadow:0 4px 10px rgba(0,0,0,0.2); font-size:16px;">
-        💰 <span id="gbit-display">0</span>
-    </div>
     <!-- 遊戲場景 -->
     <div id="environment"></div>
     <div class="speed-lines" id="speed-lines"></div>
@@ -551,145 +542,7 @@
             nextQuestion();
         }
     }
-// ================= 每大關背景音樂 =================
-    // 目前 5 大關先全部共用同一首（Eric 之後上傳新曲目時，把對應地形 id
-    // 的路徑換成新檔名即可，不用改程式碼其他地方）。
-    const TERRAIN_MUSIC = {
-        1: "./audio/terrain-1.mp3",
-        2: "./audio/terrain-1.mp3", // 🔶 預留位置，之後換成地形二專屬曲目
-        3: "./audio/terrain-1.mp3", // 🔶 預留位置，之後換成地形三專屬曲目
-        4: "./audio/terrain-1.mp3", // 🔶 預留位置，之後換成地形四專屬曲目
-        5: "./audio/terrain-1.mp3"  // 🔶 預留位置，之後換成地形五專屬曲目
-    };
 
-    const bgmAudio = new Audio();
-    bgmAudio.loop = true;
-    bgmAudio.volume = 0.45;
-    let currentBgmTerrain = null;
-
-    function playTerrainMusic(terrainId) {
-        const src = TERRAIN_MUSIC[terrainId];
-        if (!src) return;
-        if (currentBgmTerrain !== terrainId) {
-            bgmAudio.src = src;
-            currentBgmTerrain = terrainId;
-        }
-        // 瀏覽器的自動播放限制：一定要在使用者點擊之後呼叫才會真的出聲，
-        // 這裡都是從點擊事件（選關卡/進入浮空島）觸發，所以沒問題；
-        // 萬一被擋下來，安靜失敗就好，不影響遊戲進行。
-        bgmAudio.play().catch(() => {});
-    }
-
-    function stopMusic() {
-        bgmAudio.pause();
-        currentBgmTerrain = null;
-    }
-
-    // ================= 按鈕音效 =================
-    // 目前先用瀏覽器內建的音訊功能做一個簡單的「嗶」聲當按鈕音效，
-    // 如果之後想換成真正錄好的音效檔，跟我說一聲，我再幫忙換掉這個函式。
-    let clickAudioCtx = null;
-    function playClickSound() {
-        try {
-            clickAudioCtx = clickAudioCtx || new (window.AudioContext || window.webkitAudioContext)();
-            const osc = clickAudioCtx.createOscillator();
-            const gain = clickAudioCtx.createGain();
-            osc.type = "square";
-            osc.frequency.value = 880;
-            gain.gain.setValueAtTime(0.12, clickAudioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.001, clickAudioCtx.currentTime + 0.12);
-            osc.connect(gain).connect(clickAudioCtx.destination);
-            osc.start();
-            osc.stop(clickAudioCtx.currentTime + 0.12);
-        } catch (e) { /* 舊瀏覽器沒有 Web Audio API 就安靜跳過 */ }
-    }
-    // 所有按鈕跟關卡節點統一在這裡綁音效，不用每個按鈕各自加
-    document.addEventListener("click", function (e) {
-        if (e.target.closest && e.target.closest("button, .stage-node")) playClickSound();
-    }, true);
-
-    // ================= 學號登入串接 =================
-    // 跟塔防/ETP/看打共用同一組登入身分（login.html 存進 localStorage 的
-    // "keyagent_active_student"），這樣進度跟代幣才能記在同一個學生名下、
-    // 也才能被 sync-client.js 一起同步到雲端。
-    const studentNumber = (typeof keyagentGetActiveStudentNumber === 'function')
-        ? keyagentGetActiveStudentNumber() : null;
-
-    function loadSharedSave() {
-        if (!studentNumber || typeof keyagentSaveKeyFor !== 'function') return {};
-        try {
-            const raw = localStorage.getItem(keyagentSaveKeyFor(studentNumber));
-            return raw ? JSON.parse(raw) : {};
-        } catch (e) { return {}; }
-    }
-
-    function writeSharedSave(save) {
-        if (!studentNumber || typeof keyagentSaveKeyFor !== 'function') return;
-        save.lastModified = Date.now();
-        try { localStorage.setItem(keyagentSaveKeyFor(studentNumber), JSON.stringify(save)); } catch (e) {}
-    }
-
-    // 玩家關卡進度：放在共用存檔的 additionHero 欄位下，
-    // 跟塔防(towerDefense)、ETP(etp)、看打(lookType) 各自獨立、互不覆蓋。
-    let sharedSave = loadSharedSave();
-    let playerProgress = (sharedSave.additionHero && sharedSave.additionHero.stages)
-        ? sharedSave.additionHero.stages
-        : { "1-1": { unlocked: true, stars: 0 } };
-    if (!playerProgress["1-1"]) playerProgress["1-1"] = { unlocked: true, stars: 0 };
-
-    function saveProgress() {
-        sharedSave = loadSharedSave(); // 先讀最新的，避免蓋掉存檔裡其他系統剛寫入的資料
-        sharedSave.additionHero = { stages: playerProgress };
-        writeSharedSave(sharedSave);
-    }
-
-    // 過關發代幣：只在「星等進步」時發（見 endGame），避免反覆打同一關無限刷代幣。
-    // 規則：每提升 1 顆星 = 2 GBit。
-    function awardTokens(amount) {
-        if (amount <= 0) return;
-        sharedSave = loadSharedSave();
-        sharedSave.gbit = (sharedSave.gbit || 0) + amount;
-        sharedSave.gbitEarnedLifetime = (sharedSave.gbitEarnedLifetime || 0) + amount;
-        writeSharedSave(sharedSave);
-        updateGbitDisplay();
-
-        // 排進待同步佇列，讓老師電腦之後能把這筆紀錄收進校內資料庫；
-        // 沒設定雲端中繼站或離線時，這兩個呼叫都會安靜跳過，不影響遊戲。
-        if (typeof keyagentQueuePendingAttempt === 'function') {
-            keyagentQueuePendingAttempt('additionHero', {
-                stageId: currentStageObj ? currentStageObj.id : null,
-                stars: (currentStageObj && playerProgress[currentStageObj.id]) ? playerProgress[currentStageObj.id].stars : null,
-                tokensEarned: amount,
-                attemptedAt: Date.now()
-            });
-        }
-        if (typeof keyagentCloudSyncNow === 'function') {
-            keyagentCloudSyncNow();
-        }
-    }
-
-    function updateGbitDisplay() {
-        const el = document.getElementById('gbit-display');
-        if (!el) return;
-        el.innerText = (loadSharedSave().gbit) || 0;
-    }
-
-     // 沒有登入學號就不能玩：把開始畫面換成提示，引導回登入頁，
-    // 避免「沒登入也能玩，但進度存不進共用存檔」讓學生白練習。
-    if (!studentNumber) {
-        document.getElementById('gbit-badge').style.display = 'none';
-        const startBox = document.querySelector('#start-screen .modal-box');
-        if (startBox) {
-            startBox.innerHTML = `
-                <h1 style="color:#2C3E50; font-size: 48px;">加法勇者傳說</h1>
-                <p style="color:#E74C3C; font-weight:900; font-size: 22px;">⚠️ 還沒有登入學號，無法紀錄進度與代幣。</p>
-                <p>請先回登入頁輸入學號，再從「數學科」進入這個遊戲喔！</p>
-                <button onclick="location.href='./login.html'">回登入頁</button>
-            `;
-        }
-    } else {
-        updateGbitDisplay();
-    }
     function levelComplete() {
         msgTitle.innerText = "場地突破！";
         msgTitle.style.color = "var(--success-color)";
@@ -717,55 +570,6 @@
             msgDesc.innerHTML = `勇者的護甲破裂，倒在了第 ${currentLevel + 1} 關...<br>最終分數：${score}`;
         }
     }
- <!-- 🚀 手機自動等比例縮放＋防止虛擬鍵盤遮擋腳本 -->
-        function resizeGame() {
-            const container = document.getElementById('game-container');
-            if (!container) return;
-
-            const designWidth = 1000;
-            const designHeight = 700;
-
-            // 關鍵修改：優先使用 visualViewport 取得扣除鍵盤後的「真正可視寬高」
-            let windowWidth = window.innerWidth;
-            let windowHeight = window.innerHeight;
-            
-            if (window.visualViewport) {
-                windowWidth = window.visualViewport.width;
-                windowHeight = window.visualViewport.height;
-            }
-
-            const scaleX = windowWidth / designWidth;
-            const scaleY = windowHeight / designHeight;
-
-            // 保持等比例縮放
-            const scale = Math.min(scaleX, scaleY);
-
-            container.style.setProperty('--scale', scale);
-            
-            // 修正 iOS 在鍵盤彈出時會亂滾動網頁的 Bug
-            window.scrollTo(0, 0);
-        }
-
-        // 監聽所有尺寸變動事件（包含手機鍵盤彈出）
-        window.addEventListener('resize', resizeGame);
-        window.addEventListener('load', resizeGame);
-        
-        if (window.visualViewport) {
-            window.visualViewport.addEventListener('resize', resizeGame);
-            window.visualViewport.addEventListener('scroll', resizeGame);
-        }
-
-        // 當輸入框失去焦點時，確保畫面完美歸位
-        document.addEventListener('focusout', () => {
-            setTimeout(() => {
-                window.scrollTo(0, 0);
-                resizeGame();
-            }, 100);
-        });
-
-        // 初始化
-        resizeGame();
-
 </script>
 </body>
 </html>
