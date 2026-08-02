@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>完美「扣」除 - 魔法密室逃脫</title>
+    <style>
+        :root {
+            --primary-color: #ffd700;
+            --bg-color: #1a0b2e;
+            --panel-bg: rgba(30, 15, 50, 0.9);
+            --danger-color: #ff4444;
+            --text-light: #e0d8ea;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: radial-gradient(circle at center, #2a164b 0%, #0a0414 100%);
+            color: var(--text-light);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* 背景魔法光芒粒子效果的簡易替代 */
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(255, 215, 0, 0.05) 0%, transparent 20%),
+                radial-gradient(circle at 85% 30%, rgba(138, 43, 226, 0.1) 0%, transparent 25%);
+            z-index: -1;
+        }
+
+        #game-container {
+            width: 90%;
+            max-width: 600px;
+            background: var(--panel-bg);
+            border: 2px solid #5a3e85;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 0 30px rgba(90, 62, 133, 0.6), inset 0 0 20px rgba(0,0,0,0.8);
+            text-align: center;
+            position: relative;
+        }
+
+        h1 {
+            color: var(--primary-color);
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+            margin-top: 0;
+            letter-spacing: 2px;
+        }
+
+        .screen { display: none; }
+        .screen.active { display: block; }
+
+        .story-text {
+            font-size: 1.1em;
+            line-height: 1.6;
+            margin-bottom: 20px;
+            text-align: justify;
+        }
+
+        button {
+            background: linear-gradient(45deg, #4b2382, #7642c4);
+            color: white;
+            border: 1px solid #9c73e6;
+            padding: 10px 25px;
+            font-size: 1.2em;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 0 10px rgba(118, 66, 196, 0.5);
+        }
+
+        button:hover {
+            background: linear-gradient(45deg, #5c2c9e, #8b4ee6);
+            box-shadow: 0 0 20px rgba(139, 78, 230, 0.8);
+            transform: translateY(-2px);
+        }
+
+        /* 遊戲主畫面 */
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            font-size: 1.2em;
+            font-weight: bold;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #5a3e85;
+        }
+
+        .timer {
+            color: var(--danger-color);
+            text-shadow: 0 0 8px rgba(255, 68, 68, 0.6);
+            font-size: 1.5em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .bomb-icon {
+            font-size: 1.2em;
+            animation: pulse 1s infinite alternate;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            100% { transform: scale(1.1); }
+        }
+
+        .obstacle-info {
+            color: #a78bfa;
+            font-size: 1.3em;
+            margin-bottom: 20px;
+        }
+
+        .math-problem {
+            font-size: 3em;
+            margin: 20px 0;
+            color: #fff;
+            text-shadow: 0 0 15px rgba(255, 255, 255, 0.4);
+            letter-spacing: 5px;
+        }
+
+        input[type="number"] {
+            font-size: 1.5em;
+            padding: 10px;
+            width: 150px;
+            text-align: center;
+            background: rgba(0, 0, 0, 0.5);
+            border: 2px solid #5a3e85;
+            color: white;
+            border-radius: 8px;
+            outline: none;
+        }
+        
+        input[type="number"]:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+        }
+
+        .items-container {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .item-slot {
+            width: 40px;
+            height: 40px;
+            border: 2px dashed #5a3e85;
+            border-radius: 5px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 0.8em;
+            color: #5a3e85;
+        }
+
+        .item-slot.filled {
+            border: 2px solid var(--primary-color);
+            background: rgba(255, 215, 0, 0.2);
+            color: var(--primary-color);
+            text-shadow: 0 0 5px var(--primary-color);
+        }
+
+        .feedback {
+            height: 24px;
+            margin-top: 15px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <!-- 開始畫面 -->
+    <div id="screen-intro" class="screen active">
+        <h1>完美「扣」除</h1>
+        <div class="story-text">
+            你是一名充滿極高智慧的14歲天才少年。穿著俐落的校服，手中緊握著寫滿數學公式的皮革筆記本。<br><br>
+            你被困在一座充滿魔法與未知機關的古老城堡中。空氣中飄浮著微光粒子，而唯一的逃生方法，就是運用你銳利的雙眼與無可匹敵的「減法」運算能力！<br><br>
+            <strong>規則：</strong>破解障礙物旁邊的定時炸彈！每次有 30 秒，答錯扣 5 秒。在每個區域成功計算 3 次，蒐集齊 3 樣逃離物品，即可前往下一個區域！
+        </div>
+        <button onclick="startGame()">開始逃脫</button>
+    </div>
+
+    <!-- 遊戲畫面 -->
+    <div id="screen-game" class="screen">
+        <div class="status-bar">
+            <div>區域: <span id="ui-level">1/10</span></div>
+            <div class="timer"><span class="bomb-icon">💣</span> <span id="ui-time">30</span>s</div>
+        </div>
+        
+        <div class="obstacle-info">
+            目前障礙：<span id="ui-obstacle" style="color: var(--primary-color);">鐵門</span><br>
+            <span style="font-size: 0.8em; color: #ccc;">目標：收集 3 個 <span id="ui-item-name">鐵門鑰匙</span></span>
+        </div>
+
+        <div class="math-problem" id="ui-problem">? - ? = </div>
+        
+        <div>
+            <input type="number" id="answer-input" placeholder="輸入答案" onkeypress="handleEnter(event)">
+            <button onclick="checkAnswer()" style="margin-left: 10px;">解除</button>
+        </div>
+
+        <div class="feedback" id="ui-feedback"></div>
+
+        <div class="items-container" id="ui-items">
+            <div class="item-slot">空</div>
+            <div class="item-slot">空</div>
+            <div class="item-slot">空</div>
+        </div>
+    </div>
+
+    <!-- 結束畫面 -->
+    <div id="screen-result" class="screen">
+        <h1 id="result-title"></h1>
+        <div class="story-text" id="result-msg"></div>
+        <button onclick="resetGame()">重新挑戰</button>
+    </div>
+</div>
+
+<script>
+    // 關卡設定：名稱、物品、[位數1, 位數2]
+    const levels = [
+        { obstacle: '鐵門', item: '鐵門鑰匙', digits: [1, 1] },
+        { obstacle: '房間', item: '板手', digits: [2, 1] },
+        { obstacle: '地窖', item: '指北針', digits: [2, 2] },
+        { obstacle: '迷宮', item: '斧頭', digits: [3, 1] },
+        { obstacle: '小花園', item: '剪草器', digits: [3, 2] },
+        { obstacle: '怪物區', item: '煙霧彈', digits: [3, 3] },
+        { obstacle: '火海', item: '防護衣', digits: [4, 1] },
+        { obstacle: '水牢', item: '氧氣筒', digits: [4, 2] },
+        { obstacle: '大廳', item: '鋼鐵舞鞋', digits: [4, 3] },
+        { obstacle: '城堡大門', item: '大門鑰匙', digits: [4, 4] }
+    ];
+
+    let currentLevelIdx = 0;
+    let itemsCollected = 0;
+    let timeLeft = 30;
+    let timerInterval = null;
+    let currentAnswer = 0;
+
+    function switchScreen(screenId) {
+        document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+        document.getElementById(screenId).classList.add('active');
+    }
+
+    function getRandomIntByDigits(digits) {
+        const min = Math.pow(10, digits - 1);
+        const max = Math.pow(10, digits) - 1;
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    function generateProblem() {
+        const levelData = levels[currentLevelIdx];
+        let num1 = getRandomIntByDigits(levelData.digits[0]);
+        let num2 = getRandomIntByDigits(levelData.digits[1]);
+
+        // 確保結果不為負數
+        if (num1 < num2) {
+            let temp = num1;
+            num1 = num2;
+            num2 = temp;
+        }
+
+        currentAnswer = num1 - num2;
+        document.getElementById('ui-problem').innerText = `${num1} - ${num2} =`;
+        document.getElementById('answer-input').value = '';
+        document.getElementById('answer-input').focus();
+    }
+
+    function updateUI() {
+        const levelData = levels[currentLevelIdx];
+        document.getElementById('ui-level').innerText = `${currentLevelIdx + 1}/${levels.length}`;
+        document.getElementById('ui-obstacle').innerText = levelData.obstacle;
+        document.getElementById('ui-item-name').innerText = levelData.item;
+        
+        // 更新物品槽
+        const slots = document.getElementById('ui-items').children;
+        for (let i = 0; i < 3; i++) {
+            if (i < itemsCollected) {
+                slots[i].className = 'item-slot filled';
+                slots[i].innerText = '取得';
+            } else {
+                slots[i].className = 'item-slot';
+                slots[i].innerText = '空';
+            }
+        }
+    }
+
+    function startTimer() {
+        clearInterval(timerInterval);
+        timeLeft = 30;
+        document.getElementById('ui-time').innerText = timeLeft;
+        
+        timerInterval = setInterval(() => {
+            timeLeft--;
+            document.getElementById('ui-time').innerText = timeLeft;
+            if (timeLeft <= 0) {
+                gameOver(false);
+            }
+        }, 1000);
+    }
+
+    function startGame() {
+        currentLevelIdx = 0;
+        itemsCollected = 0;
+        switchScreen('screen-game');
+        setupLevel();
+    }
+
+    function setupLevel() {
+        itemsCollected = 0;
+        updateUI();
+        startTimer(); // 每題重新給30秒
+        generateProblem();
+        showFeedback("炸彈倒數開始！", "#a78bfa");
+    }
+
+    function checkAnswer() {
+        const input = document.getElementById('answer-input').value;
+        if (input === "") return;
+
+        if (parseInt(input) === currentAnswer) {
+            itemsCollected++;
+            showFeedback("正確！獲得物品！", "#00ff00");
+            
+            if (itemsCollected >= 3) {
+                currentLevelIdx++;
+                if (currentLevelIdx >= levels.length) {
+                    gameOver(true); // 通關
+                } else {
+                    showFeedback(`突破 ${levels[currentLevelIdx-1].obstacle}！前往下一區！`, "var(--primary-color)");
+                    setTimeout(() => {
+                        setupLevel();
+                    }, 1500);
+                }
+            } else {
+                updateUI();
+                startTimer(); // 下一題重置時間
+                generateProblem();
+            }
+        } else {
+            timeLeft -= 5;
+            if (timeLeft <= 0) timeLeft = 0;
+            document.getElementById('ui-time').innerText = timeLeft;
+            showFeedback("錯誤！時間減少 5 秒！", "var(--danger-color)");
+            
+            // 視覺震動效果
+            const container = document.getElementById('game-container');
+            container.style.transform = "translateX(-10px)";
+            setTimeout(() => container.style.transform = "translateX(10px)", 50);
+            setTimeout(() => container.style.transform = "translateX(-10px)", 100);
+            setTimeout(() => container.style.transform = "translateX(0)", 150);
+            
+            document.getElementById('answer-input').value = '';
+            
+            if (timeLeft <= 0) {
+                gameOver(false);
+            }
+        }
+    }
+
+    function handleEnter(e) {
+        if (e.key === 'Enter') {
+            checkAnswer();
+        }
+    }
+
+    function showFeedback(msg, color) {
+        const fb = document.getElementById('ui-feedback');
+        fb.innerText = msg;
+        fb.style.color = color;
+    }
+
+    function gameOver(isWin) {
+        clearInterval(timerInterval);
+        switchScreen('screen-result');
+        const title = document.getElementById('result-title');
+        const msg = document.getElementById('result-msg');
+
+        if (isWin) {
+            title.innerText = "逃脫成功！";
+            title.style.color = "var(--primary-color)";
+            msg.innerHTML = "你推開了城堡大門，陽光灑在你俊俏自信的臉龐上。<br>你拍了拍身上的灰塵，嘴角揚起一抹知性的微笑。筆記本上的數學公式，再次證明了智慧是打破一切魔法與困境的最強武器！";
+        } else {
+            title.innerText = "Game Over (炸彈爆炸)";
+            title.style.color = "var(--danger-color)";
+            msg.innerHTML = "「轟隆！」<br>炸彈爆炸，倒數歸零。<br>強烈的衝擊波吞噬了周圍...你的計算速度還差那麼一點點，下次再來挑戰吧！";
+        }
+    }
+
+    function resetGame() {
+        switchScreen('screen-intro');
+    }
+</script>
+</body>
+</html>
