@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>乘法極速跑酷</title>
+    <script src="./sync-client.js"></script>
+    <style>
+        /* ================= 遊戲全域與字體 ================= */
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@700;900&family=Noto+Sans+TC:wght@700;900&display=swap');
+        
+        * { box-sizing: border-box; user-select: none; }
+
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #000;
+            color: var(--text-color);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        #game-container {
+            position: relative;
+            width: 800px;
+            height: 600px;
+            background: var(--bg-color);
+            border: 4px solid var(--primary-color);
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+            overflow: hidden;
+
+	    /* 🚀 新增手機端自適應縮放核心 CSS */
+            transform: scale(var(--scale, 1));
+            transform-origin: center center;
+            flex-shrink: 0; /* 防止被 flex 壓縮變形 */
+
+        }
+
+        /* 背景與環境 */
+        #environment {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 200%;
+            height: 100%;
+            background: linear-gradient(to bottom, #2b5876, #4e4376);
+            z-index: 1;
+            transition: background 1s ease;
+        }
+
+        .speed-lines {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: repeating-linear-gradient(90deg, transparent 0%, transparent 10%, rgba(255,255,255,0.1) 10.5%, transparent 11%);
+            background-size: 200% 100%;
+            animation: moveLines 1s linear infinite;
+            z-index: 2;
+        }
+
+        @keyframes moveLines {
+            0% { background-position: 100% 0; }
+            100% { background-position: 0 0; }
+        }
+
+        /* 玩家角色 */
+        #player {
+            position: absolute;
+            bottom: 50px;
+            left: 50px;
+            width: 60px;
+            height: 100px;
+            z-index: 10;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+
+        /* 少年勇者與作戰服 */
+        .character {
+            width: 40px;
+            height: 80px;
+            background: linear-gradient(135deg, #ffffff, #d4af37);
+            border-radius: 20px 20px 5px 5px;
+            position: relative;
+            box-shadow: 0 0 15px var(--primary-color);
+            animation: bounce 0.5s alternate infinite;
+        }
+
+        /* 光束羽翼 */
+        .wings {
+            position: absolute;
+            top: 20px;
+            left: -30px;
+            width: 100px;
+            height: 40px;
+            background: radial-gradient(ellipse at center, rgba(0,255,204,0.8) 0%, rgba(0,0,0,0) 70%);
+            z-index: -1;
+            clip-path: polygon(0 50%, 50% 0, 100% 50%, 50% 100%);
+            animation: wingFlap 0.2s alternate infinite;
+        }
+
+        @keyframes bounce {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(-10px); }
+        }
+        @keyframes wingFlap {
+            0% { transform: scaleX(1); opacity: 0.8; }
+            100% { transform: scaleX(1.5); opacity: 0.4; }
+        }
+
+        /* UI 面板 */
+        #ui-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 20;
+            pointer-events: none;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .hud-top {
+            display: flex;
+            justify-content: space-between;
+            font-size: 20px;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px #000;
+        }
+
+        .hp-bar span {
+            color: var(--danger-color);
+            font-size: 24px;
+            margin-right: 5px;
+        }
+
+        #question-box {
+            position: absolute;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 40px;
+            font-weight: bold;
+            text-align: center;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 15px 30px;
+            border-radius: 10px;
+            border: 2px solid var(--success-color);
+            box-shadow: 0 0 20px var(--success-color);
+        }
+
+        /* 門/選項 */
+        #doors-container {
+            position: absolute;
+            bottom: 50px;
+            right: 50px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            pointer-events: auto;
+            z-index: 20;
+        }
+
+        .door {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid #fff;
+            padding: 15px 40px;
+            font-size: 24px;
+            font-weight: bold;
+            color: #fff;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            backdrop-filter: blur(5px);
+        }
+
+        .door:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.05) translateX(-10px);
+            box-shadow: 0 0 15px #fff;
+        }
+
+        /* 狀態效果 */
+        .invincible-aura {
+            box-shadow: 0 0 30px var(--primary-color), 0 0 50px #fff !important;
+        }
+
+        #message-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85);
+            z-index: 30;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            pointer-events: auto;
+        }
+
+        .btn {
+            margin-top: 20px;
+            padding: 10px 30px;
+            font-size: 20px;
+            background: var(--primary-color);
+            color: #000;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        
+        .btn:hover { background: #fff; }
+
+        #timer-bar-container {
+            position: absolute;
+            top: 160px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 400px;
+            height: 10px;
+            background: #333;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        #timer-bar {
+            height: 100%;
+            width: 100%;
+            background: var(--success-color);
+            transition: width 1s linear;
+        }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <!-- 💰 代幣餘額徽章：兩個畫面都看得到，沒登入學號時會自動隱藏 -->
+    <div id="gbit-badge" style="position:absolute; top:12px; right:12px; z-index:20; background:rgba(255,255,255,0.92); padding:6px 16px; border-radius:20px; font-weight:900; color:#8E44AD; box-shadow:0 4px 10px rgba(0,0,0,0.2); font-size:16px;">
+        💰 <span id="gbit-display">0</span>
+    </div>
+    <!-- 遊戲場景 -->
+    <div id="environment"></div>
+    <div class="speed-lines" id="speed-lines"></div>
+
+    <!-- 玩家 -->
+    <div id="player">
+        <div class="wings"></div>
+        <div class="character" id="character-sprite"></div>
+    </div>
+
+    <!-- UI -->
+    <div id="ui-layer">
+        <div class="hud-top">
+            <div>
+                <div>血量: <span class="hp-bar" id="hp-display">♥♥♥♥</span></div>
+                <div id="invincible-text" style="color: var(--primary-color); font-size: 16px; opacity: 0;">無敵星啟動中！</div>
+            </div>
+            <div>
+                <div id="level-display">關卡: 1 - 街道</div>
+                <div id="progress-display" style="font-size: 16px;">進度: 0/10 (準確率: 0%)</div>
+            </div>
+            <div>
+                <div id="score-display">分數: 0</div>
+                <div id="streak-display" style="color: var(--primary-color); font-size: 16px;">連續答對: 0</div>
+            </div>
+        </div>
+
+        <div id="question-box">準備開始...</div>
+        
+        <div id="timer-bar-container">
+            <div id="timer-bar"></div>
+        </div>
+    </div>
+
+    <!-- 選項門 -->
+    <div id="doors-container"></div>
+
+    <!-- 訊息覆蓋層 -->
+    <div id="message-overlay">
+        <h1 id="msg-title" style="color: var(--primary-color); font-size: 48px;">乘法極速跑酷</h1>
+        <p id="msg-desc" style="font-size: 18px; max-width: 600px; line-height: 1.5;">
+            扮演穿著輕量化魔導作戰服的跑酷勇者！<br>
+            躲避障礙、衝破極限！每題限時 60 秒。<br>
+            答對 10 題以上且準確率 80% 即可前往下一區域。<br>
+            連續答對 3 題獲得「無敵星」抵擋一次傷害！
+        </p>
+        <button class="btn" id="start-btn" onclick="startGame()">開始遊戲</button>
+    </div>
+</div>
+
+<script>
+    // 遊戲資料設定
+    const themes = [
+        { name: "街道", bg: "linear-gradient(to bottom, #141E30, #243B55)", d1: 1, d2: 1 },
+        { name: "森林", bg: "linear-gradient(to bottom, #134E5E, #71B280)", d1: 2, d2: 1 },
+        { name: "沙漠", bg: "linear-gradient(to bottom, #B79891, #94716B)", d1: 2, d2: 2 },
+        { name: "海底", bg: "linear-gradient(to bottom, #2b5876, #4e4376)", d1: 3, d2: 2 },
+        { name: "高原極地", bg: "linear-gradient(to bottom, #2980B9, #6DD5FA, #FFFFFF)", d1: 3, d2: 3 },
+        { name: "山洞", bg: "linear-gradient(to bottom, #232526, #414345)", d1: 4, d2: 1 },
+        { name: "公園", bg: "linear-gradient(to bottom, #56ab2f, #a8e063)", d1: 4, d2: 2 },
+        { name: "廢墟", bg: "linear-gradient(to bottom, #3E5151, #DECBA4)", d1: 4, d2: 3 },
+        { name: "火山", bg: "linear-gradient(to bottom, #cb2d3e, #ef473f)", d1: 4, d2: 4 },
+        { name: "雪地", bg: "linear-gradient(to bottom, #E0EAFC, #CFDEF3)", d1: 'random', d2: 'random' }
+    ];
+
+    // 遊戲狀態變數
+    let currentLevel = 0;
+    let hp = 4;
+    let score = 0;
+    let correctCount = 0;
+    let totalAttempted = 0;
+    let streak = 0;
+    let isInvincible = false;
+    
+    let currentAnswer = 0;
+    let timeLeft = 60;
+    let timerInterval;
+
+    // DOM 元素
+    const env = document.getElementById('environment');
+    const questionBox = document.getElementById('question-box');
+    const doorsContainer = document.getElementById('doors-container');
+    const hpDisplay = document.getElementById('hp-display');
+    const levelDisplay = document.getElementById('level-display');
+    const progressDisplay = document.getElementById('progress-display');
+    const scoreDisplay = document.getElementById('score-display');
+    const streakDisplay = document.getElementById('streak-display');
+    const invincibleText = document.getElementById('invincible-text');
+    const charSprite = document.getElementById('character-sprite');
+    const speedLines = document.getElementById('speed-lines');
+    const timerBar = document.getElementById('timer-bar');
+    
+    const msgOverlay = document.getElementById('message-overlay');
+    const msgTitle = document.getElementById('msg-title');
+    const msgDesc = document.getElementById('msg-desc');
+    const startBtn = document.getElementById('start-btn');
+
+    function startGame() {
+        currentLevel = 0;
+        hp = 4;
+        score = 0;
+        isInvincible = false;
+        streak = 0;
+        msgOverlay.style.display = 'none';
+        updateHUD();
+        initLevel();
+    }
+
+    function initLevel() {
+        correctCount = 0;
+        totalAttempted = 0;
+        
+        let theme = themes[currentLevel];
+        env.style.background = theme.bg;
+        levelDisplay.innerText = `關卡: ${currentLevel + 1} - ${theme.name}`;
+        
+        // 恢復正常速度特效
+        speedLines.style.animationDuration = '1s';
+        
+        updateHUD();
+        nextQuestion();
+    }
+
+    function getNumberByDigits(digits) {
+        if (digits === 'random') {
+            digits = Math.floor(Math.random() * 4) + 1;
+        }
+        let min = Math.pow(10, digits - 1);
+        let max = Math.pow(10, digits) - 1;
+        if (digits === 1) min = 1; 
+        
+        let num = Math.floor(Math.random() * (max - min + 1)) + min;
+        return Math.random() < 0.5 ? num : -num; // 正負隨機
+    }
+
+    function nextQuestion() {
+        clearInterval(timerInterval);
+        timeLeft = 60;
+        updateTimerUI();
+
+        let theme = themes[currentLevel];
+        let num1 = getNumberByDigits(theme.d1);
+        let num2 = getNumberByDigits(theme.d2);
+        
+        currentAnswer = num1 * num2;
+        
+        // 顯示題目 (若為負數加上括號確保數學式美觀)
+        let strNum1 = num1 < 0 ? `(${num1})` : num1;
+        let strNum2 = num2 < 0 ? `(${num2})` : num2;
+        questionBox.innerText = `${strNum1} × ${strNum2} = ?`;
+
+        generateDoors(currentAnswer);
+
+        // 開始倒數
+        timerInterval = setInterval(() => {
+            timeLeft--;
+            updateTimerUI();
+            if (timeLeft <= 0) {
+                handleAnswer(null); // 超時視同錯誤
+            }
+        }, 1000);
+    }
+
+    function updateTimerUI() {
+        let percentage = (timeLeft / 60) * 100;
+        timerBar.style.width = percentage + '%';
+        if (timeLeft <= 10) {
+            timerBar.style.background = 'var(--danger-color)';
+        } else {
+            timerBar.style.background = 'var(--success-color)';
+        }
+    }
+
+    function generateDoors(correctAns) {
+        doorsContainer.innerHTML = '';
+        
+        // 生成錯誤選項
+        let options = [correctAns];
+        while(options.length < 3) {
+            // 隨機擾動產生錯誤答案
+            let offset = Math.floor(Math.random() * 20) + 1;
+            let fake = correctAns + (Math.random() < 0.5 ? offset : -offset);
+            // 或者顛倒正負
+            if (Math.random() < 0.3) fake = -correctAns; 
+            
+            if (!options.includes(fake)) {
+                options.push(fake);
+            }
+        }
+
+        // 打亂順序
+        options.sort(() => Math.random() - 0.5);
+
+        options.forEach(opt => {
+            let btn = document.createElement('div');
+            btn.className = 'door';
+            btn.innerText = opt;
+            btn.onclick = () => handleAnswer(opt);
+            doorsContainer.appendChild(btn);
+        });
+    }
+
+    function handleAnswer(selectedVal) {
+        clearInterval(timerInterval);
+        totalAttempted++;
+        let timeTaken = 60 - timeLeft;
+
+        // 鎖定按鈕防止連點
+        Array.from(doorsContainer.children).forEach(btn => btn.style.pointerEvents = 'none');
+
+        if (selectedVal === currentAnswer) {
+            // 答對
+            correctCount++;
+            streak++;
+            
+            // 計算速度加成
+            let speedMultiplier = 1;
+            if (timeTaken <= 10) { speedMultiplier = 2; speedLines.style.animationDuration = '0.3s'; }
+            else if (timeTaken <= 20) { speedMultiplier = 1.5; speedLines.style.animationDuration = '0.6s'; }
+            else { speedLines.style.animationDuration = '1s'; }
+
+            let points = Math.floor(100 * speedMultiplier);
+            score += points;
+
+            // 無敵星判定
+            if (streak >= 3 && !isInvincible) {
+                isInvincible = true;
+                charSprite.classList.add('invincible-aura');
+                invincibleText.style.opacity = '1';
+            }
+
+            flashEffect('var(--success-color)');
+        } else {
+            // 答錯 / 超時
+            streak = 0;
+            
+            if (isInvincible) {
+                isInvincible = false;
+                charSprite.classList.remove('invincible-aura');
+                invincibleText.style.opacity = '0';
+                flashEffect('rgba(255, 255, 255, 0.8)'); // 護盾抵擋特效
+            } else {
+                hp--;
+                flashEffect('var(--danger-color)');
+            }
+        }
+
+        updateHUD();
+
+        setTimeout(() => {
+            checkProgress();
+        }, 800);
+    }
+
+    function flashEffect(color) {
+        let flash = document.createElement('div');
+        flash.style.position = 'absolute';
+        flash.style.top = '0'; flash.style.left = '0';
+        flash.style.width = '100%'; flash.style.height = '100%';
+        flash.style.backgroundColor = color;
+        flash.style.opacity = '0.5';
+        flash.style.zIndex = '50';
+        flash.style.pointerEvents = 'none';
+        flash.style.transition = 'opacity 0.5s ease';
+        document.getElementById('game-container').appendChild(flash);
+        
+        setTimeout(() => { flash.style.opacity = '0'; }, 100);
+        setTimeout(() => { flash.remove(); }, 600);
+    }
+
+    function updateHUD() {
+        hpDisplay.innerText = '♥'.repeat(hp);
+        scoreDisplay.innerText = `分數: ${score}`;
+        streakDisplay.innerText = `連續答對: ${streak}`;
+        
+        let acc = totalAttempted === 0 ? 0 : Math.round((correctCount / totalAttempted) * 100);
+        progressDisplay.innerText = `進度: ${correctCount}/10 (準確率: ${acc}%)`;
+    }
+
+    function checkProgress() {
+        if (hp <= 0) {
+            gameOver(false);
+            return;
+        }
+
+        let acc = (correctCount / totalAttempted);
+        
+        // 滿足過關條件
+        if (correctCount >= 10 && acc >= 0.8) {
+            currentLevel++;
+            if (currentLevel >= themes.length) {
+                gameOver(true); // 通關所有
+            } else {
+                levelComplete();
+            }
+        } else {
+            // 若失敗率過高導致無法挽回 (這部分做簡單處理，只要繼續答即可，也可以選擇一直跑)
+            // 這裡採用最簡單的：不管怎樣只要沒死就繼續給題目，直到達標。
+            nextQuestion();
+        }
+    }
+// ================= 每大關背景音樂 =================
+    // 目前 5 大關先全部共用同一首（Eric 之後上傳新曲目時，把對應地形 id
+    // 的路徑換成新檔名即可，不用改程式碼其他地方）。
+    const TERRAIN_MUSIC = {
+        1: "./audio/terrain-1.mp3",
+        2: "./audio/terrain-1.mp3", // 🔶 預留位置，之後換成地形二專屬曲目
+        3: "./audio/terrain-1.mp3", // 🔶 預留位置，之後換成地形三專屬曲目
+        4: "./audio/terrain-1.mp3", // 🔶 預留位置，之後換成地形四專屬曲目
+        5: "./audio/terrain-1.mp3"  // 🔶 預留位置，之後換成地形五專屬曲目
+    };
+
+    const bgmAudio = new Audio();
+    bgmAudio.loop = true;
+    bgmAudio.volume = 0.45;
+    let currentBgmTerrain = null;
+
+    function playTerrainMusic(terrainId) {
+        const src = TERRAIN_MUSIC[terrainId];
+        if (!src) return;
+        if (currentBgmTerrain !== terrainId) {
+            bgmAudio.src = src;
+            currentBgmTerrain = terrainId;
+        }
+        // 瀏覽器的自動播放限制：一定要在使用者點擊之後呼叫才會真的出聲，
+        // 這裡都是從點擊事件（選關卡/進入浮空島）觸發，所以沒問題；
+        // 萬一被擋下來，安靜失敗就好，不影響遊戲進行。
+        bgmAudio.play().catch(() => {});
+    }
+
+    function stopMusic() {
+        bgmAudio.pause();
+        currentBgmTerrain = null;
+    }
+
+    // ================= 按鈕音效 =================
+    // 目前先用瀏覽器內建的音訊功能做一個簡單的「嗶」聲當按鈕音效，
+    // 如果之後想換成真正錄好的音效檔，跟我說一聲，我再幫忙換掉這個函式。
+    let clickAudioCtx = null;
+    function playClickSound() {
+        try {
+            clickAudioCtx = clickAudioCtx || new (window.AudioContext || window.webkitAudioContext)();
+            const osc = clickAudioCtx.createOscillator();
+            const gain = clickAudioCtx.createGain();
+            osc.type = "square";
+            osc.frequency.value = 880;
+            gain.gain.setValueAtTime(0.12, clickAudioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, clickAudioCtx.currentTime + 0.12);
+            osc.connect(gain).connect(clickAudioCtx.destination);
+            osc.start();
+            osc.stop(clickAudioCtx.currentTime + 0.12);
+        } catch (e) { /* 舊瀏覽器沒有 Web Audio API 就安靜跳過 */ }
+    }
+    // 所有按鈕跟關卡節點統一在這裡綁音效，不用每個按鈕各自加
+    document.addEventListener("click", function (e) {
+        if (e.target.closest && e.target.closest("button, .stage-node")) playClickSound();
+    }, true);
+
+    // ================= 學號登入串接 =================
+    // 跟塔防/ETP/看打共用同一組登入身分（login.html 存進 localStorage 的
+    // "keyagent_active_student"），這樣進度跟代幣才能記在同一個學生名下、
+    // 也才能被 sync-client.js 一起同步到雲端。
+    const studentNumber = (typeof keyagentGetActiveStudentNumber === 'function')
+        ? keyagentGetActiveStudentNumber() : null;
+
+    function loadSharedSave() {
+        if (!studentNumber || typeof keyagentSaveKeyFor !== 'function') return {};
+        try {
+            const raw = localStorage.getItem(keyagentSaveKeyFor(studentNumber));
+            return raw ? JSON.parse(raw) : {};
+        } catch (e) { return {}; }
+    }
+
+    function writeSharedSave(save) {
+        if (!studentNumber || typeof keyagentSaveKeyFor !== 'function') return;
+        save.lastModified = Date.now();
+        try { localStorage.setItem(keyagentSaveKeyFor(studentNumber), JSON.stringify(save)); } catch (e) {}
+    }
+
+    // 玩家關卡進度：放在共用存檔的 additionHero 欄位下，
+    // 跟塔防(towerDefense)、ETP(etp)、看打(lookType) 各自獨立、互不覆蓋。
+    let sharedSave = loadSharedSave();
+    let playerProgress = (sharedSave.additionHero && sharedSave.additionHero.stages)
+        ? sharedSave.additionHero.stages
+        : { "1-1": { unlocked: true, stars: 0 } };
+    if (!playerProgress["1-1"]) playerProgress["1-1"] = { unlocked: true, stars: 0 };
+
+    function saveProgress() {
+        sharedSave = loadSharedSave(); // 先讀最新的，避免蓋掉存檔裡其他系統剛寫入的資料
+        sharedSave.additionHero = { stages: playerProgress };
+        writeSharedSave(sharedSave);
+    }
+
+    // 過關發代幣：只在「星等進步」時發（見 endGame），避免反覆打同一關無限刷代幣。
+    // 規則：每提升 1 顆星 = 2 GBit。
+    function awardTokens(amount) {
+        if (amount <= 0) return;
+        sharedSave = loadSharedSave();
+        sharedSave.gbit = (sharedSave.gbit || 0) + amount;
+        sharedSave.gbitEarnedLifetime = (sharedSave.gbitEarnedLifetime || 0) + amount;
+        writeSharedSave(sharedSave);
+        updateGbitDisplay();
+
+        // 排進待同步佇列，讓老師電腦之後能把這筆紀錄收進校內資料庫；
+        // 沒設定雲端中繼站或離線時，這兩個呼叫都會安靜跳過，不影響遊戲。
+        if (typeof keyagentQueuePendingAttempt === 'function') {
+            keyagentQueuePendingAttempt('additionHero', {
+                stageId: currentStageObj ? currentStageObj.id : null,
+                stars: (currentStageObj && playerProgress[currentStageObj.id]) ? playerProgress[currentStageObj.id].stars : null,
+                tokensEarned: amount,
+                attemptedAt: Date.now()
+            });
+        }
+        if (typeof keyagentCloudSyncNow === 'function') {
+            keyagentCloudSyncNow();
+        }
+    }
+
+    function updateGbitDisplay() {
+        const el = document.getElementById('gbit-display');
+        if (!el) return;
+        el.innerText = (loadSharedSave().gbit) || 0;
+    }
+
+     // 沒有登入學號就不能玩：把開始畫面換成提示，引導回登入頁，
+    // 避免「沒登入也能玩，但進度存不進共用存檔」讓學生白練習。
+    if (!studentNumber) {
+        document.getElementById('gbit-badge').style.display = 'none';
+        const startBox = document.querySelector('#start-screen .modal-box');
+        if (startBox) {
+            startBox.innerHTML = `
+                <h1 style="color:#2C3E50; font-size: 48px;">加法勇者傳說</h1>
+                <p style="color:#E74C3C; font-weight:900; font-size: 22px;">⚠️ 還沒有登入學號，無法紀錄進度與代幣。</p>
+                <p>請先回登入頁輸入學號，再從「數學科」進入這個遊戲喔！</p>
+                <button onclick="location.href='./login.html'">回登入頁</button>
+            `;
+        }
+    } else {
+        updateGbitDisplay();
+    }
+    function levelComplete() {
+        msgTitle.innerText = "場地突破！";
+        msgTitle.style.color = "var(--success-color)";
+        msgDesc.innerText = `準備進入下一個區域：${themes[currentLevel].name}`;
+        startBtn.innerText = "繼續衝刺";
+        startBtn.onclick = () => {
+            msgOverlay.style.display = 'none';
+            initLevel();
+        };
+        msgOverlay.style.display = 'flex';
+    }
+
+    function gameOver(isWin) {
+        msgOverlay.style.display = 'flex';
+        startBtn.innerText = "重新挑戰";
+        startBtn.onclick = startGame;
+
+        if (isWin) {
+            msgTitle.innerText = "🎉 跑酷大師 🎉";
+            msgTitle.style.color = "var(--primary-color)";
+            msgDesc.innerHTML = `你成功突破了所有 10 個極端環境！<br>最終分數：${score}`;
+        } else {
+            msgTitle.innerText = "Game Over";
+            msgTitle.style.color = "var(--danger-color)";
+            msgDesc.innerHTML = `勇者的護甲破裂，倒在了第 ${currentLevel + 1} 關...<br>最終分數：${score}`;
+        }
+    }
+ <!-- 🚀 手機自動等比例縮放＋防止虛擬鍵盤遮擋腳本 -->
+        function resizeGame() {
+            const container = document.getElementById('game-container');
+            if (!container) return;
+
+            const designWidth = 1000;
+            const designHeight = 700;
+
+            // 關鍵修改：優先使用 visualViewport 取得扣除鍵盤後的「真正可視寬高」
+            let windowWidth = window.innerWidth;
+            let windowHeight = window.innerHeight;
+            
+            if (window.visualViewport) {
+                windowWidth = window.visualViewport.width;
+                windowHeight = window.visualViewport.height;
+            }
+
+            const scaleX = windowWidth / designWidth;
+            const scaleY = windowHeight / designHeight;
+
+            // 保持等比例縮放
+            const scale = Math.min(scaleX, scaleY);
+
+            container.style.setProperty('--scale', scale);
+            
+            // 修正 iOS 在鍵盤彈出時會亂滾動網頁的 Bug
+            window.scrollTo(0, 0);
+        }
+
+        // 監聽所有尺寸變動事件（包含手機鍵盤彈出）
+        window.addEventListener('resize', resizeGame);
+        window.addEventListener('load', resizeGame);
+        
+        if (window.visualViewport) {
+            window.visualViewport.addEventListener('resize', resizeGame);
+            window.visualViewport.addEventListener('scroll', resizeGame);
+        }
+
+        // 當輸入框失去焦點時，確保畫面完美歸位
+        document.addEventListener('focusout', () => {
+            setTimeout(() => {
+                window.scrollTo(0, 0);
+                resizeGame();
+            }, 100);
+        });
+
+        // 初始化
+        resizeGame();
+
+</script>
+</body>
+</html>
