@@ -247,10 +247,11 @@ const PING_TIMEOUT_MS = 2000;
 const TOWER_DEFENSE_URL = "./Cells/鍵位特工-8線上功能.html";
 const ETP_URL = "./英打測試36線上功能.html";
 const LOOK_TYPE_URL = "./look-type.html";
-const God_URL = "./God/打字修仙傳-線上功能.html";
 // 數學科・加法勇者：跟其他遊戲一樣共用學號登入身分與存檔（見 sync-client.js），
 // 這裡一樣統一放常數方便之後改檔名/路徑。
 const ADDITION_HERO_URL = "./math/加法勇者4_0.html";
+const GOD_URL = "./God/打字修仙傳-線上功能.html";
+
 
 const ACTIVE_STUDENT_KEY = "keyagent_active_student";
 
@@ -396,6 +397,8 @@ function showHub(identity) {
   document.getElementById("linkTower").href = `${TOWER_DEFENSE_URL}?student=${suffix}`;
   document.getElementById("linkEtp").href = `${ETP_URL}?student=${suffix}`;
   document.getElementById("linkAdditionHero").href = `${ADDITION_HERO_URL}?student=${suffix}`;
+  document.getElementById("linkGod").href = `${GOD_URL}?student=${suffix}`;
+
   // linkLookType 不再直接用 href 跳轉，改成先跳「練習/測驗」選擇視窗（見 openLookTypeChoice）
 
   // 💡 雲端同步：有設定中繼站（sync-client.js 的 CLOUD_RELAY_URL）才顯示按鈕，
@@ -519,7 +522,7 @@ window.addEventListener("pagehide", () => {
 })();
 
 /* ============================================================
-   🥚 寵物養成區（心靈戰寵）—— login.html 只是入口
+   🥚 寵物養成區（心靈戰寵）—— index.html 只是入口
    實際功能（開蛋、餵食、復活、封存、英雄殿堂）都在 pet/pet-view.html，
    這裡只負責：(1) 顯示目前 GBit 餘額 (2) 把連結網址帶上 ?student=學號。
    存檔讀取沿用 pet-engine.js 提供的 petLoadSave()，讀了就好，不寫入。
