@@ -534,22 +534,6 @@
         el.innerText = (loadSharedSave().gbit) || 0;
     }
 
-     // 沒有登入學號就不能玩：把開始畫面換成提示，引導回登入頁，
-    // 避免「沒登入也能玩，但進度存不進共用存檔」讓學生白練習。
-    if (!studentNumber) {
-        document.getElementById('gbit-badge').style.display = 'none';
-        const startBox = document.querySelector('#start-screen .modal-box');
-        if (startBox) {
-            startBox.innerHTML = `
-                <h1 style="color:#2C3E50; font-size: 48px;">加法勇者傳說</h1>
-                <p style="color:#E74C3C; font-weight:900; font-size: 22px;">⚠️ 還沒有登入學號，無法紀錄進度與代幣。</p>
-                <p>請先回登入頁輸入學號，再從「數學科」進入這個遊戲喔！</p>
-                <button onclick="location.href='./index.html'">回登入頁</button>
-            `;
-        }
-    } else {
-        updateGbitDisplay();
-    }
 
     // ================= 戰鬥狀態變數 =================
     let currentStageObj = null;
