@@ -135,46 +135,18 @@
             color: #e74c3c;
         }
 
-        .battle-area {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-end;
-            margin-bottom: 30px;
-            border-bottom: 3px solid #eee;
-            padding-bottom: 20px;
-        }
-
-        .character {
-            width: 45%;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        .avatar {
-            font-size: 6rem;
-            height: 150px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.3s ease;
-        }
-
-        .char-desc {
-            background: #fff;
-            border: 2px dashed #ccc;
-            padding: 15px;
-            border-radius: 12px;
-            font-size: 0.85em;
-            text-align: left;
-            min-height: 100px;
+        #gameCanvas {
             width: 100%;
-            box-sizing: border-box;
-            transition: all 0.5s;
-        }
-
-        .target-desc-bg {
-            background-color: #f1f2f6;
+            max-width: 800px;
+            height: 400px;
+            background: #f8f9fa;
+            border-radius: var(--border-radius);
+            box-shadow: inset 0 4px 10px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+            border: 2px dashed #ddd;
         }
 
         /* 答題區 */
@@ -229,6 +201,11 @@
         .correct { color: #2ecc71; }
         .wrong { color: #e74c3c; }
 
+        .end-avatar {
+            font-size: 6rem;
+            margin: 20px 0;
+        }
+
     </style>
 </head>
 <body>
@@ -252,7 +229,7 @@
                 <p>深紫色波浪長髮，穿著午夜藍星空長裙。手持星寶石法杖，散發唯美星塵粒子。</p>
             </div>
         </div>
-        <button class="btn" id="start-btn" onclick="startGame()" disabled>開始清理！</button>
+        <button class="btn" id="start-btn" onclick="initGame()" disabled>開始清理！</button>
     </div>
 
     <!-- 遊戲畫面 -->
@@ -263,23 +240,8 @@
             <span class="guilt-bar">愧疚感: <span id="guilt-count">0</span>/5 💔</span>
         </div>
 
-        <div class="battle-area">
-            <!-- 玩家 -->
-            <div class="character">
-                <div class="avatar" id="player-avatar">🤴</div>
-                <div class="char-desc" id="player-desc">
-                    <b>【主角】</b><br>充滿正義感、身手敏捷。
-                </div>
-            </div>
-
-            <!-- 目標 -->
-            <div class="character">
-                <div class="avatar" id="target-avatar">🏚️</div>
-                <div class="char-desc target-desc-bg" id="target-desc">
-                    <b>【清理對象】</b><br>悲慘至極的流浪漢，皮膚混雜泥土，衣服全是補丁。
-                </div>
-            </div>
-        </div>
+        <!-- 遊戲主畫布 (Canvas) -->
+        <canvas id="gameCanvas" width="800" height="400"></canvas>
 
         <div class="math-section">
             <div class="progress-bar"><div class="progress-fill" id="clean-progress"></div></div>
@@ -296,7 +258,7 @@
     <!-- 結束畫面 -->
     <div id="game-over-screen" class="screen">
         <h1 id="end-title">遊戲結束</h1>
-        <div class="avatar" style="font-size: 6rem;" id="end-avatar">🎭</div>
+        <div class="end-avatar" id="end-avatar">🎭</div>
         <p id="end-desc" style="font-size: 1.2em; margin: 20px 0;"></p>
         <button class="btn" onclick="location.reload()">重新開始</button>
     </div>
@@ -321,15 +283,15 @@
     const profiles = {
         prince: {
             avatar: "🤴🗡️",
-            desc: "<b>【戰鬥型王子】</b><br>銀色長髮隨風飄逸，身穿白底藍紋皇家輕甲，手持發光晶體長劍，身邊環繞風元素魔法。"
+            shortDesc: "銀色長髮，白底藍紋皇家輕甲，晶體長劍與風魔法。"
         },
         princess: {
             avatar: "👸🪄",
-            desc: "<b>【星辰法師公主】</b><br>深紫色波浪長髮，穿著午夜藍星空長裙，手持星寶石法杖，身體周圍散落閃爍的星塵。"
+            shortDesc: "紫波浪長髮，午夜藍星空長裙，星寶石法杖與星塵。"
         },
         beggar: {
             avatar: "🧟‍♂️🏚️",
-            desc: "<b>【流浪漢】</b><br>臉頰凹陷、眼神空洞，頭髮像稻草打結。皮膚混雜泥土與傷疤，衣服破爛全是補丁。"
+            shortDesc: "皮膚混雜泥土與傷疤，衣服破爛全是補丁，身形骨瘦如柴。"
         }
     };
 
@@ -361,18 +323,190 @@
         document.getElementById(screenId).classList.add('active');
     }
 
-    // 遊戲流程
-    function startGame() {
+    // Canvas 變數與設定
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    let animationId = null;
+    let lastTime = 0;
+    let particles = [];
+
+    // 角色物件狀態
+    let playerObj = { 
+        x: 200, baseY: 150, y: 150, 
+        avatar: '', name: '', desc: '', 
+        state: 'idle', timer: 0 
+    };
+    
+    let targetObj = { 
+        x: 600, baseY: 150, y: 150, 
+        avatar: '', name: '', desc: '', 
+        state: 'idle', timer: 0 
+    };
+
+    // 粒子類別
+    class Particle {
+        constructor(x, y, type, color, vx, vy, life) {
+            this.x = x; this.y = y; this.type = type; this.color = color;
+            this.vx = vx; this.vy = vy; this.life = life; this.maxLife = life;
+        }
+        update() {
+            this.x += this.vx; 
+            this.y += this.vy;
+            if(this.type === 'sparkle' || this.type === 'dirt') {
+                this.vy += 0.5; // 模擬重力
+            }
+            this.life--;
+        }
+        draw(ctx) {
+            ctx.save();
+            ctx.globalAlpha = Math.max(0, this.life / this.maxLife);
+            ctx.fillStyle = this.color;
+            if (this.type === 'sparkle') {
+                ctx.font = '20px Arial';
+                ctx.fillText('✨', this.x, this.y);
+            } else if (this.type === 'wind') {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, 8, 0, Math.PI*2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.moveTo(this.x, this.y);
+                ctx.lineTo(this.x - 30, this.y);
+                ctx.strokeStyle = this.color;
+                ctx.lineWidth = 4;
+                ctx.stroke();
+            } else if (this.type === 'star') {
+                ctx.font = '24px Arial';
+                ctx.fillText('⭐', this.x, this.y);
+            } else if (this.type === 'dirt') {
+                ctx.fillStyle = '#654321';
+                ctx.fillRect(this.x, this.y, 10, 10);
+            }
+            ctx.restore();
+        }
+    }
+
+    function spawnParticles(x, y, type, color, count) {
+        for(let i=0; i<count; i++) {
+            let vx = (Math.random() - 0.5) * 15;
+            let vy = (Math.random() - 1) * 15;
+            particles.push(new Particle(x, y, type, color, vx, vy, 30 + Math.random()*20));
+        }
+    }
+
+    // 輔助函式：繪製多行文字
+    function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
+        let words = text.split('');
+        let line = '';
+        for(let n = 0; n < words.length; n++) {
+            let testLine = line + words[n];
+            let metrics = ctx.measureText(testLine);
+            let testWidth = metrics.width;
+            if (testWidth > maxWidth && n > 0) {
+                ctx.fillText(line, x, y);
+                line = words[n];
+                y += lineHeight;
+            } else {
+                line = testLine;
+            }
+        }
+        ctx.fillText(line, x, y);
+    }
+
+    // 遊戲主迴圈 Game Loop
+    function gameLoop(timestamp) {
+        let dt = timestamp - lastTime;
+        lastTime = timestamp;
+
+        // 清除畫布
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // 更新角色漂浮位置
+        playerObj.y = playerObj.baseY + Math.sin(timestamp / 300) * 10;
+        targetObj.y = targetObj.baseY + Math.sin(timestamp / 400 + 1) * 8;
+
+        // 繪製背景影子
+        ctx.fillStyle = 'rgba(0,0,0,0.1)';
+        ctx.beginPath();
+        ctx.ellipse(playerObj.x, playerObj.baseY + 60, 40, 10, 0, 0, Math.PI*2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.ellipse(targetObj.x, targetObj.baseY + 60, 40, 10, 0, 0, Math.PI*2);
+        ctx.fill();
+
+        // 處理玩家攻擊動畫
+        let px = playerObj.x;
+        if (playerObj.state === 'attack') {
+            px += Math.sin(playerObj.timer * Math.PI) * 40; 
+            playerObj.timer -= 0.05;
+            if (playerObj.timer <= 0) playerObj.state = 'idle';
+        }
+        
+        // 繪製玩家頭像與文字
+        ctx.font = '80px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(playerObj.avatar, px, playerObj.y);
+
+        ctx.font = 'bold 20px Noto Sans TC';
+        ctx.fillStyle = '#333';
+        ctx.fillText(`【${playerObj.name}】`, playerObj.x, playerObj.baseY + 110);
+        ctx.font = '14px Noto Sans TC';
+        ctx.fillStyle = '#666';
+        wrapText(ctx, playerObj.desc, playerObj.x, playerObj.baseY + 140, 220, 20);
+
+        // 處理目標受擊動畫
+        let tx = targetObj.x;
+        if (targetObj.state === 'hit' || targetObj.state === 'dirtier') {
+            tx += (Math.random() - 0.5) * 15; 
+            targetObj.timer -= 0.05;
+            if (targetObj.timer <= 0) targetObj.state = 'idle';
+        }
+
+        // 繪製目標頭像與文字
+        ctx.font = '80px Arial';
+        ctx.fillText(targetObj.avatar, tx, targetObj.y);
+
+        ctx.font = 'bold 20px Noto Sans TC';
+        ctx.fillStyle = '#333';
+        ctx.fillText(`【${targetObj.name}】`, targetObj.x, targetObj.baseY + 110);
+        ctx.font = '14px Noto Sans TC';
+        ctx.fillStyle = '#666';
+        wrapText(ctx, targetObj.desc, targetObj.x, targetObj.baseY + 140, 220, 20);
+
+        // 更新與繪製粒子
+        for (let i = particles.length - 1; i >= 0; i--) {
+            let p = particles[i];
+            p.update();
+            p.draw(ctx);
+            if (p.life <= 0) particles.splice(i, 1);
+        }
+
+        animationId = requestAnimationFrame(gameLoop);
+    }
+
+    function initGame() {
         switchScreen('game-screen');
         
-        // 設置玩家
-        document.getElementById('player-avatar').innerHTML = profiles[playerType].avatar;
-        document.getElementById('player-desc').innerHTML = profiles[playerType].desc;
-        
+        // 設置玩家畫布物件
+        if (playerType === 'prince') {
+            playerObj.avatar = profiles.prince.avatar;
+            playerObj.name = '戰鬥型王子';
+            playerObj.desc = profiles.prince.shortDesc;
+        } else {
+            playerObj.avatar = profiles.princess.avatar;
+            playerObj.name = '星辰法師公主';
+            playerObj.desc = profiles.princess.shortDesc;
+        }
+
         guilt = 0;
         currentLevelIdx = 0;
         updateGuiltUI();
         startLevel();
+
+        // 啟動 Canvas 迴圈
+        if (animationId) cancelAnimationFrame(animationId);
+        lastTime = performance.now();
+        animationId = requestAnimationFrame(gameLoop);
     }
 
     function startLevel() {
@@ -389,7 +523,7 @@
     function generateMathParams(dA, dB) {
         let minB = Math.pow(10, dB - 1);
         let maxB = Math.pow(10, dB) - 1;
-        if (dB === 1) minB = 2; // 盡量避免除以1，除非沒辦法
+        if (dB === 1) minB = 2; // 盡量避免除以1
         if (dA === 1 && dB === 1) minB = 1; 
 
         let b = Math.floor(Math.random() * (maxB - minB + 1)) + minB;
@@ -402,7 +536,6 @@
         let maxC = Math.floor(maxA / b);
 
         if (minC > maxC) {
-            // 重新生成
             return generateMathParams(dA, dB);
         }
 
@@ -447,17 +580,38 @@
             correctQ++;
             combo++;
             cleanness = Math.min(100, cleanness + 10);
-            msgEl.innerHTML = `<span class="correct">正確！移除了部分髒污！✨</span>`;
+            msgEl.innerHTML = `<span class="correct">正確！施放魔法，移除了部分髒污！✨</span>`;
+            
+            // 觸發畫布攻擊與受擊動畫
+            playerObj.state = 'attack';
+            playerObj.timer = 1.0;
+            
+            let projColor = playerType === 'prince' ? '#4facfe' : '#9b59b6';
+            let projType = playerType === 'prince' ? 'wind' : 'star';
+            particles.push(new Particle(playerObj.x + 40, playerObj.y, projType, projColor, 20, 0, 20));
+
+            setTimeout(() => {
+                targetObj.state = 'hit';
+                targetObj.timer = 1.0;
+                spawnParticles(targetObj.x, targetObj.y, 'sparkle', '#f1c40f', 15);
+            }, 300);
+
         } else {
             // 答錯
             combo = 0;
             cleanness = Math.max(0, cleanness - 10);
             guilt++;
             msgEl.innerHTML = `<span class="wrong">錯誤！魔法反噬，對象變得更髒了，愧疚感 +1 💔 (正解: ${currentAns})</span>`;
+            
+            // 觸發畫布變髒動畫
+            targetObj.state = 'dirtier';
+            targetObj.timer = 1.0;
+            spawnParticles(targetObj.x, targetObj.y, 'dirt', '#654321', 20);
+
             updateGuiltUI();
             
             if (guilt >= 5) {
-                gameOver(false);
+                setTimeout(() => gameOver(false), 1000);
                 return;
             }
         }
@@ -467,7 +621,7 @@
 
         // 判斷關卡是否結束
         if (combo >= 5 || currentQ >= 10) {
-            setTimeout(checkLevelResult, 1000);
+            setTimeout(checkLevelResult, 1500);
         } else {
             setTimeout(() => {
                 msgEl.innerText = '';
@@ -508,27 +662,26 @@
     }
 
     function updateTargetAppearance() {
-        let avatarEl = document.getElementById('target-avatar');
-        let descEl = document.getElementById('target-desc');
-        
         if (cleanness < 30) {
-            avatarEl.innerHTML = profiles.beggar.avatar;
-            descEl.innerHTML = profiles.beggar.desc;
-            descEl.style.borderColor = "#555";
+            targetObj.avatar = profiles.beggar.avatar;
+            targetObj.name = '流浪漢';
+            targetObj.desc = profiles.beggar.shortDesc;
         } else if (cleanness < 70) {
-            avatarEl.innerHTML = "👤🧹";
-            descEl.innerHTML = `<b>【清理中】</b><br>泥土與傷疤漸漸褪去，露出了乾淨的皮膚，破爛的衣服已經被魔法替換成整潔的平民服飾。`;
-            descEl.style.borderColor = "#3498db";
+            targetObj.avatar = "👤✨";
+            targetObj.name = '清理中...';
+            targetObj.desc = '泥土漸漸褪去，露出了乾淨的皮膚，換上了整潔的平民服飾。';
         } else {
-            avatarEl.innerHTML = profiles[targetType].avatar;
-            descEl.innerHTML = `<b>【即將恢復】</b><br>` + profiles[targetType].desc.replace(/【.*?】<br>/, '');
-            descEl.style.borderColor = "#f1c40f";
-            descEl.style.boxShadow = "0 0 15px #f1c40f";
+            let finalProfile = profiles[targetType];
+            targetObj.avatar = finalProfile.avatar;
+            targetObj.name = targetType === 'prince' ? '戰鬥型王子' : '星辰法師公主';
+            targetObj.desc = finalProfile.shortDesc;
         }
     }
 
     function gameOver(isWin) {
+        if (animationId) cancelAnimationFrame(animationId);
         switchScreen('game-over-screen');
+        
         if (isWin) {
             document.getElementById('end-title').innerText = "🎉 完美清'除' 🎉";
             document.getElementById('end-title').style.color = "#2ecc71";
