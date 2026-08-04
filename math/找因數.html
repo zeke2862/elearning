@@ -1,0 +1,642 @@
+
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>因數挑戰賽 🎯</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;600;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background: linear-gradient(45deg, #ff9a9e, #fecfef, #fecfef, #fad0c4);
+            background-size: 400% 400%;
+            animation: gradientShift 8s ease infinite;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .floating-shapes {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .shape {
+            position: absolute;
+            opacity: 0.6;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .shape:nth-child(1) { left: 10%; animation-delay: 0s; }
+        .shape:nth-child(2) { left: 20%; animation-delay: 1s; }
+        .shape:nth-child(3) { left: 30%; animation-delay: 2s; }
+        .shape:nth-child(4) { left: 40%; animation-delay: 3s; }
+        .shape:nth-child(5) { left: 50%; animation-delay: 4s; }
+        .shape:nth-child(6) { left: 60%; animation-delay: 5s; }
+        .shape:nth-child(7) { left: 70%; animation-delay: 0.5s; }
+        .shape:nth-child(8) { left: 80%; animation-delay: 1.5s; }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(100vh) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(180deg); }
+        }
+
+        .container {
+            position: relative;
+            z-index: 10;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .game-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 25px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            width: 100%;
+            max-width: 600px;
+            backdrop-filter: blur(10px);
+            border: 3px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #ff6b6b;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .question-container {
+            margin: 30px 0;
+            padding: 25px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 20px;
+            color: white;
+        }
+
+        .question-number {
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            opacity: 0.9;
+        }
+
+        .question {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .numbers-grid {
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            gap: 8px;
+            margin: 25px 0;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .number-btn {
+            padding: 10px 5px;
+            font-size: 1rem;
+            font-weight: 600;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: white;
+            color: #333;
+            min-height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .number-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            border-color: #4facfe;
+        }
+
+        .number-btn.selected {
+            background: linear-gradient(135deg, #4facfe, #00f2fe);
+            color: white;
+            border-color: #4facfe;
+            transform: scale(1.1);
+        }
+
+        .number-btn.correct {
+            background: linear-gradient(135deg, #56ab2f, #a8e6cf);
+            color: white;
+            border-color: #56ab2f;
+            animation: correctPulse 0.6s ease;
+        }
+
+        .number-btn.incorrect {
+            background: linear-gradient(135deg, #ff416c, #ff4b2b);
+            color: white;
+            border-color: #ff416c;
+            animation: shake 0.6s ease;
+        }
+
+        .number-btn.missed {
+            background: linear-gradient(135deg, #ffa726, #ffcc02);
+            color: white;
+            border-color: #ffa726;
+            animation: correctPulse 0.6s ease;
+        }
+
+        @keyframes correctPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        .start-btn, .next-btn, .restart-btn {
+            background: linear-gradient(135deg, #ff9a9e, #fecfef);
+            color: #333;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.3rem;
+            font-weight: 600;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+            margin: 20px 10px;
+        }
+
+        .start-btn:hover, .next-btn:hover, .restart-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .score-display {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #333;
+            margin: 20px 0;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .timer-display {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .award-container {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .award-emoji {
+            font-size: 5rem;
+            margin: 20px 0;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-20px); }
+            60% { transform: translateY(-10px); }
+        }
+
+        .award-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #ff6b6b;
+            margin: 20px 0;
+        }
+
+        .award-message {
+            font-size: 1.3rem;
+            color: #666;
+            margin: 15px 0;
+        }
+
+        .confetti {
+            position: fixed;
+            top: -10px;
+            left: 50%;
+            width: 10px;
+            height: 10px;
+            background: #ff6b6b;
+            animation: confetti-fall 3s linear infinite;
+        }
+
+        @keyframes confetti-fall {
+            to {
+                transform: translateY(100vh) rotate(360deg);
+            }
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .game-card {
+                padding: 25px;
+            }
+            
+            .title {
+                font-size: 2rem;
+            }
+            
+            .numbers-grid {
+                grid-template-columns: repeat(8, 1fr);
+                gap: 6px;
+            }
+            
+            .number-btn {
+                padding: 8px 4px;
+                font-size: 0.9rem;
+                min-height: 35px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="floating-shapes">
+        <div class="shape">🌟</div>
+        <div class="shape">🎈</div>
+        <div class="shape">🎯</div>
+        <div class="shape">🏆</div>
+        <div class="shape">⭐</div>
+        <div class="shape">🎊</div>
+        <div class="shape">🌈</div>
+        <div class="shape">🎁</div>
+    </div>
+
+    <div class="container">
+        <!-- 開始畫面 -->
+        <div id="startScreen" class="game-card">
+            <h1 class="title">🎯 因數挑戰賽 🎯</h1>
+            <p class="subtitle">準備好挑戰你的數學能力了嗎？</p>
+
+            <button class="start-btn" onclick="startGame()">🚀 開始挑戰</button>
+        </div>
+
+        <!-- 遊戲畫面 -->
+        <div id="gameScreen" class="game-card hidden">
+            <div class="score-display">
+                <div>
+                    <span>第 <span id="currentQuestion">1</span> 題 / 10</span>
+                    <span style="margin-left: 20px;">得分: <span id="score">0</span></span>
+                </div>
+                <div class="timer-display">
+                    ⏱️ <span id="timer">00:00</span>
+                </div>
+            </div>
+            
+            <div class="question-container">
+                <div class="question-number">請找出下列數字的所有因數：</div>
+                <div class="question" id="questionText">12 的因數有哪些？</div>
+            </div>
+
+            <div class="numbers-grid" id="numbersGrid">
+                <!-- 數字按鈕會動態生成 -->
+            </div>
+
+            <div style="margin: 20px 0;">
+                <p style="font-size: 1.1rem; color: #666; margin-bottom: 15px;">
+                    點選你認為是因數的數字，再點一次可以取消選擇
+                </p>
+                <button class="start-btn" id="submitBtn" onclick="submitAnswer()" style="display: none;">✅ 提交答案</button>
+                <button class="start-btn" id="retryBtn" onclick="retryQuestion()" style="display: none; background: linear-gradient(135deg, #ffa726, #ffcc02);">🔄 再試一次</button>
+                <button class="next-btn hidden" id="nextBtn" onclick="nextQuestion()">下一題 ➡️</button>
+            </div>
+        </div>
+
+        <!-- 結果畫面 -->
+        <div id="resultScreen" class="game-card hidden">
+            <div class="award-container">
+                <div class="award-emoji" id="awardEmoji">🏆</div>
+                <h2 class="award-title" id="awardTitle">恭喜完成挑戰！</h2>
+                <div class="award-message">
+                    你答對了 <span id="finalScore">0</span> 題！
+                </div>
+                <div class="award-message" id="awardMessage">你是因數大師！</div>
+                <button class="restart-btn" onclick="restartGame()">🔄 再玩一次</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 設計者資訊 -->
+    <div style="position: fixed; bottom: 5px; left: 50%; transform: translateX(-50%); background: rgba(255, 255, 255, 0.9); padding: 6px 20px; border-radius: 15px; font-size: 0.8rem; color: #666; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); z-index: 1000; white-space: nowrap;">
+        網頁設計者：桃園市大竹國小林芳全老師　｜　概念設計：台北市志清國小李衿綺老師
+    </div>
+
+    <script>
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let questions = [];
+        let answered = false;
+        let selectedNumbers = new Set();
+        let hasRetried = false;
+        let startTime = 0;
+        let timerInterval = null;
+        let totalTime = 0;
+
+        // 計時器功能
+        function startTimer() {
+            startTime = Date.now();
+            timerInterval = setInterval(updateTimer, 1000);
+        }
+
+        function updateTimer() {
+            const elapsed = Math.floor((Date.now() - startTime) / 1000);
+            const minutes = Math.floor(elapsed / 60);
+            const seconds = elapsed % 60;
+            document.getElementById('timer').textContent = 
+                `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        function stopTimer() {
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+                totalTime = Math.floor((Date.now() - startTime) / 1000);
+            }
+        }
+
+        function formatTime(seconds) {
+            const minutes = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${minutes}分${secs}秒`;
+        }
+
+        // 生成因數
+        function getFactors(num) {
+            const factors = [];
+            for (let i = 1; i <= num; i++) {
+                if (num % i === 0) {
+                    factors.push(i);
+                }
+            }
+            return factors;
+        }
+
+        // 生成題目
+        function generateQuestions() {
+            questions = [];
+            const usedNumbers = new Set();
+            
+            while (questions.length < 10) {
+                const num = Math.floor(Math.random() * 100) + 1; // 使用1-100的數字
+                if (usedNumbers.has(num)) continue;
+                usedNumbers.add(num);
+                
+                const correctFactors = getFactors(num);
+
+                questions.push({
+                    number: num,
+                    correctFactors: correctFactors
+                });
+            }
+        }
+
+        function startGame() {
+            generateQuestions();
+            currentQuestionIndex = 0;
+            score = 0;
+            totalTime = 0;
+            document.getElementById('startScreen').classList.add('hidden');
+            document.getElementById('gameScreen').classList.remove('hidden');
+            startTimer();
+            showQuestion();
+        }
+
+        function showQuestion() {
+            answered = false;
+            selectedNumbers.clear();
+            hasRetried = false;
+            const question = questions[currentQuestionIndex];
+            
+            document.getElementById('currentQuestion').textContent = currentQuestionIndex + 1;
+            document.getElementById('score').textContent = score;
+            document.getElementById('questionText').textContent = `${question.number} 的因數有哪些？`;
+            document.getElementById('nextBtn').classList.add('hidden');
+            document.getElementById('submitBtn').style.display = 'none';
+            document.getElementById('retryBtn').style.display = 'none';
+            
+            const numbersGrid = document.getElementById('numbersGrid');
+            numbersGrid.innerHTML = '';
+            
+            // 生成1-100的數字按鈕
+            for (let i = 1; i <= 100; i++) {
+                const button = document.createElement('button');
+                button.className = 'number-btn';
+                button.textContent = i;
+                button.onclick = () => toggleNumber(i, button);
+                numbersGrid.appendChild(button);
+            }
+        }
+
+        function toggleNumber(number, buttonElement) {
+            if (answered) return;
+            
+            if (selectedNumbers.has(number)) {
+                selectedNumbers.delete(number);
+                buttonElement.classList.remove('selected');
+            } else {
+                selectedNumbers.add(number);
+                buttonElement.classList.add('selected');
+            }
+            
+            // 顯示或隱藏提交按鈕
+            if (selectedNumbers.size > 0) {
+                document.getElementById('submitBtn').style.display = 'inline-block';
+            } else {
+                document.getElementById('submitBtn').style.display = 'none';
+            }
+        }
+
+        function submitAnswer() {
+            if (answered || selectedNumbers.size === 0) return;
+            answered = true;
+            
+            const question = questions[currentQuestionIndex];
+            const correctFactors = new Set(question.correctFactors);
+            
+            // 計算正確率
+            const selectedArray = Array.from(selectedNumbers);
+            const correctSelected = selectedArray.filter(num => correctFactors.has(num));
+            const incorrectSelected = selectedArray.filter(num => !correctFactors.has(num));
+            const missedFactors = question.correctFactors.filter(num => !selectedNumbers.has(num));
+            
+            // 標記所有按鈕
+            const allButtons = document.querySelectorAll('.number-btn');
+            allButtons.forEach(btn => {
+                btn.style.pointerEvents = 'none';
+                const number = parseInt(btn.textContent);
+                
+                if (correctFactors.has(number)) {
+                    if (selectedNumbers.has(number)) {
+                        btn.classList.add('correct'); // 正確選中
+                    } else {
+                        btn.classList.add('missed'); // 遺漏的正確答案
+                    }
+                } else if (selectedNumbers.has(number)) {
+                    btn.classList.add('incorrect'); // 錯誤選中
+                }
+            });
+            
+            // 計分：完全正確才得分
+            const isCorrect = incorrectSelected.length === 0 && missedFactors.length === 0;
+            if (isCorrect) {
+                score++;
+                document.getElementById('score').textContent = score;
+                setTimeout(() => {
+                    document.getElementById('nextBtn').classList.remove('hidden');
+                }, 2000);
+            } else {
+                // 答錯了，顯示再試一次按鈕（如果還沒重試過）
+                if (!hasRetried) {
+                    setTimeout(() => {
+                        document.getElementById('retryBtn').style.display = 'inline-block';
+                    }, 2000);
+                } else {
+                    setTimeout(() => {
+                        document.getElementById('nextBtn').classList.remove('hidden');
+                    }, 2000);
+                }
+            }
+            
+            document.getElementById('submitBtn').style.display = 'none';
+        }
+
+        function retryQuestion() {
+            hasRetried = true;
+            answered = false;
+            selectedNumbers.clear();
+            
+            document.getElementById('retryBtn').style.display = 'none';
+            document.getElementById('submitBtn').style.display = 'none';
+            
+            // 重置所有按鈕
+            const allButtons = document.querySelectorAll('.number-btn');
+            allButtons.forEach(btn => {
+                btn.style.pointerEvents = 'auto';
+                btn.classList.remove('correct', 'incorrect', 'missed', 'selected');
+            });
+        }
+
+        function nextQuestion() {
+            currentQuestionIndex++;
+            if (currentQuestionIndex >= questions.length) {
+                showResult();
+            } else {
+                showQuestion();
+            }
+        }
+
+        function showResult() {
+            stopTimer();
+            document.getElementById('gameScreen').classList.add('hidden');
+            document.getElementById('resultScreen').classList.remove('hidden');
+            document.getElementById('finalScore').textContent = score;
+            
+            let emoji, title, message;
+            if (score >= 9) {
+                emoji = '🏆';
+                title = '完美表現！';
+                message = `你是真正的因數大師！完成時間：${formatTime(totalTime)}`;
+                createConfetti();
+            } else if (score >= 7) {
+                emoji = '🥇';
+                title = '表現優秀！';
+                message = `你對因數很有概念！完成時間：${formatTime(totalTime)}`;
+            } else if (score >= 5) {
+                emoji = '🥈';
+                title = '不錯的成績！';
+                message = `繼續努力，你會更棒！完成時間：${formatTime(totalTime)}`;
+            } else {
+                emoji = '🥉';
+                title = '加油！';
+                message = `多練習就會進步的！完成時間：${formatTime(totalTime)}`;
+            }
+            
+            document.getElementById('awardEmoji').textContent = emoji;
+            document.getElementById('awardTitle').textContent = title;
+            document.getElementById('awardMessage').textContent = message;
+        }
+
+        function createConfetti() {
+            const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#feca57', '#ff9ff3'];
+            for (let i = 0; i < 50; i++) {
+                setTimeout(() => {
+                    const confetti = document.createElement('div');
+                    confetti.className = 'confetti';
+                    confetti.style.left = Math.random() * 100 + '%';
+                    confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                    confetti.style.animationDelay = Math.random() * 3 + 's';
+                    document.body.appendChild(confetti);
+                    
+                    setTimeout(() => {
+                        confetti.remove();
+                    }, 3000);
+                }, i * 100);
+            }
+        }
+
+        function restartGame() {
+            stopTimer();
+            document.getElementById('timer').textContent = '00:00';
+            document.getElementById('resultScreen').classList.add('hidden');
+            document.getElementById('startScreen').classList.remove('hidden');
+        }
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'97b654a813d8b308',t:'MTc1NzI0OTQxNS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
