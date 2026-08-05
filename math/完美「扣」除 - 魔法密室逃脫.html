@@ -224,11 +224,15 @@
     <div id="screen-result" class="screen">
         <h1 id="result-title"></h1>
         <div class="story-text" id="result-msg"></div>
+        <div class="story-text" id="result-gbit" style="color:var(--primary-color); font-weight:bold;"></div>
         <button onclick="resetGame()">重新挑戰</button>
     </div>
 </div>
 
+<script src="math-game-common.js"></script>
 <script>
+    MathGameCommon.renderIdentityBadge();
+
     // 關卡設定：名稱、物品、[位數1, 位數2]
     const levels = [
         { obstacle: '鐵門', item: '鐵門鑰匙', digits: [1, 1] },
@@ -248,6 +252,10 @@
     let timeLeft = 30;
     let timerInterval = null;
     let currentAnswer = 0;
+    // 💡 累計整場遊戲的答對/總題數，供結束時回傳成績用（itemsCollected 每關會歸零，不能拿來算總成績）
+    let totalCorrectAll = 0;
+    let totalAttemptedAll = 0;
+    let gameStartedAt = 0;
 
     function switchScreen(screenId) {
         document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
@@ -314,6 +322,9 @@
     function startGame() {
         currentLevelIdx = 0;
         itemsCollected = 0;
+        totalCorrectAll = 0;
+        totalAttemptedAll = 0;
+        gameStartedAt = Date.now();
         switchScreen('screen-game');
         setupLevel();
     }
@@ -330,8 +341,11 @@
         const input = document.getElementById('answer-input').value;
         if (input === "") return;
 
+        totalAttemptedAll++;
+
         if (parseInt(input) === currentAnswer) {
             itemsCollected++;
+            totalCorrectAll++;
             showFeedback("正確！獲得物品！", "#00ff00");
             
             if (itemsCollected >= 3) {
@@ -397,6 +411,20 @@
             title.style.color = "var(--danger-color)";
             msg.innerHTML = "「轟隆！」<br>炸彈爆炸，倒數歸零。<br>強烈的衝擊波吞噬了周圍...你的計算速度還差那麼一點點，下次再來挑戰吧！";
         }
+
+        // 💡 回傳這次逃脫成績、依答對率發代幣
+        const gbitLine = document.getElementById('result-gbit');
+        gbitLine.textContent = '代幣結算中…';
+        MathGameCommon.finishAttempt({
+            game: '完美扣除-魔法密室逃脫',
+            mode: isWin ? '逃脫成功' : '失敗',
+            topic: `區域${currentLevelIdx + 1}`,
+            correct: totalCorrectAll,
+            total: totalAttemptedAll,
+            timeSec: gameStartedAt ? Math.round((Date.now() - gameStartedAt) / 1000) : 0
+        }).then(result => {
+            gbitLine.textContent = `🪙 這次獲得 ${result.gbitAwarded} 枚代幣（目前共有 ${result.newBalance} 枚）`;
+        });
     }
 
     function resetGame() {
