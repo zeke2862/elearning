@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>加法勇者傳說</title>
     <script src="./sync-client.js"></script>
+    <script src="./math-game-common.js"></script>
     <style>
         /* ================= 遊戲全域與字體 ================= */
         @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@700;900&family=Noto+Sans+TC:wght@700;900&display=swap');
@@ -873,6 +874,19 @@
             saveProgress();
             if (tokensEarned > 0) awardTokens(tokensEarned);
 
+            // 💡 回傳這次挑戰結果給老師的電腦（admin.html 看得到），不影響上面既有的代幣/存檔邏輯
+            if (typeof MathGameCommon !== 'undefined') {
+                MathGameCommon.reportResult({
+                    game: '加法勇者',
+                    mode: '過關',
+                    topic: currentStageObj ? currentStageObj.id : '',
+                    correct: stageStats.correct,
+                    total: stageStats.total,
+                    timeSec: Math.round(stageStats.times.reduce((a, b) => a + b, 0)),
+                    gbitAwarded: tokensEarned
+                });
+            }
+
         } else {
             title.innerText = "💀 挑戰失敗 💀";
             title.style.color = "#E74C3C";
@@ -880,6 +894,19 @@
             starsEl.style.fontSize = "36px";
             statsEl.innerHTML = `你受到了致命的傷害，請回到大地圖重新編整再出發。`;
             nextBtn.style.display = "none";
+
+            // 💡 挑戰失敗也一併回傳，讓老師看得到練習量，不是只有過關才記錄
+            if (typeof MathGameCommon !== 'undefined') {
+                MathGameCommon.reportResult({
+                    game: '加法勇者',
+                    mode: '挑戰失敗',
+                    topic: currentStageObj ? currentStageObj.id : '',
+                    correct: stageStats.correct,
+                    total: stageStats.total,
+                    timeSec: Math.round(stageStats.times.reduce((a, b) => a + b, 0)),
+                    gbitAwarded: 0
+                });
+            }
         }
     }
 

@@ -368,6 +368,7 @@
                     你答對了 <span id="finalScore">0</span> 題！
                 </div>
                 <div class="award-message" id="awardMessage">你是因數大師！</div>
+                <div class="award-message" id="awardGbitLine" style="color:#c58a00;"></div>
                 <button class="restart-btn" onclick="restartGame()">🔄 再玩一次</button>
             </div>
         </div>
@@ -378,7 +379,12 @@
         網頁設計者：桃園市大竹國小林芳全老師　｜　概念設計：台北市志清國小李衿綺老師
     </div>
 
+    <!-- 💡 登入學號／領代幣／回傳練習結果 共用模組 -->
+    <script src="math-game-common.js"></script>
+
     <script>
+        MathGameCommon.renderIdentityBadge();
+
         let currentQuestionIndex = 0;
         let score = 0;
         let questions = [];
@@ -611,6 +617,19 @@
             document.getElementById('awardEmoji').textContent = emoji;
             document.getElementById('awardTitle').textContent = title;
             document.getElementById('awardMessage').textContent = message;
+
+            // 💡 回傳這次練習成績、依答對率發代幣
+            document.getElementById('awardGbitLine').textContent = '代幣結算中…';
+            MathGameCommon.finishAttempt({
+                game: '找因數',
+                topic: '因數',
+                correct: score,
+                total: 10,
+                timeSec: totalTime
+            }).then(result => {
+                document.getElementById('awardGbitLine').textContent =
+                    `🪙 這次獲得 ${result.gbitAwarded} 枚代幣（目前共有 ${result.newBalance} 枚）`;
+            });
         }
 
         function createConfetti() {

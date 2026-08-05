@@ -5,7 +5,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>分數學習工具</title>
-    <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
             box-sizing: border-box;
@@ -630,7 +629,12 @@
         </div>
     </footer>
 
+    <!-- 💡 登入學號／領代幣／回傳練習結果 共用模組 -->
+    <script src="math-game-common.js"></script>
+
     <script>
+        MathGameCommon.renderIdentityBadge();
+
         // 全域變數
         let currentPracticeType = '';
         let questions = [];
@@ -1080,7 +1084,21 @@
                 <div class="text-2xl font-bold text-blue-600 mb-4">總得分：${score}/10</div>
                 <div class="text-xl text-gray-700 mb-4">答對率：${accuracy}%</div>
                 <div class="text-lg text-gray-600 mb-4">${feedback}</div>
+                <div id="gbitAwardedLine" class="text-lg font-bold" style="color:#c58a00;">代幣結算中…</div>
             `;
+
+            // 💡 回傳這次練習成績、依答對率發代幣
+            const practiceTypeNames = { expand: '擴分練習', reduce: '約分練習', common: '通分練習', compare: '分數比較練習' };
+            MathGameCommon.finishAttempt({
+                game: '分數學習',
+                mode: '練習測驗',
+                topic: practiceTypeNames[currentPracticeType] || currentPracticeType,
+                correct: score,
+                total: 10
+            }).then(result => {
+                const line = document.getElementById('gbitAwardedLine');
+                if (line) line.textContent = `🪙 這次獲得 ${result.gbitAwarded} 枚代幣（目前共有 ${result.newBalance} 枚）`;
+            });
         }
 
         // 返回選單
@@ -1722,7 +1740,21 @@
                 }
             }
             
+            completionMessage += `<div id="gbitAwardedLine" class="text-lg font-bold" style="color:#c58a00;">代幣結算中…</div>`;
             document.getElementById('levelCompleteContent').innerHTML = completionMessage;
+
+            // 💡 回傳這次闖關成績、依答對率發代幣
+            const levelModeNames = { expand: '擴分城堡', reduce: '約分森林', common: '通分迷宮', compare: '比較競技場' };
+            MathGameCommon.finishAttempt({
+                game: '分數學習',
+                mode: '闖關遊戲',
+                topic: levelModeNames[currentGameLevel] || currentGameLevel,
+                correct: gameScore,
+                total: 5
+            }).then(result => {
+                const line = document.getElementById('gbitAwardedLine');
+                if (line) line.textContent = `🪙 這次獲得 ${result.gbitAwarded} 枚代幣（目前共有 ${result.newBalance} 枚）`;
+            });
         }
         
         function startNextLevel() {
@@ -1755,4 +1787,3 @@
     </script>
 <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'986a8a44742ab2fe',t:'MTc1OTEzOTA0Ny4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
-<script src='https://fifthgrade-fraction.yay.boo/javascripts/yayboo.js'></script>

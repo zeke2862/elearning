@@ -371,6 +371,7 @@
             <div style="font-size: 1.5rem; margin-bottom: 30px;">
                 <p>最終分數: <span id="final-score" style="color: var(--primary); font-size: 2rem;">0</span></p>
                 <p>到達關卡: <span id="final-level" style="color: var(--secondary); font-size: 2rem;">1</span></p>
+                <p id="final-gbit" style="color: #ffd700; font-size: 1.2rem;"></p>
             </div>
             <button class="main-btn" id="btn-restart">重新開始</button>
         </div>
@@ -381,6 +382,7 @@
             <h2>你已成為乘法極速傳說！</h2>
             <div style="font-size: 1.5rem; margin-bottom: 30px;">
                 <p>總分: <span id="victory-score" style="color: var(--primary); font-size: 2rem;">0</span></p>
+                <p id="victory-gbit" style="color: #ffd700; font-size: 1.2rem;"></p>
             </div>
             <button class="main-btn" id="btn-play-again">再次挑戰</button>
         </div>
@@ -396,10 +398,12 @@
     </div>
 </div>
 
+<script src="math-game-common.js"></script>
 <script>
 /**
  * 乘法極速跑酷 - 遭遇戰模式 (Turn-based Action Runner)
  */
+MathGameCommon.renderIdentityBadge();
 
 // --- 遊戲設定與資料 ---
 const CANVAS_WIDTH = 1280;
@@ -445,6 +449,10 @@ let levelCorrect = 0;
 let levelAttempted = 0;
 let requiredCorrect = 10;
 let minAccuracy = 0.8;
+// 💡 累計整場遊戲的答對/總題數（levelCorrect/levelAttempted 每關會歸零，不能拿來算總成績）
+let totalCorrectAll = 0;
+let totalAttemptedAll = 0;
+let gameStartedAt = 0;
 
 // 戰鬥狀態暫存
 let actionResult = {
@@ -750,6 +758,9 @@ function initGame() {
     score = 0;
     combo = 0;
     speedMult = 1.0;
+    totalCorrectAll = 0;
+    totalAttemptedAll = 0;
+    gameStartedAt = Date.now();
     player = new Player();
     monster = new Monster();
     background = new Background();
@@ -947,6 +958,8 @@ function processCombatState(dt) {
                 // 結算分數與狀態
                 levelAttempted++;
                 levelCorrect++;
+                totalAttemptedAll++;
+                totalCorrectAll++;
                 combo++;
                 
                 let scoreAdd = 100;
@@ -986,6 +999,7 @@ function processCombatState(dt) {
             
             if (actionResult.timer > 0.5) {
                 levelAttempted++;
+                totalAttemptedAll++;
                 combo = 0;
                 
                 if (isInvincible) {
@@ -1067,6 +1081,20 @@ function gameOver() {
     
     document.getElementById('final-score').innerText = score;
     document.getElementById('final-level').innerText = LEVELS[currentLevelIdx].id;
+
+    // 💡 回傳這次挑戰成績、依答對率發代幣
+    const gbitLine = document.getElementById('final-gbit');
+    gbitLine.textContent = '代幣結算中…';
+    MathGameCommon.finishAttempt({
+        game: '乘法極速跑酷',
+        mode: '挑戰失敗',
+        topic: `關卡${LEVELS[currentLevelIdx].id}(${LEVELS[currentLevelIdx].env})`,
+        correct: totalCorrectAll,
+        total: totalAttemptedAll,
+        timeSec: gameStartedAt ? Math.round((Date.now() - gameStartedAt) / 1000) : 0
+    }).then(result => {
+        gbitLine.textContent = `🪙 這次獲得 ${result.gbitAwarded} 枚代幣（目前共有 ${result.newBalance} 枚）`;
+    });
 }
 
 function victory() {
@@ -1078,6 +1106,20 @@ function victory() {
     screenVictory.classList.remove('hidden');
     
     document.getElementById('victory-score').innerText = score;
+
+    // 💡 回傳這次挑戰成績、依答對率發代幣
+    const gbitLine = document.getElementById('victory-gbit');
+    gbitLine.textContent = '代幣結算中…';
+    MathGameCommon.finishAttempt({
+        game: '乘法極速跑酷',
+        mode: '全破關卡',
+        topic: `全${LEVELS.length}關`,
+        correct: totalCorrectAll,
+        total: totalAttemptedAll,
+        timeSec: gameStartedAt ? Math.round((Date.now() - gameStartedAt) / 1000) : 0
+    }).then(result => {
+        gbitLine.textContent = `🪙 這次獲得 ${result.gbitAwarded} 枚代幣（目前共有 ${result.newBalance} 枚）`;
+    });
 }
 
 

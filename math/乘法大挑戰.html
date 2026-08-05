@@ -712,6 +712,11 @@
                             <div class="stat-label">總分數</div>
                             <div id="finalScore" class="stat-value">0</div>
                         </div>
+                        <div class="stat-item">
+                            <div class="stat-icon">🪙</div>
+                            <div class="stat-label">獲得代幣</div>
+                            <div id="gbitAwardedStat" class="stat-value">…</div>
+                        </div>
                     </div>
                 </div>
                 
@@ -725,7 +730,12 @@
         設計者：桃園市大竹國小林芳全老師
     </div>
 
+    <!-- 💡 登入學號／領代幣／回傳練習結果 共用模組 -->
+    <script src="math-game-common.js"></script>
+
     <script>
+        MathGameCommon.renderIdentityBadge();
+
         let gameState = {
             level: '',
             currentQuestion: 1,
@@ -1071,6 +1081,19 @@
             document.getElementById('earnedMedal').textContent = medal;
             document.getElementById('maxComboStat').textContent = gameState.maxCombo;
             document.getElementById('finalScore').textContent = gameState.score;
+
+            // 💡 回傳這次練習成績、依答對率發代幣
+            document.getElementById('gbitAwardedStat').textContent = '…';
+            MathGameCommon.finishAttempt({
+                game: '乘法大挑戰',
+                mode: gameState.level,
+                topic: `乘法(${gameState.level})`,
+                correct: gameState.correctAnswers,
+                total: totalQuestions,
+                timeSec: totalTime
+            }).then(result => {
+                document.getElementById('gbitAwardedStat').textContent = `+${result.gbitAwarded}`;
+            });
         }
         
 
