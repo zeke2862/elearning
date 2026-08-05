@@ -260,11 +260,15 @@
         <h1 id="end-title">遊戲結束</h1>
         <div class="end-avatar" id="end-avatar">🎭</div>
         <p id="end-desc" style="font-size: 1.2em; margin: 20px 0;"></p>
+        <p id="end-gbit" style="font-size: 1.1em; font-weight: bold; color: #f1c40f;"></p>
         <button class="btn" onclick="location.reload()">重新開始</button>
     </div>
 </div>
 
+<script src="math-game-common.js"></script>
 <script>
+    MathGameCommon.renderIdentityBadge();
+
     // 遊戲設定與資料
     const levels = [
         { name: "一位除一位", dA: 1, dB: 1 },
@@ -306,6 +310,10 @@
     let combo = 0;
     let cleanness = 0; // 0 to 100
     let currentAns = 0;
+    // 💡 累計整場遊戲的答對/總題數（currentQ/correctQ 每關會歸零，不能拿來算總成績）
+    let totalQAll = 0;
+    let totalCorrectQAll = 0;
+    let gameStartedAt = 0;
 
     // UI 選擇
     function selectPlayer(type) {
@@ -500,6 +508,9 @@
 
         guilt = 0;
         currentLevelIdx = 0;
+        totalQAll = 0;
+        totalCorrectQAll = 0;
+        gameStartedAt = Date.now();
         updateGuiltUI();
         startLevel();
 
@@ -574,10 +585,12 @@
         if (isNaN(inputVal)) return;
 
         currentQ++;
+        totalQAll++;
 
         if (inputVal === currentAns) {
             // 答對
             correctQ++;
+            totalCorrectQAll++;
             combo++;
             cleanness = Math.min(100, cleanness + 10);
             msgEl.innerHTML = `<span class="correct">正確！施放魔法，移除了部分髒污！✨</span>`;
@@ -693,6 +706,20 @@
             document.getElementById('end-avatar').innerHTML = profiles.beggar.avatar + " " + profiles.beggar.avatar;
             document.getElementById('end-desc').innerHTML = "你因為算錯太多次，導致魔法反噬。強烈的愧疚感讓你放棄了皇室身分，變成了街頭的另一名流浪漢...";
         }
+
+        // 💡 回傳這次遊戲成績、依答對率發代幣
+        const gbitLine = document.getElementById('end-gbit');
+        gbitLine.textContent = '代幣結算中…';
+        MathGameCommon.finishAttempt({
+            game: '清除大師',
+            mode: isWin ? '完美清除' : '愧疚深淵',
+            topic: `關卡${currentLevelIdx + 1}(${levels[currentLevelIdx] ? levels[currentLevelIdx].name : ''})`,
+            correct: totalCorrectQAll,
+            total: totalQAll,
+            timeSec: gameStartedAt ? Math.round((Date.now() - gameStartedAt) / 1000) : 0
+        }).then(result => {
+            gbitLine.textContent = `🪙 這次獲得 ${result.gbitAwarded} 枚代幣（目前共有 ${result.newBalance} 枚）`;
+        });
     }
 
 </script>
