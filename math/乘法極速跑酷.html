@@ -30,8 +30,8 @@
 
         #game-container {
             position: relative;
-            width: 100vw;
-            height: 100vh;
+            width: 1280px;
+            height: 720px;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -312,6 +312,7 @@
 </head>
 <body>
 
+<div id="mg-fit-stage">
 <div id="game-container">
     <canvas id="gameCanvas"></canvas>
     
@@ -397,8 +398,10 @@
         </div>
     </div>
 </div>
+</div><!-- /mg-fit-stage -->
 
 <script src="math-game-common.js"></script>
+<script src="mobile-fit.js"></script>
 <script>
 /**
  * 乘法極速跑酷 - 遭遇戰模式 (Turn-based Action Runner)
