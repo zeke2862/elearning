@@ -1,0 +1,391 @@
+﻿<content>
+	<test id="1" title="Test 1 Tulip" refer="http://en.wikipedia.org/wiki/Tulip">	
+		<row p="true">A tulip is a flower in the genus Tulipa, comprising about 150 bulbous species,</row>
+		<row>and in the family Liliaceae. The native range of the species includes southern Europe,</row>
+		<row>north Africa, and Asia from Anatolia and Iran in the west to northeast of China. The</row>
+		<row>centre of diversity of the genus is in the Pamir and Hindu Kush mountains and the</row>
+		<row>steppes of Kazakhstan. A number of species and many hybrid cultivars are grown in</row>
+		<row>gardens, used as pot plants or as fresh cut flowers. Most cultivars of tulip are derived</row>
+		<row>from Tulipa gesneriana.</row>
+	</test>
+	<test id="2" title="Test 2 Carrot" refer="http://en.wikipedia.org/wiki/Carrot">	
+		<row p="true">The carrot is a root vegetable, usually orange, purple, red, white, or yellow in</row>
+		<row>colour, with a crisp texture when fresh. The edible part of a carrot is a taproot. It is a</row>
+		<row>southwestern Asia. It has been bred for its greatly enlarged and more palatable, less</row>
+		<row>woody-textured edible taproot, but is still the same species.</row>
+		<row p="true">It is a biennial plant which grows a rosette of leaves in the spring and summer,</row>
+		<row>while building up the stout taproot, which stores large amounts of sugars for the plant</row>
+		<row>to flower in the second year. The flowering stem grows to about 1 metre (3 ft) tall,</row>
+		<row>with an umbel of white flowers that produce a fruit called a mericarp by botanists.</row>
+	</test>
+	<test id="3" title="Test 3 Rose" refer="http://en.wikipedia.org/wiki/Rose">	
+		<row p="true">A rose is a perennial flower shrub or vine of the genus Rosa, within the family</row>
+		<row>Rosaceae, that contains over 100 species and comes in a variety of colours. The</row>
+		<row>species form a group of erect shrubs, and climbing or trailing plants, with stems that</row>
+		<row>are often armed with sharp prickles. It is a common error to refer to roses having</row>
+		<row>thorns. Thorns are modified branches or stems, whereas these sharp protrusions on a</row>
+		<row>rose are modified epidermal tissues (prickles). Most are native to Asia, with smaller</row>
+		<row>numbers of species native to Europe, North America, and northwest Africa. Natives,</row>
+		<row>cultivars and hybrids are all widely grown for their beauty and fragrance.</row>
+	</test>
+	<test id="4" title="Test 4 The Songkran Festival" refer="http://en.wikipedia.org/wiki/Songkran">
+		<row p="true">The Songkran is Thai New Year. The date of the festival was originally set by</row>
+		<row>astrological calculation, but it is now fixed. If these days fall on a weekend, the</row>
+		<row>missed days off are taken on the weekdays immediately following. If they fall in the</row>
+		<row>middle of the week, many Thai take off from the previous Friday until the following</row>
+		<row>Monday. Songkran falls in the hottest time of the year in Thailand, at the end of the</row>
+		<row>dry season. Until 1888 the Thai New Year was the beginning of the year in Thailand;</row>
+		<row>thereafter 1 April was used until 1940. 1 January is now the beginning of the year.</row>
+		<row>The traditional Thai New Year has been a national holiday since then.</row>
+	</test>
+	<test id="5" title="Test 5 History of Doraemon" refer="http://en.wikipedia.org/wiki/Doraemon">
+		<row p="true">In December 1969, the Doraemon manga appeared simultaneously in six</row>
+		<row>different children's monthly magazines. The magazines were titled by the year of</row>
+		<row>children's studies, which included Yoiko (good children), Yochien (nursery school),</row>
+		<row>and Shogaku Ichinensei (first grade of primary school) to Shogaku Yonnensei (fourth</row>
+		<row>grade of primary school). By 1973, the series began to appear in two more magazines,</row>
+		<row>Shogaku Gonensei (fifth grade of primary school) and Shogaku Rokunensei (sixth</row>
+		<row>grade of primary school). The stories featured in each of the magazines were</row>
+		<row>different, meaning the author was originally creating more than six stories each month.</row>
+	</test>
+	<test id="6" title="Test 6 Whale" refer="http://en.wikipedia.org/wiki/Whale">
+		<row p="true">Whale is the common name for marine mammals of the order Cetacea. The</row>
+		<row>term whale is sometimes used to refer to all cetaceans in current taxonomy, but in</row>
+		<row>more common English usage it generally excludes the members of the Delphinoidea</row>
+		<row>suborder Odontoceti (toothed whales), which also includes the sperm whale, killer</row>
+		<row>whale, pilot whale, and beluga whale. The other suborder of cetaceans, Mysticeti</row>
+		<row>(baleen whales), includes the blue whale, which is the largest animal known to have</row>
+		<row>ever existed, the humpback whale, and many other animals that feed by straining</row>
+		<row>seawater through long strips of baleen that they have in the place of teeth.</row>
+	</test>
+	<test id="7" title="Test 7 The Giant Panda" refer="http://en.wikipedia.org/wiki/Giant_Panda">
+		<row p="true">The Giant Panda is a mammal native to central-western and south western</row>
+		<row>China. The Giant Panda is a member of the Ursidae (bear) family. It is easily</row>
+		<row>recognized by its large, distinctive black patches around the eyes, over the ears, and</row>
+		<row>across its round body. Though belonging to the order Carnivora, the Giant Panda has</row>
+		<row>a diet which is 99% bamboo. The Giant Panda may eat other foods such as honey,</row>
+		<row>eggs, fish, yams, shrub leaves, oranges, and bananas when available.</row>
+		<row p="true">The Giant Panda lives in a few mountain ranges in central China, mainly in</row>
+		<row>Sichuan, but also in the Shaanxi and Gansu provinces.</row>
+	</test>
+	<test id="8" title="Test 8 Octopus" refer="http://en.wikipedia.org/wiki/Octopus">
+		<row p="true">The octopus is a cephalopod of the order Octopoda. The octopus inhabits</row>
+		<row>many diverse regions of the ocean, especially coral reefs. The term may also be used</row>
+		<row>to refer only to those creatures in the genus Octopus. In the larger sense, there are</row>
+		<row>around 300 recognized octopus species, which is over one-third of the total number of</row>
+		<row>known cephalopod species.</row>
+		<row p="true">An octopus has eight arms, which trail behind it as it swims. Most octopuses</row>
+		<row>have no internal or external skeleton, allowing them to squeeze through tight places.</row>
+		<row>An octopus has a hard beak, with its mouth at the center point of the arms.</row>
+	</test>
+	<test id="9" title="Test 9 Dragonfly" refer="http://en.wikipedia.org/wiki/Dragonfly">
+		<row p="true">A dragonfly is a type of insect belonging to the order Odonata, the suborder</row>
+		<row>Epiprocta or, in the strict sense, the infraorder Anisoptera. It is characterized by large</row>
+		<row>multifaceted eyes, two pairs of strong transparent wings, and an elongated body.</row>
+		<row>Dragonflies are similar to damselflies, but the adults can be differentiated by the fact</row>
+		<row>that the wings of most dragonflies are held away from, and perpendicular to, the body</row>
+		<row>when at rest. Even though dragonflies possess 6 legs like any other insect, they are</row>
+		<row>not capable of walking.</row>
+	</test>
+	<test id="10" title="Test 10 Disneyland Park (Anaheim)" refer="http://en.wikipedia.org/wiki/Disneyland_Park_(Anaheim)">
+		<row p="true">Disneyland is an American theme park in Anaheim, California, owned and</row>
+		<row>operated by the Walt Disney Parks and Resorts division of The Walt Disney</row>
+		<row>Company. It was dedicated with a press preview on July 17, 1955, and opened to the</row>
+		<row>general public July 18, 1955. Disneyland holds the distinction of being the only theme</row>
+		<row>park to be designed and built by Walt Disney himself. Currently the park has been</row>
+		<row>visited by more than 515 million guests since it opened, including presidents, royalty</row>
+		<row>and other heads of state. In 1998, the theme park was re-branded "Disneyland Park" to</row>
+		<row>distinguish it from the larger Disneyland Resort complex.</row>
+	</test>
+	<test id="11" title="Test 11 Mount Everest" refer="http://en.wikipedia.org/wiki/Mount_Everest">
+		<row p="true">Mount Everest is the highest mountain on Earth, and the highest point on the</row>
+		<row>Earth's crust, as measured by the height above sea level of its summit, 8,848 metres</row>
+		<row>(29,029 ft). The mountain, which is part of the Himalaya range in Asia, is located on</row>
+		<row>the border between Sagarmatha Zone, Nepal, and Tibet, China.</row>
+		<row p="true">In 1856, the Great Trigonometric Survey of India established the first</row>
+		<row>published height of Everest, then known as Peak XV, at 29,002 ft (8,840 m). In 1865,</row>
+		<row>Everest was given its official English name by the Royal Geographical Society upon</row>
+		<row>recommendation of Andrew Waugh, the British Surveyor General of India at the time.</row>
+	</test>
+	<test id="12" title="Test 12 The Great Wall of China" refer="http://en.wikipedia.org/wiki/Great_Wall_of_China">
+		<row p="true">The Great Wall of China "The long wall of 10,000 Li" is a series of stone and</row>
+		<row>earthen fortifications in northern China, built, rebuilt, and maintained between the 5th</row>
+		<row>century BC and the 16th century to protect the northern borders of the Chinese</row>
+		<row>Empire from Xiongnu attacks during various successive dynasties. Since the 5th</row>
+		<row>century BC, several walls have been built that were referred to as the Great Wall.</row>
+		<row>One of the most famous is the wall built between 220-206 BC by the first Emperor of</row>
+		<row>China, Qin Shi Huang. Little of that wall remains; the majority of the existing wall</row>
+		<row>were built during the Ming Dynasty. The Great Wall stretches from Shanhaiguan</row>
+		<row>in the east to Lop Nur in the west, along an arc that roughly delineates</row>
+		<row>the southern edge of Inner Mongolia.</row>
+	</test>
+	<test id="13" title="Test 13 Egyptian Sphinxes" refer="http://en.wikipedia.org/wiki/Sphinx">
+		<row p="true">In Ancient Egyptian mythology, a sphinx is a zoomorphic figure, usually</row>
+		<row>depicted as a recumbent lioness or lion with a human head, but occasionally as a lion</row>
+		<row>with the head of a falcon, hawk, or ram. The figure had its origin in the Old Kingdom</row>
+		<row>and is associated with the solar deity Sekhmet. The use of heads of other animals atop</row>
+		<row>the lioness body followed the titular deities of the city or region where they were built</row>
+		<row>or which were prominent in the Egyptian pantheon at the time. Later, the sphinx</row>
+		<row>image, something very similar to the original Egyptian concept, was exported into</row>
+		<row>many other cultures, albeit often interpreted quite differently due to translations of</row>
+		<row>descriptions of the originals and the evolution of the concept in relation to other</row>
+		<row>cultural traditions.</row>
+	</test>
+	<test id="14" title="Test 14 The Niagara Falls" refer="http://en.wikipedia.org/wiki/Niagara_Falls">
+		<row p="true">The Niagara Falls are voluminous waterfalls on the Niagara River, straddling</row>
+		<row>the international border between the Canadian province of Ontario and the U.S. state</row>
+		<row>of New York. The falls are 17 miles (27 km) north-northwest of Buffalo, New York</row>
+		<row>and 75 miles (120 km) south-southeast of Toronto, Ontario, between the twin cities of</row>
+		<row>Niagara Falls, Ontario, and Niagara Falls, New York.</row>
+		<row p="true">Niagara Falls is composed of two major sections separated by Goat Island:</row>
+		<row>Horseshoe Falls, the majority of which lies on the Canadian side of the border, and</row>
+		<row>American Falls on the American side. The smaller Bridal Veil Falls are also located</row>
+		<row>on the American side, separated from the main falls by Luna Island. Niagara Falls</row>
+		<row>were formed when glaciers receded at the end of the Wisconsin glaciation (the last</row>
+		<row>ice age), and water from the newly-formed Great Lakes carved a path through</row>
+		<row>the Niagara Escarpment en route to the Atlantic Ocean. While not exceptionally</row>
+		<row>high, the Niagara Falls are very wide.</row>
+	</test>
+	<test id="15" title="Test 15 Khao Yai National Park" refer="http://en.wikipedia.org/wiki/Khao_Yai_National_Park">
+		<row p="true">Khao Yai National Park is situated in the Sankambeng Mountain Range, the</row>
+		<row>southern prolongation of the Dong Phaya Yen Mountains, at the southwestern</row>
+		<row>boundary of the Khorat Plateau.</row>
+		<row p="true">This park lies largely in Nakhon Ratchasima Province (Khorat), but also</row>
+		<row>includes parts of Saraburi, Prachinburi and Nakhon Nayok provinces.</row>
+		<row>The park is the second largest in Thailand. It covers an area of 2,168 square</row>
+		<row>kilometers, including evergreen forests and grasslands. Its altitude mostly ranges from</row>
+		<row>400 to 1,000 m above sea level. There are 3,000 species of plants,</row>
+		<row>320 species of birds like red junglefowl and green peafowl and 67 species of</row>
+		<row>mammals, including Asiatic black bears, Asian elephants, gaur, tigers, gibbons,</row>
+		<row>Indian sambar deer, crab-eating macaque, Indian muntjac, dholes, and wild pigs.</row>
+		<row>Its waterfalls include the 80 metre Heo Narok, and Haeo Suwat made famous</row>
+		<row>from the film The Beach. Namtok Sarika is popular with the Thais.</row>
+		<row>Recent wildlife studies show that animal ranges, particularly the few</row>
+		<row>resident tigers, are impacted by human activity near the center of the park.</row>
+	</test>
+	<test id="16" title="Test 16 Ozone" refer="http://en.wikipedia.org/wiki/Ozone">
+		<row p="true">Ozone or trioxygen is a triatomic molecule, consisting of three oxygen atoms.</row>
+		<row>It is an allotrope of oxygen that is much less stable than the diatomic. Ground-level</row>
+		<row>ozone is an air pollutant with harmful effects on the respiratory systems of animals.</row>
+		<row>The ozone layer in the upper atmosphere filters potentially damaging ultraviolet light</row>
+		<row>from reaching the Earth's surface. It is present in low concentrations throughout the</row>
+		<row>Earth's atmosphere. It has many industrial and consumer applications.</row>
+		<row p="true">Ozone, the first allotrope of a chemical element to be recognized by science,</row>
+		<row>was proposed as a distinct chemical compound by Christian Friedrich Schonbein in</row>
+		<row>1840, who named it after the Greek verb ozein ("to smell"), from the peculiar odor</row>
+		<row>in lightning storms. The formula for ozone, was not determined until 1865 by</row>
+		<row>Jacques-Louis Soret and confirmed by Schonbein in 1867.</row>
+	</test>
+	<test id="17" title="Test 17 Global warming" refer="http://en.wikipedia.org/wiki/Global_warming">
+		<row p="true">Global warming is the increase in the average temperature of the Earth's</row>
+		<row>near - surface air and oceans since the mid - 20th century and its projected continuation.</row>
+		<row>The Intergovernmental Panel on Climate Change (IPCC) concludes that increasing</row>
+		<row>greenhouse gas concentrations resulting from human activity such as fossil fuel</row>
+		<row>burning and deforestation caused most of the observed temperature increase since the</row>
+		<row>middle of the 20th century. The IPCC also concludes that variations in natural</row>
+		<row>phenomena such as solar radiation and volcanoes produced most of the warming from</row>
+		<row>pre-industrial times to 1950 and had a small cooling effect afterward.</row>
+		<row>These basic conclusions have been endorsed by more than 40 scientific societies</row>
+		<row>and academies of science, including all of the national academies of science of</row>
+		<row>the major industrialized countries. A small number of scientists dispute</row>
+		<row>the consensus view.</row>
+	</test>
+	<test id="18" title="Test 18 The Bermuda Triangle" refer="http://en.wikipedia.org/wiki/Bermuda_Triangle">
+		<row p="true">The Bermuda Triangle, also known as the Devil's Triangle, is a region in the</row>
+		<row>western part of the North Atlantic Ocean in which a number of aircraft and surface</row>
+		<row>vessels are alleged to have mysteriously disappeared and cannot be explained as</row>
+		<row>human error, piracy, equipment failure, or natural disasters. Popular culture has</row>
+		<row>attributed some of these disappearances to the paranormal, a suspension of the laws of</row>
+		<row>physics, or activity by extraterrestrial beings. A substantial body of documentation</row>
+		<row>reveals, however, that a significant portion of the allegedly mysterious incidents</row>
+		<row>have been inaccurately reported or embellished by later authors, and numerous</row>
+		<row>official agencies have stated that the number and nature of disappearances in</row>
+		<row>the region is similar to any other area of ocean.</row>
+	</test>
+	<test id="19" title="Test 19 Nanotechnology" refer="http://en.wikipedia.org/wiki/Nanotechnology">
+		<row p="true">Nanotechnology, shortened to "nanotech", is the study of the control of matter</row>
+		<row>on an atomic and molecular scale. Generally nanotechnology deals with structures of</row>
+		<row>the size 100 nanometers or smaller, and involves developing materials or devices</row>
+		<row>within that size. Nanotechnology is very diverse, ranging from extensions of</row>
+		<row>conventional device physics, to completely new approaches based upon molecular</row>
+		<row>self-assembly, to developing new materials with dimensions on the nanoscale, even to</row>
+		<row>speculation on whether we can directly control matter on the atomic scale.</row>
+		<row>There has been much debate on the future of implications of nanotechnology.</row>
+		<row>Nanotechnology has the potential to create many new materials and devices with</row>
+		<row>wide-ranging applications, such as in medicine, electronics, and energy</row>
+		<row>production. On the other hand, nanotechnology raises many of the same issues</row>
+		<row>as with any introduction of new technology, including concerns about the toxicity</row>
+		<row>and environmental impact of nanomaterials, and their potential effects on global</row>
+		<row>economics, as well as speculation about various doomsday scenarios.</row>
+		<row>These concerns have led to a debate among advocacy groups and governments</row>
+		<row>on whether special regulation of nanotechnology is warranted.</row>
+	</test>
+	<test id="20" title="Test 20 ASIMO Robot" refer="http://en.wikipedia.org/wiki/ASIMO">
+		<row p="true">ASIMO is a humanoid robot created by Honda. Standing at 130 centimeters</row>
+		<row>(4 feet 3 inches) and weighing 54 kilograms (114 pounds), the robot resembles a small</row>
+		<row>astronaut wearing a backpack and can walk or run on two feet at speeds up to 6 km/h</row>
+		<row>(4.3 mph), matching EMIEW.</row>
+		<row p="true">ASIMO was created at Honda's Research and Development Wako Fundamental</row>
+		<row>Technical Research Center in Japan. It is the current model in a line of eleven that</row>
+		<row>began in 1986 with E0. Officially, the name is an acronym for "Advanced Step in</row>
+		<row>Innovative MObility". Honda's official statements claim that the robot's name is not</row>
+		<row>a reference to science fiction writer and inventor of the Three Laws of Robotics,</row>
+		<row>Isaac Asimov. of February 2009, there are over 100 ASIMO units in existence.</row>
+	</test>
+	<test id="21" title="Test 21 Wikipedia" refer="http://en.wikipedia.org/wiki/Wikipedia">
+		<row p="true">Wikipedia is a free, web-based, collaborative, multilingual encyclopedia</row>
+		<row>project supported by the non-profit Wikimedia Foundation. Its name is a portmanteau</row>
+		<row>of the words wiki (a technology for creating collaborative websites, from the</row>
+		<row>Hawaiian word wiki, meaning "quick") and encyclopedia. Wikipedia's 13 million</row>
+		<row>articles (3 million in English) have been written collaboratively by volunteers around</row>
+		<row>the world, and almost all of its articles can be edited by anyone who can access the</row>
+		<row>Wikipedia website. Launched in 2001 by Jimmy Wales and Larry Sanger, it is</row>
+		<row>currently the largest and most popular general reference work on the Internet.</row>
+		<row>Critics of Wikipedia accuse it of systemic bias and inconsistencies (including undue</row>
+		<row>weight given to popular culture), and allege that it favors consensus over</row>
+		<row>credentials in its editorial process. Wikipedia's reliability and accuracy are also an</row>
+		<row>issue. Other criticisms center on its susceptibility to vandalism and the addition of</row>
+		<row>spurious or unverified information, though scholarly work suggests that vandalism</row>
+		<row>is generally short-lived.</row>
+	</test>
+	<test id="22" title="Test 22 Valentine's Day" refer="http://en.wikipedia.org/wiki/Valentine's_Day">
+		<row p="true">Valentine's Day or Saint Valentine's Day is a holiday celebrated on February</row>
+		<row>14 by many people throughout the world. In the English-speaking countries, it is the</row>
+		<row>traditional day on which lovers express their love for each other by sending</row>
+		<row>Valentine's cards, presenting flowers, or offering confectionery. The holiday is named</row>
+		<row>after two among the numerous Early Christian martyrs named Valentine. The day</row>
+		<row>became associated with romantic love in the circle of Geoffrey Chaucer in the High</row>
+		<row>Middle Ages, when the tradition of courtly love flourished. The day is most closely</row>
+		<row>associated with the mutual exchange of love notes in the form of "valentines".</row>
+		<row>Modern Valentine symbols include the heart-shaped outline, doves, and the figure</row>
+		<row>of the winged Cupid. Since the 19th century, handwritten notes have largely given</row>
+		<row>way to mass-produced greeting cards. The sending of Valentines was a fashion in</row>
+		<row>nineteenth-century Great Britain, and, in 1847, Esther Howland developed a successful</row>
+		<row>business in her Worcester, Massachusetts home with hand-made Valentine cards</row>
+		<row>based on British models.</row>
+	</test>
+	<test id="23" title="Test 23 Computer" refer="http://en.wikipedia.org/wiki/Computer">
+		<row p="true">A computer is a machine that manipulates data according to a set of</row>
+		<row>instructions. Although mechanical examples of computers have existed through much</row>
+		<row>of recorded human history, the first electronic computers were developed in the</row>
+		<row>mid - 20th century (1940 - 1945). These were the size of a large room, consuming</row>
+		<row>as much power as several hundred modern personal computers. Modern computers</row>
+		<row>based on integrated circuits are millions to billions of times more capable than the</row>
+		<row>early machines, and occupy a fraction of the space. Simple computers are small</row>
+		<row>enough to fit into a wristwatch, and can be powered by a watch battery.</row>
+		<row>Personal computers in their various forms are icons of the Information Age</row>
+		<row>and are what most people think of as "computers". The embedded computers</row>
+		<row>found in many devices from MP3 players to fighter aircraft and from toys to</row>
+		<row>industrial robots are however the most numerous. The ability to store and</row>
+		<row>execute lists of instructions called programs makes computers extremely versatile,</row>
+		<row>distinguishing them from calculators. The Church – Turing thesis is a mathematical</row>
+		<row>statement of this versatility</row>
+	</test>
+	<test id="24" title="Test 24 Social network" refer="http://en.wikipedia.org/wiki/Social_network">
+		<row p="true">A social network is a social structure made of individuals (or organizations)</row>
+		<row>called "nodes," which are tied (connected) by one or more specific types of</row>
+		<row>interdependency, such as friendship, kinship, financial exchange, dislike, sexual</row>
+		<row>relationships, or relationships of beliefs, knowledge or prestige.</row>
+		<row p="true">Social network analysis views social relationships in terms of network theory</row>
+		<row>about nodes and ties. Nodes are the individual actors within the networks, and ties are</row>
+		<row>the relationships between the actors. The resulting graph - based structures are often</row>
+		<row>very complex. There can be many kinds of ties between the nodes. Research in</row>
+		<row>a number of academic fields has shown that social networks operate on many</row>
+		<row>levels, from families up to the level of nations, and play a critical role in</row>
+		<row>determining the way problems are solved, organizations are run, and the degree</row>
+		<row>to which individuals succeed in achieving their goals. In its simplest form,</row>
+		<row>a social network is a map of all of the relevant nodes between all the nodes</row>
+		<row>being studied. The network can also be used to measure social capital - the value</row>
+		<row>that an individual gets from the social network. These concepts are often displayed</row>
+		<row>in a social network diagram, where nodes are the points and ties are the lines.</row>
+	</test>
+	<test id="25" title="Test 25 Soap opera" refer="http://en.wikipedia.org/wiki/Soap_opera">
+		<row p="true">A soap opera, sometimes called "soap" for short, is an ongoing, episodic work</row>
+		<row>of dramatic fiction presented in serial format on television or radio. The name "soap</row>
+		<row>opera" stems from the original dramatic serials broadcast on radio that had soap</row>
+		<row>manufacturers such as Procter and Gamble, Colgate - Palmolive, and Lever Brothers as</row>
+		<row>sponsors and producers. These early radio serials were broadcast in weekday daytime</row>
+		<row>slots when mostly housewives would be available to listen; thus the shows were</row>
+		<row>aimed at and consumed by a predominantly female audience. The term soap</row>
+ 		<row>opera has at times been generally applied to any romantic serial, but it is also</row>
+		<row>used to describe the more naturalistic, unglamorous UK primetime drama serials</row>
+		<row>such as Coronation Street. A crucial element that defines soap opera is the</row>
+		<row>open-ended nature of the narrative, with stories spanning several episodes.</row>
+		<row>The defining feature that makes a program a soap opera, according to</row>
+		<row>Albert Moran, is "that form of television that works with a continuous open</row>
+		<row>narrative. Each episode ends with a promise that the storyline is to be continued</row>
+		<row>in another episode".</row>
+	</test>
+	<test id="26" title="Test 26 Chocolate" refer="http://en.wikipedia.org/wiki/Chocolate">
+		<row p="true">Chocolate omprises a number of raw and processed foods produced from the</row>
+		<row>seed of the tropical cacao tree. Cacao has been cultivated for at least three millennia</row>
+		<row>in Mexico, Central and South America, with its earliest documented use around 1,100</row>
+		<row>BC. The majority of the Mesoamerican peoples made chocolate beverages, including</row>
+		<row>the Aztecs and the Maya, who made it into a beverage known as xocolatl, a Nahuatl</row>
+		<row>word meaning "bitter water". The seeds of the cacao tree have an intense bitter taste,</row>
+		<row>and must be fermented to develop the flavor. After fermentation, the beans are</row>
+		<row>dried, cleaned, and roasted, and the shell is removed to produce cacao nibs.</row>
+		<row>The nibs are then ground and liquified, resulting in pure chocolate in fluid form:</row>
+		<row>chocolate liquor. The liquor can be further processed into two components:</row>
+		<row>cocoa solids and cocoa butter. Pure, unsweetened chocolate contains primarily</row>
+		<row>cocoa solids and cocoa butter in varying proportions. Much of the chocolate</row>
+ 		<row>consumed today is in the form of sweet chocolate, combining chocolate with sugar.</row>
+	</test>
+	<test id="27" title="Test 27 Tom yum" refer="http://en.wikipedia.org/wiki/Tom_yum">
+		<row p="true">Tom yum in the Royal Thai General System of Transcription is a name for</row>
+		<row>two similar soups originating from Laos and Thailand, respectively. The Royal Lao</row>
+		<row>version includes a pinch of rice in the soup, whereas typical Lao and Thai versions do</row>
+		<row>not include rice as an ingredient. Lao tom yum is relatively unknown outside of Laos,</row>
+		<row>whereas Thai tom yum is perhaps one of the most famous dishes in Thai cuisine. It is</row>
+		<row>widely served in neighboring countries such as Malaysia, Singapore, and Indonesia,</row>
+		<row>and has been popularized around the world. Tom yum is characterized by its distinct hot</row>
+		<row>and sour flavors, with fragrant herbs generously used. The basic broth is made of stock</row>
+		<row>and fresh ingredients such as lemon grass, kaffir lime leaves, galangal, shallots,</row>
+		<row>lime juice, fish sauce, tamarind, slices of ginger and crushed chili peppers.</row>
+	</test>
+	<test id="28" title="Test 28 Thai massage" refer="http://en.wikipedia.org/wiki/Thai_massage">
+		<row p="true">Thai massage is a type of massage in Thai style that involves stretching and</row>
+		<row>deep massage. This form of bodywork is usually performed on the floor, and the</row>
+		<row>client wears comfortable clothes that allow for movement. No oils are used in Thai</row>
+		<row>massage. It is known in Thailand as "nuat phaen boran", literally, the ancient - manner</row>
+		<row>massage. In Thailand, Thai massage is one of the branches of Traditional Thai Medicine</row>
+		<row>(TTM) since a few years recognized and regulated by the government, and is widely</row>
+		<row>considered to be a medical discipline used for the treatment of a wide variety</row> 
+		<row>of ailments. On the other hand, Thai massage is also practiced and taught</row>
+		<row>by a number of non - medical massage technicians in the spa and tourism</row>
+		<row>industries. In North America and Europe, an increasing number of practitioners</row>
+		<row>and teachers of Thai massage have emerged since the 1990s. In Europe,</row>
+		<row>the United States, Thai massage is a growing modality among clients of</row>
+		<row>massage clinics and massage therapists seeking continuing education.</row>
+	</test>
+	<test id="29" title="Test 29 Thailand" refer="http://en.wikipedia.org/wiki/Thailand">
+		<row p="true">The Kingdom of Thailand is an independent country that lies in the heart of</row>
+		<row>Southeast Asia. It is bordered to the north by Laos and Burma, to the east by Laos and</row>
+		<row>Cambodia, to the south by the Gulf of Thailand and Malaysia, and to the west by the</row>
+		<row>Andaman Sea and Burma. Its maritime boundaries include Vietnam in the Gulf of</row>
+		<row>of Thailand to the southeast and Indonesia and India in the Andaman Sea to the</row>
+		<row>southwest. The capital and largest city of Thailand is Bangkok. It is also</row>
+		<row>the country's center of political, commercial, industrial and cultural activities.</row>
+		<row>Thailand is the world's 50th largest country in terms of total area (slightly smaller</row>
+		<row>than Yemen and slightly larger than Spain), with a surface area of approximately</row>
+		<row>513,000 km2 (198,000 sq mi), and the 21st most - populous country, with approximately</row>
+		<row>64 million people. About 75% of the population is ethnically Thai, 14% is of Chinese</row>
+		<row>origin, and 3% is ethnically Malay; the rest belong to minority groups including Mons,</row>
+ 		<row>Khmers and various hill tribes.</row>
+	</test>
+	<test id="30" title="Test 30 Barcode" refer="http://en.wikipedia.org/wiki/Barcode">
+		<row p="true">A barcode is an optical machine-readable representation of data. Originally,</row>
+		<row>barcodes represented data in the widths (lines) and the spacings of parallel lines, and</row>
+		<row>may be referred to as linear or 1D (1 dimensional) barcodes or symbologies. They</row>
+		<row>also come in patterns of squares, dots, hexagons and other geometric patterns within</row>
+		<row>images termed 2D (2 dimensional) matrix codes or symbologies. Although 2D systems</row>
+		<row>use symbols other than bars, they are generally referred to as barcodes as well.</row>
+		<row>The first use of barcodes was to label railroad cars, but they were not commercially</row>
+		<row>successful until they were used to automate supermarket checkout systems</row>
+		<row>a task in which they have become almost universal. Their use has spread to</row>
+		<row>many other roles as well, tasks that are generically referred to as Auto ID Data</row>
+		<row>Capture (AIDC). Other systems are attempting to make inroads in the AIDC</row>
+		<row>market, but the simplicity, universality and low cost of barcodes has limited</row>
+		<row>the role of these other systems.</row>
+	</test>
+</content>
