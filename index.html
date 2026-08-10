@@ -164,7 +164,6 @@ input#codeInput:focus{outline:none;border-color:var(--accent);}
           <div class="ic">⚔️</div>
           <div><div class="lbl">打字修仙傳：五鍵飛升</div><div class="desc">武俠闖關・五大試煉＋魔王模式</div></div>
         </a>
-       
       </div>
     </div>
 
@@ -176,6 +175,23 @@ input#codeInput:focus{outline:none;border-color:var(--accent);}
           <div class="ic">🗡️</div>
           <div><div class="lbl">加法勇者傳說</div><div class="desc">RPG 闖關・加法練習</div></div>
         </a>
+        <a class="hub-link" id="linkAdditionHerofu" href="./math/加法勇者(負數).html">
+          <div class="ic">🗡️</div>
+          <div><div class="lbl">加法勇者傳說(負數)</div><div class="desc">RPG 闖關・加法練習</div></div>
+        </a>
+        <a class="hub-link" id="linkfenzheng" href="./math/分數運算大冒險(正).html">
+          <div class="ic">🗡️</div>
+          <div><div class="lbl">分數運算大冒險(正)</div><div class="desc">RPG 闖關・分數練習</div></div>
+        </a>
+        <a class="hub-link" id="linkfenfu" href="./math/分數運算大冒險(負).html">
+          <div class="ic">🗡️</div>
+          <div><div class="lbl">分數運算大冒險(負)</div><div class="desc">RPG 闖關・負分數練習</div></div>
+        </a>
+        <a class="hub-link" id="linkfenzhengfu" href="./math/分數運算大冒險(正負隨機).html">
+          <div class="ic">🗡️</div>
+          <div><div class="lbl">分數運算大冒險(正負隨機)</div><div class="desc">RPG 闖關・正負分數練習</div></div>
+        </a>
+
 <a class="hub-link" id="linkxHero" href="./math/乘法極速跑酷.html">
           <div class="ic">🗡️</div>
           <div><div class="lbl">乘法極速跑酷</div><div class="desc">RPG 闖關・乘法練習</div></div>
@@ -184,26 +200,11 @@ input#codeInput:focus{outline:none;border-color:var(--accent);}
           <div class="ic">🗡️</div>
           <div><div class="lbl">清【除】大師</div><div class="desc">RPG 闖關・除法練習</div></div>
         </a>
-        <a class="hub-link" id="linktruf" href="./math/除法練習場.html">
-          <div class="ic">🗡️</div>
-          <div><div class="lbl">除法練習場</div><div class="desc">除法練習</div></div>
-        </a>
-        <a class="hub-link" id="linktkoHero" href="./math/完美「扣」除 - 魔法密室逃脫.html">
+        <a class="hub-link" id="linktkoHero" href="./math/清【除】大師.html">
           <div class="ic">🗡️</div>
           <div><div class="lbl">完美「扣」除 - 魔法密室逃脫</div><div class="desc">RPG 闖關・減法練習</div></div>
         </a>
-        <a class="hub-link" id="linkinshu" href="./math/找因數.html">
-          <div class="ic">🗡️</div>
-          <div><div class="lbl">找因數</div><div class="desc">因數練習</div></div>
-        </a>
-        <a class="hub-link" id="linkfshu" href="./math/分數學習.html">
-          <div class="ic">🗡️</div>
-          <div><div class="lbl">分數學習</div><div class="desc">分數練習</div></div>
-        </a>
-        <a class="hub-link" id="linkxf" href="./math/乘法大挑戰.html">
-          <div class="ic">🗡️</div>
-          <div><div class="lbl">乘法大挑戰</div><div class="desc">乘法練習</div></div>
-        </a>
+
       </div>
     </div>
 
@@ -279,17 +280,14 @@ const LOOK_TYPE_URL = "./look-type.html";
 // 數學科・加法勇者：跟其他遊戲一樣共用學號登入身分與存檔（見 sync-client.js），
 // 這裡一樣統一放常數方便之後改檔名/路徑。
 const ADDITION_HERO_URL = "./math/加法勇者4_0.html";
+const ADDITION_HEROfu_URL = "./math/加法勇者(負數).html";
 const GOD_URL = "./God/打字修仙傳-線上功能.html";
 const xHero_URL = "./math/乘法極速跑酷.html";
-const xf_URL = "./math/乘法大挑戰.html"; 
 const truHero_URL = "./math/清【除】大師.html";
-const truf_URL = "./math/除法練習場.html"; 
 const koHero_URL = "./math/完美「扣」除 - 魔法密室逃脫.html";
-const inshu_URL = "./math/找因數.html";
-const fshu_URL = "./math/分數學習.html";  
- 
-
-
+const fenzheng_URL = "./math/分數運算大冒險(正).html";
+const fenfu_URL = "./math/分數運算大冒險(負).html";
+const fenzhengfu_URL = "./math/分數運算大冒險(正負隨機).html";
 const ACTIVE_STUDENT_KEY = "keyagent_active_student";
 
 function fetchWithTimeout(url, opts, ms) {
