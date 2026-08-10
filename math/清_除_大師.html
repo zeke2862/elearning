@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>清"除"大師</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700&family=Noto+Sans+TC:wght@400;700&display=swap');
+
+        :root {
+            --bg-color: #fdfbf7;
+            --primary-color: #ff9a9e;
+            --secondary-color: #fecfef;
+            --text-color: #4a4a4a;
+            --panel-bg: #ffffff;
+            --border-radius: 16px;
+        }
+
+        body {
+            font-family: 'Nunito', 'Noto Sans TC', sans-serif;
+            background-color: var(--bg-color);
+            background-image: linear-gradient(120deg, #e0c3fc 0%, #8ec5fc 100%);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        #game-container {
+            width: 90%;
+            max-width: 900px;
+            background: var(--panel-bg);
+            border-radius: var(--border-radius);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            padding: 30px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        h1 {
+            color: #667eea;
+            margin-top: 0;
+            text-shadow: 2px 2px 0px #fff, 4px 4px 0px rgba(0,0,0,0.1);
+            font-size: 2.5em;
+        }
+
+        .screen {
+            display: none;
+            animation: fadeIn 0.5s;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* 選擇畫面 */
+        .gender-select {
+            display: flex;
+            justify-content: space-around;
+            margin: 30px 0;
+        }
+
+        .gender-card {
+            background: var(--secondary-color);
+            padding: 20px;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            width: 40%;
+            border: 4px solid transparent;
+        }
+
+        .gender-card:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+        }
+
+        .gender-card h2 {
+            margin: 10px 0;
+            color: #d13076;
+        }
+
+        .gender-card p {
+            font-size: 0.9em;
+            color: #666;
+            text-align: left;
+        }
+
+        .btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 1.2em;
+            border-radius: 30px;
+            cursor: pointer;
+            font-family: inherit;
+            font-weight: bold;
+            transition: opacity 0.2s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .btn:hover {
+            opacity: 0.9;
+        }
+
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        /* 遊戲畫面 */
+        .header-stats {
+            display: flex;
+            justify-content: space-between;
+            background: #f8f9fa;
+            padding: 15px 25px;
+            border-radius: 50px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .guilt-bar {
+            color: #e74c3c;
+        }
+
+        #gameCanvas {
+            width: 100%;
+            max-width: 800px;
+            height: 400px;
+            background: #f8f9fa;
+            border-radius: var(--border-radius);
+            box-shadow: inset 0 4px 10px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+            border: 2px dashed #ddd;
+        }
+
+        /* 答題區 */
+        .math-section {
+            background: #fff3e0;
+            padding: 25px;
+            border-radius: var(--border-radius);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
+
+        .question {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #e67e22;
+            letter-spacing: 2px;
+            margin-bottom: 20px;
+        }
+
+        .input-area input {
+            font-size: 1.5em;
+            padding: 10px 15px;
+            width: 150px;
+            text-align: center;
+            border: 2px solid #e67e22;
+            border-radius: 10px;
+            outline: none;
+            margin-right: 15px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #eee;
+            border-radius: 10px;
+            margin-top: 20px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%);
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        .status-msg {
+            margin-top: 15px;
+            font-weight: bold;
+            min-height: 24px;
+        }
+        
+        .correct { color: #2ecc71; }
+        .wrong { color: #e74c3c; }
+
+        .end-avatar {
+            font-size: 6rem;
+            margin: 20px 0;
+        }
+
+    </style>
+</head>
+<body>
+
+<div id="mg-fit-stage" style="width:900px;">
+<div id="game-container">
+    <!-- 開始畫面 -->
+    <div id="start-screen" class="screen active">
+        <h1>✨ 清"除"大師 ✨</h1>
+        <p>曾經耀眼的皇室成員流浪了10年... 運用你的「除法魔法」幫助他們恢復真身吧！<br>答錯會讓他們變醜，累積5點愧疚感，你也會變成流浪漢喔！</p>
+        
+        <h3>選擇你的主角性別</h3>
+        <div class="gender-select">
+            <div class="gender-card" id="select-prince" onclick="selectPlayer('prince')">
+                <div style="font-size: 4em;">🤴🗡️</div>
+                <h2>戰鬥型王子</h2>
+                <p>銀色長髮隨風飄逸，身穿白底藍紋皇家輕甲。手持發光晶體長劍，身邊環繞風元素魔法。</p>
+            </div>
+            <div class="gender-card" id="select-princess" onclick="selectPlayer('princess')">
+                <div style="font-size: 4em;">👸🪄</div>
+                <h2>星辰法師公主</h2>
+                <p>深紫色波浪長髮，穿著午夜藍星空長裙。手持星寶石法杖，散發唯美星塵粒子。</p>
+            </div>
+        </div>
+        <button class="btn" id="start-btn" onclick="initGame()" disabled>開始清理！</button>
+    </div>
+
+    <!-- 遊戲畫面 -->
+    <div id="game-screen" class="screen">
+        <div class="header-stats">
+            <span id="level-display">關卡: 1/11 (一位除一位)</span>
+            <span>進度: <span id="q-count">0</span>/10 (連對: <span id="combo-count">0</span>)</span>
+            <span class="guilt-bar">愧疚感: <span id="guilt-count">0</span>/5 💔</span>
+        </div>
+
+        <!-- 遊戲主畫布 (Canvas) -->
+        <canvas id="gameCanvas" width="800" height="400"></canvas>
+
+        <div class="math-section">
+            <div class="progress-bar"><div class="progress-fill" id="clean-progress"></div></div>
+            <p>清理進度</p>
+            <div class="question" id="math-question">144 ÷ 12 = ?</div>
+            <div class="input-area">
+                <input type="number" id="answer-input" placeholder="輸入答案" onkeypress="handleEnter(event)">
+                <button class="btn" onclick="checkAnswer()">施放除法 ⚡</button>
+            </div>
+            <div class="status-msg" id="status-message"></div>
+        </div>
+    </div>
+
+    <!-- 結束畫面 -->
+    <div id="game-over-screen" class="screen">
+        <h1 id="end-title">遊戲結束</h1>
+        <div class="end-avatar" id="end-avatar">🎭</div>
+        <p id="end-desc" style="font-size: 1.2em; margin: 20px 0;"></p>
+        <p id="end-gbit" style="font-size: 1.1em; font-weight: bold; color: #f1c40f;"></p>
+        <button class="btn" onclick="location.reload()">重新開始</button>
+    </div>
+</div>
+</div><!-- /mg-fit-stage -->
+
+<script src="math-game-common.js"></script>
+<script src="mobile-fit.js"></script>
+<script src="math-game-audio.js"></script>
+<script>
+    MathGameCommon.renderIdentityBadge();
+
+    // 💡 背景音樂設定：依關卡位數難度分三個大關卡。之後要換成各難度
+    // 專屬的音樂，把右邊路徑換成你自己的檔名就好，左邊代號不要改。
+    MathGameAudio.setMusicMap({
+        beginner: "./audio/clean-master-bgm-beginner.mp3",
+        intermediate: "./audio/clean-master-bgm-beginner.mp3", // 🔶 預留位置，之後換成中級專屬曲目
+        advanced: "./audio/clean-master-bgm-beginner.mp3"       // 🔶 預留位置，之後換成高級專屬曲目
+    });
+    // 💡 音效設定：目前先用內建合成音效，之後有真的音效檔再解除註解、填檔名
+    MathGameAudio.setSfxMap({
+        // correct: "./audio/sfx-correct.mp3",
+        // wrong:   "./audio/sfx-wrong.mp3",
+        // click:   "./audio/sfx-click.mp3",
+        // win:     "./audio/sfx-win.mp3",
+        // lose:    "./audio/sfx-lose.mp3"
+    });
+    MathGameAudio.bindClickSfx('button, .btn, .gender-card');
+
+    // 遊戲設定與資料
+    const levels = [
+        { name: "一位除一位", dA: 1, dB: 1 },
+        { name: "兩位除一位", dA: 2, dB: 1 },
+        { name: "兩位除兩位", dA: 2, dB: 2 },
+        { name: "三位除一位", dA: 3, dB: 1 },
+        { name: "三位除兩位", dA: 3, dB: 2 },
+        { name: "三位除三位", dA: 3, dB: 3 },
+        { name: "四位除四位", dA: 4, dB: 4 },
+        { name: "四位除三位", dA: 4, dB: 3 },
+        { name: "四位除二位", dA: 4, dB: 2 },
+        { name: "四位除一位", dA: 4, dB: 1 },
+        { name: "隨機地獄", random: true }
+    ];
+
+    const profiles = {
+        prince: {
+            avatar: "🤴🗡️",
+            shortDesc: "銀色長髮，白底藍紋皇家輕甲，晶體長劍與風魔法。"
+        },
+        princess: {
+            avatar: "👸🪄",
+            shortDesc: "紫波浪長髮，午夜藍星空長裙，星寶石法杖與星塵。"
+        },
+        beggar: {
+            avatar: "🧟‍♂️🏚️",
+            shortDesc: "皮膚混雜泥土與傷疤，衣服破爛全是補丁，身形骨瘦如柴。"
+        }
+    };
+
+    // 遊戲狀態變數
+    let playerType = '';
+    let targetType = '';
+    let currentLevelIdx = 0;
+    
+    let guilt = 0;
+    let currentQ = 0;
+    let correctQ = 0;
+    let combo = 0;
+    let cleanness = 0; // 0 to 100
+    let currentAns = 0;
+    // 💡 累計整場遊戲的答對/總題數（currentQ/correctQ 每關會歸零，不能拿來算總成績）
+    let totalQAll = 0;
+    let totalCorrectQAll = 0;
+    let gameStartedAt = 0;
+
+    // UI 選擇
+    function selectPlayer(type) {
+        playerType = type;
+        targetType = (type === 'prince') ? 'princess' : 'prince';
+        
+        document.getElementById('select-prince').style.borderColor = type === 'prince' ? '#667eea' : 'transparent';
+        document.getElementById('select-princess').style.borderColor = type === 'princess' ? '#667eea' : 'transparent';
+        
+        document.getElementById('start-btn').disabled = false;
+    }
+
+    function switchScreen(screenId) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById(screenId).classList.add('active');
+    }
+
+    // Canvas 變數與設定
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    let animationId = null;
+    let lastTime = 0;
+    let particles = [];
+
+    // 角色物件狀態
+    let playerObj = { 
+        x: 200, baseY: 150, y: 150, 
+        avatar: '', name: '', desc: '', 
+        state: 'idle', timer: 0 
+    };
+    
+    let targetObj = { 
+        x: 600, baseY: 150, y: 150, 
+        avatar: '', name: '', desc: '', 
+        state: 'idle', timer: 0 
+    };
+
+    // 粒子類別
+    class Particle {
+        constructor(x, y, type, color, vx, vy, life) {
+            this.x = x; this.y = y; this.type = type; this.color = color;
+            this.vx = vx; this.vy = vy; this.life = life; this.maxLife = life;
+        }
+        update() {
+            this.x += this.vx; 
+            this.y += this.vy;
+            if(this.type === 'sparkle' || this.type === 'dirt') {
+                this.vy += 0.5; // 模擬重力
+            }
+            this.life--;
+        }
+        draw(ctx) {
+            ctx.save();
+            ctx.globalAlpha = Math.max(0, this.life / this.maxLife);
+            ctx.fillStyle = this.color;
+            if (this.type === 'sparkle') {
+                ctx.font = '20px Arial';
+                ctx.fillText('✨', this.x, this.y);
+            } else if (this.type === 'wind') {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, 8, 0, Math.PI*2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.moveTo(this.x, this.y);
+                ctx.lineTo(this.x - 30, this.y);
+                ctx.strokeStyle = this.color;
+                ctx.lineWidth = 4;
+                ctx.stroke();
+            } else if (this.type === 'star') {
+                ctx.font = '24px Arial';
+                ctx.fillText('⭐', this.x, this.y);
+            } else if (this.type === 'dirt') {
+                ctx.fillStyle = '#654321';
+                ctx.fillRect(this.x, this.y, 10, 10);
+            }
+            ctx.restore();
+        }
+    }
+
+    function spawnParticles(x, y, type, color, count) {
+        for(let i=0; i<count; i++) {
+            let vx = (Math.random() - 0.5) * 15;
+            let vy = (Math.random() - 1) * 15;
+            particles.push(new Particle(x, y, type, color, vx, vy, 30 + Math.random()*20));
+        }
+    }
+
+    // 輔助函式：繪製多行文字
+    function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
+        let words = text.split('');
+        let line = '';
+        for(let n = 0; n < words.length; n++) {
+            let testLine = line + words[n];
+            let metrics = ctx.measureText(testLine);
+            let testWidth = metrics.width;
+            if (testWidth > maxWidth && n > 0) {
+                ctx.fillText(line, x, y);
+                line = words[n];
+                y += lineHeight;
+            } else {
+                line = testLine;
+            }
+        }
+        ctx.fillText(line, x, y);
+    }
+
+    // 遊戲主迴圈 Game Loop
+    function gameLoop(timestamp) {
+        let dt = timestamp - lastTime;
+        lastTime = timestamp;
+
+        // 清除畫布
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // 更新角色漂浮位置
+        playerObj.y = playerObj.baseY + Math.sin(timestamp / 300) * 10;
+        targetObj.y = targetObj.baseY + Math.sin(timestamp / 400 + 1) * 8;
+
+        // 繪製背景影子
+        ctx.fillStyle = 'rgba(0,0,0,0.1)';
+        ctx.beginPath();
+        ctx.ellipse(playerObj.x, playerObj.baseY + 60, 40, 10, 0, 0, Math.PI*2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.ellipse(targetObj.x, targetObj.baseY + 60, 40, 10, 0, 0, Math.PI*2);
+        ctx.fill();
+
+        // 處理玩家攻擊動畫
+        let px = playerObj.x;
+        if (playerObj.state === 'attack') {
+            px += Math.sin(playerObj.timer * Math.PI) * 40; 
+            playerObj.timer -= 0.05;
+            if (playerObj.timer <= 0) playerObj.state = 'idle';
+        }
+        
+        // 繪製玩家頭像與文字
+        ctx.font = '80px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(playerObj.avatar, px, playerObj.y);
+
+        ctx.font = 'bold 20px Noto Sans TC';
+        ctx.fillStyle = '#333';
+        ctx.fillText(`【${playerObj.name}】`, playerObj.x, playerObj.baseY + 110);
+        ctx.font = '14px Noto Sans TC';
+        ctx.fillStyle = '#666';
+        wrapText(ctx, playerObj.desc, playerObj.x, playerObj.baseY + 140, 220, 20);
+
+        // 處理目標受擊動畫
+        let tx = targetObj.x;
+        if (targetObj.state === 'hit' || targetObj.state === 'dirtier') {
+            tx += (Math.random() - 0.5) * 15; 
+            targetObj.timer -= 0.05;
+            if (targetObj.timer <= 0) targetObj.state = 'idle';
+        }
+
+        // 繪製目標頭像與文字
+        ctx.font = '80px Arial';
+        ctx.fillText(targetObj.avatar, tx, targetObj.y);
+
+        ctx.font = 'bold 20px Noto Sans TC';
+        ctx.fillStyle = '#333';
+        ctx.fillText(`【${targetObj.name}】`, targetObj.x, targetObj.baseY + 110);
+        ctx.font = '14px Noto Sans TC';
+        ctx.fillStyle = '#666';
+        wrapText(ctx, targetObj.desc, targetObj.x, targetObj.baseY + 140, 220, 20);
+
+        // 更新與繪製粒子
+        for (let i = particles.length - 1; i >= 0; i--) {
+            let p = particles[i];
+            p.update();
+            p.draw(ctx);
+            if (p.life <= 0) particles.splice(i, 1);
+        }
+
+        animationId = requestAnimationFrame(gameLoop);
+    }
+
+    function initGame() {
+        switchScreen('game-screen');
+        
+        // 設置玩家畫布物件
+        if (playerType === 'prince') {
+            playerObj.avatar = profiles.prince.avatar;
+            playerObj.name = '戰鬥型王子';
+            playerObj.desc = profiles.prince.shortDesc;
+        } else {
+            playerObj.avatar = profiles.princess.avatar;
+            playerObj.name = '星辰法師公主';
+            playerObj.desc = profiles.princess.shortDesc;
+        }
+
+        guilt = 0;
+        currentLevelIdx = 0;
+        totalQAll = 0;
+        totalCorrectQAll = 0;
+        gameStartedAt = Date.now();
+        updateGuiltUI();
+        startLevel();
+
+        // 啟動 Canvas 迴圈
+        if (animationId) cancelAnimationFrame(animationId);
+        lastTime = performance.now();
+        animationId = requestAnimationFrame(gameLoop);
+    }
+
+    // 💡 依關卡位數難度分成三個「大關卡」，決定要放哪一首背景音樂
+    function tierForLevel(idx) {
+        if (idx <= 2) return 'beginner';
+        if (idx <= 5) return 'intermediate';
+        return 'advanced';
+    }
+
+    function startLevel() {
+        currentQ = 0;
+        correctQ = 0;
+        combo = 0;
+        cleanness = 0;
+        MathGameAudio.playBgm(tierForLevel(currentLevelIdx));
+        
+        updateStatsUI();
+        updateTargetAppearance();
+        generateQuestion();
+    }
+
+    function generateMathParams(dA, dB) {
+        let minB = Math.pow(10, dB - 1);
+        let maxB = Math.pow(10, dB) - 1;
+        if (dB === 1) minB = 2; // 盡量避免除以1
+        if (dA === 1 && dB === 1) minB = 1; 
+
+        let b = Math.floor(Math.random() * (maxB - minB + 1)) + minB;
+
+        let minA = Math.pow(10, dA - 1);
+        let maxA = Math.pow(10, dA) - 1;
+        if (dA === 1) minA = 1;
+
+        let minC = Math.ceil(minA / b);
+        let maxC = Math.floor(maxA / b);
+
+        if (minC > maxC) {
+            return generateMathParams(dA, dB);
+        }
+
+        let c = Math.floor(Math.random() * (maxC - minC + 1)) + minC;
+        let a = b * c;
+        return { a, b, c };
+    }
+
+    function generateQuestion() {
+        let levelData = levels[currentLevelIdx];
+        let dA, dB;
+
+        if (levelData.random) {
+            dA = Math.floor(Math.random() * 4) + 1; // 1~4
+            dB = Math.floor(Math.random() * dA) + 1; // 1~dA
+        } else {
+            dA = levelData.dA;
+            dB = levelData.dB;
+        }
+
+        let q = generateMathParams(dA, dB);
+        currentAns = q.c;
+        document.getElementById('math-question').innerText = `${q.a} ÷ ${q.b} = ?`;
+        document.getElementById('answer-input').value = '';
+        document.getElementById('answer-input').focus();
+    }
+
+    function handleEnter(e) {
+        if (e.key === 'Enter') checkAnswer();
+    }
+
+    function checkAnswer() {
+        let inputVal = parseInt(document.getElementById('answer-input').value);
+        let msgEl = document.getElementById('status-message');
+
+        if (isNaN(inputVal)) return;
+
+        currentQ++;
+        totalQAll++;
+
+        if (inputVal === currentAns) {
+            // 答對
+            correctQ++;
+            totalCorrectQAll++;
+            combo++;
+            cleanness = Math.min(100, cleanness + 10);
+            MathGameAudio.playSfx('correct');
+            msgEl.innerHTML = `<span class="correct">正確！施放魔法，移除了部分髒污！✨</span>`;
+            
+            // 觸發畫布攻擊與受擊動畫
+            playerObj.state = 'attack';
+            playerObj.timer = 1.0;
+            
+            let projColor = playerType === 'prince' ? '#4facfe' : '#9b59b6';
+            let projType = playerType === 'prince' ? 'wind' : 'star';
+            particles.push(new Particle(playerObj.x + 40, playerObj.y, projType, projColor, 20, 0, 20));
+
+            setTimeout(() => {
+                targetObj.state = 'hit';
+                targetObj.timer = 1.0;
+                spawnParticles(targetObj.x, targetObj.y, 'sparkle', '#f1c40f', 15);
+            }, 300);
+
+        } else {
+            // 答錯
+            combo = 0;
+            cleanness = Math.max(0, cleanness - 10);
+            guilt++;
+            MathGameAudio.playSfx('wrong');
+            msgEl.innerHTML = `<span class="wrong">錯誤！魔法反噬，對象變得更髒了，愧疚感 +1 💔 (正解: ${currentAns})</span>`;
+            
+            // 觸發畫布變髒動畫
+            targetObj.state = 'dirtier';
+            targetObj.timer = 1.0;
+            spawnParticles(targetObj.x, targetObj.y, 'dirt', '#654321', 20);
+
+            updateGuiltUI();
+            
+            if (guilt >= 5) {
+                setTimeout(() => gameOver(false), 1000);
+                return;
+            }
+        }
+
+        updateStatsUI();
+        updateTargetAppearance();
+
+        // 判斷關卡是否結束
+        if (combo >= 5 || currentQ >= 10) {
+            setTimeout(checkLevelResult, 1500);
+        } else {
+            setTimeout(() => {
+                msgEl.innerText = '';
+                generateQuestion();
+            }, 1500);
+        }
+    }
+
+    function checkLevelResult() {
+        let msgEl = document.getElementById('status-message');
+        
+        if (combo >= 5 || (currentQ >= 10 && correctQ >= 7)) {
+            // 過關
+            if (currentLevelIdx < levels.length - 1) {
+                currentLevelIdx++;
+                alert(`恭喜！成功還原部分美貌，進入下一關：${levels[currentLevelIdx].name}`);
+                startLevel();
+            } else {
+                gameOver(true);
+            }
+        } else {
+            // 失敗重來
+            alert(`準確率不足 70% 且未達 5 連勝。對象又弄髒了，請重新挑戰本關卡！`);
+            startLevel();
+        }
+        msgEl.innerText = '';
+    }
+
+    function updateStatsUI() {
+        document.getElementById('level-display').innerText = `關卡: ${currentLevelIdx + 1}/${levels.length} (${levels[currentLevelIdx].name})`;
+        document.getElementById('q-count').innerText = currentQ;
+        document.getElementById('combo-count').innerText = combo;
+        document.getElementById('clean-progress').style.width = `${cleanness}%`;
+    }
+
+    function updateGuiltUI() {
+        document.getElementById('guilt-count').innerText = guilt;
+    }
+
+    function updateTargetAppearance() {
+        if (cleanness < 30) {
+            targetObj.avatar = profiles.beggar.avatar;
+            targetObj.name = '流浪漢';
+            targetObj.desc = profiles.beggar.shortDesc;
+        } else if (cleanness < 70) {
+            targetObj.avatar = "👤✨";
+            targetObj.name = '清理中...';
+            targetObj.desc = '泥土漸漸褪去，露出了乾淨的皮膚，換上了整潔的平民服飾。';
+        } else {
+            let finalProfile = profiles[targetType];
+            targetObj.avatar = finalProfile.avatar;
+            targetObj.name = targetType === 'prince' ? '戰鬥型王子' : '星辰法師公主';
+            targetObj.desc = finalProfile.shortDesc;
+        }
+    }
+
+    function gameOver(isWin) {
+        if (animationId) cancelAnimationFrame(animationId);
+        switchScreen('game-over-screen');
+        MathGameAudio.stopBgm();
+        MathGameAudio.playSfx(isWin ? 'win' : 'lose');
+        
+        if (isWin) {
+            document.getElementById('end-title').innerText = "🎉 完美清'除' 🎉";
+            document.getElementById('end-title').style.color = "#2ecc71";
+            document.getElementById('end-avatar').innerHTML = profiles[playerType].avatar + " 🤝 " + profiles[targetType].avatar;
+            document.getElementById('end-desc').innerHTML = "太棒了！你用精湛的除法魔法成功將流浪 10 年的伴侶恢復了絕美的真身！從此幸福快樂地生活下去。";
+        } else {
+            document.getElementById('end-title').innerText = "💀 愧疚深淵 💀";
+            document.getElementById('end-title').style.color = "#e74c3c";
+            document.getElementById('end-avatar').innerHTML = profiles.beggar.avatar + " " + profiles.beggar.avatar;
+            document.getElementById('end-desc').innerHTML = "你因為算錯太多次，導致魔法反噬。強烈的愧疚感讓你放棄了皇室身分，變成了街頭的另一名流浪漢...";
+        }
+
+        // 💡 回傳這次遊戲成績、依答對率發代幣
+        const gbitLine = document.getElementById('end-gbit');
+        gbitLine.textContent = '代幣結算中…';
+        MathGameCommon.finishAttempt({
+            game: '清除大師',
+            mode: isWin ? '完美清除' : '愧疚深淵',
+            topic: `關卡${currentLevelIdx + 1}(${levels[currentLevelIdx] ? levels[currentLevelIdx].name : ''})`,
+            correct: totalCorrectQAll,
+            total: totalQAll,
+            timeSec: gameStartedAt ? Math.round((Date.now() - gameStartedAt) / 1000) : 0
+        }).then(result => {
+            gbitLine.textContent = `🪙 這次獲得 ${result.gbitAwarded} 枚代幣（目前共有 ${result.newBalance} 枚）`;
+        });
+    }
+
+</script>
+</body>
+</html>

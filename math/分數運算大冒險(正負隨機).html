@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>分數運算大冒險</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0fdf4; }
+        .option-btn { transition: all 0.2s; }
+        .option-btn:hover { transform: scale(1.02); }
+        .selected { background-color: #3b82f6 !important; color: white !important; border-color: #2563eb !important; }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+    <div id="app" class="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden">
+        
+        <!-- 登入畫面 -->
+        <div id="screen-login" class="p-8 text-center">
+            <div class="text-6xl text-green-500 mb-4"><i class="fa-solid fa-shapes"></i></div>
+            <h1 class="text-3xl font-bold text-gray-800 mb-2">分數運算大冒險</h1>
+            <p class="text-gray-500 mb-6">請輸入姓名，並選擇要挑戰的關卡！</p>
+            <input type="text" id="studentName" class="w-full border-2 border-gray-200 rounded-lg p-3 mb-6 text-center text-lg focus:border-green-500 outline-none" placeholder="請輸入你的座號與姓名">
+            
+            <!-- 分類按鈕 -->
+            <div class="grid grid-cols-2 gap-3 mb-2">
+                <button onclick="startQuiz('約分')" class="bg-blue-100 hover:bg-blue-200 text-blue-800 font-bold py-2 rounded-lg transition">約分關卡</button>
+                <button onclick="startQuiz('擴分')" class="bg-green-100 hover:bg-green-200 text-green-800 font-bold py-2 rounded-lg transition">擴分關卡</button>
+                <button onclick="startQuiz('通分')" class="bg-yellow-100 hover:bg-yellow-200 text-yellow-800 font-bold py-2 rounded-lg transition">通分關卡</button>
+                <button onclick="startQuiz('加法')" class="bg-red-100 hover:bg-red-200 text-red-800 font-bold py-2 rounded-lg transition">加法關卡</button>
+                <button onclick="startQuiz('減法')" class="bg-purple-100 hover:bg-purple-200 text-purple-800 font-bold py-2 rounded-lg transition">減法關卡</button>
+                <button onclick="startQuiz('乘法')" class="bg-pink-100 hover:bg-pink-200 text-pink-800 font-bold py-2 rounded-lg transition">乘法關卡</button>
+                <button onclick="startQuiz('除法')" class="bg-indigo-100 hover:bg-indigo-200 text-indigo-800 font-bold py-2 rounded-lg transition">除法關卡</button>
+                <button onclick="startQuiz('綜合')" class="bg-gray-800 hover:bg-gray-900 text-white font-bold py-2 rounded-lg transition">綜合挑戰</button>
+            </div>
+        </div>
+
+        <!-- 測驗畫面 -->
+        <div id="screen-quiz" class="hidden flex flex-col h-full">
+            <div class="bg-green-500 text-white p-4 flex justify-between items-center">
+                <span id="qCategory" class="bg-yellow-300 text-green-900 px-3 py-1 rounded-full text-sm font-bold shadow"></span>
+                <span class="font-bold">第 <span id="qCurrent">1</span>/<span id="qTotal"></span> 題</span>
+            </div>
+            <div class="p-6 flex-grow">
+                <h2 id="qText" class="text-2xl font-bold text-gray-800 mb-8 text-center mt-4 tracking-wide"></h2>
+                <div id="optionsContainer" class="space-y-3">
+                    <!-- 選項按鈕動態注入 -->
+                </div>
+            </div>
+            <div class="p-4 bg-gray-50 border-t flex justify-end">
+                <button id="btnNext" onclick="nextQuestion()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg transition disabled:opacity-50" disabled>確定送出 <i class="fa-solid fa-arrow-right ml-1"></i></button>
+            </div>
+        </div>
+
+        <!-- 結果與上傳畫面 -->
+        <div id="screen-result" class="hidden p-8 text-center">
+            <div class="text-6xl text-yellow-400 mb-4"><i class="fa-solid fa-trophy"></i></div>
+            <h2 class="text-3xl font-bold text-gray-800 mb-2">挑戰完成！</h2>
+            <p class="text-lg text-gray-600 mb-6"><span id="displayName" class="font-bold"></span> 的成績：</p>
+            <div class="text-5xl font-black text-blue-600 mb-2" id="finalScore">0</div>
+            <p class="text-gray-500 mb-8">答對 <span id="finalCorrect"></span> / <span id="finalTotal"></span> 題</p>
+            <div id="uploadStatus" class="mb-4"></div>
+            <button onclick="submitData()" id="btnSubmit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-lg shadow-lg transition"><i class="fa-solid fa-cloud-arrow-up mr-2"></i>上傳成績給老師</button>
+            <button onclick="location.reload()" class="w-full mt-3 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-3 rounded-lg shadow transition">返回首頁重測</button>
+        </div>
+
+    </div>
+
+    <script>
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbwVsNUmhpicvrNRmqcsZhIl2TMuImIMBwO40P9Oxma0fWPgT_j2sEDu4IPegXjr4K9c/exec";
+        
+        let currentIdx = 0;
+        let studentName = "";
+        let answers = [];
+        let generatedQuestions = [];
+        const QUESTION_COUNT = 10; // 每次測驗的題數
+
+        // --- 數學與隨機生成輔助函數 ---
+        const rand = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+        const randSign = () => Math.random() < 0.5 ? 1 : -1; // 隨機正負號
+        const gcd = (a, b) => b === 0 ? Math.abs(a) : gcd(b, a % b); // 支援負數
+        const lcm = (a, b) => Math.abs(a * b) / gcd(a, b);
+        
+        const simplify = (n, d) => { 
+            let g = gcd(Math.abs(n), Math.abs(d)); 
+            let sn = n / g, sd = d / g; 
+            // 確保分母為正，符號保留在分子
+            if (sd < 0) { sn = -sn; sd = -sd; }
+            return [sn, sd]; 
+        };
+        
+        const toFracStr = (n, d) => {
+            if (n === 0) return "0";
+            return d === 1 ? `${n}` : `${n}/${d}`;
+        };
+
+        // 新增格式化函式，確保遇到負數且作為第二運算元時會加上括號
+        const fmt = (n, d, needsParen = false) => {
+            let str = toFracStr(n, d);
+            return (needsParen && n < 0) ? `(${str})` : str;
+        };
+
+        // 產生混淆選項
+        function getDistractors(ansStr, isFraction = true, n = 1, d = 2) {
+            let set = new Set([ansStr]);
+            let attempts = 0;
+            while (set.size < 4 && attempts < 100) {
+                attempts++;
+                if (isFraction) {
+                    // 隨機正負號產生新的分子
+                    let randN = (Math.abs(n) + rand(-3, 4)) * randSign();
+                    let randD = Math.max(2, Math.abs(d) + rand(-3, 4));
+                    let [sn, sd] = simplify(randN, randD);
+                    if (sd < 100) set.add(toFracStr(sn, sd));
+                } else {
+                    let val = parseInt(ansStr);
+                    let diff = rand(1, 12) * randSign();
+                    let dist = val + diff;
+                    if (dist === val) dist += 1;
+                    set.add(dist.toString());
+                }
+            }
+            // 不足4個選項時隨機填補
+            while (set.size < 4) {
+                set.add(isFraction ? toFracStr(rand(1, 9) * randSign(), rand(2, 20)) : `${rand(1, 50) * randSign()}`);
+            }
+            return Array.from(set).sort(() => Math.random() - 0.5);
+        }
+
+        // --- 各題型生成邏輯 (限制分母最大 99，允許正負號) ---
+        const generators = {
+            "約分": () => {
+                let d = rand(2, 12), n = rand(1, d - 1) * randSign();
+                [n, d] = simplify(n, d);
+                let k = rand(2, Math.floor(99 / Math.abs(d)));
+                let ansN = n, ansD = d;
+                return {
+                    category: "約分",
+                    question: `將分數 ${fmt(n * k, d * k)} 化為最簡分數，下列何者正確？`,
+                    answer: toFracStr(ansN, ansD),
+                    options: getDistractors(toFracStr(ansN, ansD), true, ansN, ansD)
+                };
+            },
+            "擴分": () => {
+                let d = rand(2, 15), n = rand(1, d - 1) * randSign();
+                [n, d] = simplify(n, d);
+                if (d === 1) d = 2;
+                let k = rand(2, Math.floor(99 / Math.abs(d)));
+                let targetD = d * k, ans = n * k;
+                return {
+                    category: "擴分",
+                    question: `將分數 ${fmt(n, d)} 的分母擴分改為 ${targetD}，其分子應為多少？`,
+                    answer: ans.toString(),
+                    options: getDistractors(ans.toString(), false)
+                };
+            },
+            "通分": () => {
+                let d1 = rand(2, 12), d2 = rand(2, 12);
+                while (lcm(d1, d2) > 99 || d1 === d2) { d1 = rand(2, 12); d2 = rand(2, 12); }
+                let n1 = rand(1, d1 - 1) * randSign(), n2 = rand(1, d2 - 1) * randSign();
+                let ans = lcm(d1, d2);
+                return {
+                    category: "通分",
+                    question: `比較 ${fmt(n1, d1)} 與 ${fmt(n2, d2)} 的大小，若以最小公倍數通分，其共同分母為多少？`,
+                    answer: ans.toString(),
+                    options: getDistractors(ans.toString(), false)
+                };
+            },
+            "加法": () => {
+                let d1 = rand(2, 12), d2 = rand(2, 12);
+                while (lcm(d1, d2) > 99) { d1 = rand(2, 12); d2 = rand(2, 12); }
+                let n1 = rand(1, d1 - 1) * randSign(), n2 = rand(1, d2 - 1) * randSign();
+                let comD = lcm(d1, d2);
+                let sumN = n1 * (comD / d1) + n2 * (comD / d2);
+                let [ansN, ansD] = simplify(sumN, comD);
+                return {
+                    category: "加法",
+                    question: `計算 ${fmt(n1, d1)} + ${fmt(n2, d2, true)} = ?`,
+                    answer: toFracStr(ansN, ansD),
+                    options: getDistractors(toFracStr(ansN, ansD), true, ansN, ansD)
+                };
+            },
+            "減法": () => {
+                let d1 = rand(2, 12), d2 = rand(2, 12);
+                while (lcm(d1, d2) > 99) { d1 = rand(2, 12); d2 = rand(2, 12); }
+                let n1 = rand(1, d1 - 1) * randSign(), n2 = rand(1, d2 - 1) * randSign();
+                // 允許產生負數結果，移除大減小限制
+                let comD = lcm(d1, d2);
+                let subN = n1 * (comD / d1) - n2 * (comD / d2);
+                let [ansN, ansD] = simplify(subN, comD);
+                return {
+                    category: "減法",
+                    question: `計算 ${fmt(n1, d1)} - ${fmt(n2, d2, true)} = ?`,
+                    answer: toFracStr(ansN, ansD),
+                    options: getDistractors(toFracStr(ansN, ansD), true, ansN, ansD)
+                };
+            },
+            "乘法": () => {
+                let d1 = rand(2, 9), d2 = rand(2, 11);
+                let n1 = rand(1, d1 - 1) * randSign(), n2 = rand(1, d2 - 1) * randSign();
+                let [ansN, ansD] = simplify(n1 * n2, d1 * d2);
+                return {
+                    category: "乘法",
+                    question: `計算 ${fmt(n1, d1)} × ${fmt(n2, d2, true)} = ?`,
+                    answer: toFracStr(ansN, ansD),
+                    options: getDistractors(toFracStr(ansN, ansD), true, ansN, ansD)
+                };
+            },
+            "除法": () => {
+                // 確保 n2 不為 0 以避免除以 0 錯誤
+                let d1 = rand(2, 9), n2 = rand(2, 9) * randSign(); 
+                let n1 = rand(1, d1 - 1) * randSign(), d2 = rand(Math.abs(n2) + 1, 15);
+                let [ansN, ansD] = simplify(n1 * d2, d1 * n2);
+                return {
+                    category: "除法",
+                    question: `計算 ${fmt(n1, d1)} ÷ ${fmt(n2, d2, true)} = ?`,
+                    answer: toFracStr(ansN, ansD),
+                    options: getDistractors(toFracStr(ansN, ansD), true, ansN, ansD)
+                };
+            }
+        };
+
+        // --- 核心流程控制 ---
+        function showScreen(id) {
+            ['screen-login', 'screen-quiz', 'screen-result'].forEach(s => document.getElementById(s).classList.add('hidden'));
+            document.getElementById(id).classList.remove('hidden');
+        }
+
+        function startQuiz(category) {
+            const name = document.getElementById('studentName').value.trim();
+            if(!name) { alert("請填寫姓名！"); return; }
+            studentName = name;
+            
+            // 生成題目
+            generatedQuestions = [];
+            const types = ["約分", "擴分", "通分", "加法", "減法", "乘法", "除法"];
+            for (let i = 0; i < QUESTION_COUNT; i++) {
+                let typeToGen = category === '綜合' ? types[rand(0, types.length - 1)] : category;
+                generatedQuestions.push(generators[typeToGen]());
+            }
+
+            document.getElementById('qTotal').innerText = generatedQuestions.length;
+            currentIdx = 0;
+            answers = [];
+            loadQuestion();
+            showScreen('screen-quiz');
+        }
+
+        function loadQuestion() {
+            const q = generatedQuestions[currentIdx];
+            document.getElementById('qCurrent').innerText = currentIdx + 1;
+            document.getElementById('qCategory').innerText = q.category;
+            document.getElementById('qText').innerText = q.question;
+            
+            const optsContainer = document.getElementById('optionsContainer');
+            optsContainer.innerHTML = '';
+            document.getElementById('btnNext').disabled = true;
+
+            q.options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = "option-btn w-full text-left p-4 border-2 border-gray-200 rounded-xl text-lg font-medium text-gray-700 hover:border-blue-400 focus:outline-none bg-white";
+                btn.innerText = opt;
+                btn.onclick = () => selectOption(btn, opt);
+                optsContainer.appendChild(btn);
+            });
+        }
+
+        let selectedAnswer = null;
+        function selectOption(btn, opt) {
+            document.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+            selectedAnswer = opt;
+            document.getElementById('btnNext').disabled = false;
+        }
+
+        function nextQuestion() {
+            const q = generatedQuestions[currentIdx];
+            const isCorrect = (selectedAnswer === q.answer);
+            answers.push({ cat: q.category, correct: isCorrect });
+            
+            currentIdx++;
+            if(currentIdx < generatedQuestions.length) {
+                selectedAnswer = null;
+                loadQuestion();
+            } else {
+                showResult();
+            }
+        }
+
+        function showResult() {
+            const correctCount = answers.filter(a => a.correct).length;
+            const finalScore = Math.round((correctCount / generatedQuestions.length) * 100);
+            
+            document.getElementById('displayName').innerText = studentName;
+            document.getElementById('finalScore').innerText = finalScore;
+            document.getElementById('finalCorrect').innerText = correctCount;
+            document.getElementById('finalTotal').innerText = generatedQuestions.length;
+            
+            const errors = answers.filter(a => !a.correct).map(a => a.cat);
+            const errorDetails = errors.length > 0 ? Array.from(new Set(errors)).join(', ') : '無';
+
+            window.finalData = {
+                name: studentName,
+                score: finalScore,
+                correctCount: correctCount,
+                totalCount: generatedQuestions.length,
+                errorDetails: errorDetails
+            };
+            
+            showScreen('screen-result');
+        }
+
+        function submitData() {
+            const btn = document.getElementById('btnSubmit');
+            const status = document.getElementById('uploadStatus');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>上傳中...';
+            
+            fetch(GAS_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain' },
+                body: JSON.stringify(window.finalData)
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.status === 'success') {
+                    status.innerHTML = '<span class="text-green-600 font-bold"><i class="fa-solid fa-check-circle mr-1"></i>上傳成功！老師已經收到你的成績。</span>';
+                    btn.classList.add('hidden');
+                } else {
+                    throw new Error("伺服器錯誤");
+                }
+            })
+            .catch(err => {
+                status.innerHTML = '<span class="text-red-500">上傳失敗，請稍後再試。</span>';
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up mr-2"></i>重新嘗試上傳';
+            });
+        }
+    </script>
+</body>
+</html>

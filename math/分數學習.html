@@ -1,0 +1,1824 @@
+
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>分數學習工具</title>
+    <style>
+        body {
+            box-sizing: border-box;
+        }
+        .fraction {
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0 8px;
+        }
+        .numerator {
+            border-bottom: 2px solid #333;
+            padding: 2px 8px;
+            font-size: 1.2em;
+        }
+        .denominator {
+            padding: 2px 8px;
+            font-size: 1.2em;
+        }
+        .tab-active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .concept-card {
+            background: linear-gradient(135deg, #fef7ff 0%, #f0f9ff 100%);
+            color: #374151;
+            border: 2px solid #e5e7eb;
+        }
+        .practice-card {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+        }
+        .game-card {
+            background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 50%, #fecfef 100%);
+            color: #374151;
+        }
+        
+        /* 煙火動畫 */
+        .fireworks-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1000;
+        }
+        
+        .firework {
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            animation: explode 1.5s ease-out forwards;
+        }
+        
+        @keyframes explode {
+            0% {
+                transform: scale(0) rotate(0deg);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1) rotate(180deg);
+                opacity: 1;
+            }
+            100% {
+                transform: scale(2) rotate(360deg);
+                opacity: 0;
+            }
+        }
+        
+        .firework-particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            animation: particle 1.2s ease-out forwards;
+        }
+        
+        @keyframes particle {
+            0% {
+                transform: translate(0, 0) scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(var(--dx), var(--dy)) scale(0);
+                opacity: 0;
+            }
+        }
+        
+        .celebration-text {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 3rem;
+            font-weight: 900;
+            color: #ff6b6b;
+            text-shadow: 3px 3px 0px #fff, 6px 6px 0px #ff9ff3;
+            animation: celebrationBounce 2s ease-out forwards;
+            z-index: 1001;
+            pointer-events: none;
+        }
+        
+        @keyframes celebrationBounce {
+            0% {
+                transform: translate(-50%, -50%) scale(0);
+                opacity: 0;
+            }
+            20% {
+                transform: translate(-50%, -50%) scale(1.2);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(-50%, -50%) scale(0.8);
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-purple-50 min-h-screen">
+    <!-- 煙火動畫容器 -->
+    <div id="fireworksContainer" class="fireworks-container"></div>
+    
+    <div id="mg-fit-stage" style="width:600px;">
+    <div class="container mx-auto px-4 py-6" style="max-width:100%;width:100%;">
+        <!-- 標題 -->
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-gray-800 mb-2">🧮 分數學習工具 🧮</h1>
+            <p class="text-lg text-gray-600">學習擴分、約分、通分和分數比較</p>
+        </div>
+
+        <!-- 分頁標籤 -->
+        <div class="flex justify-center mb-8">
+            <div class="bg-white rounded-lg shadow-lg p-2 flex">
+                <button onclick="showPage('concept')" id="conceptTab" class="tab-active px-6 py-3 rounded-lg font-semibold transition-all duration-300">
+                    📚 概念學習
+                </button>
+                <button onclick="showPage('practice')" id="practiceTab" class="px-6 py-3 rounded-lg font-semibold text-gray-600 hover:text-gray-800 transition-all duration-300">
+                    ✏️ 練習測驗
+                </button>
+                <button onclick="showPage('game')" id="gameTab" class="px-6 py-3 rounded-lg font-semibold text-gray-600 hover:text-gray-800 transition-all duration-300">
+                    🎮 遊戲闖關
+                </button>
+            </div>
+        </div>
+
+        <!-- 概念學習頁面 -->
+        <div id="conceptPage" class="space-y-8">
+            <div class="grid md:grid-cols-2 gap-6">
+                <!-- 擴分 -->
+                <div class="concept-card rounded-xl p-6 shadow-lg">
+                    <h3 class="text-2xl font-bold mb-4">🔍 擴分</h3>
+                    <p class="mb-4">把分子和分母同乘以一個比1大的整數，會得到一個和原分數相等的分數，這種方法叫作擴分。</p>
+                    <div class="bg-white bg-opacity-60 rounded-lg p-4 mb-4 border border-gray-200">
+                        <div class="text-center text-xl mb-4">
+                            <span class="fraction">
+                                <span class="numerator">2 × 2</span>
+                                <span class="denominator">3 × 2</span>
+                            </span>
+                            <span class="mx-4">=</span>
+                            <span class="fraction">
+                                <span class="numerator">4</span>
+                                <span class="denominator">6</span>
+                            </span>
+                        </div>
+                        <!-- 視覺化圓餅圖 -->
+                        <div class="flex justify-center items-center space-x-8 mt-4">
+                            <div class="text-center">
+                                <div class="text-sm text-gray-600 mb-2">2/3</div>
+                                <svg width="80" height="80" viewBox="0 0 80 80" class="mx-auto">
+                                    <circle cx="40" cy="40" r="35" fill="#e5e7eb" stroke="#374151" stroke-width="2"/>
+                                    <path d="M 40 40 L 40 5 A 35 35 0 0 1 70.31 55 Z" fill="#3b82f6" stroke="#374151" stroke-width="2"/>
+                                    <path d="M 40 40 L 70.31 55 A 35 35 0 0 1 9.69 55 Z" fill="#3b82f6" stroke="#374151" stroke-width="2"/>
+                                </svg>
+                            </div>
+                            <div class="text-2xl">=</div>
+                            <div class="text-center">
+                                <div class="text-sm text-gray-600 mb-2">4/6</div>
+                                <svg width="80" height="80" viewBox="0 0 80 80" class="mx-auto">
+                                    <circle cx="40" cy="40" r="35" fill="#e5e7eb" stroke="#374151" stroke-width="2"/>
+                                    <path d="M 40 40 L 40 5 A 35 35 0 1 1 40 75 Z" fill="#3b82f6" stroke="#374151" stroke-width="2"/>
+                                    <path d="M 40 40 L 40 75 A 35 35 0 0 1 9.69 55 Z" fill="#3b82f6" stroke="#374151" stroke-width="2"/>
+                                    <line x1="40" y1="40" x2="40" y2="5" stroke="#374151" stroke-width="2"/>
+                                    <line x1="40" y1="40" x2="70.31" y2="25" stroke="#374151" stroke-width="2"/>
+                                    <line x1="40" y1="40" x2="70.31" y2="55" stroke="#374151" stroke-width="2"/>
+                                    <line x1="40" y1="40" x2="40" y2="75" stroke="#374151" stroke-width="2"/>
+                                    <line x1="40" y1="40" x2="9.69" y2="55" stroke="#374151" stroke-width="2"/>
+                                    <line x1="40" y1="40" x2="9.69" y2="25" stroke="#374151" stroke-width="2"/>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="text-sm">分子和分母都乘以2，分數值相等</p>
+                </div>
+
+                <!-- 約分 -->
+                <div class="concept-card rounded-xl p-6 shadow-lg">
+                    <h3 class="text-2xl font-bold mb-4">📉 約分</h3>
+                    <p class="mb-4">把分子和分母同除以一個比1大的公因數，會得到一個和原分數相等的分數，這種方法叫作約分。</p>
+                    <div class="bg-white bg-opacity-60 rounded-lg p-4 mb-4 border border-gray-200">
+                        <div class="text-center text-xl mb-4">
+                            <span class="fraction">
+                                <span class="numerator">8 ÷ 4</span>
+                                <span class="denominator">12 ÷ 4</span>
+                            </span>
+                            <span class="mx-4">=</span>
+                            <span class="fraction">
+                                <span class="numerator">2</span>
+                                <span class="denominator">3</span>
+                            </span>
+                        </div>
+                        <!-- 視覺化圓餅圖 -->
+                        <div class="flex justify-center items-center space-x-8 mt-4">
+                            <div class="text-center">
+                                <div class="text-sm text-gray-600 mb-2">8/12</div>
+                                <svg width="80" height="80" viewBox="0 0 80 80" class="mx-auto">
+                                    <circle cx="40" cy="40" r="35" fill="#e5e7eb" stroke="#374151" stroke-width="2"/>
+                                    <!-- 8/12 = 2/3，所以填充240度 -->
+                                    <path d="M 40 40 L 40 5 A 35 35 0 0 1 70.31 55 Z" fill="#3b82f6" stroke="#374151" stroke-width="2"/>
+                                    <path d="M 40 40 L 70.31 55 A 35 35 0 0 1 9.69 55 Z" fill="#3b82f6" stroke="#374151" stroke-width="2"/>
+                                    <!-- 12等分線 -->
+                                    <line x1="40" y1="40" x2="40" y2="5" stroke="#374151" stroke-width="1"/>
+                                    <line x1="40" y1="40" x2="57.5" y2="12.5" stroke="#374151" stroke-width="1"/>
+                                    <line x1="40" y1="40" x2="70.31" y2="25" stroke="#374151" stroke-width="1"/>
+                                    <line x1="40" y1="40" x2="75" y2="40" stroke="#374151" stroke-width="1"/>
+                                    <line x1="40" y1="40" x2="70.31" y2="55" stroke="#374151" stroke-width="1"/>
+                                    <line x1="40" y1="40" x2="57.5" y2="67.5" stroke="#374151" stroke-width="1"/>
+                                    <line x1="40" y1="40" x2="40" y2="75" stroke="#374151" stroke-width="1"/>
+                                    <line x1="40" y1="40" x2="22.5" y2="67.5" stroke="#374151" stroke-width="1"/>
+                                    <line x1="40" y1="40" x2="9.69" y2="55" stroke="#374151" stroke-width="1"/>
+                                    <line x1="40" y1="40" x2="5" y2="40" stroke="#374151" stroke-width="1"/>
+                                    <line x1="40" y1="40" x2="9.69" y2="25" stroke="#374151" stroke-width="1"/>
+                                    <line x1="40" y1="40" x2="22.5" y2="12.5" stroke="#374151" stroke-width="1"/>
+                                </svg>
+                            </div>
+                            <div class="text-2xl">=</div>
+                            <div class="text-center">
+                                <div class="text-sm text-gray-600 mb-2">2/3</div>
+                                <svg width="80" height="80" viewBox="0 0 80 80" class="mx-auto">
+                                    <circle cx="40" cy="40" r="35" fill="#e5e7eb" stroke="#374151" stroke-width="2"/>
+                                    <path d="M 40 40 L 40 5 A 35 35 0 0 1 70.31 55 Z" fill="#3b82f6" stroke="#374151" stroke-width="2"/>
+                                    <path d="M 40 40 L 70.31 55 A 35 35 0 0 1 9.69 55 Z" fill="#3b82f6" stroke="#374151" stroke-width="2"/>
+                                    <!-- 3等分線 -->
+                                    <line x1="40" y1="40" x2="40" y2="5" stroke="#374151" stroke-width="2"/>
+                                    <line x1="40" y1="40" x2="70.31" y2="55" stroke="#374151" stroke-width="2"/>
+                                    <line x1="40" y1="40" x2="9.69" y2="55" stroke="#374151" stroke-width="2"/>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="text-sm">分子和分母都除以4，得到最簡分數</p>
+                </div>
+
+                <!-- 通分 -->
+                <div class="concept-card rounded-xl p-6 shadow-lg">
+                    <h3 class="text-2xl font-bold mb-4">🔄 通分</h3>
+                    <p class="mb-4">用擴分或約分，把不同分母的分數化成相同分母的分數，叫作通分。</p>
+                    <div class="bg-white bg-opacity-60 rounded-lg p-4 mb-4 border border-gray-200">
+                        <div class="text-center text-xl">
+                            <span class="fraction">
+                                <span class="numerator">1 × 3</span>
+                                <span class="denominator">2 × 3</span>
+                            </span>
+                            <span class="mx-2">=</span>
+                            <span class="fraction">
+                                <span class="numerator">3</span>
+                                <span class="denominator">6</span>
+                            </span>
+                        </div>
+                        <div class="text-center text-xl mt-2">
+                            <span class="fraction">
+                                <span class="numerator">1 × 2</span>
+                                <span class="denominator">3 × 2</span>
+                            </span>
+                            <span class="mx-2">=</span>
+                            <span class="fraction">
+                                <span class="numerator">2</span>
+                                <span class="denominator">6</span>
+                            </span>
+                        </div>
+                    </div>
+                    <p class="text-sm">找到最小公倍數6作為共同分母</p>
+                </div>
+
+                <!-- 分數比較 -->
+                <div class="concept-card rounded-xl p-6 shadow-lg">
+                    <h3 class="text-2xl font-bold mb-4">⚖️ 分數比較</h3>
+                    <p class="mb-4">比較分數大小的方法：</p>
+                    
+                    <div class="bg-white bg-opacity-60 rounded-lg p-4 mb-4 border border-gray-200">
+                        <h4 class="font-semibold mb-2">同分母比較</h4>
+                        <div class="text-center text-xl mb-2">
+                            <span class="fraction">
+                                <span class="numerator">3</span>
+                                <span class="denominator">6</span>
+                            </span>
+                            <span class="mx-4">&gt;</span>
+                            <span class="fraction">
+                                <span class="numerator">2</span>
+                                <span class="denominator">6</span>
+                            </span>
+                        </div>
+                        <p class="text-sm text-gray-600">同分母時，分子大的分數比較大</p>
+                    </div>
+                    
+                    <div class="bg-white bg-opacity-60 rounded-lg p-4 mb-4 border border-gray-200">
+                        <h4 class="font-semibold mb-2">同分子比較</h4>
+                        <div class="text-center text-xl mb-2">
+                            <span class="fraction">
+                                <span class="numerator">2</span>
+                                <span class="denominator">3</span>
+                            </span>
+                            <span class="mx-4">&gt;</span>
+                            <span class="fraction">
+                                <span class="numerator">2</span>
+                                <span class="denominator">5</span>
+                            </span>
+                        </div>
+                        <p class="text-sm text-gray-600">同分子時，分母小的分數比較大</p>
+                    </div>
+                    
+                    <p class="text-sm">其他情況先通分，再比較分子大小</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 練習測驗頁面 -->
+        <div id="practicePage" class="hidden">
+            <!-- 選擇練習類型 -->
+            <div id="practiceMenu" class="grid md:grid-cols-2 gap-6 mb-8">
+                <div class="practice-card rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 cursor-pointer" onclick="startPractice('expand')">
+                    <h3 class="text-2xl font-bold mb-2">🔍 擴分練習</h3>
+                    <p>練習將分數擴分</p>
+                </div>
+                <div class="practice-card rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 cursor-pointer" onclick="startPractice('reduce')">
+                    <h3 class="text-2xl font-bold mb-2">📉 約分練習</h3>
+                    <p>練習將分數約分</p>
+                </div>
+                <div class="practice-card rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 cursor-pointer" onclick="startPractice('common')">
+                    <h3 class="text-2xl font-bold mb-2">🔄 通分練習</h3>
+                    <p>練習將分數通分</p>
+                </div>
+                <div class="practice-card rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 cursor-pointer" onclick="startPractice('compare')">
+                    <h3 class="text-2xl font-bold mb-2">⚖️ 比較練習</h3>
+                    <p>練習比較分數大小</p>
+                </div>
+            </div>
+
+            <!-- 測驗區域 -->
+            <div id="quizArea" class="hidden">
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 id="quizTitle" class="text-2xl font-bold text-gray-800"></h3>
+                        <div class="text-lg font-semibold text-gray-600">
+                            題目 <span id="currentQuestion">1</span> / 10
+                        </div>
+                    </div>
+                    
+                    <div id="questionContent" class="text-center mb-8 text-xl"></div>
+                    
+                    <div id="answerArea" class="text-center mb-6"></div>
+                    
+                    <div class="text-center">
+                        <button id="submitBtn" onclick="checkAnswer()" class="bg-blue-500 hover:bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold transition-all duration-300">
+                            提交答案
+                        </button>
+                        <button id="nextBtn" onclick="nextQuestion()" class="hidden bg-green-500 hover:bg-green-600 text-white px-8 py-3 rounded-lg font-semibold transition-all duration-300 ml-4">
+                            下一題
+                        </button>
+                    </div>
+                    
+                    <div id="feedback" class="mt-6 text-center hidden"></div>
+                </div>
+            </div>
+
+            <!-- 結果頁面 -->
+            <div id="resultArea" class="hidden">
+                <div class="bg-white rounded-xl shadow-lg p-8 text-center">
+                    <h3 class="text-3xl font-bold text-gray-800 mb-6">🎉 測驗完成！</h3>
+                    <div id="resultContent" class="space-y-4 mb-8"></div>
+                    <button onclick="backToMenu()" class="bg-purple-500 hover:bg-purple-600 text-white px-8 py-3 rounded-lg font-semibold transition-all duration-300">
+                        返回選單
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 遊戲闖關頁面 -->
+        <div id="gamePage" class="hidden">
+            <!-- 遊戲介紹頁面 -->
+            <div id="gameIntro" class="text-center">
+                <div class="bg-white rounded-xl shadow-lg p-8 mb-8">
+                    <div class="text-8xl mb-4">🧙‍♂️</div>
+                    <h2 class="text-3xl font-bold text-gray-800 mb-4">歡迎來到分數魔法學院！</h2>
+                    <div class="bg-blue-50 rounded-lg p-6 mb-6">
+                        <div class="text-6xl mb-4">🎯</div>
+                        <h3 class="text-xl font-bold text-gray-800 mb-4">遊戲規則說明</h3>
+                        <div class="text-left space-y-3 text-gray-700">
+                            <p>🏰 <strong>四大關卡：</strong>擴分城堡、約分森林、通分迷宮、比較競技場</p>
+                            <p>❤️ <strong>生命系統：</strong>每關開始有5顆愛心，答錯扣1顆</p>
+                            <p>🎲 <strong>關卡挑戰：</strong>每關有5道題目等你挑戰</p>
+                            <p>🏆 <strong>終極獎勵：</strong>完成所有關卡可獲得專屬證書</p>
+                            <p>🤖 <strong>NPC助手：</strong>每關都有可愛助手為你加油</p>
+                        </div>
+                    </div>
+                    <button onclick="showLevelSelect()" class="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white px-8 py-4 rounded-lg font-bold text-xl transition-all duration-300 transform hover:scale-105">
+                        🚀 開始冒險
+                    </button>
+                </div>
+            </div>
+
+            <!-- 關卡選擇頁面 -->
+            <div id="levelSelect" class="hidden">
+                <div class="text-center mb-8">
+                    <h2 class="text-3xl font-bold text-gray-800 mb-4">選擇你的冒險關卡</h2>
+                    <div class="flex justify-center items-center space-x-4 mb-6">
+                        <span class="text-lg text-gray-600">進度：</span>
+                        <div class="flex space-x-2">
+                            <span id="level1Status" class="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-white font-bold">1</span>
+                            <span id="level2Status" class="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-white font-bold">2</span>
+                            <span id="level3Status" class="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-white font-bold">3</span>
+                            <span id="level4Status" class="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-white font-bold">4</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div id="expandLevel" class="game-card rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 cursor-pointer" onclick="startGameLevel('expand')">
+                        <div class="text-6xl mb-4">🏰</div>
+                        <h3 class="text-2xl font-bold mb-2">擴分城堡</h3>
+                        <p class="mb-4">在魔法城堡中學習擴分的奧秘</p>
+                        <div class="flex justify-center items-center space-x-2">
+                            <span class="text-sm text-gray-600">難度：</span>
+                            <div class="flex space-x-1">
+                                <span class="w-3 h-3 bg-green-400 rounded-full"></span>
+                                <span class="w-3 h-3 bg-gray-300 rounded-full"></span>
+                                <span class="w-3 h-3 bg-gray-300 rounded-full"></span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="reduceLevel" class="game-card rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 cursor-pointer opacity-50" onclick="startGameLevel('reduce')">
+                        <div class="text-6xl mb-4">🌲</div>
+                        <h3 class="text-2xl font-bold mb-2">約分森林</h3>
+                        <p class="mb-4">在神秘森林中掌握約分技巧</p>
+                        <div class="flex justify-center items-center space-x-2">
+                            <span class="text-sm text-gray-600">難度：</span>
+                            <div class="flex space-x-1">
+                                <span class="w-3 h-3 bg-yellow-400 rounded-full"></span>
+                                <span class="w-3 h-3 bg-yellow-400 rounded-full"></span>
+                                <span class="w-3 h-3 bg-gray-300 rounded-full"></span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="commonLevel" class="game-card rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 cursor-pointer opacity-50" onclick="startGameLevel('common')">
+                        <div class="text-6xl mb-4">🌀</div>
+                        <h3 class="text-2xl font-bold mb-2">通分迷宮</h3>
+                        <p class="mb-4">在複雜迷宮中學會通分方法</p>
+                        <div class="flex justify-center items-center space-x-2">
+                            <span class="text-sm text-gray-600">難度：</span>
+                            <div class="flex space-x-1">
+                                <span class="w-3 h-3 bg-orange-400 rounded-full"></span>
+                                <span class="w-3 h-3 bg-orange-400 rounded-full"></span>
+                                <span class="w-3 h-3 bg-orange-400 rounded-full"></span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="compareLevel" class="game-card rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 cursor-pointer opacity-50" onclick="startGameLevel('compare')">
+                        <div class="text-6xl mb-4">⚔️</div>
+                        <h3 class="text-2xl font-bold mb-2">比較競技場</h3>
+                        <p class="mb-4">在競技場中挑戰分數比較</p>
+                        <div class="flex justify-center items-center space-x-2">
+                            <span class="text-sm text-gray-600">難度：</span>
+                            <div class="flex space-x-1">
+                                <span class="w-3 h-3 bg-red-400 rounded-full"></span>
+                                <span class="w-3 h-3 bg-red-400 rounded-full"></span>
+                                <span class="w-3 h-3 bg-red-400 rounded-full"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="text-center mt-8">
+                    <button onclick="showGameIntro()" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300">
+                        ← 返回說明
+                    </button>
+                </div>
+            </div>
+
+            <!-- 遊戲關卡頁面 -->
+            <div id="gameLevel" class="hidden">
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <!-- 關卡標題和狀態 -->
+                    <div class="flex justify-between items-center mb-6">
+                        <div class="flex items-center space-x-4">
+                            <div id="levelIcon" class="text-4xl"></div>
+                            <div>
+                                <h3 id="levelTitle" class="text-2xl font-bold text-gray-800"></h3>
+                                <p id="levelSubtitle" class="text-gray-600"></p>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <div class="flex items-center space-x-2 mb-2">
+                                <span class="text-sm text-gray-600">生命：</span>
+                                <div id="hearts" class="flex space-x-1"></div>
+                            </div>
+                            <div class="text-lg font-semibold text-gray-600">
+                                題目 <span id="gameCurrentQuestion">1</span> / 5
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- NPC助手 -->
+                    <div class="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-4 mb-6">
+                        <div class="flex items-center space-x-4">
+                            <div id="npcAvatar" class="text-4xl"></div>
+                            <div class="flex-1">
+                                <div id="npcMessage" class="bg-white rounded-lg p-3 shadow-sm"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="gameQuestionContent" class="text-center mb-8 text-xl"></div>
+                    
+                    <div id="gameAnswerArea" class="text-center mb-6"></div>
+                    
+                    <div class="text-center">
+                        <button id="gameSubmitBtn" onclick="checkGameAnswer()" class="bg-blue-500 hover:bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold transition-all duration-300">
+                            提交答案
+                        </button>
+                        <button id="gameNextBtn" onclick="nextGameQuestion()" class="hidden bg-green-500 hover:bg-green-600 text-white px-8 py-3 rounded-lg font-semibold transition-all duration-300 ml-4">
+                            下一題
+                        </button>
+                    </div>
+                    
+                    <div id="gameFeedback" class="mt-6 text-center hidden"></div>
+                </div>
+            </div>
+
+            <!-- 關卡完成頁面 -->
+            <div id="levelComplete" class="hidden">
+                <div class="bg-white rounded-xl shadow-lg p-8 text-center">
+                    <div id="levelCompleteContent"></div>
+                    <div class="mt-8 space-x-4">
+                        <button onclick="showLevelSelect()" class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300">
+                            返回關卡選擇
+                        </button>
+                        <button id="nextLevelBtn" onclick="startNextLevel()" class="hidden bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300">
+                            挑戰下一關
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 證書頁面 -->
+            <div id="certificate" class="hidden">
+                <div class="bg-white rounded-xl shadow-lg p-8 text-center">
+                    <div class="text-6xl mb-4">🏆</div>
+                    <h2 class="text-3xl font-bold text-gray-800 mb-6">恭喜完成所有關卡！</h2>
+                    
+                    <div class="bg-gradient-to-br from-yellow-100 to-orange-100 border-4 border-yellow-400 rounded-xl p-8 mb-6">
+                        <div class="text-4xl mb-4">🎓</div>
+                        <h3 class="text-2xl font-bold text-gray-800 mb-4">分數魔法學院畢業證書</h3>
+                        <div class="mb-4">
+                            <label class="block text-lg font-semibold text-gray-700 mb-2">請輸入你的暱稱：</label>
+                            <input type="text" id="playerName" class="border-2 border-yellow-400 rounded-lg px-4 py-2 text-center text-xl font-bold" placeholder="輸入暱稱" maxlength="20">
+                        </div>
+                        <button onclick="generateCertificate()" class="bg-yellow-500 hover:bg-yellow-600 text-white px-6 py-3 rounded-lg font-bold transition-all duration-300">
+                            生成證書
+                        </button>
+                    </div>
+                    
+                    <div id="finalCertificate" class="hidden bg-gradient-to-br from-yellow-50 to-orange-50 border-4 border-yellow-500 rounded-xl p-8">
+                        <div class="text-6xl mb-4">🌟</div>
+                        <h3 class="text-3xl font-bold text-gray-800 mb-2">分數魔法學院</h3>
+                        <h4 class="text-xl text-gray-600 mb-6">畢業證書</h4>
+                        <p class="text-lg mb-4">茲證明</p>
+                        <p id="certificateName" class="text-3xl font-bold text-blue-600 mb-4"></p>
+                        <p class="text-lg mb-6">已成功完成分數魔法學院的所有課程<br>在擴分、約分、通分、分數比較四大領域<br>展現了卓越的學習成果</p>
+                        <div class="flex justify-center items-center space-x-8 mb-6">
+                            <div class="text-center">
+                                <div class="text-2xl">🏰</div>
+                                <p class="text-sm">擴分城堡</p>
+                            </div>
+                            <div class="text-center">
+                                <div class="text-2xl">🌲</div>
+                                <p class="text-sm">約分森林</p>
+                            </div>
+                            <div class="text-center">
+                                <div class="text-2xl">🌀</div>
+                                <p class="text-sm">通分迷宮</p>
+                            </div>
+                            <div class="text-center">
+                                <div class="text-2xl">⚔️</div>
+                                <p class="text-sm">比較競技場</p>
+                            </div>
+                        </div>
+                        <p class="text-sm text-gray-600">頒發日期：<span id="certificateDate"></span></p>
+                        <div class="mt-6">
+                            <p class="text-lg font-bold text-purple-600">🧙‍♂️ 分數魔法學院院長</p>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-8">
+                        <button onclick="showLevelSelect()" class="bg-purple-500 hover:bg-purple-600 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300">
+                            重新挑戰
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    </div><!-- /mg-fit-stage -->
+
+    <!-- 設計者資訊 -->
+    <footer class="bg-gray-100 border-t border-gray-200 py-4 mt-8">
+        <div class="container mx-auto px-4 text-center">
+            <p class="text-gray-600 text-sm">
+                設計者：桃園市大竹國小林芳全老師
+            </p>
+        </div>
+    </footer>
+
+    <!-- 💡 登入學號／領代幣／回傳練習結果 共用模組 -->
+    <script src="math-game-common.js"></script>
+    <!-- 💡 手機自動縮放成滿版畫面，不會被裁切 -->
+    <script src="mobile-fit.js"></script>
+    <!-- 💡 音效／背景音樂 共用引擎 -->
+    <script src="math-game-audio.js"></script>
+
+    <script>
+        MathGameCommon.renderIdentityBadge();
+
+        // 💡 背景音樂設定：四個主題＝四個大關卡（擴分/約分/通分/比較），
+        // 練習測驗跟闖關遊戲用同一套主題音樂（同一個大關卡＝同一首）。
+        // 之後要換成各主題專屬的音樂，把右邊路徑換成你自己的檔名就好。
+        MathGameAudio.setMusicMap({
+            expand: "./audio/fraction-bgm-expand.mp3",
+            reduce: "./audio/fraction-bgm-expand.mp3",  // 🔶 預留位置，之後換成約分專屬曲目
+            common: "./audio/fraction-bgm-expand.mp3",  // 🔶 預留位置，之後換成通分專屬曲目
+            compare: "./audio/fraction-bgm-expand.mp3"  // 🔶 預留位置，之後換成比較專屬曲目
+        });
+        // 💡 音效設定：目前先用內建合成音效，之後有真的音效檔再解除註解、填檔名
+        MathGameAudio.setSfxMap({
+            // correct: "./audio/sfx-correct.mp3",
+            // wrong:   "./audio/sfx-wrong.mp3",
+            // click:   "./audio/sfx-click.mp3",
+            // win:     "./audio/sfx-win.mp3",
+            // lose:    "./audio/sfx-lose.mp3"
+        });
+        MathGameAudio.bindClickSfx('button');
+
+        // 全域變數
+        let currentPracticeType = '';
+        let questions = [];
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let wrongAnswers = [];
+        
+        // 遊戲相關變數
+        let gameProgress = {
+            expand: false,
+            reduce: false,
+            common: false,
+            compare: false
+        };
+        let currentGameLevel = '';
+        let gameQuestions = [];
+        let currentGameQuestionIndex = 0;
+        let lives = 5;
+        let gameScore = 0;
+
+        // 分頁切換函數
+        function showPage(page) {
+            // 隱藏所有頁面
+            document.getElementById('conceptPage').classList.add('hidden');
+            document.getElementById('practicePage').classList.add('hidden');
+            document.getElementById('gamePage').classList.add('hidden');
+            
+            // 重置所有標籤樣式
+            const tabs = ['conceptTab', 'practiceTab', 'gameTab'];
+            tabs.forEach(tabId => {
+                const tab = document.getElementById(tabId);
+                tab.classList.remove('tab-active');
+                tab.classList.add('text-gray-600');
+            });
+
+            // 顯示選中的頁面並設置標籤樣式
+            if (page === 'concept') {
+                document.getElementById('conceptPage').classList.remove('hidden');
+                document.getElementById('conceptTab').classList.add('tab-active');
+                document.getElementById('conceptTab').classList.remove('text-gray-600');
+            } else if (page === 'practice') {
+                document.getElementById('practicePage').classList.remove('hidden');
+                document.getElementById('practiceTab').classList.add('tab-active');
+                document.getElementById('practiceTab').classList.remove('text-gray-600');
+                backToMenu(); // 確保顯示練習選單
+            } else if (page === 'game') {
+                document.getElementById('gamePage').classList.remove('hidden');
+                document.getElementById('gameTab').classList.add('tab-active');
+                document.getElementById('gameTab').classList.remove('text-gray-600');
+            }
+        }
+
+        // 計算最大公因數
+        function gcd(a, b) {
+            while (b !== 0) {
+                let temp = b;
+                b = a % b;
+                a = temp;
+            }
+            return a;
+        }
+
+        // 計算最小公倍數
+        function lcm(a, b) {
+            return (a * b) / gcd(a, b);
+        }
+
+        // 約分函數
+        function reduceFraction(num, den) {
+            const g = gcd(num, den);
+            return { numerator: num / g, denominator: den / g };
+        }
+
+        // 生成題目
+        function generateQuestions(type) {
+            questions = [];
+            
+            for (let i = 0; i < 10; i++) {
+                let question = {};
+                
+                if (type === 'expand') {
+                    // 擴分題目 - 使用最簡真分數
+                    let num, den;
+                    do {
+                        num = Math.floor(Math.random() * 8) + 1;
+                        den = Math.floor(Math.random() * 8) + num + 1;
+                    } while (gcd(num, den) !== 1); // 確保是最簡分數
+                    
+                    const multiplier = Math.floor(Math.random() * 4) + 2;
+                    const fillType = Math.random() < 0.5 ? 'numerator' : 'denominator';
+                    
+                    question = {
+                        type: 'expand',
+                        original: { numerator: num, denominator: den },
+                        multiplier: multiplier,
+                        fillType: fillType,
+                        target: fillType === 'numerator' ? 
+                            { numerator: '?', denominator: den * multiplier } :
+                            { numerator: num * multiplier, denominator: '?' },
+                        answer: fillType === 'numerator' ? num * multiplier : den * multiplier
+                    };
+                    
+                } else if (type === 'reduce') {
+                    // 約分題目 - 隨機選擇填分子或分母
+                    let num, den;
+                    do {
+                        num = Math.floor(Math.random() * 20) + 4;
+                        den = Math.floor(Math.random() * 20) + num + 1;
+                    } while (gcd(num, den) === 1);
+                    
+                    const reduced = reduceFraction(num, den);
+                    const fillType = Math.random() < 0.5 ? 'numerator' : 'denominator';
+                    
+                    question = {
+                        type: 'reduce',
+                        original: { numerator: num, denominator: den },
+                        fillType: fillType,
+                        target: fillType === 'numerator' ? 
+                            { numerator: '?', denominator: reduced.denominator } :
+                            { numerator: reduced.numerator, denominator: '?' },
+                        answer: fillType === 'numerator' ? reduced.numerator : reduced.denominator
+                    };
+                    
+                } else if (type === 'common') {
+                    // 通分題目 - 使用最簡分數或真分數
+                    let num1, den1, num2, den2;
+                    
+                    // 生成第一個最簡真分數
+                    do {
+                        num1 = Math.floor(Math.random() * 12) + 1;
+                        den1 = Math.floor(Math.random() * 12) + 2;
+                    } while (gcd(num1, den1) !== 1 || num1 >= den1);
+                    
+                    // 生成第二個最簡真分數，確保分母不同
+                    do {
+                        num2 = Math.floor(Math.random() * 12) + 1;
+                        den2 = Math.floor(Math.random() * 12) + 2;
+                    } while (gcd(num2, den2) !== 1 || num2 >= den2 || den2 === den1);
+                    
+                    const commonDen = lcm(den1, den2);
+                    
+                    question = {
+                        type: 'common',
+                        fractions: [
+                            { numerator: num1, denominator: den1 },
+                            { numerator: num2, denominator: den2 }
+                        ],
+                        answer: {
+                            fraction1: {
+                                numerator: num1 * (commonDen / den1),
+                                denominator: commonDen
+                            },
+                            fraction2: {
+                                numerator: num2 * (commonDen / den2),
+                                denominator: commonDen
+                            }
+                        }
+                    };
+                    
+                } else if (type === 'compare') {
+                    // 比較題目
+                    const num1 = Math.floor(Math.random() * 8) + 1;
+                    const den1 = Math.floor(Math.random() * 8) + num1 + 1;
+                    const num2 = Math.floor(Math.random() * 8) + 1;
+                    const den2 = Math.floor(Math.random() * 8) + num2 + 1;
+                    
+                    const commonDen = lcm(den1, den2);
+                    const comp1 = num1 * (commonDen / den1);
+                    const comp2 = num2 * (commonDen / den2);
+                    
+                    let symbol;
+                    if (comp1 > comp2) symbol = '>';
+                    else if (comp1 < comp2) symbol = '<';
+                    else symbol = '=';
+                    
+                    question = {
+                        type: 'compare',
+                        fractions: [
+                            { numerator: num1, denominator: den1 },
+                            { numerator: num2, denominator: den2 }
+                        ],
+                        answer: symbol
+                    };
+                }
+                
+                questions.push(question);
+            }
+        }
+
+        // 開始練習
+        function startPractice(type) {
+            console.log('開始練習:', type);
+            
+            currentPracticeType = type;
+            currentQuestionIndex = 0;
+            score = 0;
+            wrongAnswers = [];
+            MathGameAudio.playBgm(type);
+            
+            generateQuestions(type);
+            
+            document.getElementById('practiceMenu').classList.add('hidden');
+            document.getElementById('quizArea').classList.remove('hidden');
+            
+            const titles = {
+                'expand': '🔍 擴分練習',
+                'reduce': '📉 約分練習',
+                'common': '🔄 通分練習',
+                'compare': '⚖️ 分數比較練習'
+            };
+            
+            document.getElementById('quizTitle').textContent = titles[type];
+            showQuestion();
+        }
+
+        // 顯示題目
+        function showQuestion() {
+            const question = questions[currentQuestionIndex];
+            document.getElementById('currentQuestion').textContent = currentQuestionIndex + 1;
+            document.getElementById('feedback').classList.add('hidden');
+            document.getElementById('submitBtn').classList.remove('hidden');
+            document.getElementById('nextBtn').classList.add('hidden');
+            
+            let questionHTML = '';
+            let answerHTML = '';
+            
+            if (question.type === 'expand') {
+                questionHTML = `
+                    <p class="mb-4">將下面的分數擴分，填入空格：</p>
+                    <div class="text-2xl mb-4">
+                        <span class="fraction">
+                            <span class="numerator">${question.original.numerator}</span>
+                            <span class="denominator">${question.original.denominator}</span>
+                        </span>
+                        <span class="mx-4">=</span>
+                        <span class="fraction">
+                            <span class="numerator">${question.target.numerator}</span>
+                            <span class="denominator">${question.target.denominator}</span>
+                        </span>
+                    </div>
+                `;
+                answerHTML = `
+                    <div class="flex justify-center">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">請填入空格中的數字：</label>
+                            <input type="number" id="singleAnswer" class="border-2 border-gray-300 rounded-lg px-4 py-2 text-center text-lg w-32" min="1">
+                        </div>
+                    </div>
+                `;
+                
+            } else if (question.type === 'reduce') {
+                questionHTML = `
+                    <p class="mb-4">將下面的分數約分到最簡，填入空格：</p>
+                    <div class="text-2xl mb-4">
+                        <span class="fraction">
+                            <span class="numerator">${question.original.numerator}</span>
+                            <span class="denominator">${question.original.denominator}</span>
+                        </span>
+                        <span class="mx-4">=</span>
+                        <span class="fraction">
+                            <span class="numerator">${question.target.numerator}</span>
+                            <span class="denominator">${question.target.denominator}</span>
+                        </span>
+                    </div>
+                `;
+                answerHTML = `
+                    <div class="flex justify-center">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">請填入空格中的數字：</label>
+                            <input type="number" id="singleAnswer" class="border-2 border-gray-300 rounded-lg px-4 py-2 text-center text-lg w-32" min="1">
+                        </div>
+                    </div>
+                `;
+                
+            } else if (question.type === 'common') {
+                questionHTML = `
+                    <p class="mb-4">將下面兩個分數通分：</p>
+                    <div class="text-2xl mb-4">
+                        <span class="fraction">
+                            <span class="numerator">${question.fractions[0].numerator}</span>
+                            <span class="denominator">${question.fractions[0].denominator}</span>
+                        </span>
+                        <span class="mx-4">和</span>
+                        <span class="fraction">
+                            <span class="numerator">${question.fractions[1].numerator}</span>
+                            <span class="denominator">${question.fractions[1].denominator}</span>
+                        </span>
+                    </div>
+                `;
+                answerHTML = `
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div class="space-y-4">
+                            <h4 class="font-semibold">第一個分數：</h4>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">分子：</label>
+                                <input type="number" id="answerNum1" class="border-2 border-gray-300 rounded-lg px-4 py-2 text-center text-lg w-full" min="1">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">分母：</label>
+                                <input type="number" id="answerDen1" class="border-2 border-gray-300 rounded-lg px-4 py-2 text-center text-lg w-full" min="1">
+                            </div>
+                        </div>
+                        <div class="space-y-4">
+                            <h4 class="font-semibold">第二個分數：</h4>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">分子：</label>
+                                <input type="number" id="answerNum2" class="border-2 border-gray-300 rounded-lg px-4 py-2 text-center text-lg w-full" min="1">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">分母：</label>
+                                <input type="number" id="answerDen2" class="border-2 border-gray-300 rounded-lg px-4 py-2 text-center text-lg w-full" min="1">
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+            } else if (question.type === 'compare') {
+                questionHTML = `
+                    <p class="mb-4">比較下面兩個分數的大小：</p>
+                    <div class="text-2xl mb-4">
+                        <span class="fraction">
+                            <span class="numerator">${question.fractions[0].numerator}</span>
+                            <span class="denominator">${question.fractions[0].denominator}</span>
+                        </span>
+                        <span class="mx-4">?</span>
+                        <span class="fraction">
+                            <span class="numerator">${question.fractions[1].numerator}</span>
+                            <span class="denominator">${question.fractions[1].denominator}</span>
+                        </span>
+                    </div>
+                `;
+                answerHTML = `
+                    <div class="flex justify-center space-x-4">
+                        <button onclick="selectSymbol('>')" id="greater" class="symbol-btn bg-gray-200 hover:bg-blue-200 px-6 py-3 rounded-lg text-2xl font-bold transition-all duration-300">></button>
+                        <button onclick="selectSymbol('<')" id="less" class="symbol-btn bg-gray-200 hover:bg-blue-200 px-6 py-3 rounded-lg text-2xl font-bold transition-all duration-300"><</button>
+                        <button onclick="selectSymbol('=')" id="equal" class="symbol-btn bg-gray-200 hover:bg-blue-200 px-6 py-3 rounded-lg text-2xl font-bold transition-all duration-300">=</button>
+                    </div>
+                    <input type="hidden" id="selectedSymbol" value="">
+                `;
+            }
+            
+            document.getElementById('questionContent').innerHTML = questionHTML;
+            document.getElementById('answerArea').innerHTML = answerHTML;
+        }
+
+        // 選擇符號
+        function selectSymbol(symbol) {
+            document.querySelectorAll('.symbol-btn').forEach(btn => {
+                btn.classList.remove('bg-blue-500', 'text-white');
+                btn.classList.add('bg-gray-200');
+            });
+            
+            document.getElementById('selectedSymbol').value = symbol;
+            
+            const clickedBtn = Array.from(document.querySelectorAll('.symbol-btn')).find(btn => btn.textContent.trim() === symbol);
+            if (clickedBtn) {
+                clickedBtn.classList.remove('bg-gray-200');
+                clickedBtn.classList.add('bg-blue-500', 'text-white');
+            }
+        }
+
+        // 檢查答案
+        function checkAnswer() {
+            const question = questions[currentQuestionIndex];
+            let isCorrect = false;
+            
+            if (question.type === 'expand') {
+                const userAnswer = parseInt(document.getElementById('singleAnswer').value);
+                isCorrect = userAnswer === question.answer;
+                
+            } else if (question.type === 'reduce') {
+                const userAnswer = parseInt(document.getElementById('singleAnswer').value);
+                isCorrect = userAnswer === question.answer;
+                
+            } else if (question.type === 'common') {
+                const userNum1 = parseInt(document.getElementById('answerNum1').value);
+                const userDen1 = parseInt(document.getElementById('answerDen1').value);
+                const userNum2 = parseInt(document.getElementById('answerNum2').value);
+                const userDen2 = parseInt(document.getElementById('answerDen2').value);
+                
+                isCorrect = userNum1 === question.answer.fraction1.numerator && 
+                           userDen1 === question.answer.fraction1.denominator &&
+                           userNum2 === question.answer.fraction2.numerator && 
+                           userDen2 === question.answer.fraction2.denominator;
+                           
+            } else if (question.type === 'compare') {
+                const userAnswer = document.getElementById('selectedSymbol').value;
+                isCorrect = userAnswer === question.answer;
+            }
+            
+            const feedback = document.getElementById('feedback');
+            feedback.classList.remove('hidden');
+            MathGameAudio.playSfx(isCorrect ? 'correct' : 'wrong');
+            
+            if (isCorrect) {
+                score++;
+                triggerFireworks();
+                feedback.innerHTML = `
+                    <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg">
+                        <p class="font-bold">✅ 答對了！🎉</p>
+                    </div>
+                `;
+                
+                document.getElementById('submitBtn').classList.add('hidden');
+                
+                setTimeout(() => {
+                    nextQuestion();
+                }, 2000);
+                
+            } else {
+                feedback.innerHTML = `
+                    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg">
+                        <p class="font-bold">❌ 答錯了，再試一次！</p>
+                    </div>
+                `;
+            }
+        }
+
+        // 下一題
+        function nextQuestion() {
+            currentQuestionIndex++;
+            
+            if (currentQuestionIndex >= questions.length) {
+                showResult();
+            } else {
+                showQuestion();
+            }
+        }
+
+        // 顯示結果
+        function showResult() {
+            document.getElementById('quizArea').classList.add('hidden');
+            document.getElementById('resultArea').classList.remove('hidden');
+            MathGameAudio.stopBgm();
+            
+            const accuracy = Math.round((score / 10) * 100);
+            let feedback = '';
+            
+            if (accuracy >= 90) {
+                feedback = '🌟 太棒了！你已經完全掌握了這個概念！';
+            } else if (accuracy >= 70) {
+                feedback = '👍 做得不錯！再多練習一些就會更好！';
+            } else if (accuracy >= 50) {
+                feedback = '💪 還需要多加練習，但你已經在進步了！';
+            } else {
+                feedback = '📚 建議先回到概念學習頁面複習一下！';
+            }
+            MathGameAudio.playSfx(accuracy >= 70 ? 'win' : 'lose');
+            
+            document.getElementById('resultContent').innerHTML = `
+                <div class="text-2xl font-bold text-blue-600 mb-4">總得分：${score}/10</div>
+                <div class="text-xl text-gray-700 mb-4">答對率：${accuracy}%</div>
+                <div class="text-lg text-gray-600 mb-4">${feedback}</div>
+                <div id="gbitAwardedLine" class="text-lg font-bold" style="color:#c58a00;">代幣結算中…</div>
+            `;
+
+            // 💡 回傳這次練習成績、依答對率發代幣
+            const practiceTypeNames = { expand: '擴分練習', reduce: '約分練習', common: '通分練習', compare: '分數比較練習' };
+            MathGameCommon.finishAttempt({
+                game: '分數學習',
+                mode: '練習測驗',
+                topic: practiceTypeNames[currentPracticeType] || currentPracticeType,
+                correct: score,
+                total: 10
+            }).then(result => {
+                const line = document.getElementById('gbitAwardedLine');
+                if (line) line.textContent = `🪙 這次獲得 ${result.gbitAwarded} 枚代幣（目前共有 ${result.newBalance} 枚）`;
+            });
+        }
+
+        // 返回選單
+        function backToMenu() {
+            document.getElementById('practiceMenu').classList.remove('hidden');
+            document.getElementById('quizArea').classList.add('hidden');
+            document.getElementById('resultArea').classList.add('hidden');
+        }
+
+        // 煙火動畫
+        function createFirework(x, y) {
+            const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#feca57', '#ff9ff3'];
+            const container = document.getElementById('fireworksContainer');
+            const color = colors[Math.floor(Math.random() * colors.length)];
+            
+            // 創建中心爆炸點
+            const firework = document.createElement('div');
+            firework.className = 'firework';
+            firework.style.left = x + 'px';
+            firework.style.top = y + 'px';
+            firework.style.backgroundColor = color;
+            container.appendChild(firework);
+            
+            // 創建爆炸粒子
+            for (let i = 0; i < 12; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'firework-particle';
+                particle.style.left = x + 'px';
+                particle.style.top = y + 'px';
+                particle.style.backgroundColor = color;
+                
+                // 計算粒子飛散方向
+                const angle = (i * 30) * Math.PI / 180;
+                const distance = 80 + Math.random() * 40;
+                const dx = Math.cos(angle) * distance;
+                const dy = Math.sin(angle) * distance;
+                
+                particle.style.setProperty('--dx', dx + 'px');
+                particle.style.setProperty('--dy', dy + 'px');
+                
+                container.appendChild(particle);
+                
+                setTimeout(() => {
+                    if (particle.parentNode) {
+                        particle.parentNode.removeChild(particle);
+                    }
+                }, 1200);
+            }
+            
+            setTimeout(() => {
+                if (firework.parentNode) {
+                    firework.parentNode.removeChild(firework);
+                }
+            }, 1500);
+        }
+        
+        function createCelebrationText() {
+            const container = document.getElementById('fireworksContainer');
+            const texts = ['🎉 太棒了！', '✨ 答對了！', '🌟 很好！', '👏 厲害！'];
+            
+            const celebrationDiv = document.createElement('div');
+            celebrationDiv.className = 'celebration-text';
+            celebrationDiv.textContent = texts[Math.floor(Math.random() * texts.length)];
+            container.appendChild(celebrationDiv);
+            
+            setTimeout(() => {
+                if (celebrationDiv.parentNode) {
+                    celebrationDiv.parentNode.removeChild(celebrationDiv);
+                }
+            }, 2000);
+        }
+        
+        function triggerFireworks() {
+            const screenWidth = window.innerWidth;
+            const screenHeight = window.innerHeight;
+            
+            createCelebrationText();
+            
+            for (let i = 0; i < 5; i++) {
+                setTimeout(() => {
+                    const x = Math.random() * screenWidth;
+                    const y = Math.random() * (screenHeight * 0.5) + (screenHeight * 0.1);
+                    createFirework(x, y);
+                }, i * 100);
+            }
+        }
+        
+        // 遊戲相關函數
+        function showGameIntro() {
+            document.getElementById('gameIntro').classList.remove('hidden');
+            document.getElementById('levelSelect').classList.add('hidden');
+            document.getElementById('gameLevel').classList.add('hidden');
+            document.getElementById('levelComplete').classList.add('hidden');
+            document.getElementById('certificate').classList.add('hidden');
+        }
+        
+        function showLevelSelect() {
+            document.getElementById('gameIntro').classList.add('hidden');
+            document.getElementById('levelSelect').classList.remove('hidden');
+            document.getElementById('gameLevel').classList.add('hidden');
+            document.getElementById('levelComplete').classList.add('hidden');
+            document.getElementById('certificate').classList.add('hidden');
+            updateLevelStatus();
+        }
+        
+        function updateLevelStatus() {
+            const levels = ['expand', 'reduce', 'common', 'compare'];
+            levels.forEach((level, index) => {
+                const statusElement = document.getElementById(`level${index + 1}Status`);
+                const levelElement = document.getElementById(`${level}Level`);
+                
+                if (gameProgress[level]) {
+                    statusElement.classList.remove('bg-gray-300');
+                    statusElement.classList.add('bg-green-500');
+                    statusElement.innerHTML = '✓';
+                }
+                
+                // 解鎖邏輯：第一關總是可用，其他關卡需要前一關完成
+                if (index === 0 || gameProgress[levels[index - 1]]) {
+                    levelElement.classList.remove('opacity-50');
+                    levelElement.style.pointerEvents = 'auto';
+                } else {
+                    levelElement.classList.add('opacity-50');
+                    levelElement.style.pointerEvents = 'none';
+                }
+            });
+        }
+        
+        function startGameLevel(levelType) {
+            const levels = ['expand', 'reduce', 'common', 'compare'];
+            const currentIndex = levels.indexOf(levelType);
+            
+            // 檢查是否可以進入該關卡
+            if (currentIndex > 0 && !gameProgress[levels[currentIndex - 1]]) {
+                alert('請先完成前一個關卡！');
+                return;
+            }
+            
+            currentGameLevel = levelType;
+            currentGameQuestionIndex = 0;
+            lives = 5;
+            gameScore = 0;
+            MathGameAudio.playBgm(levelType);
+            
+            generateGameQuestions(levelType);
+            
+            document.getElementById('levelSelect').classList.add('hidden');
+            document.getElementById('gameLevel').classList.remove('hidden');
+            
+            setupGameLevel(levelType);
+            showGameQuestion();
+        }
+        
+        function setupGameLevel(levelType) {
+            const levelConfig = {
+                expand: {
+                    icon: '🏰',
+                    title: '擴分城堡',
+                    subtitle: '在魔法城堡中學習擴分的奧秘',
+                    npc: '🧙‍♀️',
+                    welcomeMessage: '歡迎來到擴分城堡！我是魔法師艾莉，讓我們一起學習擴分的魔法吧！'
+                },
+                reduce: {
+                    icon: '🌲',
+                    title: '約分森林',
+                    subtitle: '在神秘森林中掌握約分技巧',
+                    npc: '🧚‍♀️',
+                    welcomeMessage: '歡迎來到約分森林！我是森林精靈露娜，讓我們一起探索約分的秘密！'
+                },
+                common: {
+                    icon: '🌀',
+                    title: '通分迷宮',
+                    subtitle: '在複雜迷宮中學會通分方法',
+                    npc: '🔮',
+                    welcomeMessage: '歡迎來到通分迷宮！我是水晶球智者，讓我們一起解開通分的謎題！'
+                },
+                compare: {
+                    icon: '⚔️',
+                    title: '比較競技場',
+                    subtitle: '在競技場中挑戰分數比較',
+                    npc: '🛡️',
+                    welcomeMessage: '歡迎來到比較競技場！我是騎士隊長，讓我們一起征服分數比較的挑戰！'
+                }
+            };
+            
+            const config = levelConfig[levelType];
+            document.getElementById('levelIcon').textContent = config.icon;
+            document.getElementById('levelTitle').textContent = config.title;
+            document.getElementById('levelSubtitle').textContent = config.subtitle;
+            document.getElementById('npcAvatar').textContent = config.npc;
+            document.getElementById('npcMessage').textContent = config.welcomeMessage;
+            
+            updateHearts();
+        }
+        
+        function updateHearts() {
+            const heartsContainer = document.getElementById('hearts');
+            heartsContainer.innerHTML = '';
+            
+            for (let i = 0; i < 5; i++) {
+                const heart = document.createElement('span');
+                heart.className = 'text-2xl';
+                heart.textContent = i < lives ? '❤️' : '🖤';
+                heartsContainer.appendChild(heart);
+            }
+        }
+        
+        function generateGameQuestions(type) {
+            gameQuestions = [];
+            
+            for (let i = 0; i < 5; i++) {
+                let question = {};
+                
+                if (type === 'expand') {
+                    // 擴分題目 - 使用最簡真分數
+                    let num, den;
+                    do {
+                        num = Math.floor(Math.random() * 6) + 1;
+                        den = Math.floor(Math.random() * 6) + num + 1;
+                    } while (gcd(num, den) !== 1); // 確保是最簡分數
+                    
+                    const multiplier = Math.floor(Math.random() * 4) + 2;
+                    const fillType = Math.random() < 0.5 ? 'numerator' : 'denominator';
+                    
+                    question = {
+                        type: 'expand',
+                        original: { numerator: num, denominator: den },
+                        multiplier: multiplier,
+                        fillType: fillType,
+                        target: fillType === 'numerator' ? 
+                            { numerator: '?', denominator: den * multiplier } :
+                            { numerator: num * multiplier, denominator: '?' },
+                        answer: fillType === 'numerator' ? num * multiplier : den * multiplier
+                    };
+                    
+                } else if (type === 'reduce') {
+                    let num, den;
+                    do {
+                        num = Math.floor(Math.random() * 16) + 4;
+                        den = Math.floor(Math.random() * 16) + num + 1;
+                    } while (gcd(num, den) === 1);
+                    
+                    const reduced = reduceFraction(num, den);
+                    const fillType = Math.random() < 0.5 ? 'numerator' : 'denominator';
+                    
+                    question = {
+                        type: 'reduce',
+                        original: { numerator: num, denominator: den },
+                        fillType: fillType,
+                        target: fillType === 'numerator' ? 
+                            { numerator: '?', denominator: reduced.denominator } :
+                            { numerator: reduced.numerator, denominator: '?' },
+                        answer: fillType === 'numerator' ? reduced.numerator : reduced.denominator
+                    };
+                    
+                } else if (type === 'common') {
+                    let num1, den1, num2, den2;
+                    
+                    do {
+                        num1 = Math.floor(Math.random() * 10) + 1;
+                        den1 = Math.floor(Math.random() * 10) + 2;
+                    } while (gcd(num1, den1) !== 1 || num1 >= den1);
+                    
+                    do {
+                        num2 = Math.floor(Math.random() * 10) + 1;
+                        den2 = Math.floor(Math.random() * 10) + 2;
+                    } while (gcd(num2, den2) !== 1 || num2 >= den2 || den2 === den1);
+                    
+                    const commonDen = lcm(den1, den2);
+                    
+                    question = {
+                        type: 'common',
+                        fractions: [
+                            { numerator: num1, denominator: den1 },
+                            { numerator: num2, denominator: den2 }
+                        ],
+                        answer: {
+                            fraction1: {
+                                numerator: num1 * (commonDen / den1),
+                                denominator: commonDen
+                            },
+                            fraction2: {
+                                numerator: num2 * (commonDen / den2),
+                                denominator: commonDen
+                            }
+                        }
+                    };
+                    
+                } else if (type === 'compare') {
+                    const num1 = Math.floor(Math.random() * 7) + 1;
+                    const den1 = Math.floor(Math.random() * 7) + num1 + 1;
+                    const num2 = Math.floor(Math.random() * 7) + 1;
+                    const den2 = Math.floor(Math.random() * 7) + num2 + 1;
+                    
+                    const commonDen = lcm(den1, den2);
+                    const comp1 = num1 * (commonDen / den1);
+                    const comp2 = num2 * (commonDen / den2);
+                    
+                    let symbol;
+                    if (comp1 > comp2) symbol = '>';
+                    else if (comp1 < comp2) symbol = '<';
+                    else symbol = '=';
+                    
+                    question = {
+                        type: 'compare',
+                        fractions: [
+                            { numerator: num1, denominator: den1 },
+                            { numerator: num2, denominator: den2 }
+                        ],
+                        answer: symbol
+                    };
+                }
+                
+                gameQuestions.push(question);
+            }
+        }
+        
+        function showGameQuestion() {
+            const question = gameQuestions[currentGameQuestionIndex];
+            document.getElementById('gameCurrentQuestion').textContent = currentGameQuestionIndex + 1;
+            document.getElementById('gameFeedback').classList.add('hidden');
+            document.getElementById('gameSubmitBtn').classList.remove('hidden');
+            document.getElementById('gameNextBtn').classList.add('hidden');
+            
+            // 更新NPC訊息
+            updateNPCMessage();
+            
+            let questionHTML = '';
+            let answerHTML = '';
+            
+            if (question.type === 'expand') {
+                questionHTML = `
+                    <p class="mb-4">將下面的分數擴分，填入空格：</p>
+                    <div class="text-2xl mb-4">
+                        <span class="fraction">
+                            <span class="numerator">${question.original.numerator}</span>
+                            <span class="denominator">${question.original.denominator}</span>
+                        </span>
+                        <span class="mx-4">=</span>
+                        <span class="fraction">
+                            <span class="numerator">${question.target.numerator}</span>
+                            <span class="denominator">${question.target.denominator}</span>
+                        </span>
+                    </div>
+                `;
+                answerHTML = `
+                    <div class="flex justify-center">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">請填入空格中的數字：</label>
+                            <input type="number" id="gameSingleAnswer" class="border-2 border-gray-300 rounded-lg px-4 py-2 text-center text-lg w-32" min="1">
+                        </div>
+                    </div>
+                `;
+                
+            } else if (question.type === 'reduce') {
+                questionHTML = `
+                    <p class="mb-4">將下面的分數約分到最簡，填入空格：</p>
+                    <div class="text-2xl mb-4">
+                        <span class="fraction">
+                            <span class="numerator">${question.original.numerator}</span>
+                            <span class="denominator">${question.original.denominator}</span>
+                        </span>
+                        <span class="mx-4">=</span>
+                        <span class="fraction">
+                            <span class="numerator">${question.target.numerator}</span>
+                            <span class="denominator">${question.target.denominator}</span>
+                        </span>
+                    </div>
+                `;
+                answerHTML = `
+                    <div class="flex justify-center">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">請填入空格中的數字：</label>
+                            <input type="number" id="gameSingleAnswer" class="border-2 border-gray-300 rounded-lg px-4 py-2 text-center text-lg w-32" min="1">
+                        </div>
+                    </div>
+                `;
+                
+            } else if (question.type === 'common') {
+                questionHTML = `
+                    <p class="mb-4">將下面兩個分數通分：</p>
+                    <div class="text-2xl mb-4">
+                        <span class="fraction">
+                            <span class="numerator">${question.fractions[0].numerator}</span>
+                            <span class="denominator">${question.fractions[0].denominator}</span>
+                        </span>
+                        <span class="mx-4">和</span>
+                        <span class="fraction">
+                            <span class="numerator">${question.fractions[1].numerator}</span>
+                            <span class="denominator">${question.fractions[1].denominator}</span>
+                        </span>
+                    </div>
+                `;
+                answerHTML = `
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div class="space-y-4">
+                            <h4 class="font-semibold">第一個分數：</h4>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">分子：</label>
+                                <input type="number" id="gameAnswerNum1" class="border-2 border-gray-300 rounded-lg px-4 py-2 text-center text-lg w-full" min="1">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">分母：</label>
+                                <input type="number" id="gameAnswerDen1" class="border-2 border-gray-300 rounded-lg px-4 py-2 text-center text-lg w-full" min="1">
+                            </div>
+                        </div>
+                        <div class="space-y-4">
+                            <h4 class="font-semibold">第二個分數：</h4>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">分子：</label>
+                                <input type="number" id="gameAnswerNum2" class="border-2 border-gray-300 rounded-lg px-4 py-2 text-center text-lg w-full" min="1">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">分母：</label>
+                                <input type="number" id="gameAnswerDen2" class="border-2 border-gray-300 rounded-lg px-4 py-2 text-center text-lg w-full" min="1">
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+            } else if (question.type === 'compare') {
+                questionHTML = `
+                    <p class="mb-4">比較下面兩個分數的大小：</p>
+                    <div class="text-2xl mb-4">
+                        <span class="fraction">
+                            <span class="numerator">${question.fractions[0].numerator}</span>
+                            <span class="denominator">${question.fractions[0].denominator}</span>
+                        </span>
+                        <span class="mx-4">?</span>
+                        <span class="fraction">
+                            <span class="numerator">${question.fractions[1].numerator}</span>
+                            <span class="denominator">${question.fractions[1].denominator}</span>
+                        </span>
+                    </div>
+                `;
+                answerHTML = `
+                    <div class="flex justify-center space-x-4">
+                        <button onclick="selectGameSymbol('>')" id="gameGreater" class="game-symbol-btn bg-gray-200 hover:bg-blue-200 px-6 py-3 rounded-lg text-2xl font-bold transition-all duration-300">></button>
+                        <button onclick="selectGameSymbol('<')" id="gameLess" class="game-symbol-btn bg-gray-200 hover:bg-blue-200 px-6 py-3 rounded-lg text-2xl font-bold transition-all duration-300"><</button>
+                        <button onclick="selectGameSymbol('=')" id="gameEqual" class="game-symbol-btn bg-gray-200 hover:bg-blue-200 px-6 py-3 rounded-lg text-2xl font-bold transition-all duration-300">=</button>
+                    </div>
+                    <input type="hidden" id="gameSelectedSymbol" value="">
+                `;
+            }
+            
+            document.getElementById('gameQuestionContent').innerHTML = questionHTML;
+            document.getElementById('gameAnswerArea').innerHTML = answerHTML;
+        }
+        
+        function updateNPCMessage() {
+            const messages = {
+                expand: [
+                    '記住，擴分就是分子和分母同時乘以相同的數字！',
+                    '想想看，要讓分數變大但保持相等，該怎麼做呢？',
+                    '擴分的魔法在於保持分數的價值不變！',
+                    '你做得很好！繼續保持這個節奏！',
+                    '最後一題了，相信你一定可以的！'
+                ],
+                reduce: [
+                    '約分就是找到分子和分母的公因數，然後同時除以它！',
+                    '尋找最大公因數是約分的關鍵！',
+                    '簡化分數讓計算變得更容易！',
+                    '你的約分技巧越來越熟練了！',
+                    '最後一題，展現你的約分實力吧！'
+                ],
+                common: [
+                    '通分需要找到兩個分母的最小公倍數！',
+                    '把不同分母變成相同分母，這就是通分的魔法！',
+                    '記住，通分後分數的大小不會改變！',
+                    '你對通分的理解越來越深入了！',
+                    '最後一道通分題，加油！'
+                ],
+                compare: [
+                    '比較分數時，先通分再比較分子大小！',
+                    '相同分母的分數比較起來很簡單！',
+                    '分數比較是所有分數運算的基礎！',
+                    '你的比較技巧已經很棒了！',
+                    '最後一次比較，展現你的實力！'
+                ]
+            };
+            
+            const levelMessages = messages[currentGameLevel];
+            const message = levelMessages[currentGameQuestionIndex];
+            document.getElementById('npcMessage').textContent = message;
+        }
+        
+        function selectGameSymbol(symbol) {
+            document.querySelectorAll('.game-symbol-btn').forEach(btn => {
+                btn.classList.remove('bg-blue-500', 'text-white');
+                btn.classList.add('bg-gray-200');
+            });
+            
+            document.getElementById('gameSelectedSymbol').value = symbol;
+            
+            const clickedBtn = Array.from(document.querySelectorAll('.game-symbol-btn')).find(btn => btn.textContent.trim() === symbol);
+            if (clickedBtn) {
+                clickedBtn.classList.remove('bg-gray-200');
+                clickedBtn.classList.add('bg-blue-500', 'text-white');
+            }
+        }
+        
+        function checkGameAnswer() {
+            const question = gameQuestions[currentGameQuestionIndex];
+            let isCorrect = false;
+            
+            if (question.type === 'expand') {
+                const userAnswer = parseInt(document.getElementById('gameSingleAnswer').value);
+                isCorrect = userAnswer === question.answer;
+                
+            } else if (question.type === 'reduce') {
+                const userAnswer = parseInt(document.getElementById('gameSingleAnswer').value);
+                isCorrect = userAnswer === question.answer;
+                
+            } else if (question.type === 'common') {
+                const userNum1 = parseInt(document.getElementById('gameAnswerNum1').value);
+                const userDen1 = parseInt(document.getElementById('gameAnswerDen1').value);
+                const userNum2 = parseInt(document.getElementById('gameAnswerNum2').value);
+                const userDen2 = parseInt(document.getElementById('gameAnswerDen2').value);
+                
+                isCorrect = userNum1 === question.answer.fraction1.numerator && 
+                           userDen1 === question.answer.fraction1.denominator &&
+                           userNum2 === question.answer.fraction2.numerator && 
+                           userDen2 === question.answer.fraction2.denominator;
+                           
+            } else if (question.type === 'compare') {
+                const userAnswer = document.getElementById('gameSelectedSymbol').value;
+                isCorrect = userAnswer === question.answer;
+            }
+            
+            const feedback = document.getElementById('gameFeedback');
+            feedback.classList.remove('hidden');
+            MathGameAudio.playSfx(isCorrect ? 'correct' : 'wrong');
+            
+            if (isCorrect) {
+                gameScore++;
+                triggerFireworks();
+                feedback.innerHTML = `
+                    <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg">
+                        <p class="font-bold">✅ 答對了！太棒了！🎉</p>
+                    </div>
+                `;
+                
+                document.getElementById('gameSubmitBtn').classList.add('hidden');
+                
+                setTimeout(() => {
+                    nextGameQuestion();
+                }, 2000);
+                
+            } else {
+                lives--;
+                updateHearts();
+                
+                if (lives <= 0) {
+                    MathGameAudio.playSfx('lose');
+                    MathGameAudio.stopBgm();
+                    feedback.innerHTML = `
+                        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg">
+                            <p class="font-bold">💔 生命用完了！關卡失敗！</p>
+                            <button onclick="restartLevel()" class="mt-2 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg">重新開始</button>
+                        </div>
+                    `;
+                } else {
+                    feedback.innerHTML = `
+                        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg">
+                            <p class="font-bold">❌ 答錯了！失去一顆愛心，再試一次！</p>
+                        </div>
+                    `;
+                }
+            }
+        }
+        
+        function nextGameQuestion() {
+            currentGameQuestionIndex++;
+            
+            if (currentGameQuestionIndex >= gameQuestions.length) {
+                completeLevel();
+            } else {
+                showGameQuestion();
+            }
+        }
+        
+        function restartLevel() {
+            startGameLevel(currentGameLevel);
+        }
+        
+        function completeLevel() {
+            gameProgress[currentGameLevel] = true;
+            MathGameAudio.playSfx('win');
+            MathGameAudio.stopBgm();
+            
+            document.getElementById('gameLevel').classList.add('hidden');
+            document.getElementById('levelComplete').classList.remove('hidden');
+            
+            const levelNames = {
+                expand: '擴分城堡',
+                reduce: '約分森林',
+                common: '通分迷宮',
+                compare: '比較競技場'
+            };
+            
+            const levelIcons = {
+                expand: '🏰',
+                reduce: '🌲',
+                common: '🌀',
+                compare: '⚔️'
+            };
+            
+            let completionMessage = `
+                <div class="text-6xl mb-4">${levelIcons[currentGameLevel]}</div>
+                <h3 class="text-3xl font-bold text-gray-800 mb-4">🎉 ${levelNames[currentGameLevel]}通關成功！</h3>
+                <div class="bg-green-100 rounded-lg p-6 mb-6">
+                    <p class="text-lg text-gray-700 mb-4">恭喜你完成了${levelNames[currentGameLevel]}的挑戰！</p>
+                    <div class="flex justify-center items-center space-x-4 mb-4">
+                        <div class="text-center">
+                            <div class="text-2xl mb-2">🎯</div>
+                            <p class="text-sm text-gray-600">答對題數</p>
+                            <p class="text-xl font-bold">${gameScore}/5</p>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-2xl mb-2">❤️</div>
+                            <p class="text-sm text-gray-600">剩餘生命</p>
+                            <p class="text-xl font-bold">${lives}/5</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // 檢查是否完成所有關卡
+            const allCompleted = Object.values(gameProgress).every(completed => completed);
+            if (allCompleted) {
+                completionMessage += `
+                    <div class="bg-yellow-100 border border-yellow-400 rounded-lg p-4 mb-4">
+                        <p class="text-lg font-bold text-yellow-800">🏆 恭喜完成所有關卡！可以獲得畢業證書了！</p>
+                        <button onclick="showCertificate()" class="mt-2 bg-yellow-500 hover:bg-yellow-600 text-white px-6 py-3 rounded-lg font-bold">
+                            獲得證書 🎓
+                        </button>
+                    </div>
+                `;
+            } else {
+                // 顯示下一關按鈕
+                const levels = ['expand', 'reduce', 'common', 'compare'];
+                const currentIndex = levels.indexOf(currentGameLevel);
+                if (currentIndex < levels.length - 1) {
+                    document.getElementById('nextLevelBtn').classList.remove('hidden');
+                }
+            }
+            
+            completionMessage += `<div id="gbitAwardedLine" class="text-lg font-bold" style="color:#c58a00;">代幣結算中…</div>`;
+            document.getElementById('levelCompleteContent').innerHTML = completionMessage;
+
+            // 💡 回傳這次闖關成績、依答對率發代幣
+            const levelModeNames = { expand: '擴分城堡', reduce: '約分森林', common: '通分迷宮', compare: '比較競技場' };
+            MathGameCommon.finishAttempt({
+                game: '分數學習',
+                mode: '闖關遊戲',
+                topic: levelModeNames[currentGameLevel] || currentGameLevel,
+                correct: gameScore,
+                total: 5
+            }).then(result => {
+                const line = document.getElementById('gbitAwardedLine');
+                if (line) line.textContent = `🪙 這次獲得 ${result.gbitAwarded} 枚代幣（目前共有 ${result.newBalance} 枚）`;
+            });
+        }
+        
+        function startNextLevel() {
+            const levels = ['expand', 'reduce', 'common', 'compare'];
+            const currentIndex = levels.indexOf(currentGameLevel);
+            if (currentIndex < levels.length - 1) {
+                startGameLevel(levels[currentIndex + 1]);
+            }
+        }
+        
+        function showCertificate() {
+            document.getElementById('levelComplete').classList.add('hidden');
+            document.getElementById('certificate').classList.remove('hidden');
+        }
+        
+        function generateCertificate() {
+            const playerName = document.getElementById('playerName').value.trim();
+            if (!playerName) {
+                alert('請輸入你的暱稱！');
+                return;
+            }
+            
+            document.getElementById('certificateName').textContent = playerName;
+            document.getElementById('certificateDate').textContent = new Date().toLocaleDateString('zh-TW');
+            document.getElementById('finalCertificate').classList.remove('hidden');
+            
+            // 觸發慶祝動畫
+            triggerFireworks();
+        }
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'986a8a44742ab2fe',t:'MTc1OTEzOTA0Ny4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>

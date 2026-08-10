@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>分數減法 - 數字寵物養成遊戲</title>
+    <style>
+        :root {
+            --primary-color: #ff7675;
+            --secondary-color: #74b9ff;
+            --accent-color: #ffeaa7;
+            --bg-color: #dfe6e9;
+            --text-color: #2d3436;
+            --card-bg: rgba(255, 255, 255, 0.95);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #game-container {
+            width: 100%;
+            max-width: 800px;
+            height: 600px;
+            background: linear-gradient(135deg, #ffeaa7 0%, #fab1a0 100%);
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            border: 4px solid #fff;
+        }
+
+        .bg-room {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle at top right, rgba(255,255,255,0.8) 0%, rgba(250,177,160,0.4) 50%, rgba(116,185,255,0.3) 100%);
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .screen {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 3;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 25px;
+            transition: opacity 0.3s ease;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .menu-screen {
+            background: var(--card-bg);
+            border-radius: 15px;
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            text-align: center;
+            gap: 15px;
+        }
+
+        .category-btn {
+            background: var(--secondary-color);
+            color: white;
+            padding: 12px 25px;
+            border-radius: 25px;
+            border: none;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 250px;
+            box-shadow: 0 4px 10px rgba(116, 185, 255, 0.4);
+            transition: transform 0.1s;
+        }
+
+        .category-btn:hover {
+            transform: translateY(-2px);
+            background: #0984e3;
+        }
+        .category-btn:hover, .level-btn.unlocked:hover {
+            animation: mgfx-bounce-btn 0.5s ease-in-out infinite;
+        }
+
+        .level-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            max-height: 320px;
+            overflow-y: auto;
+            width: 100%;
+            padding: 10px;
+        }
+
+        .level-btn {
+            background: #dfe6e9;
+            color: var(--text-color);
+            padding: 12px;
+            border-radius: 10px;
+            font-size: 14px;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .level-btn.unlocked {
+            background: var(--primary-color);
+            color: white;
+            box-shadow: 0 4px 10px rgba(255, 118, 117, 0.4);
+        }
+
+        .level-btn:disabled {
+            background: #b2bec3;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--card-bg);
+            padding: 10px 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
+
+        .hearts { color: #d63031; font-size: 20px; }
+        .score-board, .timer-display { font-weight: bold; font-size: 16px; }
+
+        .stage {
+            flex: 1;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+        }
+
+        .character-box, .pet-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: rgba(255,255,255,0.6);
+            padding: 15px;
+            border-radius: 20px;
+            backdrop-filter: blur(5px);
+        }
+
+        .avatar-img { width: 100px; height: 120px; position: relative; }
+
+        .control-panel {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            align-items: center;
+        }
+
+        button.action-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 25px;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(255, 118, 117, 0.4);
+        }
+
+        .input-group { display: flex; gap: 10px; justify-content: center; align-items: center; }
+        input[type="text"] {
+            padding: 10px 15px;
+            border-radius: 10px;
+            border: 2px solid #b2bec3;
+            font-size: 18px;
+            width: 160px;
+            text-align: center;
+        }
+
+        .question-text { font-size: 22px; font-weight: bold; color: #2d3436; }
+        .feedback-msg { font-size: 15px; font-weight: bold; min-height: 20px; }
+        h1 { font-size: 28px; color: #d63031; }
+    </style>
+</head>
+<body>
+
+<div id="mg-fit-stage" style="width:800px;">
+<div id="game-container">
+    <div class="bg-room"></div>
+
+    <!-- 主選單：選擇系列 -->
+    <div id="main-menu" class="screen menu-screen">
+        <h1>分數減法 - 寵物養成</h1>
+        <p style="font-size: 14px; color: #636e72;">選擇一個系列開始挑戰！支援任何等值分數輸入。</p>
+        <button class="category-btn" onclick="selectCategory('proper')">🌿 真分數系列</button>
+        <button class="category-btn" onclick="selectCategory('improper')">🔥 假分數系列</button>
+        <button class="category-btn" onclick="selectCategory('mixed')">⭐ 帶分數系列</button>
+    </div>
+
+    <!-- 關卡選擇畫面 -->
+    <div id="level-select" class="screen menu-screen hidden">
+        <h2 id="category-title">系列關卡</h2>
+        <div class="level-grid" id="level-grid-container"></div>
+        <button class="category-btn" onclick="backToMenu()" style="background-color: #b2bec3; width: 150px; padding: 8px;">返回首頁</button>
+    </div>
+
+    <!-- 遊戲進行畫面 -->
+    <div id="game-screen" class="screen hidden">
+        <div class="status-bar">
+            <div class="hearts" id="hearts-display">❤️❤️❤️❤️❤️</div>
+            <div class="score-board">答對: <span id="current-score">0</span> / 10</div>
+            <div class="timer-display">⏱️ <span id="question-timer">0</span>s</div>
+        </div>
+
+        <div class="stage">
+            <div class="character-box">
+                <div class="avatar-img">
+                    <svg viewBox="0 0 100 120" width="100%" height="100%">
+                        <path d="M30 40 Q50 10 70 40 Q80 60 70 80 L30 80 Q20 60 30 40 Z" fill="#a0522d"/>
+                        <circle cx="50" cy="55" r="22" fill="#ffeaa7"/>
+                        <circle cx="42" cy="53" r="3" fill="#2d3436"/>
+                        <circle cx="58" cy="53" r="3" fill="#2d3436"/>
+                        <path d="M45 65 Q50 70 55 65" stroke="#d63031" stroke-width="2" fill="none"/>
+                        <polygon points="35,80 65,80 75,120 25,120" fill="#ffffff"/>
+                        <polygon points="45,80 55,80 52,100 48,100" fill="#0984e3"/>
+                    </svg>
+                </div>
+                <span style="font-size: 12px; font-weight: bold; margin-top: 4px;">17歲主人</span>
+            </div>
+
+            <div class="pet-box">
+                <div class="avatar-img">
+                    <svg id="pet-svg" viewBox="0 0 100 100" width="100%" height="100%">
+                        <circle cx="50" cy="60" r="25" fill="#e17055"/>
+                        <polygon points="30,45 35,25 45,45" fill="#e17055"/>
+                        <polygon points="70,45 65,25 55,45" fill="#e17055"/>
+                        <circle cx="40" cy="55" r="3" fill="#2d3436"/>
+                        <circle cx="60" cy="55" r="3" fill="#2d3436"/>
+                        <path d="M47 65 Q50 68 53 65" stroke="#2d3436" stroke-width="2" fill="none"/>
+                    </svg>
+                </div>
+                <span style="font-size: 12px; font-weight: bold; margin-top: 4px;" id="pet-name">柴犬幼犬</span>
+            </div>
+        </div>
+
+        <div class="control-panel">
+            <div class="feedback-msg" id="feedback-msg">請輸入分數計算結果：</div>
+            <div class="question-text" id="question-text">1/3 - 2/3 = ?</div>
+            <div class="input-group">
+                <input type="text" id="answer-input" placeholder="例: 1/2 或 1 1/2" autocomplete="off">
+                <button class="action-btn" onclick="submitAnswer()">送出答案</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 結算畫面 -->
+    <div id="result-screen" class="screen menu-screen hidden">
+        <h2 id="result-title">通關結算</h2>
+        <p id="result-desc">表現優異！</p>
+        <button class="category-btn" onclick="returnToLevelSelect()">返回關卡選單</button>
+    </div>
+</div>
+</div><!-- /mg-fit-stage -->
+
+<!-- 💡 保護殼：如果下面四個共用檔案沒有跟這個html放在同一個資料夾、
+讀取失敗，遊戲本身還是能正常開始玩，只是暫時沒有登入/代幣/音效/
+特效這些附加功能。等檔案補齊、重新整理網頁後就會自動恢復正常。 -->
+<script>
+    window.MathGameCommon = window.MathGameCommon || {
+        renderIdentityBadge: function () {},
+        finishAttempt: function () { return Promise.resolve({ gbitAwarded: 0, newBalance: 0 }); },
+        reportResult: function () { return Promise.resolve(); },
+        awardGbit: function () { return 0; },
+        getActiveStudent: function () { return null; }
+    };
+    window.MathGameAudio = window.MathGameAudio || {
+        setMusicMap: function () {}, playBgm: function () {}, stopBgm: function () {},
+        setBgmVolume: function () {}, setSfxMap: function () {}, playSfx: function () {},
+        bindClickSfx: function () {}
+    };
+    window.MathGameFX = window.MathGameFX || {
+        burst: function () {}, shake: function () {}, flash: function () {},
+        popText: function () {}, confetti: function () {}, floatStars: function () {}
+    };
+</script>
+<script src="math-game-common.js"></script>
+<script src="mobile-fit.js"></script>
+<script src="math-game-audio.js"></script>
+<script src="math-game-fx.js"></script>
+<script>
+    MathGameCommon.renderIdentityBadge();
+    MathGameFX.floatStars(document.getElementById('game-container'), 40);
+
+    // 💡 背景音樂設定：真分數／假分數／帶分數三個系列＝三個大關卡。
+    MathGameAudio.setMusicMap({
+        proper: "./audio/fraction-sub-bgm-proper.mp3",
+        improper: "./audio/fraction-sub-bgm-proper.mp3", // 🔶 預留位置
+        mixed: "./audio/fraction-sub-bgm-proper.mp3"     // 🔶 預留位置
+    });
+    MathGameAudio.setSfxMap({
+        // correct: "./audio/sfx-correct.mp3",
+        // wrong:   "./audio/sfx-wrong.mp3",
+        // click:   "./audio/sfx-click.mp3",
+        // win:     "./audio/sfx-win.mp3",
+        // lose:    "./audio/sfx-lose.mp3"
+    });
+    MathGameAudio.bindClickSfx('button, .category-btn');
+
+    let currentCategory = '';
+    let currentLevel = 1;
+    
+    let unlockedLevels = { proper: 1, improper: 1, mixed: 1 };
+
+    let lives = 5;
+    let score = 0;
+    let currentQuestionIndex = 0;
+    const totalQuestions = 10;
+    
+    let targetValNum = 0; // 標準答案分子
+    let targetValDenom = 1; // 標準答案分母
+    let targetWhole = 0;   // 帶分數整數部
+    let currentQText = "";
+    let timerInterval = null;
+    let secondsElapsed = 0;
+
+    const categoryNames = {
+        proper: "🌿 真分數系列 (共5關)",
+        improper: "🔥 假分數系列 (共5關)",
+        mixed: "⭐ 帶分數系列 (共5關)"
+    };
+
+    function selectCategory(cat) {
+        currentCategory = cat;
+        document.getElementById("category-title").innerText = categoryNames[cat];
+        renderLevelGrid();
+        hideAllScreens();
+        document.getElementById("level-select").classList.remove("hidden");
+    }
+
+    function backToMenu() {
+        hideAllScreens();
+        document.getElementById("main-menu").classList.remove("hidden");
+    }
+
+    function returnToLevelSelect() {
+        selectCategory(currentCategory);
+    }
+
+    function hideAllScreens() {
+        document.getElementById("main-menu").classList.add("hidden");
+        document.getElementById("level-select").classList.add("hidden");
+        document.getElementById("game-screen").classList.add("hidden");
+        document.getElementById("result-screen").classList.add("hidden");
+    }
+
+    function renderLevelGrid() {
+        const grid = document.getElementById("level-grid-container");
+        grid.innerHTML = "";
+        let maxUnlocked = unlockedLevels[currentCategory];
+        const levelSubNames = ["1. 正減正", "2. 負減負", "3. 正減負", "4. 負減正", "5. 綜合連減"];
+
+        for (let i = 1; i <= 5; i++) {
+            let btn = document.createElement("button");
+            btn.className = "level-btn";
+            btn.innerText = levelSubNames[i-1];
+            if (i <= maxUnlocked) {
+                btn.classList.add("unlocked");
+                btn.onclick = () => startLevel(i);
+            } else {
+                btn.disabled = true;
+            }
+            grid.appendChild(btn);
+        }
+    }
+
+    function startLevel(lvl) {
+        currentLevel = lvl;
+        lives = 5;
+        score = 0;
+        currentQuestionIndex = 0;
+        MathGameAudio.playBgm(currentCategory);
+        hideAllScreens();
+        document.getElementById("game-screen").classList.remove("hidden");
+        updateHearts();
+        nextQuestion();
+    }
+
+    function updateHearts() {
+        let h = "";
+        for(let i=0; i<lives; i++) h += "❤️";
+        for(let i=lives; i<5; i++) h += "🖤";
+        document.getElementById("hearts-display").innerText = h;
+    }
+
+    function gcd(a, b) { return b === 0 ? a : gcd(b, a % b); }
+
+    function generateQuestion() {
+        let denom = Math.floor(Math.random() * 5) + 3; // 分母 3~7
+        let subType = currentLevel; // 1:正減正, 2:負減負, 3:正減負, 4:負減正, 5:綜合
+
+        if (currentCategory === 'proper') {
+            let n1 = Math.floor(Math.random() * (denom - 2)) + 2;
+            let n2 = Math.floor(Math.random() * (n1 - 1)) + 1; // 確保正減正結果為正
+            
+            let s1 = 1, s2 = 1;
+            if (subType === 1) {
+                // 正減正：答案一率為正
+                s1 = 1; s2 = 1;
+                if (n1 < n2) { let temp = n1; n1 = n2; n2 = temp; }
+            } else if (subType === 2) {
+                // 負減負 (-n1/d - (-n2/d) = -n1 + n2)。依照規定「負號出現前的關卡答案一率是正的」故調整大小使結果為正
+                s1 = -1; s2 = -1;
+                if (n1 > n2) { let temp = n1; n1 = n2; n2 = temp; } // 讓 -n1 (- 較小數) - (-n2 (- 較大數)) = 正數
+            } else if (subType === 3) { s1 = 1; s2 = -1; }
+            else if (subType === 4) { s1 = -1; s2 = 1; }
+            else if (subType === 5) { s1 = Math.random() > 0.5 ? 1 : -1; s2 = Math.random() > 0.5 ? 1 : -1; }
+
+            let val1 = s1 * n1;
+            let val2 = s2 * n2;
+            let totalVal = val1 - val2;
+            
+            targetWhole = 0;
+            let common = gcd(Math.abs(totalVal), denom);
+            targetValNum = totalVal / common;
+            targetValDenom = denom / common;
+
+            let displayN2 = Math.abs(n2);
+            currentQText = `${val1 < 0 ? '-' : ''}${Math.abs(val1)}/${denom} - (${val2 < 0 ? '-' : ''}${displayN2}/${denom}) = ?`;
+        } 
+        else if (currentCategory === 'improper') {
+            let n1 = Math.floor(Math.random() * denom) + denom + 2;
+            let n2 = Math.floor(Math.random() * (n1 - 1)) + 1;
+
+            let s1 = 1, s2 = 1;
+            if (subType === 1) {
+                s1 = 1; s2 = 1;
+                if (n1 < n2) { let temp = n1; n1 = n2; n2 = temp; }
+            } else if (subType === 2) {
+                s1 = -1; s2 = -1;
+                if (n1 > n2) { let temp = n1; n1 = n2; n2 = temp; }
+            } else if (subType === 3) { s1 = 1; s2 = -1; }
+            else if (subType === 4) { s1 = -1; s2 = 1; }
+            else if (subType === 5) { s1 = Math.random() > 0.5 ? 1 : -1; s2 = Math.random() > 0.5 ? 1 : -1; }
+
+            let val1 = s1 * n1;
+            let val2 = s2 * n2;
+            let totalVal = val1 - val2;
+
+            targetWhole = 0;
+            let common = gcd(Math.abs(totalVal), denom);
+            targetValNum = totalVal / common;
+            targetValDenom = denom / common;
+
+            currentQText = `${val1 < 0 ? '-' : ''}${Math.abs(val1)}/${denom} - (${val2 < 0 ? '-' : ''}${Math.abs(val2)}/${denom}) = ?`;
+        } 
+        else if (currentCategory === 'mixed') {
+            let w1 = Math.floor(Math.random() * 2) + 2;
+            let w2 = Math.floor(Math.random() * 2) + 1;
+            let n1 = Math.floor(Math.random() * (denom - 1)) + 1;
+            let n2 = Math.floor(Math.random() * (denom - 1)) + 1;
+
+            let s1 = 1, s2 = 1;
+            if (subType === 1) {
+                s1 = 1; s2 = 1;
+                if ((w1 * denom + n1) < (w2 * denom + n2)) {
+                    let tw = w1; w1 = w2; w2 = tw;
+                    let tn = n1; n1 = n2; n2 = tn;
+                }
+            } else if (subType === 2) {
+                s1 = -1; s2 = -1;
+                if ((w1 * denom + n1) > (w2 * denom + n2)) {
+                    let tw = w1; w1 = w2; w2 = tw;
+                    let tn = n1; n1 = n2; n2 = tn;
+                }
+            } else if (subType === 3) { s1 = 1; s2 = -1; }
+            else if (subType === 4) { s1 = -1; s2 = 1; }
+            else if (subType === 5) { s1 = Math.random() > 0.5 ? 1 : -1; s2 = Math.random() > 0.5 ? 1 : -1; }
+
+            let total1 = s1 * (w1 * denom + n1);
+            let total2 = s2 * (w2 * denom + n2);
+            let totalVal = total1 - total2;
+
+            targetWhole = Math.trunc(totalVal / denom);
+            let rem = Math.abs(totalVal % denom);
+            if (rem === 0) {
+                targetValNum = 0;
+                targetValDenom = 1;
+            } else {
+                let common = gcd(rem, denom);
+                // 保持符號正確
+                targetValNum = (totalVal < 0 ? -1 : 1) * (rem / common);
+                targetValDenom = denom / common;
+            }
+
+            currentQText = `${s1 < 0 ? '-' : ''}${w1} ${n1}/${denom} - (${s2 < 0 ? '-' : ''}${w2} ${n2}/${denom}) = ?`;
+        }
+    }
+
+    // 解析玩家輸入並轉化為統一分數結構進行「等值判定」
+    function parseUserAnswer(inputStr) {
+        inputStr = inputStr.replace(/\s+/g, ' ').trim();
+        if (!inputStr) return null;
+
+        // 判斷是否為帶分數格式 (例如 "1 1/2" 或 "-1 1/2")
+        let parts = inputStr.split(' ');
+        if (parts.length === 2) {
+            let whole = parseFloat(parts[0]);
+            let fracParts = parts[1].split('/');
+            if (fracParts.length !== 2) return null;
+            let num = parseFloat(fracParts[0]);
+            let den = parseFloat(fracParts[1]);
+            if (isNaN(whole) || isNaN(num) || isNaN(den) || den === 0) return null;
+            
+            let sign = whole < 0 ? -1 : 1;
+            let totalNum = (Math.abs(whole) * den + num) * sign;
+            return { num: totalNum, den: den };
+        } 
+        else if (inputStr.includes('/')) {
+            let fracParts = inputStr.split('/');
+            if (fracParts.length !== 2) return null;
+            let num = parseFloat(fracParts[0]);
+            let den = parseFloat(fracParts[1]);
+            if (isNaN(num) || isNaN(den) || den === 0) return null;
+            return { num: num, den: den };
+        } 
+        else {
+            let val = parseFloat(inputStr);
+            if (isNaN(val)) return null;
+            return { num: val, den: 1 };
+        }
+    }
+
+    function checkIsEquivalent(userAnsStr) {
+        let userParsed = parseUserAnswer(userAnsStr);
+        if (!userParsed) return false;
+
+        // 將玩家答案與目標答案進行交叉相乘驗證等值：a/b == c/d 等價於 a*d == c*b
+        let targetTotalNum = targetWhole * targetValDenom + (targetWhole < 0 ? -1 : 1) * Math.abs(targetValNum);
+        let targetDenom = targetValDenom;
+
+        // 如果目標是整數格式
+        if (targetValDenom === 1 && targetValNum === 0) {
+            targetTotalNum = targetWhole;
+            targetDenom = 1;
+        }
+
+        let cross1 = userParsed.num * targetDenom;
+        let cross2 = targetTotalNum * userParsed.den;
+
+        return cross1 === cross2;
+    }
+
+    function getFormattedTargetAnswer() {
+        if (targetWhole !== 0) {
+            let rem = Math.abs(targetValNum);
+            if (rem === 0) return `${targetWhole}`;
+            return `${targetWhole} ${rem}/${targetValDenom}`;
+        } else {
+            if (targetValDenom === 1) return `${targetValNum}`;
+            return `${targetValNum}/${targetValDenom}`;
+        }
+    }
+
+    function nextQuestion() {
+        if (currentQuestionIndex >= totalQuestions) {
+            endLevel(true);
+            return;
+        }
+        currentQuestionIndex++;
+        document.getElementById("current-score").innerText = `${currentQuestionIndex - 1}`;
+        generateQuestion();
+        document.getElementById("question-text").innerText = currentQText;
+        document.getElementById("answer-input").value = "";
+
+        secondsElapsed = 0;
+        clearInterval(timerInterval);
+        timerInterval = setInterval(() => {
+            secondsElapsed++;
+            document.getElementById("question-timer").innerText = secondsElapsed;
+        }, 1000);
+    }
+
+    function submitAnswer() {
+        clearInterval(timerInterval);
+        let userAns = document.getElementById("answer-input").value.trim();
+        let feedback = document.getElementById("feedback-msg");
+
+        let isCorrect = checkIsEquivalent(userAns);
+
+        if (isCorrect) {
+            score++;
+            MathGameAudio.playSfx('correct');
+            const gc = document.getElementById('game-container');
+            const r = gc.getBoundingClientRect();
+            MathGameFX.burst(r.left + r.width / 2, r.top + r.height / 2);
+            feedback.classList.add('mgfx-pop-in');
+            feedback.style.color = "#00b894";
+            feedback.innerText = "答對了！等值正確，寵物開心地吃飽了！ 🎉";
+            setTimeout(() => feedback.classList.remove('mgfx-pop-in'), 400);
+        } else {
+            lives--;
+            MathGameAudio.playSfx('wrong');
+            MathGameFX.shake(document.getElementById('game-container'));
+            updateHearts();
+            feedback.style.color = "#d63031";
+            feedback.innerText = `答錯！正確答案之一為：${getFormattedTargetAnswer()}`;
+            if (lives <= 0) {
+                setTimeout(() => endLevel(false), 1500);
+                return;
+            }
+        }
+
+        setTimeout(() => {
+            feedback.style.color = "#2d3436";
+            nextQuestion();
+        }, 1500);
+    }
+
+    function endLevel(success) {
+        hideAllScreens();
+        document.getElementById("result-screen").classList.remove("hidden");
+        MathGameAudio.stopBgm();
+        let title = document.getElementById("result-title");
+        let desc = document.getElementById("result-desc");
+
+        let passed = success && (score >= 8);
+        MathGameAudio.playSfx(passed ? 'win' : 'lose');
+        if (passed) MathGameFX.confetti(document.getElementById('game-container'));
+
+        if (passed) {
+            title.innerText = "🎉 恭喜通關！";
+            desc.innerText = `你在本關答對了 ${score} 題！寵物進化升級了！`;
+            if (currentLevel < 5 && currentLevel >= unlockedLevels[currentCategory]) {
+                unlockedLevels[currentCategory] = currentLevel + 1;
+            }
+        } else {
+            title.innerText = "💥 挑戰失敗";
+            desc.innerText = `答對題數共 ${score} 題（需答對 8 題以上），再試一次吧！`;
+        }
+
+        desc.innerHTML += `<br><span id="gbitAwardedLine" style="color:#e17055;">代幣結算中…</span>`;
+
+        // 💡 回傳這次挑戰成績、依答對率發代幣
+        MathGameCommon.finishAttempt({
+            game: '分數減法',
+            mode: (typeof getCategoryName === 'function') ? getCategoryName(currentCategory) : currentCategory,
+            topic: `關卡${currentLevel}`,
+            correct: score,
+            total: totalQuestions
+        }).then(result => {
+            const line = document.getElementById('gbitAwardedLine');
+            if (line) line.textContent = `🪙 這次獲得 ${result.gbitAwarded} 枚代幣（目前共有 ${result.newBalance} 枚）`;
+        });
+    }
+
+    document.getElementById("answer-input").addEventListener("keypress", function(e) {
+        if (e.key === "Enter") submitAnswer();
+    });
+</script>
+
+</body>
+</html>

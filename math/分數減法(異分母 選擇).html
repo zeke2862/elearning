@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>異分母分數減法（選擇題版） - 數字寵物養成遊戲</title>
+    <style>
+        :root {
+            --primary-color: #ff7675;
+            --secondary-color: #74b9ff;
+            --accent-color: #ffeaa7;
+            --bg-color: #dfe6e9;
+            --text-color: #2d3436;
+            --card-bg: rgba(255, 255, 255, 0.95);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #game-container {
+            width: 100%;
+            max-width: 800px;
+            height: 620px;
+            background: linear-gradient(135deg, #ffeaa7 0%, #fab1a0 100%);
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            border: 4px solid #fff;
+        }
+
+        .bg-room {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle at top right, rgba(255,255,255,0.8) 0%, rgba(250,177,160,0.4) 50%, rgba(116,185,255,0.3) 100%);
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .screen {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 3;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 20px;
+            transition: opacity 0.3s ease;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .menu-screen {
+            background: var(--card-bg);
+            border-radius: 15px;
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            text-align: center;
+            gap: 15px;
+        }
+
+        .category-btn {
+            background: var(--secondary-color);
+            color: white;
+            padding: 12px 25px;
+            border-radius: 25px;
+            border: none;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 280px;
+            box-shadow: 0 4px 10px rgba(116, 185, 255, 0.4);
+            transition: transform 0.1s;
+        }
+
+        .category-btn:hover {
+            transform: translateY(-2px);
+            background: #0984e3;
+        }
+
+        .level-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            max-height: 320px;
+            overflow-y: auto;
+            width: 100%;
+            padding: 10px;
+        }
+
+        .level-btn {
+            background: #dfe6e9;
+            color: var(--text-color);
+            padding: 12px;
+            border-radius: 10px;
+            font-size: 14px;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .level-btn.unlocked {
+            background: var(--primary-color);
+            color: white;
+            box-shadow: 0 4px 10px rgba(255, 118, 117, 0.4);
+        }
+
+        .level-btn:disabled {
+            background: #b2bec3;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--card-bg);
+            padding: 8px 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
+
+        .hearts { color: #d63031; font-size: 18px; }
+        .score-board, .timer-display { font-weight: bold; font-size: 15px; }
+
+        .stage {
+            flex: 1;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            max-height: 160px;
+        }
+
+        .character-box, .pet-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: rgba(255,255,255,0.6);
+            padding: 10px;
+            border-radius: 20px;
+            backdrop-filter: blur(5px);
+        }
+
+        .avatar-img { width: 70px; height: 90px; position: relative; }
+
+        .control-panel {
+            background: var(--card-bg);
+            padding: 15px;
+            border-radius: 15px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .question-text { font-size: 20px; font-weight: bold; color: #2d3436; }
+        .feedback-msg { font-size: 14px; font-weight: bold; min-height: 18px; }
+        
+        .options-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            width: 100%;
+            max-width: 500px;
+        }
+
+        .option-btn {
+            background-color: white;
+            color: var(--text-color);
+            border: 2px solid var(--secondary-color);
+            padding: 10px;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.05);
+            transition: all 0.2s;
+        }
+
+        .option-btn:hover {
+            background-color: var(--secondary-color);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        h1 { font-size: 26px; color: #d63031; }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <div class="bg-room"></div>
+
+    <!-- 主選單：選擇系列 -->
+    <div id="main-menu" class="screen menu-screen">
+        <h1>異分母分數減法（選擇題版）</h1>
+        <p style="font-size: 14px; color: #636e72;">挑戰通分與最簡分數減法，選項皆為最簡化答案！</p>
+        <button class="category-btn" onclick="selectCategory('proper')">🌿 異分母真分數系列</button>
+        <button class="category-btn" onclick="selectCategory('improper')">🔥 異分母假分數系列</button>
+        <button class="category-btn" onclick="selectCategory('mixed')">⭐ 異分母帶分數系列</button>
+    </div>
+
+    <!-- 關卡選擇畫面 -->
+    <div id="level-select" class="screen menu-screen hidden">
+        <h2 id="category-title">系列關卡</h2>
+        <div class="level-grid" id="level-grid-container"></div>
+        <button class="category-btn" onclick="backToMenu()" style="background-color: #b2bec3; width: 150px; padding: 8px;">返回首頁</button>
+    </div>
+
+    <!-- 遊戲進行畫面 -->
+    <div id="game-screen" class="screen hidden">
+        <div class="status-bar">
+            <div class="hearts" id="hearts-display">❤️❤️❤️❤️❤️</div>
+            <div class="score-board">答對: <span id="current-score">0</span> / 10</div>
+            <div class="timer-display">⏱️ <span id="question-timer">0</span>s</div>
+        </div>
+
+        <div class="stage">
+            <div class="character-box">
+                <div class="avatar-img">
+                    <svg viewBox="0 0 100 120" width="100%" height="100%">
+                        <path d="M30 40 Q50 10 70 40 Q80 60 70 80 L30 80 Q20 60 30 40 Z" fill="#a0522d"/>
+                        <circle cx="50" cy="55" r="22" fill="#ffeaa7"/>
+                        <circle cx="42" cy="53" r="3" fill="#2d3436"/>
+                        <circle cx="58" cy="53" r="3" fill="#2d3436"/>
+                        <path d="M45 65 Q50 70 55 65" stroke="#d63031" stroke-width="2" fill="none"/>
+                        <polygon points="35,80 65,80 75,120 25,120" fill="#ffffff"/>
+                        <polygon points="45,80 55,80 52,100 48,100" fill="#0984e3"/>
+                    </svg>
+                </div>
+                <span style="font-size: 11px; font-weight: bold; margin-top: 2px;">17歲主人</span>
+            </div>
+
+            <div class="pet-box">
+                <div class="avatar-img">
+                    <svg id="pet-svg" viewBox="0 0 100 100" width="100%" height="100%">
+                        <circle cx="50" cy="60" r="25" fill="#e17055"/>
+                        <polygon points="30,45 35,25 45,45" fill="#e17055"/>
+                        <polygon points="70,45 65,25 55,45" fill="#e17055"/>
+                        <circle cx="40" cy="55" r="3" fill="#2d3436"/>
+                        <circle cx="60" cy="55" r="3" fill="#2d3436"/>
+                        <path d="M47 65 Q50 68 53 65" stroke="#2d3436" stroke-width="2" fill="none"/>
+                    </svg>
+                </div>
+                <span style="font-size: 11px; font-weight: bold; margin-top: 2px;">柴犬幼犬</span>
+            </div>
+        </div>
+
+        <div class="control-panel">
+            <div class="feedback-msg" id="feedback-msg">請選擇正確的最簡分數答案：</div>
+            <div class="question-text" id="question-text">1/2 - 1/3 = ?</div>
+            <div class="options-grid" id="options-container">
+                <!-- 選項按鈕將由 JS 動態生成 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 結算畫面 -->
+    <div id="result-screen" class="screen menu-screen hidden">
+        <h2 id="result-title">通關結算</h2>
+        <p id="result-desc">表現優異！</p>
+        <button class="category-btn" onclick="returnToLevelSelect()">返回關卡選單</button>
+    </div>
+</div>
+
+<script>
+    let currentCategory = '';
+    let currentLevel = 1;
+    let unlockedLevels = { proper: 1, improper: 1, mixed: 1 };
+
+    let lives = 5;
+    let score = 0;
+    let currentQuestionIndex = 0;
+    const totalQuestions = 10;
+    
+    let targetValNum = 0; 
+    let targetValDenom = 1; 
+    let targetWhole = 0;   
+    let currentQText = "";
+    let timerInterval = null;
+    let secondsElapsed = 0;
+
+    const categoryNames = {
+        proper: "🌿 異分母真分數系列 (共5關)",
+        improper: "🔥 異分母假分數系列 (共5關)",
+        mixed: "⭐ 異分母帶分數系列 (共5關)"
+    };
+
+    function selectCategory(cat) {
+        currentCategory = cat;
+        document.getElementById("category-title").innerText = categoryNames[cat];
+        renderLevelGrid();
+        hideAllScreens();
+        document.getElementById("level-select").classList.remove("hidden");
+    }
+
+    function backToMenu() {
+        hideAllScreens();
+        document.getElementById("main-menu").classList.remove("hidden");
+    }
+
+    function returnToLevelSelect() {
+        selectCategory(currentCategory);
+    }
+
+    function hideAllScreens() {
+        document.getElementById("main-menu").classList.add("hidden");
+        document.getElementById("level-select").classList.add("hidden");
+        document.getElementById("game-screen").classList.add("hidden");
+        document.getElementById("result-screen").classList.add("hidden");
+    }
+
+    function renderLevelGrid() {
+        const grid = document.getElementById("level-grid-container");
+        grid.innerHTML = "";
+        let maxUnlocked = unlockedLevels[currentCategory];
+        const levelSubNames = ["1. 正減正", "2. 負減負", "3. 正減負", "4. 負減正", "5. 綜合連減"];
+
+        for (let i = 1; i <= 5; i++) {
+            let btn = document.createElement("button");
+            btn.className = "level-btn";
+            btn.innerText = levelSubNames[i-1];
+            if (i <= maxUnlocked) {
+                btn.classList.add("unlocked");
+                btn.onclick = () => startLevel(i);
+            } else {
+                btn.disabled = true;
+            }
+            grid.appendChild(btn);
+        }
+    }
+
+    function startLevel(lvl) {
+        currentLevel = lvl;
+        lives = 5;
+        score = 0;
+        currentQuestionIndex = 0;
+        hideAllScreens();
+        document.getElementById("game-screen").classList.remove("hidden");
+        updateHearts();
+        nextQuestion();
+    }
+
+    function updateHearts() {
+        let h = "";
+        for(let i=0; i<lives; i++) h += "❤️";
+        for(let i=lives; i<5; i++) h += "🖤";
+        document.getElementById("hearts-display").innerText = h;
+    }
+
+    function gcd(a, b) { return b === 0 ? a : gcd(b, a % b); }
+    function lcm(a, b) { return (a * b) / gcd(a, b); }
+
+    // 取得最簡分數格式字串
+    fnSimplify = function(w, n, d) {
+        if (d === 0) return { whole: w, num: n, denom: 1 };
+        // 先把帶分數或分數轉成純假分數處理約分
+        let totalNum = w * d + (w < 0 ? -1 : 1) * Math.abs(n);
+        let common = gcd(Math.abs(totalNum), d);
+        let simpNum = totalNum / common;
+        let simpDenom = d / common;
+
+        if (currentCategory === 'mixed' && Math.abs(simpNum) >= simpDenom) {
+            let newW = Math.trunc(simpNum / simpDenom);
+            let newRem = Math.abs(simpNum % simpDenom);
+            return { whole: newW, num: newRem, denom: simpDenom };
+        } else if (currentCategory === 'improper') {
+            // 假分數維持假分數形式，但要化為最簡
+            return { whole: 0, num: simpNum, denom: simpDenom };
+        } else {
+            return { whole: 0, num: simpNum, denom: simpDenom };
+        }
+    };
+
+    function formatAnsObj(obj) {
+        let w = obj.whole;
+        let n = obj.num;
+        let d = obj.denom;
+        if (d === 1) return `${w !== 0 ? w : n}`;
+        if (w !== 0) {
+            let rem = Math.abs(n);
+            if (rem === 0) return `${w}`;
+            return `${w} ${rem}/${d}`;
+        } else {
+            return `${n}/${d}`;
+        }
+    }
+
+    function generateQuestion() {
+        let d1Options = [2, 3, 4, 5];
+        let d2Options = [3, 4, 5, 6, 7];
+        let d1 = d1Options[Math.floor(Math.random() * d1Options.length)];
+        let d2 = d2Options[Math.floor(Math.random() * d2Options.length)];
+        if (d1 === d2) d2 = d1 + 1;
+
+        let subType = currentLevel;
+
+        if (currentCategory === 'proper') {
+            let n1 = Math.floor(Math.random() * (d1 - 1)) + 1;
+            let n2 = Math.floor(Math.random() * (d2 - 1)) + 1;
+
+            let s1 = 1, s2 = 1;
+            if (subType === 1) {
+                s1 = 1; s2 = 1;
+                if ((n1 / d1) < (n2 / d2)) { let td = d1; d1 = d2; d2 = td; let tn = n1; n1 = n2; n2 = tn; }
+            } else if (subType === 2) {
+                s1 = -1; s2 = -1;
+                if ((n1 / d1) > (n2 / d2)) { let td = d1; d1 = d2; d2 = td; let tn = n1; n1 = n2; n2 = tn; }
+            } else if (subType === 3) { s1 = 1; s2 = -1; }
+            else if (subType === 4) { s1 = -1; s2 = 1; }
+            else if (subType === 5) { s1 = Math.random() > 0.5 ? 1 : -1; s2 = Math.random() > 0.5 ? 1 : -1; }
+
+            let commonDenom = lcm(d1, d2);
+            let val1 = s1 * n1 * (commonDenom / d1);
+            let val2 = s2 * n2 * (commonDenom / d2);
+            let totalVal = val1 - val2;
+
+            let common = gcd(Math.abs(totalVal), commonDenom);
+            targetWhole = 0;
+            targetValNum = totalVal / common;
+            targetValDenom = commonDenom / common;
+
+            currentQText = `${s1 < 0 ? '-' : ''}${n1}/${d1} - (${s2 < 0 ? '-' : ''}${n2}/${d2}) = ?`;
+        } 
+        else if (currentCategory === 'improper') {
+            let n1 = Math.floor(Math.random() * d1) + d1 + 1;
+            let n2 = Math.floor(Math.random() * d2) + d2 + 1;
+
+            let s1 = 1, s2 = 1;
+            if (subType === 1) {
+                s1 = 1; s2 = 1;
+                if ((n1 / d1) < (n2 / d2)) { let td = d1; d1 = d2; d2 = td; let tn = n1; n1 = n2; n2 = tn; }
+            } else if (subType === 2) {
+                s1 = -1; s2 = -1;
+                if ((n1 / d1) > (n2 / d2)) { let td = d1; d1 = d2; d2 = td; let tn = n1; n1 = n2; n2 = tn; }
+            } else if (subType === 3) { s1 = 1; s2 = -1; }
+            else if (subType === 4) { s1 = -1; s2 = 1; }
+            else if (subType === 5) { s1 = Math.random() > 0.5 ? 1 : -1; s2 = Math.random() > 0.5 ? 1 : -1; }
+
+            let commonDenom = lcm(d1, d2);
+            let val1 = s1 * n1 * (commonDenom / d1);
+            let val2 = s2 * n2 * (commonDenom / d2);
+            let totalVal = val1 - val2;
+
+            let common = gcd(Math.abs(totalVal), commonDenom);
+            targetWhole = 0;
+            targetValNum = totalVal / common;
+            targetValDenom = commonDenom / common;
+
+            currentQText = `${s1 < 0 ? '-' : ''}${n1}/${d1} - (${s2 < 0 ? '-' : ''}${n2}/${d2}) = ?`;
+        } 
+        else if (currentCategory === 'mixed') {
+            let w1 = Math.floor(Math.random() * 2) + 2;
+            let w2 = Math.floor(Math.random() * 2) + 1;
+            let n1 = Math.floor(Math.random() * (d1 - 1)) + 1;
+            let n2 = Math.floor(Math.random() * (d2 - 1)) + 1;
+
+            let s1 = 1, s2 = 1;
+            if (subType === 1) {
+                s1 = 1; s2 = 1;
+                let v1 = w1 + (n1 / d1);
+                let v2 = w2 + (n2 / d2);
+                if (v1 < v2) {
+                    let tw = w1; w1 = w2; w2 = tw;
+                    let td = d1; d1 = d2; d2 = td;
+                    let tn = n1; n1 = n2; n2 = tn;
+                }
+            } else if (subType === 2) {
+                s1 = -1; s2 = -1;
+                let v1 = w1 + (n1 / d1);
+                let v2 = w2 + (n2 / d2);
+                if (v1 > v2) {
+                    let tw = w1; w1 = w2; w2 = tw;
+                    let td = d1; d1 = d2; d2 = td;
+                    let tn = n1; n1 = n2; n2 = tn;
+                }
+            } else if (subType === 3) { s1 = 1; s2 = -1; }
+            else if (subType === 4) { s1 = -1; s2 = 1; }
+            else if (subType === 5) { s1 = Math.random() > 0.5 ? 1 : -1; s2 = Math.random() > 0.5 ? 1 : -1; }
+
+            let commonDenom = lcm(d1, d2);
+            let total1 = s1 * (w1 * commonDenom + n1 * (commonDenom / d1));
+            let total2 = s2 * (w2 * commonDenom + n2 * (commonDenom / d2));
+            let totalVal = total1 - total2;
+
+            targetWhole = Math.trunc(totalVal / commonDenom);
+            let rem = Math.abs(totalVal % commonDenom);
+            if (rem === 0) {
+                targetValNum = 0;
+                targetValDenom = 1;
+            } else {
+                let common = gcd(rem, commonDenom);
+                targetValNum = (totalVal < 0 ? -1 : 1) * (rem / common);
+                targetValDenom = commonDenom / common;
+            }
+
+            currentQText = `${s1 < 0 ? '-' : ''}${w1} ${n1}/${d1} - (${s2 < 0 ? '-' : ''}${w2} ${n2}/${d2}) = ?`;
+        }
+    }
+
+    function getCorrectAnswerString() {
+        return formatAnsObj({ whole: targetWhole, num: targetValNum, denom: targetValDenom });
+    }
+
+    function generateDistractors() {
+        let correctStr = getCorrectAnswerString();
+        let optionsSet = new Set([correctStr]);
+
+        // 生成干擾選項（包含未約分的、符號錯誤的、或±1分子的擾亂項）
+        let attempts = 0;
+        while (optionsSet.size < 4 && attempts < 50) {
+            attempts++;
+            let offsetNum = targetValNum + (Math.random() > 0.5 ? 1 : -1) * (Math.floor(Math.random() * 2) + 1);
+            let offsetDenom = targetValDenom;
+            let offsetWhole = targetWhole;
+
+            // 確保不產生分母為0或不合理數值
+            if (offsetDenom <= 0) offsetDenom = 2;
+
+            let distObj = fnSimplify(offsetWhole, offsetNum, offsetDenom);
+            let distStr = formatAnsObj(distObj);
+
+            if (distStr !== correctStr) {
+                optionsSet.add(distStr);
+            }
+        }
+
+        // 如果還不夠4個，補上基本的擾亂項
+        let fallbackList = ["1/2", "-1/3", "1 1/4", "-1/6", "3/4", "0", "1/5", "-2/3"];
+        for (let item of fallbackList) {
+            if (optionsSet.size >= 4) break;
+            optionsSet.add(item);
+        }
+
+        let optionsArr = Array.from(optionsSet);
+        // 隨機打散順序
+        return optionsArr.sort(() => Math.random() - 0.5);
+    }
+
+    function nextQuestion() {
+        if (currentQuestionIndex >= totalQuestions) {
+            endLevel(true);
+            return;
+        }
+        currentQuestionIndex++;
+        document.getElementById("current-score").innerText = `${currentQuestionIndex - 1}`;
+        generateQuestion();
+        document.getElementById("question-text").innerText = currentQText;
+
+        let options = generateDistractors();
+        let container = document.getElementById("options-container");
+        container.innerHTML = "";
+
+        let correctAns = getCorrectAnswerString();
+
+        options.forEach(opt => {
+            let btn = document.createElement("button");
+            btn.className = "option-btn";
+            btn.innerText = opt;
+            btn.onclick = () => submitAnswer(opt, correctAns);
+            container.appendChild(btn);
+        });
+
+        secondsElapsed = 0;
+        clearInterval(timerInterval);
+        timerInterval = setInterval(() => {
+            secondsElapsed++;
+            document.getElementById("question-timer").innerText = secondsElapsed;
+        }, 1000);
+    }
+
+    function submitAnswer(selectedAns, correctAns) {
+        clearInterval(timerInterval);
+        let feedback = document.getElementById("feedback-msg");
+
+        let isCorrect = (selectedAns === correctAns);
+
+        if (isCorrect) {
+            score++;
+            feedback.style.color = "#00b894";
+            feedback.innerText = "答對了！最簡分數正確，寵物開心地吃飽了！ 🎉";
+        } else {
+            lives--;
+            updateHearts();
+            feedback.style.color = "#d63031";
+            feedback.innerText = `答錯！正確的最簡分數是：${correctAns}`;
+            if (lives <= 0) {
+                setTimeout(() => endLevel(false), 1500);
+                return;
+            }
+        }
+
+        setTimeout(() => {
+            feedback.style.color = "#2d3436";
+            nextQuestion();
+        }, 1500);
+    }
+
+    function endLevel(success) {
+        hideAllScreens();
+        document.getElementById("result-screen").classList.remove("hidden");
+        let title = document.getElementById("result-title");
+        let desc = document.getElementById("result-desc");
+
+        let passed = success && (score >= 8);
+
+        if (passed) {
+            title.innerText = "🎉 恭喜通關！";
+            desc.innerText = `你在本關答對了 ${score} 題！寵物進化升級了！`;
+            if (currentLevel < 5 && currentLevel >= unlockedLevels[currentCategory]) {
+                unlockedLevels[currentCategory] = currentLevel + 1;
+            }
+        } else {
+            title.innerText = "💥 挑戰失敗";
+            desc.innerText = `答對題數共 ${score} 題（需答對 8 題以上），再試一次吧！`;
+        }
+    }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,1204 @@
+
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>數字乘法大挑戰</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Microsoft JhengHei', 'PingFang TC', 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4);
+            background-size: 400% 400%;
+            animation: gradientShift 8s ease infinite;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            transition: all 0.5s ease;
+        }
+        
+
+        
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        .game-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+            position: relative;
+        }
+        
+
+        
+
+        
+
+        
+        .content {
+            position: relative;
+            z-index: 1;
+        }
+        
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 28px;
+            font-weight: 700;
+            line-height: 1.4;
+            padding: 0 10px;
+        }
+        
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-10px); }
+            60% { transform: translateY(-5px); }
+        }
+        
+        .level-selection {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .level-btn {
+            background: linear-gradient(45deg, #3498db, #2980b9);
+            color: white;
+            border: none;
+            padding: 20px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: inherit;
+            font-size: 16px;
+            font-weight: 600;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+        }
+        
+        .level-btn:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+        }
+        
+        .level-btn.easy { background: linear-gradient(45deg, #2ecc71, #27ae60); }
+        .level-btn.medium { background: linear-gradient(45deg, #f39c12, #e67e22); }
+        .level-btn.hard { background: linear-gradient(45deg, #e74c3c, #c0392b); }
+        
+        .game-area {
+            display: none;
+            text-align: center;
+        }
+        
+        .game-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+            background: rgba(52, 73, 94, 0.1);
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid rgba(52, 73, 94, 0.2);
+        }
+        
+        .info-item {
+            color: #2c3e50;
+            font-size: 14px;
+            font-weight: 600;
+            text-align: center;
+        }
+        
+        .combo-display {
+            font-size: 18px;
+            color: #e74c3c;
+            animation: comboGlow 0.5s ease-in-out;
+        }
+        
+        @keyframes comboGlow {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); color: #ff6b6b; }
+            100% { transform: scale(1); }
+        }
+        
+        .timer-bar {
+            background: #e9ecef;
+            height: 6px;
+            border-radius: 10px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+        
+        .timer-fill {
+            background: linear-gradient(45deg, #2ecc71, #27ae60);
+            height: 100%;
+            width: 100%;
+            transition: width 0.1s linear;
+            border-radius: 10px;
+        }
+        
+        .timer-fill.warning {
+            background: linear-gradient(45deg, #f39c12, #e67e22);
+        }
+        
+        .timer-fill.danger {
+            background: linear-gradient(45deg, #e74c3c, #c0392b);
+            animation: timerPulse 0.5s ease-in-out infinite;
+        }
+        
+        @keyframes timerPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        .question {
+            background: rgba(52, 152, 219, 0.1);
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(52, 152, 219, 0.2);
+            position: relative;
+        }
+        
+        .question-text {
+            color: #2c3e50;
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 20px;
+        }
+        
+        .answer-input {
+            background: white;
+            color: #2c3e50;
+            border: 2px solid #ddd;
+            padding: 15px;
+            font-size: 20px;
+            font-family: inherit;
+            font-weight: 600;
+            border-radius: 10px;
+            width: 150px;
+            text-align: center;
+            margin-right: 15px;
+        }
+        
+        .answer-input:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+        }
+        
+        .submit-btn {
+            background: linear-gradient(45deg, #2ecc71, #27ae60);
+            color: white;
+            border: none;
+            padding: 15px 25px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(46, 204, 113, 0.3);
+            margin-right: 10px;
+        }
+        
+        .submit-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        
+        .hint-btn {
+            background: linear-gradient(45deg, #f39c12, #e67e22);
+            color: white;
+            border: none;
+            padding: 15px 25px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(243, 156, 18, 0.3);
+        }
+        
+        .hint-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        
+        .hint-btn:disabled {
+            background: #95a5a6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .feedback {
+            margin-top: 20px;
+            font-size: 14px;
+            min-height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .correct {
+            color: #2ecc71;
+            animation: correctPulse 0.6s ease;
+        }
+        
+        .incorrect {
+            color: #e74c3c;
+            animation: shake 0.6s ease;
+        }
+        
+        .hint {
+            color: #f39c12;
+            font-style: italic;
+        }
+        
+        @keyframes correctPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+        
+        .progress-bar {
+            background: #e9ecef;
+            height: 8px;
+            border-radius: 10px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            background: linear-gradient(45deg, #3498db, #2980b9);
+            height: 100%;
+            width: 0%;
+            transition: width 0.5s ease;
+            border-radius: 10px;
+        }
+        
+        .result-screen {
+            display: none;
+            text-align: center;
+        }
+        
+        .game-statistics {
+            background: rgba(52, 152, 219, 0.1);
+            padding: 25px;
+            border-radius: 15px;
+            margin: 30px 0;
+            border: 1px solid rgba(52, 152, 219, 0.2);
+        }
+        
+        .game-statistics h3 {
+            color: #2c3e50;
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 20px;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+        }
+        
+        .stat-item {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+        
+        .stat-item:hover {
+            transform: translateY(-2px);
+        }
+        
+        .stat-icon {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+        
+        .stat-label {
+            color: #6c757d;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        .stat-value {
+            color: #2c3e50;
+            font-size: 18px;
+            font-weight: 700;
+        }
+        
+
+        
+        .medal {
+            font-size: 80px;
+            margin: 20px 0;
+            animation: medalSpin 3s ease-in-out infinite;
+        }
+        
+        @keyframes medalSpin {
+            0%, 100% { transform: rotate(0deg) scale(1); }
+            50% { transform: rotate(10deg) scale(1.1); }
+        }
+        
+        .result-text {
+            color: #2c3e50;
+            font-size: 24px;
+            font-weight: 700;
+            margin: 20px 0;
+        }
+        
+        .restart-btn {
+            background: linear-gradient(45deg, #9b59b6, #8e44ad);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin-top: 20px;
+            box-shadow: 0 4px 15px rgba(155, 89, 182, 0.3);
+        }
+        
+        .restart-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+        }
+        
+        .start-screen {
+            text-align: center;
+        }
+        
+        .selected-level-info {
+            background: rgba(52, 152, 219, 0.1);
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(52, 152, 219, 0.2);
+        }
+        
+        .selected-level-info h2 {
+            color: #2c3e50;
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 15px;
+        }
+        
+        .selected-level-info p {
+            color: #6c757d;
+            font-size: 16px;
+            line-height: 1.6;
+        }
+        
+        .start-game-btn {
+            background: linear-gradient(45deg, #2ecc71, #27ae60);
+            color: white;
+            border: none;
+            padding: 20px 40px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 18px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(46, 204, 113, 0.3);
+            margin-right: 15px;
+        }
+        
+        .start-game-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(46, 204, 113, 0.4);
+        }
+        
+        .back-btn {
+            background: linear-gradient(45deg, #95a5a6, #7f8c8d);
+            color: white;
+            border: none;
+            padding: 20px 40px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 18px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(149, 165, 166, 0.3);
+        }
+        
+        .back-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(149, 165, 166, 0.4);
+        }
+        
+        .countdown-screen {
+            text-align: center;
+            padding: 50px 0;
+        }
+        
+        .countdown-number {
+            font-size: 120px;
+            font-weight: 900;
+            color: #e74c3c;
+            margin-bottom: 20px;
+            animation: countdownPulse 1s ease-in-out;
+        }
+        
+        .countdown-text {
+            font-size: 24px;
+            color: #2c3e50;
+            font-weight: 600;
+        }
+        
+        @keyframes countdownPulse {
+            0% { transform: scale(0.5); opacity: 0; }
+            50% { transform: scale(1.2); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        .floating-number {
+            position: absolute;
+            font-size: 20px;
+            font-weight: bold;
+            pointer-events: none;
+            animation: floatUp 2s ease-out forwards;
+        }
+        
+        @keyframes floatUp {
+            0% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-100px);
+            }
+        }
+        
+        .combo-effect {
+            position: absolute;
+            font-size: 24px;
+            font-weight: bold;
+            color: #e74c3c;
+            pointer-events: none;
+            animation: comboFloat 2s ease-out forwards;
+        }
+        
+        @keyframes comboFloat {
+            0% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+            50% {
+                transform: translateY(-30px) scale(1.2);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-60px) scale(1);
+            }
+        }
+        
+        .designer-credit {
+            text-align: center;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 14px;
+            margin-top: auto;
+            padding: 15px;
+            font-weight: 500;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+            position: fixed;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        
+        @media (max-width: 768px) {
+            .game-container {
+                padding: 20px;
+                margin: 10px;
+            }
+            
+            h1 {
+                font-size: 22px;
+            }
+            
+            .level-btn {
+                font-size: 14px;
+                padding: 15px;
+            }
+            
+            .question-text {
+                font-size: 28px;
+            }
+            
+            .answer-input {
+                width: 120px;
+                font-size: 18px;
+            }
+            
+            .info-item {
+                font-size: 12px;
+            }
+            
+            .game-info {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+            }
+            
+            .designer-credit {
+                font-size: 12px;
+                margin-top: 15px;
+                padding: 10px;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .stat-item {
+                padding: 10px;
+            }
+            
+            .stat-icon {
+                font-size: 20px;
+            }
+            
+            .stat-value {
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="mg-fit-stage" style="width:600px;">
+    <div class="game-container">
+
+        
+
+        
+        <div class="content">
+            <h1>🎮 數字乘法大挑戰 🎮</h1>
+            
+            <div id="levelSelection" class="level-selection">
+                <button class="level-btn easy" onclick="selectLevel('easy')">
+                    🌟 初級<br>
+                    1-10
+                </button>
+                <button class="level-btn medium" onclick="selectLevel('medium')">
+                    🔥 中級<br>
+                    1-20
+                </button>
+                <button class="level-btn hard" onclick="selectLevel('hard')">
+                    💎 高級<br>
+                    1-30
+                </button>
+            </div>
+            
+            <div id="startScreen" class="start-screen" style="display: none;">
+                <div class="selected-level-info">
+                    <h2 id="selectedLevelText">已選擇：初級</h2>
+                    <p>準備好挑戰10道乘法題目了嗎？<br>
+                    ⚡ 每題限時1分鐘<br>
+                    🔥 連擊可獲得額外分數<br>
+                    ❤️ 你有3條生命</p>
+                </div>
+                <button class="start-game-btn" onclick="startCountdown()">開始遊戲</button>
+                <button class="back-btn" onclick="backToLevelSelection()">重新選擇</button>
+            </div>
+            
+            <div id="countdownScreen" class="countdown-screen" style="display: none;">
+                <div id="countdownNumber" class="countdown-number">3</div>
+                <div class="countdown-text">準備開始！</div>
+            </div>
+            
+            <div id="gameArea" class="game-area">
+                <div class="game-info">
+                    <div class="info-item">
+                        題目: <span id="questionCount">1</span>/10
+                    </div>
+                    <div class="info-item">
+                        分數: <span id="score">0</span>
+                    </div>
+                    <div class="info-item">
+                        連擊: <span id="combo" class="combo-display">0</span>🔥
+                    </div>
+                    <div class="info-item">
+                        時間: <span id="questionTimer">60</span>s
+                    </div>
+                    <div class="info-item">
+                        生命: <span id="lives">❤️❤️❤️</span>
+                    </div>
+                </div>
+                
+                <div class="timer-bar">
+                    <div id="timerFill" class="timer-fill"></div>
+                </div>
+                
+                <div class="progress-bar">
+                    <div id="progressFill" class="progress-fill"></div>
+                </div>
+                
+                <div class="question">
+                    <div id="questionText" class="question-text">5 × 7 = ?</div>
+                    <input type="number" id="answerInput" class="answer-input" placeholder="答案">
+                    <button class="submit-btn" onclick="checkAnswer()">提交</button>
+                    <div id="feedback" class="feedback"></div>
+                </div>
+            </div>
+            
+            <div id="resultScreen" class="result-screen">
+                <div id="medal" class="medal">🏆</div>
+                <div id="resultText" class="result-text">恭喜完成挑戰！</div>
+                
+                <div class="game-statistics">
+                    <h3>🎯 遊戲統計</h3>
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <div class="stat-icon">✅</div>
+                            <div class="stat-label">答對題數</div>
+                            <div id="correctCount" class="stat-value">0</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-icon">❌</div>
+                            <div class="stat-label">錯誤題數</div>
+                            <div id="wrongCount" class="stat-value">0</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-icon">📊</div>
+                            <div class="stat-label">答對率</div>
+                            <div id="accuracyRate" class="stat-value">0%</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-icon">🏆</div>
+                            <div class="stat-label">獲得獎章</div>
+                            <div id="earnedMedal" class="stat-value">🏅</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-icon">🔥</div>
+                            <div class="stat-label">最高連擊</div>
+                            <div id="maxComboStat" class="stat-value">0</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-icon">⭐</div>
+                            <div class="stat-label">總分數</div>
+                            <div id="finalScore" class="stat-value">0</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-icon">🪙</div>
+                            <div class="stat-label">獲得代幣</div>
+                            <div id="gbitAwardedStat" class="stat-value">…</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <button class="restart-btn" onclick="restartGame()">重新開始</button>
+            </div>
+        </div>
+        
+    </div>
+    </div><!-- /mg-fit-stage -->
+    
+    <div class="designer-credit">
+        設計者：桃園市大竹國小林芳全老師
+    </div>
+
+    <!-- 💡 登入學號／領代幣／回傳練習結果 共用模組 -->
+    <script src="math-game-common.js"></script>
+    <!-- 💡 手機自動縮放成滿版畫面，不會被裁切 -->
+    <script src="mobile-fit.js"></script>
+    <!-- 💡 音效／背景音樂 共用引擎 -->
+    <script src="math-game-audio.js"></script>
+
+    <script>
+        MathGameCommon.renderIdentityBadge();
+
+        // 💡 背景音樂設定：三個難度＝三個大關卡。目前先共用同一首，
+        // 之後要換成各難度專屬的音樂，把右邊路徑換成你自己的檔名就好。
+        MathGameAudio.setMusicMap({
+            easy: "./audio/multiply-bgm-easy.mp3",
+            medium: "./audio/multiply-bgm-easy.mp3",   // 🔶 預留位置，之後換成中級專屬曲目
+            hard: "./audio/multiply-bgm-easy.mp3"       // 🔶 預留位置，之後換成高級專屬曲目
+        });
+        // 💡 音效設定：目前先用內建合成音效，之後有真的音效檔再解除註解、填檔名
+        MathGameAudio.setSfxMap({
+            // correct: "./audio/sfx-correct.mp3",
+            // wrong:   "./audio/sfx-wrong.mp3",
+            // click:   "./audio/sfx-click.mp3",
+            // win:     "./audio/sfx-win.mp3",
+            // lose:    "./audio/sfx-lose.mp3"
+        });
+        MathGameAudio.bindClickSfx('button');
+
+        let gameState = {
+            level: '',
+            currentQuestion: 1,
+            score: 0,
+            mistakes: 0,
+            lives: 3,
+            combo: 0,
+            maxCombo: 0,
+            startTime: 0,
+            questions: [],
+            currentAnswer: 0,
+            maxRange: 10,
+            selectedLevel: '',
+            questionStartTime: 0,
+            questionTimeLimit: 60,
+            questionTimer: null,
+            correctAnswers: 0,
+            wrongAnswers: 0
+        };
+        
+
+
+        function selectLevel(level) {
+            gameState.selectedLevel = level;
+            
+            // 更新顯示文字
+            const levelNames = {
+                'easy': '初級 (1-10)',
+                'medium': '中級 (1-20)', 
+                'hard': '高級 (1-30)'
+            };
+            
+            document.getElementById('selectedLevelText').textContent = `已選擇：${levelNames[level]}`;
+            document.getElementById('levelSelection').style.display = 'none';
+            document.getElementById('startScreen').style.display = 'block';
+        }
+
+        function backToLevelSelection() {
+            document.getElementById('startScreen').style.display = 'none';
+            document.getElementById('levelSelection').style.display = 'grid';
+        }
+
+        function startCountdown() {
+            document.getElementById('startScreen').style.display = 'none';
+            document.getElementById('countdownScreen').style.display = 'block';
+            
+            let count = 3;
+            const countdownElement = document.getElementById('countdownNumber');
+            
+            const countdownInterval = setInterval(() => {
+                countdownElement.textContent = count;
+                countdownElement.style.animation = 'none';
+                setTimeout(() => {
+                    countdownElement.style.animation = 'countdownPulse 1s ease-in-out';
+                }, 10);
+                
+                count--;
+                
+                if (count < 1) {
+                    clearInterval(countdownInterval);
+                    setTimeout(() => {
+                        startGame();
+                    }, 1000);
+                }
+            }, 1000);
+        }
+
+        function startGame() {
+            gameState.level = gameState.selectedLevel;
+            MathGameAudio.playBgm(gameState.level);
+            gameState.currentQuestion = 1;
+            gameState.score = 0;
+            gameState.mistakes = 0;
+            gameState.lives = 3;
+            gameState.combo = 0;
+            gameState.maxCombo = 0;
+            gameState.startTime = Date.now();
+            gameState.correctAnswers = 0;
+            gameState.wrongAnswers = 0;
+            
+            // 設定範圍
+            switch(gameState.level) {
+                case 'easy': gameState.maxRange = 10; break;
+                case 'medium': gameState.maxRange = 20; break;
+                case 'hard': gameState.maxRange = 30; break;
+            }
+            
+            // 生成10道題目
+            gameState.questions = generateQuestions();
+            
+            document.getElementById('countdownScreen').style.display = 'none';
+            document.getElementById('gameArea').style.display = 'block';
+            
+            showQuestion();
+            startTimer();
+        }
+
+        function generateQuestions() {
+            const questions = [];
+            const usedQuestions = new Set();
+            
+            while(questions.length < 10) {
+                const num1 = Math.floor(Math.random() * gameState.maxRange) + 1;
+                const num2 = Math.floor(Math.random() * gameState.maxRange) + 1;
+                
+                const questionKey = `${num1}×${num2}`;
+                
+                if (!usedQuestions.has(questionKey)) {
+                    usedQuestions.add(questionKey);
+                    questions.push({
+                        num1: num1,
+                        num2: num2,
+                        answer: num1 * num2,
+                        attempts: 0
+                    });
+                }
+            }
+            return questions;
+        }
+
+        function showQuestion() {
+            const question = gameState.questions[gameState.currentQuestion - 1];
+            document.getElementById('questionText').textContent = `${question.num1} × ${question.num2} = ?`;
+            document.getElementById('answerInput').value = '';
+            document.getElementById('answerInput').focus();
+            document.getElementById('feedback').textContent = '';
+            
+
+            
+            updateUI();
+            startQuestionTimer();
+        }
+
+        function startQuestionTimer() {
+            gameState.questionStartTime = Date.now();
+            gameState.questionTimeLimit = 60;
+            
+            if (gameState.questionTimer) {
+                clearInterval(gameState.questionTimer);
+            }
+            
+            gameState.questionTimer = setInterval(() => {
+                const elapsed = (Date.now() - gameState.questionStartTime) / 1000;
+                const remaining = Math.max(0, gameState.questionTimeLimit - elapsed);
+                
+                document.getElementById('questionTimer').textContent = Math.ceil(remaining);
+                
+                const timerFill = document.getElementById('timerFill');
+                const percentage = (remaining / gameState.questionTimeLimit) * 100;
+                timerFill.style.width = percentage + '%';
+                
+                // 改變顏色警告
+                timerFill.className = 'timer-fill';
+                if (percentage < 30) {
+                    timerFill.classList.add('danger');
+                } else if (percentage < 60) {
+                    timerFill.classList.add('warning');
+                }
+                
+                if (remaining <= 0) {
+                    clearInterval(gameState.questionTimer);
+                    timeUp();
+                }
+            }, 100);
+        }
+
+        function timeUp() {
+            const question = gameState.questions[gameState.currentQuestion - 1];
+            const feedback = document.getElementById('feedback');
+            feedback.textContent = '時間到！正確答案是 ' + question.answer;
+            feedback.className = 'feedback incorrect';
+            
+            gameState.wrongAnswers++;
+            loseLife();
+            
+            setTimeout(() => {
+                nextQuestion();
+            }, 2000);
+        }
+
+        function checkAnswer() {
+            if (gameState.questionTimer) {
+                clearInterval(gameState.questionTimer);
+            }
+            
+            const userAnswer = parseInt(document.getElementById('answerInput').value);
+            const question = gameState.questions[gameState.currentQuestion - 1];
+            const feedback = document.getElementById('feedback');
+            
+            if (isNaN(userAnswer)) {
+                feedback.textContent = '請輸入數字！';
+                feedback.className = 'feedback incorrect';
+                startQuestionTimer(); // 重新開始計時
+                return;
+            }
+            
+            question.attempts++;
+            
+            if (userAnswer === question.answer) {
+                // 答對了
+                gameState.combo++;
+                gameState.maxCombo = Math.max(gameState.maxCombo, gameState.combo);
+                gameState.correctAnswers++;
+                
+                // 計算分數（基礎分數 + 連擊加成 + 時間加成）
+                const baseScore = 100;
+                const comboBonus = Math.min(gameState.combo * 10, 100); // 連擊加成最多100分
+                const timeBonus = Math.floor((Date.now() - gameState.questionStartTime) / 1000) < 20 ? 50 : 0; // 20秒內答對額外50分
+                const totalScore = baseScore + comboBonus + timeBonus;
+                
+                gameState.score += totalScore;
+                
+                feedback.textContent = `太棒了！正確答案！ 🎉 (+${totalScore}分)`;
+                feedback.className = 'feedback correct';
+                
+                // 播放正確音效
+                playCorrectSound();
+                
+                // 創建浮動分數效果
+                createFloatingNumber(`+${totalScore}`, '#2ecc71');
+                
+                // 連擊特效
+                if (gameState.combo > 1) {
+                    createComboEffect(`${gameState.combo}連擊！`);
+                }
+                
+                setTimeout(() => {
+                    nextQuestion();
+                }, 1500);
+                
+            } else {
+                // 答錯了
+                playIncorrectSound();
+                gameState.combo = 0; // 重置連擊
+                
+                if (question.attempts >= 3) {
+                    feedback.textContent = `答案是 ${question.answer}，下一題！`;
+                    feedback.className = 'feedback incorrect';
+                    
+                    gameState.wrongAnswers++;
+                    loseLife();
+                    setTimeout(() => {
+                        nextQuestion();
+                    }, 2000);
+                } else {
+                    feedback.textContent = `答錯了！還有 ${3 - question.attempts} 次機會`;
+                    feedback.className = 'feedback incorrect';
+                    document.getElementById('answerInput').value = '';
+                    document.getElementById('answerInput').focus();
+                    startQuestionTimer(); // 重新開始計時
+                }
+            }
+            
+            updateUI();
+        }
+
+
+
+        function loseLife() {
+            gameState.lives--;
+            gameState.mistakes++;
+            
+            if (gameState.lives <= 0) {
+                endGame();
+            }
+        }
+
+        function nextQuestion() {
+            if (gameState.currentQuestion >= 10 || gameState.lives <= 0) {
+                endGame();
+            } else {
+                gameState.currentQuestion++;
+                showQuestion();
+            }
+        }
+
+        function updateUI() {
+            document.getElementById('questionCount').textContent = gameState.currentQuestion;
+            document.getElementById('score').textContent = gameState.score;
+            document.getElementById('combo').textContent = gameState.combo;
+            
+            // 更新生命顯示
+            const heartsArray = Array(3).fill('🖤');
+            for (let i = 0; i < gameState.lives; i++) {
+                heartsArray[i] = '❤️';
+            }
+            document.getElementById('lives').textContent = heartsArray.join('');
+            
+            // 連擊動畫
+            if (gameState.combo > 0) {
+                document.getElementById('combo').classList.add('combo-display');
+            }
+            
+            const progress = (gameState.currentQuestion - 1) / 10 * 100;
+            document.getElementById('progressFill').style.width = progress + '%';
+        }
+
+        function startTimer() {
+            setInterval(() => {
+                const elapsed = Math.floor((Date.now() - gameState.startTime) / 1000);
+                const minutes = Math.floor(elapsed / 60);
+                const seconds = elapsed % 60;
+                // 移除總時間顯示，因為現在專注於每題計時
+            }, 1000);
+        }
+
+        function endGame() {
+            if (gameState.questionTimer) {
+                clearInterval(gameState.questionTimer);
+            }
+            MathGameAudio.stopBgm();
+            
+            document.getElementById('gameArea').style.display = 'none';
+            document.getElementById('resultScreen').style.display = 'block';
+            
+            const totalTime = Math.floor((Date.now() - gameState.startTime) / 1000);
+            const totalQuestions = gameState.correctAnswers + gameState.wrongAnswers;
+            const accuracy = totalQuestions > 0 ? Math.round((gameState.correctAnswers / totalQuestions) * 100) : 0;
+            
+            // 決定獎章
+            let medal, message;
+            if (gameState.lives > 0 && accuracy >= 90) {
+                medal = '🥇';
+                message = '金牌！你是乘法大師！';
+            } else if (gameState.lives > 0 && accuracy >= 70) {
+                medal = '🥈';
+                message = '銀牌！表現很棒！';
+            } else if (gameState.lives > 0 && accuracy >= 50) {
+                medal = '🥉';
+                message = '銅牌！繼續加油！';
+            } else if (gameState.lives > 0) {
+                medal = '🏅';
+                message = '完成挑戰！多練習會更好！';
+            } else {
+                medal = '💀';
+                message = '挑戰失敗！再試一次吧！';
+            }
+            MathGameAudio.playSfx(gameState.lives > 0 ? 'win' : 'lose');
+            
+            // 更新統計顯示
+            document.getElementById('medal').textContent = medal;
+            document.getElementById('resultText').textContent = message;
+            document.getElementById('correctCount').textContent = gameState.correctAnswers;
+            document.getElementById('wrongCount').textContent = gameState.wrongAnswers;
+            document.getElementById('accuracyRate').textContent = accuracy + '%';
+            document.getElementById('earnedMedal').textContent = medal;
+            document.getElementById('maxComboStat').textContent = gameState.maxCombo;
+            document.getElementById('finalScore').textContent = gameState.score;
+
+            // 💡 回傳這次練習成績、依答對率發代幣
+            document.getElementById('gbitAwardedStat').textContent = '…';
+            MathGameCommon.finishAttempt({
+                game: '乘法大挑戰',
+                mode: gameState.level,
+                topic: `乘法(${gameState.level})`,
+                correct: gameState.correctAnswers,
+                total: totalQuestions,
+                timeSec: totalTime
+            }).then(result => {
+                document.getElementById('gbitAwardedStat').textContent = `+${result.gbitAwarded}`;
+            });
+        }
+        
+
+        
+
+
+        function restartGame() {
+            document.getElementById('resultScreen').style.display = 'none';
+            document.getElementById('levelSelection').style.display = 'grid';
+            
+            // 重置遊戲狀態
+            gameState = {
+                level: '',
+                currentQuestion: 1,
+                score: 0,
+                mistakes: 0,
+                lives: 3,
+                combo: 0,
+                maxCombo: 0,
+                startTime: 0,
+                questions: [],
+                currentAnswer: 0,
+                maxRange: 10,
+                selectedLevel: '',
+                questionStartTime: 0,
+                questionTimeLimit: 60,
+                questionTimer: null,
+                correctAnswers: 0,
+                wrongAnswers: 0
+            };
+        }
+
+        function createFloatingNumber(text, color) {
+            const floating = document.createElement('div');
+            floating.className = 'floating-number';
+            floating.textContent = text;
+            floating.style.color = color;
+            floating.style.left = Math.random() * 200 + 200 + 'px';
+            floating.style.top = '50%';
+            
+            document.querySelector('.game-container').appendChild(floating);
+            
+            setTimeout(() => {
+                floating.remove();
+            }, 2000);
+        }
+
+        function createComboEffect(text) {
+            const combo = document.createElement('div');
+            combo.className = 'combo-effect';
+            combo.textContent = text;
+            combo.style.left = Math.random() * 200 + 200 + 'px';
+            combo.style.top = '40%';
+            
+            document.querySelector('.game-container').appendChild(combo);
+            
+            setTimeout(() => {
+                combo.remove();
+            }, 2000);
+        }
+
+        function playCorrectSound() {
+            // 💡 原本是連到校外網址播放音效，但學校電腦大多沒有對外網路，
+            // 連不到的話音效就完全放不出來；改用共用音效引擎（本機合成
+            // 或你自己上傳的音效檔），不管有沒有網路都能正常出聲。
+            MathGameAudio.playSfx('correct');
+        }
+
+        function playIncorrectSound() {
+            MathGameAudio.playSfx('wrong');
+        }
+
+        // 按Enter鍵提交答案
+        document.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && document.getElementById('gameArea').style.display === 'block') {
+                checkAnswer();
+            }
+        });
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'97bf951c01c4b308',t:'MTc1NzM0NjQyNy4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
+<script src='https://multiplication-challenge.yay.boo/javascripts/yayboo.js'></script>
