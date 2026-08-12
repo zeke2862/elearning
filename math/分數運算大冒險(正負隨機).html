@@ -4,13 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>分數運算大冒險</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="tailwind-lite.css">
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0fdf4; }
-        .option-btn { transition: all 0.2s; }
-        .option-btn:hover { transform: scale(1.02); }
-        .selected { background-color: #3b82f6 !important; color: white !important; border-color: #2563eb !important; }
+        body { background-color: #f0fdf4; }
     </style>
 </head>
 <body class="flex items-center justify-center min-h-screen p-4">
@@ -18,10 +14,9 @@
         
         <!-- 登入畫面 -->
         <div id="screen-login" class="p-8 text-center">
-            <div class="text-6xl text-green-500 mb-4"><i class="fa-solid fa-shapes"></i></div>
+            <div class="text-6xl text-green-500 mb-4">🧮</div>
             <h1 class="text-3xl font-bold text-gray-800 mb-2">分數運算大冒險</h1>
-            <p class="text-gray-500 mb-6">請輸入姓名，並選擇要挑戰的關卡！</p>
-            <input type="text" id="studentName" class="w-full border-2 border-gray-200 rounded-lg p-3 mb-6 text-center text-lg focus:border-green-500 outline-none" placeholder="請輸入你的座號與姓名">
+            <p class="text-gray-500 mb-6">請選擇要挑戰的關卡！(正負隨機篇)</p>
             
             <!-- 分類按鈕 -->
             <div class="grid grid-cols-2 gap-3 mb-2">
@@ -49,31 +44,76 @@
                 </div>
             </div>
             <div class="p-4 bg-gray-50 border-t flex justify-end">
-                <button id="btnNext" onclick="nextQuestion()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg transition disabled:opacity-50" disabled>確定送出 <i class="fa-solid fa-arrow-right ml-1"></i></button>
+                <button id="btnNext" onclick="nextQuestion()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg transition disabled:opacity-50" disabled>下一題 →</button>
             </div>
         </div>
 
         <!-- 結果與上傳畫面 -->
         <div id="screen-result" class="hidden p-8 text-center">
-            <div class="text-6xl text-yellow-400 mb-4"><i class="fa-solid fa-trophy"></i></div>
+            <div class="text-6xl text-yellow-400 mb-4">🏆</div>
             <h2 class="text-3xl font-bold text-gray-800 mb-2">挑戰完成！</h2>
             <p class="text-lg text-gray-600 mb-6"><span id="displayName" class="font-bold"></span> 的成績：</p>
             <div class="text-5xl font-black text-blue-600 mb-2" id="finalScore">0</div>
             <p class="text-gray-500 mb-8">答對 <span id="finalCorrect"></span> / <span id="finalTotal"></span> 題</p>
+            <div id="gbitLine" class="text-lg font-bold mb-4" style="color:#d97706;">代幣結算中…</div>
             <div id="uploadStatus" class="mb-4"></div>
-            <button onclick="submitData()" id="btnSubmit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-lg shadow-lg transition"><i class="fa-solid fa-cloud-arrow-up mr-2"></i>上傳成績給老師</button>
+            <button onclick="submitData()" id="btnSubmit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-lg shadow-lg transition">📤 上傳成績給老師(Google表單)</button>
             <button onclick="location.reload()" class="w-full mt-3 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-3 rounded-lg shadow transition">返回首頁重測</button>
         </div>
 
     </div>
 
+    <!-- 💡 保護殼：如果下面兩個共用檔案沒有跟這個html放在同一個資料夾、
+    讀取失敗，遊戲本身還是能正常開始玩，只是暫時沒有登入/代幣/音效
+    這些附加功能。等檔案補齊、重新整理網頁後就會自動恢復正常。 -->
     <script>
+        window.MathGameCommon = window.MathGameCommon || {
+            renderIdentityBadge: function () {},
+            finishAttempt: function () { return Promise.resolve({ gbitAwarded: 0, newBalance: 0 }); },
+            reportResult: function () { return Promise.resolve(); },
+            awardGbit: function () { return 0; },
+            getActiveStudent: function () { return null; }
+        };
+        window.MathGameAudio = window.MathGameAudio || {
+            setMusicMap: function () {}, playBgm: function () {}, stopBgm: function () {},
+            setBgmVolume: function () {}, setSfxMap: function () {}, playSfx: function () {},
+            bindClickSfx: function () {}
+        };
+    </script>
+    <script src="math-game-common.js"></script>
+    <script src="math-game-audio.js"></script>
+    <script>
+        MathGameCommon.renderIdentityBadge();
+
+        // 💡 背景音樂設定：八個關卡分類＝八個大關卡。目前先共用同一首，
+        // 之後要換成各分類專屬的音樂，把右邊路徑換成你自己的檔名就好。
+        MathGameAudio.setMusicMap({
+            '約分': "./audio/fraction-adv-mix-bgm.mp3",
+            '擴分': "./audio/fraction-adv-mix-bgm.mp3",
+            '通分': "./audio/fraction-adv-mix-bgm.mp3",
+            '加法': "./audio/fraction-adv-mix-bgm.mp3",
+            '減法': "./audio/fraction-adv-mix-bgm.mp3",
+            '乘法': "./audio/fraction-adv-mix-bgm.mp3",
+            '除法': "./audio/fraction-adv-mix-bgm.mp3",
+            '綜合': "./audio/fraction-adv-mix-bgm.mp3"
+        });
+        // 💡 音效設定：目前先用內建合成音效，之後有真的音效檔再解除註解、填檔名
+        MathGameAudio.setSfxMap({
+            // correct: "./audio/sfx-correct.mp3",
+            // wrong:   "./audio/sfx-wrong.mp3",
+            // click:   "./audio/sfx-click.mp3",
+            // win:     "./audio/sfx-win.mp3",
+            // lose:    "./audio/sfx-lose.mp3"
+        });
+        MathGameAudio.bindClickSfx('button');
+
         const GAS_URL = "https://script.google.com/macros/s/AKfycbwVsNUmhpicvrNRmqcsZhIl2TMuImIMBwO40P9Oxma0fWPgT_j2sEDu4IPegXjr4K9c/exec";
         
         let currentIdx = 0;
         let studentName = "";
         let answers = [];
         let generatedQuestions = [];
+        let currentCategory = '';
         const QUESTION_COUNT = 10; // 每次測驗的題數
 
         // --- 數學與隨機生成輔助函數 ---
@@ -228,9 +268,11 @@
         }
 
         function startQuiz(category) {
-            const name = document.getElementById('studentName').value.trim();
-            if(!name) { alert("請填寫姓名！"); return; }
-            studentName = name;
+            currentCategory = category;
+            // 💡 姓名/座號不用再手動輸入了，直接使用登入時的身分（由 login.html 帶過來）
+            const student = MathGameCommon.getActiveStudent();
+            studentName = (student && (student.name || student.studentNumber)) || '訪客';
+            MathGameAudio.playBgm(category);
             
             // 生成題目
             generatedQuestions = [];
@@ -256,6 +298,17 @@
             const optsContainer = document.getElementById('optionsContainer');
             optsContainer.innerHTML = '';
             document.getElementById('btnNext').disabled = true;
+            document.getElementById('btnNext').innerText = '下一題 →';
+
+            let feedback = document.getElementById('qFeedback');
+            if (!feedback) {
+                feedback = document.createElement('div');
+                feedback.id = 'qFeedback';
+                feedback.className = 'text-center font-bold mb-3';
+                feedback.style.minHeight = '1.5em';
+                document.getElementById('qText').insertAdjacentElement('afterend', feedback);
+            }
+            feedback.innerText = '';
 
             q.options.forEach(opt => {
                 const btn = document.createElement('button');
@@ -267,18 +320,39 @@
         }
 
         let selectedAnswer = null;
+        // 💡 選完答案立刻宣布對錯、公佈正確答案，不用等按下一題才知道結果
         function selectOption(btn, opt) {
-            document.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
-            btn.classList.add('selected');
+            if (selectedAnswer !== null) return; // 已經作答過，不能再改
             selectedAnswer = opt;
-            document.getElementById('btnNext').disabled = false;
+            const q = generatedQuestions[currentIdx];
+            const isCorrect = (opt === q.answer);
+            answers.push({ cat: q.category, correct: isCorrect });
+
+            const allBtns = document.querySelectorAll('.option-btn');
+            allBtns.forEach(b => {
+                b.onclick = null;
+                b.style.cursor = 'default';
+                if (b.innerText === q.answer) b.classList.add('option-correct');
+                else if (b === btn) b.classList.add('option-wrong');
+            });
+
+            const feedback = document.getElementById('qFeedback');
+            if (isCorrect) {
+                MathGameAudio.playSfx('correct');
+                feedback.style.color = '#16a34a';
+                feedback.innerText = '✅ 答對了！';
+            } else {
+                MathGameAudio.playSfx('wrong');
+                feedback.style.color = '#dc2626';
+                feedback.innerText = `❌ 答錯了，正確答案是：${q.answer}`;
+            }
+
+            const nextBtn = document.getElementById('btnNext');
+            nextBtn.disabled = false;
+            if (currentIdx + 1 >= generatedQuestions.length) nextBtn.innerText = '查看結果 →';
         }
 
         function nextQuestion() {
-            const q = generatedQuestions[currentIdx];
-            const isCorrect = (selectedAnswer === q.answer);
-            answers.push({ cat: q.category, correct: isCorrect });
-            
             currentIdx++;
             if(currentIdx < generatedQuestions.length) {
                 selectedAnswer = null;
@@ -296,6 +370,8 @@
             document.getElementById('finalScore').innerText = finalScore;
             document.getElementById('finalCorrect').innerText = correctCount;
             document.getElementById('finalTotal').innerText = generatedQuestions.length;
+            MathGameAudio.stopBgm();
+            MathGameAudio.playSfx(finalScore >= 70 ? 'win' : 'lose');
             
             const errors = answers.filter(a => !a.correct).map(a => a.cat);
             const errorDetails = errors.length > 0 ? Array.from(new Set(errors)).join(', ') : '無';
@@ -309,13 +385,25 @@
             };
             
             showScreen('screen-result');
+
+            // 💡 回傳這次挑戰成績給老師的電腦、依答對率發代幣
+            MathGameCommon.finishAttempt({
+                game: '分數運算大冒險(正負隨機)',
+                mode: currentCategory,
+                topic: `${currentCategory}關卡`,
+                correct: correctCount,
+                total: generatedQuestions.length
+            }).then(result => {
+                const line = document.getElementById('gbitLine');
+                if (line) line.textContent = `🪙 這次獲得 ${result.gbitAwarded} 枚代幣（目前共有 ${result.newBalance} 枚）`;
+            });
         }
 
         function submitData() {
             const btn = document.getElementById('btnSubmit');
             const status = document.getElementById('uploadStatus');
             btn.disabled = true;
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>上傳中...';
+            btn.innerHTML = '<span class="spin-icon">⏳</span> 上傳中...';
             
             fetch(GAS_URL, {
                 method: 'POST',
@@ -325,7 +413,7 @@
             .then(res => res.json())
             .then(data => {
                 if(data.status === 'success') {
-                    status.innerHTML = '<span class="text-green-600 font-bold"><i class="fa-solid fa-check-circle mr-1"></i>上傳成功！老師已經收到你的成績。</span>';
+                    status.innerHTML = '<span class="text-green-600 font-bold">✅ 上傳成功！老師已經收到你的成績。</span>';
                     btn.classList.add('hidden');
                 } else {
                     throw new Error("伺服器錯誤");
@@ -334,7 +422,7 @@
             .catch(err => {
                 status.innerHTML = '<span class="text-red-500">上傳失敗，請稍後再試。</span>';
                 btn.disabled = false;
-                btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up mr-2"></i>重新嘗試上傳';
+                btn.innerHTML = '📤 重新嘗試上傳';
             });
         }
     </script>
