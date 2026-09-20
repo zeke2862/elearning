@@ -204,7 +204,7 @@ input#codeInput:focus{outline:none;border-color:var(--accent);}
           <div><div class="lbl">分數運算大冒險(正負隨機)</div><div class="desc">RPG 闖關・正負分數練習</div></div>
         </a>
 
-<a class="hub-link" id="linkxHero" href="./math/乘法極速跑酷.html">
+        <a class="hub-link" id="linkxHero" href="./math/乘法極速跑酷.html">
           <div class="ic">🗡️</div>
           <div><div class="lbl">乘法極速跑酷</div><div class="desc">RPG 闖關・乘法練習</div></div>
         </a>
@@ -217,6 +217,18 @@ input#codeInput:focus{outline:none;border-color:var(--accent);}
           <div><div class="lbl">完美「扣」除 - 魔法密室逃脫</div><div class="desc">RPG 闖關・減法練習</div></div>
         </a>
 
+      </div>
+    </div>
+
+
+    <!-- ====== 國文科 ====== -->
+    <div class="subject-group">
+      <div class="subject-title"><span class="subject-ic">🉐</span>國文科</div>
+      <div class="hub-links">
+        <a class="hub-link" id="linkESHENGZI" href="./CHINESE/ESHENGZI/index.html">
+          <div class="ic">⚔️</div>
+          <div><div class="lbl">泰北版華文生字練習</div><div class="desc">認國字、認拼音</div></div>
+        </a>
       </div>
     </div>
 
@@ -304,7 +316,7 @@ const fenzheng_URL = "./math/分數運算大冒險(正).html";
 const fenfu_URL = "./math/分數運算大冒險(負).html";
 const fenzhengfu_URL = "./math/分數運算大冒險(正負隨機).html";
 const ACTIVE_STUDENT_KEY = "keyagent_active_student";
-
+const ESHENGZI_URL = "./CHINESE/ESHENGZI/index.html";
 function fetchWithTimeout(url, opts, ms) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), ms);
