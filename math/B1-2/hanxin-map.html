@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>韓信點兵：數字戰線｜戰略地圖</title>
+<style>
+:root{--ink:#161a2e;--ink2:#20264a;--line:#3a4270;--bronze:#d2a24c;--paper:#f1e8d2;--red:#d24a33;--jade:#43a58f;--txt:#e9e4d4}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(ellipse at top,#252c56,var(--ink) 65%);color:var(--txt);font-family:"Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif;min-height:100vh}
+h1,h2,h3,.serif{font-family:"Noto Serif TC","Songti TC","PMingLiU",serif}
+main{max-width:860px;margin:0 auto;padding:16px 16px 60px}
+button{font:inherit;cursor:pointer;color:inherit}
+button:focus-visible{outline:3px solid var(--bronze);outline-offset:2px}
+.hide{display:none!important}
+.card{background:var(--ink2);border:2px solid var(--line);border-radius:14px;padding:16px}
+.head{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.rank{font-size:2rem;color:var(--bronze);margin:0}
+.grow{flex:1;min-width:200px}
+.pbar{height:12px;background:var(--ink);border-radius:8px;overflow:hidden;margin:6px 0}
+#rbar{height:100%;background:linear-gradient(90deg,var(--bronze),#f0cf85);width:0;transition:width .6s}
+.ch{margin-top:16px}
+.ch h2{margin:0;font-size:1.25rem;color:var(--bronze)}
+.ch small{opacity:.75}
+.nodes{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:10px}
+.node{background:var(--ink);border:2px solid var(--line);border-radius:12px;padding:10px 6px;min-height:104px;text-align:center;display:flex;flex-direction:column;justify-content:center;gap:4px}
+.node b{font-size:1.15rem}
+.node span{font-size:.85rem;line-height:1.3}
+.node:hover:not(.locked){border-color:var(--bronze);background:#2b2a3c}
+.node.boss{border-color:#8a3a2c}
+.node.locked{opacity:.45}
+.node.done{border-color:var(--jade)}
+.node.soon{border-style:dashed}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-top:10px}
+.cd{background:var(--paper);color:#2b2416;border-radius:10px;padding:10px;font-size:.85rem;line-height:1.5;min-height:130px}
+.cd b{font-size:1.2rem;display:block;font-family:"Noto Serif TC","Songti TC",serif}
+.cd.lock{background:var(--ink);color:#8a8fb0;border:2px dashed var(--line)}
+#ov{position:fixed;inset:0;background:var(--ink);z-index:50}
+#fr{width:100%;height:100%;border:0}
+#x{position:absolute;top:8px;right:10px;z-index:60;background:#0008;border:2px solid var(--line);border-radius:8px;padding:2px 10px}
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--bronze);color:#2a1d05;padding:12px 20px;border-radius:10px;font-weight:700;z-index:100;text-align:center;max-width:90vw;line-height:1.6}
+.tiny{margin-top:24px;text-align:center}
+.tiny button{background:none;border:1px solid var(--line);border-radius:8px;padding:6px 14px;opacity:.7}
+@media (max-width:560px){.nodes{grid-template-columns:repeat(2,1fr)}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<main>
+  <h1 class="serif" style="margin:0 0 4px">韓信點兵：數字戰線</h1>
+  <p style="margin:0 0 14px;opacity:.8">國一數學第二章　因數與倍數　戰略地圖</p>
+
+  <section class="card head">
+    <div><p class="rank serif" id="rank"></p><small>目前軍階</small></div>
+    <div class="grow"><b id="tot"></b><div class="pbar"><div id="rbar"></div></div><small id="nxt"></small></div>
+  </section>
+
+  <div id="map"></div>
+
+  <section class="ch">
+    <h2 class="serif">🃏 歷史人物收藏卡</h2>
+    <small>通關對應的關卡就能收集</small>
+    <div class="cards" id="cards"></div>
+  </section>
+
+  <p class="tiny"><button id="reset">重置我的進度</button></p>
+</main>
+
+<div id="ov" class="hide"><button id="x" aria-label="關閉">✕</button><iframe id="fr" title="關卡"></iframe></div>
+<div id="toast" class="hide"></div>
+
+<script>
+/*LOGIC*/
+const CH=[
+ {n:'一、密碼森林',sub:'因倍數判別',st:[['1-1','2 與 5 濾鏡','stage1-1-filter-2-5.html'],['1-2','3 與 9 濾鏡','stage1-2-filter-3-9.html'],['1-3','11 濾鏡','stage1-3-filter-11.html'],['1-4','Boss：迷霧斥候長','stage1-4-boss-scout.html']]},
+ {n:'二、質數堡壘',sub:'質數與合數',st:[['2-1','基地搭建','stage2-1-tiles.html'],['2-2','質數篩選塔'],['2-3','蜈蚣圖 6n±1'],['2-4','Boss：偽裝者 91']]},
+ {n:'三、鍊金實驗室',sub:'短除法與最大公因數',st:[['3-1','短除法拆解'],['3-2','標準分解式'],['3-3','最大公因數'],['3-4','Boss：混沌煉金術士']]},
+ {n:'四、垓下之戰',sub:'公因數與公倍數的應用',st:[['4-1','戰術辨識'],['4-2','找因數行動'],['4-3','找倍數行動'],['4-4','終極 Boss：韓信點兵']]}
+];
+const RK=[[0,'新兵'],[5,'伍長'],[12,'校尉'],[24,'將軍'],[40,'大元帥']];
+const CARDS=[
+ ['1-4','蕭何','他極力推薦韓信給劉邦，還連夜把逃走的韓信追了回來，留下「月下追韓信」的故事。'],
+ ['2-4','張良','劉邦稱讚他「運籌帷幄之中，決勝千里之外」，是最會用腦袋打仗的軍師。'],
+ ['3-4','項羽','力氣大、打仗猛的西楚霸王，最後在垓下兵敗，走到烏江自刎。'],
+ ['4-3','虞姬','項羽身邊的愛人，是楚漢故事裡最有名的女子之一。'],
+ ['4-4','韓信','劉邦問他能帶多少兵，他答「多多益善」，被後人稱為「兵仙」。']
+];
+const KEY='hanxin-progress-v1',MAXSTAR=48;
+let P={};
+const ids=ci=>CH[ci].st.map(s=>s[0]);
+const flat=CH.flatMap((c,i)=>ids(i));
+const st=id=>(P[id]&&P[id].stars)||0;
+const total=()=>flat.reduce((a,id)=>a+st(id),0);
+const rankOf=t=>RK.filter(r=>r[0]<=t).pop();
+function lockReason(ci,k){
+  const d=ids(ci);
+  if(k==0)return ci==0||st(CH[ci-1].st[3][0])>0?'':`先打倒上一大關的「${CH[ci-1].st[3][1].split('：').pop()}」`;
+  if(k<3)return st(d[k-1])>0?'':`先通關 ${d[k-1]}`;
+  if(!(st(d[0])&&st(d[1])&&st(d[2])))return `先通關 ${d[0]}、${d[1]}、${d[2]}`;
+  const s=st(d[0])+st(d[1])+st(d[2]);
+  return s>=6?'':`挑戰 Boss 需要前三關共 6 顆星（目前 ${s} 顆），回去重打拿更多星吧`;
+}
+const owned=()=>CARDS.filter(c=>st(c[0])>0).map(c=>c[1]);
+/*UI*/
+const $=s=>document.querySelector(s);
+let cur='',tt=0;
+function load(){try{P=JSON.parse(localStorage.getItem(KEY))||{}}catch(e){P={}}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(P))}catch(e){}}
+function toast(h){const t=$('#toast');t.innerHTML=h;t.classList.remove('hide');clearTimeout(tt);tt=setTimeout(()=>t.classList.add('hide'),3800)}
+function render(){
+  const t=total(),rk=rankOf(t),nx=RK.find(r=>r[0]>t);
+  $('#rank').textContent=rk[1];$('#tot').textContent=`${t} / ${MAXSTAR} ⭐`;$('#rbar').style.width=(t/MAXSTAR*100)+'%';
+  $('#nxt').textContent=nx?`再 ${nx[0]-t} 顆星，升為「${nx[1]}」`:'你已經是大元帥了！';
+  $('#map').innerHTML=CH.map((c,ci)=>`<section class="ch card"><h2 class="serif">${c.n}</h2><small>${c.sub}</small><div class="nodes">`+
+    c.st.map((s,k)=>{
+      const r=lockReason(ci,k),n=st(s[0]),cls=['node',k==3?'boss':'',r?'locked':'',n?'done':'',!s[2]?'soon':''].join(' ');
+      return `<button class="${cls}" data-ci="${ci}" data-k="${k}"><b>${r?'🔒':k==3?'👹':'⚔️'} ${s[0]}</b><span>${s[1]}</span><span>${s[2]?(n?'⭐'.repeat(n)+'☆'.repeat(3-n):'尚未通關'):'建造中'}</span></button>`;
+    }).join('')+`</div></section>`).join('');
+  $('#cards').innerHTML=CARDS.map(c=>st(c[0])>0?`<div class="cd"><b>${c[1]}</b>${c[2]}</div>`:`<div class="cd lock"><b>？？？</b>通關 ${c[0]} 解鎖</div>`).join('');
+}
+$('#map').onclick=e=>{
+  const b=e.target.closest('.node');if(!b)return;
+  const ci=+b.dataset.ci,k=+b.dataset.k,s=CH[ci].st[k],r=lockReason(ci,k);
+  if(r)return toast('🔒 '+r);
+  if(!s[2])return toast('🔨 這一關還在建造中，敬請期待！');
+  cur=s[0];$('#fr').src=s[2];$('#ov').classList.remove('hide');
+};
+function closeStage(){$('#ov').classList.add('hide');$('#fr').src='about:blank';render()}
+$('#x').onclick=closeStage;
+addEventListener('message',e=>{
+  if(e.source!==$('#fr').contentWindow)return;
+  const d=e.data||{};
+  if(d.type=='stage-result'&&!d.fail&&d.id==cur){
+    const r0=rankOf(total())[1],c0=owned().length,old=P[d.id]||{stars:0,best:0};
+    P[d.id]={stars:Math.max(old.stars,d.stars),best:Math.max(old.best,d.score)};save();
+    const msg=[];
+    if(!old.stars)msg.push('🎉 首次通關 '+d.id+'！');
+    if(owned().length>c0)msg.push('🃏 獲得收藏卡：'+owned().pop()+'！');
+    const r1=rankOf(total())[1];if(r1!=r0)msg.push('🎖️ 升官了：'+r1+'！');
+    if(msg.length)toast(msg.join('<br>'));
+  }
+  if(d.type=='stage-exit')closeStage();
+});
+$('#reset').onclick=()=>{if(confirm('確定要清除所有星星與收藏卡嗎？這個動作無法復原。')){P={};save();render()}};
+load();render();
+</script>
+</body>
+</html>

@@ -1,0 +1,1134 @@
+<!DOCTYPE html>
+<html lang="zh-TW" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>整數王國：數之鑰的覺醒 - 國一數學動態冒險系統</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            kingdom: {
+              dark: '#0f172a',
+              card: '#1e293b',
+              border: '#334155',
+              primary: '#6366f1',
+              accent: '#a855f7',
+              success: '#22c55e',
+              danger: '#ef4444'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Noto Sans TC', sans-serif; }
+    .glow-effect { box-shadow: 0 0 25px rgba(99, 102, 241, 0.25); }
+    .glow-accent { box-shadow: 0 0 25px rgba(168, 85, 247, 0.25); }
+  </style>
+</head>
+<body class="bg-kingdom-dark text-slate-100 min-h-screen flex flex-col justify-between selection:bg-indigo-500 selection:text-white">
+
+  <!-- Navigation Header -->
+  <header class="border-b border-kingdom-border bg-kingdom-card/60 backdrop-blur sticky top-0 z-50">
+    <div class="max-w-6xl mx-auto px-4 py-4 flex flex-wrap justify-between items-center">
+      <div class="flex items-center space-x-3 cursor-pointer" onclick="returnToMap()">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center glow-effect">
+          <i class="fa-solid fa-key text-white text-lg"></i>
+        </div>
+        <div>
+          <h1 class="font-black text-lg tracking-wide bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">整數王國：數之鑰的覺醒</h1>
+          <p class="text-xs text-slate-400">國一數學全動態靈活題庫測驗系統</p>
+        </div>
+      </div>
+      <div id="header-stats" class="hidden flex items-center space-x-4 text-sm bg-slate-900/80 px-4 py-2 rounded-full border border-kingdom-border">
+        <div><i class="fa-solid fa-star text-amber-400 mr-1"></i> 得分: <span id="stat-score" class="font-bold text-white">0</span></div>
+        <div class="text-slate-600">|</div>
+        <div><i class="fa-solid fa-heart text-red-400 mr-1"></i> 護盾: <span id="stat-lives" class="font-bold text-red-400">3</span></div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Experience Area -->
+  <main class="max-w-4xl w-full mx-auto px-4 py-8 flex-grow flex flex-col justify-center">
+
+    <!-- View 1: Chapter Map / Selection -->
+    <div id="view-map" class="space-y-6">
+      <div class="text-center space-y-2 mb-8">
+        <span class="bg-indigo-500/10 text-indigo-400 text-xs font-semibold px-3 py-1 rounded-full border border-indigo-500/20">試煉關卡選單</span>
+        <h2 class="text-3xl font-black tracking-tight">探索整數王國的四大主題與特別番外</h2>
+        <p class="text-slate-400 text-sm max-w-lg mx-auto">每次挑戰數字與敘述角度（如高/低、左/右、增/減）皆完全隨機生成，全面破解定勢迷思！答對率達 60% 以上即可解鎖下一關！</p>
+      </div>
+
+      <div id="chapter-cards-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Dynamically rendered chapter cards -->
+      </div>
+    </div>
+
+    <!-- View 2: Quiz Arena -->
+    <div id="view-quiz" class="hidden space-y-6">
+      <!-- Progress Bar & Info -->
+      <div class="flex justify-between items-center bg-kingdom-card border border-kingdom-border px-6 py-4 rounded-2xl">
+        <div>
+          <span id="quiz-chapter-badge" class="text-xs font-bold px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-400 border border-indigo-500/30">關卡載入中</span>
+          <h3 id="quiz-chapter-title" class="text-lg font-bold mt-1">關卡標題</h3>
+        </div>
+        <div class="text-right">
+          <span class="text-xs text-slate-400">進度</span>
+          <div class="text-lg font-black"><span id="current-q-num">1</span> / <span id="total-q-num">10</span></div>
+        </div>
+      </div>
+      <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+        <div id="progress-bar" class="bg-gradient-to-r from-indigo-500 to-purple-500 h-full w-[10%] transition-all duration-300"></div>
+      </div>
+
+      <!-- Question Card -->
+      <div class="bg-kingdom-card border border-kingdom-border p-6 md:p-8 rounded-2xl shadow-xl space-y-6 relative overflow-hidden">
+        <div class="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 rounded-full blur-2xl pointer-events-none"></div>
+        
+        <!-- Question Text -->
+        <div class="space-y-2">
+          <span class="text-xs uppercase tracking-wider text-indigo-400 font-semibold"><i class="fa-solid fa-circle-question mr-1"></i> 試煉考題</span>
+          <h4 id="question-text" class="text-xl md:text-2xl font-bold leading-relaxed whitespace-pre-line">載入中...</h4>
+        </div>
+
+        <!-- Hint Box -->
+        <div id="hint-container" class="hidden bg-amber-500/10 border border-amber-500/20 p-4 rounded-xl text-amber-300 text-sm flex items-start space-x-3">
+          <i class="fa-solid fa-lightbulb text-amber-400 mt-0.5 text-base"></i>
+          <div id="hint-text">長老提示...</div>
+        </div>
+
+        <!-- Options Grid -->
+        <div id="options-container" class="grid grid-cols-1 gap-3">
+          <!-- Dynamically inserted option buttons -->
+        </div>
+
+        <!-- Feedback & Rationale Container -->
+        <div id="feedback-container" class="hidden p-5 rounded-xl border space-y-3 transition-all">
+          <div id="feedback-header" class="font-bold flex items-center space-x-2 text-base"></div>
+          <p id="feedback-text" class="text-sm text-slate-300 leading-relaxed whitespace-pre-line"></p>
+          <button onclick="nextQuestion()" class="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl transition-colors shadow-lg shadow-indigo-600/30 flex items-center justify-center space-x-2">
+            <span>前往下一題</span> <i class="fa-solid fa-arrow-right"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Helper Actions -->
+      <div class="flex justify-between items-center px-2">
+        <button onclick="returnToMap()" class="text-slate-400 hover:text-white text-sm flex items-center space-x-2 transition-colors">
+          <i class="fa-solid fa-house"></i> <span>放棄並返回地圖</span>
+        </button>
+        <button onclick="toggleHint()" class="text-amber-400 hover:text-amber-300 text-sm flex items-center space-x-2 transition-colors bg-amber-500/10 px-4 py-2 rounded-xl border border-amber-500/20">
+          <i class="fa-solid fa-eye"></i> <span id="hint-btn-text">查看長老提示</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- View 3: Result Summary -->
+    <div id="view-result" class="hidden space-y-6 text-center bg-kingdom-card border border-kingdom-border p-8 rounded-3xl glow-effect">
+      <div id="result-icon-bg" class="w-20 h-20 bg-gradient-to-tr from-indigo-500 to-purple-500 rounded-3xl mx-auto flex items-center justify-center text-3xl shadow-lg">
+        <i id="result-icon" class="fa-solid fa-trophy text-white"></i>
+      </div>
+
+      <div class="space-y-2">
+        <div id="result-stars" class="flex justify-center space-x-2 text-3xl my-2">
+          <!-- Stars rendered dynamically -->
+        </div>
+        <h3 id="result-title" class="text-3xl font-black">試煉完成！</h3>
+        <p id="result-subtitle" class="text-slate-400 text-sm">你已完成本關卡的動態隨機題庫試煉。</p>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4 max-w-sm mx-auto py-2">
+        <div class="bg-slate-900/60 p-4 rounded-2xl border border-kingdom-border">
+          <div class="text-slate-400 text-xs mb-1">正確題數 / 答對率</div>
+          <div id="result-score" class="text-2xl font-black text-indigo-400">8 / 10 (80%)</div>
+        </div>
+        <div class="bg-slate-900/60 p-4 rounded-2xl border border-kingdom-border">
+          <div class="text-slate-400 text-xs mb-1">獲得星等評定</div>
+          <div id="result-star-text" class="text-2xl font-black text-amber-400">2 星</div>
+        </div>
+      </div>
+
+      <div class="flex flex-col sm:flex-row justify-center gap-3 pt-4">
+        <button onclick="restartCurrentChapter()" class="px-6 py-3 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl transition-colors border border-kingdom-border">
+          <i class="fa-solid fa-rotate-right mr-2"></i> 再次挑戰（全新題型與數字）
+        </button>
+        <button id="next-chapter-btn" onclick="goToNextChapter()" class="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl transition-colors shadow-lg shadow-indigo-600/30">
+          <span>進入下一關</span> <i class="fa-solid fa-arrow-right ml-2"></i>
+        </button>
+        <button onclick="returnToMap()" class="px-6 py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold rounded-xl transition-colors border border-kingdom-border">
+          <i class="fa-solid fa-map mr-2"></i> 返回地圖
+        </button>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="border-t border-kingdom-border bg-kingdom-card/30 text-center py-4 text-xs text-slate-500">
+    整數王國：數之鑰的覺醒 © 2026 國一數學全動態去重教學系統
+  </footer>
+
+  <!-- Complete Application Logic -->
+  <script>
+    // Utility functions for random integer and array shuffling
+    function randInt(min, max) {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    function shuffle(array) {
+      let currentIndex = array.length, randomIndex;
+      while (currentIndex !== 0) {
+        randomIndex = Math.floor(Math.random() * currentIndex);
+        currentIndex--;
+        [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+      }
+      return array;
+    }
+
+    // Global Game State
+    let gameState = {
+      currentChapter: 1,
+      currentQuestionIdx: 0,
+      score: 0,
+      lives: 3,
+      questions: [],
+      selectedAnswer: null,
+      isAnswered: false,
+      hintVisible: false,
+      chapterStars: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
+      unlockedChapters: [1]
+    };
+
+    const chapterBadgeLabels = {
+      1: "1-1",
+      2: "番外",
+      3: "1-2",
+      4: "1-3",
+      5: "1-4"
+    };
+
+    const chapterTitles = {
+      1: "第一關：基準與數線（1-1 基準點、相反數與絕對值）",
+      2: "番外篇：結界破除（拆括號、符號判斷與分配律）",
+      3: "第二關：中心線位移（1-2 整數加減與多階段運算）",
+      4: "第三關：算籌鏡像陣（1-3 乘除法與括號次方護盾）",
+      5: "第四關：星際縮放鑰（1-4 指數律與科學記號）"
+    };
+
+    const chapterDescriptions = {
+      1: "破解高/低於基準點雙向轉化、數線左右移動、分數小數標定與絕對值概念。",
+      2: "精通加減乘除去括號法則、括號前負號變號規律與分配律展開。",
+      3: "靈活運用加減位移、先右後左、非 0 起點及先補血或先扣血的不同情境。",
+      4: "掌握乘除號「奇負偶正」法則、先乘除後加減與 -a² vs (-a)² 的差別。",
+      5: "精通指數律計算、科學記號 a × 10ⁿ 規範與大數小數大小比較。"
+    };
+
+    /**
+     * Helper to build questions with strictly 4 unique and distinct options.
+     */
+    function buildQuestion({ q, correctText, correctRationale, distractors, hint }) {
+      const seen = new Set();
+      const options = [];
+
+      // 1. Add correct answer
+      const cleanCorrect = String(correctText).trim();
+      seen.add(cleanCorrect);
+      options.push({
+        text: cleanCorrect,
+        correct: true,
+        rationale: correctRationale
+      });
+
+      // 2. Add candidates if unique
+      for (let cand of distractors) {
+        if (options.length >= 4) break;
+        const candText = String(cand.text).trim();
+        if (candText !== "" && !seen.has(candText)) {
+          seen.add(candText);
+          options.push({
+            text: candText,
+            correct: false,
+            rationale: cand.rationale || "觀念或計算過程有誤。"
+          });
+        }
+      }
+
+      // 3. Dynamic fallback generator if options < 4
+      let numericVal = parseFloat(cleanCorrect.replace(/[^0-9.-]/g, ''));
+      let step = 1;
+      while (options.length < 4) {
+        let fallbackText;
+        if (!isNaN(numericVal) && !cleanCorrect.includes('^') && !cleanCorrect.includes('×') && !cleanCorrect.includes('/') && !cleanCorrect.includes('a') && !cleanCorrect.includes('+') && !cleanCorrect.includes('-')) {
+          let delta = step * (numericVal === 0 ? randInt(2, 5) : Math.max(1, Math.round(Math.abs(numericVal) * 0.3 * step)));
+          if (step % 2 === 1) delta = -delta;
+          
+          if (cleanCorrect.includes('度')) {
+            fallbackText = `${numericVal + delta} 度`;
+          } else if (cleanCorrect.includes('公分')) {
+            let val = numericVal + delta;
+            fallbackText = `${val >= 0 ? '+' : ''}${val} 公分`;
+          } else if (cleanCorrect.includes('公里')) {
+            fallbackText = `${numericVal + delta} 公里`;
+          } else if (cleanCorrect.includes('個')) {
+            fallbackText = `${Math.abs(numericVal + delta)} 個`;
+          } else {
+            fallbackText = String(numericVal + delta);
+          }
+        } else if (cleanCorrect.includes('10^')) {
+          fallbackText = cleanCorrect.replace(/10\^([0-9-]+)/, (match, p1) => `10^${parseInt(p1) + (step % 2 === 1 ? step : -step)}`);
+        } else {
+          fallbackText = `${cleanCorrect} (選項變體 ${step})`;
+        }
+
+        if (!seen.has(fallbackText)) {
+          seen.add(fallbackText);
+          options.push({
+            text: fallbackText,
+            correct: false,
+            rationale: "此選項推論不成立。"
+          });
+        }
+        step++;
+      }
+
+      return { q, options, hint };
+    }
+
+    /**
+     * Question Engine: Generates dynamic questions based on chapter and variations
+     */
+    function generateQuestions(chapter) {
+      let qs = [];
+
+      if (chapter === 1) {
+        // --- 1-1 基準與數線（徹底修訂「高於/低於/逆向反推/多情境」）---
+        
+        // Q1: Baseline (Variation A: Ask Below, Variation B: Reverse Deduction, Variation C: Elevation/Money)
+        let mode1 = randInt(0, 2);
+        let num1 = randInt(3, 25);
+        if (mode1 === 0) {
+          // 問負方向（低於）
+          qs.push(buildQuestion({
+            q: `氣象觀測站以 0 度為標準基準點。若高於基準點 ${num1} 度記為 +${num1} 度，則低於基準點 ${num1} 度的氣溫應記為多少？`,
+            correctText: `-${num1} 度`,
+            correctRationale: `低於基準點代表相反方向的量，故以負數表示，記為 -${num1} 度。`,
+            distractors: [
+              { text: `+${num1} 度`, rationale: `+${num1} 度代表高於基準點。` },
+              { text: `0 度`, rationale: `0 度為基準點本身。` },
+              { text: `-${num1 * 2} 度`, rationale: `數值計算錯誤。` }
+            ],
+            hint: "低於基準點的方向對應數線上的負數方向。"
+          }));
+        } else if (mode1 === 1) {
+          // 逆向反推觀念
+          qs.push(buildQuestion({
+            q: `若水庫水位高於警戒線 ${num1} 公尺記為 +${num1} 公尺，請問當水位記為 -${num1} 公尺時，代表什麼意思？`,
+            correctText: `水位低於警戒線 ${num1} 公尺`,
+            correctRationale: `負號 '-' 代表與基準點（警戒線）相反的方向，故 -${num1} 代表低於警戒線 ${num1} 公尺。`,
+            distractors: [
+              { text: `水位高於警戒線 ${num1} 公尺`, rationale: `高於警戒線應記為正號 '+'。` },
+              { text: `水位剛好等於警戒線`, rationale: `剛好等於警戒線應記為 0 公尺。` },
+              { text: `水位比昨天下降 ${num1} 公尺`, rationale: `題目的基準點是警戒線而非昨天水位。` }
+            ],
+            hint: "解讀正負號時，請連結基準點（警戒線）與相對方向。"
+          }));
+        } else {
+          // 改變情境：帳戶收支/海拔
+          qs.push(buildQuestion({
+            q: `若小明將銀行帳戶存入 ${num1 * 100} 元記為 +${num1 * 100} 元，則帳戶提領（支出）${num1 * 100} 元應如何表示？`,
+            correctText: `-${num1 * 100} 元`,
+            correctRationale: `提領支出為存入的相反方向，故以負號表示為 -${num1 * 100} 元。`,
+            distractors: [
+              { text: `+${num1 * 100} 元`, rationale: `正號代表存入（增加）。` },
+              { text: `0 元`, rationale: `0 元代表帳戶金額無變動。` },
+              { text: `-${num1} 元`, rationale: `單位金額數值錯誤。` }
+            ],
+            hint: "存入與提領為相反概念，符號互為正負。"
+          }));
+        }
+
+        // Q2: Absolute distance to origin
+        let distNum = randInt(4, 30);
+        qs.push(buildQuestion({
+          q: `數線上代表 -${distNum} 的點，與原點的距離是多少個單位長？`,
+          correctText: `${distNum} 個單位長`,
+          correctRationale: `點與原點的距離代表絕對值 |- ${distNum}| = ${distNum} 個單位長。`,
+          distractors: [
+            { text: `-${distNum} 個單位長`, rationale: `距離為幾何長度，永遠不可能為負值。` },
+            { text: `0 個單位長`, rationale: `0 為原點本身的座標。` },
+            { text: `${distNum * 2} 個單位長`, rationale: `這是該點到其對稱點的距離。` }
+          ],
+          hint: "距離永遠是非負數，代表點到原點的步數。"
+        }));
+
+        // Q3: Opposite numbers
+        let opA = randInt(2, 9);
+        let opB = randInt(3, 9);
+        if (opA === opB) opB += 1;
+        qs.push(buildQuestion({
+          q: `下列哪一個選項中的兩個數「互為相反數」？`,
+          correctText: `-${opA}/${opB} 與 ${opA}/${opB}`,
+          correctRationale: `符號相反、絕對值相同的兩個數互為相反數。`,
+          distractors: [
+            { text: `-${opA}/${opB} 與 -${opA}/${opB}`, rationale: `兩者符號相同，為同一數。` },
+            { text: `${opB}/${opA} 與 -${opA}/${opB}`, rationale: `這是倒數加負號，非相反數。` },
+            { text: `-${opA}/${opB} 與 ${opB}/${opA}`, rationale: `絕對值不相等。` }
+          ],
+          hint: "相反數在數線上位於原點兩側，且到原點距離相等。"
+        }));
+
+        // Q4: Decimal / Fraction Plotting
+        let intP = randInt(1, 9);
+        let subD = randInt(1, 9);
+        let decVal = (subD * 0.1).toFixed(1);
+        qs.push(buildQuestion({
+          q: `若數線上的點 A 表示 -${intP}.${subD}，則在數線上要如何正確標定它？`,
+          correctText: `從 -${intP} 的位置開始，向左移動 ${decVal} 個單位長`,
+          correctRationale: `負小數向左遞減，從 -${intP} 再向左移動 ${decVal} 個單位長即到達 -${intP}.${subD}。`,
+          distractors: [
+            { text: `從 -${intP} 的位置開始，向右移動 ${decVal} 個單位長`, rationale: `向右移動會使數值變大（變為 -${(intP - subD*0.1).toFixed(1)}）。` },
+            { text: `從 -${intP + 1} 的位置開始，向左移動 ${decVal} 個單位長`, rationale: `這樣會移動到過小的負數。` },
+            { text: `從 0 開始向右移動 ${intP}.${subD} 個單位長`, rationale: `向右為正方向，負數應向左標定。` }
+          ],
+          hint: "負小數在數線上是從整數點往更左邊（負方向）移動。"
+        }));
+
+        // Q5: Single movement on number line (Left vs Right)
+        let isLeftMove = Math.random() < 0.5;
+        let startPoint = -randInt(2, 10);
+        let moveUnits = randInt(5, 15);
+        if (isLeftMove) {
+          let ansLeft = startPoint - moveUnits;
+          qs.push(buildQuestion({
+            q: `已知數線上有一點 Q 代表 ${startPoint}，若將 Q 點向左移動 ${moveUnits} 個單位長，新位置代表的數為何？`,
+            correctText: `${ansLeft}`,
+            correctRationale: `向左移動代表減法：${startPoint} - ${moveUnits} = ${ansLeft}。`,
+            distractors: [
+              { text: `${startPoint + moveUnits}`, rationale: `誤算為向右移動（加法）。` },
+              { text: `${moveUnits}`, rationale: `誤將移動單位直接當作最後座標。` },
+              { text: `${Math.abs(ansLeft)}`, rationale: `正負號判斷錯誤。` }
+            ],
+            hint: "向左移動代表數值減少（減法）。"
+          }));
+        } else {
+          let ansRight = startPoint + moveUnits;
+          qs.push(buildQuestion({
+            q: `已知數線上有一點 P 代表 ${startPoint}，若將 P 點向右移動 ${moveUnits} 個單位長，新位置代表的數為何？`,
+            correctText: `${ansRight}`,
+            correctRationale: `向右移動代表加法：${startPoint} + ${moveUnits} = ${ansRight}。`,
+            distractors: [
+              { text: `${startPoint - moveUnits}`, rationale: `誤算為向左移動（減法）。` },
+              { text: `${moveUnits}`, rationale: `誤將移動距離當作最後座標。` },
+              { text: `${-ansRight}`, rationale: `符號算錯。` }
+            ],
+            hint: "向右移動代表數值增加（加法）。"
+          }));
+        }
+
+        // Q6: Algebraic Absolute Value
+        let xVar = -randInt(2, 15);
+        qs.push(buildQuestion({
+          q: `若未知數 a 為負數（例如 a = ${xVar}），則 |a| 可以化簡為下列哪一個代數式？`,
+          correctText: `-a`,
+          correctRationale: `當 a < 0 時，|a| 等於其相反數 -a（注意：因為 a 為負數，所以 -a 實際上代表正數）。`,
+          distractors: [
+            { text: `a`, rationale: `若 a 為負數，|a| 不能直接等於 a（否則會變成負數）。` },
+            { text: `0`, rationale: `非零負數的絕對值必為正數。` },
+            { text: `a²`, rationale: `絕對值代表距離而非二次方。` }
+          ],
+          hint: "負數去絕對值時，前面要補一個負號使其變為正數。"
+        }));
+
+        // Q7: Distance between two points
+        let p1 = -randInt(2, 15);
+        let p2 = randInt(3, 20);
+        let dist7 = p2 - p1;
+        qs.push(buildQuestion({
+          q: `在數線上，代表 ${p1} 和 ${p2} 的兩點之間的距離是多少個單位長？`,
+          correctText: `${dist7} 個單位長`,
+          correctRationale: `兩點距離為大座標減小座標：${p2} - (${p1}) = ${p2} + ${Math.abs(p1)} = ${dist7} 個單位長。`,
+          distractors: [
+            { text: `${p1 + p2} 個單位長`, rationale: `直接將兩座標相加無法代表幾何距離。` },
+            { text: `${Math.abs(p1) - Math.abs(p2)} 個單位長`, rationale: `距離計算公式錯誤。` },
+            { text: `-${dist7} 個單位長`, rationale: `距離不可為負值。` }
+          ],
+          hint: "兩點距離等於座標差的絕對值（大減小）。"
+        }));
+
+        // Q8: Reverse movement deduction (Reverse Start Point)
+        let endP = randInt(2, 10);
+        let shiftRight = randInt(8, 15);
+        let startP = endP - shiftRight;
+        qs.push(buildQuestion({
+          q: `有一點 P 向右移動 ${shiftRight} 個單位後到達 ${endP}，請問 P 點原本代表的數為何？`,
+          correctText: `${startP}`,
+          correctRationale: `向右移動為加法（起點 + ${shiftRight} = ${endP}），逆向求解起點：${endP} - ${shiftRight} = ${startP}。`,
+          distractors: [
+            { text: `${endP + shiftRight}`, rationale: `誤將抵達點再向右移動。` },
+            { text: `${shiftRight}`, rationale: `誤將移動距離當作起點。` },
+            { text: `${-startP}`, rationale: `正負號算錯。` }
+          ],
+          hint: "從終點逆推回起點，向右的逆運算就是向左減去距離。"
+        }));
+
+        // Q9: Movement direction and distance deduction
+        let fromPt = -randInt(2, 9);
+        let toPt = -randInt(12, 20);
+        let moveDist = Math.abs(toPt - fromPt);
+        qs.push(buildQuestion({
+          q: `要將數線上的點從 ${fromPt} 移動到 ${toPt}，需要往哪個方向移動多少單位長？`,
+          correctText: `向左移動 ${moveDist} 個單位長`,
+          correctRationale: `因為 ${toPt} 小於 ${fromPt}（更偏左邊），故需要往左移動，移動距離為 ${fromPt} - (${toPt}) = ${moveDist} 個單位長。`,
+          distractors: [
+            { text: `向右移動 ${moveDist} 個單位長`, rationale: `向右移動會使數值變大而非變小。` },
+            { text: `向左移動 ${Math.abs(toPt)} 個單位長`, rationale: `距離計算未扣除起點座標。` },
+            { text: `向右移動 ${Math.abs(fromPt)} 個單位長`, rationale: `方向與距離均計算錯誤。` }
+          ],
+          hint: "比較起點與終點的大小：往較小的數移動是向左，往較大的數移動是向右。"
+        }));
+
+        // Q10: True/False concept check
+        qs.push(buildQuestion({
+          q: `下列關於整數與數線的觀念敘述，何者「錯誤」？`,
+          correctText: `絕對值越大的負數，其數值越大`,
+          correctRationale: `負數的絕對值越大，代表在數線上離原點越左邊，數值反而越小（例如 |-10| > |-2|，但 -10 < -2）。`,
+          distractors: [
+            { text: `數線上越右邊的點所代表的數越大`, rationale: `此敘述完全正確。` },
+            { text: `互為相反數的兩數到原點距離相等`, rationale: `此敘述完全正確。` },
+            { text: `「0」既不是正數也不是負數`, rationale: `此敘述完全正確。` }
+          ],
+          hint: "仔細想想：在負數的世界裡，欠越多錢（絕對值越大）代表資產越少。"
+        }));
+
+      } else if (chapter === 2) {
+        // --- 番外篇：拆括號、符號判斷與分配律 ---
+        let a1 = randInt(10, 30);
+        let b1 = randInt(10, 30);
+        let c1 = randInt(10, 30);
+        qs.push(buildQuestion({
+          q: `將式子 -${a1} + (-${b1} + ${c1}) 正確拆除括號化簡，結果為何？`,
+          correctText: `-${a1} - ${b1} +${c1}`,
+          correctRationale: `括號前為「+」號時，去括號後括號內各項的正負號保持不變：+ (-${b1}) 變 -${b1}，+ (+${c1}) 變 +${c1}。`,
+          distractors: [
+            { text: `-${a1} + ${b1} -${c1}`, rationale: `誤將括號內各項符號反轉。` },
+            { text: `-${a1} - ${b1} -${c1}`, rationale: `遺漏了最後一項正號。` },
+            { text: `${a1} - ${b1} +${c1}`, rationale: `第一項負號遺失。` }
+          ],
+          hint: "括號前面是加號時，去括號直接照抄內部的正負號。"
+        }));
+
+        let a2 = randInt(10, 30);
+        let b2 = randInt(10, 30);
+        let c2 = randInt(10, 30);
+        let d2 = randInt(10, 30);
+        qs.push(buildQuestion({
+          q: `將式子 -${a2} - (-${b2} + ${c2} - ${d2}) 正確拆除括號化簡，結果為何？`,
+          correctText: `-${a2} +${b2} - ${c2} +${d2}`,
+          correctRationale: `括號前為「-」號時，去括號時括號內「每一項」都要變號：-(-${b2}) 變 +${b2}，-(+${c2}) 變 -${c2}，-(-${d2}) 變 +${d2}。`,
+          distractors: [
+            { text: `-${a2} +${b2} + ${c2} -${d2}`, rationale: `只變號了第一項，後面各項忘記變號。` },
+            { text: `-${a2} -${b2} + ${c2} -${d2}`, rationale: `未進行變號運算。` },
+            { text: `-${a2} +${b2} - ${c2} -${d2}`, rationale: `最後一項負號未變號為正號。` }
+          ],
+          hint: "括號前面是減號時，去括號後括號內「每一項」都要變號（正變負、負變正）。"
+        }));
+
+        let a4 = randInt(3, 12);
+        let b4 = randInt(4, 15);
+        let c4 = randInt(4, 15);
+        qs.push(buildQuestion({
+          q: `將式子 (-${a4}) × (-${b4} + ${c4}) 利用乘法分配律拆除括號展開，下列何者正確？`,
+          correctText: `(-${a4}) × (-${b4}) + (-${a4}) × (${c4})`,
+          correctRationale: `乘法分配律：a × (b + c) = a × b + a × c。這裡 a = -${a4}，故為 (-${a4}) × (-${b4}) + (-${a4}) × (${c4})。`,
+          distractors: [
+            { text: `(-${a4}) × (-${b4}) + ${c4}`, rationale: `遺漏了將 -${a4} 分配乘以第二項 ${c4}。` },
+            { text: `-${a4} × ${b4} + ${c4}`, rationale: `負號與分配律皆處理錯誤。` },
+            { text: `(-${a4}) × (${b4}) - (-${a4}) × (${c4})`, rationale: `第一項的負號 (-${b4}) 被漏掉。` }
+          ],
+          hint: "分配律要「公平」：括號外的數字（包含其負號）必須分別乘以括號內的每一項。"
+        }));
+
+        let negCount = randInt(3, 5);
+        let totalTerms = negCount + randInt(1, 2);
+        let isEven = (negCount % 2 === 0);
+        let signText = isEven ? "正數" : "負數";
+        let oppSignText = isEven ? "負數" : "正數";
+        qs.push(buildQuestion({
+          q: `判斷算式中包含 ${negCount} 個負數與 ${totalTerms - negCount} 個正數進行連續乘除運算（無加減法），其最終結果的正負號為何？`,
+          correctText: `必為${signText}`,
+          correctRationale: `連乘除算式的正負號由「負號的總個數」決定：偶數個負號相乘除結果為正數，奇數個負號相乘除結果為負數。此題有 ${negCount} 個（${isEven ? '偶數' : '奇數'}個）負號，故結果為${signText}。`,
+          distractors: [
+            { text: `必為${oppSignText}`, rationale: `負號個數的奇偶性判斷顛倒。` },
+            { text: `無法判斷，取決於數字大小`, rationale: `乘除法結果的符號僅由負號個數決定，與數字絕對值大小無關。` },
+            { text: `必為 0`, rationale: `非零數連續乘除結果不會為 0。` }
+          ],
+          hint: "乘除法符號口訣：「奇負偶正」——數一數共有幾個負號即可。"
+        }));
+
+        // Fill remaining questions for Chapter 2 dynamically
+        for (let i = 5; i <= 10; i++) {
+          let x = randInt(5, 20);
+          let y = randInt(5, 20);
+          let z = randInt(2, 8);
+          qs.push(buildQuestion({
+            q: `化簡算式 -(${x} - ${y}) ÷ (-${z}) 去括號展開後的符號形式為何？`,
+            correctText: `-${x} ÷ (-${z}) + ${y} ÷ (-${z})`,
+            correctRationale: `先化簡分子 -( ${x} - ${y} ) = -${x} + ${y}，再對除數 -${z} 進行分配：(-${x} + ${y}) ÷ (-${z}) = -${x} ÷ (-${z}) + ${y} ÷ (-${z})。`,
+            distractors: [
+              { text: `${x} ÷ (-${z}) - ${y} ÷ (-${z})`, rationale: `分子負號分配錯誤。` },
+              { text: `-${x} ÷ ${z} - ${y} ÷ ${z}`, rationale: `除數負號遺失。` },
+              { text: `${x} ÷ ${z} + ${y} ÷ ${z}`, rationale: `正負號全部搞混。` }
+            ],
+            hint: "括號前的負號要先對括號內部每一項變號，再進行分配。"
+          }));
+        }
+
+      } else if (chapter === 3) {
+        // --- 1-2 整數加減（修訂「血量先加後減/補血大於傷害」、「兩階段位移先右後左/非0起點」）---
+        
+        // Q1: Health Point Variation (Heal > Damage, Heal first)
+        let initHp1 = randInt(60, 100);
+        let bigHeal = randInt(40, 70);
+        let dmg1 = randInt(20, 35);
+        let finalHp1 = initHp1 + bigHeal - dmg1;
+        qs.push(buildQuestion({
+          q: `玩家初始血量為 ${initHp1}，先獲得 +${bigHeal} 的大補血，隨後遭受 -${dmg1} 的傷害，請問最後血量為何？`,
+          correctText: `${finalHp1}`,
+          correctRationale: `計算順序為先加後減：${initHp1} + ${bigHeal} - ${dmg1} = ${initHp1 + bigHeal} - ${dmg1} = ${finalHp1}。`,
+          distractors: [
+            { text: `${initHp1 - bigHeal + dmg1}`, rationale: `誤將補血當作傷害、傷害當作補血。` },
+            { text: `${initHp1 - dmg1}`, rationale: `漏算了補血的數值。` },
+            { text: `${initHp1 + bigHeal + dmg1}`, rationale: `誤將傷害也當作加血。` }
+          ],
+          hint: "獲得補血用加法，遭受傷害用減法。"
+        }));
+
+        // Q2: Two-Stage Displacement (First Right then Left, Non-zero start)
+        let startPos = randInt(5, 20);
+        let moveR = randInt(15, 30);
+        let moveL = randInt(25, 45);
+        let finalPos = startPos + moveR - moveL;
+        qs.push(buildQuestion({
+          q: `拔河比賽中，繩結初始位置在 +${startPos} 公分處。先向右移動 ${moveR} 公分，再向左移動 ${moveL} 公分，最後位置在哪裡？`,
+          correctText: `${finalPos >= 0 ? '+' : ''}${finalPos} 公分`,
+          correctRationale: `起點非 0：+${startPos}，向右加 ${moveR}，向左減 ${moveL}。式子為 +${startPos} + ${moveR} - ${moveL} = ${finalPos} 公分。`,
+          distractors: [
+            { text: `${moveR - moveL} 公分`, rationale: `忽略了非 0 的初始起點位置 +${startPos}。` },
+            { text: `+${startPos + moveR + moveL} 公分`, rationale: `誤將向左移動算為加法。` },
+            { text: `-${finalPos} 公分`, rationale: `正負號算錯。` }
+          ],
+          hint: "計算式：最後位置 = 初始起點 + 向右位移 - 向左位移。"
+        }));
+
+        // Q3: Continuous same-direction damage
+        let initHp2 = randInt(100, 150);
+        let trap1 = randInt(20, 35);
+        let trap2 = randInt(25, 40);
+        let finalHp2 = initHp2 - trap1 - trap2;
+        qs.push(buildQuestion({
+          q: `玩家初始血量為 ${initHp2}，連續踩到兩次陷阱（分別造成 -${trap1} 與 -${trap2} 的傷害），最後血量為何？`,
+          correctText: `${finalHp2}`,
+          correctRationale: `連續扣血：${initHp2} - ${trap1} - ${trap2} = ${initHp2} - (${trap1} + ${trap2}) = ${finalHp2}。`,
+          distractors: [
+            { text: `${initHp2 - trap1 + trap2}`, rationale: `第二次傷害誤算為加血。` },
+            { text: `${initHp2 + trap1 + trap2}`, rationale: `誤將兩次傷害皆算為加血。` },
+            { text: `${finalHp2 + 20}`, rationale: `數值計算錯誤。` }
+          ],
+          hint: "連續受到傷害代表連續減去負值（或連續減去正數傷害量）。"
+        }));
+
+        // Q4: Reverse Damage Deduction
+        let startHp3 = randInt(80, 120);
+        let heal3 = randInt(15, 30);
+        let endHp3 = randInt(50, 75);
+        let damageVal = startHp3 + heal3 - endHp3;
+        qs.push(buildQuestion({
+          q: `玩家初始血量為 ${startHp3}，獲得 +${heal3} 補血後又受到一次傷害，最終血量剩下 ${endHp3}，請問該次傷害值（扣血量）為何？`,
+          correctText: `${damageVal}`,
+          correctRationale: `設傷害值為 x：${startHp3} + ${heal3} - x = ${endHp3} ➔ ${startHp3 + heal3} - x = ${endHp3} ➔ x = ${damageVal}。`,
+          distractors: [
+            { text: `${damageVal + 20}`, rationale: `計算錯誤。` },
+            { text: `${startHp3 - endHp3}`, rationale: `漏算了獲得補血的 +${heal3}。` },
+            { text: `${heal3}`, rationale: `誤將補血量當作傷害值。` }
+          ],
+          hint: "先算補血後的血量，再減去最終剩餘血量即可求得傷害值。"
+        }));
+
+        // Q5: Integer subtraction with negative minus negative
+        let c2 = randInt(12, 40);
+        let d2 = randInt(10, 35);
+        let ans2 = c2 + d2;
+        qs.push(buildQuestion({
+          q: `計算 ${c2} - (-${d2}) 的結果為何？`,
+          correctText: `${ans2}`,
+          correctRationale: `減去一個負數等於加上其相反數（負負得正）：${c2} + ${d2} = ${ans2}。`,
+          distractors: [
+            { text: `${c2 - d2}`, rationale: `未將減去負數轉為加法。` },
+            { text: `-${ans2}`, rationale: `符號計算錯誤。` },
+            { text: `${d2 - c2}`, rationale: `運算順序顛倒。` }
+          ],
+          hint: "記得基本口訣：「減去負數等於加上正數（負負得正）」。"
+        }));
+
+        // Fill remaining Chapter 3 questions
+        for (let i = 6; i <= 10; i++) {
+          let a = randInt(10, 30);
+          let b = randInt(10, 30);
+          qs.push(buildQuestion({
+            q: `計算 (-${a}) + (+${b}) 的結果為何？`,
+            correctText: `${-a + b}`,
+            correctRationale: `異號相加：用較大的絕對值減去較小的絕對值，符號跟隨絕對值較大者。-${a} + ${b} = ${-a + b}。`,
+            distractors: [
+              { text: `${a + b}`, rationale: `誤將兩數絕對值直接相加。` },
+              { text: `-${a + b}`, rationale: `未進行抵銷計算。` },
+              { text: `${a - b}`, rationale: `正負號判斷顛倒。` }
+            ],
+            hint: "異號相加取大數的符號，並將兩數絕對值相減。"
+          }));
+        }
+
+      } else if (chapter === 4) {
+        // --- 1-3 算籌鏡像陣（修訂「-6² vs (-6)² 靈活變體/符號與次方比較」）---
+
+        // Q1: Exponent variation (Which one is POSITIVE?)
+        let base1 = randInt(3, 7);
+        qs.push(buildQuestion({
+          q: `下列哪一個算式的計算結果為「正數」？`,
+          correctText: `(-${base1})^2`,
+          correctRationale: `(-${base1})^2 有括號保護且指數為偶數，負負得正，結果為 +${base1 * base1}（正數）；而 -${base1}^2 = -${base1 * base1}，(-${base1})^3 = -${base1 * base1 * base1}。`,
+          distractors: [
+            { text: `-${base1}^2`, rationale: `沒有括號保護，負號留在外面，結果為 -${base1 * base1}（負數）。` },
+            { text: `(-${base1})^3`, rationale: `負數的奇數次方結果仍為負數（-${base1 * base1 * base1}）。` },
+            { text: `-${base1}^3`, rationale: `結果為負數（-${base1 * base1 * base1}）。` }
+          ],
+          hint: "只有「有括號」且「次方為偶數」時，負負得正才會變成正數！"
+        }));
+
+        // Q2: Odd exponent comparison (-2^3 vs (-2)^3)
+        let base2 = randInt(2, 5);
+        let oddPow = 3;
+        let val2 = -Math.pow(base2, oddPow);
+        qs.push(buildQuestion({
+          q: `比較 -${base2}^${oddPow} 與 (-${base2})^${oddPow} 的數值大小關係，下列敘述何者正確？`,
+          correctText: `兩者數值相等，皆為 ${val2}`,
+          correctRationale: `-${base2}^${oddPow} = -(${base2}^${oddPow}) = ${val2}；而 (-${base2})^${oddPow} = (-${base2}) × (-${base2}) × (-${base2}) = ${val2}。打破「括號次方一定變正數」的迷思（奇數次方保持負號）！`,
+          distractors: [
+            { text: `-${base2}^${oddPow} 的值比較大`, rationale: `兩者計算結果均為 ${val2}，相等。` },
+            { text: `(-${base2})^${oddPow} 的值為正數`, rationale: `奇數次方不會變成正數！` },
+            { text: `兩者互為相反數`, rationale: `兩者結果完全相同，非相反數。` }
+          ],
+          hint: "當次方是「奇數」時，有無括號算出來的負數數值是相同的。"
+        }));
+
+        // Q3: Even exponent contrast (-6^2 vs (-6)^2)
+        let base3 = randInt(4, 9);
+        let v1 = -Math.pow(base3, 2);
+        let v2 = Math.pow(-base3, 2);
+        qs.push(buildQuestion({
+          q: `下列關於 -${base3}^2 與 (-${base3})^2 的數值比較與敘述，何者完全正確？`,
+          correctText: `-${base3}^2 的值為 ${v1}，而 (-${base3})^2 的值為 ${v2}，兩者互為相反數`,
+          correctRationale: `-${base3}^2 無括號保護，負號留在外面：-( ${base3}^2 ) = ${v1}；(-${base3})^2 有括號，負負得正：(-${base3}) × (-${base3}) = ${v2}。${v1} 與 ${v2} 互為相反數。`,
+          distractors: [
+            { text: `兩者的值皆為 ${v2}`, rationale: `忽略了 -${base3}^2 沒有括號的差別。` },
+            { text: `兩者的值皆為 ${v1}`, rationale: `偶數次方會將括號內的負號轉為正數。` },
+            { text: `-${base3}^2 的值為 ${v2}，而 (-${base3})^2 的值為 ${v1}`, rationale: `括號保護概念顛倒。` }
+          ],
+          hint: "括號是護盾！有括號連負號一起平方，無括號負號留外面。"
+        }));
+
+        // Q4: Order of Operations with Multiplication & Subtraction
+        let opA = randInt(15, 40);
+        let opB = randInt(3, 9);
+        let opC = randInt(3, 9);
+        let ans4 = opA + (opB * opC);
+        qs.push(buildQuestion({
+          q: `計算 ${opA} - ${opB} × (-${opC}) 的結果為何？`,
+          correctText: `${ans4}`,
+          correctRationale: `先乘除後加減：${opB} × (-${opC}) = -${opB * opC}。原式 = ${opA} - (-${opB * opC}) = ${opA} + ${opB * opC} = ${ans4}。`,
+          distractors: [
+            { text: `${(opA - opB) * (-opC)}`, rationale: `違反先乘除後加減順序。` },
+            { text: `${opA - opB * opC}`, rationale: `減去負數未轉為加法。` },
+            { text: `-${ans4}`, rationale: `正負號計算錯誤。` }
+          ],
+          hint: "遵循運算順序：先算乘法，再算減法（注意減負得正）。"
+        }));
+
+        // Fill remaining Chapter 4 questions
+        for (let i = 5; i <= 10; i++) {
+          let m1 = randInt(4, 12);
+          let m2 = randInt(4, 12);
+          qs.push(buildQuestion({
+            q: `計算 (-${m1}) × (-${m2}) 的結果為何？`,
+            correctText: `${m1 * m2}`,
+            correctRationale: `負負得正：(-${m1}) × (-${m2}) = +(${m1} × ${m2}) = ${m1 * m2}。`,
+            distractors: [
+              { text: `-${m1 * m2}`, rationale: `負負相乘忘記變正數。` },
+              { text: `${m1 + m2}`, rationale: `誤將乘法算成加法。` },
+              { text: `-${m1 + m2}`, rationale: `運算規則完全錯誤。` }
+            ],
+            hint: "同號相乘（負負或正正）結果為正數。"
+          }));
+        }
+
+      } else if (chapter === 5) {
+        // --- 1-4 星際縮放鑰（指數律與科學記號）---
+        
+        // Q1: Scientific Notation Standard Rule (1 <= a < 10)
+        let sA = randInt(1, 9);
+        let sB = randInt(1, 9);
+        let sExp = randInt(-8, 8);
+        qs.push(buildQuestion({
+          q: `下列哪一個數值的寫法符合標準「科學記號 a × 10ⁿ」的規範？`,
+          correctText: `${sA}.${sB} × 10^${sExp}`,
+          correctRationale: `符合 1 ≤ a < 10 且 n 為整數的標準科學記號格式。`,
+          distractors: [
+            { text: `${sA * 10}.${sB} × 10^3`, rationale: `前端係數大於等於 10，不合規範。` },
+            { text: `0.${sA} × 10^5`, rationale: `前端係數小於 1，不合規範。` },
+            { text: `5 × 10^2.5`, rationale: `指數 n 必須為整數，不可為小數。` }
+          ],
+          hint: "科學記號的係數 a 必須滿足 1 ≤ a < 10。"
+        }));
+
+        // Q2: Big number conversion
+        let b2 = randInt(2, 9);
+        let expBig = randInt(5, 8);
+        let numStr = `${b2}` + '0'.repeat(expBig);
+        qs.push(buildQuestion({
+          q: `將大數 ${numStr} 表示為科學記號，其正確形式為何？`,
+          correctText: `${b2} × 10^${expBig}`,
+          correctRationale: `小數點向左移動 ${expBig} 位，故記為 ${b2} × 10^${expBig}。`,
+          distractors: [
+            { text: `${b2} × 10^${expBig - 1}`, rationale: `位數少算了一位。` },
+            { text: `${b2 * 10} × 10^${expBig - 1}`, rationale: `前端係數非 1 ≤ a < 10。` },
+            { text: `${b2} × 10^-${expBig}`, rationale: `大於 1 的數指數應為正數。` }
+          ],
+          hint: "大於 10 的數，指數 n 為正整數，等於小數點向左移的位數。"
+        }));
+
+        // Q3: Small decimal conversion
+        let b3 = randInt(2, 9);
+        let p3 = randInt(4, 7);
+        let decStr = "0." + "0".repeat(p3 - 1) + `${b3}`;
+        qs.push(buildQuestion({
+          q: `將小數 ${decStr} 表示為科學記號，其正確形式為何？`,
+          correctText: `${b3} × 10^-${p3}`,
+          correctRationale: `小數點向右移動 ${p3} 位，故記為 ${b3} × 10^-${p3}。`,
+          distractors: [
+            { text: `${b3} × 10^${p3}`, rationale: `小數的指數應為負數。` },
+            { text: `0.${b3} × 10^-${p3 - 1}`, rationale: `係數必須大於等於 1。` },
+            { text: `${b3} × 10^-${p3 + 1}`, rationale: `位數多算了一位。` }
+          ],
+          hint: "小於 1 的正小數，指數為負數，等於小數點向右移到第一個非零數字後的位數。"
+        }));
+
+        // Fill remaining Chapter 5 questions
+        for (let i = 4; i <= 10; i++) {
+          let base4 = randInt(2, 8);
+          let m4 = randInt(2, 6);
+          let n4 = randInt(3, 7);
+          qs.push(buildQuestion({
+            q: `根據指數律，計算 ${base4}^${m4} × ${base4}^${n4} 化簡後的指數形式為何？`,
+            correctText: `${base4}^${m4 + n4}`,
+            correctRationale: `同底數相乘，指數相加：${base4}^(${m4} + ${n4}) = ${base4}^${m4 + n4}。`,
+            distractors: [
+              { text: `${base4}^${m4 * n4}`, rationale: `誤將指數相乘。` },
+              { text: `${base4 * 2}^${m4 + n4}`, rationale: `底數不可相加。` },
+              { text: `${base4}^${Math.abs(m4 - n4)}`, rationale: `誤用相減。` }
+            ],
+            hint: "同底數相乘公式：aᵐ × aⁿ = aᵐ⁺ⁿ。"
+          }));
+        }
+      }
+
+      return shuffle(qs);
+    }
+
+    // Render Chapter Selection Map
+    function renderMap() {
+      const container = document.getElementById('chapter-cards-container');
+      container.innerHTML = '';
+
+      for (let ch = 1; ch <= 5; ch++) {
+        const isUnlocked = gameState.unlockedChapters.includes(ch);
+        const stars = gameState.chapterStars[ch];
+
+        let starIcons = '';
+        for (let s = 1; s <= 3; s++) {
+          if (s <= stars) {
+            starIcons += `<i class="fa-solid fa-star text-amber-400 mr-0.5"></i>`;
+          } else {
+            starIcons += `<i class="fa-regular fa-star text-slate-600 mr-0.5"></i>`;
+          }
+        }
+
+        const card = document.createElement('div');
+        if (isUnlocked) {
+          card.className = "group bg-kingdom-card border border-kingdom-border hover:border-indigo-500/50 rounded-2xl p-6 transition-all duration-300 cursor-pointer hover:scale-[1.02] hover:glow-effect flex flex-col justify-between";
+          card.onclick = () => startChapter(ch);
+          card.innerHTML = `
+            <div>
+              <div class="flex justify-between items-start mb-3">
+                <span class="px-2.5 py-1 rounded-lg bg-indigo-500/10 text-indigo-400 flex items-center justify-center font-bold text-sm border border-indigo-500/20">${chapterBadgeLabels[ch]}</span>
+                <div class="text-right">
+                  <div class="text-sm mb-1">${starIcons}</div>
+                  <span class="text-[10px] text-slate-400 bg-slate-800 px-2 py-0.5 rounded-full">10 題動態隨機題</span>
+                </div>
+              </div>
+              <h3 class="text-xl font-bold mb-2 group-hover:text-indigo-400 transition-colors">${chapterTitles[ch].split('（')[0]}</h3>
+              <p class="text-slate-400 text-sm leading-relaxed">${chapterDescriptions[ch]}</p>
+            </div>
+            <div class="mt-6 flex items-center text-sm font-semibold text-indigo-400">
+              開始試煉 <i class="fa-solid fa-arrow-right ml-2 group-hover:translate-x-1 transition-transform"></i>
+            </div>
+          `;
+        } else {
+          card.className = "bg-kingdom-card/40 border border-slate-800 rounded-2xl p-6 opacity-60 flex flex-col justify-between cursor-not-allowed relative overflow-hidden";
+          card.innerHTML = `
+            <div>
+              <div class="flex justify-between items-start mb-3">
+                <span class="px-2.5 py-1 rounded-lg bg-slate-800 text-slate-500 flex items-center justify-center font-bold text-sm border border-slate-700">${chapterBadgeLabels[ch]}</span>
+                <span class="text-xs text-amber-400/80 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded-full"><i class="fa-solid fa-lock mr-1"></i> 未解鎖</span>
+              </div>
+              <h3 class="text-xl font-bold mb-2 text-slate-400">${chapterTitles[ch].split('（')[0]}</h3>
+              <p class="text-slate-500 text-sm leading-relaxed">${chapterDescriptions[ch]}</p>
+            </div>
+            <div class="mt-6 flex items-center text-xs font-semibold text-slate-500">
+              <i class="fa-solid fa-lock mr-2"></i> 前一關獲得 1 星以上即可解鎖
+            </div>
+          `;
+        }
+        container.appendChild(card);
+      }
+    }
+
+    // Start a Chapter
+    function startChapter(chapterNum) {
+      gameState.currentChapter = chapterNum;
+      gameState.currentQuestionIdx = 0;
+      gameState.score = 0;
+      gameState.lives = 3;
+      gameState.questions = generateQuestions(chapterNum);
+      gameState.hintVisible = false;
+
+      document.getElementById('view-map').classList.add('hidden');
+      document.getElementById('view-result').classList.add('hidden');
+      document.getElementById('view-quiz').classList.remove('hidden');
+      document.getElementById('header-stats').classList.remove('hidden');
+
+      document.getElementById('quiz-chapter-badge').innerText = chapterBadgeLabels[chapterNum];
+      document.getElementById('quiz-chapter-title').innerText = chapterTitles[chapterNum];
+      document.getElementById('total-q-num').innerText = gameState.questions.length;
+
+      updateStats();
+      loadQuestion();
+    }
+
+    // Return to Chapter Map
+    function returnToMap() {
+      document.getElementById('view-quiz').classList.add('hidden');
+      document.getElementById('view-result').classList.add('hidden');
+      document.getElementById('view-map').classList.remove('hidden');
+      document.getElementById('header-stats').classList.add('hidden');
+      renderMap();
+    }
+
+    // Update Header Stats
+    function updateStats() {
+      document.getElementById('stat-score').innerText = gameState.score;
+      document.getElementById('stat-lives').innerText = gameState.lives;
+    }
+
+    // Load Single Question into UI
+    function loadQuestion() {
+      const qObj = gameState.questions[gameState.currentQuestionIdx];
+      document.getElementById('current-q-num').innerText = gameState.currentQuestionIdx + 1;
+      
+      const pct = ((gameState.currentQuestionIdx + 1) / gameState.questions.length) * 100;
+      document.getElementById('progress-bar').style.width = pct + '%';
+
+      document.getElementById('question-text').innerText = qObj.q;
+
+      document.getElementById('hint-text').innerText = qObj.hint;
+      document.getElementById('hint-container').classList.add('hidden');
+      gameState.hintVisible = false;
+      document.getElementById('hint-btn-text').innerText = "查看長老提示";
+
+      document.getElementById('feedback-container').classList.add('hidden');
+
+      const optionsContainer = document.getElementById('options-container');
+      optionsContainer.innerHTML = '';
+      
+      let shuffledOpts = shuffle([...qObj.options]);
+
+      shuffledOpts.forEach((opt, idx) => {
+        const btn = document.createElement('button');
+        btn.className = "w-full text-left p-4 rounded-xl border border-kingdom-border bg-slate-900/60 hover:bg-slate-800/80 hover:border-indigo-500/50 transition-all font-medium flex items-center justify-between group";
+        btn.innerHTML = `
+          <div class="flex items-center space-x-3">
+            <span class="w-7 h-7 rounded-lg bg-slate-800 border border-slate-700 flex items-center justify-center text-xs font-bold text-slate-400 group-hover:border-indigo-500 group-hover:text-indigo-400 transition-colors">${String.fromCharCode(65 + idx)}</span>
+            <span class="text-slate-200">${opt.text}</span>
+          </div>
+          <i class="fa-solid fa-chevron-right text-slate-600 group-hover:text-indigo-400 text-xs transition-colors"></i>
+        `;
+        btn.onclick = () => selectAnswer(opt, btn, shuffledOpts);
+        optionsContainer.appendChild(btn);
+      });
+
+      gameState.isAnswered = false;
+    }
+
+    // Toggle Elder Hint
+    function toggleHint() {
+      gameState.hintVisible = !gameState.hintVisible;
+      const hintBox = document.getElementById('hint-container');
+      const hintBtnText = document.getElementById('hint-btn-text');
+      if (gameState.hintVisible) {
+        hintBox.classList.remove('hidden');
+        hintBtnText.innerText = "隱藏長老提示";
+      } else {
+        hintBox.classList.add('hidden');
+        hintBtnText.innerText = "查看長老提示";
+      }
+    }
+
+    // Select Option & Handle Rationale Feedback
+    function selectAnswer(selectedOpt, clickedBtn, allOpts) {
+      if (gameState.isAnswered) return;
+      gameState.isAnswered = true;
+
+      const allButtons = document.getElementById('options-container').querySelectorAll('button');
+      allButtons.forEach(b => b.disabled = true);
+
+      const feedbackBox = document.getElementById('feedback-container');
+      const feedbackHeader = document.getElementById('feedback-header');
+      const feedbackText = document.getElementById('feedback-text');
+
+      if (selectedOpt.correct) {
+        gameState.score += 10;
+        clickedBtn.classList.remove('bg-slate-900/60', 'border-kingdom-border');
+        clickedBtn.classList.add('bg-emerald-500/20', 'border-emerald-500', 'text-emerald-300');
+
+        feedbackBox.classList.remove('hidden', 'bg-red-500/10', 'border-red-500/30');
+        feedbackBox.classList.add('bg-emerald-500/10', 'border-emerald-500/30');
+        
+        feedbackHeader.className = "font-bold flex items-center space-x-2 text-base text-emerald-400";
+        feedbackHeader.innerHTML = `<i class="fa-solid fa-circle-check text-xl"></i> <span>回答正確！成功獲得 10 積分！</span>`;
+        feedbackText.innerText = selectedOpt.rationale;
+      } else {
+        gameState.lives = Math.max(0, gameState.lives - 1);
+        clickedBtn.classList.remove('bg-slate-900/60', 'border-kingdom-border');
+        clickedBtn.classList.add('bg-red-500/20', 'border-red-500', 'text-red-300');
+
+        // Highlight correct button
+        allButtons.forEach(b => {
+          if (b.innerText.includes(allOpts.find(o => o.correct).text)) {
+            b.classList.add('bg-emerald-500/20', 'border-emerald-500', 'text-emerald-300');
+          }
+        });
+
+        feedbackBox.classList.remove('hidden', 'bg-emerald-500/10', 'border-emerald-500/30');
+        feedbackBox.classList.add('bg-red-500/10', 'border-red-500/30');
+
+        feedbackHeader.className = "font-bold flex items-center space-x-2 text-base text-red-400";
+        feedbackHeader.innerHTML = `<i class="fa-solid fa-circle-xmark text-xl"></i> <span>答錯了，破解失敗！解析如下：</span>`;
+        feedbackText.innerText = `${selectedOpt.rationale}\n\n正解說明：${allOpts.find(o => o.correct).rationale}`;
+      }
+
+      updateStats();
+      feedbackBox.classList.remove('hidden');
+    }
+
+    // Go to Next Question or Summary
+    function nextQuestion() {
+      gameState.currentQuestionIdx++;
+      if (gameState.currentQuestionIdx < gameState.questions.length) {
+        loadQuestion();
+      } else {
+        showResults();
+      }
+    }
+
+    // Calculate Stars & Show Final Results View
+    function showResults() {
+      document.getElementById('view-quiz').classList.add('hidden');
+      document.getElementById('view-result').classList.remove('hidden');
+
+      const correctCount = gameState.score / 10;
+      const totalCount = gameState.questions.length;
+      const pct = Math.round((correctCount / totalCount) * 100);
+
+      let stars = 0;
+      if (pct >= 90) stars = 3;
+      else if (pct >= 70) stars = 2;
+      else if (pct >= 60) stars = 1;
+
+      // Update unlocked chapters & stars state
+      if (stars >= 1) {
+        gameState.chapterStars[gameState.currentChapter] = Math.max(gameState.chapterStars[gameState.currentChapter], stars);
+        const nextCh = gameState.currentChapter + 1;
+        if (nextCh <= 5 && !gameState.unlockedChapters.includes(nextCh)) {
+          gameState.unlockedChapters.push(nextCh);
+        }
+      }
+
+      // Render Star Icons
+      const starsContainer = document.getElementById('result-stars');
+      starsContainer.innerHTML = '';
+      for (let s = 1; s <= 3; s++) {
+        if (s <= stars) {
+          starsContainer.innerHTML += `<i class="fa-solid fa-star text-amber-400"></i>`;
+        } else {
+          starsContainer.innerHTML += `<i class="fa-regular fa-star text-slate-600"></i>`;
+        }
+      }
+
+      document.getElementById('result-score').innerText = `${correctCount} / ${totalCount} (${pct}%)`;
+      document.getElementById('result-star-text').innerText = `${stars} 星`;
+
+      const nextBtn = document.getElementById('next-chapter-btn');
+      if (gameState.currentChapter < 5 && stars >= 1) {
+        nextBtn.classList.remove('hidden');
+      } else {
+        nextBtn.classList.add('hidden');
+      }
+
+      if (stars >= 1) {
+        document.getElementById('result-title').innerText = "試煉通過！";
+        document.getElementById('result-subtitle').innerText = "恭喜你順利破除本關卡定勢迷思，展現優異的數學觀念！";
+        document.getElementById('result-icon-bg').className = "w-20 h-20 bg-gradient-to-tr from-emerald-500 to-teal-500 rounded-3xl mx-auto flex items-center justify-center text-3xl shadow-lg";
+        document.getElementById('result-icon').className = "fa-solid fa-trophy text-white";
+      } else {
+        document.getElementById('result-title').innerText = "試煉未通過";
+        document.getElementById('result-subtitle').innerText = "答對率未達 60%，建議點擊下方按鈕重新試煉（題目將重新隨機生成）。";
+        document.getElementById('result-icon-bg').className = "w-20 h-20 bg-gradient-to-tr from-slate-700 to-slate-800 rounded-3xl mx-auto flex items-center justify-center text-3xl shadow-lg";
+        document.getElementById('result-icon').className = "fa-solid fa-shield-halved text-slate-400";
+      }
+    }
+
+    function restartCurrentChapter() {
+      startChapter(gameState.currentChapter);
+    }
+
+    function goToNextChapter() {
+      if (gameState.currentChapter < 5) {
+        startChapter(gameState.currentChapter + 1);
+      }
+    }
+
+    // Initialize App
+    window.onload = function() {
+      renderMap();
+    };
+  </script>
+</body>
+</html>

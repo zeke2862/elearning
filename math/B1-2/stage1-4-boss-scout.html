@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>1-4 Boss 迷霧斥候長｜韓信點兵：數字戰線</title>
+<style>
+:root{--ink:#161a2e;--ink2:#20264a;--line:#3a4270;--bronze:#d2a24c;--paper:#f1e8d2;--red:#d24a33;--jade:#43a58f;--txt:#e9e4d4}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(ellipse at top,#252c56,var(--ink) 65%);color:var(--txt);font-family:"Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif;min-height:100vh}
+h1,h2,.serif{font-family:"Noto Serif TC","Songti TC","PMingLiU",serif}
+main{max-width:720px;margin:0 auto;padding:16px}
+.hide{display:none!important}
+button{font:inherit;cursor:pointer;color:inherit}
+button:focus-visible{outline:3px solid var(--bronze);outline-offset:2px}
+.card{background:var(--ink2);border:2px solid var(--line);border-radius:14px;padding:18px}
+.btn{background:var(--bronze);color:#2a1d05;border:0;border-radius:10px;padding:12px 22px;font-weight:700;font-size:1.05rem}
+.btn.ghost{background:transparent;color:var(--bronze);border:2px solid var(--bronze)}
+.modes{display:grid;gap:10px;margin:16px 0}
+.mode{text-align:left;background:var(--ink);border:2px solid var(--line);border-radius:12px;padding:12px 14px}
+.mode.on{border-color:var(--bronze);background:#2b2a3c}
+.mode b{font-size:1.1rem}.mode small{display:block;opacity:.75;margin-top:2px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px;font-weight:700}
+.hearts{letter-spacing:2px}
+.combo{color:var(--bronze);min-width:5em;text-align:right}
+.field{position:relative;height:96px;margin:12px 0;border-radius:12px;background:linear-gradient(#1b2040,#2b3160);border:2px solid var(--line);overflow:hidden}
+.field::after{content:"";position:absolute;left:0;right:0;bottom:0;height:22px;background:#3b3f2e}
+.wall{position:absolute;right:0;top:0;bottom:0;width:20%;background:repeating-linear-gradient(#6a5a45 0 14px,#57493a 14px 16px);border-left:4px solid var(--bronze);display:flex;align-items:center;justify-content:center;font-size:2rem}
+#enemy{position:absolute;bottom:14px;left:0;font-size:2.4rem;transition:left .15s linear,opacity .6s,transform .6s;white-space:nowrap}
+#enemy.dead{opacity:0;transform:translateY(-30px) rotate(20deg) scale(1.4)}
+.timebar{height:8px;background:var(--ink);border-radius:6px;overflow:hidden}
+#bar{height:100%;background:var(--jade);width:100%;transition:width .1s linear}
+.q{background:var(--paper);color:#2b2416;border-radius:12px;padding:18px;margin:12px 0;text-align:center}
+.q .t{font-size:1.25rem;font-weight:700;line-height:1.5}
+.q .hint{margin-top:8px;font-size:.95rem;color:#7a4a12}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.opt{background:var(--ink2);border:2px solid var(--bronze);border-radius:12px;padding:16px 6px;font-size:1.5rem;font-weight:700;font-variant-numeric:tabular-nums}
+.opt:hover:not(:disabled){background:#33396b}
+.opt.ok{background:var(--jade);border-color:var(--jade);color:#06231c}
+.opt.bad{background:var(--red);border-color:var(--red)}
+.opt.cut{opacity:.15;pointer-events:none}
+.tools{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.tool{flex:1;min-width:100px;background:var(--ink);border:2px solid var(--line);border-radius:10px;padding:8px}
+.tool:disabled{opacity:.35;cursor:not-allowed}
+#say{margin-top:12px;border-left:5px solid var(--bronze);background:var(--ink);padding:12px 14px;border-radius:8px;line-height:1.7}
+#say.win{border-color:var(--jade)}#say.lose{border-color:var(--red)}
+.o{color:#6fb7ff;font-weight:700}.e{color:#ffb454;font-weight:700}.q .o{color:#1e63b8}.q .e{color:#b25a00}
+.bhp{height:12px;background:var(--ink);border:2px solid var(--red);border-radius:8px;overflow:hidden;margin-bottom:8px}#bhpbar{height:100%;width:100%;background:linear-gradient(90deg,#d24a33,#f07a4a);transition:width .5s}
+.stars{font-size:2.6rem;letter-spacing:6px}
+.jail{margin-top:12px;display:grid;gap:8px}
+.jail div{background:var(--ink);border-radius:8px;padding:10px 12px;line-height:1.6;font-size:.95rem}
+@media (max-width:480px){.opt{font-size:1.25rem}.field{height:84px}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<main>
+
+<section id="s-start" class="card">
+  <h1 class="serif" style="margin:0">韓信點兵：數字戰線</h1>
+  <h2 class="serif" style="margin:6px 0 0;color:var(--bronze)">1-4　Boss：迷霧斥候長</h2>
+  <p style="line-height:1.7">迷霧斥候長現身了！他把 2、3、5、9、11 五種盾牌混在一起。你的濾鏡就是武器，要先判斷該用哪一把才能攻破。擊退 10 波，打倒斥候長，守住有 5 顆心的城牆！</p>
+  <div class="modes" id="modes">
+    <button class="mode on" data-m="easy"><b>練兵模式</b><small>不限時，適合先熟悉規則</small></button>
+    <button class="mode" data-m="real"><b>實戰模式</b><small>每波 15 秒，敵軍會逼近城牆</small></button>
+    <button class="mode" data-m="hard"><b>修羅模式</b><small>每波 10 秒，數字更大更長</small></button>
+  </div>
+  <button class="btn" id="go">出征！</button>
+</section>
+
+<section id="s-game" class="hide">
+  <div class="top">
+    <span id="wave">第 1/10 波</span>
+    <span class="hearts" id="hearts"></span>
+    <span class="combo" id="combo"></span>
+  </div>
+  <div class="field"><div id="enemy">👺🛡️</div><div class="wall">🏯</div></div>
+  <div style="font-size:.8rem;opacity:.85">👺 迷霧斥候長</div><div class="bhp"><div id="bhpbar"></div></div><div class="timebar"><div id="bar"></div></div>
+  <div style="text-align:right;font-size:.85rem;opacity:.8;margin-top:2px" id="sec"></div>
+  <div class="q"><div class="t" id="qt"></div><div class="hint hide" id="hintbox"></div><div style="font-size:.85rem;margin-top:8px;color:#5a4a2a"><span class="o">🔵 奇數位</span>　<span class="e">🟠 偶數位</span>（由左數起）</div></div>
+  <div class="opts" id="opts"></div>
+  <div class="tools">
+    <button class="tool" id="t-hint">💡 提示</button>
+    <button class="tool" id="t-cut">✂️ 刪去法</button>
+    <button class="tool" id="t-freeze">⏳ 時間凍結</button>
+  </div>
+  <div id="say" class="hide"></div>
+</section>
+
+<section id="s-end" class="card hide" style="text-align:center">
+  <h2 class="serif" id="e-title" style="margin:0"></h2>
+  <div class="stars" id="e-stars"></div>
+  <p id="e-info" style="line-height:1.8"></p>
+  <div id="e-jail" class="jail" style="text-align:left"></div>
+  <p style="margin-top:16px">
+    <button class="btn" id="again">再戰一次</button>
+    <button class="btn ghost" id="rescue">解救戰俘</button>
+    <button class="btn ghost hide" id="back">返回地圖</button>
+  </p>
+</section>
+
+</main>
+<script>
+const $=s=>document.querySelector(s);
+const R=(a,b)=>Math.floor(Math.random()*(b-a+1))+a;
+const pick=a=>a[R(0,a.length-1)];
+const sh=a=>a.map(v=>[Math.random(),v]).sort((x,y)=>x[0]-y[0]).map(x=>x[1]);
+const MODES={easy:{t:0,len:[3,4]},real:{t:15,len:[3,5]},hard:{t:10,len:[5,6]}};
+const EVEN=[0,2,4,6,8],ODD=[1,3,5,7,9];
+const PLAN=['w','w','b','m','no','w','b','m','no','m'];
+
+const EMB=window.parent!==window,SID='1-4';
+let mode='easy',qs=[],idx=0,q=null,hearts=5,combo=0,score=0,right=0,wrongs=[],lock=true,left=0,tm=0,frozenUntil=0,rescue=false,used={};
+
+const F=[2,3,5,9,11];
+const ds=n=>String(n).split('').map(Number);
+const S=a=>a.reduce((x,y)=>x+y,0);
+const expr=n=>ds(n).join('+')+'='+S(ds(n));
+const od=n=>ds(n).filter((_,i)=>i%2==0),ev=n=>ds(n).filter((_,i)=>i%2==1);
+const diff=n=>Math.abs(S(od(n))-S(ev(n)));
+const col=s=>String(s).split('').map((ch,i)=>`<span class="${i%2?'e':'o'}">${ch}</span>`).join('');
+const desc=(f,n)=>f==2||f==5?`末位 ${n%10}`:f==3||f==9?`位數和 ${expr(n)}`:`奇偶位差 ${diff(n)}`;
+const tag=(f,n)=>`${f} 號（${desc(f,n)}）${n%f==0?'✔':'✘'}`;
+const divs=n=>F.filter(f=>n%f==0);
+function rn(len){let n=R(1,9);for(let i=1;i<len;i++)n=n*10+R(0,9);return n}
+function find(len,p){let n;do{n=rn(len)}while(!p(n));return n}
+function opts(c,g){const s=new Set([c]);while(s.size<4)s.add(g());return sh([...s])}
+const BH={2:'2 號看末位是不是偶數。',5:'5 號看末位是 0 或 5。',3:'把各位數字加起來，和要能被 3 整除。',9:'把各位數字加起來，和要能被 9 整除。',11:'奇數位和 − 偶數位和，差是 0 或 11 的倍數。'};
+function gen(t){
+  const L=()=>R(...MODES[mode].len);let o;
+  if(t=='w'){
+    const N=find(L(),n=>{const k=divs(n).length;return k>=1&&k<=2});
+    const D=divs(N),f=pick(D),nd=F.filter(x=>!D.includes(x)),opt=sh([f,...sh(nd).slice(0,3)]);
+    o={text:`敵軍盾牌上的數字是 <b>${N}</b>。哪一號濾鏡能攻破它（${N} 是它的倍數）？`,ans:f,options:opt,suf:' 號',
+       hint:'2、5 看末位；3、9 看位數和；11 看奇偶位的差。把每把武器都檢查一遍！',
+       explain:`${N}：`+opt.map(x=>tag(x,N)).join('；')+`。所以要用 ${f} 號。`,scan:`${N}：${tag(f,N)}`};
+  }else if(t=='m'){
+    const [a,b]=pick([[2,3],[3,5],[2,9],[2,11],[5,11],[3,11]]),c=find(L(),n=>n%a==0&&n%b==0);
+    o={text:`哪一個數「同時」是 ${a} 和 ${b} 的倍數？`,ans:c,options:opts(c,()=>find(L(),n=>(n%a==0)!=(n%b==0))),col:1,
+       hint:`先用 ${a} 號濾鏡篩一次，再用 ${b} 號濾鏡篩一次，兩把武器都要攻破。`,explain:`${c}：${tag(a,c)}、${tag(b,c)}，雙雙過關。`,scan:`${c}：${tag(a,c)}、${tag(b,c)}`};
+    o.explain+='<br>其他盾牌：'+o.options.filter(x=>x!==c).map(x=>`${x}（${a} 號${x%a==0?'✔':'✘'}、${b} 號${x%b==0?'✔':'✘'}）`).join('、');
+  }else if(t=='no'){
+    const c=find(L(),n=>divs(n).length==0);
+    o={text:'哪一個數被 2、3、5、9、11 號濾鏡「全部」攻不破？',ans:c,options:opts(c,()=>find(L(),n=>divs(n).length>=1)),col:1,
+       hint:'每個盾牌都要用五把武器各檢查一遍，找出「五把都失敗」的那個。',
+       explain:`${c}：末位 ${c%10}、位數和 ${expr(c)}、奇偶位差 ${diff(c)}，五種濾鏡都攻不破。`,scan:`${c}：五種濾鏡全數失敗`};
+    o.explain+='<br>其他盾牌：'+o.options.filter(x=>x!==c).map(x=>`${x}（${divs(x).join('、')} 號攻破）`).join('、');
+  }else{
+    const X=pick([2,3,5,9,11]),c=find(L(),n=>n%X==0),s=String(c),p=(X==2||X==5)?s.length-1:R(0,s.length-1),ans=+s[p];
+    const digs=[0,1,2,3,4,5,6,7,8,9].filter(x=>!(p==0&&x==0));
+    const bads=digs.filter(x=>+(s.slice(0,p)+x+s.slice(p+1))%X!=0),m=s.slice(0,p)+'□'+s.slice(p+1);
+    o={text:`要讓下面的數是 ${X} 的倍數，□ 要填哪個數字？<br>${X==11?col(m):m}`,ans:ans,options:opts(ans,()=>pick(bads)),hint:BH[X],
+       explain:`完整的數是 ${c}：${desc(X,c)}，所以 □ 填 ${ans}。`,scan:`${c}：${desc(X,c)}`};
+  }
+  o.type=t;return o;
+}
+
+// ---------- 畫面 ----------
+function show(id){['s-start','s-game','s-end'].forEach(s=>$('#'+s).classList.toggle('hide',s!=id))}
+function drawHearts(){$('#hearts').textContent='❤️'.repeat(hearts)+'🖤'.repeat(5-hearts)}
+function drawCombo(){$('#combo').textContent=combo>=2?`🔥 連擊 ×${combo}`:''}
+function say(html,cls){const e=$('#say');e.className=cls||'';e.innerHTML=html}
+function paint(){
+  const T=MODES[mode].t;
+  $('#enemy').style.left=(T?(1-left/T)*74:28)+'%';
+  $('#bar').style.width=T?(left/T*100)+'%':'100%';
+  $('#sec').textContent=T?Math.ceil(left)+' 秒':'不限時';
+}
+
+function start(types,isRescue){
+  rescue=!!isRescue;qs=types.map(gen);idx=0;hearts=5;combo=0;score=0;right=0;wrongs=[];
+  used={hint:0,cut:0,freeze:0};
+  show('s-game');drawHearts();drawCombo();$('#bhpbar').style.width='100%';next();
+}
+function next(){
+  clearInterval(tm);
+  if(idx>=qs.length||hearts<=0)return finish();
+  q=qs[idx++];lock=false;
+  $('#wave').textContent=`第 ${idx}/${qs.length} 波`+(rescue?'（解救戰俘）':'');
+  $('#qt').innerHTML=q.text;
+  $('#hintbox').classList.add('hide');
+  say('');$('#say').classList.add('hide');
+  $('#enemy').className='';
+  const o=$('#opts');o.innerHTML='';
+  q.options.forEach(v=>{const b=document.createElement('button');b.className='opt';b.innerHTML=(q.col?col(v):v)+(q.suf||'');b.dataset.v=v;b.onclick=()=>answer(v,b);o.appendChild(b)});
+  $('#t-hint').disabled=!!used.hint;$('#t-cut').disabled=!!used.cut;
+  $('#t-freeze').disabled=!!used.freeze||!MODES[mode].t;
+  startTimer();
+}
+function startTimer(){
+  const T=MODES[mode].t;left=T;frozenUntil=0;paint();if(!T)return;
+  tm=setInterval(()=>{
+    if(Date.now()<frozenUntil)return;
+    left-=0.1;paint();
+    if(left<=0){clearInterval(tm);miss(null)}
+  },100);
+}
+function answer(v,btn){
+  if(lock)return;
+  if(v===q.ans){
+    lock=true;clearInterval(tm);
+    btn.classList.add('ok');combo++;right++;$('#bhpbar').style.width=(100-right/qs.length*100)+'%';
+    const gain=100+(combo-1)*20;score+=gain;drawCombo();
+    $('#enemy').classList.add('dead');
+    $('#say').classList.remove('hide');
+    say(`⚔️ 擊退敵軍！ +${gain} 戰功`+(combo>=3?`　🔥 ${combo} 連擊！`:'')+`<br>🔍 掃描結果　${q.scan}`,'win');
+    setTimeout(next,1800);
+  }else{
+    btn.classList.add('bad');miss(btn);
+  }
+}
+function miss(btn){
+  if(lock)return;
+  lock=true;clearInterval(tm);
+  hearts--;combo=0;wrongs.push(q);drawHearts();drawCombo();
+  document.querySelectorAll('.opt').forEach(b=>{if(+b.dataset.v===q.ans)b.classList.add('ok')});
+  $('#say').classList.remove('hide');
+  say(`<b>${btn?'❌ 城牆受損！':'⏰ 時間到，敵軍撞上城牆！'}</b><br>🧙 軍師說：正確答案是 <b>${q.ans}</b>。${q.explain}<br><button class="btn" id="nx" style="margin-top:8px">${hearts<=0?'查看戰報':'下一波'}</button>`,'lose');
+  $('#nx').onclick=next;$('#nx').focus();
+}
+function finish(){
+  clearInterval(tm);show('s-end');
+  const fail=hearts<=0,total=qs.length;
+  let stars=fail?0:wrongs.length<=1?3:wrongs.length<=3?2:1;
+  if(rescue){
+    $('#e-title').textContent='解救戰俘行動結束';
+    $('#e-stars').textContent='';
+    $('#e-info').textContent=`成功救回 ${right}/${total} 位戰俘。`+(right==total?'全員歸隊！':'沒救出的，下次再來！');
+  }else{
+    $('#e-title').textContent=fail?'城牆倒塌了…':'迷霧斥候長倒下了！';
+    $('#e-stars').textContent=fail?'💔':'⭐'.repeat(stars)+'☆'.repeat(3-stars);
+    $('#e-info').innerHTML=`戰功 ${score}　答對 ${right}/${total}　剩餘城牆 ${hearts} 顆心`+(fail?'':'<br>🃏 掉落收藏卡：<b>蕭何</b>——他極力推薦韓信給劉邦，還連夜把逃走的韓信追了回來。');
+  }
+  const j=$('#e-jail');j.innerHTML='';
+  if(wrongs.length){
+    const h=document.createElement('div');h.innerHTML=`<b>⛓️ 戰俘營（${wrongs.length} 題）</b>`;j.appendChild(h);
+    wrongs.forEach(w=>{const d=document.createElement('div');d.innerHTML=`${w.text}<br>正解：<b>${w.ans}</b>　${w.explain}`;j.appendChild(d)});
+  }
+  $('#rescue').classList.toggle('hide',!wrongs.length||rescue);
+  $('#back').classList.toggle('hide',!EMB);
+  if(EMB&&!rescue)parent.postMessage({type:'stage-result',id:SID,stars:stars,fail:fail,score:score,right:right,total:total},'*');
+}
+
+// ---------- 事件 ----------
+$('#modes').onclick=e=>{const b=e.target.closest('.mode');if(!b)return;mode=b.dataset.m;document.querySelectorAll('.mode').forEach(x=>x.classList.toggle('on',x==b))};
+$('#go').onclick=()=>start(PLAN,false);
+$('#back').onclick=()=>parent.postMessage({type:'stage-exit'},'*');
+$('#again').onclick=()=>show('s-start');
+$('#rescue').onclick=()=>start(wrongs.map(w=>w.type),true);
+$('#t-hint').onclick=()=>{if(lock||used.hint)return;used.hint=1;$('#t-hint').disabled=true;const h=$('#hintbox');h.textContent='💡 '+q.hint;h.classList.remove('hide')};
+$('#t-cut').onclick=()=>{if(lock||used.cut)return;used.cut=1;$('#t-cut').disabled=true;
+  sh([...document.querySelectorAll('.opt')].filter(b=>+b.dataset.v!==q.ans)).slice(0,2).forEach(b=>b.classList.add('cut'))};
+$('#t-freeze').onclick=()=>{if(lock||used.freeze)return;used.freeze=1;$('#t-freeze').disabled=true;frozenUntil=Date.now()+10000;
+  $('#say').classList.remove('hide');say('⏳ 時間凍結 10 秒！慢慢想。')};
+</script>
+</body>
+</html>
