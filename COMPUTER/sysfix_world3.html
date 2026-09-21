@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="zh-Hant"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>系統修復師：資安防線（世界3原型）</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:dark;--bg:#0b1220;--panel:#111c33;--ink:#e6f1ff;--neon:#39ff9c;--gold:#ffd166}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;background:var(--bg);color:var(--ink);font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif}
+#app{position:relative;height:100%;display:flex;flex-direction:column;max-width:960px;margin:0 auto;user-select:none;-webkit-user-select:none}
+#hud{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;font-size:18px;background:var(--panel)}
+#brief{padding:10px 12px;font-size:clamp(14px,3.6vw,19px);font-weight:700;color:var(--neon);text-align:center;background:#0d2a22;min-height:50px}
+#timer{height:6px;background:#1c2b4a}#tb{height:100%;width:0;background:var(--gold)}
+#stage{position:relative;flex:1;min-height:0;overflow:hidden;background:linear-gradient(160deg,#12305a,#0b1a33);transition:box-shadow .2s}
+#layer{position:absolute;inset:0;display:flex;flex-direction:column}
+#top{flex:1;display:flex;align-items:center;justify-content:center;padding:12px;overflow:auto}
+#bot{display:flex;gap:10px;justify-content:center;padding:10px;background:#0006}
+.qc{width:100%;text-align:center;padding:10px}
+.qc>div:first-child{font-size:clamp(18px,4.5vw,26px);line-height:1.6}
+.qc p{min-height:24px;font-size:15px;line-height:1.5;color:var(--gold)}
+#pw{width:100%;max-width:340px;padding:10px;font-size:18px;border-radius:8px;border:2px solid var(--neon);background:#0b1220;color:var(--ink);text-align:center;font-family:inherit}
+#chk{margin:10px auto;text-align:left;display:inline-block;font-size:15px;line-height:1.8}
+.meter,.hpbar{height:10px;background:#1c2b4a;border-radius:6px;max-width:340px;margin:6px auto 10px}
+.hpbar{background:#4b1d2a;height:12px}
+#mt,#hh{height:100%;border-radius:6px;transition:width .2s}
+#mt{width:0;background:var(--neon)}#hh{width:100%;background:#ff4d6d}
+.kw{font-size:clamp(24px,6vw,34px);letter-spacing:2px;font-family:ui-monospace,Consolas,monospace;margin-top:10px}
+.kw .d{color:var(--neon)}.kw .c{background:var(--gold);color:#000;border-radius:4px}.kw .r{opacity:.5}
+#bar{height:34px;background:#0a0f1c;display:flex;align-items:center;justify-content:space-between;padding:0 12px;font-size:13px;color:#8ba3c7}
+#ov{position:absolute;inset:0;background:#000c;display:none;align-items:center;justify-content:center;z-index:9998;padding:16px}
+.card{background:var(--panel);border:2px solid var(--neon);border-radius:14px;padding:20px;max-width:440px;width:100%;text-align:center;box-shadow:0 0 30px #39ff9c44;max-height:100%;overflow:auto}
+.card h2{margin:0 0 8px}.card p{line-height:1.6;margin:8px 0;font-size:15px}
+button.b{display:block;width:100%;margin:8px 0;padding:12px;font-size:16px;border:0;border-radius:10px;background:var(--neon);color:#062;font-weight:700;cursor:pointer;font-family:inherit}
+button.b.g{background:#22355c;color:var(--ink)}
+</style></head>
+<body>
+<div id="app">
+  <div id="hud"><span id="hp"></span><span id="cb"></span><span id="sc"></span></div>
+  <div id="brief">系統修復師</div>
+  <div id="timer"><div id="tb"></div></div>
+  <div id="stage"><div id="layer"></div></div>
+  <div id="bar"><span>🔐 世界3：資安防線 v0.1</span><span>需要鍵盤</span></div>
+  <div id="ov"></div>
+</div>
+<script>
+const $=s=>document.querySelector(s),R=(a,b)=>Math.floor(Math.random()*(b-a+1))+a,shuf=a=>[...a].sort(()=>Math.random()-.5);
+const layer=$('#layer'),ov=$('#ov'),brief=$('#brief'),tb=$('#tb'),stage=$('#stage');
+let G={t:[],over:true},best={};
+const T=(f,ms)=>{const id=setTimeout(f,ms);G.t.push(id);return id};
+const clr=()=>{G.t.forEach(clearTimeout);G.t=[]};
+document.addEventListener('keydown',e=>{
+ if(G.over||!G.kd||e.ctrlKey||e.metaKey||e.target.tagName==='INPUT')return;
+ if(['Shift','Control','CapsLock','Alt','Meta','Tab'].includes(e.key))return;
+ e.preventDefault();G.kd(e.key);
+});
+function hud(){const h=Math.max(G.hearts||0,0);$('#hp').textContent='❤️'.repeat(h)+'🖤'.repeat(3-h);$('#sc').textContent='分數 '+(G.score||0);$('#cb').textContent=G.combo>1?'🔥連擊 x'+G.combo:''}
+function card(h){ov.innerHTML='<div class="card">'+h+'</div>';ov.style.display='flex'}
+function setBar(p,ms){tb.style.transition='none';tb.style.width=p+'%';if(ms){void tb.offsetWidth;tb.style.transition='width '+ms+'ms linear';tb.style.width='0%'}}
+function flash(){stage.style.boxShadow='inset 0 0 60px #ff2d55';setTimeout(()=>stage.style.boxShadow='none',250)}
+function base(t){G.b=t;brief.textContent=t}
+function hint(m){brief.textContent=m;T(()=>brief.textContent=G.b,1600)}
+function bad(m){G.hearts--;G.combo=0;hud();flash();hint('❌ '+m);if(G.hearts<=0)T(()=>finish(false,'愛心用完了！'),500)}
+function setup(){layer.innerHTML='<div id="top"></div><div id="bot"></div>';G.kd=null;G.lock=false;return[$('#top'),$('#bot')]}
+
+function menu(){clr();G={t:[],over:true,hearts:3,score:0,combo:0};layer.innerHTML='';hud();base('選擇任務');setBar(0);
+card(`<h2>🔐 資安防線</h2><p>Glitch 病毒的駭客想偷走全校的密碼！<br>特工，守住防線。</p>
+<button class="b" onclick="intro('l1')">① 密碼鍛造爐</button>
+<button class="b" onclick="intro('l2')">② 釣魚訊息判斷</button>
+<button class="b" onclick="intro('l3')">③ 隱私保鏢</button>
+<button class="b" onclick="intro('l4')">④ 鍵盤特訓</button>
+<button class="b g" onclick="intro('l5')">👾 Boss：駭客對決</button>
+<button class="b g" onclick="intro('end')">♾️ 無盡崩壞</button>`)}
+const INFO={
+l1:['① 密碼鍛造爐','<b>情報簡報：</b>好密碼要有大寫、小寫、數字，越長越安全，不要用 123456 或生日。<br>照條件鍛造出 3 道防護盾。<br>⚠️ 這裡的密碼看得到，<b>請不要打你真實的密碼</b>！'],
+l2:['② 釣魚訊息判斷','<b>情報簡報：</b>釣魚訊息常常<b>催你趕快</b>、<b>叫你點怪連結</b>、<b>問你密碼或驗證碼</b>。<br>判斷每則訊息是安全還是危險，共 10 題。'],
+l3:['③ 隱私保鏢','<b>情報簡報：</b>真實姓名、電話、住址、學校名稱、密碼，這些不能隨便公開在網路上。<br>判斷每項資料能不能公開，共 10 題。'],
+l4:['④ 鍵盤特訓','<b>情報簡報：</b>F 和 J 有小凸起，是食指的基準鍵。<br>用 <b>Shift+數字</b> 打符號，用 Shift 或 Caps Lock 打大寫。<br>看指令按對的鍵，共 10 題。打完大寫記得關掉 Caps Lock。'],
+l5:['👾 駭客對決','<b>情報簡報：</b>駭客的密碼會一個一個出現，照著<b>一個字一個字</b>打出來，打完就打倒他！<br>打錯 3 次扣 1 顆愛心，60 秒內完成。'],
+end:['♾️ 無盡崩壞','<b>情報簡報：</b>判斷題和鍵盤題會混在一起一直出現，越來越快。<br>3 條命，看你能撐幾題！']};
+function intro(m){card(`<h2>${INFO[m][0]}</h2><p>${INFO[m][1]}</p><button class="b" onclick="go('${m}')">開始任務</button><button class="b g" onclick="menu()">返回</button>`)}
+function go(m){clr();ov.style.display='none';layer.innerHTML='';G={t:[],mode:m,hearts:3,score:0,combo:0,over:false};hud();setBar(0);
+ ({l1,l2:()=>quiz(PH,'這則訊息安全嗎？','✅ 安全','⚠️ 危險'),l3:()=>quiz(PV,'這個資料可以公開發到網路上嗎？','可以公開','不可以'),l4,l5,end:()=>{G.end=true;G.round=0;e3()}})[m]()}
+
+/* ① 密碼鍛造爐 */
+const RU=[
+ {t:'長度至少 8 個字',f:s=>s.length>=8},{t:'有大寫英文',f:s=>/[A-Z]/.test(s)},{t:'有小寫英文',f:s=>/[a-z]/.test(s)},{t:'有數字',f:s=>/\d/.test(s)},
+ {t:'有符號（如 !@#）',f:s=>/[^A-Za-z0-9]/.test(s)},{t:'長度至少 12 個字',f:s=>s.length>=12},{t:'不含 123、password、abc',f:s=>!/123|password|abc/i.test(s)}];
+const RR=[[0,1,2,3],[0,1,2,3,4],[5,1,2,3,4,6]];
+function l1(){G.rd=0;r1()}
+function r1(){
+ if(G.rd>=3)return finish(true,'三道防護盾鍛造完成！');
+ const[top]=setup(),rs=RR[G.rd].map(i=>RU[i]);
+ base(`第 ${G.rd+1}/3 題｜鍛造一個符合所有條件的密碼`);
+ top.innerHTML=`<div class="qc"><div>🛡️</div><input id="pw" autocomplete="off" placeholder="在這裡輸入密碼"><br><div id="chk"></div><div class="meter"><div id="mt"></div></div><button class="b" id="fg">🔨 鍛造！</button></div>`;
+ const pw=$('#pw');pw.focus();
+ const up=()=>{const n=rs.filter(r=>r.f(pw.value)).length;$('#chk').innerHTML=rs.map(r=>(r.f(pw.value)?'✅ ':'⬜ ')+r.t).join('<br>');$('#mt').style.width=(n/rs.length*100)+'%'};
+ pw.oninput=up;up();
+ $('#fg').onclick=()=>{
+  if(G.lock)return;
+  if(rs.every(r=>r.f(pw.value))){G.lock=true;G.combo++;G.score+=200+G.combo*10;hud();G.rd++;base('✅ 鍛造成功！');T(r1,900)}
+  else bad('還有條件沒達成');
+ };
+}
+
+/* ②③ 判斷題共用 */
+const PH=[
+ ['📱 簡訊：您的包裹配送失敗，請立即點 http://tw-p0st.top 補繳 30 元',false,'網址拼得怪，又催你馬上付錢，是釣魚！'],
+ ['老師在班級群組：明天請帶美勞用具，不用回覆。',true,'正常通知，沒有要你點連結或給密碼。'],
+ ['📧「你的遊戲帳號將被停權！24 小時內輸入密碼驗證」',false,'用恐嚇和倒數逼你，正牌客服不會這樣。'],
+ ['🎁 恭喜中獎！免費 iPhone，輸入身分證和電話領獎',false,'天下沒有白吃的午餐，還想騙你個資。'],
+ ['導師在學校作業平台發公告，網址是 classroom.google.com',true,'官方平台的正常公告。'],
+ ['陌生人加你好友：「我是客服，請告訴我簡訊驗證碼」',false,'驗證碼絕對不能告訴任何人！'],
+ ['📧 銀行通知：帳號異常，請點此登入（bank-login.xyz）',false,'銀行不會用怪網址叫你登入。'],
+ ['App 商店官方通知：你的遊戲有新版本可以更新。',true,'從官方商店更新是安全的。'],
+ ['🔗「看誰偷偷看你的個人頁！」（縮短網址 bit.ly/x9z）',false,'引誘好奇心的釣魚連結。'],
+ ['系統提醒：密碼 3 天後到期，請自己進「設定」頁面更改（沒有附連結）',true,'自己進官方設定頁更改，很安全。'],
+ ['「我是老師，請把你的帳號密碼傳給我，我幫你註冊」',false,'真正的老師也不會跟你要密碼。'],
+ ['商店寄來訂單確認信，內容是你剛買的東西，沒有要你輸入密碼。',true,'只是通知，沒有可疑要求。']];
+const PV=[
+ ['我最喜歡的遊戲是 Minecraft',true,'興趣不會洩漏身分。'],
+ ['我的真實全名和班級座號',false,'別人可以拼出你是誰。'],
+ ['我的手機號碼',false,'會被拿去詐騙或騷擾。'],
+ ['我家的住址',false,'會讓陌生人知道你住哪裡。'],
+ ['我今天看了一部好看的電影',true,'分享心情很安全。'],
+ ['我的密碼',false,'密碼絕對不能給任何人。'],
+ ['穿著校服、看得到校名的自拍照',false,'別人會知道你在哪間學校。'],
+ ['我家貓咪的可愛照片（背景沒有任何地址）',true,'沒有洩漏個資。'],
+ ['我明天全家出國，家裡沒人',false,'壞人會知道你家沒人。'],
+ ['我喜歡的音樂類型',true,'興趣可以分享。'],
+ ['我的身分證字號',false,'這是最重要的個資之一。'],
+ ['我通關的遊戲截圖（沒有出現姓名）',true,'沒有洩漏個人資料。']];
+function quiz(items,head,yl,nl){G.qs=shuf(items).slice(0,10);G.qi=0;G.yl=yl;G.nl=nl;G.head=head;nq()}
+function nq(){
+ if(G.over)return;if(G.qi>=G.qs.length)return finish(true,'全部判斷完成！');
+ const[top,bot]=setup(),[txt,ans,why]=G.qs[G.qi];
+ base(G.end?`第 ${G.round} 題｜${G.head}`:`第 ${G.qi+1}/${G.qs.length} 題｜${G.head}`);
+ top.innerHTML=`<div class="qc"><div>${txt}</div><p id="ex"></p></div>`;
+ [[true,G.yl,'#16a34a'],[false,G.nl,'#dc2626']].forEach(([v,l,c])=>{
+  const b=document.createElement('button');b.className='b';b.style.cssText='width:44%;background:'+c+';color:#fff';b.textContent=l;
+  b.onclick=()=>{
+   if(G.lock||G.over)return;G.lock=true;clearTimeout(G.to);const ok=v===ans;
+   $('#ex').textContent=(ok?'✅ ':'❌ ')+why;
+   if(ok){G.combo++;G.score+=100+G.combo*10;hud()}else bad(why);
+   G.qi++;T(G.end?e3:nq,ok?1100:1800);
+  };
+  bot.appendChild(b);
+ });
+ if(G.end){G.lim=Math.max(2800,6500-G.round*90);setBar(100,G.lim);G.to=T(()=>{if(G.lock||G.over)return;G.lock=true;bad('時間到！');G.qi++;T(e3,1200)},G.lim)}
+}
+
+/* ④ 鍵盤特訓 */
+const KT=[['基準鍵：按下 <b>F</b>（食指有凸起）','f'],['基準鍵：按下 <b>J</b>（食指有凸起）','j'],
+ ['Shift+1 打出「!」','!'],['Shift+2 打出「@」','@'],['Shift+3 打出「#」','#'],['Shift+4 打出「$」','$'],['Shift+5 打出「%」','%'],
+ ['Shift+7 打出「&」','&'],['Shift+8 打出「*」','*'],['Shift+9 打出「(」','('],
+ ['打出大寫「Q」（Shift+字母）','Q'],['打出大寫「M」（用 Shift 或 Caps Lock）','M'],
+ ['按下 Backspace（刪掉游標左邊的字）','Backspace'],['按下 Enter（換行／確定）','Enter'],['按下 Space（空白鍵）',' ']];
+function l4(){G.ts=shuf(KT).slice(0,10);G.ti=0;t4()}
+function t4(){
+ if(G.over)return;if(G.ti>=G.ts.length)return finish(true,'鍵盤特訓完成！');
+ const[top]=setup(),[p,x]=G.ts[G.ti];
+ base(G.end?`第 ${G.round} 題｜鍵盤`:`第 ${G.ti+1}/${G.ts.length} 題`);
+ top.innerHTML=`<div class="qc"><div>⌨️</div><div style="font-size:clamp(20px,5vw,30px);margin-top:10px">${p}</div></div>`;
+ G.lim=G.end?Math.max(2200,6500-G.round*110):Math.max(3500,6500-G.ti*250);G.t0=Date.now();setBar(100,G.lim);G.to=T(()=>miss4('時間到！'),G.lim);
+ G.kd=k=>{if(G.lock)return;(k===x||(/^[a-z]$/.test(x)&&k.toLowerCase()===x))?ok4():miss4('你按的是「'+(k===' '?'Space':k)+'」')};
+}
+function ok4(){G.lock=true;clearTimeout(G.to);G.combo++;G.score+=100+G.combo*10+Math.round(Math.max(0,G.lim-(Date.now()-G.t0))/100);hud();G.ti++;base('✅ 答對了！');T(G.end?e3:t4,500)}
+function miss4(m){if(G.lock)return;G.lock=true;clearTimeout(G.to);bad(m);G.ti++;T(G.end?e3:t4,1200)}
+
+/* 無盡崩壞：判斷題與鍵盤題混合 */
+function e3(){
+ if(G.over)return;G.round++;
+ if(Math.random()<.5){
+  if(!G.qs||G.qi>=G.qs.length){G.qs=shuf(PH.map(x=>[...x,0]).concat(PV.map(x=>[...x,1])));G.qi=0}
+  const v=G.qs[G.qi][3];G.yl=v?'可以公開':'✅ 安全';G.nl=v?'不可以':'⚠️ 危險';G.head=v?'這個資料可以公開嗎？':'這則訊息安全嗎？';nq();
+ }else{if(!G.ts||G.ti>=G.ts.length){G.ts=shuf(KT);G.ti=0}t4()}
+}
+
+/* Boss：駭客對決 */
+function l5(){
+ G.w=['Hello!','Sec#ure99','F&J_home','Ab1@Cd2#','Fish&Chips','Zx$9Qw!7'];G.wi=0;G.ci=0;G.done=0;G.miss=0;G.tot=G.w.join('').length;
+ const[top]=setup();
+ top.innerHTML=`<div class="qc"><div>🕵️ 駭客</div><div class="hpbar"><div id="hh"></div></div><div id="wd" class="kw"></div></div>`;
+ base('照著上面的密碼，一個字一個字打出來！');
+ setBar(100,60000);T(()=>finish(false,'駭客逃走了！'),60000);
+ G.kd=k=>{
+  const w=G.w[G.wi];
+  if(k===w[G.ci]){
+   G.ci++;G.done++;G.combo++;G.score+=20+G.combo;hud();
+   if(G.ci>=w.length){G.wi++;G.ci=0;if(G.wi>=G.w.length){$('#hh').style.width='0%';return finish(true,'駭客被打倒了！')}}
+   rw();
+  }else{G.miss++;G.combo=0;hud();flash();if(G.miss%3===0)bad('打錯太多次了');else hint('打錯了（'+(G.miss%3)+'/3，滿 3 次扣愛心）')}
+ };
+ rw();
+}
+function rw(){const w=G.w[G.wi];$('#wd').innerHTML=[...w].map((c,i)=>`<span class="${i<G.ci?'d':i===G.ci?'c':'r'}">${c}</span>`).join('');$('#hh').style.width=(100-G.done/G.tot*100)+'%'}
+
+function finish(win,msg){
+ if(G.over)return;G.over=true;clr();G.kd=null;
+ const m=G.mode,st=win?Math.max(1,G.hearts):0;best[m]=Math.max(best[m]||0,G.score);
+ card(`<h2>${m==='end'?'♾️ 撐了 '+Math.max(0,G.round-1)+' 題':win?'✅ 任務成功！':'💥 任務失敗'}</h2><p>${msg||''}</p>${m==='end'?'':`<div style="font-size:34px">${'⭐'.repeat(st)+'☆'.repeat(3-st)}</div>`}<p>分數 ${G.score}｜本次最高 ${best[m]}</p><button class="b" onclick="go('${m}')">再玩一次</button><button class="b g" onclick="menu()">主選單</button>`);
+ try{parent.postMessage({type:'sysfix-result',world:3,mode:m,win,stars:st,score:G.score},'*')}catch(e){}
+}
+menu();
+</script>
+</body></html>

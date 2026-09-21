@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="zh-Hant"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>系統修復師：檔案風暴（世界2原型）</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:dark;--bg:#0b1220;--panel:#111c33;--ink:#e6f1ff;--neon:#39ff9c;--gold:#ffd166}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;background:var(--bg);color:var(--ink);font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif}
+#app{position:relative;height:100%;display:flex;flex-direction:column;max-width:960px;margin:0 auto;user-select:none;-webkit-user-select:none}
+#hud{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;font-size:18px;background:var(--panel)}
+#brief{padding:10px 12px;font-size:clamp(14px,3.6vw,19px);font-weight:700;color:var(--neon);text-align:center;background:#0d2a22;min-height:50px}
+#timer{height:6px;background:#1c2b4a}#tb{height:100%;width:0;background:var(--gold)}
+#stage{position:relative;flex:1;min-height:0;overflow:hidden;background:linear-gradient(160deg,#12305a,#0b1a33);transition:box-shadow .2s}
+#layer{position:absolute;inset:0;display:flex;flex-direction:column}
+#top{flex:1;position:relative;display:flex;flex-wrap:wrap;align-content:flex-start;gap:8px;padding:12px;overflow:auto}
+#bot{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;padding:10px;background:#0006}
+.f{min-width:78px;text-align:center;font-size:12px;padding:6px 4px;border-radius:8px;cursor:pointer;touch-action:none;color:var(--ink)}
+.f b{display:block;font-size:32px}
+.f.sel{background:#3b82f66a;outline:1px solid #60a5fa}
+.f input{width:120px;font-size:12px;text-align:center;font-family:inherit}
+.fd{border:2px dashed #ffffff55}
+.ghost{position:fixed;pointer-events:none;z-index:9999;opacity:.85;transform:translate(-50%,-50%)}
+.cm{position:absolute;background:#fff;color:#111;border-radius:6px;box-shadow:0 4px 16px #0008;z-index:50;min-width:150px;font-size:14px;overflow:hidden}
+.cm div{padding:8px 12px;cursor:pointer}.cm div:hover{background:#dbeafe}
+#bar{height:34px;background:#0a0f1c;display:flex;align-items:center;justify-content:space-between;padding:0 12px;font-size:13px;color:#8ba3c7}
+#ov{position:absolute;inset:0;background:#000c;display:none;align-items:center;justify-content:center;z-index:9998;padding:16px}
+.card{background:var(--panel);border:2px solid var(--neon);border-radius:14px;padding:20px;max-width:440px;width:100%;text-align:center;box-shadow:0 0 30px #39ff9c44;max-height:100%;overflow:auto}
+.card h2{margin:0 0 8px}.card p{line-height:1.6;margin:8px 0;font-size:15px}
+button.b{display:block;width:100%;margin:8px 0;padding:12px;font-size:16px;border:0;border-radius:10px;background:var(--neon);color:#062;font-weight:700;cursor:pointer;font-family:inherit}
+button.b.g{background:#22355c;color:var(--ink)}
+</style></head>
+<body>
+<div id="app">
+  <div id="hud"><span id="hp"></span><span id="cb"></span><span id="sc"></span></div>
+  <div id="brief">系統修復師</div>
+  <div id="timer"><div id="tb"></div></div>
+  <div id="stage"><div id="layer"></div></div>
+  <div id="bar"><span>📁 世界2：檔案風暴 v0.1</span><span>需要鍵盤與滑鼠</span></div>
+  <div id="ov"></div>
+</div>
+<script>
+const $=s=>document.querySelector(s),R=(a,b)=>Math.floor(Math.random()*(b-a+1))+a,shuf=a=>[...a].sort(()=>Math.random()-.5);
+const layer=$('#layer'),ov=$('#ov'),brief=$('#brief'),tb=$('#tb'),stage=$('#stage');
+let G={t:[],over:true},best={};
+const T=(f,ms)=>{const id=setTimeout(f,ms);G.t.push(id);return id};
+const clr=()=>{G.t.forEach(clearTimeout);G.t=[]};
+const hide=()=>{ov.style.display='none'};
+const closeMenu=()=>document.querySelectorAll('.cm').forEach(x=>x.remove());
+document.addEventListener('pointerdown',closeMenu);
+document.addEventListener('keydown',e=>{
+ if(G.over||!G.key||e.target.tagName==='INPUT')return;
+ const k=e.key.toLowerCase(),c=e.ctrlKey||e.metaKey;
+ if(k==='f2'||k==='delete'){e.preventDefault();G.key(k)}
+ else if(c&&(k==='c'||k==='v')){e.preventDefault();G.key('ctrl+'+k)}
+});
+function hud(){const h=Math.max(G.hearts||0,0);$('#hp').textContent='❤️'.repeat(h)+'🖤'.repeat(3-h);$('#sc').textContent='分數 '+(G.score||0);$('#cb').textContent=G.combo>1?'🔥連擊 x'+G.combo:''}
+function card(h){ov.innerHTML='<div class="card">'+h+'</div>';ov.style.display='flex'}
+function setBar(p,ms){tb.style.transition='none';tb.style.width=p+'%';if(ms){void tb.offsetWidth;tb.style.transition='width '+ms+'ms linear';tb.style.width='0%'}}
+function flash(){stage.style.boxShadow='inset 0 0 60px #ff2d55';setTimeout(()=>stage.style.boxShadow='none',250)}
+function base(t){G.b=t;brief.textContent=t}
+function hint(m){brief.textContent=m;T(()=>brief.textContent=G.b,1600)}
+function bad(m){G.hearts--;G.combo=0;hud();flash();hint('❌ '+m);if(G.hearts<=0)T(()=>finish(false,'愛心用完了！'),500)}
+const ico=n=>({jpg:'🖼️',png:'🖼️',mp3:'🎵',wav:'🎵',docx:'📄',txt:'📄',xlsx:'📊',pptx:'📽️',tmp:'🗒️'})[n.split('.').pop()]||'📄';
+function mk(cls,emo,label){const d=document.createElement('div');d.className=cls;d.innerHTML=`<b>${emo}</b><span>${label}</span>`;return d}
+function setup(){layer.innerHTML='<div id="top"></div><div id="bot"></div>';G.key=null;G.sel=null;return[$('#top'),$('#bot')]}
+function sel(f){layer.querySelectorAll('.sel').forEach(x=>x.classList.remove('sel'));f.classList.add('sel');G.sel=f}
+function menuAt(e,items,host){
+ closeMenu();const r=host.getBoundingClientRect(),m=document.createElement('div');m.className='cm';
+ m.style.left=Math.max(0,Math.min(e.clientX-r.left,r.width-160))+'px';m.style.top=Math.max(0,Math.min(e.clientY-r.top,r.height-items.length*36))+'px';
+ items.forEach(([t,f])=>{const i=document.createElement('div');i.textContent=t;i.onpointerdown=ev=>{ev.stopPropagation();closeMenu();f()};m.appendChild(i)});
+ host.appendChild(m);
+}
+
+function menu(){clr();G={t:[],over:true,hearts:3,score:0,combo:0};layer.innerHTML='';hud();base('選擇任務');setBar(0);
+card(`<h2>📁 檔案風暴</h2><p>Glitch 病毒把檔案搞得亂七八糟！<br>特工，請整理電腦。</p>
+<button class="b" onclick="intro('l1')">① 秘密基地：新建資料夾＋改名</button>
+<button class="b" onclick="intro('l2')">② 分類收納：拖曳檔案</button>
+<button class="b" onclick="intro('l3')">③ 複製貼上闖關</button>
+<button class="b" onclick="intro('l4')">④ 資源回收桶救援</button>
+<button class="b g" onclick="intro('boss')">👾 Boss：混亂桌面</button>
+<button class="b g" onclick="intro('end')">♾️ 無盡整理</button>`)}
+const INFO={
+l1:['① 秘密基地','<b>情報簡報：</b>在桌面空白處按<b>滑鼠右鍵</b> ➜ 新增 ➜ 資料夾。<br>選取資料夾後按 <b>F2</b>（或右鍵➜重新命名）就能改名。<br>名字格式：「座號_姓名」。共 3 題。'],
+l2:['② 分類收納','<b>情報簡報：</b>把檔案<b>按住拖曳</b>到正確的資料夾。<br>🖼️圖片、🎵音樂、📄文件（含 Word、Excel、簡報）。<br>75 秒內全部整理好，放錯扣愛心。'],
+l3:['③ 複製貼上闖關','<b>情報簡報：</b>① 單擊檔案選取 ② <b>Ctrl+C</b> 複製 ③ 單擊目標資料夾 ④ <b>Ctrl+V</b> 貼上。<br>複製錯檔案或貼錯地方會扣愛心。共 4 題。'],
+l4:['④ 資源回收桶救援','<b>情報簡報：</b>單擊檔案選取，按 <b>Delete</b> 丟進資源回收桶。<br>只刪 <b>.tmp 暫存檔</b>，刪到重要檔案會扣愛心。'],
+boss:['👾 Boss：混亂桌面','<b>情報簡報：</b>桌面被病毒弄成一團亂！36 個檔案要一次整理好。<br>拖進 🖼️圖片、🎵音樂、📄文件，<b>.tmp 垃圾</b>拖進 🗑️回收桶。<br>限時 90 秒，放錯扣愛心。'],
+end:['♾️ 無盡整理','<b>情報簡報：</b>檔案一個一個出現，越來越快。<br>拖到正確的資料夾，.tmp 垃圾丟進回收桶。<br>3 條命，看你能整理幾個！']};
+function intro(m){card(`<h2>${INFO[m][0]}</h2><p>${INFO[m][1]}</p><button class="b" onclick="go('${m}')">開始任務</button><button class="b g" onclick="menu()">返回</button>`)}
+function go(m){clr();hide();layer.innerHTML='';G={t:[],mode:m,hearts:3,score:0,combo:0,over:false};hud();setBar(0);({l1,l2,l3,l4,boss,end:endless})[m]()}
+
+/* ① 新建資料夾＋改名 */
+const NAMES=['50101_王小明','50215_陳美玲','60308_林大華'];
+function l1(){G.rd=0;r1()}
+function r1(){
+ if(G.rd>=3)return finish(true,'資料夾都整理好了！');
+ const[top]=setup();G.tg=NAMES[G.rd];G.step=0;G.t0=Date.now();
+ base(`第 ${G.rd+1}/3 題｜在桌面空白處按【滑鼠右鍵】➜ 新增 ➜ 資料夾`);
+ top.oncontextmenu=e=>{e.preventDefault();if(G.step===0)menuAt(e,[['📁 新增 ➜ 資料夾',()=>mkF(e,top)],['🔄 重新整理',()=>0],['⚙️ 個人化',()=>0]],top)};
+}
+function mkF(e,top){
+ G.step=1;const r=top.getBoundingClientRect(),f=mk('f','📁','新增資料夾');
+ f.style.position='absolute';f.style.left=Math.max(0,Math.min(e.clientX-r.left,r.width-130))+'px';f.style.top=Math.max(0,Math.min(e.clientY-r.top,r.height-90))+'px';
+ top.appendChild(f);let chosen=false;
+ const rename=()=>{
+  if(!chosen)return hint('先【單擊】資料夾選取它');
+  if(G.step!==1)return;G.step=2;
+  const s=f.querySelector('span');s.innerHTML='<input value="新增資料夾">';const i=s.firstChild;i.focus();i.select();
+  i.onkeydown=ev=>{if(ev.key!=='Enter'||ev.isComposing)return;
+   if(i.value.trim()===G.tg){G.combo++;G.score+=200+G.combo*10+Math.max(0,40-Math.round((Date.now()-G.t0)/1000))*5;hud();G.rd++;G.key=null;base('✅ 改名成功！');T(r1,800)}
+   else{bad('名字要是「'+G.tg+'」');i.select()}};
+ };
+ f.onpointerdown=ev=>{ev.stopPropagation();chosen=true;f.classList.add('sel')};
+ f.oncontextmenu=ev=>{ev.preventDefault();ev.stopPropagation();chosen=true;f.classList.add('sel');menuAt(ev,[['✏️ 重新命名',rename],['🔍 內容',()=>0]],top)};
+ G.key=k=>{if(k==='f2')rename()};
+ base(`單擊資料夾選取，再按【F2】改名為「${G.tg}」`);
+}
+
+/* ② 分類收納（Boss 與無盡共用） */
+const F12=[['貓咪.jpg','p'],['校慶.png','p'],['風景.jpg','p'],['頭像.png','p'],['夏日.mp3','m'],['校歌.mp3','m'],['鈴聲.wav','m'],['練習曲.mp3','m'],['報告.docx','d'],['成績.xlsx','d'],['簡報.pptx','d'],['筆記.txt','d']];
+const PN={p:[['貓咪','jpg'],['風景','png'],['自拍','jpg'],['海報','png']],m:[['夏日','mp3'],['校歌','mp3'],['鈴聲','wav']],d:[['報告','docx'],['成績','xlsx'],['簡報','pptx'],['筆記','txt']],x:[['暫存','tmp'],['cache','tmp'],['下載中','tmp']]};
+const gname=(k,i)=>{const[a,e]=PN[k][R(0,PN[k].length-1)];return a+(i||'')+'.'+e};
+function dragify(f,onDrop){
+ f.onpointerdown=e=>{
+  if(G.over)return;e.preventDefault();
+  const g=f.cloneNode(true);g.classList.add('ghost');document.body.appendChild(g);f.style.opacity=.3;
+  const mv=ev=>{g.style.left=ev.clientX+'px';g.style.top=ev.clientY+'px'};mv(e);
+  const up=ev=>{document.removeEventListener('pointermove',mv);document.removeEventListener('pointerup',up);g.remove();f.style.opacity=1;
+   if(G.over)return;const d=document.elementFromPoint(ev.clientX,ev.clientY),t=d&&d.closest('.fd');if(t)onDrop(t)};
+  document.addEventListener('pointermove',mv);document.addEventListener('pointerup',up);
+ };
+}
+function folders(bot,bin){[['p','圖片'],['m','音樂'],['d','文件']].concat(bin?[['x','回收桶']]:[]).forEach(([k,n])=>{const d=mk('f fd',k==='x'?'🗑️':'📁',n);d.dataset.k=k;bot.appendChild(d)})}
+function sortGame(F,secs,bin){
+ const[top,bot]=setup();G.left=F.length;
+ base(bin?'把檔案拖進對的資料夾，.tmp 垃圾丟進回收桶！':'把檔案拖進正確的資料夾（🖼️圖片 🎵音樂 📄文件）');
+ folders(bot,bin);
+ shuf(F).forEach(([n,k])=>{
+  const f=mk('f',ico(n),n);top.appendChild(f);
+  dragify(f,t=>{if(t.dataset.k===k){f.remove();G.left--;G.combo++;G.score+=80+G.combo*8;hud();if(!G.left)finish(true,'桌面乾淨了！')}else bad('「'+n+'」不屬於這裡')});
+ });
+ setBar(100,secs*1000);T(()=>finish(false,'時間到！'),secs*1000);
+}
+function l2(){sortGame(F12,75,false)}
+function boss(){const F=[];[['p',10],['m',9],['d',10],['x',7]].forEach(([k,c])=>{for(let i=1;i<=c;i++)F.push([gname(k,i),k])});sortGame(F,90,true)}
+function endless(){
+ const[top,bot]=setup();G.round=0;folders(bot,true);top.style.justifyContent='center';top.style.alignContent='center';en();
+}
+function en(){
+ if(G.over)return;G.round++;G.lock=false;const top=$('#top');top.innerHTML='';
+ const k=['p','m','d','x'][R(0,3)],n=gname(k),f=mk('f',ico(n),n);f.style.transform='scale(1.6)';top.appendChild(f);
+ base(`第 ${G.round} 個檔案｜拖到正確的地方（.tmp 丟回收桶）`);
+ dragify(f,t=>{if(G.lock)return;G.lock=true;clearTimeout(G.to);
+  if(t.dataset.k===k){G.combo++;G.score+=60+G.combo*6;hud();T(en,250)}else{bad('「'+n+'」放錯了');T(en,1000)}});
+ G.lim=Math.max(1600,4500-G.round*70);setBar(100,G.lim);
+ G.to=T(()=>{if(G.lock)return;G.lock=true;bad('太慢了！');T(en,1000)},G.lim);
+}
+
+/* ③ 複製貼上 */
+function l3(){G.rd=0;r3()}
+function r3(){
+ if(G.rd>=4)return finish(true,'複製貼上大師！');
+ const[top,bot]=setup();G.clip=null;
+ const fs=shuf(['報告.docx','貓咪.jpg','成績.xlsx','夏日.mp3','簡報.pptx','筆記.txt']).slice(0,5),ds=['備份','作業','相片','隨身碟'];
+ G.tf=fs[R(0,4)];G.td=ds[R(0,3)];
+ base(`第 ${G.rd+1}/4 題｜把【${G.tf}】複製到【${G.td}】`);
+ fs.forEach(n=>{const f=mk('f',ico(n),n);f.dataset.n=n;f.onpointerdown=()=>sel(f);top.appendChild(f)});
+ ds.forEach(n=>{const f=mk('f fd','📁',n);f.dataset.n=n;f.onpointerdown=()=>sel(f);bot.appendChild(f)});
+ G.key=k=>{
+  const s=G.sel,isD=s&&s.classList.contains('fd');
+  if(k==='ctrl+c'){if(!s||isD)return hint('先單擊一個【檔案】再按 Ctrl+C');G.clip=s.dataset.n;hint('📋 已複製：'+G.clip)}
+  else if(k==='ctrl+v'){
+   if(!isD)return hint('先單擊要貼上的【資料夾】');if(!G.clip)return hint('還沒複製任何東西，先按 Ctrl+C');
+   if(G.clip===G.tf&&s.dataset.n===G.td){G.combo++;G.score+=150+G.combo*10;hud();G.rd++;G.key=null;s.querySelector('b').textContent='📂';base('✅ 貼上成功！');T(r3,900)}
+   else{G.clip=null;bad('複製或貼上的位置不對，要重新複製')}
+  }};
+}
+
+/* ④ 資源回收桶救援 */
+function l4(){
+ const[top,bot]=setup();
+ const J=['暫存.tmp','~$報告.tmp','期末報告_舊.tmp','下載中.tmp','cache.tmp'],K=['畢業照.jpg','期末報告.docx','成績單.xlsx','備份_勿刪.docx','班級名冊.xlsx'];
+ G.junk=J.length;base('選取【.tmp 暫存檔】，按 Delete 丟進資源回收桶。重要檔案別刪！');
+ shuf([...J,...K]).forEach(n=>{const f=mk('f',ico(n),n);f.dataset.n=n;f.onpointerdown=()=>sel(f);top.appendChild(f)});
+ bot.appendChild(mk('f','🗑️','資源回收桶'));
+ G.key=k=>{
+  if(k!=='delete')return;if(!G.sel)return hint('先單擊一個檔案');
+  const n=G.sel.dataset.n;
+  if(n.endsWith('.tmp')){G.sel.remove();G.sel=null;G.junk--;G.combo++;G.score+=100+G.combo*10;hud();hint('🗑️ 已丟進回收桶');if(!G.junk)finish(true,'垃圾清光了！')}
+  else bad('「'+n+'」是重要檔案！已從回收桶救回');
+ };
+}
+
+function finish(win,msg){
+ if(G.over)return;G.over=true;clr();G.key=null;closeMenu();
+ const m=G.mode,st=win?Math.max(1,G.hearts):0;best[m]=Math.max(best[m]||0,G.score);
+ card(`<h2>${m==='end'?'♾️ 撐了 '+Math.max(0,G.round-1)+' 題':win?'✅ 任務成功！':'💥 任務失敗'}</h2><p>${msg||''}</p>${m==='end'?'':`<div style="font-size:34px">${'⭐'.repeat(st)+'☆'.repeat(3-st)}</div>`}<p>分數 ${G.score}｜本次最高 ${best[m]}</p><button class="b" onclick="go('${m}')">再玩一次</button><button class="b g" onclick="menu()">主選單</button>`);
+ try{parent.postMessage({type:'sysfix-result',world:2,mode:m,win,stars:st,score:G.score},'*')}catch(e){}
+}
+menu();
+</script>
+</body></html>

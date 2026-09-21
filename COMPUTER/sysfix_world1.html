@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="zh-Hant"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>系統修復師：桌面危機（世界1原型）</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:dark;--bg:#0b1220;--panel:#111c33;--ink:#e6f1ff;--neon:#39ff9c;--gold:#ffd166}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;background:var(--bg);color:var(--ink);font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif}
+#app{position:relative;height:100%;display:flex;flex-direction:column;max-width:960px;margin:0 auto;user-select:none;-webkit-user-select:none}
+#hud{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;font-size:18px;background:var(--panel)}
+#brief{padding:10px 12px;font-size:clamp(15px,4vw,21px);font-weight:700;color:var(--neon);text-align:center;background:#0d2a22;min-height:46px}
+#timer{height:6px;background:#1c2b4a}#tb{height:100%;width:100%;background:var(--gold)}
+#stage{position:relative;flex:1;min-height:0;overflow:hidden;background:linear-gradient(160deg,#12305a,#0b1a33);transition:box-shadow .2s}
+#layer{position:absolute;inset:0}
+.ic{position:absolute;right:14px;font-size:13px;text-align:center;opacity:.55;pointer-events:none}
+.ic b{display:block;font-size:30px}
+.win{position:absolute;background:#f1f5f9;color:#111;border-radius:8px;box-shadow:0 8px 24px #0008;overflow:hidden;transition:all .25s;display:flex;flex-direction:column}
+.tb2{display:flex;align-items:center;gap:6px;background:#2563eb;color:#fff;padding:4px 6px;font-size:14px}
+.tb2 b{flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-weight:600}
+.tb2 i{font-style:normal;display:inline-flex;width:36px;height:30px;align-items:center;justify-content:center;border-radius:4px;cursor:pointer;background:#ffffff33;touch-action:manipulation}
+.tb2 i.c{background:#e11d48}
+.bd{padding:10px;font-size:14px;flex:1;overflow:hidden}
+.virus .tb2{background:#b91c1c}.virus{animation:pop .2s}
+.sys .tb2{background:#1d4ed8}.sys{animation:pop .2s;outline:3px solid #60a5fa}
+@keyframes pop{from{transform:scale(.5);opacity:0}}
+@keyframes shake{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+#bar{height:38px;background:#0a0f1c;display:flex;align-items:center;justify-content:space-between;padding:0 12px;font-size:13px;color:#8ba3c7}
+#ov{position:absolute;inset:0;background:#000c;display:none;align-items:center;justify-content:center;z-index:9999;padding:16px}
+.card{background:var(--panel);border:2px solid var(--neon);border-radius:14px;padding:20px;max-width:440px;width:100%;text-align:center;box-shadow:0 0 30px #39ff9c44;max-height:100%;overflow:auto}
+.card h2{margin:0 0 8px}.card p{line-height:1.6;margin:8px 0;font-size:15px}
+button.b{display:block;width:100%;margin:8px 0;padding:12px;font-size:16px;border:0;border-radius:10px;background:var(--neon);color:#062;font-weight:700;cursor:pointer;font-family:inherit}
+button.b.g{background:#22355c;color:var(--ink)}
+</style></head>
+<body>
+<div id="app">
+  <div id="hud"><span id="hp"></span><span id="cb"></span><span id="sc"></span></div>
+  <div id="brief">系統修復師</div>
+  <div id="timer"><div id="tb"></div></div>
+  <div id="stage">
+    <div class="ic" style="top:14px"><b>🗑️</b>資源回收桶</div>
+    <div class="ic" style="top:90px"><b>📁</b>作業</div>
+    <div id="layer"></div>
+  </div>
+  <div id="bar"><span>🪟 系統修復師 v0.1</span><span>Glitch 病毒入侵中…</span></div>
+  <div id="ov"></div>
+</div>
+<script>
+const $=s=>document.querySelector(s),R=(a,b)=>Math.floor(Math.random()*(b-a+1))+a;
+const layer=$('#layer'),ov=$('#ov'),brief=$('#brief'),tb=$('#tb'),stage=$('#stage');
+const L={min:'最小化',max:'最大化',close:'關閉',restore:'還原'};
+let G={t:[],over:true},best={};
+const T=(f,ms)=>{const id=setTimeout(f,ms);G.t.push(id);return id};
+const clr=()=>{G.t.forEach(clearTimeout);G.t=[]};
+const hide=()=>{ov.style.display='none'};
+function hud(){const h=Math.max(G.hearts||0,0);$('#hp').textContent='❤️'.repeat(h)+'🖤'.repeat(3-h);$('#sc').textContent='分數 '+(G.score||0);$('#cb').textContent=G.combo>1?'🔥連擊 x'+G.combo:''}
+function card(h){ov.innerHTML='<div class="card">'+h+'</div>';ov.style.display='flex'}
+function setBar(p,ms){tb.style.transition='none';tb.style.width=p+'%';if(ms){void tb.offsetWidth;tb.style.transition='width '+ms+'ms linear';tb.style.width='0%'}}
+function flash(){stage.style.boxShadow='inset 0 0 60px #ff2d55';setTimeout(()=>stage.style.boxShadow='none',250)}
+function place(e,g){e.style.left=g.x+'px';e.style.top=g.y+'px';e.style.width=g.w+'px';e.style.height=g.h+'px'}
+
+function menu(){clr();G={t:[],over:true,hearts:3,score:0,combo:0};layer.innerHTML='';hud();brief.textContent='選擇任務';setBar(0);
+card(`<h2>🖥️ 系統修復師</h2><p>Glitch 病毒入侵了學校電腦！視窗亂飛、系統失控。<br>特工，請奪回控制權！</p>
+<button class="b" onclick="intro('l1')">🖱️ 關卡1：視窗大亂鬥</button>
+<button class="b" onclick="intro('boss')">👾 Boss：彈跳視窗軍團</button>
+<button class="b g" onclick="intro('end')">♾️ 無盡崩壞</button>`)}
+
+const INFO={
+l1:['🖱️ 視窗大亂鬥','<b>情報簡報：</b>視窗右上角有三顆按鈕：<br>─ 最小化（收到下面）　□ 最大化（放到最大）<br>✕ 關閉　❐ 還原（變回原本大小）<br>照指令按對的那顆！答錯或太慢會扣愛心。共 10 題。'],
+boss:['👾 彈跳視窗軍團','<b>情報簡報：</b>病毒視窗（紅色）會一直跳出來，按它的 ✕ 關掉！<br>但是<b>藍色的系統視窗不能關</b>，關了扣愛心。<br>45 秒內清掉 30 個病毒；螢幕同時超過 14 個就失敗。'],
+end:['♾️ 無盡崩壞','<b>情報簡報：</b>指令會一直出現，越來越快。<br>3 條命，每 10 題補 1 條命。看你能撐幾題！']};
+function intro(m){card(`<h2>${INFO[m][0]}</h2><p>${INFO[m][1]}</p><button class="b" onclick="go('${m}')">開始任務</button><button class="b g" onclick="menu()">返回</button>`)}
+
+function go(m){clr();hide();layer.innerHTML='';G={t:[],mode:m,hearts:3,score:0,combo:0,round:0,z:1,over:false};hud();
+ if(m==='boss'){G.total=30;G.sp=0;G.cl=0;G.left=45;upd();spawn();T(tick,1000)}else round()}
+
+/* ===== 視窗大亂鬥 / 無盡 ===== */
+function round(){
+ if(G.over)return;
+ if(G.mode==='l1'&&G.round>=10)return finish(true);
+ G.round++;G.lock=false;layer.innerHTML='';
+ if(G.mode==='end'&&G.round%10===1&&G.round>1&&G.hearts<3){G.hearts++;hud()}
+ const keys=G.round>2?['min','max','close','restore']:['min','max','close'];
+ G.cmd=keys[R(0,keys.length-1)];
+ const sw=layer.clientWidth,sh=layer.clientHeight,w=Math.min(280,sw-16),h=Math.min(170,sh-16);
+ G.n={x:R(8,Math.max(8,sw-w-8)),y:R(8,Math.max(8,sh-h-8)),w,h};
+ const mx=G.cmd==='restore',e=G.el=document.createElement('div');e.className='win';
+ place(e,mx?{x:0,y:0,w:sw,h:sh}:G.n);
+ e.innerHTML=`<div class="tb2"><b>📄 我的文件.txt</b><i data-k="min">─</i><i data-k="${mx?'restore':'max'}">${mx?'❐':'□'}</i><i class="c" data-k="close">✕</i></div><div class="bd">Glitch 病毒入侵中…<br>快照指令操作！</div>`;
+ e.querySelectorAll('i').forEach(i=>i.onpointerdown=()=>press(i.dataset.k));
+ layer.appendChild(e);
+ brief.textContent=`第 ${G.round}${G.mode==='l1'?' / 10':''} 題｜把視窗【${L[G.cmd]}】`;
+ G.lim=G.mode==='l1'?Math.max(2500,4500-G.round*150):Math.max(1400,4200-G.round*80);
+ G.t0=Date.now();setBar(100,G.lim);G.to=T(()=>bad('時間到！'),G.lim);
+}
+function press(k){if(G.lock||G.over)return;k===G.cmd?ok():bad('按錯了！')}
+function ok(){
+ G.lock=true;clearTimeout(G.to);G.combo++;
+ G.score+=100+G.combo*10+Math.round(Math.max(0,G.lim-(Date.now()-G.t0))/100);
+ const e=G.el,sw=layer.clientWidth,sh=layer.clientHeight;
+ if(G.cmd==='min'){place(e,{x:20,y:sh,w:30,h:10});e.style.opacity=0}
+ else if(G.cmd==='max')place(e,{x:0,y:0,w:sw,h:sh});
+ else if(G.cmd==='restore')place(e,G.n);
+ else{e.style.opacity=0;e.style.transform='scale(.8)'}
+ hud();T(round,550);
+}
+function bad(msg){
+ if(G.lock||G.over)return;
+ G.lock=true;clearTimeout(G.to);G.hearts--;G.combo=0;hud();flash();
+ G.el.style.animation='shake .3s';brief.textContent='❌ '+msg;
+ G.hearts<=0?T(()=>finish(false),600):T(round,800);
+}
+
+/* ===== Boss：彈跳視窗軍團 ===== */
+function upd(){
+ const n=layer.querySelectorAll('.virus').length;
+ brief.textContent=`🦠 ${G.cl}/${G.total}｜⏱ ${G.left}s｜螢幕病毒 ${n}/14`;
+ tb.style.transition='width 1s linear';tb.style.width=(G.left/45*100)+'%';
+}
+function pop(sys){
+ const sw=layer.clientWidth,sh=layer.clientHeight,w=Math.min(200,sw-16),h=110;
+ const e=document.createElement('div');e.className='win '+(sys?'sys':'virus');
+ place(e,{x:R(6,Math.max(6,sw-w-6)),y:R(6,Math.max(6,sh-h-6)),w,h});e.style.zIndex=++G.z;
+ const V=['免費iPhone.exe','你中獎了！.exe','Glitch.exe','超快加速器','Trojan_Kitty','廣告視窗 x99'];
+ e.innerHTML=`<div class="tb2"><b>${sys?'🛡️ 系統更新（重要）':V[R(0,5)]}</b><i class="c">✕</i></div><div class="bd">${sys?'這是系統視窗，<b>不要關！</b>':'⚠️ 你的電腦中毒了！'}</div>`;
+ e.querySelector('i').onpointerdown=()=>{
+  if(G.over||!e.isConnected)return;
+  e.remove();
+  if(sys){G.hearts--;G.combo=0;hud();flash();upd();if(G.hearts<=0)finish(false,'你把系統視窗關掉了！')}
+  else{G.cl++;G.combo++;G.score+=50+G.combo*5;hud();upd();if(G.cl>=G.total)finish(true,'病毒全清光！')}
+ };
+ layer.appendChild(e);
+ if(sys)T(()=>{if(e.isConnected){e.style.opacity=0;T(()=>e.remove(),250)}},3500);
+}
+function spawn(){
+ if(G.over||G.sp>=G.total)return;
+ const sys=G.sp>2&&Math.random()<.2;
+ pop(sys);if(!sys)G.sp++;upd();
+ if(layer.querySelectorAll('.virus').length>=14)return finish(false,'螢幕被病毒塞爆了！');
+ T(spawn,Math.max(450,950-G.sp*16));
+}
+function tick(){if(G.over)return;G.left--;upd();if(G.left<=0)return finish(false,'時間到，病毒還在！');T(tick,1000)}
+
+/* ===== 結算 ===== */
+function finish(win,msg){
+ if(G.over)return;G.over=true;clr();
+ const m=G.mode,st=win?Math.max(1,G.hearts):0;
+ best[m]=Math.max(best[m]||0,G.score);
+ const title=m==='end'?'♾️ 撐了 '+(G.round-1)+' 題':win?'✅ 任務成功！':'💥 任務失敗';
+ card(`<h2>${title}</h2><p>${msg||''}</p><div style="font-size:34px">${m==='end'?'':'⭐'.repeat(st)+'☆'.repeat(3-st)}</div><p>分數 ${G.score}｜本次最高 ${best[m]}</p><button class="b" onclick="go('${m}')">再玩一次</button><button class="b g" onclick="menu()">主選單</button>`);
+ try{parent.postMessage({type:'sysfix-result',mode:m,win,stars:st,score:G.score},'*')}catch(e){}
+}
+menu();
+</script>
+</body></html>
