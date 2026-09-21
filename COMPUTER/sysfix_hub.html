@@ -70,7 +70,7 @@ function render(){
   <h2>${u?w.e:'🔒'} ${w.n}</h2><p>${u?w.d:'先通關世界 '+(w.id-1)+' 的所有任務才能解鎖'}</p>
   <p>⭐ ${wStars(w.id)} / ${keys(w.id).length*3}</p>
   <div class="chips">${keys(w.id).map(k=>`<span class="chip ${st(w.id,k).stars?'ok':''}">${st(w.id,k).stars?'✅':'⬜'} ${w.m[k]}</span>`).join('')}</div></div>`}).join('')+
- `<div id="foot"><button id="lb">🏆 排行榜</button><button id="lg">👤 ${STU?'切換學生':'登入'}</button><button id="tq">${teacher?'🔓 老師模式：已全部解鎖（點一下關閉）':'🔒 老師：全部解鎖'}</button><button id="rs">🗑️ 重置進度</button></div>`;
+ `<div id="foot"><button id="lb">🏆 排行榜</button><button id="lg">👤 ${STU?'切換學生':'登入'}</button><button id="rs">🗑️ 重置進度</button></div>`;
  document.querySelectorAll('.node').forEach(n=>n.onclick=()=>{const w=+n.dataset.w;if(unlocked(w))open(w)});
  $('#tq').onclick=()=>{teacher=!teacher;save();render()};$('#lb').onclick=lbPanel;$('#lg').onclick=loginPanel;
  const rs=$('#rs');rs.onclick=()=>{if(!armR){armR=true;rs.textContent='⚠️ 再按一次確認重置';setTimeout(()=>{armR=false;if(rs.isConnected)rs.textContent='🗑️ 重置進度'},3000);return}P={};armR=false;save();render()};
