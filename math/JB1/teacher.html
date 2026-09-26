@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>國一數學戰略地圖｜教師後台</title>
+<style>
+:root{--ink:#161a2e;--ink2:#20264a;--line:#3a4270;--bronze:#d2a24c;--paper:#f1e8d2;--red:#d24a33;--jade:#43a58f;--txt:#e9e4d4}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ink);color:var(--txt);font-family:"Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif}
+main{max-width:1200px;margin:0 auto;padding:16px 16px 60px}
+h1{margin:0 0 4px;font-family:"Noto Serif TC","Songti TC",serif}
+button,select,input{font:inherit;color:inherit}
+button{cursor:pointer}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid var(--bronze);outline-offset:2px}
+.bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:12px 0}
+.b{background:var(--ink2);border:2px solid var(--bronze);border-radius:8px;padding:8px 14px}
+.b.on{background:var(--bronze);color:#2a1d05;font-weight:700}
+.b.ghost{border-color:var(--line)}
+select,input[type=number]{background:var(--ink2);border:2px solid var(--line);border-radius:8px;padding:7px 10px}
+.card{background:var(--ink2);border:2px solid var(--line);border-radius:12px;padding:14px;margin-top:12px}
+.tw{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:.9rem}
+th,td{border:1px solid var(--line);padding:6px 8px;text-align:center;white-space:nowrap}
+th{background:#252c56;position:sticky;top:0}
+td.l,th.l{text-align:left}
+.s0{color:#6b7090}.s1{background:#5a4a1e}.s2{background:#33553d}.s3{background:#2f7a5b;font-weight:700}.s4{background:#2a6f8f;font-weight:700}.s5{background:#8a6d1c;font-weight:700;color:#fff3c4}
+.acc{display:inline-block;height:10px;border-radius:5px;background:var(--jade);vertical-align:middle}
+.acc.lo{background:var(--red)}.acc.mid{background:var(--bronze)}
+.msg{margin:6px 0;font-size:.9rem;opacity:.9}
+.hide{display:none}
+small{opacity:.75}
+</style>
+</head>
+<body>
+<main>
+<h1>教師後台</h1>
+<small>第二章「韓信點兵」× 第三章「代數異世界」　學生進度、題型弱點、個別診斷</small>
+
+<div class="bar">
+  <label class="b">📥 匯入學生進度檔<input type="file" id="file" accept=".json,application/json" multiple hidden></label>
+  <button class="b ghost" id="demo">載入示範資料</button>
+  <button class="b ghost" id="clear">清空資料</button>
+  <span class="msg" id="msg"></span>
+</div>
+<div class="bar">
+  <label>班級 <select id="cls"></select></label>
+  <button class="b on" data-t="prog">班級進度表</button>
+  <button class="b" data-t="weak">題型弱點</button>
+  <button class="b" data-t="one">個別學生</button>
+</div>
+
+<section id="v-prog" class="card"></section>
+<section id="v-weak" class="card hide"></section>
+<section id="v-one" class="card hide"></section>
+</main>
+
+<script>
+/*DATA*/
+const CH=[['I-1-1','整數I-1-1 基準點與符號'],['I-1-2','整數I-1-2 數線與比大小'],['I-1-3','整數I-1-3 相反數與絕對值'],['I-1-4','整數I-1-4 番外：結界破除'],['II-1-1','整數II-1-1 整數加法'],['II-1-2','整數II-1-2 整數減法'],['II-1-3','整數II-1-3 距離、座標與中點'],['III-1-1','整數III-1-1 整數乘法'],['III-1-2','整數III-1-2 整數除法'],['III-1-3','整數III-1-3 整數四則運算'],['III-1-4','整數III-1-4 分配律'],['IV-1-1','整數IV-1-1 指數簡記'],['IV-1-2','整數IV-1-2 乘方的加減乘除'],['IV-1-3','整數IV-1-3 科學記號'],['IV-1-4','整數IV-1-4 Boss：星際縮放大師'],
+ ['1-1','2 與 5 濾鏡'],['1-2','3 與 9 濾鏡'],['1-3','11 濾鏡'],['1-4','Boss 迷霧斥候長'],
+ ['2-1','基地搭建'],['2-2','質數篩選塔'],['2-3','蜈蚣圖 6n±1'],['2-4','Boss 偽裝者 91'],
+ ['3-1','短除法拆解'],['3-2','標準分解式'],['3-3','最大公因數'],['3-4','Boss 混沌煉金術士'],
+ ['4-1','戰術辨識'],['4-2','找因數行動'],['4-3','找倍數行動'],['4-4','終極 Boss 韓信點兵'],
+ ['5-1','咒語簡記修復'],['5-2','能量注入求值'],
+ ['6-1','括號封印解除'],['6-2','複合化簡試煉'],['6-3','身分鑑定'],['6-4','解方程式・基礎'],['6-5','解方程式・綜合'],
+ ['7-1','生活情境列式大挑戰'],['7-2','合理性之鏡'],['7-3','Boss 符號大師認證考試']];
+const IDS=CH.map(c=>c[0]);
+const LABEL={
+'I-1-1:base':'高低基準與符號','I-1-1:same':'同號異號判斷','I-1-1:prop':'性質/運算符號','I-1-1:rev':'負號意義反推','I-1-1:neg':'辨認負數','I-1-2:rule':'數線三要素','I-1-2:plotI':'讀整數座標','I-1-2:plotD':'讀小數座標','I-1-2:plotF':'讀分數座標','I-1-2:place':'標出小數/分數','I-1-2:cmp2':'兩數比大小','I-1-2:order':'多數排序','I-1-3:opp':'相反數','I-1-3:oppN':'多層括號相反數','I-1-3:abs':'絕對值計算','I-1-3:absq':'絕對值意涵','I-1-3:cmpAbs':'比大小與絕對值','I-1-3:inv':'由相反數反推','I-1-4:pl':'加號去括號','I-1-4:mi':'減號去括號','I-1-4:dist':'分配律展開','I-1-4:sign':'奇負偶正','I-1-4:sub':'減負數與雙重負號','II-1-1:same':'同號相加','II-1-1:diff':'異號相加','II-1-1:multi':'多個數相加','II-1-1:brk':'拆括號加法','II-1-1:rope':'位移(拔河)','II-1-1:hp':'補血扣血','II-1-2:ssub':'同號相減','II-1-2:dsub':'異號相減','II-1-2:conv':'減法改加法','II-1-2:multi':'多個數加減','II-1-2:abs':'含絕對值加減','II-1-2:brk':'拆括號減法','II-1-3:dist':'兩點距離','II-1-3:coord':'距離求座標','II-1-3:mid':'求中點','II-1-3:endp':'由中點求端點','II-1-3:shift':'位移','III-1-1:mirror':'乘負數鏡像','III-1-1:mul':'兩數相乘','III-1-1:multi':'多個數相乘','III-1-1:abs':'含絕對值乘法','III-1-1:brk':'拆括號乘法','III-1-1:sign':'判斷符號','III-1-2:div':'兩數相除','III-1-2:inv':'除法改乘倒數','III-1-2:multi':'連除','III-1-2:abs':'含絕對值除法','III-1-2:brk':'拆括號除法','III-1-2:chain':'乘除混合','III-1-2:sign':'判斷符號','III-1-3:first':'運算順序','III-1-3:ord':'先乘除後加減','III-1-3:mix':'括號四則','III-1-3:abs':'含絕對值四則','III-1-3:brk':'拆括號四則','III-1-4:dist':'分配律展開','III-1-4:calc':'分配律簡算','III-1-4:near':'接近整百簡算','III-1-4:rev':'逆用分配律','III-1-4:abs':'含絕對值分配','III-1-4:brk':'拆括號分配','IV-1-1:wr':'指數簡記','IV-1-1:val':'次方計算','IV-1-1:sgn':'判斷正負','IV-1-1:pow':'括號護盾','IV-1-2:add':'乘方加減','IV-1-2:mul':'乘方相乘','IV-1-2:div':'乘方相除','IV-1-2:mix':'乘方混合','IV-1-2:law':'指數律','IV-1-3:sci':'科學記號規範','IV-1-3:big':'大數轉科學記號','IV-1-3:small':'小數轉科學記號','IV-1-3:trap':'邊界陷阱','IV-1-3:cmp':'科學記號比大小','IV-1-3:real':'現實應用','IV-1-4:wr':'指數簡記','IV-1-4:val':'次方計算','IV-1-4:sgn':'判斷正負','IV-1-4:mix':'乘方混合','IV-1-4:div':'乘方相除','IV-1-4:sci':'科學記號規範','IV-1-4:big':'大數轉科學記號','IV-1-4:small':'小數轉科學記號','IV-1-4:cmp':'比大小','IV-1-4:trap':'邊界陷阱',
+
+'1-1:m2':'找 2 的倍數','1-1:m5':'找 5 的倍數','1-1:b2':'末位填空（2）','1-1:b5':'末位填空（5）','1-1:b10':'末位填空（2 和 5）','1-1:ten':'同時是 2 和 5 的倍數','1-1:not':'2、5 都不是',
+'1-2:m3':'找 3 的倍數（位數和）','1-2:m9':'找 9 的倍數（位數和）','1-2:b3':'位數填空（3）','1-2:b9':'位數填空（9）','1-2:t39':'3 的倍數但不是 9','1-2:six':'同時是 2 和 3 的倍數',
+'1-3:m11':'找 11 的倍數','1-3:no11':'找「不是」11 的倍數','1-3:d11':'奇偶位和相等','1-3:b11':'11 濾鏡填空',
+'1-4:w':'選對濾鏡（武器）','1-4:m':'同時是兩數的倍數','1-4:no':'五種濾鏡都攻不破','1-4:b':'混合濾鏡填空',
+'2-1:tile':'排磁磚判斷質數/合數','2-1:count':'長方形排法個數','2-1:one':'1 是質數嗎','2-1:two':'2 是唯一偶質數',
+'2-2:squad':'找出質數盾牌','2-2:one':'選出質數','2-2:cnt':'某範圍有幾個質數','2-2:test':'只需檢查 2、3、5、7',
+'2-3:chart':'蜈蚣圖找質數','2-3:fill':'蜈蚣圖填空','2-3:cand':'不在腳上的數','2-3:trap':'腳上的合數','2-3:why':'為什麼是 6n±1',
+'2-4:squad':'揪出偽裝者（隊伍）','2-4:which':'找出合數偽裝者','2-4:one':'選質數（避開偽裝）','2-4:mask':'偽裝者的分解','2-4:why91':'91 還要檢查 7','2-4:zero':'0 和 1 的定義',
+'3-1:ladder':'短除法拆解','3-1:fillq':'短除法補空格','3-1:pf':'質因數有哪些','3-1:lang':'「除以」與「除」語法',
+'3-2:build':'指數積木','3-2:std':'選標準分解式','3-2:read':'分解式算數值',
+'3-3:gcd':'求最大公因數','3-3:pack':'物資分裝','3-3:std':'標準式求 GCD','3-3:coprime':'互質判斷',
+'3-4:lcm':'求最小公倍數','3-4:both':'GCD 與 LCM 同時','3-4:std':'標準式求 LCM','3-4:comp':'因倍互補公式','3-4:word':'公車週期題',
+'4-1:sort':'關鍵字配對','4-1:tac':'選戰術','4-1:rem':'化整除（餘/不足）',
+'4-2:act':'處理餘數再求 GCD','4-2:calc':'算出分裝答案','4-2:gt':'除數要大於餘數',
+'4-3:line':'時間軸同時再遇','4-3:add':'點兵加餘','4-3:sub':'點兵減不足','4-3:act':'兩步驟找倍數',
+'4-4:tree0':'邊界種樹（課本原題）','4-4:tree':'邊界種樹','4-4:army':'終極點兵','4-4:tac':'綜合選戰術',
+'5-1:mulInt':'整數乘法簡記','5-1:mulDecimal':'小數乘法簡記','5-1:mulFrac':'分數乘法簡記','5-1:oneVar':'係數為1化簡','5-1:power':'次方簡記','5-1:negOne':'乘以負1簡記','5-1:div':'整數除法化分數','5-1:divDecimal':'除以小數(倒數)',
+'5-2:evalInt':'整數代入求值','5-2:evalFrac':'分數代入求值',
+'6-1:posSign':'正號括號展開','6-1:negSign':'負號括號展開',
+'6-2:plusForm':'雙括號相加化簡','6-2:minusForm':'雙括號相減化簡',
+'6-3:identify':'拆解代數式找係數','6-3:construct':'反向組合代數式',
+'6-4:int-addsub':'整數加減解方程式','6-4:int-muldiv':'整數乘除解方程式','6-4:decimal-addsub':'小數加減解方程式','6-4:decimal-muldiv':'小數乘除解方程式','6-4:frac-addsub':'分數加減解方程式','6-4:frac-muldiv':'分數乘除解方程式',
+'6-5:int-twoStep':'整數兩步驟解方程式','6-5:int-bothSides':'整數兩邊有x解方程式','6-5:decimal-twoStep':'小數多步驟解方程式','6-5:frac-twoStep':'分數多步驟解方程式',
+'7-1:discount':'價格偽裝判讀','7-1:age':'年齡列式問題','7-1:basketball':'籃球得分列式問題','7-1:mix':'混合採購列式問題',
+'7-2:posInt':'合理性-正整數情境','7-2:posIntMin1':'合理性-正整數(含1)情境','7-2:date':'合理性-日期情境','7-2:nonNeg':'合理性-非負數情境','7-2:posNum':'合理性-正數(可小數)情境',
+'7-3:mulInt':'Boss綜合-整數乘法簡記','7-3:mulDecimal':'Boss綜合-小數乘法簡記','7-3:mulFrac':'Boss綜合-分數乘法簡記','7-3:oneVar':'Boss綜合-係數為1化簡','7-3:power':'Boss綜合-次方簡記','7-3:negOne':'Boss綜合-乘以負1簡記','7-3:div':'Boss綜合-整數除法化分數','7-3:divDecimal':'Boss綜合-除以小數','7-3:evalInt':'Boss綜合-整數代入求值','7-3:evalFrac':'Boss綜合-分數代入求值','7-3:posSign':'Boss綜合-正號括號展開','7-3:negSign':'Boss綜合-負號括號展開','7-3:plusForm':'Boss綜合-雙括號相加化簡','7-3:minusForm':'Boss綜合-雙括號相減化簡','7-3:identify':'Boss綜合-拆解代數式','7-3:construct':'Boss綜合-組合代數式','7-3:int-addsub':'Boss綜合-整數加減方程式','7-3:int-muldiv':'Boss綜合-整數乘除方程式','7-3:decimal-addsub':'Boss綜合-小數加減方程式','7-3:decimal-muldiv':'Boss綜合-小數乘除方程式','7-3:frac-addsub':'Boss綜合-分數加減方程式','7-3:frac-muldiv':'Boss綜合-分數乘除方程式','7-3:int-twoStep':'Boss綜合-整數兩步驟方程式','7-3:int-bothSides':'Boss綜合-整數兩邊有x方程式','7-3:decimal-twoStep':'Boss綜合-小數多步驟方程式','7-3:frac-twoStep':'Boss綜合-分數多步驟方程式','7-3:discount':'Boss綜合-價格偽裝判讀','7-3:age':'Boss綜合-年齡列式','7-3:basketball':'Boss綜合-籃球得分列式','7-3:mix':'Boss綜合-混合採購列式','7-3:posInt':'Boss綜合-合理性正整數','7-3:posIntMin1':'Boss綜合-合理性正整數(含1)','7-3:date':'Boss綜合-合理性日期','7-3:nonNeg':'Boss綜合-合理性非負數','7-3:posNum':'Boss綜合-合理性正數(可小數)'};
+const RK=[[0,'新兵'],[8,'伍長'],[20,'校尉'],[40,'將軍'],[67,'大元帥'],[97,'兵仙'],[130,'代數宗師']]; // 與 world-map.html 相同（每關最多 5 星）
+const KEY='hanxin-teacher-v1';
+let S=[];
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const sid=x=>[x.who.cls,x.who.no,x.who.name].join('|');
+const total=x=>IDS.reduce((a,id)=>a+((x.stages[id]&&x.stages[id].stars)||0),0);
+const endTotal=x=>IDS.reduce((a,id)=>a+((x.stages[id]&&x.stages[id].eb)||0),0);
+const rankOf=t=>RK.filter(r=>r[0]<=t).pop()[1];
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+function ingest(o){
+  if(!o||o.v!==1||typeof o.stages!=='object'||o.stages===null)return false;
+  const w=o.who||{},rec={who:{cls:String(w.cls||'').slice(0,20),no:String(w.no||'').slice(0,10),name:String(w.name||'').slice(0,30)},stages:{},q:{},at:String(o.at||'')};
+  IDS.forEach(id=>{const s=o.stages[id];if(s&&typeof s==='object')rec.stages[id]={stars:clamp(Math.floor(+s.stars)||0,0,5),best:Math.max(0,+s.best||0),eb:Math.max(0,Math.floor(+s.eb)||0)}});
+  const q=o.q&&typeof o.q==='object'?o.q:{};
+  Object.keys(q).forEach(k=>{if(!LABEL[k]||!q[k])return;const n=Math.max(0,Math.floor(+q[k].n)||0),ok=clamp(Math.floor(+q[k].ok)||0,0,n);if(n)rec.q[k]={n:n,ok:ok}});
+  const i=S.findIndex(x=>sid(x)==sid(rec));
+  if(i>=0){if(rec.at>=S[i].at)S[i]=rec}else S.push(rec);
+  return true;
+}
+const byClass=c=>S.filter(x=>!c||x.who.cls===c).sort((a,b)=>(a.who.cls+'|'+String(a.who.no).padStart(4,'0')).localeCompare(b.who.cls+'|'+String(b.who.no).padStart(4,'0'),'zh-Hant'));
+function aggregate(list){
+  const m={};list.forEach(x=>Object.keys(x.q).forEach(k=>{const r=m[k]||(m[k]={n:0,ok:0});r.n+=x.q[k].n;r.ok+=x.q[k].ok}));
+  return Object.keys(m).map(k=>({k:k,label:k.split(':')[0]+' '+LABEL[k],n:m[k].n,ok:m[k].ok,acc:m[k].ok/m[k].n}));
+}
+const weakRows=(rows,minN)=>rows.filter(r=>r.n>=minN).sort((a,b)=>a.acc-b.acc||b.n-a.n);
+const csvCell=v=>{let s=String(v);if(/^[=+\-@\t\r]/.test(s))s="'"+s;return /[",\n\r]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s};
+const toCSV=rows=>'\ufeff'+rows.map(r=>r.map(csvCell).join(',')).join('\r\n');
+function progressCSV(list){
+  return toCSV([['班級','座號','姓名','總星數','軍階','無極限最高題數合計',...IDS.map(id=>id+' '+CH.find(c=>c[0]==id)[1])],
+    ...list.map(x=>[x.who.cls,x.who.no,x.who.name,total(x),rankOf(total(x)),endTotal(x),...IDS.map(id=>(x.stages[id]&&x.stages[id].stars)||0)])]);
+}
+function weakCSV(rows){return toCSV([['關卡','題型','作答次數','答對次數','答對率(%)'],...rows.map(r=>[r.k.split(':')[0],LABEL[r.k],r.n,r.ok,Math.round(r.acc*100)])])}
+function demoData(){
+  const names=['王小明','李小華','陳大文','林美玲','張志豪','黃雅婷','吳家豪','劉佳穎','蔡宗翰','楊淑芬','許志偉','鄭雅文'];
+  const keys=Object.keys(LABEL),weak=new Set(keys.filter(()=>Math.random()<.12));
+  names.forEach((nm,i)=>{
+    const upto=Math.floor(Math.random()*17),stages={},q={};
+    IDS.forEach((id,k)=>{if(k<upto){const sr=1+Math.floor(Math.random()*5);stages[id]={stars:sr,best:400+Math.floor(Math.random()*900),eb:sr>=3&&Math.random()<.5?5+Math.floor(Math.random()*25):0}}});
+    keys.forEach(key=>{const k=IDS.indexOf(key.split(':')[0]);if(k<upto){const n=3+Math.floor(Math.random()*8),p=weak.has(key)?.4:.85;let ok=0;for(let j=0;j<n;j++)if(Math.random()<p)ok++;q[key]={n:n,ok:ok}}});
+    ingest({v:1,who:{cls:i<6?'701':'702',no:String(i%6+1),name:'示範'+nm},stages:stages,q:q,at:new Date().toISOString()});
+  });
+}
+/*UI*/
+const $=s=>document.querySelector(s);
+let tab='prog';
+function load(){try{S=JSON.parse(localStorage.getItem(KEY))||[]}catch(e){S=[]}if(!Array.isArray(S))S=[];const old=S;S=[];old.forEach(x=>ingest({v:1,who:x.who,stages:x.stages,q:x.q,at:x.at}))}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+function say(t){$('#msg').textContent=t}
+function download(name,text,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type:type||'text/csv;charset=utf-8'}));a.download=name;document.body.appendChild(a);a.click();a.remove()}
+const cur=()=>$('#cls').value;
+function renderCls(){const cs=[...new Set(S.map(x=>x.who.cls))].sort(),old=cur();$('#cls').innerHTML='<option value="">全部班級</option>'+cs.map(c=>`<option value="${esc(c)}">${esc(c||'（未填班級）')}</option>`).join('');if(cs.includes(old))$('#cls').value=old}
+function star(n){return n?`<td class="s${n}">${'★'.repeat(n)}</td>`:'<td class="s0">—</td>'}
+function bar(a){const c=a<.6?'lo':a<.8?'mid':'';return `<span class="acc ${c}" style="width:${Math.max(2,Math.round(a*100))}px"></span> ${Math.round(a*100)}%`}
+function renderProg(){
+  const L=byClass(cur());
+  if(!L.length){$('#v-prog').innerHTML='<p>還沒有資料。請按「匯入學生進度檔」，或先按「載入示範資料」看看效果。</p>';return}
+  const cleared=IDS.map(id=>L.filter(x=>x.stages[id]&&x.stages[id].stars>0).length),avg=L.reduce((a,x)=>a+total(x),0)/L.length;
+  $('#v-prog').innerHTML=`<div class="bar"><b>共 ${L.length} 位學生，平均 ${avg.toFixed(1)} 顆星</b><button class="b" id="e-prog">⬇️ 匯出 Excel（CSV）</button></div><div class="tw"><table><tr><th class="l">班級</th><th>座號</th><th class="l">姓名</th><th>總星數</th><th>軍階</th><th title="各關無極限最高題數加總">♾️合計</th>${IDS.map(id=>`<th title="${esc(CH.find(c=>c[0]==id)[1])}">${id}</th>`).join('')}</tr>`+
+   L.map(x=>`<tr><td class="l">${esc(x.who.cls)}</td><td>${esc(x.who.no)}</td><td class="l">${esc(x.who.name)}</td><td>${total(x)}</td><td>${rankOf(total(x))}</td><td>${endTotal(x)||'—'}</td>${IDS.map(id=>star((x.stages[id]&&x.stages[id].stars)||0)).join('')}</tr>`).join('')+
+   `<tr><th class="l" colspan="6">通關率</th>${cleared.map(c=>`<th>${Math.round(c/L.length*100)}%</th>`).join('')}</tr></table></div>`;
+  $('#e-prog').onclick=()=>download('班級進度表.csv',progressCSV(L));
+}
+function renderWeak(){
+  const L=byClass(cur()),minN=+($('#minn')&&$('#minn').value)||5;
+  if(!L.length){$('#v-weak').innerHTML='<p>還沒有資料。</p>';return}
+  const rows=weakRows(aggregate(L),minN);
+  $('#v-weak').innerHTML=`<div class="bar"><b>全班各題型答對率（由低到高）</b><label>至少作答 <input type="number" id="minn" min="1" value="${minN}" style="width:5em"> 次才列入</label><button class="b" id="e-weak">⬇️ 匯出 Excel（CSV）</button></div><div class="tw"><table><tr><th class="l">關卡與題型</th><th>作答次數</th><th class="l">答對率</th></tr>`+
+   (rows.length?rows.map(r=>`<tr><td class="l">${esc(r.label)}</td><td>${r.n}</td><td class="l">${bar(r.acc)}</td></tr>`).join(''):'<tr><td colspan="3">資料還不夠，請調低「至少作答次數」。</td></tr>')+`</table></div>`;
+  $('#minn').onchange=renderWeak;$('#e-weak').onclick=()=>download('題型弱點.csv',weakCSV(rows));
+}
+function renderOne(){
+  const L=byClass(cur());
+  if(!L.length){$('#v-one').innerHTML='<p>還沒有資料。</p>';return}
+  const sel=$('#who')?+$('#who').value:0,i=Math.min(sel||0,L.length-1),x=L[i],rows=weakRows(Object.keys(x.q).map(k=>({k:k,label:k.split(':')[0]+' '+LABEL[k],n:x.q[k].n,ok:x.q[k].ok,acc:x.q[k].ok/x.q[k].n})),3);
+  $('#v-one').innerHTML=`<div class="bar"><label>學生 <select id="who">${L.map((s,j)=>`<option value="${j}" ${j==i?'selected':''}>${esc(s.who.cls)} ${esc(s.who.no)} ${esc(s.who.name)}</option>`).join('')}</select></label><b>${total(x)} 顆星｜${rankOf(total(x))}</b></div>`+
+   `<p><b>最需要加強的題型（作答 3 次以上）：</b></p>`+(rows.length?`<div class="tw"><table><tr><th class="l">關卡與題型</th><th>作答次數</th><th class="l">答對率</th></tr>${rows.slice(0,8).map(r=>`<tr><td class="l">${esc(r.label)}</td><td>${r.n}</td><td class="l">${bar(r.acc)}</td></tr>`).join('')}</table></div>`:'<p>這位同學的作答資料還不夠。</p>')+
+   (()=>{const e=IDS.filter(id=>x.stages[id]&&x.stages[id].eb).sort((a,b)=>x.stages[b].eb-x.stages[a].eb);
+     return `<p><b>♾️ 無極限挑戰最高紀錄：</b>${e.length?'':'尚無紀錄'}</p>`+(e.length?`<div class="tw"><table><tr><th class="l">關卡</th><th>最高題數</th></tr>${e.map(id=>`<tr><td class="l">${esc(id+' '+CH.find(c=>c[0]==id)[1])}</td><td>${x.stages[id].eb}</td></tr>`).join('')}</table></div>`:'')})();
+  $('#who').onchange=renderOne;
+}
+function render(){renderCls();({prog:renderProg,weak:renderWeak,one:renderOne})[tab]();['prog','weak','one'].forEach(t=>$('#v-'+t).classList.toggle('hide',t!=tab));document.querySelectorAll('[data-t]').forEach(b=>b.classList.toggle('on',b.dataset.t==tab))}
+document.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>{tab=b.dataset.t;render()});
+$('#cls').onchange=render;
+$('#file').onchange=async e=>{
+  let ok=0,bad=0;
+  for(const f of e.target.files){try{ingest(JSON.parse(await f.text()))?ok++:bad++}catch(err){bad++}}
+  e.target.value='';save();render();say(`匯入完成：成功 ${ok} 份${bad?`，${bad} 份格式不符已略過`:''}`);
+};
+$('#demo').onclick=()=>{demoData();save();render();say('已載入 12 位示範學生（名字前有「示範」）。')};
+$('#clear').onclick=()=>{if(confirm('確定要清空後台裡所有學生資料嗎？（學生自己電腦上的進度不受影響）')){S=[];save();render();say('已清空')}};
+load();render();
+</script>
+</body>
+</html>

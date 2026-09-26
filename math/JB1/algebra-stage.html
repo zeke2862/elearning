@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>代數異世界｜符號之城的覺醒</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@600;700;900&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg-deep:#150E2B; --bg-panel:#221639; --bg-panel-2:#2C1D4D;
+  --accent-gold:#E8B94D; --accent-teal:#49C6B0; --accent-rose:#E8637A;
+  --text-cream:#F3ECDD; --text-muted:#B7A6D9; --border-glow:#7C5CC4;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:radial-gradient(circle at 20% 10%, #2a1b4d 0%, transparent 45%),
+    radial-gradient(circle at 85% 80%, #1d2f52 0%, transparent 50%), var(--bg-deep);
+  color:var(--text-cream); font-family:'Noto Sans TC', sans-serif; min-height:100vh;
+}
+h1,h2,.rune-font{font-family:'Noto Serif TC', serif;}
+.hide{display:none!important;}
+main{max-width:720px;margin:0 auto;padding:16px;}
+button{font:inherit;cursor:pointer;color:inherit;}
+button:focus-visible{outline:3px solid var(--accent-gold);outline-offset:2px;}
+.card{background:linear-gradient(160deg, var(--bg-panel), var(--bg-panel-2));border:1px solid rgba(124,92,196,0.4);border-radius:16px;padding:20px;}
+.btn{background:linear-gradient(135deg,var(--accent-gold),#c99938);color:#241639;border:0;border-radius:12px;padding:12px 24px;font-weight:700;font-size:1.05rem;}
+.btn.ghost{background:transparent;color:var(--accent-gold);border:2px solid var(--accent-gold);}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px;font-weight:700;flex-wrap:wrap;}
+.hearts{letter-spacing:2px;}
+.combo{color:var(--accent-rose);min-width:5em;text-align:right;font-size:.9rem;}
+.q{background:var(--bg-panel);border:1px solid rgba(232,185,77,0.3);border-radius:14px;padding:22px 18px;margin:14px 0;text-align:center;}
+.q .scen{font-size:.75rem;color:var(--text-muted);margin-bottom:6px;letter-spacing:.5px;}
+.q .t{font-family:'Noto Serif TC',serif;font-size:clamp(20px,5vw,28px);font-weight:700;line-height:1.6;}
+.frac{display:inline-flex;flex-direction:column;vertical-align:middle;margin:0 3px;text-align:center;line-height:1.05;font-size:0.78em;}
+.frac .num{border-bottom:2px solid currentColor;padding:0 4px 1px;}
+.frac .den{padding:1px 4px 0;}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.opts.opt3{grid-template-columns:1fr 1fr 1fr;}
+@media (max-width:480px){.opts,.opts.opt3{grid-template-columns:1fr;}}
+.opt{background:rgba(255,255,255,0.04);border:1.5px solid rgba(183,166,217,0.35);color:var(--text-cream);border-radius:12px;padding:14px 10px;font-size:1.15rem;font-family:'Noto Serif TC',serif;font-weight:600;}
+.opt:hover:not(:disabled){border-color:var(--accent-gold);background:rgba(232,185,77,0.1);}
+.opt.ok{background:rgba(73,198,176,0.25);border-color:var(--accent-teal);}
+.opt.bad{background:rgba(232,99,122,0.25);border-color:var(--accent-rose);}
+.opt:disabled{cursor:default;}
+#say{margin-top:14px;border-left:5px solid var(--accent-gold);background:rgba(255,255,255,0.03);padding:12px 14px;border-radius:8px;line-height:1.7;font-size:.92rem;}
+#say.win{border-color:var(--accent-teal);}#say.lose{border-color:var(--accent-rose);}
+.stars{font-size:2.6rem;letter-spacing:6px;color:var(--accent-gold);}
+.jail{margin-top:12px;display:grid;gap:8px;}
+.jail div{background:rgba(255,255,255,0.03);border-radius:8px;padding:10px 12px;line-height:1.6;font-size:.88rem;}
+small{opacity:.75;}
+.modes{display:grid;gap:10px;margin:16px 0;}
+.mode{text-align:left;background:rgba(255,255,255,0.04);border:1.5px solid rgba(183,166,217,0.35);border-radius:12px;padding:12px 14px;}
+.mode.on{border-color:var(--accent-gold);background:rgba(232,185,77,0.1);}
+.mode b{font-size:1.1rem;}.mode small{display:block;opacity:.75;margin-top:2px;}
+.timebar{height:8px;background:rgba(255,255,255,0.08);border-radius:6px;overflow:hidden;margin-top:8px;}
+#bar{height:100%;background:var(--accent-teal);width:100%;transition:width .1s linear;}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;}}
+</style>
+</head>
+<body>
+<main>
+
+<section id="s-start" class="card">
+  <h1 class="rune-font" style="margin:0;color:var(--accent-gold);font-size:1.3rem" id="stageTitle"></h1>
+  <p style="line-height:1.7" id="stageDesc"></p>
+  <p style="line-height:1.7;color:var(--text-muted);font-size:.9rem">共 10 題，答錯或超時會損失一點法力（❤️），法力歸零挑戰失敗。</p>
+  <div class="modes" id="modes">
+    <button class="mode on" data-m="easy"><b>練兵模式</b><small>不限時，適合先熟悉規則</small></button>
+    <button class="mode" data-m="real"><b>實戰模式</b><small id="m-real"></small></button>
+    <button class="mode" data-m="hard"><b>修羅模式</b><small id="m-hard"></small></button>
+  </div>
+  <button class="btn" id="go">開始挑戰！</button>
+</section>
+
+<section id="s-game" class="hide">
+  <div class="top">
+    <span id="wave">第 1/10 題</span>
+    <span class="hearts" id="hearts"></span>
+    <span class="combo" id="combo"></span>
+  </div>
+  <div class="timebar"><div id="bar"></div></div>
+  <div style="text-align:right;font-size:.85rem;opacity:.8;margin-top:2px" id="sec"></div>
+  <div class="q"><div class="scen" id="scen"></div><div class="t" id="qt"></div></div>
+  <div class="opts" id="opts"></div>
+  <div id="say" class="hide"></div>
+</section>
+
+<section id="s-end" class="card hide" style="text-align:center">
+  <h2 class="rune-font" id="e-title" style="margin:0"></h2>
+  <div class="stars" id="e-stars"></div>
+  <p id="e-info" style="line-height:1.8"></p>
+  <div id="e-jail" class="jail" style="text-align:left"></div>
+  <p style="margin-top:16px">
+    <button class="btn" id="again">再戰一次</button>
+    <button class="btn ghost hide" id="back">返回地圖</button>
+  </p>
+</section>
+
+</main>
+<script src="lessons.js"></script>
+<script src="mode-system.js"></script>
+<script>
+const VARS = ['x','y','a','b','m','k','n','c'];
+const rndInt = (min,max)=>Math.floor(Math.random()*(max-min+1))+min;
+const rndPick = (arr)=>arr[Math.floor(Math.random()*arr.length)];
+const rndSign = ()=> Math.random()<0.5 ? 1 : -1;
+function shuffle(arr){
+  const a=[...arr];
+  for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}
+  return a;
+}
+function fmtSignedTerm(coef, isFirst){ // returns {op:'+'|'-', abs:string}
+  const op = coef<0 ? '-' : '+';
+  const abs = Math.abs(coef);
+  return {op, abs};
+}
+function frac(num,den){ return `<span class="frac"><span class="num">${num}</span><span class="den">${den}</span></span>`; }
+function sup(base,exp){ return `${base}<sup>${exp}</sup>`; }
+function linearHTML(coef, cst){ // coef*x + cst -> nice html, coef may be 1/-1/0
+  let s='';
+  if(coef===0){ s = `${cst}`; return s; }
+  if(coef===1) s='x'; else if(coef===-1) s='-x'; else s=`${coef}x`;
+  if(cst!==0){
+    s += cst>0 ? ` + ${cst}` : ` - ${Math.abs(cst)}`;
+  }
+  return s;
+}
+function buildOptions(correctHTML, distractorHTMLs){
+  const opts = shuffle([correctHTML, ...distractorHTMLs]);
+  return {opts, correctIndex: opts.indexOf(correctHTML)};
+}
+// 回傳一個保證跟 v 不同的數字：v 不是 0 就直接取相反數；
+// v 剛好是 0 的話（相反數還是 0，無法造成差異），改用備用值 altBy。
+function altVal(v, altBy){ return v===0 ? altBy : -v; }
+// 產生「數字＋單位」的選擇題選項，保證 4 個選項的數值彼此不重複、
+// 也保證都跟正確答案不同（用來避免多選項文字重複的 bug）。
+function numericOptions(correct, wrongCandidates, suffix=''){
+  const seen = new Set([correct]);
+  const uniqueWrongs = [];
+  for(const w of wrongCandidates){
+    if(!seen.has(w)){ seen.add(w); uniqueWrongs.push(w); }
+    if(uniqueWrongs.length>=3) break;
+  }
+  let guard=0;
+  while(uniqueWrongs.length<3 && guard<30){
+    guard++;
+    const cand = correct + rndPick([-4,-3,-2,-1,1,2,3,4]);
+    if(!seen.has(cand)){ seen.add(cand); uniqueWrongs.push(cand); }
+  }
+  const optsNum = shuffle([correct, ...uniqueWrongs]);
+  return { opts: optsNum.map(n=>`${n}${suffix}`), correctIndex: optsNum.indexOf(correct) };
+}
+
+/* ---------- Type A: 簡記修復（整數／分數／小數皆有） ---------- */
+const DECIMAL_DIV_MAP = {0.5:2, 0.25:4, 0.2:5, 0.1:10};
+function genA(){
+  const v = rndPick(VARS);
+  const kind = rndPick(['mulInt','mulDecimal','mulFrac','oneVar','power','negOne','div','divDecimal']);
+  let promptHTML, correctHTML, distractors;
+  if(kind==='mulInt'){
+    const n = rndInt(2,9);
+    promptHTML = `${v} &times; ${n}`;
+    correctHTML = `${n}${v}`;
+    distractors = [`${v}${n}`, `${n}+${v}`, `${v}<sup>${n}</sup>`];
+  } else if(kind==='mulDecimal'){
+    const n = rndPick([0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9]);
+    promptHTML = `${v} &times; ${n}`;
+    correctHTML = `${n}${v}`;
+    distractors = [`${v}${n}`, `${Math.round(n*10)}${v}`, `${n}+${v}`];
+  } else if(kind==='mulFrac'){
+    const den = rndPick([2,3,4,5]);
+    let num = rndInt(1,den-1); if(num<1) num=1;
+    promptHTML = `${v} &times; ${frac(num,den)}`;
+    correctHTML = `${frac(num,den)}${v}`;
+    distractors = [`${frac(den,num)}${v}`, `${frac(num,den)}+${v}`, `${num}${v}`];
+  } else if(kind==='oneVar'){
+    promptHTML = `1 &times; ${v}`;
+    correctHTML = `${v}`;
+    distractors = [`1${v}`, `0${v}`, `${v}<sup>1</sup>${v}`];
+  } else if(kind==='power'){
+    const k = rndInt(2,5);
+    promptHTML = Array(k).fill(v).join(' &times; ');
+    correctHTML = sup(v,k);
+    distractors = [`${k}${v}`, sup(v,k+1), `${k}${v}<sup>${k}</sup>`];
+  } else if(kind==='negOne'){
+    const order = rndSign();
+    promptHTML = order>0 ? `${v} &times; (-1)` : `(-1) &times; ${v}`;
+    correctHTML = `-${v}`;
+    distractors = [`${v}`, `1${v}`, `-1${v}`];
+  } else if(kind==='div'){
+    const n = rndInt(2,9);
+    const isNeg = Math.random()<0.5;
+    promptHTML = isNeg ? `${v} &divide; (-${n})` : `${v} &divide; ${n}`;
+    correctHTML = isNeg ? `-${frac(v,n)}` : frac(v,n);
+    distractors = [ isNeg ? frac(v,n) : `-${frac(v,n)}`, frac(n,v), `${n}${v}` ];
+  } else { // divDecimal：除以小數等於乘以它的倒數
+    const keys = Object.keys(DECIMAL_DIV_MAP).map(Number);
+    const dnum = rndPick(keys);
+    const mult = DECIMAL_DIV_MAP[dnum];
+    promptHTML = `${v} &divide; ${dnum}`;
+    correctHTML = `${mult}${v}`;
+    distractors = [`${frac(1,mult)}${v}`, `${v}${dnum}`, `${dnum}${v}`];
+  }
+  const {opts, correctIndex} = buildOptions(correctHTML, distractors);
+  return {
+    qtype: kind,
+    scenario:'咒語碎片捕捉・簡記修復',
+    promptHTML: `修復咒語：<br><span class="op-hl">${promptHTML}</span> = ？`,
+    opts, correctIndex,
+    explain:`正確簡記為 ${correctHTML.replace(/<[^>]+>/g,'')}`,
+    optClass:'opt2'
+  };
+}
+
+/* ---------- Type B: 求值 ---------- */
+function genB(){
+  const useFrac = Math.random()<0.3;
+  let a,x,b, xLabel, val;
+  b = rndInt(-9,9);
+  if(useFrac){
+    const den = rndPick([2,4]);
+    const numChoices = den===2 ? [1,-1,3,-3] : [1,-1,3,-3];
+    const num = rndPick(numChoices);
+    a = rndPick([den, -den, 2*den, -2*den]);
+    x = num/den;
+    xLabel = (num<0? '-':'') + frac(Math.abs(num),den);
+    val = a*x + b;
+  } else {
+    a = rndInt(-9,9); if(a===0) a=3;
+    x = rndInt(-6,6);
+    xLabel = `${x}`;
+    val = a*x + b;
+  }
+  const coefTerm = a===1?'x':(a===-1?'-x':`${a}x`);
+  const exprHTML = `${coefTerm} ${b>=0?'+':'-'} ${Math.abs(b)}`;
+  const {opts, correctIndex} = numericOptions(
+    val,
+    [a*x - b, b - a*x, val+2, val-2, val+4].filter(v=>v!==val),
+    ''
+  );
+  return {
+    qtype: useFrac?'evalFrac':'evalInt',
+    scenario:'能量注入・代入求值',
+    promptHTML:`若 ${exprHTML}，當 x = ${xLabel} 時，咒語能量為？`,
+    opts, correctIndex,
+    explain:`代入 x = ${xLabel.replace(/<[^>]+>/g,'')}：結果為 ${val}`,
+    optClass:'opt2'
+  };
+}
+
+/* ---------- Type C: 括號封印解除 ---------- */
+function genC(){
+  const sign1 = rndSign();
+  const a = rndInt(2,9);
+  const b = rndInt(2,9);
+  const innerSign = rndSign();
+  const innerHTML = `${a}x ${innerSign>0?'+':'-'} ${b}`;
+  const promptHTML = `${sign1>0?'+':'-'}(${innerHTML})`;
+  const coefX = sign1 * a;             // a>=2，恆不為 0
+  const cst = sign1 * innerSign * b;   // b>=2，恆不為 0
+  const correctHTML = linearHTML(coefX, cst);
+  // 三種錯誤都用「刻意翻轉正確答案某一項的正負號」來產生，
+  // 因為 coefX、cst 恆不為 0，三個選項保證彼此不同、也保證跟正確答案不同
+  const distractors = [
+    linearHTML(-coefX, cst),   // x 項符號忘記變
+    linearHTML(coefX, -cst),   // 常數項符號忘記變
+    linearHTML(-coefX, -cst)   // 兩項都用反了
+  ];
+  const {opts, correctIndex} = buildOptions(correctHTML, distractors);
+  return {
+    qtype: sign1>0?'posSign':'negSign',
+    scenario:'分配律天秤・括號封印解除',
+    promptHTML:`解除封印：<br><span class="op-hl">${promptHTML}</span> = ？`,
+    opts, correctIndex,
+    explain:`括號前是「${sign1>0?'正':'負'}」號，${sign1>0?'內部保持不變':'內部每一項都要變號'}`,
+    optClass:'opt2'
+  };
+}
+
+/* ---------- Type D: 複合化簡 ---------- */
+function genD(){
+  const p = rndInt(2,6), q = rndInt(2,6);
+  const a = rndInt(2,9), c = rndInt(2,9);
+  const b = rndInt(2,9), d = rndInt(2,9);
+  const s1 = rndSign(), s2 = rndSign();
+  const op2 = rndSign(); // + or - between the two bracket terms
+  const promptHTML = `${p}(${a}x ${s1>0?'+':'-'} ${b}) ${op2>0?'+':'-'} ${q}(${c}x ${s2>0?'+':'-'} ${d})`;
+  const coefX = p*a + op2*q*c;
+  const cst = p*s1*b + op2*q*s2*d;
+  const correctHTML = linearHTML(coefX, cst);
+  // coefX、cst 有可能剛好等於 0（例如兩項恰好抵銷），
+  // altVal 保證回傳一個「一定跟原本不一樣」的數字，讓三個錯誤選項
+  // 保證彼此不同、也保證跟正確答案不同
+  const altCoef = altVal(coefX, coefX + q);
+  const altCst  = altVal(cst, cst + d);
+  const distractors = [
+    linearHTML(altCoef, cst),      // x 項係數算錯（忘記分配符號）
+    linearHTML(coefX, altCst),     // 常數項算錯（忘記分配符號）
+    linearHTML(altCoef, altCst)    // 兩項都算錯
+  ];
+  const {opts, correctIndex} = buildOptions(correctHTML, distractors);
+  return {
+    qtype: op2>0?'plusForm':'minusForm',
+    scenario:'分配律天秤・複合化簡試煉',
+    promptHTML:`化簡：<br><span class="op-hl">${promptHTML}</span>`,
+    opts, correctIndex,
+    explain:`展開後同類項合併，結果為 ${correctHTML.replace(/<[^>]+>/g,'')}`,
+    optClass:'opt2'
+  };
+}
+
+/* ---------- Type E: 身分鑑定（拆解＋組合兩種模式） ---------- */
+function genE(){
+  const coef = (()=>{let k=rndInt(-9,9); if(k===0)k=rndPick([1,-1,2,-2]); return k;})();
+  let cst = rndInt(-20,20);
+  while(cst===0 || cst===coef){ cst = rndInt(-20,20); }   // 確保常數項不為 0、也不等於係數，避免選項重複
+  const exprHTML = linearHTML(coef, cst);
+  const mode = rndPick(['identify','construct']);
+  if(mode==='identify'){
+    const correctHTML = `一次項係數 ${coef}，常數項 ${cst}`;
+    const distractors = [
+      `一次項係數 ${-coef}，常數項 ${cst}`,
+      `一次項係數 ${coef}，常數項 ${-cst}`,
+      `一次項係數 ${cst}，常數項 ${coef}`
+    ];
+    const {opts, correctIndex} = buildOptions(correctHTML, distractors);
+    return {
+      qtype:'identify',
+      scenario:'分配律天秤・身分鑑定（拆解代數式）',
+      promptHTML:`鑑定咒語結構：<br><span class="op-hl">${exprHTML}</span><br>它的一次項係數與常數項各是多少？`,
+      opts, correctIndex,
+      explain:`x 前面的數字是一次項係數，單獨的數字是常數項`,
+      optClass:'opt1col'
+    };
+  } else {
+    // construct：反過來，給係數與常數項，要學生組出完整代數式
+    const correctHTML = exprHTML;
+    const distractors = [
+      linearHTML(-coef, cst),
+      linearHTML(coef, -cst),
+      linearHTML(-coef, -cst)
+    ];
+    const {opts, correctIndex} = buildOptions(correctHTML, distractors);
+    return {
+      qtype:'construct',
+      scenario:'分配律天秤・身分鑑定（組合代數式）',
+      promptHTML:`一次項係數 = ${coef}，常數項 = ${cst}，這個代數式是？`,
+      opts, correctIndex,
+      explain:`把一次項係數放在 x 前面、常數項接在後面，組成完整代數式 ${correctHTML.replace(/<[^>]+>/g,'')}`,
+      optClass:'opt2'
+    };
+  }
+}
+
+/* ---------- Type F1: 解方程式・基礎（單步驟：加減或乘除，含整數/小數/分數） ---------- */
+function genEq1(){
+  const flavor = rndPick(['int','decimal','frac']);
+  const opKind = rndPick(['addsub','muldiv']);
+  let promptHTML, correct, explain;
+  if(flavor==='int'){
+    if(opKind==='addsub'){
+      const isAdd = Math.random()<0.5;
+      const b = rndInt(1,15);
+      const x = rndInt(-12,12);
+      const c = isAdd ? x+b : x-b;
+      promptHTML = `x ${isAdd?'+':'-'} ${b} = ${c}`;
+      correct = x;
+      explain = `兩邊同時${isAdd?'減去':'加上'} ${b}，解得 x = ${x}`;
+    } else {
+      const isMul = Math.random()<0.5;
+      if(isMul){
+        let a = rndInt(2,9)*rndSign(); if(a===0) a=3;
+        const x = rndInt(-9,9);
+        const c = a*x;
+        promptHTML = `${linearHTML(a,0)} = ${c}`;
+        correct = x;
+        explain = `兩邊同時除以 ${a}，解得 x = ${x}`;
+      } else {
+        let a = rndInt(2,9)*rndSign(); if(a===0) a=3;
+        const c = rndInt(-9,9);
+        const x = a*c;
+        promptHTML = `x &divide; ${a} = ${c}`;
+        correct = x;
+        explain = `兩邊同時乘以 ${a}，解得 x = ${x}`;
+      }
+    }
+  } else if(flavor==='decimal'){
+    const decimalSet = [0.5,1.5,2,2.5,4,5,0.2,0.4];
+    if(opKind==='addsub'){
+      const isAdd = Math.random()<0.5;
+      const b = Math.round(rndInt(1,50))/10;
+      const x = Math.round(rndInt(-50,50))/10;
+      const c = Math.round((isAdd? x+b : x-b)*10)/10;
+      promptHTML = `x ${isAdd?'+':'-'} ${b} = ${c}`;
+      correct = x;
+      explain = `兩邊同時${isAdd?'減去':'加上'} ${b}，解得 x = ${x}`;
+    } else {
+      const isMul = Math.random()<0.5;
+      if(isMul){
+        const a = rndPick(decimalSet);
+        const x = rndInt(-9,9);
+        const c = Math.round(a*x*10)/10;
+        promptHTML = `${a}x = ${c}`;
+        correct = x;
+        explain = `兩邊同時除以 ${a}，解得 x = ${x}`;
+      } else {
+        const a = rndPick(decimalSet);
+        const c = rndInt(-9,9);
+        const x = Math.round(a*c*10)/10;
+        promptHTML = `x &divide; ${a} = ${c}`;
+        correct = x;
+        explain = `兩邊同時乘以 ${a}，解得 x = ${x}`;
+      }
+    }
+  } else { // frac
+    const den = rndPick([2,3,4,5]);
+    let num = rndInt(1,den-1); if(num<1) num=1;
+    if(opKind==='addsub'){
+      const x = rndInt(-6,6);
+      const isAdd = Math.random()<0.5;
+      const cNum = den*x + (isAdd? num : -num);
+      const bHTML = frac(num,den);
+      const cHTML = cNum<0 ? `-${frac(Math.abs(cNum),den)}` : frac(cNum,den);
+      promptHTML = `x ${isAdd?'+':'-'} ${bHTML} = ${cHTML}`;
+      correct = x;
+      explain = `兩邊同時${isAdd?'減去':'加上'} ${num}/${den}，解得 x = ${x}`;
+    } else {
+      const k = rndPick([-4,-3,-2,-1,1,2,3,4]);
+      const x = den*k;
+      const c = num*k;
+      promptHTML = `${frac(num,den)}x = ${c}`;
+      correct = x;
+      explain = `兩邊同時乘以 ${den}/${num}，解得 x = ${x}`;
+    }
+  }
+  const {opts, correctIndex} = numericOptions(
+    correct, [correct+1, correct-1, correct+2, -correct].filter(v=>v!==correct), ''
+  );
+  return {
+    qtype: `${flavor}-${opKind}`,
+    scenario:'分配律天秤・解方程式（基礎：單步驟）',
+    promptHTML: `求出 x 的值：<br><span class="op-hl">${promptHTML}</span>`,
+    opts, correctIndex, explain,
+    optClass:'opt2'
+  };
+}
+
+/* ---------- Type F2: 解方程式・綜合（多步驟，含整數/小數/分數） ---------- */
+function genEq2(){
+  const flavor = rndPick(['int','decimal','frac']);
+  const formKind = flavor==='int' ? rndPick(['twoStep','bothSides']) : 'twoStep';
+  let promptHTML, correct, explain;
+  if(flavor==='int'){
+    if(formKind==='twoStep'){
+      let a = rndInt(2,9)*rndSign(); if(a===0) a=3;
+      const x = rndInt(-9,9);
+      const b = rndInt(-15,15);
+      const c = a*x+b;
+      promptHTML = `${linearHTML(a,b)} = ${c}`;
+      correct = x;
+      explain = `先移項變成 ${linearHTML(a,0).replace(/<[^>]+>/g,'')} = ${c-b}，解得 x = ${x}`;
+    } else {
+      let a = rndInt(2,9)*rndSign(); if(a===0) a=3;
+      let cCoef = rndInt(2,9)*rndSign(); if(cCoef===0 || cCoef===a) cCoef = a + (a>0?1:-1);
+      const x = rndInt(-9,9);
+      const b = rndInt(-12,12);
+      const d = (a-cCoef)*x + b;
+      promptHTML = `${linearHTML(a,b)} = ${linearHTML(cCoef,d)}`;
+      correct = x;
+      explain = `把含 x 的項移到同一邊、常數移到另一邊，解得 x = ${x}`;
+    }
+  } else if(flavor==='decimal'){
+    const decimalSet = [0.5,1.5,2,2.5,4,0.2,0.4];
+    const a = rndPick(decimalSet);
+    const x = rndInt(-9,9);
+    const b = Math.round(rndInt(-40,40))/10;
+    const c = Math.round((a*x+b)*10)/10;
+    promptHTML = `${a}x ${b>=0?'+':'-'} ${Math.abs(b)} = ${c}`;
+    correct = x;
+    explain = `先移項變成 ${a}x = ${Math.round((c-b)*10)/10}，解得 x = ${x}`;
+  } else { // frac
+    const den = rndPick([2,3,4,5]);
+    let num = rndInt(1,den-1); if(num<1) num=1;
+    const k = rndPick([-4,-3,-2,-1,1,2,3,4]);
+    const x = den*k;
+    const b = rndInt(-10,10);
+    const c = num*k + b;
+    promptHTML = `${frac(num,den)}x ${b>=0?'+':'-'} ${Math.abs(b)} = ${c}`;
+    correct = x;
+    explain = `先移項變成 ${frac(num,den)}x = ${c-b}，再乘以 ${den}/${num}，解得 x = ${x}`;
+  }
+  const {opts, correctIndex} = numericOptions(
+    correct, [correct+1, correct-1, correct+3, -correct].filter(v=>v!==correct), ''
+  );
+  return {
+    qtype: `${flavor}-${formKind}`,
+    scenario:'分配律天秤・解方程式（綜合：多步驟）',
+    promptHTML: `求出 x 的值：<br><span class="op-hl">${promptHTML}</span>`,
+    opts, correctIndex, explain,
+    optClass:'opt2'
+  };
+}
+
+/* ---------- Type G(舊F): 符號商人的生存戰（多種情境列式應用題） ---------- */
+function genF_discount(){
+  const oldFold = rndPick([0.9,0.85,0.8,0.75,0.7]);
+  const inflatePct = rndPick([5,8,10,12,15,18,20,25,30]);
+  const newFold = rndPick([0.9,0.85,0.8,0.75,0.7,0.6]);
+  const newMult = Math.round((1+inflatePct/100)*newFold*1000)/1000;
+  const diff = Math.round((newMult-oldFold)*1000)/1000;
+  let correctHTML;
+  if(diff>0.005) correctHTML='陷阱！實際變貴了';
+  else if(diff<-0.005) correctHTML='真划算！變便宜了';
+  else correctHTML='沒有差別，一樣的價格';
+  const allOpts = ['陷阱！實際變貴了','真划算！變便宜了','沒有差別，一樣的價格'];
+  const oldFoldText = Math.round(oldFold*100)/10;
+  const newFoldText = Math.round(newFold*100)/10;
+  return {
+    qtype:'discount',
+    scenario:'符號商人的生存戰・價格偽裝',
+    promptHTML:`商人公告：「原本會員優惠 ${oldFoldText}折，現在調漲 ${inflatePct}%，改為 ${newFoldText}折優惠。」<br>設原價為 x 元，這是真划算還是話術陷阱？`,
+    opts: allOpts, correctIndex: allOpts.indexOf(correctHTML),
+    explain:`新價格＝(1+${inflatePct}%)×${newFoldText}折 = ${newMult}x，原本是 ${oldFoldText}折＝${oldFold}x，比較兩者大小即可判斷`,
+    optClass:'opt3'
+  };
+}
+function genF_age(){
+  const names = [['小安','小新'],['阿凱','阿翔'],['姐姐','妹妹'],['哥哥','弟弟'],['小婷','小雨']];
+  const [nameOld, nameYoung] = rndPick(names);
+  const youngerAge = rndInt(6,16);
+  const diff = rndInt(2,12);
+  const olderAge = youngerAge + diff;
+  const total = youngerAge + olderAge;
+  const promptHTML = `${nameOld}比${nameYoung}大 ${diff} 歲，兩人年齡合計 ${total} 歲。<br>設${nameYoung}的年齡為 x 歲，則 ${nameOld}是 (x + ${diff}) 歲，可列式：<br>x + (x + ${diff}) = ${total}<br>請問 ${nameYoung} 今年幾歲？`;
+  const {opts, correctIndex} = numericOptions(
+    youngerAge,
+    [olderAge, youngerAge+2, youngerAge-2, diff].filter(v=>v>0 && v!==youngerAge),
+    ' 歲'
+  );
+  return {
+    qtype:'age',
+    scenario:'符號商人的生存戰・年齡謎題',
+    promptHTML, opts, correctIndex,
+    explain:`化簡得 2x + ${diff} = ${total}，解得 x = ${youngerAge}`,
+    optClass:'opt2'
+  };
+}
+function genF_basketball(){
+  const players = ['小杰','阿翔','小宇','阿凱'];
+  const player = rndPick(players);
+  const twoPt = rndInt(2,12);
+  const totalShots = twoPt + rndInt(1,10);
+  const threePt = totalShots - twoPt;
+  const score = 2*twoPt + 3*threePt;
+  const promptHTML = `${player}在比賽中投進兩分球和三分球，共投進 ${totalShots} 球，總得分 ${score} 分。<br>設兩分球進了 x 球，三分球就進了 (${totalShots} − x) 球，可列式：<br>2x + 3(${totalShots} − x) = ${score}<br>請問${player}投進了幾顆兩分球？`;
+  const {opts, correctIndex} = numericOptions(
+    twoPt,
+    [threePt, twoPt+2, twoPt-2, totalShots-twoPt+1].filter(v=>v>=0 && v<=totalShots && v!==twoPt),
+    ' 球'
+  );
+  return {
+    qtype:'basketball',
+    scenario:'符號商人的生存戰・籃球得分推理',
+    promptHTML, opts, correctIndex,
+    explain:`化簡得 −x + ${3*totalShots} = ${score}，解得 x = ${twoPt}`,
+    optClass:'opt2'
+  };
+}
+function genF_mix(){
+  const pairs = [['雞蛋糕','地瓜球'],['包子','蘿蔔糕'],['珍珠奶茶','紅茶'],['刈包','蔥油餅']];
+  const [itemA, itemB] = rndPick(pairs);
+  const priceA = rndInt(15,40);
+  let priceB = rndInt(10,35);
+  while(priceB === priceA){ priceB = rndInt(10,35); }
+  const xA = rndInt(1,10);
+  const totalCount = xA + rndInt(1,10);
+  const xB = totalCount - xA;
+  const totalPrice = priceA*xA + priceB*xB;
+  const promptHTML = `小美買了${itemA}和${itemB}共 ${totalCount} 份，${itemA}一份 ${priceA} 元，${itemB}一份 ${priceB} 元，總共花了 ${totalPrice} 元。<br>設買了 x 份${itemA}，則買了 (${totalCount} − x) 份${itemB}，可列式：<br>${priceA}x + ${priceB}(${totalCount} − x) = ${totalPrice}<br>請問小美買了幾份${itemA}？`;
+  const {opts, correctIndex} = numericOptions(
+    xA,
+    [xB, xA+2, xA-2, totalCount-xA+1].filter(v=>v>=0 && v<=totalCount && v!==xA),
+    ' 份'
+  );
+  return {
+    qtype:'mix',
+    scenario:'符號商人的生存戰・混合採購推理',
+    promptHTML, opts, correctIndex,
+    explain:`化簡後可解得 x = ${xA}`,
+    optClass:'opt2'
+  };
+}
+function genF(){
+  const pool = [genF_discount, genF_age, genF_basketball, genF_mix];
+  return rndPick(pool)();
+}
+
+/* ---------- Type G: 合理性之鏡 ---------- */
+const SCENARIOS_G = [
+  {name:'購買披薩的數量', unit:'個', rule:'posInt'},
+  {name:'使者的生日日期', unit:'日', rule:'date'},
+  {name:'分裝糖果的人數', unit:'人', rule:'posInt'},
+  {name:'走路花費的秒數', unit:'秒', rule:'nonNeg'},
+  {name:'班上的座號', unit:'號', rule:'posInt'},
+  {name:'買飲料的杯數', unit:'杯', rule:'posInt'},
+  {name:'使者的年齡', unit:'歲', rule:'posInt'},
+  {name:'折扣後的價錢', unit:'元', rule:'nonNeg'},
+  {name:'探索隊伍人數', unit:'人', rule:'posIntMin1'},
+  {name:'魔法繩的長度', unit:'公分', rule:'posNum'}
+];
+function isReasonable(rule, val){
+  switch(rule){
+    case 'posInt': return Number.isInteger(val) && val>0;
+    case 'posIntMin1': return Number.isInteger(val) && val>=1;
+    case 'date': return Number.isInteger(val) && val>=1 && val<=31;
+    case 'nonNeg': return val>=0;
+    case 'posNum': return val>0;
+  }
+}
+function genG(){
+  const sc = rndPick(SCENARIOS_G);
+  const makeValid = Math.random()<0.5;
+  let val;
+  if(makeValid){
+    if(sc.rule==='date') val=rndInt(1,28);
+    else if(sc.rule==='posNum') val = rndPick([2.5,4,6.5,10,12.2,3]);
+    else if(sc.rule==='nonNeg') val = rndPick([0,3.5,7,12,20]);
+    else val = rndInt(1,20);
+  } else {
+    const badType = rndPick(['neg','decimal','zero']);
+    if(badType==='neg') val = -rndInt(1,10);
+    else if(badType==='decimal' && (sc.rule==='posInt'||sc.rule==='posIntMin1'||sc.rule==='date')) val = rndPick([2.4,3.7,5.5,8.2]);
+    else if(badType==='zero' && sc.rule==='posIntMin1') val = 0;
+    else val = -rndInt(1,10);
+  }
+  const reasonable = isReasonable(sc.rule, val);
+  const valText = Number.isInteger(val) ? val : val.toFixed(1);
+  const opts = ['合理 ✓ 可以成立','不合理 ✗ 必須捨去'];
+  return {
+    qtype: sc.rule,
+    scenario:'合理性之鏡・解答真偽判定',
+    promptHTML:`情境：x 代表「${sc.name}」（單位：${sc.unit}）<br>解出 x = ${valText}，這個答案合理嗎？`,
+    opts, correctIndex: reasonable?0:1,
+    explain: reasonable ? `${sc.name}可以是這個數值，答案成立` : `${sc.name}不可能是這個數值（需符合現實限制），此解要捨去`,
+    optClass:'opt2'
+  };
+}
+
+/* ---------- Boss：綜合試煉 ---------- */
+function genBoss(){
+  const pool=[genA,genB,genC,genD,genE,genEq1,genEq2,genF,genG];
+  return rndPick(pool)();
+}
+
+/* ============================================================
+   關卡執行器：讀網址參數 ?id= 決定要跑哪一個小關卡
+============================================================ */
+const $=s=>document.querySelector(s);
+const STAGE_DEFS = {
+  '5-1': {title:'咒語簡記修復', desc:'把繁瑣的乘除運算修復成最簡潔的代數簡記，整數、小數、分數都會出現。', gen:genA},
+  '5-2': {title:'能量注入求值', desc:'將指定的 x 值代入咒語，算出真正的能量結果。', gen:genB},
+  '6-1': {title:'括號封印解除', desc:'判斷括號前的正負號，正確展開每一項。', gen:genC},
+  '6-2': {title:'複合化簡試煉', desc:'展開兩組括號並合併同類項，維持法力平衡。', gen:genD},
+  '6-3': {title:'身分鑑定', desc:'辨認一次項係數與常數項，或反過來組出完整代數式。', gen:genE},
+  '6-4': {title:'解方程式・基礎', desc:'整數、分數、小數的一元一次方程式，單步驟加減或乘除求 x。', gen:genEq1},
+  '6-5': {title:'解方程式・綜合', desc:'更難的多步驟方程式，整數、分數、小數混合出題求 x。', gen:genEq2},
+  '7-1': {title:'生活情境列式大挑戰', desc:'年齡問題、籃球得分、混合採購、價格陷阱，練習列方程式並算出答案。', gen:genF},
+  '7-2': {title:'合理性之鏡', desc:'判斷解出的未知數在現實情境中是否合理。', gen:genG},
+  '7-3': {title:'符號大師認證考試', desc:'綜合九大試煉的所有題型，證明你是真正的代數大師！', gen:genBoss},
+};
+function getParam(name){ return new URLSearchParams(location.search).get(name); }
+const SID = STAGE_DEFS[getParam('id')] ? getParam('id') : '5-1';
+const DEF = STAGE_DEFS[SID];
+document.title = DEF.title + '｜代數異世界';
+$('#stageTitle').textContent = '🔮 ' + DEF.title;
+$('#stageDesc').textContent = DEF.desc;
+
+const EMB = window.parent !== window;
+function log(ok, qtype){ if(EMB && !MS.active()) parent.postMessage({type:'wave-log', id:SID, qtype:qtype, ok:ok}, '*'); }
+
+// 每一關的「實戰／修羅」每題秒數（代數題要列式、計算，時間比整數關卡寬鬆；想調整改這裡）
+const TIMES = {'5-1':[20,12],'5-2':[25,15],'6-1':[25,15],'6-3':[25,15],'6-5':[40,30],'7-1':[45,35],'7-3':[45,35]};
+const TT = TIMES[SID] || [30,20];
+const MODES = {easy:{t:0}, real:{t:TT[0]}, hard:{t:TT[1]}};
+$('#m-real').textContent = `每題 ${TT[0]} 秒，逾時視為答錯`;
+$('#m-hard').textContent = `每題 ${TT[1]} 秒，更緊迫`;
+
+let mode='easy', idx=0, q=null, hearts=5, combo=0, score=0, right=0, wrongs=[], lock=true, left=0, tm=0;
+
+function show(id){ ['s-start','s-game','s-end'].forEach(s=>$('#'+s).classList.toggle('hide', s!=id)); }
+function drawHearts(){ $('#hearts').textContent = '❤️'.repeat(hearts)+'🖤'.repeat(5-hearts); }
+function drawCombo(){ $('#combo').textContent = combo>=2?`🔥 連擊 ×${combo}`:''; }
+function say(html, cls){ const e=$('#say'); e.className=cls||''; e.innerHTML=html; }
+function paint(){
+  const T=MODES[mode].t;
+  $('#bar').style.width = T ? (left/T*100)+'%' : '100%';
+  $('#sec').textContent = T ? Math.ceil(left)+' 秒' : '不限時';
+}
+function startTimer(){
+  clearInterval(tm);
+  const T=MODES[mode].t; left=T; paint(); if(!T) return;
+  tm=setInterval(()=>{
+    left-=0.1; paint();
+    if(left<=0){ clearInterval(tm); miss(null); }
+  },100);
+}
+
+function start(){
+  MS.begin(false);
+  hearts=5; combo=0; score=0; right=0; wrongs=[]; idx=0;
+  show('s-game'); drawHearts(); drawCombo(); next();
+}
+function next(){
+  clearInterval(tm);
+  if(MS.halt()) return;
+  if(MS.active()) mode = MS.prep(idx+1);
+  if(hearts<=0 || (!MS.active() && idx>=10)) return finish();
+  q = DEF.gen(); lock=false; idx++;
+  $('#wave').textContent = MS.wave(idx,10,'題');
+  $('#scen').textContent = q.scenario;
+  $('#qt').innerHTML = q.promptHTML;
+  $('#say').classList.add('hide');
+  const o = $('#opts');
+  o.className = 'opts' + (q.optClass==='opt3' ? ' opt3' : '');
+  o.innerHTML='';
+  q.opts.forEach((html,i)=>{
+    const b=document.createElement('button');
+    b.className='opt'; b.innerHTML=html;
+    b.onclick=()=>answer(i,b);
+    o.appendChild(b);
+  });
+  startTimer();
+}
+function answer(i, btn){
+  if(lock) return;
+  if(i===q.correctIndex){
+    lock=true; clearInterval(tm);
+    btn.classList.add('ok'); combo++; right++; log(true,q.qtype);
+    const gain=100+(combo-1)*20; score+=gain; drawCombo();
+    document.querySelectorAll('#opts .opt').forEach(b=>b.disabled=true);
+    $('#say').classList.remove('hide');
+    say(`✨ 正確！${q.explain}`+(combo>=3?`　🔥 ${combo} 連擊！`:''),'win');
+    setTimeout(next,1100);
+  } else {
+    btn.classList.add('bad');
+    miss(btn);
+  }
+}
+function miss(btn){
+  if(lock) return;
+  lock=true; clearInterval(tm);
+  hearts--; combo=0; wrongs.push(q); log(false,q.qtype); drawHearts(); drawCombo();
+  document.querySelectorAll('#opts .opt').forEach((b,bi)=>{ b.disabled=true; if(bi===q.correctIndex) b.classList.add('ok'); });
+  $('#say').classList.remove('hide');
+  say(`<b>${btn?'💥 再想想～':'⏰ 時間到！'}</b><br>🧙 解析：${q.explain}<br><button class="btn" id="nx" style="margin-top:8px">${hearts<=0?'查看戰報':'下一題'}</button>`,'lose');
+  $('#nx').onclick=next; $('#nx').focus();
+}
+function finish(){
+  clearInterval(tm);
+  show('s-end');
+  const fail = hearts<=0;
+  const stars = fail?0: wrongs.length<=1?3: wrongs.length<=3?2:1;
+  $('#e-title').textContent = fail? '法力耗盡了…' : ['','新兵見習','資深使者','符號大師'][stars]+'　試煉完成！';
+  $('#e-stars').textContent = fail? '💔' : '⭐'.repeat(stars)+'☆'.repeat(3-stars);
+  $('#e-info').textContent = `戰功 ${score}　答對 ${right}/10　剩餘法力 ${hearts} 點`;
+  const j=$('#e-jail'); j.innerHTML='';
+  if(wrongs.length){
+    const h=document.createElement('div'); h.innerHTML=`<b>⛓️ 錯題筆記（${wrongs.length} 題）</b>`; j.appendChild(h);
+    wrongs.forEach(w=>{ const d=document.createElement('div'); d.innerHTML=`${w.promptHTML}<br>解析：${w.explain}`; j.appendChild(d); });
+  }
+  $('#back').classList.toggle('hide', !EMB);
+  MS.result({sid:SID, emb:EMB, rescue:false, mode:mode, stars:stars, fail:fail, score:score, right:right, total:10});
+}
+$('#modes').onclick=e=>{const b=e.target.closest('.mode');if(!b)return;mode=b.dataset.m;document.querySelectorAll('.mode').forEach(x=>x.classList.toggle('on',x==b))};
+$('#go').onclick=start;
+$('#again').onclick=()=>show('s-start');
+$('#back').onclick=()=>parent.postMessage({type:'stage-exit'},'*');
+show('s-start');
+MS.init(MODES, SID);
+</script>
+</body>
+</html>

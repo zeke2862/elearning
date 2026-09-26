@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>3-4 Boss 混沌煉金術士｜韓信點兵：數字戰線</title>
+<style>
+:root{--ink:#161a2e;--ink2:#20264a;--line:#3a4270;--bronze:#d2a24c;--paper:#f1e8d2;--red:#d24a33;--jade:#43a58f;--txt:#e9e4d4}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(ellipse at top,#252c56,var(--ink) 65%);color:var(--txt);font-family:"Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif;min-height:100vh}
+h1,h2,.serif{font-family:"Noto Serif TC","Songti TC","PMingLiU",serif}
+main{max-width:720px;margin:0 auto;padding:16px}
+.hide{display:none!important}
+button{font:inherit;cursor:pointer;color:inherit}
+button:focus-visible{outline:3px solid var(--bronze);outline-offset:2px}
+.card{background:var(--ink2);border:2px solid var(--line);border-radius:14px;padding:18px}
+.btn{background:var(--bronze);color:#2a1d05;border:0;border-radius:10px;padding:12px 22px;font-weight:700;font-size:1.05rem}
+.btn.ghost{background:transparent;color:var(--bronze);border:2px solid var(--bronze)}
+.modes{display:grid;gap:10px;margin:16px 0}
+.mode{text-align:left;background:var(--ink);border:2px solid var(--line);border-radius:12px;padding:12px 14px}
+.mode.on{border-color:var(--bronze);background:#2b2a3c}
+.mode b{font-size:1.1rem}.mode small{display:block;opacity:.75;margin-top:2px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px;font-weight:700}
+.hearts{letter-spacing:2px}
+.combo{color:var(--bronze);min-width:5em;text-align:right}
+.field{position:relative;height:96px;margin:12px 0;border-radius:12px;background:linear-gradient(#1b2040,#2b3160);border:2px solid var(--line);overflow:hidden}
+.field::after{content:"";position:absolute;left:0;right:0;bottom:0;height:22px;background:#3b3f2e}
+.wall{position:absolute;right:0;top:0;bottom:0;width:20%;background:repeating-linear-gradient(#6a5a45 0 14px,#57493a 14px 16px);border-left:4px solid var(--bronze);display:flex;align-items:center;justify-content:center;font-size:2rem}
+#enemy{position:absolute;bottom:14px;left:0;font-size:2.4rem;transition:left .15s linear,opacity .6s,transform .6s;white-space:nowrap}
+#enemy.dead{opacity:0;transform:translateY(-30px) rotate(20deg) scale(1.4)}
+.timebar{height:8px;background:var(--ink);border-radius:6px;overflow:hidden}
+#bar{height:100%;background:var(--jade);width:100%;transition:width .1s linear}
+.q{background:var(--paper);color:#2b2416;border-radius:12px;padding:18px;margin:12px 0;text-align:center}
+.q .t{font-size:1.25rem;font-weight:700;line-height:1.5}
+.q .hint{margin-top:8px;font-size:.95rem;color:#7a4a12}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.opt{background:var(--ink2);border:2px solid var(--bronze);border-radius:12px;padding:16px 6px;font-size:1.5rem;font-weight:700;font-variant-numeric:tabular-nums}
+.opt:hover:not(:disabled){background:#33396b}
+.opt.ok{background:var(--jade);border-color:var(--jade);color:#06231c}
+.opt.bad{background:var(--red);border-color:var(--red)}
+.opt.cut{opacity:.15;pointer-events:none}
+.tools{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.tool{flex:1;min-width:100px;background:var(--ink);border:2px solid var(--line);border-radius:10px;padding:8px}
+.tool:disabled{opacity:.35;cursor:not-allowed}
+#say{margin-top:12px;border-left:5px solid var(--bronze);background:var(--ink);padding:12px 14px;border-radius:8px;line-height:1.7}
+#say.win{border-color:var(--jade)}#say.lose{border-color:var(--red)}
+.bp{grid-column:1/-1;background:var(--ink2);border:2px solid var(--bronze);border-radius:12px;padding:12px;text-align:center}
+.tg{display:grid;gap:2px;justify-content:center;max-height:150px;overflow:auto;margin-bottom:8px;padding:4px}
+.tg i{width:16px;height:16px;border-radius:3px;display:block}
+.tg i.g{background:var(--jade)}.tg i.y{background:var(--bronze)}.tg i.r{background:var(--red)}
+.bi{min-height:1.6em;margin-bottom:8px;line-height:1.5}
+.stp{display:flex;gap:10px;align-items:center;justify-content:center;font-size:1.1rem;margin-bottom:10px}
+.stp input{width:4.2em;font:inherit;font-size:1.2rem;text-align:center;border-radius:8px;border:2px solid var(--bronze);background:var(--ink);color:var(--txt);padding:6px}
+.bb{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.sq{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px}
+.sh{background:var(--ink);border:2px solid var(--bronze);border-radius:10px;padding:14px 4px;font-size:1.4rem;font-weight:700;font-variant-numeric:tabular-nums}
+.sh.on{background:var(--jade);border-color:var(--jade);color:#06231c}
+.sh.pk{outline:3px solid var(--jade)}
+.sh.wr{background:var(--red);border-color:var(--red);color:#fff}
+.lad{background:var(--paper);color:#2b2416;border-radius:10px;padding:10px;margin:8px 0;min-height:56px;font-size:1.25rem;font-weight:700;font-variant-numeric:tabular-nums}
+.lr{display:flex;justify-content:center;align-items:stretch}
+.lr .d{min-width:2.2em;text-align:right;padding-right:.5em;border-right:3px solid #2b2416}
+.lr .v{min-width:4.2em;text-align:left;padding-left:.6em;border-bottom:2px solid #2b2416}
+#tray{gap:8px}#tray .sh{min-width:64px}
+.cols{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-bottom:8px}
+.pc{background:var(--ink);border:2px solid var(--line);border-radius:10px;padding:8px 10px;text-align:center;min-width:68px}
+.stk{display:flex;flex-direction:column-reverse;align-items:center;gap:2px;height:170px;justify-content:flex-start;margin-bottom:6px}
+.stk i{display:block;width:34px;height:14px;background:var(--bronze);border-radius:3px}
+.pc:nth-child(2) .stk i{background:var(--jade)}.pc:nth-child(3) .stk i{background:#6fb7ff}
+.pc:nth-child(4) .stk i{background:var(--red)}.pc:nth-child(5) .stk i{background:#b58cf0}.pc:nth-child(6) .stk i{background:#f0cf85}
+.sm{width:36px;height:36px;font-size:1.2rem;border-radius:8px;border:2px solid var(--bronze);background:var(--ink2);margin:2px}
+.boxes{display:flex;flex-wrap:wrap;gap:4px;justify-content:center;margin:8px 0;max-height:96px;overflow:auto}
+.boxes i{font-style:normal;font-size:1.3rem}
+.bhp{height:12px;background:var(--ink);border:2px solid var(--red);border-radius:8px;overflow:hidden;margin-bottom:8px}#bhpbar{height:100%;width:100%;background:linear-gradient(90deg,#d24a33,#f07a4a);transition:width .5s}
+.stars{font-size:2.6rem;letter-spacing:6px}
+.jail{margin-top:12px;display:grid;gap:8px}
+.jail div{background:var(--ink);border-radius:8px;padding:10px 12px;line-height:1.6;font-size:.95rem}
+@media (max-width:480px){.opt{font-size:1.25rem}.field{height:84px}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<main>
+
+<section id="s-start" class="card">
+  <h1 class="serif" style="margin:0">韓信點兵：數字戰線</h1>
+  <h2 class="serif" style="margin:6px 0 0;color:var(--bronze)">3-4　Boss：混沌煉金術士</h2>
+  <p style="line-height:1.7">混沌煉金術士現身了！他手上有兩把鑰匙：最大公因數 (A, B) 和最小公倍數 [A, B]，還會用「因倍互補公式」考你。兩種配方要同時調對！擊退 10 波敵軍，守住有 5 顆心的城牆！</p>
+  <div class="modes" id="modes">
+    <button class="mode on" data-m="easy"><b>練兵模式</b><small>不限時，適合先熟悉規則</small></button>
+    <button class="mode" data-m="real"><b>實戰模式</b><small>每波 30 秒，敵軍會逼近城牆</small></button>
+    <button class="mode" data-m="hard"><b>修羅模式</b><small>每波 20 秒，數字更大更長</small></button>
+  </div>
+  <button class="btn" id="go">出征！</button>
+</section>
+
+<section id="s-game" class="hide">
+  <div class="top">
+    <span id="wave">第 1/10 波</span>
+    <span class="hearts" id="hearts"></span>
+    <span class="combo" id="combo"></span>
+  </div>
+  <div class="field"><div id="enemy">🧙🛡️</div><div class="wall">🏯</div></div>
+  <div style="font-size:.8rem;opacity:.85">🧙 混沌煉金術士</div><div class="bhp"><div id="bhpbar"></div></div><div class="timebar"><div id="bar"></div></div>
+  <div style="text-align:right;font-size:.85rem;opacity:.8;margin-top:2px" id="sec"></div>
+  <div class="q"><div class="t" id="qt"></div><div class="hint hide" id="hintbox"></div></div>
+  <div class="opts" id="opts"></div>
+  <div class="tools">
+    <button class="tool" id="t-hint">💡 提示</button>
+    <button class="tool" id="t-cut">✂️ 刪去法</button>
+    <button class="tool" id="t-freeze">⏳ 時間凍結</button>
+  </div>
+  <div id="say" class="hide"></div>
+</section>
+
+<section id="s-end" class="card hide" style="text-align:center">
+  <h2 class="serif" id="e-title" style="margin:0"></h2>
+  <div class="stars" id="e-stars"></div>
+  <p id="e-info" style="line-height:1.8"></p>
+  <div id="e-jail" class="jail" style="text-align:left"></div>
+  <p style="margin-top:16px">
+    <button class="btn" id="again">再戰一次</button>
+    <button class="btn ghost" id="rescue">解救戰俘</button>
+    <button class="btn ghost hide" id="back">返回地圖</button>
+  </p>
+</section>
+
+</main>
+<script src="lessons.js"></script>
+<script src="mode-system.js"></script>
+<script>
+const $=s=>document.querySelector(s);
+const R=(a,b)=>Math.floor(Math.random()*(b-a+1))+a;
+const pick=a=>a[R(0,a.length-1)];
+const sh=a=>a.map(v=>[Math.random(),v]).sort((x,y)=>x[0]-y[0]).map(x=>x[1]);
+const MODES={easy:{t:0},real:{t:30},hard:{t:20}};
+const PLAN=['lcm','both','std','comp','both','lcm','comp','word','both','std'];
+const EMB=window.parent!==window,SID='3-4';
+function log(ok){if(EMB&&!rescue)parent.postMessage({type:'wave-log',id:SID,qtype:q.type,ok:ok},'*')}
+let mode='easy',qs=[],idx=0,q=null,hearts=5,combo=0,score=0,right=0,wrongs=[],lock=true,left=0,tm=0,frozenUntil=0,rescue=false,used={};
+
+const gcd=(a,b)=>b?gcd(b,a%b):a,lcm=(a,b)=>a/gcd(a,b)*b;
+const G=a=>a.reduce(gcd),LC=a=>a.reduce(lcm);
+const sup=n=>String(n).split('').map(c=>'⁰¹²³⁴⁵⁶⁷⁸⁹'[c]).join('');
+const term=(b,e)=>e==1?String(b):b+sup(e);
+const fac=n=>{const r=[];for(let p=2;p*p<=n;p++){let e=0;while(n%p==0){n/=p;e++}if(e)r.push([p,e])}if(n>1)r.push([n,1]);return r};
+const stdN=n=>fac(n).map(([p,e])=>term(p,e)).join(' × ');
+function opts(c,g){const s=new Set([c]);while(s.size<4)s.add(g());return sh([...s])}
+function pick3(ans,c){
+  const ok=x=>x!=ans&&x>0&&Number.isInteger(x),w=[...new Set(c)].filter(ok);
+  const f=[ans+1,ans*2,ans+2,ans*3,ans-1].filter(x=>ok(x)&&!w.includes(x));
+  return [...sh(w),...sh(f)].slice(0,3);
+}
+const CFG={easy:{g:[2,6],k:[2,8],n:2},real:{g:[3,12],k:[2,9],n:2},hard:{g:[6,24],k:[2,9],n:3}};
+function nums(c){
+  c=c||CFG[mode];let g,ks;
+  do{g=R(...c.g);ks=Array.from({length:c.n},()=>R(...c.k))}while(G(ks)!=1||new Set(ks).size<c.n);
+  return {g:g,arr:ks.map(k=>k*g)};
+}
+const expl=arr=>{const g=G(arr),l=LC(arr);return arr.map(a=>`${a} = ${stdN(a)}`).join('<br>')+`<br>取指數最少：(${arr.join(', ')}) = ${stdN(g)} = ${g}；取指數最多：[${arr.join(', ')}] = ${stdN(l)} = ${l}。`};
+function gen(t){
+  let o;
+  if(t=='lcm'){
+    const {g,arr}=nums(),l=LC(arr),prod=arr.reduce((a,b)=>a*b,1);
+    o={ans:l,options:sh([l,...pick3(l,[g,prod,l*2,Math.max(...arr),arr.reduce((a,b)=>a+b,0)])]),
+       text:`敵軍盾牌上有這些數：<b>${arr.join('、')}</b>。它們的最小公倍數 [${arr.join(', ')}] 是多少？`,
+       hint:'先拆成質因數，再取所有質因數中「指數最多」的。',explain:expl(arr)};
+  }else if(t=='both'){
+    const {g,arr}=nums(),l=LC(arr);
+    o={kind:'squad',layout:'dual',arr:arr,g:g,l:l,ans:1,options:[],
+       text:`混沌煉金術士拿出鑰匙：<b>${arr.join('、')}</b>。兩種配方要同時調對！（小括號 ( ) 是最大公因數，中括號 [ ] 是最小公倍數）`,
+       hint:'最大公因數取指數最少的，最小公倍數取指數最多的。',
+       ansText:`(${arr.join(', ')}) = ${g}，[${arr.join(', ')}] = ${l}`,explain:expl(arr)};
+  }else if(t=='std'){
+    const P=mode=='easy'?[2,3,5]:[2,3,5,7],EM=mode=='hard'?4:3;
+    const val=e=>P.reduce((a,p,i)=>a*p**e[i],1),S=e=>P.map((p,i)=>e[i]?term(p,e[i]):null).filter(Boolean).join(' × ');
+    let e1,e2,A,B,mx,mn;
+    do{e1=P.map(()=>R(0,EM));e2=P.map(()=>R(0,EM));A=val(e1);B=val(e2);mx=P.map((p,i)=>Math.max(e1[i],e2[i]));mn=P.map((p,i)=>Math.min(e1[i],e2[i]))}
+    while(!P.some((p,i)=>e1[i]>0&&e2[i]>0)||!P.some((p,i)=>e1[i]!=e2[i])||A==B||val(mx)>20000);
+    const ans=val(mx),gg=val(mn),all=P.filter((p,i)=>mx[i]>0),c=[gg,A*B,all.reduce((a,p)=>a*p,1)];
+    all.forEach(p=>{c.push(ans*p);c.push(ans/p)});
+    o={ans:ans,A:A,B:B,options:sh([ans,...pick3(ans,c)]),
+       text:`<b>A = ${S(e1)}</b><br><b>B = ${S(e2)}</b><br>它們的最小公倍數 [A, B] 是多少？`,
+       hint:'所有「出現過」的質因數都要用，指數取「最多」的那個。',
+       explain:`所有出現過的質因數：${all.join('、')}。取指數最多的：${S(mx)} = ${ans}。（取指數最少的是最大公因數，別搞混！）`};
+  }else if(t=='comp'){
+    let g,k1,k2;const c=CFG[mode];
+    do{g=R(...c.g);k1=R(...c.k);k2=R(...c.k)}while(gcd(k1,k2)!=1||k1==k2);
+    const a=g*k1,b=g*k2,l=g*k1*k2,v=R(0,2),law='因倍互補公式：(A, B) × [A, B] = A × B。';
+    if(v==0)o={ans:b,text:`已知兩數的最大公因數是 ${g}、最小公倍數是 ${l}，其中一個數是 ${a}，另一個數是多少？`,
+       wrong:[l/a,a+g,l-a,b+g,b-g,l/g],explain:`${law}${g} × ${l} = ${a} × B，所以 B = ${g*l} ÷ ${a} = ${b}。`};
+    else if(v==1)o={ans:l,text:`兩數是 ${a} 和 ${b}，已知 (${a}, ${b}) = ${g}，那麼 [${a}, ${b}] 是多少？`,
+       wrong:[a*b,a+b,l/g,l*g,Math.max(a,b)],explain:`${law}${g} × [${a}, ${b}] = ${a} × ${b} = ${a*b}，所以最小公倍數 = ${a*b} ÷ ${g} = ${l}。`};
+    else o={ans:g,text:`兩數的乘積是 ${a*b}，最小公倍數是 ${l}，它們的最大公因數是多少？`,
+       wrong:[l/g,l,a*b,g*2,Math.min(a,b)],explain:`${law}(A, B) × ${l} = ${a*b}，所以最大公因數 = ${a*b} ÷ ${l} = ${g}。`};
+    o.options=sh([o.ans,...pick3(o.ans,o.wrong)]);o.v=v;o.a=a;o.b=b;o.g=g;o.l=l;
+    o.hint='兩個數的「最大公因數 × 最小公倍數 = 兩數相乘」。已知三個量，就能算出第四個。';
+    delete o.wrong;
+  }else if(t=='word'){
+    const {g,arr}=nums(CFG.easy),[x,y]=arr,l=lcm(x,y);
+    o={ans:l,x:x,y:y,options:sh([l,...pick3(l,[g,x*y,l*2,x+y])]),
+       text:`兩路公車，一路每 <b>${x}</b> 分鐘發一班，另一路每 <b>${y}</b> 分鐘發一班。現在兩路同時發車，至少再過幾分鐘會再度同時發車？`,
+       hint:'「同時再遇」、「重複」、「週期」這類字眼，是在找最小公倍數。',
+       explain:`${x} = ${stdN(x)}，${y} = ${stdN(y)}，[${x}, ${y}] = ${l}。所以每 ${l} 分鐘會同時發車一次。`};
+  }
+  o.type=t;return o;
+}
+function buildPanel(){
+  const box=document.createElement('div');box.className='bp';
+  const a=q.arr;
+  box.innerHTML=`<div class="stp"><label>(${a.join(', ')}) ＝ <input type="number" id="gv" min="1"></label></div><div class="stp"><label>[${a.join(', ')}] ＝ <input type="number" id="lv" min="1"></label></div><div class="bi" id="bi"></div><div class="bb"><button class="btn" id="sub">⚗️ 調配！</button></div>`;
+  $('#opts').appendChild(box);
+  let wrong=0;const dummy=()=>document.createElement('button');
+  $('#sub').onclick=()=>{
+    if(lock)return;
+    const gv=$('#gv').value,lv=$('#lv').value;
+    if(gv===''||lv===''){$('#bi').textContent='⚠️ 兩個配方都要填喔！';return}
+    const gok=+gv==q.g,lok=+lv==q.l;
+    if(gok&&lok){answer(1,dummy());return}
+    wrong++;combo=0;drawCombo();
+    $('#bi').textContent=`${gok?'✅':'❌'} 最大公因數　${lok?'✅':'❌'} 最小公倍數　（${wrong}/3）`;
+    if(wrong>=3)answer(0,dummy());
+  };
+}
+
+// ---------- 畫面 ----------
+function show(id){['s-start','s-game','s-end'].forEach(s=>$('#'+s).classList.toggle('hide',s!=id))}
+function drawHearts(){$('#hearts').textContent='❤️'.repeat(hearts)+'🖤'.repeat(5-hearts)}
+function drawCombo(){$('#combo').textContent=combo>=2?`🔥 連擊 ×${combo}`:''}
+function say(html,cls){const e=$('#say');e.className=cls||'';e.innerHTML=html}
+function paint(){
+  const T=MODES[mode].t;
+  $('#enemy').style.left=(T?(1-left/T)*74:28)+'%';
+  $('#bar').style.width=T?(left/T*100)+'%':'100%';
+  $('#sec').textContent=T?Math.ceil(left)+' 秒':'不限時';
+}
+
+function start(types,isRescue){
+  rescue=!!isRescue;qs=MS.begin(rescue)?[]:types.map(gen);idx=0;hearts=5;combo=0;score=0;right=0;wrongs=[];
+  used={hint:0,cut:0,freeze:0};
+  show('s-game');drawHearts();drawCombo();$('#bhpbar').style.width='100%';next();
+}
+function next(){
+  clearInterval(tm);
+  if(MS.halt())return;
+  if(MS.active()){mode=MS.prep(idx+1);if(idx>=qs.length&&hearts>0)qs.push(gen(MS.pick(PLAN)))}
+  if(idx>=qs.length||hearts<=0)return finish();
+  q=qs[idx++];lock=false;
+  $('#wave').textContent=MS.wave(idx,qs.length,'波')+(rescue?'（解救戰俘）':'');
+  $('#qt').innerHTML=q.text;
+  $('#hintbox').classList.add('hide');
+  say('');$('#say').classList.add('hide');
+  $('#enemy').className='';
+  const o=$('#opts');o.innerHTML='';
+  q.options.forEach(v=>{const b=document.createElement('button');b.className='opt';b.textContent=v;b.dataset.v=v;b.onclick=()=>answer(v,b);o.appendChild(b)});
+  if(q.kind=='squad')buildPanel();
+  $('#t-hint').disabled=!!used.hint;$('#t-cut').disabled=!!used.cut||q.kind=='squad';
+  $('#t-freeze').disabled=!!used.freeze||!MODES[mode].t;
+  startTimer();
+}
+function startTimer(){
+  const T=MODES[mode].t;left=T;frozenUntil=0;paint();if(!T)return;
+  tm=setInterval(()=>{
+    if(Date.now()<frozenUntil)return;
+    left-=0.1;paint();
+    if(left<=0){clearInterval(tm);miss(null)}
+  },100);
+}
+function answer(v,btn){
+  if(lock)return;
+  if(v===q.ans){
+    lock=true;clearInterval(tm);
+    btn.classList.add('ok');combo++;right++;log(true);$('#bhpbar').style.width=MS.hp(right,qs.length)+'%';
+    const gain=100+(combo-1)*20;score+=gain;drawCombo();
+    $('#enemy').classList.add('dead');
+    $('#say').classList.remove('hide');
+    say(`⚔️ 擊退敵軍！ +${gain} 戰功`+(combo>=3?`　🔥 ${combo} 連擊！`:''),'win');
+    setTimeout(next,1000);
+  }else{
+    btn.classList.add('bad');miss(btn);
+  }
+}
+function miss(btn){
+  if(lock)return;
+  lock=true;clearInterval(tm);
+  hearts--;combo=0;wrongs.push(q);log(false);drawHearts();drawCombo();
+  document.querySelectorAll('.opt').forEach(b=>{if(b.dataset.v===String(q.ans))b.classList.add('ok')});
+  $('#say').classList.remove('hide');
+  say(`<b>${btn?'❌ 城牆受損！':'⏰ 時間到，敵軍撞上城牆！'}</b><br>🧙 軍師說：正確答案是 <b>${q.ansText!==undefined?q.ansText:q.ans}</b>。${q.explain}<br><button class="btn" id="nx" style="margin-top:8px">${hearts<=0?'查看戰報':'下一波'}</button>`,'lose');
+  $('#nx').onclick=next;$('#nx').focus();
+}
+function finish(){
+  clearInterval(tm);show('s-end');
+  const fail=hearts<=0,total=qs.length;
+  let stars=fail?0:wrongs.length<=1?3:wrongs.length<=3?2:1;
+  if(rescue){
+    $('#e-title').textContent='解救戰俘行動結束';
+    $('#e-stars').textContent='';
+    $('#e-info').textContent=`成功救回 ${right}/${total} 位戰俘。`+(right==total?'全員歸隊！':'沒救出的，下次再來！');
+  }else{
+    $('#e-title').textContent=fail?'城牆倒塌了…':'混沌煉金術士被擊敗了！';
+    $('#e-stars').textContent=fail?'💔':'⭐'.repeat(stars)+'☆'.repeat(3-stars);
+    $('#e-info').innerHTML=`戰功 ${score}　答對 ${right}/${total}　剩餘城牆 ${hearts} 顆心`+(fail?'':'<br>🃏 掉落收藏卡：<b>項羽</b>——力氣大、打仗猛的西楚霸王，最後在垓下兵敗，走到烏江自刎。');
+  }
+  const j=$('#e-jail');j.innerHTML='';
+  if(wrongs.length){
+    const h=document.createElement('div');h.innerHTML=`<b>⛓️ 戰俘營（${wrongs.length} 題）</b>`;j.appendChild(h);
+    wrongs.forEach(w=>{const d=document.createElement('div');d.innerHTML=`${w.text}<br>正解：<b>${w.ansText!==undefined?w.ansText:w.ans}</b>　${w.explain}`;j.appendChild(d)});
+  }
+  $('#rescue').classList.toggle('hide',!wrongs.length||rescue);
+  $('#back').classList.toggle('hide',!EMB);
+  MS.result({sid:SID,emb:EMB,rescue:rescue,mode:mode,stars:stars,fail:fail,score:score,right:right,total:total});
+}
+
+// ---------- 事件 ----------
+$('#modes').onclick=e=>{const b=e.target.closest('.mode');if(!b)return;mode=b.dataset.m;document.querySelectorAll('.mode').forEach(x=>x.classList.toggle('on',x==b))};
+$('#go').onclick=()=>start(PLAN,false);
+$('#back').onclick=()=>parent.postMessage({type:'stage-exit'},'*');
+$('#again').onclick=()=>show('s-start');
+$('#rescue').onclick=()=>start(wrongs.map(w=>w.type),true);
+$('#t-hint').onclick=()=>{if(lock||used.hint)return;used.hint=1;$('#t-hint').disabled=true;const h=$('#hintbox');h.textContent='💡 '+q.hint;h.classList.remove('hide')};
+$('#t-cut').onclick=()=>{if(lock||used.cut)return;used.cut=1;$('#t-cut').disabled=true;
+  sh([...document.querySelectorAll('.opt')].filter(b=>+b.dataset.v!==q.ans)).slice(0,2).forEach(b=>b.classList.add('cut'))};
+$('#t-freeze').onclick=()=>{if(lock||used.freeze)return;used.freeze=1;$('#t-freeze').disabled=true;frozenUntil=Date.now()+10000;
+  $('#say').classList.remove('hide');say('⏳ 時間凍結 10 秒！慢慢想。')};
+MS.init(MODES, SID);
+</script>
+</body>
+</html>

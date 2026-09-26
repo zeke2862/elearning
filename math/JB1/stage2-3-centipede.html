@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>2-3 蜈蚣圖 6n±1｜韓信點兵：數字戰線</title>
+<style>
+:root{--ink:#161a2e;--ink2:#20264a;--line:#3a4270;--bronze:#d2a24c;--paper:#f1e8d2;--red:#d24a33;--jade:#43a58f;--txt:#e9e4d4}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(ellipse at top,#252c56,var(--ink) 65%);color:var(--txt);font-family:"Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif;min-height:100vh}
+h1,h2,.serif{font-family:"Noto Serif TC","Songti TC","PMingLiU",serif}
+main{max-width:720px;margin:0 auto;padding:16px}
+.hide{display:none!important}
+button{font:inherit;cursor:pointer;color:inherit}
+button:focus-visible{outline:3px solid var(--bronze);outline-offset:2px}
+.card{background:var(--ink2);border:2px solid var(--line);border-radius:14px;padding:18px}
+.btn{background:var(--bronze);color:#2a1d05;border:0;border-radius:10px;padding:12px 22px;font-weight:700;font-size:1.05rem}
+.btn.ghost{background:transparent;color:var(--bronze);border:2px solid var(--bronze)}
+.modes{display:grid;gap:10px;margin:16px 0}
+.mode{text-align:left;background:var(--ink);border:2px solid var(--line);border-radius:12px;padding:12px 14px}
+.mode.on{border-color:var(--bronze);background:#2b2a3c}
+.mode b{font-size:1.1rem}.mode small{display:block;opacity:.75;margin-top:2px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px;font-weight:700}
+.hearts{letter-spacing:2px}
+.combo{color:var(--bronze);min-width:5em;text-align:right}
+.field{position:relative;height:96px;margin:12px 0;border-radius:12px;background:linear-gradient(#1b2040,#2b3160);border:2px solid var(--line);overflow:hidden}
+.field::after{content:"";position:absolute;left:0;right:0;bottom:0;height:22px;background:#3b3f2e}
+.wall{position:absolute;right:0;top:0;bottom:0;width:20%;background:repeating-linear-gradient(#6a5a45 0 14px,#57493a 14px 16px);border-left:4px solid var(--bronze);display:flex;align-items:center;justify-content:center;font-size:2rem}
+#enemy{position:absolute;bottom:14px;left:0;font-size:2.4rem;transition:left .15s linear,opacity .6s,transform .6s;white-space:nowrap}
+#enemy.dead{opacity:0;transform:translateY(-30px) rotate(20deg) scale(1.4)}
+.timebar{height:8px;background:var(--ink);border-radius:6px;overflow:hidden}
+#bar{height:100%;background:var(--jade);width:100%;transition:width .1s linear}
+.q{background:var(--paper);color:#2b2416;border-radius:12px;padding:18px;margin:12px 0;text-align:center}
+.q .t{font-size:1.25rem;font-weight:700;line-height:1.5}
+.q .hint{margin-top:8px;font-size:.95rem;color:#7a4a12}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.opt{background:var(--ink2);border:2px solid var(--bronze);border-radius:12px;padding:16px 6px;font-size:1.5rem;font-weight:700;font-variant-numeric:tabular-nums}
+.opt:hover:not(:disabled){background:#33396b}
+.opt.ok{background:var(--jade);border-color:var(--jade);color:#06231c}
+.opt.bad{background:var(--red);border-color:var(--red)}
+.opt.cut{opacity:.15;pointer-events:none}
+.tools{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.tool{flex:1;min-width:100px;background:var(--ink);border:2px solid var(--line);border-radius:10px;padding:8px}
+.tool:disabled{opacity:.35;cursor:not-allowed}
+#say{margin-top:12px;border-left:5px solid var(--bronze);background:var(--ink);padding:12px 14px;border-radius:8px;line-height:1.7}
+#say.win{border-color:var(--jade)}#say.lose{border-color:var(--red)}
+.bp{grid-column:1/-1;background:var(--ink2);border:2px solid var(--bronze);border-radius:12px;padding:12px;text-align:center}
+.tg{display:grid;gap:2px;justify-content:center;max-height:150px;overflow:auto;margin-bottom:8px;padding:4px}
+.tg i{width:16px;height:16px;border-radius:3px;display:block}
+.tg i.g{background:var(--jade)}.tg i.y{background:var(--bronze)}.tg i.r{background:var(--red)}
+.bi{min-height:1.6em;margin-bottom:8px;line-height:1.5}
+.stp{display:flex;gap:10px;align-items:center;justify-content:center;font-size:1.1rem;margin-bottom:10px}
+.stp input{width:4.2em;font:inherit;font-size:1.2rem;text-align:center;border-radius:8px;border:2px solid var(--bronze);background:var(--ink);color:var(--txt);padding:6px}
+.bb{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.sq{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px}
+.sh{background:var(--ink);border:2px solid var(--bronze);border-radius:10px;padding:14px 4px;font-size:1.4rem;font-weight:700;font-variant-numeric:tabular-nums}
+.sh.on{background:var(--jade);border-color:var(--jade);color:#06231c}
+.sh.pk{outline:3px solid var(--jade)}
+.sh.wr{background:var(--red);border-color:var(--red);color:#fff}
+.rl{text-align:center;font-size:.85rem;opacity:.85;align-self:center}
+.stars{font-size:2.6rem;letter-spacing:6px}
+.jail{margin-top:12px;display:grid;gap:8px}
+.jail div{background:var(--ink);border-radius:8px;padding:10px 12px;line-height:1.6;font-size:.95rem}
+@media (max-width:480px){.opt{font-size:1.25rem}.field{height:84px}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<main>
+
+<section id="s-start" class="card">
+  <h1 class="serif" style="margin:0">韓信點兵：數字戰線</h1>
+  <h2 class="serif" style="margin:6px 0 0;color:var(--bronze)">2-3　蜈蚣圖 6n±1</h2>
+  <p style="line-height:1.7">蜈蚣的身體是 6 的倍數，質數只可能躲在兩側的「腳」（6n−1 和 6n+1）上！用蜈蚣圖縮小範圍，再把真正的質數找出來。擊退 10 波敵軍，守住有 5 顆心的城牆！</p>
+  <div class="modes" id="modes">
+    <button class="mode on" data-m="easy"><b>練兵模式</b><small>不限時，適合先熟悉規則</small></button>
+    <button class="mode" data-m="real"><b>實戰模式</b><small>每波 25 秒，敵軍會逼近城牆</small></button>
+    <button class="mode" data-m="hard"><b>修羅模式</b><small>每波 15 秒，蜈蚣圖更長更刁鑽</small></button>
+  </div>
+  <button class="btn" id="go">出征！</button>
+</section>
+
+<section id="s-game" class="hide">
+  <div class="top">
+    <span id="wave">第 1/10 波</span>
+    <span class="hearts" id="hearts"></span>
+    <span class="combo" id="combo"></span>
+  </div>
+  <div class="field"><div id="enemy">🐛🛡️</div><div class="wall">🏯</div></div>
+  <div class="timebar"><div id="bar"></div></div>
+  <div style="text-align:right;font-size:.85rem;opacity:.8;margin-top:2px" id="sec"></div>
+  <div class="q"><div class="t" id="qt"></div><div class="hint hide" id="hintbox"></div></div>
+  <div class="opts" id="opts"></div>
+  <div class="tools">
+    <button class="tool" id="t-hint">💡 提示</button>
+    <button class="tool" id="t-cut">✂️ 刪去法</button>
+    <button class="tool" id="t-freeze">⏳ 時間凍結</button>
+  </div>
+  <div id="say" class="hide"></div>
+</section>
+
+<section id="s-end" class="card hide" style="text-align:center">
+  <h2 class="serif" id="e-title" style="margin:0"></h2>
+  <div class="stars" id="e-stars"></div>
+  <p id="e-info" style="line-height:1.8"></p>
+  <div id="e-jail" class="jail" style="text-align:left"></div>
+  <p style="margin-top:16px">
+    <button class="btn" id="again">再戰一次</button>
+    <button class="btn ghost" id="rescue">解救戰俘</button>
+    <button class="btn ghost hide" id="back">返回地圖</button>
+  </p>
+</section>
+
+</main>
+<script src="lessons.js"></script>
+<script src="mode-system.js"></script>
+<script>
+const $=s=>document.querySelector(s);
+const R=(a,b)=>Math.floor(Math.random()*(b-a+1))+a;
+const pick=a=>a[R(0,a.length-1)];
+const sh=a=>a.map(v=>[Math.random(),v]).sort((x,y)=>x[0]-y[0]).map(x=>x[1]);
+const MODES={easy:{t:0},real:{t:25},hard:{t:15}};
+const PLAN=['fill','chart','cand','chart','trap','fill','chart','why','chart','trap'];
+const NR={easy:[1,8],real:[1,16],hard:[4,16]};
+const EMB=window.parent!==window,SID='2-3';
+function log(ok){if(EMB&&!rescue)parent.postMessage({type:'wave-log',id:SID,qtype:q.type,ok:ok},'*')}
+let mode='easy',qs=[],idx=0,q=null,hearts=5,combo=0,score=0,right=0,wrongs=[],lock=true,left=0,tm=0,frozenUntil=0,rescue=false,used={};
+
+const isP=n=>{if(n<2)return false;for(let i=2;i*i<=n;i++)if(n%i==0)return false;return true};
+const sf=n=>{for(let i=2;i*i<=n;i++)if(n%i==0)return i;return n};
+const feet=n=>n%6==1||n%6==5;
+function opts(c,g){const s=new Set([c]);while(s.size<4)s.add(g());return sh([...s])}
+const foot=c=>{const k=Math.round(c/6);return `6×${k}${c>6*k?'+1':'−1'}`};
+function gen(t){
+  let o;const [lo,hi]=NR[mode],mn=6*lo-1,mx=6*hi+1,all=[];
+  for(let x=mn;x<=mx;x++)all.push(x);
+  if(t=='chart'){
+    let a;do{a=R(lo,hi-3)}while(mode=='real'&&a<=15&&a+3>=15);   // 91 留給 2-4 Boss
+    const nums=[];for(let n=a;n<a+4;n++)nums.push(6*n-1,6*n,6*n+1);
+    const ps=nums.filter(isP);
+    o={kind:'squad',rows:[a,a+1,a+2,a+3],nums:nums,ans:1,options:[],
+       text:'蜈蚣爬過來了！身體（中間一欄）都是 6 的倍數，質數只可能躲在兩側的腳上。點選所有質數，再按發射！',
+       hint:'中間一欄不可能是質數；兩側的腳只要再試試 5 和 7 能不能整除。',
+       ansText:'質數是 '+ps.join('、'),
+       explain:nums.map((x,i)=>i%3==1?`${x}：身體，是 6 的倍數，不是質數`:isP(x)?`${x}：質數`:`${x} = ${sf(x)}×${x/sf(x)}：腳上的合數`).join('<br>')};
+  }else if(t=='fill'){
+    const n=R(lo,hi),arr=[6*n-1,6*n,6*n+1],p=R(0,2),ans=arr[p];
+    o={ans:ans,options:opts(ans,()=>ans+pick([-3,-2,-1,1,2,3])),
+       text:`蜈蚣圖第 n = ${n} 列（6n−1、6n、6n+1）：<b>${arr.map((x,i)=>i==p?'□':x).join('、')}</b>，□ 是多少？`,
+       hint:'先算出 6n（身體），再往左減 1、往右加 1 就是兩隻腳。',
+       explain:`n = ${n}：6n−1 = ${6*n-1}、6n = ${6*n}、6n+1 = ${6*n+1}，所以 □ 是 ${ans}。`};
+  }else if(t=='cand'){
+    const ans=pick(all.filter(x=>!feet(x))),r=ans%6;
+    o={ans:ans,options:opts(ans,()=>pick(all.filter(feet))),
+       text:'哪一個數「不是」6n−1 或 6n+1 的形式（不在蜈蚣的腳上），所以除了 2、3 以外，可以直接確定它不是質數？',
+       hint:'用 6 去除，看餘數：餘數是 1 或 5 的，才在腳上。',
+       explain:`${ans} ÷ 6 = ${Math.floor(ans/6)} 餘 ${r}，餘數不是 1 也不是 5，${r==0?'它是 6 的倍數':r==3?'它是 3 的倍數':'它是 2 的倍數'}，所以一定不是質數。其他選項都在腳上，還要再檢查。`};
+  }else if(t=='trap'){
+    const cs=all.filter(x=>feet(x)&&!isP(x)&&x!=91),ans=pick(cs);
+    const wr=all.filter(x=>x!=91&&(feet(x)?isP(x):true));
+    o={ans:ans,options:opts(ans,()=>pick(wr)),text:'下列哪一個數在蜈蚣的腳上（是 6n−1 或 6n+1），卻「不是」質數？',
+       hint:'腳上的數只是「質數候選」。把在腳上的選項都檢查看看，誰能被 5 或 7 整除？',
+       explain:`${ans} = ${foot(ans)}，在腳上；但 ${ans} = ${sf(ans)}×${ans/sf(ans)}，是合數。所以 6n±1 只是候選，不保證是質數！`};
+  }else{
+    const a='因為 6n、6n+2、6n+4 是 2 的倍數，6n+3 是 3 的倍數，都不會是質數';
+    o={ans:a,options:sh([a,'因為 6 是質數，所以它旁邊的數也是質數','因為 6n−1 和 6n+1 全部都是質數','因為 6n±1 都是奇數，奇數就是質數']),
+       text:'為什麼（除了 2、3）質數只會出現在 6n−1 或 6n+1 的位置？',
+       hint:'把 6 個連續的數 6n、6n+1、…、6n+5 分別看看誰能被 2 或 3 整除。',
+       explain:'6n+0、+2、+4 都是偶數；6n+3 是 3 的倍數；剩下只有 6n+1 和 6n+5（也就是 6n−1）。不過腳上只是「候選」，例如 25、35、49 都在腳上，卻是合數。'};
+  }
+  o.type=t;return o;
+}
+function buildPanel(){
+  const box=document.createElement('div');box.className='bp';
+  box.innerHTML=`<div class="sq" id="sq" style="grid-template-columns:.8fr 1fr 1fr 1fr"></div><div class="bi" id="bi">點選你認為是「質數」的數字，再發射！</div><div class="bb"><button class="btn" id="fire">🏹 發射！</button></div>`;
+  $('#opts').appendChild(box);
+  const sq=$('#sq'),sel=new Set(),dummy=()=>document.createElement('button');
+  sq.innerHTML=['','6n−1','6n 🐛身體','6n+1'].map(x=>`<div class="rl">${x}</div>`).join('');
+  q.nums.forEach((n,i)=>{
+    if(i%3==0){const l=document.createElement('div');l.className='rl';l.textContent='n = '+q.rows[i/3];sq.appendChild(l)}
+    const b=document.createElement('button');b.className='sh';b.textContent=n;
+    b.onclick=()=>{if(lock)return;sel.has(n)?sel.delete(n):sel.add(n);b.classList.toggle('on',sel.has(n));$('#bi').textContent=`已選 ${sel.size} 個`};
+    sq.appendChild(b);
+  });
+  $('#fire').onclick=()=>{
+    if(lock)return;
+    if(!sel.size){$('#bi').textContent='⚠️ 先點選至少一個質數喔！';return}
+    const ok=q.nums.every(n=>sel.has(n)==isP(n));
+    sq.querySelectorAll('.sh').forEach(b=>{const n=+b.textContent;if(isP(n))b.classList.add('pk');if(sel.has(n)!=isP(n))b.classList.add('wr')});
+    answer(ok?1:0,dummy());
+  };
+}
+
+// ---------- 畫面 ----------
+function show(id){['s-start','s-game','s-end'].forEach(s=>$('#'+s).classList.toggle('hide',s!=id))}
+function drawHearts(){$('#hearts').textContent='❤️'.repeat(hearts)+'🖤'.repeat(5-hearts)}
+function drawCombo(){$('#combo').textContent=combo>=2?`🔥 連擊 ×${combo}`:''}
+function say(html,cls){const e=$('#say');e.className=cls||'';e.innerHTML=html}
+function paint(){
+  const T=MODES[mode].t;
+  $('#enemy').style.left=(T?(1-left/T)*74:28)+'%';
+  $('#bar').style.width=T?(left/T*100)+'%':'100%';
+  $('#sec').textContent=T?Math.ceil(left)+' 秒':'不限時';
+}
+
+function start(types,isRescue){
+  rescue=!!isRescue;qs=MS.begin(rescue)?[]:types.map(gen);idx=0;hearts=5;combo=0;score=0;right=0;wrongs=[];
+  used={hint:0,cut:0,freeze:0};
+  show('s-game');drawHearts();drawCombo();next();
+}
+function next(){
+  clearInterval(tm);
+  if(MS.halt())return;
+  if(MS.active()){mode=MS.prep(idx+1);if(idx>=qs.length&&hearts>0)qs.push(gen(MS.pick(PLAN)))}
+  if(idx>=qs.length||hearts<=0)return finish();
+  q=qs[idx++];lock=false;
+  $('#wave').textContent=MS.wave(idx,qs.length,'波')+(rescue?'（解救戰俘）':'');
+  $('#qt').innerHTML=q.text;
+  $('#hintbox').classList.add('hide');
+  say('');$('#say').classList.add('hide');
+  $('#enemy').className='';
+  const o=$('#opts');o.innerHTML='';
+  q.options.forEach(v=>{const b=document.createElement('button');b.className='opt';b.textContent=v;b.dataset.v=v;b.onclick=()=>answer(v,b);o.appendChild(b)});
+  if(q.kind=='squad')buildPanel();
+  $('#t-hint').disabled=!!used.hint;$('#t-cut').disabled=!!used.cut||q.kind=='squad';
+  $('#t-freeze').disabled=!!used.freeze||!MODES[mode].t;
+  startTimer();
+}
+function startTimer(){
+  const T=MODES[mode].t;left=T;frozenUntil=0;paint();if(!T)return;
+  tm=setInterval(()=>{
+    if(Date.now()<frozenUntil)return;
+    left-=0.1;paint();
+    if(left<=0){clearInterval(tm);miss(null)}
+  },100);
+}
+function answer(v,btn){
+  if(lock)return;
+  if(v===q.ans){
+    lock=true;clearInterval(tm);
+    btn.classList.add('ok');combo++;right++;log(true);
+    const gain=100+(combo-1)*20;score+=gain;drawCombo();
+    $('#enemy').classList.add('dead');
+    $('#say').classList.remove('hide');
+    say(`⚔️ 擊退敵軍！ +${gain} 戰功`+(combo>=3?`　🔥 ${combo} 連擊！`:''),'win');
+    setTimeout(next,1000);
+  }else{
+    btn.classList.add('bad');miss(btn);
+  }
+}
+function miss(btn){
+  if(lock)return;
+  lock=true;clearInterval(tm);
+  hearts--;combo=0;wrongs.push(q);log(false);drawHearts();drawCombo();
+  document.querySelectorAll('.opt').forEach(b=>{if(b.dataset.v===String(q.ans))b.classList.add('ok')});
+  $('#say').classList.remove('hide');
+  say(`<b>${btn?'❌ 城牆受損！':'⏰ 時間到，敵軍撞上城牆！'}</b><br>🧙 軍師說：正確答案是 <b>${q.ansText!==undefined?q.ansText:q.ans}</b>。${q.explain}<br><button class="btn" id="nx" style="margin-top:8px">${hearts<=0?'查看戰報':'下一波'}</button>`,'lose');
+  $('#nx').onclick=next;$('#nx').focus();
+}
+function finish(){
+  clearInterval(tm);show('s-end');
+  const fail=hearts<=0,total=qs.length;
+  let stars=fail?0:wrongs.length<=1?3:wrongs.length<=3?2:1;
+  if(rescue){
+    $('#e-title').textContent='解救戰俘行動結束';
+    $('#e-stars').textContent='';
+    $('#e-info').textContent=`成功救回 ${right}/${total} 位戰俘。`+(right==total?'全員歸隊！':'沒救出的，下次再來！');
+  }else{
+    $('#e-title').textContent=fail?'城牆倒塌了…':['','新兵','伍長','校尉'][stars]+'　凱旋！';
+    $('#e-stars').textContent=fail?'💔':'⭐'.repeat(stars)+'☆'.repeat(3-stars);
+    $('#e-info').textContent=`戰功 ${score}　答對 ${right}/${total}　剩餘城牆 ${hearts} 顆心`;
+  }
+  const j=$('#e-jail');j.innerHTML='';
+  if(wrongs.length){
+    const h=document.createElement('div');h.innerHTML=`<b>⛓️ 戰俘營（${wrongs.length} 題）</b>`;j.appendChild(h);
+    wrongs.forEach(w=>{const d=document.createElement('div');d.innerHTML=`${w.text}<br>正解：<b>${w.ansText!==undefined?w.ansText:w.ans}</b>　${w.explain}`;j.appendChild(d)});
+  }
+  $('#rescue').classList.toggle('hide',!wrongs.length||rescue);
+  $('#back').classList.toggle('hide',!EMB);
+  MS.result({sid:SID,emb:EMB,rescue:rescue,mode:mode,stars:stars,fail:fail,score:score,right:right,total:total});
+}
+
+// ---------- 事件 ----------
+$('#modes').onclick=e=>{const b=e.target.closest('.mode');if(!b)return;mode=b.dataset.m;document.querySelectorAll('.mode').forEach(x=>x.classList.toggle('on',x==b))};
+$('#go').onclick=()=>start(PLAN,false);
+$('#back').onclick=()=>parent.postMessage({type:'stage-exit'},'*');
+$('#again').onclick=()=>show('s-start');
+$('#rescue').onclick=()=>start(wrongs.map(w=>w.type),true);
+$('#t-hint').onclick=()=>{if(lock||used.hint)return;used.hint=1;$('#t-hint').disabled=true;const h=$('#hintbox');h.textContent='💡 '+q.hint;h.classList.remove('hide')};
+$('#t-cut').onclick=()=>{if(lock||used.cut)return;used.cut=1;$('#t-cut').disabled=true;
+  sh([...document.querySelectorAll('.opt')].filter(b=>+b.dataset.v!==q.ans)).slice(0,2).forEach(b=>b.classList.add('cut'))};
+$('#t-freeze').onclick=()=>{if(lock||used.freeze)return;used.freeze=1;$('#t-freeze').disabled=true;frozenUntil=Date.now()+10000;
+  $('#say').classList.remove('hide');say('⏳ 時間凍結 10 秒！慢慢想。')};
+MS.init(MODES, SID);
+</script>
+</body>
+</html>

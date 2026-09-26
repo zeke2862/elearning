@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>國一數學戰略地圖｜韓信點兵 × 代數異世界</title>
+<style>
+:root{--ink:#161a2e;--ink2:#20264a;--line:#3a4270;--bronze:#d2a24c;--paper:#f1e8d2;--red:#d24a33;--jade:#43a58f;--txt:#e9e4d4}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(ellipse at top,#252c56,var(--ink) 65%);color:var(--txt);font-family:"Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif;min-height:100vh}
+h1,h2,h3,.serif{font-family:"Noto Serif TC","Songti TC","PMingLiU",serif}
+main{max-width:860px;margin:0 auto;padding:16px 16px 60px}
+button{font:inherit;cursor:pointer;color:inherit}
+button:focus-visible{outline:3px solid var(--bronze);outline-offset:2px}
+.hide{display:none!important}
+.card{background:var(--ink2);border:2px solid var(--line);border-radius:14px;padding:16px}
+.head{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.rank{font-size:2rem;color:var(--bronze);margin:0}
+.grow{flex:1;min-width:200px}
+.pbar{height:12px;background:var(--ink);border-radius:8px;overflow:hidden;margin:6px 0}
+#rbar{height:100%;background:linear-gradient(90deg,var(--bronze),#f0cf85);width:0;transition:width .6s}
+.ch{margin-top:16px}
+.who{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.who input{background:var(--ink);border:2px solid var(--line);border-radius:8px;padding:8px 10px;color:var(--txt);font:inherit;width:9.5em}
+.who button{background:var(--ink);border:2px solid var(--bronze);border-radius:8px;padding:8px 12px}
+.ch h2{margin:0;font-size:1.25rem;color:var(--bronze)}
+.ch small{opacity:.75}
+.nodes{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:10px}
+.node{background:var(--ink);border:2px solid var(--line);border-radius:12px;padding:10px 6px;min-height:104px;text-align:center;display:flex;flex-direction:column;justify-content:center;gap:4px}
+.node b{font-size:1.15rem}
+.node span{font-size:.85rem;line-height:1.3}
+.node:hover:not(.locked){border-color:var(--bronze);background:#2b2a3c}
+.node.boss{border-color:#8a3a2c}
+.node.locked{opacity:.45}
+.node.done{border-color:var(--jade)}
+.node.soon{border-style:dashed}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-top:10px}
+.cd{background:var(--paper);color:#2b2416;border-radius:10px;padding:10px;font-size:.85rem;line-height:1.5;min-height:130px}
+.cd b{font-size:1.2rem;display:block;font-family:"Noto Serif TC","Songti TC",serif}
+.cd.lock{background:var(--ink);color:#8a8fb0;border:2px dashed var(--line)}
+#ov{position:fixed;inset:0;background:var(--ink);z-index:50}
+#fr{width:100%;height:100%;border:0}
+#x{position:absolute;top:8px;right:10px;z-index:60;background:#0008;border:2px solid var(--line);border-radius:8px;padding:2px 10px}
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--bronze);color:#2a1d05;padding:12px 20px;border-radius:10px;font-weight:700;z-index:100;text-align:center;max-width:90vw;line-height:1.6}
+.enode{min-height:84px}
+.enode.done{border-color:#c9a13b}
+.rule{margin-top:12px;line-height:1.8;font-size:.92rem}
+.tiny{margin-top:24px;text-align:center}
+.tiny button{background:none;border:1px solid var(--line);border-radius:8px;padding:6px 14px;opacity:.7}
+@media (max-width:560px){.nodes{grid-template-columns:repeat(2,1fr)}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<main>
+  <h1 class="serif" style="margin:0 0 4px">國一數學戰略地圖</h1>
+  <p style="margin:0 0 14px;opacity:.8">第一章「整數王國」× 第二章「韓信點兵：數字戰線」× 第三章「代數異世界：符號之城的覺醒」</p>
+
+  <section class="card head">
+    <div><p class="rank serif" id="rank"></p><small>目前軍階</small></div>
+    <div class="grow"><b id="tot"></b><div class="pbar"><div id="rbar"></div></div><small id="nxt"></small></div>
+  </section>
+
+  <section class="card rule">
+    <b>⭐ 星等規則</b><br>
+    練兵模式：最多 3 ⭐　→　拿到 3 ⭐ 解鎖「實戰模式」和「♾️ 無極限挑戰」<br>
+    實戰模式：正確率 80% 以上 → 4 ⭐　→　解鎖「修羅模式」<br>
+    修羅模式：正確率 100%（全對）→ 5 ⭐
+  </section>
+
+  <section class="card who" id="who">
+    <b>👤 我的資料</b>
+    <input id="w-cls" placeholder="班級（例：701）" maxlength="20" aria-label="班級">
+    <input id="w-no" placeholder="座號" maxlength="10" aria-label="座號">
+    <input id="w-name" placeholder="姓名或暱稱" maxlength="30" aria-label="姓名或暱稱">
+    <button id="w-save">儲存</button>
+    <button id="w-exp">📤 匯出我的進度</button>
+  </section>
+
+  <div id="map"></div>
+
+  <section class="ch">
+    <h2 class="serif">🃏 歷史人物收藏卡</h2>
+    <small>通關對應的關卡就能收集</small>
+    <div class="cards" id="cards"></div>
+  </section>
+
+  <p class="tiny"><button id="reset">重置我的進度</button></p>
+</main>
+
+<div id="ov" class="hide"><button id="x" aria-label="關閉">✕</button><iframe id="fr" title="關卡"></iframe></div>
+<div id="toast" class="hide"></div>
+
+<script>
+/*LOGIC*/
+const CH1=[{"n": "第 1 大關｜玉山極寒試煉", "sub": "基準點・數線・相反數與絕對值・去括號", "st": [["I-1-1", "基準點與符號", "stage-int.html?id=I-1-1"], ["I-1-2", "數線與比大小", "stage-int.html?id=I-1-2"], ["I-1-3", "相反數與絕對值", "stage-int.html?id=I-1-3"], ["I-1-4", "番外：結界破除", "stage-int.html?id=I-1-4"]]}, {"n": "第 2 大關｜中心線的拉鋸", "sub": "整數加法・減法・距離與中點", "st": [["II-1-1", "整數加法", "stage-int.html?id=II-1-1"], ["II-1-2", "整數減法", "stage-int.html?id=II-1-2"], ["II-1-3", "距離、座標與中點", "stage-int.html?id=II-1-3"]]}, {"n": "第 3 大關｜算籌鏡像迷宮", "sub": "乘法・除法・四則運算・分配律", "st": [["III-1-1", "整數乘法", "stage-int.html?id=III-1-1"], ["III-1-2", "整數除法", "stage-int.html?id=III-1-2"], ["III-1-3", "整數四則運算", "stage-int.html?id=III-1-3"], ["III-1-4", "分配律", "stage-int.html?id=III-1-4"]]}, {"n": "第 4 大關｜星際縮放之鑰", "sub": "指數簡記・乘方運算・科學記號", "st": [["IV-1-1", "指數簡記", "stage-int.html?id=IV-1-1"], ["IV-1-2", "乘方的加減乘除", "stage-int.html?id=IV-1-2"], ["IV-1-3", "科學記號", "stage-int.html?id=IV-1-3"], ["IV-1-4", "Boss：星際縮放大師", "stage-int.html?id=IV-1-4"]]}];
+const CH2=[
+ {n:'第二章一、密碼森林',sub:'因倍數判別',st:[['1-1','2 與 5 濾鏡','stage1-1-filter-2-5.html'],['1-2','3 與 9 濾鏡','stage1-2-filter-3-9.html'],['1-3','11 濾鏡','stage1-3-filter-11.html'],['1-4','Boss：迷霧斥候長','stage1-4-boss-scout.html']]},
+ {n:'第二章二、質數堡壘',sub:'質數與合數',st:[['2-1','基地搭建','stage2-1-tiles.html'],['2-2','質數篩選塔','stage2-2-sieve-tower.html'],['2-3','蜈蚣圖 6n±1','stage2-3-centipede.html'],['2-4','Boss：偽裝者 91','stage2-4-boss-disguiser.html']]},
+ {n:'第二章三、鍊金實驗室',sub:'短除法與最大公因數',st:[['3-1','短除法拆解','stage3-1-ladder.html'],['3-2','標準分解式','stage3-2-blocks.html'],['3-3','最大公因數','stage3-3-gcd.html'],['3-4','Boss：混沌煉金術士','stage3-4-boss-alchemist.html']]},
+ {n:'第二章四、垓下之戰',sub:'公因數與公倍數的應用',st:[['4-1','戰術辨識','stage4-1-tactics.html'],['4-2','找因數行動','stage4-2-divisors.html'],['4-3','找倍數行動','stage4-3-multiples.html'],['4-4','終極 Boss：韓信點兵','stage4-4-final-boss.html']]}
+];
+const CH3=[
+ {n:'第三章一、符號森林的遺失咒語',sub:'代數式的簡記與求值',st:[['5-1','咒語簡記修復','algebra-stage.html?id=5-1'],['5-2','能量注入求值','algebra-stage.html?id=5-2']]},
+ {n:'第三章二、分配律的平衡天秤',sub:'去括號、化簡與解方程式',st:[['6-1','括號封印解除','algebra-stage.html?id=6-1'],['6-2','複合化簡試煉','algebra-stage.html?id=6-2'],['6-3','身分鑑定','algebra-stage.html?id=6-3'],['6-4','解方程式・基礎','algebra-stage.html?id=6-4'],['6-5','解方程式・綜合','algebra-stage.html?id=6-5']]},
+ {n:'第三章三、符號商人的生存戰',sub:'方程式的應用與合理性',st:[['7-1','生活情境列式大挑戰','algebra-stage.html?id=7-1'],['7-2','合理性之鏡','algebra-stage.html?id=7-2']]},
+ {n:'第三章・最終試煉',sub:'綜合九大試煉題型',st:[['7-3','Boss：符號大師認證考試','algebra-stage.html?id=7-3']]}
+];
+const RK=[[0,'新兵'],[8,'伍長'],[20,'校尉'],[40,'將軍'],[67,'大元帥'],[97,'兵仙'],[130,'代數宗師']]; // 滿星 = 關卡數 × 5
+const CARDS=[
+ ['IV-1-4','數線長老','守護整數王國的智者，教你用「性質符號」與「運算符號」握住開啟真理的數之鑰。'],
+ ['1-4','蕭何','他極力推薦韓信給劉邦，還連夜把逃走的韓信追了回來，留下「月下追韓信」的故事。'],
+ ['2-4','張良','劉邦稱讚他「運籌帷幄之中，決勝千里之外」，是最會用腦袋打仗的軍師。'],
+ ['3-4','項羽','力氣大、打仗猛的西楚霸王，最後在垓下兵敗，走到烏江自刎。'],
+ ['4-3','虞姬','項羽身邊的愛人，是楚漢故事裡最有名的女子之一。'],
+ ['4-4','韓信','劉邦問他能帶多少兵，他答「多多益善」，被後人稱為「兵仙」。'],
+ ['7-3','符號使者','修復了符號之城所有崩解的咒語，成為真正的代數大師。']
+];
+const KEY='hanxin-progress-v1',PERSTAGE=5; // 每關最多 5 星（練兵3 + 實戰4 + 修羅5）
+let P={};
+const idsOf=(GROUPS,ci)=>GROUPS[ci].st.map(s=>s[0]);
+const flat1=CH1.flatMap((c,i)=>idsOf(CH1,i));
+const flat2=CH2.flatMap((c,i)=>idsOf(CH2,i));
+const flat3=CH3.flatMap((c,i)=>idsOf(CH3,i));
+const flatAll=[...flat1,...flat2,...flat3];
+const MAXSTAR=flatAll.length*PERSTAGE;
+const b3=id=>Math.min(3,st(id)); // 解鎖章節／Boss 用的「基本星」（最多算 3 顆，維持原本的推進難度）
+const ebOf=id=>(P[id]&&P[id].eb)||0;
+const st=id=>(P[id]&&P[id].stars)||0;
+const total=()=>flatAll.reduce((a,id)=>a+st(id),0);
+const rankOf=t=>RK.filter(r=>r[0]<=t).pop();
+// 第一章：小關依序解鎖；下一大關需前一大關最後一關 ≥1 星。第二、三章維持原規則，不受第一章限制。
+function lockCh1(ci,k){const prev=k>0?CH1[ci].st[k-1][0]:ci>0?CH1[ci-1].st[CH1[ci-1].st.length-1][0]:null;return prev==null||st(prev)>0?'':`先通關 ${prev}`}
+// 第二章：每大關 4 關（前 3 關依序解鎖，第 4 關 Boss 需要前 3 關共 6 顆星）
+function lockCh2(ci,k){
+  const d=idsOf(CH2,ci);
+  if(k==0)return ci==0||st(CH2[ci-1].st[3][0])>0?'':`先打倒上一大關的「${CH2[ci-1].st[3][1].split('：').pop()}」`;
+  if(k<3)return st(d[k-1])>0?'':`先通關 ${d[k-1]}`;
+  if(!(st(d[0])&&st(d[1])&&st(d[2])))return `先通關 ${d[0]}、${d[1]}、${d[2]}`;
+  const s=b3(d[0])+b3(d[1])+b3(d[2]);
+  return s>=6?'':`挑戰 Boss 需要前三關共 6 顆星（目前 ${s} 顆），回去重打拿更多星吧`;
+}
+// 第三章：每一大關內依序解鎖；下一大關需要上一大關全部完成；
+// 最終 Boss 需要第三章九個試煉合計 18 顆星（滿分 27 的 2/3）
+function lockCh3(ci,k){
+  if(ci==0&&k==0)return '';
+  const g=CH3[ci];
+  if(g.st.length==1){ // 最終試煉／Boss 大關
+    const need=18,s=flat3.filter(id=>id!='7-3').reduce((a,id)=>a+b3(id),0);
+    return s>=need?'':`挑戰 Boss 需要第三章其餘試煉共 ${need} 顆星（目前 ${s} 顆），回去重打拿更多星吧`;
+  }
+  if(k>0){const prev=g.st[k-1][0];return st(prev)>0?'':`先通關 ${prev}`;}
+  const prevGroup=CH3[ci-1],allDone=prevGroup.st.every(s=>st(s[0])>0);
+  return allDone?'':`先完成「${prevGroup.n.replace(/^第三章[^、]*、/,'')}」的所有試煉`;
+}
+const owned=()=>CARDS.filter(c=>st(c[0])>0).map(c=>c[1]);
+function makeExport(){
+  const stages={};flatAll.forEach(id=>{if(P[id])stages[id]={stars:P[id].stars||0,best:P[id].best||0,eb:P[id].eb||0}});
+  return {v:1,who:P._who||{},stages:stages,q:P._q||{},at:new Date().toISOString()};
+}
+/*UI*/
+const $=s=>document.querySelector(s);
+let cur='',tt=0;
+function load(){try{P=JSON.parse(localStorage.getItem(KEY))||{}}catch(e){P={}}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(P))}catch(e){}}
+function toast(h){const t=$('#toast');t.innerHTML=h;t.classList.remove('hide');clearTimeout(tt);tt=setTimeout(()=>t.classList.add('hide'),3800)}
+function groupHTML(GROUPS,lockFn,chapterTag){
+  return GROUPS.map((c,ci)=>`<section class="ch card"><h2 class="serif">${c.n}</h2><small>${c.sub}</small><div class="nodes">`+
+    c.st.map((s,k)=>{
+      const isBoss=/Boss/.test(s[1]);
+      const r=lockFn(ci,k),n=st(s[0]),cls=['node',isBoss?'boss':'',r?'locked':'',n?'done':'',!s[2]?'soon':''].join(' ');
+      return `<button class="${cls}" data-ch="${chapterTag}" data-ci="${ci}" data-k="${k}"><b>${r?'🔒':isBoss?'👹':'⚔️'} ${s[0]}</b><span>${s[1]}</span><span>${s[2]?(n?'⭐'.repeat(n)+'☆'.repeat(5-n):'尚未通關'):'建造中'}</span></button>`;
+    }).join('')+`</div></section>`).join('');
+}
+// ===== ♾️ 無極限挑戰：關卡拿到 3 星就解鎖該關的無限題 =====
+const ENDLESS_NEED=3;
+const ECH=[['第一章｜整數王國',CH1],['第二章｜韓信點兵',CH2],['第三章｜代數異世界',CH3]];
+function endlessHTML(){
+  return `<h2 class="serif" style="margin:28px 0 0;color:var(--bronze)">♾️ 無極限挑戰</h2>`+
+  `<p style="margin:4px 0 0;opacity:.8;line-height:1.7">關卡拿到 ${ENDLESS_NEED} ⭐ 就解鎖該關的無限題作答區。題目源源不絕，時間會從實戰速度慢慢縮到修羅速度，5 顆心用完為止——看你能答對幾題！</p>`+
+  ECH.map(([title,G],gi)=>`<section class="ch card"><h2 class="serif">${title}</h2><div class="nodes">`+
+    G.flatMap((c,ci)=>c.st.map((s,k)=>{
+      const n=st(s[0]),lk=n<ENDLESS_NEED,eb=ebOf(s[0]);
+      return `<button class="node enode ${lk?'locked':''} ${eb?'done':''}" data-e="1" data-g="${gi}" data-ci="${ci}" data-k="${k}"><b>${lk?'🔒':'♾️'} ${s[0]}</b><span>${s[1]}</span><span>${lk?`需 ${ENDLESS_NEED} ⭐（目前 ${n}）`:(eb?'🏆 最高 '+eb+' 題':'尚無紀錄')}</span></button>`})).join('')+
+    `</div></section>`).join('');
+}
+function stageURL(url,id,endless){
+  return url+(url.includes('?')?'&':'?')+'stars='+st(id)+'&eb='+ebOf(id)+(endless?'&endless=1':'');
+}
+function render(){
+  const t=total(),rk=rankOf(t),nx=RK.find(r=>r[0]>t);
+  $('#rank').textContent=rk[1];$('#tot').textContent=`${t} / ${MAXSTAR} ⭐`;$('#rbar').style.width=(t/MAXSTAR*100)+'%';
+  $('#nxt').textContent=nx?`再 ${nx[0]-t} 顆星，升為「${nx[1]}」`:'你已經是最高階了！';
+  $('#map').innerHTML=
+    `<h2 class="serif" style="margin:20px 0 0;color:var(--bronze)">🗝️ 第一章：整數王國・數之鑰的覺醒</h2>`+
+    groupHTML(CH1,lockCh1,'1')+
+    `<h2 class="serif" style="margin:20px 0 0;color:var(--bronze)">📜 第二章：韓信點兵・數字戰線</h2>`+
+    groupHTML(CH2,lockCh2,'2')+
+    `<h2 class="serif" style="margin:20px 0 0;color:var(--bronze)">🔮 第三章：代數異世界・符號之城的覺醒</h2>`+
+    groupHTML(CH3,lockCh3,'3')+
+    endlessHTML();
+  $('#cards').innerHTML=CARDS.map(c=>st(c[0])>0?`<div class="cd"><b>${c[1]}</b>${c[2]}</div>`:`<div class="cd lock"><b>？？？</b>通關 ${c[0]} 解鎖</div>`).join('');
+}
+$('#map').onclick=e=>{
+  const b=e.target.closest('.node');if(!b)return;
+  if(b.dataset.e){ // 無極限挑戰節點
+    const s=ECH[+b.dataset.g][1][+b.dataset.ci].st[+b.dataset.k];
+    if(st(s[0])<ENDLESS_NEED)return toast(`🔒 ${s[0]} 要先拿到 ${ENDLESS_NEED} ⭐（目前 ${st(s[0])} ⭐）才能挑戰無限題`);
+    cur=s[0];$('#fr').src=stageURL(s[2],s[0],true);$('#ov').classList.remove('hide');return;
+  }
+  const chapterTag=b.dataset.ch,[GROUPS,lockFn]={1:[CH1,lockCh1],2:[CH2,lockCh2],3:[CH3,lockCh3]}[chapterTag];
+  const ci=+b.dataset.ci,k=+b.dataset.k,s=GROUPS[ci].st[k],r=lockFn(ci,k);
+  if(r)return toast('🔒 '+r);
+  if(!s[2])return toast('🔨 這一關還在建造中，敬請期待！');
+  cur=s[0];$('#fr').src=stageURL(s[2],s[0],false);$('#ov').classList.remove('hide');
+};
+function closeStage(){$('#ov').classList.add('hide');$('#fr').src='about:blank';render()}
+$('#x').onclick=closeStage;
+addEventListener('message',e=>{
+  if(e.source!==$('#fr').contentWindow)return;
+  const d=e.data||{};
+  if(d.type=='stage-result'&&!d.fail&&d.id==cur){
+    const r0=rankOf(total())[1],c0=owned().length,old=P[d.id]||{stars:0,best:0};
+    P[d.id]={...old,stars:Math.max(old.stars,d.stars),best:Math.max(old.best,d.score)};save();
+    const msg=[];
+    if(!old.stars)msg.push('🎉 首次通關 '+d.id+'！');
+    if(old.stars<3&&d.stars>=3)msg.push('🔓 '+d.id+' 實戰模式與無極限挑戰解鎖！');
+    else if(old.stars<4&&d.stars>=4)msg.push('🔓 '+d.id+' 修羅模式解鎖！');
+    else if(old.stars<5&&d.stars>=5)msg.push('👑 '+d.id+' 修羅全對，滿星 5 ⭐！');
+    if(owned().length>c0)msg.push('🃏 獲得收藏卡：'+owned().pop()+'！');
+    const r1=rankOf(total())[1];if(r1!=r0)msg.push('🎖️ 升官了：'+r1+'！');
+    if(msg.length)toast(msg.join('<br>'));
+  }
+  if(d.type=='wave-log'&&typeof d.id=='string'&&typeof d.qtype=='string'){
+    const key=d.id+':'+d.qtype;P._q=P._q||{};const r=P._q[key]||{n:0,ok:0};r.n++;if(d.ok)r.ok++;P._q[key]=r;save();
+  }
+  if(d.type=='endless-result'&&d.id==cur&&Number.isFinite(d.count)){
+    const old=P[d.id]||{stars:0,best:0},o=old.eb||0;
+    if(d.count>o){P[d.id]={...old,eb:d.count};save();toast('🏆 '+d.id+' 無極限新紀錄：'+d.count+' 題！')}
+  }
+  if(d.type=='stage-exit')closeStage();
+});
+$('#reset').onclick=()=>{if(confirm('確定要清除所有星星與收藏卡嗎？這個動作無法復原。')){P={};save();render()}};
+function fillWho(){const w=P._who||{};$('#w-cls').value=w.cls||'';$('#w-no').value=w.no||'';$('#w-name').value=w.name||''}
+function saveWho(){P._who={cls:$('#w-cls').value.trim(),no:$('#w-no').value.trim(),name:$('#w-name').value.trim()};save()}
+$('#w-save').onclick=()=>{saveWho();toast('✅ 已儲存你的資料')};
+$('#w-exp').onclick=()=>{
+  saveWho();const o=makeExport(),w=o.who,safe=x=>String(x||'').replace(/[^\w\u4e00-\u9fff-]/g,'');
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(o,null,1)],{type:'application/json'}));
+  a.download=`progress-${safe(w.cls)}-${safe(w.no)}-${safe(w.name)}.json`;document.body.appendChild(a);a.click();a.remove();
+  toast('📤 已匯出，請把檔案交給老師');
+};
+load();fillWho();render();
+</script>
+</body>
+</html>

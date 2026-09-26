@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>整數王國：數之鑰的覺醒</title>
+<style>
+:root{--ink:#161a2e;--ink2:#20264a;--line:#3a4270;--bronze:#d2a24c;--paper:#f1e8d2;--red:#d24a33;--jade:#43a58f;--txt:#e9e4d4}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(ellipse at top,#252c56,var(--ink) 65%);color:var(--txt);font-family:"Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif;min-height:100vh}
+h1,h2,.serif{font-family:"Noto Serif TC","Songti TC","PMingLiU",serif}
+main{max-width:720px;margin:0 auto;padding:16px}
+.hide{display:none!important}
+button{font:inherit;cursor:pointer;color:inherit}
+button:focus-visible{outline:3px solid var(--bronze);outline-offset:2px}
+.card{background:var(--ink2);border:2px solid var(--line);border-radius:14px;padding:18px}
+.btn{background:var(--bronze);color:#2a1d05;border:0;border-radius:10px;padding:12px 22px;font-weight:700;font-size:1.05rem}
+.btn.ghost{background:transparent;color:var(--bronze);border:2px solid var(--bronze)}
+.modes{display:grid;gap:10px;margin:16px 0}
+.mode{text-align:left;background:var(--ink);border:2px solid var(--line);border-radius:12px;padding:12px 14px}
+.mode.on{border-color:var(--bronze);background:#2b2a3c}
+.mode b{font-size:1.1rem}.mode small{display:block;opacity:.75;margin-top:2px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px;font-weight:700}
+.hearts{letter-spacing:2px}
+.combo{color:var(--bronze);min-width:5em;text-align:right}
+.field{position:relative;height:96px;margin:12px 0;border-radius:12px;background:linear-gradient(#1b2040,#2b3160);border:2px solid var(--line);overflow:hidden}
+.field::after{content:"";position:absolute;left:0;right:0;bottom:0;height:22px;background:#3b3f2e}
+.wall{position:absolute;right:0;top:0;bottom:0;width:20%;background:repeating-linear-gradient(#6a5a45 0 14px,#57493a 14px 16px);border-left:4px solid var(--bronze);display:flex;align-items:center;justify-content:center;font-size:2rem}
+#enemy{position:absolute;bottom:14px;left:0;font-size:2.4rem;transition:left .15s linear,opacity .6s,transform .6s;white-space:nowrap}
+#enemy.dead{opacity:0;transform:translateY(-30px) rotate(20deg) scale(1.4)}
+.timebar{height:8px;background:var(--ink);border-radius:6px;overflow:hidden}
+#bar{height:100%;background:var(--jade);width:100%;transition:width .1s linear}
+.q{background:var(--paper);color:#2b2416;border-radius:12px;padding:18px;margin:12px 0;text-align:center}
+.q .t{font-size:1.25rem;font-weight:700;line-height:1.5}
+.q .hint{margin-top:8px;font-size:.95rem;color:#7a4a12}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.opt{background:var(--ink2);border:2px solid var(--bronze);border-radius:12px;padding:16px 6px;font-size:1.5rem;font-weight:700;font-variant-numeric:tabular-nums}
+.opt:hover:not(:disabled){background:#33396b}
+.opt.ok{background:var(--jade);border-color:var(--jade);color:#06231c}
+.opt.bad{background:var(--red);border-color:var(--red)}
+.opt.cut{opacity:.15;pointer-events:none}
+.tools{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.tool{flex:1;min-width:100px;background:var(--ink);border:2px solid var(--line);border-radius:10px;padding:8px}
+.tool:disabled{opacity:.35;cursor:not-allowed}
+#say{margin-top:12px;border-left:5px solid var(--bronze);background:var(--ink);padding:12px 14px;border-radius:8px;line-height:1.7}
+#say.win{border-color:var(--jade)}#say.lose{border-color:var(--red)}
+.stars{font-size:2.6rem;letter-spacing:6px}
+.jail{margin-top:12px;display:grid;gap:8px}
+.jail div{background:var(--ink);border-radius:8px;padding:10px 12px;line-height:1.6;font-size:.95rem}
+@media (max-width:480px){.opt{font-size:1.25rem}.field{height:84px}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+.chip{display:inline-block;min-width:2.4em;margin:2px;padding:2px 8px;border-radius:8px;font-weight:700;color:#fff}.chip.pos{background:#2b6cb0}.chip.neg{background:#d24a33}.cap{font-size:.9rem;color:#7a4a12;margin-top:4px}#vis{margin-bottom:8px}#vis:empty{display:none}</style>
+</head>
+<body>
+<main>
+
+<section id="s-start" class="card">
+  <h1 class="serif" style="margin:0">整數王國：數之鑰的覺醒</h1>
+  <h2 class="serif" id="stT" style="margin:6px 0 0;color:var(--bronze)"></h2>
+  <p style="line-height:1.7" id="stD"></p>
+  <div class="modes" id="modes">
+    <button class="mode on" data-m="easy"><b>練兵模式</b><small>不限時，適合先熟悉規則</small></button>
+    <button class="mode" data-m="real"><b>實戰模式</b><small>每波 15 秒，敵軍會逼近城牆</small></button>
+    <button class="mode" data-m="hard"><b>修羅模式</b><small>每波 10 秒，數字更大、題目更刁</small></button>
+  </div>
+  <button class="btn" id="go">出征！</button>
+</section>
+
+<section id="s-game" class="hide">
+  <div class="top">
+    <span id="wave">第 1/10 波</span>
+    <span class="hearts" id="hearts"></span>
+    <span class="combo" id="combo"></span>
+  </div>
+  <div class="field"><div id="enemy">🛡️⚔️</div><div class="wall">🏯</div></div>
+  <div class="timebar"><div id="bar"></div></div>
+  <div style="text-align:right;font-size:.85rem;opacity:.8;margin-top:2px" id="sec"></div>
+  <div class="q"><div id="vis"></div><div class="t" id="qt"></div><div class="hint hide" id="hintbox"></div></div>
+  <div class="opts" id="opts"></div>
+  <div class="tools">
+    <button class="tool" id="t-hint">💡 提示</button>
+    <button class="tool" id="t-cut">✂️ 刪去法</button>
+    <button class="tool" id="t-freeze">⏳ 時間凍結</button>
+  </div>
+  <div id="say" class="hide"></div>
+</section>
+
+<section id="s-end" class="card hide" style="text-align:center">
+  <h2 class="serif" id="e-title" style="margin:0"></h2>
+  <div class="stars" id="e-stars"></div>
+  <p id="e-info" style="line-height:1.8"></p>
+  <div id="e-jail" class="jail" style="text-align:left"></div>
+  <p style="margin-top:16px">
+    <button class="btn" id="again">再戰一次</button>
+    <button class="btn ghost" id="rescue">解救戰俘</button>
+    <button class="btn ghost hide" id="back">返回地圖</button>
+  </p>
+</section>
+
+</main>
+<script src="lessons.js"></script>
+<script src="mode-system.js"></script>
+<script>
+const $=s=>document.querySelector(s);
+const R=(a,b)=>Math.floor(Math.random()*(b-a+1))+a;
+const pick=a=>a[R(0,a.length-1)];
+const sh=a=>a.map(v=>[Math.random(),v]).sort((x,y)=>x[0]-y[0]).map(x=>x[1]);
+const EMB=window.parent!==window;
+function log(ok){if(EMB&&!rescue)parent.postMessage({type:'wave-log',id:SID,qtype:q.type,ok:ok},'*')}
+let mode='easy',qs=[],idx=0,q=null,hearts=5,combo=0,score=0,right=0,wrongs=[],lock=true,left=0,tm=0,frozenUntil=0,rescue=false,used={};
+const MODES={easy:{t:0},real:{t:15},hard:{t:10}};
+const SID=new URLSearchParams(location.search).get('id')||'I-1-1';
+const STG={
+'I-1':{t:'1-1　玉山極寒試煉',d:'寒流襲擊玉山！在數線上標定座標、分辨相反數與絕對值，撐過 10 波冰霜考驗。',en:'❄️',plan:['base','rev','dist','opp','plot','move','cmp','dist2','plot','move2']},
+'I-2':{t:'番外　結界破除',d:'結界由括號與符號封印。拆括號、分配律、奇負偶正，破除 10 道結界。',en:'🔮',plan:['pl','mi','mi','dist','sign','sign','sub','mi','dist','sub']},
+'I-3':{t:'1-2　中心線的拉鋸',d:'加減就是數線上的位移！看圖預判紅絲帶最後停在哪，別讓絲帶斷裂。',en:'🪢',plan:['rope','hp','opp','sub','trap','rope','mine','rev','opp','sub']},
+'I-4':{t:'1-3　算籌鏡像迷宮',d:'乘以負數就是 180 度鏡像翻轉。看穿括號護盾，走出迷宮。',en:'🎋',plan:['mirror','mul','sign','pow','pow','ord','div','sign','ord','pow']},
+'I-5':{t:'1-4　星際縮放之鑰',d:'用科學記號壓縮宇宙與微粒。小數點往哪移、指數是正是負，圖上看得見。',en:'☄️',plan:['sci','big','small','law','trap','big','small','law','cmp','real']}};
+const SP='⁰¹²³⁴⁵⁶⁷⁸⁹',sup=n=>String(n).split('').map(c=>c=='-'?'⁻':SP[c]).join('');
+const sg=n=>(n>0?'+':'')+n, H=()=>mode=='hard';
+const sgn=()=>Math.random()<.5?1:-1;
+function opts(c,cands,g){const s=new Set([String(c)]);for(const x of cands){if(s.size>=4)break;if(x!=null&&!s.has(String(x)))s.add(String(x))}let k=0;while(s.size<4&&k++<60)s.add(g?g():String(R(-99,99)));return sh([...s])}
+const chip=n=>`<span class="chip ${n<0?'neg':'pos'}">${sg(n)}</span>`;
+const chips=a=>a.map(chip).join('');
+// 數線：pts=[{v,t,c}] arrs=[{a,b,t,c,h}] band=[lo,hi]
+function nl(lo,hi,pts,arrs,band,minor){
+  const W=620,X=v=>30+(v-lo)/(hi-lo)*(W-60),sp=hi-lo,step=sp>60?20:sp>30?10:sp>14?5:1;
+  let s=`<svg viewBox="0 0 ${W} 122" role="img" aria-label="數線圖" style="width:100%;max-width:620px"><defs><marker id="m1" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0 0L8 4L0 8z" fill="#d24a33"/></marker><marker id="m2" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0 0L8 4L0 8z" fill="#2b6cb0"/></marker></defs>`;
+  if(band)s+=`<rect x="${X(band[0])}" y="62" width="${X(band[1])-X(band[0])}" height="24" fill="#43a58f" opacity=".3"/>`;
+  s+=`<line x1="12" y1="74" x2="${W-12}" y2="74" stroke="#2b2416" stroke-width="3"/><path d="M${W-10} 74l-9-5v10z" fill="#2b2416"/>`;
+  for(let v=Math.ceil(lo);v<=hi;v++){if(v%step)continue;const z=v==0,c=z?'#d24a33':'#2b2416';
+    s+=`<line x1="${X(v)}" y1="66" x2="${X(v)}" y2="82" stroke="${c}" stroke-width="${z?4:2}"/><text x="${X(v)}" y="102" text-anchor="middle" font-size="14" fill="${c}" font-weight="${z?700:400}">${v}${z?'（原點）':''}</text>`}
+  if(minor>1)for(let v=Math.floor(lo);v<hi;v++)for(let j=1;j<minor;j++){const u=v+j/minor;if(u<lo||u>hi)continue;s+=`<line x1="${X(u)}" y1="69" x2="${X(u)}" y2="79" stroke="#2b2416" stroke-width="1"/>`}
+  (arrs||[]).forEach(a=>{const x1=X(a.a),x2=X(a.b),c=a.c||'#d24a33',h=a.h==null?-8:a.h;
+    s+=`<path d="M${x1} 68Q${(x1+x2)/2} ${h} ${x2} 68" fill="none" stroke="${c}" stroke-width="3" marker-end="url(#${c=='#d24a33'?'m1':'m2'})"/><text x="${(x1+x2)/2}" y="${(68+h)/2-4}" text-anchor="middle" font-size="13" font-weight="700" fill="${c}">${a.t||''}</text>`});
+  (pts||[]).forEach(p=>{s+=`<circle cx="${X(p.v)}" cy="74" r="8" fill="${p.c||'#43a58f'}" stroke="#2b2416" stroke-width="2"/><text x="${X(p.v)}" y="${p.y||120}" text-anchor="middle" font-size="15" font-weight="700" fill="${p.c||'#2b6e5e'}">${p.t}</text>`});
+  return s+'</svg>'}
+const rng=(...v)=>[Math.min(0,...v)-3,Math.max(0,...v)+3];
+function shiftSVG(str,n,left){ // 小數點移動示意
+  const cw=26,W=str.length*cw+40,x0=20,dot=str.indexOf('.')<0?str.length:str.indexOf('.'),
+  a=x0+dot*cw, b=left?x0+cw:x0+(str.replace('.','').search(/[1-9]/)+1+(str.startsWith('0.')?1:0))*cw;
+  const t=str.split('').map((c,i)=>`<text x="${x0+i*cw+cw/2}" y="62" text-anchor="middle" font-size="26" font-family="monospace" fill="#2b2416">${c}</text>`).join('');
+  return `<svg viewBox="0 0 ${W} 100" style="width:100%;max-width:${W}px">${t}<path d="M${a} 30Q${(a+b)/2} 0 ${b} 30" fill="none" stroke="#d24a33" stroke-width="3" marker-end="url(#m1)"/><defs><marker id="m1" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0 0L8 4L0 8z" fill="#d24a33"/></marker></defs><text x="${(a+b)/2}" y="14" text-anchor="middle" font-size="13" font-weight="700" fill="#d24a33">小數點${left?'左':'右'}移 ${n} 位</text></svg>`}
+function signQ(ops){ // 奇負偶正
+  const m=R(3,H()?6:4),v=[];for(let i=0;i<m;i++)v.push(R(2,9)*sgn());
+  const k=v.filter(x=>x<0).length,ans=k%2?'負數':'正數';
+  const ex=v.map((x,i)=>(i?' '+pick(ops||['×','÷'])+' ':'')+(x<0?`(${x})`:x)).join('');
+  return{text:`不必算出答案，判斷 ${ex} 的結果是正數還是負數？`,vis:`<div>${chips(v)}</div><div class="cap">負號共 <b>${k}</b> 個（${k%2?'奇數':'偶數'}個）</div>`,ans,options:sh(['正數','負數','0','無法判斷']),hint:'數一數有幾個負號：奇數個→負，偶數個→正。',explain:`共有 ${k} 個負號，${k%2?'奇數':'偶數'}個，結果為${ans}。`}}
+const OLD={
+'I-1':{
+ base(){const c=pick([{u:'度',up:'高於基準 0 度',dn:'低於基準 0 度',k:1},{u:'公尺',up:'水位高於警戒線',dn:'水位低於警戒線',k:1},{u:'元',up:'存入',dn:'提領',k:100}]),n=R(3,H()?40:20)*c.k,l=n+(c.k>1?100:2),[lo,hi]=[-l,l];
+  return{text:`${c.up} ${n} ${c.u}記為 +${n} ${c.u}，則${c.dn} ${n} ${c.u}應記為？`,vis:nl(lo,hi,[{v:n,t:'+'+n},{v:-n,t:'？',c:'#d24a33'}]),ans:`-${n} ${c.u}`,options:opts(`-${n} ${c.u}`,[`+${n} ${c.u}`,`0 ${c.u}`,`-${n*2} ${c.u}`]),hint:'相反意義的量，符號相反。',explain:`低於/提領與高於/存入方向相反，所以是 -${n} ${c.u}。`}},
+ rev(){const n=R(3,H()?40:20);return{text:`水位高於警戒線 ${n} 公尺記為 +${n} 公尺。水位記為 -${n} 公尺，代表什麼？`,vis:nl(-n-2,n+2,[{v:0,t:'警戒線',c:'#7a4a12'},{v:-n,t:'-'+n,c:'#d24a33'}]),ans:`低於警戒線 ${n} 公尺`,options:opts(`低於警戒線 ${n} 公尺`,[`高於警戒線 ${n} 公尺`,'剛好在警戒線',`低於警戒線 ${n*2} 公尺`]),hint:'負號＝與「高於」相反的方向。',explain:`-${n} 在原點（警戒線）左邊，表示低於警戒線 ${n} 公尺。`}},
+ dist(){const a=-(R(2,H()?18:9)+(H()?.5:0)),l=Math.ceil(-a)+2;return{text:`數線上 A 點代表 ${a}，它與原點的距離是幾個單位長？`,vis:nl(-l,l,[{v:a,t:'A',c:'#d24a33'}],[{a:a,b:0,t:'距離',c:'#2b6cb0',h:-6}]),ans:`${-a} 個單位長`,options:opts(`${-a} 個單位長`,[`${a} 個單位長`,'0 個單位長',`${-2*a} 個單位長`]),hint:'距離不會是負的，數一數到原點幾格。',explain:`|${a}| = ${-a}，A 到原點是 ${-a} 個單位長。`}},
+ opp(){const a=sgn()*(R(1,9)+(H()?.5:0)),l=Math.ceil(Math.abs(a))+2;return{text:`${a} 的相反數是？`,vis:nl(-l,l,[{v:a,t:String(a),c:'#43a58f'},{v:-a,t:'？',c:'#d24a33'}],[{a:a,b:-a,t:'對稱翻到另一邊',c:'#2b6cb0',h:-10}]),ans:String(-a),options:opts(-a,[a,-a+1,-a-1],()=>String(-a+pick([-2,2,3]))),hint:'相反數：在原點兩側，到原點一樣遠。',explain:`${a} 與 ${-a} 到原點距離相同、方向相反，相加為 0。`}},
+ plot(){const h=mode=='easy'?1:2;let v;do{v=R(-8*h,8*h)/h}while(!v);const[lo,hi]=rng(v);return{text:'圖中 P 點代表的數是多少？',vis:nl(lo,hi,[{v:v,t:'P',c:'#d24a33'}]),ans:String(v),options:opts(v,[-v,v+1,v-1],()=>String(v+pick([2,-2,.5,-.5]))),hint:'先找原點 0，再往左（負）或右（正）數格子。',explain:`P 在原點${v<0?'左':'右'}邊，代表 ${v}。`}},
+ move(){const s=R(2,10)*-1,m=R(5,H()?30:15),left=Math.random()<.5,e=left?s-m:s+m,[lo,hi]=rng(s,e);return{text:`數線上 Q 點代表 ${s}，向${left?'左':'右'}移動 ${m} 個單位長，新位置代表的數是？`,vis:nl(lo,hi,[{v:s,t:'Q '+s,c:'#43a58f'}],[{a:s,b:e,t:(left?'向左 ':'向右 ')+m}]),ans:String(e),options:opts(e,[left?s+m:s-m,m,-e]),hint:'向右加、向左減。',explain:`${s} ${left?'-':'+'} ${m} = ${e}。`}},
+ cmp(){let a=-R(2,9),b=-R(10,20);if(Math.random()<.5)[a,b]=[b,a];const lo=Math.min(a,b),hi=Math.max(a,b),[l,h]=rng(a,b);return{text:'圖中 A、B 兩點分別代表哪兩個數？下列大小關係何者正確？',vis:nl(l,h,[{v:a,t:'A '+a,c:'#d24a33'},{v:b,t:'B '+b,c:'#2b6cb0'}]),ans:`${lo} < ${hi}，因為 ${lo} 在比較左邊`,options:sh([`${lo} < ${hi}，因為 ${lo} 在比較左邊`,`${lo} > ${hi}，因為 ${lo} 的絕對值比較大`,`${hi} < ${lo}，因為 ${hi} 離原點比較近`,'無法比較，因為都是負數']),hint:'數線上越右邊越大。',explain:`${lo} 在 ${hi} 左邊，所以 ${lo} < ${hi}。負數絕對值越大反而越小。`}},
+ dist2(){const p=-R(2,15),t=R(3,H()?30:20),d=t-p,[lo,hi]=rng(p,t);return{text:`數線上代表 ${p} 與 ${t} 的兩點，相距幾個單位長？`,vis:nl(lo,hi,[{v:p,t:String(p),c:'#d24a33'},{v:t,t:String(t),c:'#2b6cb0'}],[{a:p,b:t,t:'？',c:'#2b6cb0',h:-6}]),ans:`${d} 個單位長`,options:opts(`${d} 個單位長`,[`${p+t} 個單位長`,`${Math.abs(Math.abs(p)-t)} 個單位長`,`-${d} 個單位長`]),hint:'兩點距離＝大的減小的。',explain:`${t} - (${p}) = ${t} + ${-p} = ${d}。`}},
+ move2(){const p=-R(2,9),t=-R(11,20),d=p-t,[lo,hi]=rng(p,t);return{text:`要把點從 ${p} 移到 ${t}，往哪個方向移動多少個單位長？`,vis:nl(lo,hi,[{v:p,t:String(p),c:'#43a58f'},{v:t,t:String(t),c:'#d24a33'}],[{a:p,b:t,t:'？'}]),ans:`向左移動 ${d} 個單位長`,options:opts(`向左移動 ${d} 個單位長`,[`向右移動 ${d} 個單位長`,`向左移動 ${-t} 個單位長`,`向右移動 ${-p} 個單位長`]),hint:'目標比較小，就往左。',explain:`${t} < ${p}，往左；${p} - (${t}) = ${d}。`}}},
+'I-2':{
+ pl(){return brk(1)},mi(){return brk(-1)},
+ dist(){const A=-R(3,12),b=-R(4,15),c=R(4,15),f=n=>`(${n})`;return{text:`用分配律展開 (${A}) × (${b} + ${c})，何者正確？`,vis:`<div>${chip(A)} × ( ${chip(b)} + ${chip(c)} )</div><div class="cap">↓　每一項都要分到　↓</div>`,ans:`${f(A)}×${f(b)} + ${f(A)}×${f(c)}`,options:opts(`${f(A)}×${f(b)} + ${f(A)}×${f(c)}`,[`${f(A)}×${f(b)} + ${f(c)}`,`${f(A)}×${f(b)} - ${f(A)}×${f(c)}`,`${f(b)} + ${f(A)}×${f(c)}`]),hint:'括號外的數（含負號）要分別乘括號裡的每一項。',explain:'a×(b+c) = a×b + a×c，外面的數要乘到每一項。'}},
+ sign:signQ,
+ sub(){const A=R(10,30),B=R(10,30),v=Math.random()<.5;return v?{text:`計算 ${A} - (-${B})`,vis:`<div class="cap">減去負數＝收回虧損＝加上正數</div><div>${chip(A)} － ${chip(-B)} ＝ ${chip(A)} ＋ ${chip(B)}</div>`,ans:String(A+B),options:opts(A+B,[A-B,-(A+B),B-A]),hint:'減去一個負數，等於加上它的相反數。',explain:`${A} - (-${B}) = ${A} + ${B} = ${A+B}。`}:{text:`計算 -(-${A}) + (-${B})`,vis:`<div class="cap">-(-A) 兩次翻轉，回到 +A</div><div>${chip(A)} ${chip(-B)}</div>`,ans:String(A-B),options:opts(A-B,[-A-B,A+B,B-A]),hint:'先化簡 -(-A) = +A。',explain:`-(-${A}) = ${A}，再加 (-${B})：${A} - ${B} = ${A-B}。`}}},
+'I-3':{
+ rope(){const s=R(5,20),r=R(15,30),l=R(25,45),e=s+r-l,m=s+r,[lo,hi]=rng(s,m,e);return{text:`拔河繩結原本在 +${s} 公分處，先向右 ${r} 公分，再向左 ${l} 公分，最後停在哪裡？`,vis:nl(lo,hi,[{v:s,t:'起點',c:'#43a58f'}],[{a:s,b:m,t:'+'+r},{a:m,b:e,t:'-'+l,c:'#2b6cb0',h:24}]),ans:`${sg(e)} 公分`,options:opts(`${sg(e)} 公分`,[`${sg(r-l)} 公分`,`+${s+r+l} 公分`,`${sg(-e)} 公分`]),hint:'最後位置＝起點＋向右－向左。',explain:`${s} + ${r} - ${l} = ${e}。`}},
+ hp(){const s=R(60,100),h=R(40,70),d=R(20,35),m=s+h,e=m-d;return{text:`血量 ${s}，先補血 +${h}，再受傷 -${d}，最後血量？`,vis:nl(0,m+10,[{v:s,t:'起始',c:'#43a58f'}],[{a:s,b:m,t:'+'+h},{a:m,b:e,t:'-'+d,c:'#2b6cb0',h:24}]),ans:String(e),options:opts(e,[s-h+d,s-d,s+h+d]),hint:'補血加、受傷減。',explain:`${s} + ${h} - ${d} = ${e}。`}},
+ opp(){const a=R(10,30),b=R(a+3,a+30),e=b-a,[lo,hi]=rng(-a,e);return{text:`計算 (-${a}) + (+${b})`,vis:nl(lo,hi,[{v:-a,t:String(-a),c:'#43a58f'}],[{a:-a,b:e,t:'+'+b}]),ans:String(e),options:opts(e,[a+b,-(a+b),a-b]),hint:'異號相加：大減小，符號跟大的。',explain:`${b} 比 ${a} 大，${b} - ${a} = ${e}，符號為正。`}},
+ sub(){const c=R(12,40),d=R(10,30),e=c+d,[lo,hi]=rng(c,e);return{text:`計算 ${c} - (-${d})`,vis:nl(lo,hi,[{v:c,t:String(c),c:'#43a58f'}],[{a:c,b:e,t:'減負＝往右 '+d}]),ans:String(e),options:opts(e,[c-d,-e,d-c]),hint:'減去負數等於加上正數。',explain:`${c} + ${d} = ${e}。`}},
+ trap(){const s=R(100,150),a=R(20,35),b=R(25,40),m=s-a,e=m-b;return{text:`血量 ${s}，連踩兩個陷阱，分別 -${a} 與 -${b}，最後血量？`,vis:nl(0,s+10,[{v:s,t:'起始',c:'#43a58f'}],[{a:s,b:m,t:'-'+a},{a:m,b:e,t:'-'+b,c:'#2b6cb0',h:24}]),ans:String(e),options:opts(e,[s-a+b,s+a+b,e+20]),hint:'兩次都是往左退。',explain:`${s} - ${a} - ${b} = ${e}。`}},
+ mine(){const m=-R(3,15),p=R(3,15),d=p-m,[lo,hi]=rng(m,p);return{text:`地雷埋在 ${m}，你站在 ${p}，兩者相距幾單位？`,vis:nl(lo,hi,[{v:m,t:'地雷 '+m,c:'#d24a33'},{v:p,t:'你 '+p,c:'#43a58f'}],[{a:m,b:p,t:'？',c:'#2b6cb0',h:-6}]),ans:`${d} 單位`,options:opts(`${d} 單位`,[`${p+m} 單位`,`${p-(-m)-2*p} 單位`,`${Math.abs(m)-p} 單位`]),hint:'距離＝|a-b|。',explain:`|${p} - (${m})| = ${d}。`}},
+ rev(){const s=R(80,120),h=R(15,30),e=R(50,75),x=s+h-e,m=s+h;return{text:`血量 ${s}，補血 +${h} 後又受傷一次，剩下 ${e}。這次傷害是多少？`,vis:nl(0,m+10,[{v:s,t:'起始',c:'#43a58f'},{v:e,t:'剩下',c:'#2b6cb0'}],[{a:s,b:m,t:'+'+h},{a:m,b:e,t:'？',c:'#2b6cb0',h:24}]),ans:String(x),options:opts(x,[s-e,h,x+20]),hint:'先算補血後多少，再減掉剩下的。',explain:`${s}+${h}=${m}，${m}-${e}=${x}。`}}},
+'I-4':{
+ mirror(){const k=pick(mode=='easy'?[-1]:H()?[-2,-3]:[-1,-2]),p=R(2,H()?6:9)*sgn(),e=p*k,l=Math.max(Math.abs(p),Math.abs(e))+2;return{text:`把數線上的 ${p} 乘以 (${k})，會落在哪裡？`,vis:nl(-l,l,[{v:p,t:String(p),c:'#43a58f'},{v:e,t:'？',c:'#d24a33'}],[{a:p,b:e,t:'×('+k+') 翻轉',h:-14}]),ans:String(e),options:opts(e,[-e,p,p+k],()=>String(e+pick([-2,2,4]))),hint:'乘負數＝翻到原點另一側（k=-1 剛好對稱）。',explain:`${p} × (${k}) = ${e}。`}},
+ mul(){const a=R(4,12),b=R(4,12),s1=sgn(),s2=sgn(),e=a*s1*b*s2;return{text:`計算 (${s1*a}) × (${s2*b})`,vis:`<div>${chip(s1*a)} × ${chip(s2*b)}</div><div class="cap">同號得正、異號得負</div>`,ans:String(e),options:opts(e,[-e,a+b,-(a+b)]),hint:'先判斷符號，再乘絕對值。',explain:`${s1*s2>0?'同號':'異號'}相乘為${e>0?'正':'負'}：${a}×${b}=${a*b}，答案 ${e}。`}},
+ sign:signQ,
+ pow(){const a=R(3,7),v=R(0,2);if(v==0)return{text:'下列哪一個算式的結果是「正數」？',vis:`<div>🛡️ (-${a})² → (-${a})×(-${a})　　-${a}² → -(${a}×${a})</div>`,ans:`(-${a})²`,options:sh([`(-${a})²`,`-${a}²`,`(-${a})³`,`-${a}³`]),hint:'有括號且偶數次方，負負得正。',explain:`(-${a})² = ${a*a}（正）；-${a}² = ${-a*a}；(-${a})³ = ${-(a*a*a)}；-${a}³ = ${-(a*a*a)}。`};
+  if(v==1)return{text:`計算 -${a}² 的值`,vis:`<div>沒有括號護盾，負號只是旁觀者：-${a}² ＝ -(${a}×${a})</div>`,ans:String(-a*a),options:opts(-a*a,[a*a,-2*a,2*a]),hint:'指數只管緊鄰的數。',explain:`-${a}² = -(${a}×${a}) = ${-a*a}。`};
+  return{text:`計算 (-${a})² 的值`,vis:`<div>🛡️ 括號護住負號：(-${a})² ＝ (-${a})×(-${a})</div>`,ans:String(a*a),options:opts(a*a,[-a*a,-2*a,2*a]),hint:'括號內整個數一起平方。',explain:`(-${a})×(-${a}) = ${a*a}。`}},
+ ord(){const A=R(15,40),B=R(3,9),C=R(3,9),m=Math.random()<.5,e=m?A+B*C:A-B*C;return{text:`計算 ${A} ${m?'-':'+'} ${B} × (-${C})`,vis:`<div class="cap">① 先乘除　② 再加減</div><div>${chip(B)} × ${chip(-C)} = ${chip(-B*C)}</div>`,ans:String(e),options:opts(e,[m?A-B*C:A+B*C,(A+(m?-B:B))*-C,-e]),hint:'先乘除後加減，再小心減負。',explain:`${B}×(-${C}) = ${-B*C}，${A} ${m?'-':'+'} (${-B*C}) = ${e}。`}},
+ div(){const y=R(2,9),q=R(2,12),s1=sgn(),s2=sgn(),x=y*q,e=(s1*x)/(s2*y);return{text:`計算 (${s1*x}) ÷ (${s2*y})`,vis:`<div>${chip(s1*x)} ÷ ${chip(s2*y)}</div><div class="cap">除法符號規則和乘法一樣</div>`,ans:String(e),options:opts(e,[-e,x+y,q*y]),hint:'先定符號，再算絕對值相除。',explain:`${s1*s2>0?'同號':'異號'}相除為${e>0?'正':'負'}：${x}÷${y}=${q}，答案 ${e}。`}}},
+'I-5':{
+ sci(){const A=R(1,9),B=R(1,9),n=R(-8,8),ok=`${A}.${B} × 10${sup(n)}`;return{text:'下列哪一個是標準科學記號 a × 10ⁿ？',vis:nl(0,12,[],null,[1,10])+'<div class="cap">綠色範圍：1 ≤ a < 10（10 不含）</div>',ans:ok,options:sh([ok,`${A}${B}.${B} × 10³`,`0.${A}${B} × 10⁵`,`${A}.${B} × 10^(1.5)`]),hint:'a 要在 1 到 10 之間，n 要是整數。',explain:'a 必須 1 ≤ a < 10，n 必須為整數。'}},
+ big(){const g=String(R(1,9))+String(R(1,9)),e=R(5,H()?11:8),str=g+'0'.repeat(e-1),ans=`${g[0]}.${g[1]} × 10${sup(e)}`;return{text:`把 ${str} 寫成科學記號？`,vis:shiftSVG(str,e,true),ans,options:opts(ans,[`${g[0]}.${g[1]} × 10${sup(e-1)}`,`${g} × 10${sup(e-1)}`,`${g[0]}.${g[1]} × 10${sup(-e)}`]),hint:'大數：小數點左移，指數為正。',explain:`小數點左移 ${e} 位，得 ${ans}。`}},
+ small(){const g=String(R(1,9))+String(R(1,9)),e=R(3,H()?9:6),str='0.'+'0'.repeat(e-1)+g,ans=`${g[0]}.${g[1]} × 10${sup(-e)}`;return{text:`把 ${str} 寫成科學記號？`,vis:shiftSVG(str,e,false),ans,options:opts(ans,[`${g[0]}.${g[1]} × 10${sup(e)}`,`${g[0]}.${g[1]} × 10${sup(-e-1)}`,`${g[0]}.${g[1]} × 10${sup(-e+1)}`]),hint:'小數：小數點右移，指數為負。',explain:`小數點右移 ${e} 位，得 ${ans}。`}},
+ law(){const a=R(2,8),m=R(2,5),n=R(2,5),d=H()&&m>n&&Math.random()<.5,e=d?m-n:m+n;return{text:`化簡 ${a}${sup(m)} ${d?'÷':'×'} ${a}${sup(n)}`,vis:`<div>${'🟦'.repeat(m)}${d?' ÷ ':' ✖ '}${'🟨'.repeat(n)}</div><div class="cap">${d?`${m} 個相除掉 ${n} 個，剩 ${m-n} 個`:`${m} 個 ＋ ${n} 個，共 ${m+n} 個 ${a} 相乘`}</div>`,ans:`${a}${sup(e)}`,options:opts(`${a}${sup(e)}`,[`${a}${sup(m*n)}`,`${a*a}${sup(e)}`,`${a}${sup(d?m+n:Math.abs(m-n))}`]),hint:d?'同底相除，指數相減。':'同底相乘，指數相加。',explain:`${a}${sup(m)} ${d?'÷':'×'} ${a}${sup(n)} = ${a}${sup(e)}。`}},
+ trap(){const k=R(2,7),[a,mt,sh_]=pick([['10','1',1],['25','2.5',1],['78','7.8',1],['0.6','6',-1],['0.42','4.2',-1],['300','3',2]]),ans=`${mt} × 10${sup(k+sh_)}`;return{text:`${a} × 10${sup(k)} 寫成標準科學記號應是？`,vis:nl(0,12,[],null,[1,10])+`<div class="cap">係數 ${a} 不在綠色範圍，要調整</div>`,ans,options:opts(ans,[`${mt} × 10${sup(k)}`,`${mt} × 10${sup(k-sh_)}`,`${a} × 10${sup(k+1)}`]),hint:'先把係數調成 1~10，再補償指數。',explain:`${a} = ${mt} × 10${sup(sh_)}，所以整體為 ${ans}。`}},
+ cmp(){let n1=R(-6,8),n2;do n2=R(-6,8);while(n2==n1);const a1=R(1,9),a2=R(1,9),A=`${a1} × 10${sup(n1)}`,B=`${a2} × 10${sup(n2)}`,big=n1>n2?'A':'B',[lo,hi]=rng(n1,n2);return{text:`A = ${A}，B = ${B}，哪一個比較大？`,vis:nl(lo,hi,[{v:n1,t:'A',c:'#d24a33'},{v:n2,t:'B',c:'#2b6cb0'}])+'<div class="cap">數線表示「指數 n」：越右邊，數越大</div>',ans:`${big} 比較大`,options:sh(['A 比較大','B 比較大','一樣大','無法比較']),hint:'係數都在 1~10，先比指數，指數大的就大。',explain:`指數 ${Math.max(n1,n2)} > ${Math.min(n1,n2)}，所以 ${big} 比較大。`}},
+ real(){const v=R(0,2);if(v==0)return{text:'1 奈米是 10⁻⁹ 公尺。7 奈米用科學記號寫成幾公尺？',vis:'<div class="cap">公尺 → 10⁻³ 毫米 → 10⁻⁶ 微米 → 10⁻⁹ 奈米</div>',ans:`7 × 10${sup(-9)} 公尺`,options:sh([`7 × 10${sup(-9)} 公尺`,`7 × 10⁹ 公尺`,`7 × 10${sup(-8)} 公尺`,`0.7 × 10${sup(-8)} 公尺`]),hint:'奈米很小，指數是負的。',explain:'7 奈米 = 7 × 10⁻⁹ 公尺。'};
+  if(v==1)return{text:'光一年約走 9.46 × 10¹² 公里，寫成一般數字約幾公里？',vis:'<div class="cap">10¹² ＝ 1 後面 12 個 0（小數點右移 12 位）</div>',ans:'9,460,000,000,000 公里',options:sh(['9,460,000,000,000 公里','946,000,000,000 公里','94,600,000,000,000 公里','9,460,000,000 公里']),hint:'9.46 右移 12 位。',explain:'9.46 → 小數點右移 12 位，共 13 位整數。'};
+  return{text:'2 TB ＝ 2 × 10¹² Bytes，一張照片約 4 × 10⁶ Bytes，大約可存幾張？',vis:'<div class="cap">2 × 10¹² ÷ 4 × 10⁶ ＝ (2÷4) × 10⁶ ＝ 0.5 × 10⁶</div>',ans:'5 × 10⁵ 張',options:sh(['5 × 10⁵ 張','5 × 10⁶ 張','5 × 10⁴ 張','8 × 10¹⁸ 張']),hint:'同底相除指數相減，別忘了把 0.5 調成 5。',explain:'0.5 × 10⁶ = 5 × 10⁵ 張。'}}}};
+function brk(s){const n=R(2,3),v=[];for(let i=0;i<n;i++)v.push(R(5,30)*sgn());const f=R(5,30)*sgn(),res=[f,...v.map(x=>x*s)],fm=a=>a.map(sg).join(' ');
+  const ins=v.map((x,i)=>i?sg(x):String(x)).join(' '),ans=fm(res);
+  return{text:`拆掉括號：${f} ${s>0?'+':'-'} (${ins})`,vis:`<div>括號前：<b>${s>0?'＋':'－'}</b>　括號內：${chips(v)}</div><div class="cap">${s>0?'＋號：每項照抄':'－號：每項變號（籌碼翻面）'}</div>`,ans,options:opts(ans,[fm([f,...v.map(x=>-x*s)]),fm([-f,...v.map(x=>x*s)]),fm([f,-v[0]*s,...v.slice(1).map(x=>x*s)])],()=>fm([f,...v.map(x=>x*sgn())])),hint:s>0?'括號前是加號，裡面照抄。':'括號前是減號，裡面每一項都變號。',explain:`${s>0?'加號':'減號'}去括號：括號內各項${s>0?'符號不變':'全部變號'}，得 ${ans}。`}}
+function gen(t){const o=G[SID][t]();o.type=t;o.options=o.options||[];return o}
+
+/* ===== 第一章 15 小關（新版）===== */
+const N=n=>n<0?`(${n})`:String(n);
+const gcd=(a,b)=>b?gcd(b,a%b):Math.abs(a);
+const fs=(n,d)=>{if(d<0){n=-n;d=-d}const g=gcd(n,d)||1;n/=g;d/=g;if(d==1)return String(n);const a=Math.abs(n),w=Math.floor(a/d),r=a%d;return(n<0?'-':'')+(w?w+'又':'')+r+'/'+d};
+const ev=(c,t)=>({t:t||c.replace(/\*/g,'×').replace(/\//g,'÷').replace(/Math\.abs\(([^()]*)\)/g,'|$1|'),v:Function('"use strict";return '+c)()});
+const r1=x=>String(Math.round(x*10)/10);
+const rat=()=>{const d=pick([2,3,4,5,10]);return[R(-4*d,4*d)||1,d]};
+const ratS=([n,d])=>(d==3||Math.random()<.5)?fs(n,d):String(n/d);
+const G0='#43a58f',RD='#d24a33',BL='#2b6cb0';
+const rr=(a,b)=>{const lo=Math.floor(Math.min(a,b,0))-1,hi=Math.ceil(Math.max(a,b,0))+1;return[lo,hi]};
+const opsp=(a,b)=>{const[lo,hi]=rng(a,a+b);return nl(lo,hi,[{v:a,t:'起點 '+a,c:G0}],[{a:a,b:a+b,t:sg(b)}])};
+const num=(e,x,extra)=>({...extra,ans:String(e.v??e),options:opts(e.v??e,[-(e.v??e),(e.v??e)+pick([1,2,-1,-2]),(e.v??e)+pick([3,-3,4])])});
+const term=(mk=3)=>{const b=R(2,4),k=R(2,mk),s=pick(['p','m','n']);return s=='p'?{d:`${b}${sup(k)}`,v:b**k}:s=='m'?{d:`(${-b})${sup(k)}`,v:(-b)**k}:{d:`-${b}${sup(k)}`,v:-(b**k)}};
+const W=t=>t.d[0]=='-'?`(${t.d})`:t.d;
+const tl=ts=>`<div class="cap">${ts.map(t=>`${t.d} ＝ ${t.v}`).join('　｜　')}</div><div class="cap">先算次方 → 再乘除 → 最後加減</div>`;
+const STG2={
+'I-1-1':{t:'1-1-1　基準點與符號',d:'0 是基準點，高於為正、低於為負。分清同號、異號，以及性質符號與運算符號。',en:'❄️',plan:['base','same','prop','rev','neg','same','prop','base','same','prop']},
+'I-1-2':{t:'1-1-2　數線與比大小',d:'原點、正向、單位長缺一不可。整數、分數、小數怎麼畫、怎麼比大小。',en:'❄️',plan:['rule','plotI','plotD','plotF','place','cmp2','order','plotF','place','order']},
+'I-1-3':{t:'1-1-3　相反數與絕對值',d:'多層括號的相反數、絕對值的意義（到原點的距離）、比大小。',en:'❄️',plan:['opp','oppN','abs','oppN','absq','cmpAbs','inv','abs','oppN','cmpAbs']},
+'I-1-4':{t:'1-1-4　番外：結界破除',d:'結界由括號與符號封印。拆括號、分配律、奇負偶正。',en:'🔮',plan:['pl','mi','mi','dist','sign','sign','sub','mi','dist','sub']},
+'II-1-1':{t:'1-2-1　整數加法',d:'同號、異號、多個數混合、拆括號的加法，看數線位移預判結果。',en:'🪢',plan:['same','diff','multi','brk','rope','same','diff','multi','brk','hp']},
+'II-1-2':{t:'1-2-2　整數減法',d:'減法＝加相反數。同號、異號、多個數、絕對值、拆括號一次練齊。',en:'🪢',plan:['ssub','dsub','conv','multi','abs','brk','ssub','dsub','abs','multi']},
+'II-1-3':{t:'1-2-3　距離、座標與中點',d:'兩點距離＝絕對值，還要會算座標、位移與中點。',en:'🪢',plan:['dist','coord','mid','endp','shift','dist','coord','mid','endp','mid']},
+'III-1-1':{t:'1-3-1　整數乘法',d:'乘負數是鏡像翻轉。同號、異號、多個數、絕對值、拆括號的乘法。',en:'🎋',plan:['mirror','mul','multi','abs','brk','mul','sign','multi','abs','brk']},
+'III-1-2':{t:'1-3-2　整數除法',d:'除以一個數＝乘以它的倒數。符號規則和乘法一樣。',en:'🎋',plan:['div','inv','multi','abs','brk','chain','div','sign','abs','chain']},
+'III-1-3':{t:'1-3-3　整數四則運算',d:'先乘除後加減、括號優先，再加上絕對值與拆括號。',en:'🎋',plan:['first','ord','mix','abs','brk','ord','mix','abs','brk','mix']},
+'III-1-4':{t:'1-3-4　分配律',d:'展開、逆用、簡算。含負數、絕對值與拆括號。',en:'🎋',plan:['dist','calc','near','rev','abs','brk','dist','calc','near','rev']},
+'IV-1-1':{t:'1-4-1　指數簡記',d:'底數是負數要加括號。學會簡記、計算、判斷正負。',en:'☄️',plan:['wr','val','sgn','pow','wr','val','sgn','pow','val','sgn']},
+'IV-1-2':{t:'1-4-2　乘方的加減乘除',d:'先算次方，再乘除，最後加減；同底數的指數律也在這裡。',en:'☄️',plan:['add','mul','div','mix','law','add','mul','div','mix','law']},
+'IV-1-3':{t:'1-4-3　科學記號',d:'a × 10ⁿ（1 ≤ a < 10）怎麼寫、怎麼比大小，看小數點移動。',en:'☄️',plan:['sci','big','small','trap','big','small','cmp','real','cmp','trap']},
+'IV-1-4':{t:'1-4-4　Boss：星際縮放大師',d:'綜合指數、乘方運算、科學記號，最終考驗。',en:'👾',plan:['wr','val','sgn','mix','div','sci','big','small','cmp','trap']}};
+const G={
+'I-1-1':{
+ base:OLD['I-1'].base,rev:OLD['I-1'].rev,
+ same(){const a=sgn()*R(1,9),z=Math.random()<.15,b=z?0:sgn()*R(1,9),P=n=>n==0?'0':`(${sg(n)})`,ans=z?'都不是（有 0）':a*b>0?'同號數':'異號數';return{text:`${P(a)} 與 ${P(b)} 是同號數還是異號數？`,vis:`<div>${chips([a,b])}</div><div class="cap">同號：都正或都負；異號：一正一負；0 既非正也非負</div>`,ans,options:sh(['同號數','異號數','都不是（有 0）','無法判斷']),hint:'看符號：一樣→同號，不同→異號。',explain:`答案：${ans}。`}},
+ prop(){const a=R(2,9),b=R(2,9),w=Math.random()<.5,ans=w?'性質符號':'運算符號';return{text:`在 ${a} − (−${b}) 中，${w?'括號裡的「−」':'括號外面的「−」'}是什麼符號？`,vis:`<div style="font-size:1.4rem">${a} <b style="color:#d98e04">−</b> ( <b style="color:#d24a33">−</b>${b} )</div><div class="cap"><b style="color:#d98e04">橘：運算符號（減）</b>　<b style="color:#d24a33">紅：性質符號（負數）</b></div>`,ans,options:sh(['性質符號','運算符號','兩種都是','兩種都不是']),hint:'表示「這個數是負的」→性質；表示「要做減法」→運算。',explain:w?`括號內的 − 說明 ${b} 是負數，是性質符號。`:'括號外的 − 表示減法動作，是運算符號。'}},
+ neg(){const n=-(R(1,9)+(Math.random()<.5?.5:0)),o=[n,R(1,9),0,R(1,9)+.5].map(String);const v=o.map(Number);return{text:'下列哪一個數「低於基準 0」？',vis:nl(-10,10,v.map((x,i)=>({v:x,t:o[i],c:x<0?RD:G0}))),ans:String(n),options:sh(o),hint:'低於 0 → 負數。',explain:`${n} 在原點左邊，低於 0。`}}},
+'I-1-2':{
+ rule(){const v=R(0,2);return v==0?{text:'數線必須具備哪三個要素？',vis:nl(-5,5,[]),ans:'原點、正方向、單位長',options:sh(['原點、正方向、單位長','原點、負方向、質數','起點、終點、中點','單位長、面積、體積']),hint:'決定 0 在哪、往哪邊是正、一格多長。',explain:'數線＝原點＋正方向＋單位長。'}:v==1?{text:'只畫出刻度，卻沒有標出原點 0，能確定各點代表的數嗎？',vis:'<svg viewBox="0 0 620 60" style="width:100%;max-width:620px"><line x1="12" y1="30" x2="608" y2="30" stroke="#2b2416" stroke-width="3"/>'+[0,1,2,3,4,5,6,7,8,9].map(i=>`<line x1="${50+i*60}" y1="22" x2="${50+i*60}" y2="38" stroke="#2b2416" stroke-width="2"/>`).join('')+'</svg>',ans:'不能，必須先決定原點',options:sh(['不能，必須先決定原點','能，最左邊就是 0','能，最右邊就是 0','能，因為刻度就是答案']),hint:'沒有原點就沒有基準。',explain:'必須先決定原點，才能知道每個點是多少。'}:{text:'正方向向右時，原點左邊的點代表什麼數？',vis:nl(-5,5,[{v:-3,t:'？',c:RD}]),ans:'負數',options:sh(['負數','正數','0','不一定']),hint:'和正方向相反。',explain:'原點左邊與正方向相反，是負數。'}},
+ plotI(){const v=R(-9,9)||4,[lo,hi]=rng(v);return{text:'圖中 P 點代表的數是多少？',vis:nl(lo,hi,[{v,t:'P',c:RD}]),ans:String(v),options:opts(v,[-v,v+1,v-1],()=>String(v+pick([2,-2,3]))),hint:'先找原點，再數格子。',explain:`P 在原點${v<0?'左':'右'}邊 ${Math.abs(v)} 格，是 ${v}。`}},
+ plotD(){let v;do v=(R(-35,35))/10;while(!v||Number.isInteger(v));const[lo,hi]=rr(v,0);return{text:'圖中每一大格再平分成 10 等分，P 點代表的數是？',vis:nl(lo,hi,[{v,t:'P',c:RD}],null,null,10),ans:r1(v),options:opts(r1(v),[r1(-v),r1(v+.1),r1(v-.1)],()=>r1(v+pick([.2,-.2,.3]))),hint:'先看整數位，再數小格（每小格 0.1）。',explain:`P 代表 ${r1(v)}。`}},
+ plotF(){const d=pick([2,3,4]);let k;do k=R(-3*d,3*d);while(k%d==0);const v=k/d,[lo,hi]=rr(v,0);return{text:`圖中每一大格平分成 ${d} 等分，P 點代表的數是？（用帶分數）`,vis:nl(lo,hi,[{v,t:'P',c:RD}],null,null,d),ans:fs(k,d),options:opts(fs(k,d),[fs(-k,d),fs(k+1,d),fs(k-1,d)],()=>fs(k+pick([2,-2,3]),d)),hint:`每小格是 1/${d}。`,explain:`P 是 ${fs(k,d)}。`}},
+ place(){const f=Math.random()<.5;let v,u,d=10,lab;if(f){d=pick([2,3,4]);let k;do k=R(-3*d,3*d);while(k%d==0);v=k/d;u=1/d;lab=fs(k,d)}else{do v=R(-35,35)/10;while(!v||Number.isInteger(v));u=.2;lab=String(v)}
+  let ps;do ps=[v,-v,v+u*pick([1,-1]),v-u*pick([2,-2,3])];while(new Set(ps.map(x=>Math.round(x*1000))).size<4);
+  const od=sh([0,1,2,3]),col=[RD,BL,G0,'#a0651f'],[lo,hi]=rr(Math.min(...ps),Math.max(...ps));
+  return{text:`要在數線上標出 ${lab}，應該標在哪一個點？`,vis:nl(lo,hi,od.map((p,j)=>({v:ps[p],t:'ABCD'[j],c:col[j]})),null,null,d),ans:'ABCD'[od.indexOf(0)],options:['A','B','C','D'],hint:`${v<0?'負數在原點左邊':'正數在原點右邊'}，再看小格。`,explain:`${lab} 在原點${v<0?'左':'右'}邊。`}},
+ cmp2(){let a,b;do{a=rat();b=rat()}while(a[0]*b[1]==b[0]*a[1]);const s=ratS(a),t=ratS(b),va=a[0]/a[1],vb=b[0]/b[1],[lo,hi]=rng(va,vb),big=va>vb?s:t;return{text:`${s} 與 ${t}，哪一個比較大？`,vis:nl(lo,hi,[{v:va,t:s,c:RD},{v:vb,t:t,c:BL}]),ans:big,options:opts(big,[va>vb?t:s,'一樣大','無法比較']),hint:'數線上越右邊越大。',explain:`${big} 在右邊，比較大。`}},
+ order(){let r=[];while(r.length<3){const x=rat();if(!r.some(y=>y[0]*x[1]==x[0]*y[1]))r.push(x)}const S=r.map(ratS),v=r.map(x=>x[0]/x[1]),ix=[0,1,2].sort((i,j)=>v[i]-v[j]),cor=ix.map(i=>S[i]).join(' < '),pm=[[0,1,2],[0,2,1],[1,0,2],[1,2,0],[2,0,1],[2,1,0]].map(p=>p.map(i=>S[i]).join(' < ')).filter(x=>x!=cor),[lo,hi]=rng(...v);return{text:'由小到大排列，哪一個正確？',vis:nl(lo,hi,v.map((x,i)=>({v:x,t:S[i],c:[RD,BL,G0][i]}))),ans:cor,options:opts(cor,sh(pm)),hint:'先分正負，負數絕對值大的反而小。',explain:`由左到右：${cor}。`}}},
+'I-1-3':{
+ opp:OLD['I-1'].opp,
+ oppN(){const a=sgn()*R(2,9),k=R(1,H()?4:3);let s=a>0?`+${a}`:`${a}`;for(let i=0;i<k;i++)s=`-(${s})`;const e=a*(-1)**k,seq=[];for(let i=0;i<=k;i++)seq.push(a*(-1)**i);return{text:`化簡 ${s}`,vis:`<div>${seq.map(chip).join(' → ')}</div><div class="cap">每多一層負號括號，就翻轉一次</div>`,ans:String(e),options:opts(e,[-e,Math.abs(e)+1,-Math.abs(e)]),hint:'由內往外，一層一層翻轉。',explain:`翻轉 ${k} 次，結果 ${e}。`}},
+ abs(){const a=R(2,12),b=R(2,12),v=R(0,3);if(v==0)return{text:`計算 |${-a}|`,vis:nl(-a-2,a+2,[{v:-a,t:String(-a),c:RD}],[{a:-a,b:0,t:'距離 '+a,c:BL,h:-6}]),ans:String(a),options:opts(a,[-a,0,2*a]),hint:'絕對值＝到原點的距離。',explain:`|${-a}| = ${a}。`};
+  if(v==1)return{text:`計算 -|${-a}|`,vis:'<div class="cap">絕對值先算 → 再處理外面的負號</div>',ans:String(-a),options:opts(-a,[a,0,-2*a]),hint:'先算 |−a|，再加負號。',explain:`-|${-a}| = -${a}。`};
+  if(v==2){const[lo,hi]=rng(-a,b);return{text:`計算 |${-a} - ${b}|`,vis:nl(lo,hi,[{v:-a,t:String(-a),c:RD},{v:b,t:String(b),c:BL}],[{a:-a,b:b,t:'距離',c:BL,h:-6}]),ans:String(a+b),options:opts(a+b,[Math.abs(a-b),-(a+b),a*b]),hint:'先算 −a − b。',explain:`|${-a} - ${b}| = |${-a-b}| = ${a+b}。`}}
+  return{text:`計算 |${-a}| + |${b}|`,vis:'<div class="cap">兩個絕對值都變成非負數再相加</div>',ans:String(a+b),options:opts(a+b,[a-b,-(a+b),b-a]),hint:'先各自去絕對值。',explain:`${a} + ${b} = ${a+b}。`}},
+ absq(){const a=R(2,12);return Math.random()<.7?{text:`絕對值等於 ${a} 的數有哪些？`,vis:nl(-a-2,a+2,[{v:-a,t:String(-a),c:RD},{v:a,t:String(a),c:BL}]),ans:`${a} 和 ${-a}`,options:opts(`${a} 和 ${-a}`,[`只有 ${a}`,`只有 ${-a}`,'沒有這樣的數']),hint:'距離原點 a 的點有兩個。',explain:`${a} 與 ${-a} 到原點都是 ${a}。`}:{text:'|x| = 0，x 是多少？',vis:'<div class="cap">距離原點 0 的點，就是原點本身</div>',ans:'0',options:sh(['0','1','-1','沒有這個數']),hint:'距離是 0。',explain:'只有 0。'}},
+ cmpAbs(){const a=-R(2,9),b=-R(10,20),lo=Math.min(a,b),hi=Math.max(a,b),[l,h]=rng(a,b),ans=`${lo} < ${hi}，但 |${lo}| > |${hi}|`;return{text:'比較兩個負數的大小與絕對值，哪一個正確？',vis:nl(l,h,[{v:a,t:String(a),c:RD},{v:b,t:String(b),c:BL}]),ans,options:sh([ans,`${lo} > ${hi}，且 |${lo}| > |${hi}|`,`${lo} < ${hi}，且 |${lo}| < |${hi}|`,`${lo} > ${hi}，但 |${lo}| < |${hi}|`]),hint:'負數：越左越小，但離原點越遠（絕對值越大）。',explain:`${lo} 更靠左所以較小，但離原點更遠，絕對值較大。`}},
+ inv(){const b=sgn()*R(2,12);return{text:`x 的相反數是 ${b}，則 x 是多少？`,vis:nl(-14,14,[{v:b,t:String(b),c:RD},{v:-b,t:'x？',c:BL}],[{a:-b,b:b,t:'相反數',c:BL,h:-8}]),ans:String(-b),options:opts(-b,[b,0,2*b]),hint:'相反數的相反數是自己。',explain:`x = ${-b}。`}}},
+'I-1-4':OLD['I-2'],
+'II-1-1':{
+ same(){const s=sgn(),a=s*R(3,20),b=s*R(3,20);return{text:`計算 (${sg(a)}) + (${sg(b)})`,vis:opsp(a,b),ans:String(a+b),options:opts(a+b,[-(a+b),a-b,Math.abs(a)-Math.abs(b)]),hint:'同號相加：絕對值相加，符號不變。',explain:`同號：${Math.abs(a)}+${Math.abs(b)}=${Math.abs(a+b)}，符號 ${s>0?'+':'-'}。`}},
+ diff(){let s=sgn(),a,b;do{a=s*R(3,25);b=-s*R(3,25)}while(a+b==0);return{text:`計算 (${sg(a)}) + (${sg(b)})`,vis:opsp(a,b),ans:String(a+b),options:opts(a+b,[-(a+b),Math.abs(a)+Math.abs(b),a-b]),hint:'異號相加：大減小，符號跟絕對值大的。',explain:`絕對值大的是 ${Math.abs(a)>Math.abs(b)?a:b}，所以結果 ${a+b}。`}},
+ multi(){let v;do v=[0,0,0,0].map(()=>R(3,15)*sgn());while(!(v.some(x=>x>0)&&v.some(x=>x<0)));const P=v.filter(x=>x>0).reduce((a,b)=>a+b,0),Q=v.filter(x=>x<0).reduce((a,b)=>a+b,0),e=P+Q;return{text:'計算 '+v.map(x=>`(${sg(x)})`).join(' + '),vis:`<div>${chips(v)}</div><div class="cap">正數合計 ${P}，負數合計 ${Q}，相加得 ${e}</div>`,ans:String(e),options:opts(e,[-e,P-Q,e+10]),hint:'正數先加、負數先加，最後合併。',explain:`${P} + (${Q}) = ${e}。`}},
+ brk(){const a=R(5,20)*sgn(),b=R(3,15)*sgn(),c=R(3,15)*sgn(),e=a+b-c;return{text:`計算 ${a} + (${sg(b)}) + (-(${sg(c)}))`,vis:`<div>${chips([a,b,-c])}</div><div class="cap">+(b) 照抄；+(−(c)) 變成 −c</div>`,ans:String(e),options:opts(e,[a+b+c,-e,a-b-c]),hint:'先拆括號，再逐項相加。',explain:`${a} + ${b} + ${-c} = ${e}。`}},
+ rope:OLD['I-3'].rope,hp:OLD['I-3'].hp},
+'II-1-2':{
+ ssub(){const s=sgn(),a=s*R(3,20),b=s*R(3,20),e=a-b,[lo,hi]=rng(a,e);return{text:`計算 (${sg(a)}) - (${sg(b)})`,vis:nl(lo,hi,[{v:a,t:String(a),c:G0}],[{a:a,b:e,t:`減 ${sg(b)} ＝ 加 ${sg(-b)}`}]),ans:String(e),options:opts(e,[a+b,-e,-(a+b)]),hint:'減去一個數＝加上它的相反數。',explain:`${a} + (${-b}) = ${e}。`}},
+ dsub(){const s=sgn(),a=s*R(3,20),b=-s*R(3,20),e=a-b,[lo,hi]=rng(a,e);return{text:`計算 (${sg(a)}) - (${sg(b)})`,vis:nl(lo,hi,[{v:a,t:String(a),c:G0}],[{a:a,b:e,t:`減 ${sg(b)} ＝ 加 ${sg(-b)}`}]),ans:String(e),options:opts(e,[a+b,-e,Math.abs(a)-Math.abs(b)]),hint:'異號相減：變成同號相加。',explain:`${a} + (${-b}) = ${e}。`}},
+ conv(){const a=R(3,15)*sgn(),b=R(3,15)*sgn(),ans=`${a} + (${sg(-b)})`;return{text:`${a} - (${sg(b)}) 可以改寫成哪一個加法？`,vis:'<div class="cap">減法 ＝ 加上「相反數」</div>',ans,options:opts(ans,[`${a} + (${sg(b)})`,`(${sg(-a)}) + (${sg(-b)})`,`${b} - (${a})`]),hint:'減去 b＝加上 −b。',explain:`${a} - (${b}) = ${a} + (${-b})。`}},
+ multi(){const v=[0,0,0,0].map(()=>R(3,15)*sgn()),e=ev(`${v[0]} - ${N(v[1])} - ${N(v[2])} + ${N(v[3])}`);return{text:'計算 '+e.t,vis:`<div class="cap">減法都改成「加相反數」再合併</div><div>${chips([v[0],-v[1],-v[2],v[3]])}</div>`,ans:String(e.v),options:opts(e.v,[-e.v,e.v+2*v[1],e.v-2*v[2]]),hint:'逐項改寫成加法。',explain:`結果 ${e.v}。`}},
+ abs(){const a=R(3,15)*sgn(),b=R(3,15)*sgn(),v=R(0,2);let e,vis;if(v==0){e=ev(`Math.abs(${a}) - Math.abs(${b})`);vis='<div class="cap">絕對值先變非負數，再相減</div>'}else if(v==1){e=ev(`Math.abs(${a} - ${N(b)})`,`|${a} - ${N(b)}|`);const[lo,hi]=rng(a,b);vis=nl(lo,hi,[{v:a,t:String(a),c:RD},{v:b,t:String(b),c:BL}],[{a:a,b:b,t:'距離',c:BL,h:-6}])}else{e=ev(`-Math.abs(${a}) - (-Math.abs(${b}))`,`-|${a}| - (-|${b}|)`);vis='<div class="cap">−|a| 永遠 ≤ 0；減去負數＝加上正數</div>'}return{text:'計算 '+e.t,vis,ans:String(e.v),options:opts(e.v,[-e.v,e.v+2,e.v-2]),hint:'先處理絕對值。',explain:`結果 ${e.v}。`}},
+ brk(){const[a,b,c,d]=[0,0,0,0].map(()=>R(3,12)*sgn()),e=ev(`${a} - (${b} - ${N(c)}) - ${N(d)}`);return{text:'計算 '+e.t,vis:'<div class="cap">前面是減號：括號內每一項都變號</div>',ans:String(e.v),options:opts(e.v,[a-b-c-d,-e.v,a-b+c+d]),hint:'−(b − c) ＝ −b + c。',explain:`${a} - ${b} + ${c} - (${d}) = ${e.v}。`}}},
+'II-1-3':{
+ dist(){return Math.random()<.5?OLD['I-1'].dist2():OLD['I-3'].mine()},
+ coord(){const a=R(-9,9),d=R(2,8),[lo,hi]=rng(a-d,a+d),c=`${a-d} 和 ${a+d}`;return{text:`數線上與 ${a} 距離為 ${d} 個單位長的點，座標是？`,vis:nl(lo,hi,[{v:a,t:String(a),c:G0},{v:a-d,t:'？',c:RD},{v:a+d,t:'？',c:RD}],[{a:a,b:a-d,t:d,c:BL,h:-6},{a:a,b:a+d,t:d,c:BL,h:24}]),ans:c,options:opts(c,[`只有 ${a+d}`,`${-a-d} 和 ${-a+d}`,`${a-d} 和 ${a+2*d}`]),hint:'左右各一個。',explain:`${a} - ${d} = ${a-d}，${a} + ${d} = ${a+d}。`}},
+ mid(){const a=R(-15,5),b=a+R(3,14),m=(a+b)/2,[lo,hi]=rng(a,b);return{text:`A 點座標 ${a}，B 點座標 ${b}，線段 AB 的中點座標是？`,vis:nl(lo,hi,[{v:a,t:'A '+a,c:RD},{v:b,t:'B '+b,c:BL},{v:m,t:'M？',c:G0}]),ans:String(m),options:opts(m,[(b-a)/2,a+b,m+1]),hint:'中點＝兩座標相加再除以 2。',explain:`(${a} + ${b}) ÷ 2 = ${m}。`}},
+ endp(){const a=R(-12,8),m=a+R(2,8),b=2*m-a,[lo,hi]=rng(a,b);return{text:`線段 AB 的中點 M 座標為 ${m}，A 點座標為 ${a}，則 B 點座標是？`,vis:nl(lo,hi,[{v:a,t:'A '+a,c:RD},{v:m,t:'M '+m,c:G0},{v:b,t:'B？',c:BL}]),ans:String(b),options:opts(b,[m+(m-a)/2,m+a,m-a]),hint:'M 到 A 多遠，M 到 B 就一樣遠。',explain:`B = 2×${m} - ${a} = ${b}。`}},
+ shift(){let a,b;do{a=R(-12,12);b=R(-12,12)}while(a==b);const[lo,hi]=rng(a,b);return{text:`從 ${a} 走到 ${b}，位移（含方向的正負）是多少？`,vis:nl(lo,hi,[{v:a,t:'起 '+a,c:G0},{v:b,t:'終 '+b,c:RD}],[{a:a,b:b,t:'？',c:BL,h:-6}]),ans:sg(b-a),options:opts(sg(b-a),[sg(a-b),sg(a+b),String(Math.abs(b-a)+ (b>a?1:-1))]),hint:'位移＝終點座標 − 起點座標。',explain:`${b} - (${a}) = ${sg(b-a)}。`}}},
+'III-1-1':{
+ mirror:OLD['I-4'].mirror,mul:OLD['I-4'].mul,
+ multi(){const n=R(3,4),v=[];for(let i=0;i<n;i++)v.push(R(2,H()?9:6)*sgn());const p=v.reduce((a,b)=>a*b,1),k=v.filter(x=>x<0).length;return{text:'計算 '+v.map(N).join(' × '),vis:`<div>${chips(v)}</div><div class="cap">負號 ${k} 個 → ${k%2?'負':'正'}；絕對值相乘＝${Math.abs(p)}</div>`,ans:String(p),options:opts(p,[-p,p+v[0],p-v[1]]),hint:'先數負號決定符號，再乘絕對值。',explain:`結果 ${p}。`}},
+ abs(){const x=R(2,9)*sgn(),y=R(2,9)*sgn(),v=R(0,2);const e=v==0?ev(`Math.abs(${x}) * ${N(y)}`):v==1?ev(`-Math.abs(${x}) * ${N(y)}`):ev(`Math.abs(${x} * ${N(y)})`,`|${x} × ${N(y)}|`);return{text:'計算 '+e.t,vis:'<div class="cap">絕對值先化成非負數，再乘</div>',ans:String(e.v),options:opts(e.v,[-e.v,Math.abs(x)+y,x*y]),hint:'先處理絕對值。',explain:`結果 ${e.v}。`}},
+ brk(){const a=R(2,9)*sgn(),b=R(2,9)*sgn(),e=ev(`-(${a}) * (-(${b}))`,`-(${sg(a)}) × (-(${sg(b)}))`);return{text:'計算 '+e.t,vis:`<div>${chips([-a,-b])}</div><div class="cap">先拆括號：−(a) 是 a 的相反數</div>`,ans:String(e.v),options:opts(e.v,[-e.v,a-b,a+b]),hint:'先化簡每個括號。',explain:`(${-a}) × (${-b}) = ${e.v}。`}},
+ sign:()=>signQ(['×'])},
+'III-1-2':{
+ div:OLD['I-4'].div,
+ inv(){const x=R(2,9)*sgn(),y=R(2,9)*sgn(),rc=n=>n<0?`-1/${-n}`:`1/${n}`,ans=`${N(x)} × (${rc(y)})`;return{text:`${N(x)} ÷ ${N(y)} 可以改寫成哪一個乘法？`,vis:'<div class="cap">除以一個數 ＝ 乘以它的倒數（符號不變）</div>',ans,options:opts(ans,[`${N(x)} × ${N(y)}`,`${N(x)} × (${rc(-y)})`,`${N(y)} × (${rc(x)})`]),hint:'倒數：分子分母顛倒，符號不變。',explain:`${y} 的倒數是 ${rc(y)}。`}},
+ multi(){const q=R(2,6),B=R(2,5),C=R(2,4),A=sgn()*q*B*C,b=sgn()*B,c=sgn()*C,e=ev(`${N(A)} / ${N(b)} / ${N(c)}`);return{text:'計算 '+e.t,vis:`<div>${chips([A,b,c])}</div><div class="cap">由左到右一次一步</div>`,ans:String(e.v),options:opts(e.v,[-e.v,e.v*2,A/b]),hint:'先定符號，再由左到右除。',explain:`結果 ${e.v}。`}},
+ abs(){const y=R(2,9)*sgn(),q=R(2,9)*sgn(),x=y*q,e=ev(`Math.abs(${x}) / ${N(y)}`);return{text:'計算 '+e.t,vis:'<div class="cap">絕對值先變非負數，再除</div>',ans:String(e.v),options:opts(e.v,[-e.v,x/y,e.v+1]),hint:'先算 |x|。',explain:`結果 ${e.v}。`}},
+ brk(){const b=R(2,9)*sgn(),q=R(2,9)*sgn(),a=b*q,e=ev(`${N(a)} / (-(${b}))`,`${N(a)} ÷ (-(${sg(b)}))`);return{text:'計算 '+e.t,vis:`<div class="cap">−(${sg(b)}) ＝ ${b*-1}</div>`,ans:String(e.v),options:opts(e.v,[-e.v,q,e.v+1]),hint:'先化簡括號。',explain:`${a} ÷ (${-b}) = ${e.v}。`}},
+ chain(){const B=R(2,6),C=R(2,9),q=R(2,9)*sgn();let e;if(Math.random()<.5){const b=sgn()*B,c=sgn()*C;e=ev(`${N(b*q)} / ${N(b)} * ${N(c)}`)}else{const c=sgn()*C,b=sgn()*B;e=ev(`${N(c*q)} * ${N(b)} / ${N(c)}`)}return{text:'計算 '+e.t,vis:'<div class="cap">乘除同級：由左到右</div>',ans:String(e.v),options:opts(e.v,[-e.v,e.v+q,e.v*2]),hint:'由左往右算。',explain:`結果 ${e.v}。`}},
+ sign:()=>signQ(['÷'])},
+'III-1-3':{
+ first(){const A=R(5,20),B=R(2,9)*sgn(),C=R(2,9),D=R(3,15);return{text:`計算 ${A} + ${N(B)} × ${C} - ${D} 時，第一步應先算哪一部分？`,vis:'<div class="cap">口訣：括號優先，先乘除、後加減</div>',ans:`${N(B)} × ${C}`,options:sh([`${N(B)} × ${C}`,`${A} + ${N(B)}`,`${C} - ${D}`,`${A} + ${N(B)} × ${C}`]),hint:'乘除比加減優先。',explain:'先乘除，再加減。'}},
+ ord:OLD['I-4'].ord,
+ mix(){const a=R(2,9)*sgn(),b=R(2,9)*sgn(),c=R(2,6)*sgn(),e0=R(2,5)*sgn(),d=e0*R(2,6)*sgn(),e=ev(`(${a} + ${N(b)}) * ${N(c)} - ${N(d)} / ${N(e0)}`);return{text:'計算 '+e.t,vis:'<div class="cap">① 括號 ② 乘除 ③ 加減</div>',ans:String(e.v),options:opts(e.v,[-e.v,e.v+c,e.v-2]),hint:'括號→乘除→加減。',explain:`結果 ${e.v}。`}},
+ abs(){const a=R(2,9)*sgn(),b=R(2,9)*sgn(),c=R(2,9)*sgn(),d=R(2,9)*sgn(),e=ev(`Math.abs(${a}) * ${N(b)} - Math.abs(${c} - ${N(d)})`,`|${a}| × ${N(b)} - |${c} - ${N(d)}|`);return{text:'計算 '+e.t,vis:'<div class="cap">絕對值也像括號：先算裡面再取絕對值</div>',ans:String(e.v),options:opts(e.v,[-e.v,e.v+2,e.v-2]),hint:'先化簡各個絕對值。',explain:`結果 ${e.v}。`}},
+ brk(){const a=R(2,9)*sgn(),b=R(2,9)*sgn(),c=R(2,6)*sgn(),d=R(2,9)*sgn(),e=ev(`-(${a} - ${N(b)}) * ${N(c)} + ${N(d)}`);return{text:'計算 '+e.t,vis:'<div class="cap">外面的負號先跟括號整體相乘</div>',ans:String(e.v),options:opts(e.v,[-e.v,e.v+c,e.v-d]),hint:'先算括號內，再乘除，最後加減。',explain:`結果 ${e.v}。`}}},
+'III-1-4':{
+ dist:OLD['I-2'].dist,
+ calc(){const a=pick([13,27,37,46,58,64,72,83]),b=100-a,s=sgn(),c=R(3,9)*sgn(),e=s*100*c;return{text:`用分配律簡算：${N(s*a)} × ${N(c)} + ${N(s*b)} × ${N(c)}`,vis:`<div class="cap">共同因數 ${N(c)}：(${N(s*a)} + ${N(s*b)}) × ${N(c)}</div>`,ans:String(e),options:opts(e,[-e,e/10,e+c]),hint:'先合併括號內的數。',explain:`(${s*a} + ${s*b}) × ${N(c)} = ${s*100} × ${N(c)} = ${e}。`}},
+ near(){const n=pick([99,98,101,102,199,201]),base=Math.round(n/100)*100,k=n-base,c=R(3,9)*sgn(),o=k<0?'-':'+';return{text:`用分配律簡算 ${n} × ${N(c)}`,vis:`<div class="cap">${n} = ${base} ${o} ${Math.abs(k)}</div><div>(${base} ${o} ${Math.abs(k)}) × ${N(c)} = ${base} × ${N(c)} ${o} ${Math.abs(k)} × ${N(c)}</div>`,ans:String(n*c),options:opts(n*c,[base*c,-n*c,n*c+c]),hint:'把數拆成整百加減小數。',explain:`${n} × ${N(c)} = ${n*c}。`}},
+ rev(){const a=R(2,9)*sgn(),b=R(3,15)*sgn(),c=R(3,15)*sgn(),ans=`${N(a)} × (${b} + ${N(c)})`;return{text:`逆用分配律，把 ${N(a)} × ${N(b)} + ${N(a)} × ${N(c)} 改寫成？`,vis:'<div class="cap">a×b + a×c ＝ a×(b + c)：提出共同因數</div>',ans,options:opts(ans,[`(${N(a)} + ${N(b)}) × ${N(c)}`,`${N(a)} × (${b} × ${N(c)})`,`${N(a)} × (${b} - ${N(c)})`]),hint:'找共同因數。',explain:`共同因數是 ${N(a)}。`}},
+ abs(){const x=R(2,9)*sgn(),b=R(2,9)*sgn(),c=R(2,9)*sgn(),e=ev(`Math.abs(${x}) * (${b} + ${N(c)})`);return{text:'計算 '+e.t,vis:`<div class="cap">分配律：|${x}|×${N(b)} + |${x}|×${N(c)}</div>`,ans:String(e.v),options:opts(e.v,[-e.v,x*(b+c),e.v+2]),hint:'|x| 先變非負數。',explain:`結果 ${e.v}。`}},
+ brk(){const a=R(2,9),b=R(2,9)*sgn(),c=R(2,9)*sgn(),e=ev(`-${a} * (-(${b}) + ${N(c)})`,`-${a} × (-(${sg(b)}) + ${N(c)})`);return{text:'計算 '+e.t,vis:`<div class="cap">先化簡 −(${sg(b)}) ＝ ${-b}，再分配</div>`,ans:String(e.v),options:opts(e.v,[-e.v,a*(b+c),e.v+a]),hint:'括號→分配律。',explain:`結果 ${e.v}。`}}},
+'IV-1-1':{
+ wr(){const b=pick([2,3,4,5,-2,-3,-4]),k=R(3,5),A=`${N(b)}${sup(k)}`;return{text:`把 ${Array(k).fill(N(b)).join(' × ')} 用指數簡記表示？`,vis:`<div>${chips(Array(k).fill(b))}</div><div class="cap">${k} 個 ${N(b)} 相乘：指數 ${k}；底數是負數要加括號</div>`,ans:A,options:opts(A,[`${b}${sup(k)}`,`${N(b)}${sup(k+1)}`,`${N(b)} × ${k}`,`${k}${sup(Math.abs(b))}`]),hint:'底數×次數。',explain:`${A}。`}},
+ val(){const a=R(2,4),k=R(2,H()?4:3),v=R(0,2);if(v==0){const e=(-a)**k;return{text:`計算 (${-a})${sup(k)}`,vis:`<div class="cap">${Array(k).fill(N(-a)).join(' × ')}</div>`,ans:String(e),options:opts(e,[-e,-a*k,a**k+1]),hint:'括號內整個數相乘 k 次。',explain:`= ${e}。`}}
+  if(v==1){const e=-(a**k);return{text:`計算 -${a}${sup(k)}`,vis:`<div class="cap">沒有括號：−(${Array(k).fill(a).join(' × ')})</div>`,ans:String(e),options:opts(e,[-e,-a*k,a**k+1]),hint:'指數只管緊鄰的數。',explain:`= ${e}。`}}
+  const n=R(2,H()?99:12),e=n%2?-1:1;return{text:`計算 (-1)${sup(n)}`,vis:'<div class="cap">(−1)：奇數次方→−1；偶數次方→1</div>',ans:String(e),options:sh(['1','-1','0','-'+n]),hint:'看指數奇偶。',explain:`${n} 是${n%2?'奇':'偶'}數，結果 ${e}。`}},
+ sgn(){const a=R(2,9),k=R(2,H()?99:9),v=R(0,2),t=v==0?`(-${a})${sup(k)}`:v==1?`-${a}${sup(k)}`:`-(-${a})${sup(k)}`,neg=v==0?k%2==1:v==1?true:k%2==0,ans=neg?'負數':'正數';return{text:`判斷 ${t} 是正數還是負數？`,vis:'<div class="cap">看括號護盾與指數奇偶：負底數 奇→負、偶→正</div>',ans,options:sh(['正數','負數','0','無法判斷']),hint:'先看有沒有括號，再看指數奇偶。',explain:`答案：${ans}。`}},
+ pow:OLD['I-4'].pow},
+'IV-1-2':{
+ add(){const t=[term(),term(),term()],o=[pick(['+','-']),pick(['+','-'])],e=t[0].v+(o[0]=='+'?1:-1)*t[1].v+(o[1]=='+'?1:-1)*t[2].v;return{text:`計算 ${t[0].d} ${o[0]} ${W(t[1])} ${o[1]} ${W(t[2])}`,vis:tl(t),ans:String(e),options:opts(e,[-e,e+pick([2,4,-2]),e-t[1].v]),hint:'先把每個次方算出來。',explain:`結果 ${e}。`}},
+ mul(){const a=term(),b=term(),e=a.v*b.v;return{text:`計算 ${a.d} × ${W(b)}`,vis:tl([a,b]),ans:String(e),options:opts(e,[-e,a.v+b.v,e+a.v]),hint:'先算次方再相乘。',explain:`${a.v} × ${b.v} = ${e}。`}},
+ div(){let a,b,k=0;do{a=term(4);b=term(3);k++}while(!(a.v%b.v===0&&Math.abs(a.v)>=Math.abs(b.v))&&k<300);if(k>=300){a={d:'2³',v:8};b={d:'2²',v:4}}const e=a.v/b.v;return{text:`計算 ${a.d} ÷ ${W(b)}`,vis:tl([a,b]),ans:String(e),options:opts(e,[-e,e*2,a.v-b.v]),hint:'先算次方再相除。',explain:`${a.v} ÷ ${b.v} = ${e}。`}},
+ mix(){const a=term(2),b=term(2),c=term(2),e=a.v+b.v*c.v;return{text:`計算 ${a.d} + ${W(b)} × ${W(c)}`,vis:tl([a,b,c]),ans:String(e),options:opts(e,[(a.v+b.v)*c.v,-e,e+2]),hint:'次方→乘除→加減。',explain:`${a.v} + ${b.v}×${c.v} = ${e}。`}},
+ law:OLD['I-5'].law},
+'IV-1-3':{sci:OLD['I-5'].sci,big:OLD['I-5'].big,small:OLD['I-5'].small,trap:OLD['I-5'].trap,cmp:OLD['I-5'].cmp,real:OLD['I-5'].real},
+'IV-1-4':{wr:null,val:null,sgn:null,mix:null,div:null,sci:OLD['I-5'].sci,big:OLD['I-5'].big,small:OLD['I-5'].small,cmp:OLD['I-5'].cmp,trap:OLD['I-5'].trap}};
+Object.assign(G['IV-1-4'],{wr:G['IV-1-1'].wr,val:G['IV-1-1'].val,sgn:G['IV-1-1'].sgn,mix:G['IV-1-2'].mix,div:G['IV-1-2'].div});
+Object.assign(STG,STG2);
+
+const PLAN=STG[SID].plan;
+// ---------- 畫面 ----------
+function show(id){['s-start','s-game','s-end'].forEach(s=>$('#'+s).classList.toggle('hide',s!=id))}
+function drawHearts(){$('#hearts').textContent='❤️'.repeat(hearts)+'🖤'.repeat(5-hearts)}
+function drawCombo(){$('#combo').textContent=combo>=2?`🔥 連擊 ×${combo}`:''}
+function say(html,cls){const e=$('#say');e.className=cls||'';e.innerHTML=html}
+function paint(){
+  const T=MODES[mode].t;
+  $('#enemy').style.left=(T?(1-left/T)*74:28)+'%';
+  $('#bar').style.width=T?(left/T*100)+'%':'100%';
+  $('#sec').textContent=T?Math.ceil(left)+' 秒':'不限時';
+}
+
+function start(types,isRescue){
+  rescue=!!isRescue;qs=MS.begin(rescue)?[]:types.map(gen);idx=0;hearts=5;combo=0;score=0;right=0;wrongs=[];
+  used={hint:0,cut:0,freeze:0};
+  show('s-game');$('#enemy').textContent=STG[SID].en;drawHearts();drawCombo();next();
+}
+function next(){
+  clearInterval(tm);
+  if(MS.halt())return;
+  if(MS.active()){mode=MS.prep(idx+1);if(idx>=qs.length&&hearts>0)qs.push(gen(MS.pick(PLAN)))}
+  if(idx>=qs.length||hearts<=0)return finish();
+  q=qs[idx++];lock=false;
+  $('#wave').textContent=MS.wave(idx,qs.length,'波')+(rescue?'（解救戰俘）':'');
+  $('#qt').textContent=q.text;$('#vis').innerHTML=q.vis||'';$('#enemy').textContent=STG[SID].en;
+  $('#hintbox').classList.add('hide');
+  say('');$('#say').classList.add('hide');
+  $('#enemy').className='';
+  const o=$('#opts');o.innerHTML='';
+  q.options.forEach(v=>{const b=document.createElement('button');b.className='opt';b.textContent=v;b.dataset.v=v;b.onclick=()=>answer(v,b);o.appendChild(b)});
+  $('#t-hint').disabled=!!used.hint;$('#t-cut').disabled=!!used.cut;
+  $('#t-freeze').disabled=!!used.freeze||!MODES[mode].t;
+  startTimer();
+}
+function startTimer(){
+  const T=MODES[mode].t;left=T;frozenUntil=0;paint();if(!T)return;
+  tm=setInterval(()=>{
+    if(Date.now()<frozenUntil)return;
+    left-=0.1;paint();
+    if(left<=0){clearInterval(tm);miss(null)}
+  },100);
+}
+function answer(v,btn){
+  if(lock)return;
+  if(v===q.ans){
+    lock=true;clearInterval(tm);
+    btn.classList.add('ok');combo++;right++;log(true);
+    const gain=100+(combo-1)*20;score+=gain;drawCombo();
+    $('#enemy').classList.add('dead');
+    $('#say').classList.remove('hide');
+    say(`⚔️ 擊退敵軍！ +${gain} 戰功`+(combo>=3?`　🔥 ${combo} 連擊！`:''),'win');
+    setTimeout(next,1000);
+  }else{
+    btn.classList.add('bad');miss(btn);
+  }
+}
+function miss(btn){
+  if(lock)return;
+  lock=true;clearInterval(tm);
+  hearts--;combo=0;wrongs.push(q);log(false);drawHearts();drawCombo();
+  document.querySelectorAll('.opt').forEach(b=>{if(b.dataset.v===q.ans)b.classList.add('ok')});
+  $('#say').classList.remove('hide');
+  say(`<b>${btn?'❌ 城牆受損！':'⏰ 時間到，敵軍撞上城牆！'}</b><br>🧙 軍師說：正確答案是 <b>${q.ans}</b>。${q.explain}<br><button class="btn" id="nx" style="margin-top:8px">${hearts<=0?'查看戰報':'下一波'}</button>`,'lose');
+  $('#nx').onclick=next;$('#nx').focus();
+}
+function finish(){
+  clearInterval(tm);show('s-end');
+  const fail=hearts<=0,total=qs.length;
+  let stars=fail?0:wrongs.length<=1?3:wrongs.length<=3?2:1;
+  if(rescue){
+    $('#e-title').textContent='解救戰俘行動結束';
+    $('#e-stars').textContent='';
+    $('#e-info').textContent=`成功救回 ${right}/${total} 位戰俘。`+(right==total?'全員歸隊！':'沒救出的，下次再來！');
+  }else{
+    $('#e-title').textContent=fail?'城牆倒塌了…':['','新兵','伍長','校尉'][stars]+'　凱旋！';
+    $('#e-stars').textContent=fail?'💔':'⭐'.repeat(stars)+'☆'.repeat(3-stars);
+    $('#e-info').textContent=`戰功 ${score}　答對 ${right}/${total}　剩餘城牆 ${hearts} 顆心`;
+  }
+  const j=$('#e-jail');j.innerHTML='';
+  if(wrongs.length){
+    const h=document.createElement('div');h.innerHTML=`<b>⛓️ 戰俘營（${wrongs.length} 題）</b>`;j.appendChild(h);
+    wrongs.forEach(w=>{const d=document.createElement('div');d.innerHTML=`${w.text}<br>正解：<b>${w.ans}</b>　${w.explain}`;j.appendChild(d)});
+  }
+  $('#rescue').classList.toggle('hide',!wrongs.length||rescue);
+  $('#back').classList.toggle('hide',!EMB);
+  MS.result({sid:SID,emb:EMB,rescue:rescue,mode:mode,stars:stars,fail:fail,score:score,right:right,total:total});
+}
+
+// ---------- 事件 ----------
+$('#modes').onclick=e=>{const b=e.target.closest('.mode');if(!b)return;mode=b.dataset.m;document.querySelectorAll('.mode').forEach(x=>x.classList.toggle('on',x==b))};
+$('#stT').textContent=STG[SID].t;$('#stD').textContent=STG[SID].d;
+$('#go').onclick=()=>start(PLAN,false);
+$('#back').onclick=()=>parent.postMessage({type:'stage-exit'},'*');
+$('#again').onclick=()=>show('s-start');
+$('#rescue').onclick=()=>start(wrongs.map(w=>w.type),true);
+$('#t-hint').onclick=()=>{if(lock||used.hint)return;used.hint=1;$('#t-hint').disabled=true;const h=$('#hintbox');h.textContent='💡 '+q.hint;h.classList.remove('hide')};
+$('#t-cut').onclick=()=>{if(lock||used.cut)return;used.cut=1;$('#t-cut').disabled=true;
+  sh([...document.querySelectorAll('.opt')].filter(b=>b.dataset.v!==q.ans)).slice(0,2).forEach(b=>b.classList.add('cut'))};
+$('#t-freeze').onclick=()=>{if(lock||used.freeze)return;used.freeze=1;$('#t-freeze').disabled=true;frozenUntil=Date.now()+10000;
+  $('#say').classList.remove('hide');say('⏳ 時間凍結 10 秒！慢慢想。')};
+MS.init(MODES, SID);
+</script>
+</body>
+</html>
