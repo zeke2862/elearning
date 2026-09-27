@@ -34,9 +34,9 @@ button:focus-visible{outline:3px solid var(--bronze);outline-offset:2px}
 .node.locked{opacity:.45}
 .node.done{border-color:var(--jade)}
 .node.soon{border-style:dashed}
-.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-top:10px}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px;margin-top:10px}
 .cd{background:var(--paper);color:#2b2416;border-radius:10px;padding:10px;font-size:.85rem;line-height:1.5;min-height:130px}
-.cd b{font-size:1.2rem;display:block;font-family:"Noto Serif TC","Songti TC",serif}
+.cd b{font-size:1.1rem;display:block;font-family:"Noto Serif TC","Songti TC",serif}
 .cd.lock{background:var(--ink);color:#8a8fb0;border:2px dashed var(--line)}
 #ov{position:fixed;inset:0;background:var(--ink);z-index:50}
 #fr{width:100%;height:100%;border:0}
@@ -47,9 +47,45 @@ button:focus-visible{outline:3px solid var(--bronze);outline-offset:2px}
 .rule{margin-top:12px;line-height:1.8;font-size:.92rem}
 .tiny{margin-top:24px;text-align:center}
 .tiny button{background:none;border:1px solid var(--line);border-radius:8px;padding:6px 14px;opacity:.7}
+/* ===== 角色戰力／裝備（新增） ===== */
+.hero-row{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.avatar{background:var(--ink);border:2px solid var(--bronze);border-radius:14px}
+#ebar{height:100%;background:linear-gradient(90deg,var(--jade),#7be0c9);width:0;transition:width .6s}
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(105px,1fr));gap:8px;margin-top:12px}
+.sbox{background:var(--ink);border:2px solid var(--line);border-radius:10px;padding:8px 6px;text-align:center}
+.sbox b{font-size:1.1rem;display:block}
+.sbox span{font-size:.75rem;opacity:.8}
+.icon-wrap{display:inline-flex;align-items:center;justify-content:center;vertical-align:middle}
+.icon-wrap img{display:block;object-fit:contain;border-radius:6px}
+.icon-wrap .emoji-fb{display:none;line-height:1}
+.ic-eq{width:30px;height:30px}
+.ic-eq img,.ic-eq .emoji-fb{width:30px;height:30px;font-size:26px}
+.avatar{width:78px;height:78px;padding:0;display:flex;align-items:center;justify-content:center}
+.ic-av{width:100%;height:100%}
+.ic-av img,.ic-av .emoji-fb{width:100%;height:100%;font-size:2.6rem}
+.cd .es{margin:6px 0;font-weight:700}
+.cd .hint{font-size:.76rem;opacity:.8;margin-bottom:4px}
+.cd .desc{font-size:.76rem;opacity:.85;line-height:1.5}
+.q-normal{color:#5a5245}
+.q-fine{color:#2f7d4f}
+.q-legend{color:#2b4fc4}
+.q-myth{color:#b8542c}
+.avatar{cursor:pointer}
+.fighter{background:var(--ink);border:2px solid var(--line);border-radius:12px;padding:10px 12px;margin:8px 0}
+.fighter b{font-size:1.05rem}
+.fbar{height:10px;background:#2a2f52;border-radius:6px;overflow:hidden;margin:4px 0}
+.fbar>i{display:block;height:100%;transition:width .3s}
+.fbar.hp>i{background:linear-gradient(90deg,#43a58f,#7be0c9)}
+.fbar.mp>i{background:linear-gradient(90deg,#3a6fd2,#7fb0f2)}
+.turn-tag{display:inline-block;background:var(--bronze);color:#2a1d05;padding:2px 10px;border-radius:8px;font-weight:700;font-size:.85rem;margin-bottom:6px}
+.amenu{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.amenu button{background:var(--ink);border:2px solid var(--bronze);border-radius:8px;padding:8px 12px;font-size:.88rem}
+.amenu button:disabled{opacity:.35;cursor:not-allowed}
+.blog{margin-top:10px;font-size:.82rem;opacity:.85;line-height:1.6;max-height:120px;overflow-y:auto}
 @media (max-width:560px){.nodes{grid-template-columns:repeat(2,1fr)}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 </head>
 <body>
 <main>
@@ -73,17 +109,51 @@ button:focus-visible{outline:3px solid var(--bronze);outline-offset:2px}
     <input id="w-cls" placeholder="班級（例：701）" maxlength="20" aria-label="班級">
     <input id="w-no" placeholder="座號" maxlength="10" aria-label="座號">
     <input id="w-name" placeholder="姓名或暱稱" maxlength="30" aria-label="姓名或暱稱">
+    <input id="w-sid" placeholder="我的學號（對戰要用）" maxlength="20" aria-label="我的學號">
     <button id="w-save">儲存</button>
     <button id="w-exp">📤 匯出我的進度</button>
   </section>
 
   <div id="map"></div>
 
+  <section class="card" id="hero">
+    <h2 class="serif" style="margin:0 0 6px">🧙 角色戰力</h2>
+    <small>每答一題就會累積經驗值，答對 +10、答錯 +1，經驗值滿了就升級！</small>
+    <div class="hero-row" style="margin-top:10px">
+      <div class="avatar" id="avatar">🧙</div>
+      <div class="grow">
+        <b id="lv-txt"></b>
+        <div class="pbar"><div id="ebar"></div></div>
+        <small id="exp-txt"></small>
+      </div>
+    </div>
+    <div class="stat-grid" id="stats"></div>
+  </section>
+
   <section class="ch">
-    <h2 class="serif">🃏 歷史人物收藏卡</h2>
-    <small>通關對應的關卡就能收集</small>
+    <h2 class="serif">⚔️ 裝備收藏</h2>
+    <small>通關「一整個大關」的所有小關就能獲得裝備，累積星星還能升級品質！</small>
     <div class="cards" id="cards"></div>
   </section>
+
+  <section class="card" id="arena">
+    <h2 class="serif" style="margin:0 0 6px">⚔️ 學號對戰</h2>
+    <div id="arena-setup">
+      <small>手機、平板、家裡電腦都可以玩，只要有網路就好！輸入對方學號、選好模式、按下對戰。</small>
+      <div class="who" style="margin-top:10px">
+        <label style="display:inline-flex;align-items:center;gap:4px"><input type="radio" name="duel-mode" value="sync" checked>⚡即時對戰（雙方都要在線）</label>
+        <label style="display:inline-flex;align-items:center;gap:4px"><input type="radio" name="duel-mode" value="async">👻單挑幽靈AI（對方不用在線）</label>
+      </div>
+      <div class="who" style="margin-top:8px">
+        <input id="op-sid" placeholder="對方學號">
+        <button id="op-fight">⚔️ 輸入學號，對戰！</button>
+      </div>
+      <div id="arena-pending" class="hide" style="margin-top:10px"></div>
+    </div>
+    <div id="arena-battle" class="hide"></div>
+  </section>
+
+  <p class="tiny" style="margin-top:8px;opacity:.7">👆 點一下上面「角色戰力」的頭像，可以看自己的對戰總戰績</p>
 
   <p class="tiny"><button id="reset">重置我的進度</button></p>
 </main>
@@ -107,15 +177,6 @@ const CH3=[
  {n:'第三章・最終試煉',sub:'綜合九大試煉題型',st:[['7-3','Boss：符號大師認證考試','algebra-stage.html?id=7-3']]}
 ];
 const RK=[[0,'新兵'],[8,'伍長'],[20,'校尉'],[40,'將軍'],[67,'大元帥'],[97,'兵仙'],[130,'代數宗師']]; // 滿星 = 關卡數 × 5
-const CARDS=[
- ['IV-1-4','數線長老','守護整數王國的智者，教你用「性質符號」與「運算符號」握住開啟真理的數之鑰。'],
- ['1-4','蕭何','他極力推薦韓信給劉邦，還連夜把逃走的韓信追了回來，留下「月下追韓信」的故事。'],
- ['2-4','張良','劉邦稱讚他「運籌帷幄之中，決勝千里之外」，是最會用腦袋打仗的軍師。'],
- ['3-4','項羽','力氣大、打仗猛的西楚霸王，最後在垓下兵敗，走到烏江自刎。'],
- ['4-3','虞姬','項羽身邊的愛人，是楚漢故事裡最有名的女子之一。'],
- ['4-4','韓信','劉邦問他能帶多少兵，他答「多多益善」，被後人稱為「兵仙」。'],
- ['7-3','符號使者','修復了符號之城所有崩解的咒語，成為真正的代數大師。']
-];
 const KEY='hanxin-progress-v1',PERSTAGE=5; // 每關最多 5 星（練兵3 + 實戰4 + 修羅5）
 let P={};
 const idsOf=(GROUPS,ci)=>GROUPS[ci].st.map(s=>s[0]);
@@ -153,10 +214,109 @@ function lockCh3(ci,k){
   const prevGroup=CH3[ci-1],allDone=prevGroup.st.every(s=>st(s[0])>0);
   return allDone?'':`先完成「${prevGroup.n.replace(/^第三章[^、]*、/,'')}」的所有試煉`;
 }
-const owned=()=>CARDS.filter(c=>st(c[0])>0).map(c=>c[1]);
+
+/* ===== ⚔️ 裝備系統（新增） =====
+   每一個「大關」通關（大關內所有小關都拿到 ≥1 顆星）就會掉落一件裝備，
+   對應順序：第一章 4 大關 → 第二章 4 大關 → 第三章 4 大關，共 12 大關 = 12 件裝備。
+   品質＝這個大關目前累積的總星數 ÷ 大關內小關數：
+     普通：小關全通關　精良：總星數 ≥ 小關數×3　傳說：≥×4　神話：≥×5（滿星）
+   數值規則（重要）：每件裝備第一次解鎖時，會在範圍內「抽一次」基礎數值，
+   之後永遠固定不變；品質升級時只是把這個固定的基礎數值乘上倍率顯示出來，
+   不會重新抽獎，所以裝備數值不會忽大忽小。 */
+const ITEMS=[
+ {name:'奧術附魔劍',en:'Arcane Infused Greatsword',icon:'🗡️',img:'images/item-01.png',slot:'武器',
+  stats:[['atk',35,50],['matk',40,60],['spd',2,5]],
+  desc:'核心輸出武器，大幅同時提升普攻與魔攻，並微幅增加揮刀與移動速度。'},
+ {name:'符文鎧・褲',en:'',icon:'👖',img:'images/item-02.png',slot:'下裝',
+  stats:[['hp',80,120],['def',20,30],['mdef',15,25]],
+  desc:'下半身防具，提供均衡的雙防與血量，提升戰場生存力。'},
+ {name:'魔力編織戰盔',en:'Manastitch Helm',icon:'⛑️',img:'images/item-03.png',slot:'頭部',
+  stats:[['mp',60,90],['matk',15,25],['mdef',10,18]],
+  desc:'頭部防具，大幅擴充續航用的魔力池，並強化魔法傷害與魔防。'},
+ {name:'符文鎧・上衣',en:'',icon:'🥋',img:'images/item-04.png',slot:'上衣',
+  stats:[['hp',150,200],['def',35,50],['spd',-2,-1]],
+  desc:'核心重防具，提供全遊戲最高額的血量與物防，但會微幅犧牲速度。'},
+ {name:'元素烙印護手',en:'Gauntlets of Elemental Brand',icon:'🧤',img:'images/item-05.png',slot:'手部',
+  stats:[['atk',15,25],['matk',15,25],['spd',5,8]],
+  desc:'手部攻擊裝，同時提升普攻與魔攻，並顯著增加施法與攻擊速度。'},
+ {name:'閃現長靴',en:'Boots of Arcane Blink',icon:'👢',img:'images/item-06.png',slot:'足部',
+  stats:[['spd',15,25],['hp',30,50],['mp',20,40]],
+  desc:'足部移動裝，提供全遊戲最高的速度加成，讓法師在戰場上靈活走位。'},
+ {name:'魔武流轉項鍊',en:'Amulet of Convergence',icon:'📿',img:'images/item-07.png',slot:'項鍊',
+  stats:[['atk',10,20],['matk',10,20],['mp',40,60]],
+  desc:'配件，專為魔武雙修設計，均衡提升雙攻，並增加魔力以便頻繁施法。'},
+ {name:'混沌元素戒指',en:'Ring of Chaos Alignment',icon:'💍',img:'images/item-08.png',slot:'戒指',
+  stats:[['matk',30,45],['mp',30,50]],
+  desc:'飾品，極致追求純魔法輸出的戒指，提供高額魔攻與魔力上限。'},
+ {name:'賢者吸魔戒',en:"Sage's Siphon Signet",icon:'💠',img:'images/item-09.png',slot:'戒指',
+  stats:[['atk',20,30],['hp',40,60]],
+  desc:'飾品，偏向近戰與續航的戒指，提升普攻傷害並增加血量容錯率。'},
+ {name:'戰法精靈',en:'',icon:'🧚',img:'images/item-10.png',slot:'寵物',
+  stats:[['hp',50,80],['mp',50,80],['spd',3,6]],
+  desc:'全能型夥伴，全方位補足角色的基礎三圍（血、魔、速），不佔用身體防具欄位。'},
+ {name:'減速披風',en:'Cloak of the Chrono-Stasis',icon:'🧣',img:'images/item-11.png',slot:'背部',
+  stats:[['def',15,25],['mdef',25,40],['spd',5,10]],
+  desc:'終極通關背部裝備，提供極高的魔法防禦與速度，幫助法師在後期關卡抗衡高壓法術。'},
+ {name:'分身',en:'',icon:'👥',img:'images/item-12.png',slot:'特殊',
+  stats:[],special:true,
+  desc:'完全複製角色資訊（含裝備），在對戰模式中可以造成雙倍攻擊！'}
+];
+const EQUIP_GROUPS=[idsOf(CH1,0),idsOf(CH1,1),idsOf(CH1,2),idsOf(CH1,3),idsOf(CH2,0),idsOf(CH2,1),idsOf(CH2,2),idsOf(CH2,3),idsOf(CH3,0),idsOf(CH3,1),idsOf(CH3,2),idsOf(CH3,3)];
+const GROUP_NAMES=[...CH1.map(c=>c.n),...CH2.map(c=>c.n),...CH3.map(c=>c.n)];
+const QMUL={normal:1,fine:2,legend:2.5,myth:5};
+const QLABEL={normal:'普通',fine:'精良',legend:'傳說',myth:'神話'};
+const QNEXT={normal:'fine',fine:'legend',legend:'myth',myth:null};
+const groupSum=ids=>ids.reduce((a,id)=>a+st(id),0);
+const groupDone=ids=>ids.every(id=>st(id)>0);
+function qNeedStars(n,q){return q=='fine'?n*3:q=='legend'?n*4:n*5;}
+function qualityOf(i){
+  const ids=EQUIP_GROUPS[i];
+  if(!groupDone(ids))return null;
+  const n=ids.length,s=groupSum(ids);
+  if(s>=n*5)return 'myth';
+  if(s>=n*4)return 'legend';
+  if(s>=n*3)return 'fine';
+  return 'normal';
+}
+function ensureRoll(i){
+  P._eq=P._eq||{};
+  if(P._eq[i])return;
+  const it=ITEMS[i],r={};
+  it.stats.forEach(([k,lo,hi])=>{r[k]=lo+Math.random()*(hi-lo);});
+  P._eq[i]=r;save();
+}
+function effStats(i){
+  const it=ITEMS[i],q=qualityOf(i);
+  if(!q||it.special)return {};
+  ensureRoll(i);
+  const roll=P._eq[i],mul=QMUL[q],out={};
+  it.stats.forEach(([k])=>{out[k]=Math.round(roll[k]*mul);});
+  return out;
+}
+
+/* ===== 🧙 經驗值 / 等級（新增）=====
+   答對一題 +10 經驗值、答錯一題 +1 經驗值。
+   升到下一級所需經驗值＝50 + 目前等級的平方 × 50（等級 1→2 需要 100，2→3 需要 250…）。 */
+const STATKEYS=['hp','mp','atk','matk','def','mdef','spd'];
+const BASE={hp:1000,mp:300,atk:50,matk:50,spd:100,def:20,mdef:20};
+const GROWTH={hp:100,mp:30,atk:5,matk:5,def:3,mdef:3,spd:1};
+const STATLABEL={hp:'❤️血量',mp:'🔹魔力',atk:'⚔️普攻',matk:'✨魔攻',def:'🛡️物防',mdef:'🔮魔防',spd:'🏃速度'};
+function expNeed(lv){return 50+lv*lv*50;}
+function levelInfo(){
+  const exp=P._exp||0;let lv=1,rem=exp;
+  while(rem>=expNeed(lv)){rem-=expNeed(lv);lv++;}
+  return {level:lv,cur:rem,need:expNeed(lv),exp:exp};
+}
+function totalStats(){
+  const li=levelInfo(),out={};
+  STATKEYS.forEach(k=>out[k]=BASE[k]+GROWTH[k]*(li.level-1));
+  ITEMS.forEach((it,i)=>{const es=effStats(i);STATKEYS.forEach(k=>{if(es[k])out[k]+=es[k];});});
+  return out;
+}
 function makeExport(){
   const stages={};flatAll.forEach(id=>{if(P[id])stages[id]={stars:P[id].stars||0,best:P[id].best||0,eb:P[id].eb||0}});
-  return {v:1,who:P._who||{},stages:stages,q:P._q||{},at:new Date().toISOString()};
+  const li=levelInfo(),equip={};ITEMS.forEach((it,i)=>{const q=qualityOf(i);if(q)equip[it.name]=q;});
+  return {v:2,who:P._who||{},stages:stages,q:P._q||{},exp:li.exp,level:li.level,equip:equip,at:new Date().toISOString()};
 }
 /*UI*/
 const $=s=>document.querySelector(s);
@@ -187,6 +347,47 @@ function endlessHTML(){
 function stageURL(url,id,endless){
   return url+(url.includes('?')?'&':'?')+'stars='+st(id)+'&eb='+ebOf(id)+(endless?'&endless=1':'');
 }
+// ===== 🖼️ 圖片區（新增）=====
+// 把您做好的圖片依照下面的檔名放進 world-map.html 同一層的 images 資料夾即可自動套用；
+// 圖片還沒準備好的項目，會自動顯示表情符號代替，不會壞版面。
+function iconHTML(src,emoji,cls){
+  return `<span class="icon-wrap ${cls}"><img src="${src}" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex'"><span class="emoji-fb">${emoji}</span></span>`;
+}
+// ===== 🧙 角色戰力面板（新增） =====
+const AV=['🧑‍🎓','🥋','🛡️','⚔️','🐉','🧞','🧙‍♂️'];
+const AVIMG=['images/avatar-0.png','images/avatar-1.png','images/avatar-2.png','images/avatar-3.png','images/avatar-4.png','images/avatar-5.png','images/avatar-6.png'];
+function renderHero(){
+  const li=levelInfo(),rk=RK.indexOf(rankOf(total())),ri=Math.max(0,rk);
+  $('#avatar').innerHTML=iconHTML(AVIMG[ri],AV[ri]||'🧙','ic-av');
+  $('#lv-txt').innerHTML=`等級 <b>Lv.${li.level}</b>　經驗值 ${li.cur} / ${li.need}`;
+  $('#ebar').style.width=(li.cur/li.need*100)+'%';
+  $('#exp-txt').textContent=`累計經驗值：${li.exp}`;
+  const ts=totalStats();
+  $('#stats').innerHTML=STATKEYS.map(k=>`<div class="sbox"><b>${ts[k]}</b><span>${STATLABEL[k]}</span></div>`).join('');
+}
+// ===== ⚔️ 裝備卡片（取代原本的歷史人物收藏卡） =====
+function eqCardHTML(i){
+  const it=ITEMS[i],q=qualityOf(i),ids=EQUIP_GROUPS[i],n=ids.length;
+  if(!q){
+    const done=ids.filter(id=>st(id)>0).length;
+    return `<div class="cd lock"><b>${iconHTML(it.img,it.icon,'ic-eq')} ？？？</b><small>${it.slot}</small><div class="hint">通關「${GROUP_NAMES[i]}」全部 ${n} 個小關才能解鎖（目前 ${done}/${n}）</div></div>`;
+  }
+  const nq=QNEXT[q];
+  const hint=nq?`⬆️ 下一階「${QLABEL[nq]}」需要這個大關累積 ${qNeedStars(n,nq)} ⭐（目前 ${groupSum(ids)} ⭐）`:'👑 已經是最高品質！';
+  let lines;
+  if(it.special){
+    const pct=Math.min(100,st('7-3')*20);
+    lines=`對戰複製你目前所有戰力，攻擊力雙倍！（依 7-3 星等，目前加成 ${pct}%）`;
+  }else{
+    const es=effStats(i);
+    lines=it.stats.map(([k])=>`${STATLABEL[k]} ${es[k]>=0?'+':''}${es[k]}`).join('　');
+  }
+  return `<div class="cd"><b>${iconHTML(it.img,it.icon,'ic-eq')} ${it.name}</b><small>${it.slot}／<b class="q-${q}">${QLABEL[q]}</b></small>
+    <div class="es">${lines}</div>
+    <div class="hint">${hint}</div>
+    <div class="desc">${it.desc}</div></div>`;
+}
+function renderEquip(){$('#cards').innerHTML=ITEMS.map((it,i)=>eqCardHTML(i)).join('');}
 function render(){
   const t=total(),rk=rankOf(t),nx=RK.find(r=>r[0]>t);
   $('#rank').textContent=rk[1];$('#tot').textContent=`${t} / ${MAXSTAR} ⭐`;$('#rbar').style.width=(t/MAXSTAR*100)+'%';
@@ -199,7 +400,9 @@ function render(){
     `<h2 class="serif" style="margin:20px 0 0;color:var(--bronze)">🔮 第三章：代數異世界・符號之城的覺醒</h2>`+
     groupHTML(CH3,lockCh3,'3')+
     endlessHTML();
-  $('#cards').innerHTML=CARDS.map(c=>st(c[0])>0?`<div class="cd"><b>${c[1]}</b>${c[2]}</div>`:`<div class="cd lock"><b>？？？</b>通關 ${c[0]} 解鎖</div>`).join('');
+  renderHero();
+  renderEquip();
+  syncMyUser();
 }
 $('#map').onclick=e=>{
   const b=e.target.closest('.node');if(!b)return;
@@ -220,19 +423,26 @@ addEventListener('message',e=>{
   if(e.source!==$('#fr').contentWindow)return;
   const d=e.data||{};
   if(d.type=='stage-result'&&!d.fail&&d.id==cur){
-    const r0=rankOf(total())[1],c0=owned().length,old=P[d.id]||{stars:0,best:0};
+    const r0=rankOf(total())[1];
+    const gi=EQUIP_GROUPS.findIndex(ids=>ids.includes(d.id)),qBefore=gi>=0?qualityOf(gi):null;
+    const old=P[d.id]||{stars:0,best:0};
     P[d.id]={...old,stars:Math.max(old.stars,d.stars),best:Math.max(old.best,d.score)};save();
     const msg=[];
     if(!old.stars)msg.push('🎉 首次通關 '+d.id+'！');
     if(old.stars<3&&d.stars>=3)msg.push('🔓 '+d.id+' 實戰模式與無極限挑戰解鎖！');
     else if(old.stars<4&&d.stars>=4)msg.push('🔓 '+d.id+' 修羅模式解鎖！');
     else if(old.stars<5&&d.stars>=5)msg.push('👑 '+d.id+' 修羅全對，滿星 5 ⭐！');
-    if(owned().length>c0)msg.push('🃏 獲得收藏卡：'+owned().pop()+'！');
+    if(gi>=0){const qAfter=qualityOf(gi);if(qAfter&&qAfter!==qBefore)msg.push('⚔️ 獲得裝備：'+ITEMS[gi].icon+' '+ITEMS[gi].name+'（'+QLABEL[qAfter]+'）！');}
     const r1=rankOf(total())[1];if(r1!=r0)msg.push('🎖️ 升官了：'+r1+'！');
     if(msg.length)toast(msg.join('<br>'));
   }
   if(d.type=='wave-log'&&typeof d.id=='string'&&typeof d.qtype=='string'){
-    const key=d.id+':'+d.qtype;P._q=P._q||{};const r=P._q[key]||{n:0,ok:0};r.n++;if(d.ok)r.ok++;P._q[key]=r;save();
+    const key=d.id+':'+d.qtype;P._q=P._q||{};const r=P._q[key]||{n:0,ok:0};r.n++;if(d.ok)r.ok++;P._q[key]=r;
+    const before=levelInfo().level;
+    P._exp=(P._exp||0)+(d.ok?10:1);save();
+    const after=levelInfo().level;
+    if(after>before)toast('🎉 升級了！Lv.'+before+' → Lv.'+after);
+    renderHero();
   }
   if(d.type=='endless-result'&&d.id==cur&&Number.isFinite(d.count)){
     const old=P[d.id]||{stars:0,best:0},o=old.eb||0;
@@ -241,16 +451,316 @@ addEventListener('message',e=>{
   if(d.type=='stage-exit')closeStage();
 });
 $('#reset').onclick=()=>{if(confirm('確定要清除所有星星與收藏卡嗎？這個動作無法復原。')){P={};save();render()}};
-function fillWho(){const w=P._who||{};$('#w-cls').value=w.cls||'';$('#w-no').value=w.no||'';$('#w-name').value=w.name||''}
-function saveWho(){P._who={cls:$('#w-cls').value.trim(),no:$('#w-no').value.trim(),name:$('#w-name').value.trim()};save()}
-$('#w-save').onclick=()=>{saveWho();toast('✅ 已儲存你的資料')};
+function fillWho(){const w=P._who||{};$('#w-cls').value=w.cls||'';$('#w-no').value=w.no||'';$('#w-name').value=w.name||'';$('#w-sid').value=w.sid||''}
+function saveWho(){P._who={cls:$('#w-cls').value.trim(),no:$('#w-no').value.trim(),name:$('#w-name').value.trim(),sid:$('#w-sid').value.trim()};save()}
+$('#w-save').onclick=()=>{saveWho();syncMyUser();toast('✅ 已儲存你的資料');startPendingListen()};
 $('#w-exp').onclick=()=>{
   saveWho();const o=makeExport(),w=o.who,safe=x=>String(x||'').replace(/[^\w\u4e00-\u9fff-]/g,'');
   const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(o,null,1)],{type:'application/json'}));
   a.download=`progress-${safe(w.cls)}-${safe(w.no)}-${safe(w.name)}.json`;document.body.appendChild(a);a.click();a.remove();
   toast('📤 已匯出，請把檔案交給老師');
 };
-load();fillWho();render();
+// ===== ⚔️ 對戰系統（改用 Supabase，手機用自己的網路也能玩）=====
+// 下面這兩個值先留空，網頁會安靜跳過對戰功能、不影響其他部分正常運作。
+// 等您在 Supabase 建好專案、拿到 Project URL 跟 anon public key 之後，
+// 填進下面兩個空字串裡即可，其他程式碼完全不用改。
+const SUPABASE_URL = "";       // 例如 "https://xxxxxxxxxxxx.supabase.co"
+const SUPABASE_ANON_KEY = "";  // 貼上 anon public key（不是 service_role 那組）
+let sb=null;
+try{
+  if(SUPABASE_URL && SUPABASE_ANON_KEY && typeof supabase!=='undefined'){
+    sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  }
+}catch(e){ console.warn('Supabase 尚未設定或初始化失敗，對戰功能停用', e); }
+function sbReady(){ return !!sb; }
+function mySid(){const w=P._who||{};return w.sid?String(w.sid).trim():null;}
+
+// 傷害/招式規則：跟前面「角色戰力」共用同一套公式，兩種對戰模式（即時／幽靈AI）都呼叫這裡，
+// 之後如果要調整戰鬥數值，改這裡就好，不用兩邊分別改。
+const NMOVES=[['fist','拳',0.5],['kick','腳',0.7],['charge','衝撞',0.8],['slash','劍砍',1.0]];
+const MMOVES=[['s','小',30,1],['m','中',45,2],['l','大',90,3]];
+function dealDamageLocal(att,def,base,isMagic){
+  const raw=base*(0.8+Math.random()*0.3);
+  const dfv=(isMagic?def.mdef:def.def)*(def.defending?2:1);
+  let dmg=Math.round(raw-dfv); if(dmg<1)dmg=1;
+  def.hp-=dmg; if(def.defending)def.defending=false;
+  return dmg;
+}
+// 執行一次出招，直接修改 att/def 物件本身，回傳這回合的戰鬥紀錄文字；
+// MP 不夠等無效狀況回傳 null。att 正在蓄力時，不管傳進來什麼 kind 都強制視為 release。
+function applyAction(att,def,kind,move){
+  if(att.charging) kind='release';
+  if(kind=='defend'){ att.defending=true; return `${att.name} 擺出防禦姿勢，防禦力 ×2！`; }
+  if(kind=='normal'){
+    const mv=NMOVES.find(m=>m[0]==move); if(!mv) return null;
+    const dmg=dealDamageLocal(att,def,att.atk*mv[2],false);
+    let extra=''; if(move=='charge'){const sh=Math.round(dmg/2);att.hp-=sh;extra=`，自己也反噬 ${sh} 點血`;}
+    return `${att.name} 使用「${mv[1]}」，對 ${def.name} 造成 ${dmg} 點傷害${extra}！`;
+  }
+  if(kind=='magic'){
+    const mv=MMOVES.find(m=>m[0]==move); if(!mv) return null;
+    if(att.mp<mv[2]) return null;
+    att.mp-=mv[2];
+    if(move=='l'){ att.charging=true; return `${att.name} 開始詠唱「大魔法」，這回合先暫停攻擊！`; }
+    const dmg=dealDamageLocal(att,def,att.matk*mv[3],true);
+    return `${att.name} 使用「${mv[1]}魔法」，對 ${def.name} 造成 ${dmg} 點傷害！`;
+  }
+  if(kind=='release'){
+    att.charging=false;
+    const dmg=dealDamageLocal(att,def,att.matk*3,true);
+    return `${att.name} 的大魔法發動了！對 ${def.name} 造成 ${dmg} 點傷害！`;
+  }
+  return null;
+}
+function bumpDuelRecord(sid,field){
+  if(!sbReady()||!sid)return;
+  const fn = field=='wins'?'bump_duel_win':field=='losses'?'bump_duel_loss':'bump_duel_draw';
+  sb.rpc(fn,{p_sid:sid}).then(()=>{}).catch(()=>{});
+}
+function mkFighterObj(sid,name,level,stats){
+  return {studentId:sid,name:name||sid,level:level||1,hp:stats.hp,hpMax:stats.hp,mp:stats.mp,mpMax:stats.mp,
+    atk:stats.atk,matk:stats.matk,def:stats.def,mdef:stats.mdef,spd:stats.spd,defending:false,charging:false};
+}
+// 每次畫面更新時，把自己目前的戰力寫到雲端 duel_users，讓別人挑戰我時查得到最新數值
+function syncMyUser(){
+  if(!sbReady())return;
+  const sid=mySid(); if(!sid) return;
+  const li=levelInfo();
+  sb.from('duel_users').upsert({student_number:sid, name:(P._who&&P._who.name)||sid, level:li.level, stats:totalStats(), updated_at:new Date().toISOString()}).then(()=>{}).catch(()=>{});
+}
+
+let duelState=null,duelSub=null,battleChannel=null,pendingChannel=null;
+
+// ---- 有人挑戰我時的通知（即時對戰模式用）----
+function startPendingListen(){
+  if(!sbReady())return;
+  const sid=mySid(); if(!sid) return;
+  if(pendingChannel){ sb.removeChannel(pendingChannel); pendingChannel=null; }
+  checkPendingNow(sid);
+  pendingChannel = sb.channel('pending-'+sid)
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'duel_pending',filter:'target_id=eq.'+sid}, payload=>{
+      if(duelState) return;
+      showPendingInvite(payload.new.battle_id);
+    })
+    .on('postgres_changes',{event:'DELETE',schema:'public',table:'duel_pending',filter:'target_id=eq.'+sid}, ()=>{
+      const box=$('#arena-pending'); if(box){box.classList.add('hide');box.innerHTML='';}
+    })
+    .subscribe();
+}
+async function checkPendingNow(sid){
+  const {data}=await sb.from('duel_pending').select('battle_id').eq('target_id',sid).maybeSingle();
+  if(data && !duelState) showPendingInvite(data.battle_id);
+}
+async function showPendingInvite(battleId){
+  const {data:battle}=await sb.from('duel_battles').select('a').eq('id',battleId).maybeSingle();
+  const box=$('#arena-pending'); if(!box||!battle) return;
+  const name=(battle.a&&battle.a.name)||'同學';
+  box.classList.remove('hide');
+  box.innerHTML=`<div class="fighter"><b>⚔️ ${name} 想要挑戰你！</b><div class="amenu"><button id="ap-accept">接受挑戰</button></div></div>`;
+  $('#ap-accept').onclick=()=>acceptSyncChallenge(battleId);
+}
+
+// ---- 模式一：即時對戰（雙方都要在線）----
+async function challengeSync(osid){
+  const sid=mySid(), li=levelInfo();
+  const {data:opUser}=await sb.from('duel_users').select('*').eq('student_number',osid).maybeSingle();
+  if(!opUser)return toast('❗ 找不到這位同學的資料，請他先打開遊戲、存過學號');
+  const aFighter=mkFighterObj(sid,(P._who&&P._who.name)||sid,li.level,totalStats());
+  const {data:battle,error}=await sb.from('duel_battles').insert({
+    mode:'sync', a_id:sid, b_id:osid, a:aFighter, b:null, turn:null, over:false, winner:null,
+    log:[`⚔️ ${aFighter.name} 發起了挑戰，等待 ${opUser.name||osid} 加入！`]
+  }).select().single();
+  if(error||!battle)return toast('❗ 建立對戰失敗，請再試一次');
+  await sb.from('duel_pending').upsert({target_id:osid, battle_id:battle.id});
+  enterSyncBattle(battle.id);
+}
+async function acceptSyncChallenge(battleId){
+  const sid=mySid(), li=levelInfo();
+  const {data:room}=await sb.from('duel_battles').select('*').eq('id',battleId).maybeSingle();
+  if(!room||room.b)return toast('這場對戰已經結束或已經開始了');
+  const bFighter=mkFighterObj(sid,(P._who&&P._who.name)||sid,li.level,totalStats());
+  const turn=room.a.spd>=bFighter.spd?'a':'b';
+  const newLog=[...(room.log||[]),`${bFighter.name} 加入戰場！⚔️ 對戰開始！`];
+  await sb.from('duel_battles').update({b:bFighter,turn,log:newLog,updated_at:new Date().toISOString()}).eq('id',battleId);
+  await sb.from('duel_pending').delete().eq('target_id',sid);
+  enterSyncBattle(battleId);
+}
+function enterSyncBattle(battleId){
+  if(pendingChannel){ sb.removeChannel(pendingChannel); pendingChannel=null; }
+  duelState={mode:'sync', battleId, room:null}; duelSub=null;
+  $('#arena-setup').classList.add('hide');$('#arena-battle').classList.remove('hide');
+  $('#arena-battle').innerHTML='<p>⏳ 連線中...</p>';
+  loadBattleNow(battleId);
+  if(battleChannel){ sb.removeChannel(battleChannel); battleChannel=null; }
+  battleChannel = sb.channel('battle-'+battleId)
+    .on('postgres_changes',{event:'UPDATE',schema:'public',table:'duel_battles',filter:'id=eq.'+battleId}, payload=>{
+      if(!duelState||duelState.battleId!==battleId) return;
+      duelState.room=payload.new; renderSyncBattle();
+    })
+    .subscribe();
+}
+async function loadBattleNow(battleId){
+  const {data:room}=await sb.from('duel_battles').select('*').eq('id',battleId).maybeSingle();
+  if(!duelState||duelState.battleId!==battleId) return;
+  if(!room){ $('#arena-battle').innerHTML='<p>⚠️ 對戰資料不見了。</p><button class="btn" id="b-close">返回</button>'; $('#b-close').onclick=exitBattle; return; }
+  duelState.room=room; renderSyncBattle();
+}
+function mySideOf(room){ const sid=mySid(); return room.a_id===sid?'a':(room.b_id===sid?'b':null); }
+async function sendSyncAction(kind,move){
+  const room=duelState.room, mine=mySideOf(room), other=mine=='a'?'b':'a';
+  if(!room||room.turn!==mine) return;
+  const att={...room[mine]}, def={...room[other]};
+  const logLine=applyAction(att,def,kind,move);
+  duelSub=null;
+  if(logLine===null){ toast('魔力不夠喔'); renderSyncBattle(); return; }
+  const log=[...(room.log||[]).slice(-40),logLine];
+  const over=att.hp<=0||def.hp<=0;
+  const winner=over?((att.hp<=0&&def.hp<=0)?'draw':(att.hp<=0?def.name:att.name)):null;
+  const patch={turn:over?room.turn:other, log, over, winner, updated_at:new Date().toISOString()};
+  patch[mine]=att; patch[other]=def;
+  await sb.from('duel_battles').update(patch).eq('id',duelState.battleId);
+  if(over){
+    const myId=mine=='a'?room.a_id:room.b_id, opId=mine=='a'?room.b_id:room.a_id;
+    if(winner=='draw'){bumpDuelRecord(myId,'draws');bumpDuelRecord(opId,'draws');}
+    else if(winner==att.name){bumpDuelRecord(myId,'wins');bumpDuelRecord(opId,'losses');}
+    else{bumpDuelRecord(myId,'losses');bumpDuelRecord(opId,'wins');}
+  }
+  // Realtime 訊息偶爾會晚一點才到，先自己手動更新一次畫面，操作起來比較不卡頓
+  duelState.room={...room,...patch};
+  renderSyncBattle();
+}
+
+// ---- 模式二：單挑雲端幽靈（對方不用在線，抓他存在雲端的最新數值，由簡單 AI 操作）----
+async function challengeAsync(osid){
+  const sid=mySid(), li=levelInfo();
+  const {data:opUser}=await sb.from('duel_users').select('*').eq('student_number',osid).maybeSingle();
+  if(!opUser)return toast('❗ 找不到這位同學的資料，請他先打開遊戲、存過學號');
+  const a=mkFighterObj(sid,(P._who&&P._who.name)||sid,li.level,totalStats());
+  const b=mkFighterObj(osid,opUser.name||osid,opUser.level||1,opUser.stats||{hp:1000,mp:300,atk:50,matk:50,def:20,mdef:20,spd:100});
+  const turn=a.spd>=b.spd?'a':'b';
+  duelState={mode:'async', aId:sid, bId:osid, room:{a,b,turn,over:false,winner:null,log:[`⚔️ ${a.name} 挑戰了 ${b.name} 的雲端幽靈！`]}};
+  duelSub=null;
+  $('#arena-setup').classList.add('hide');$('#arena-battle').classList.remove('hide');
+  renderAsyncBattle();
+  if(duelState.room.turn=='b') setTimeout(aiTakeTurn,700);
+}
+function checkAsyncOver(){
+  const room=duelState.room;
+  if(room.a.hp<=0||room.b.hp<=0){
+    room.over=true;
+    room.winner=(room.a.hp<=0&&room.b.hp<=0)?'draw':(room.a.hp<=0?room.b.name:room.a.name);
+    const myId=duelState.aId, opId=duelState.bId;
+    if(room.winner=='draw'){bumpDuelRecord(myId,'draws');bumpDuelRecord(opId,'draws');}
+    else if(room.winner==room.a.name){bumpDuelRecord(myId,'wins');bumpDuelRecord(opId,'losses');}
+    else{bumpDuelRecord(myId,'losses');bumpDuelRecord(opId,'wins');}
+  }
+}
+function sendAsyncAction(kind,move){
+  const room=duelState.room; if(room.turn!='a')return;
+  const logLine=applyAction(room.a,room.b,kind,move);
+  duelSub=null;
+  if(logLine===null){ toast('魔力不夠喔'); renderAsyncBattle(); return; }
+  room.log=[...(room.log||[]).slice(-40),logLine];
+  checkAsyncOver();
+  if(!room.over){ room.turn='b'; renderAsyncBattle(); setTimeout(aiTakeTurn,700); }
+  else renderAsyncBattle();
+}
+// 幽靈 AI：血量偏低時比較不會用會自傷的「衝撞」，魔力夠時有機會放魔法，其餘時候普通攻擊
+function aiTakeTurn(){
+  const room=duelState.room; if(!room||room.over||room.turn!='b')return;
+  const att=room.b; let kind,move;
+  if(att.charging){ kind='release'; }
+  else{
+    const roll=Math.random();
+    if(att.mp>=30 && roll<0.35){ kind='magic'; move= att.mp>=90&&roll<0.1 ? 'l' : (att.mp>=45&&roll<0.22 ? 'm' : 's'); }
+    else if(roll<0.15){ kind='defend'; }
+    else{
+      kind='normal';
+      const safe=att.hp>att.hpMax*0.3;
+      const pool= safe? ['fist','kick','charge','slash','slash'] : ['fist','kick','slash','slash'];
+      move=pool[Math.floor(Math.random()*pool.length)];
+    }
+  }
+  const logLine=applyAction(att,room.a,kind,move);
+  room.log=[...(room.log||[]).slice(-40),logLine];
+  checkAsyncOver();
+  if(!room.over) room.turn='a';
+  renderAsyncBattle();
+}
+
+// ---- 共用的戰鬥畫面（兩種模式共用同一套排版）----
+function renderFighterBar(f){
+  return `<div class="fighter"><b>${f.name}　Lv.${f.level}</b>
+    <div class="fbar hp"><i style="width:${Math.max(0,f.hp)/f.hpMax*100}%"></i></div><small>HP ${Math.max(0,f.hp)}/${f.hpMax}</small>
+    <div class="fbar mp"><i style="width:${Math.max(0,f.mp)/f.mpMax*100}%"></i></div><small>MP ${Math.max(0,f.mp)}/${f.mpMax}</small></div>`;
+}
+function renderMenu(meFighter,myTurn){
+  if(!myTurn) return '';
+  if(meFighter.charging) return `<p>⏳ 你正在蓄力中，這回合會自動發動大魔法！</p><div class="amenu"><button id="b-pass">確定</button></div>`;
+  if(!duelSub) return `<div class="amenu"><button data-m="n">⚔️ 普通攻擊</button><button data-m="m">✨ 魔法攻擊</button><button data-m="d">🛡️ 防禦</button></div>`;
+  if(duelSub=='n') return `<div class="amenu">`+NMOVES.map(m=>`<button data-n="${m[0]}">${m[1]}（×${m[2]}）</button>`).join('')+`<button data-back="1">返回</button></div>`;
+  if(duelSub=='m') return `<div class="amenu">`+MMOVES.map(m=>`<button data-mg="${m[0]}" ${meFighter.mp<m[2]?'disabled':''}>${m[1]}（耗魔${m[2]}／×${m[3]}）</button>`).join('')+`<button data-back="1">返回</button></div>`;
+}
+function bindMenuEvents(box,myTurn,sendFn){
+  if(!myTurn)return;
+  box.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{const m=b.dataset.m;if(m=='d'){sendFn('defend');}else{duelSub=m;renderBattleAgain();}});
+  box.querySelectorAll('[data-back]').forEach(b=>b.onclick=()=>{duelSub=null;renderBattleAgain();});
+  box.querySelectorAll('[data-n]').forEach(b=>b.onclick=()=>sendFn('normal',b.dataset.n));
+  box.querySelectorAll('[data-mg]').forEach(b=>b.onclick=()=>sendFn('magic',b.dataset.mg));
+  const pass=box.querySelector('#b-pass'); if(pass) pass.onclick=()=>sendFn('release');
+}
+function renderBattleAgain(){ if(!duelState)return; duelState.mode=='sync'?renderSyncBattle():renderAsyncBattle(); }
+function renderSyncBattle(){
+  const room=duelState.room, mine=mySideOf(room), box=$('#arena-battle');
+  if(!room.b){ box.innerHTML='<p>⏳ 等待對方加入戰場...</p>'; return; }
+  const myTurn=room.turn===mine, meFighter=mine=='a'?room.a:room.b;
+  let html=renderFighterBar(room.a)+renderFighterBar(room.b);
+  if(room.over){
+    html+=`<div class="turn-tag">🏆 ${room.winner=='draw'?'平手！':room.winner+' 獲勝！'}</div><p>想變更強嗎？回去多答題累積經驗值就能升級，通關大關累積星星還能升級裝備品質喔！</p><button class="btn" id="b-close">結束對戰</button>`;
+    box.innerHTML=html; $('#b-close').onclick=exitBattle; return;
+  }
+  html+=`<div class="turn-tag">${myTurn?'👉 輪到你了！':'⏳ 等待對方出招...'}</div>`+renderMenu(meFighter,myTurn)+
+    `<div class="blog">${(room.log||[]).slice(-8).map(x=>'· '+x).join('<br>')}</div>`;
+  box.innerHTML=html;
+  bindMenuEvents(box,myTurn,sendSyncAction);
+}
+function renderAsyncBattle(){
+  const room=duelState.room, box=$('#arena-battle'), myTurn=room.turn=='a';
+  let html=renderFighterBar(room.a)+renderFighterBar(room.b);
+  if(room.over){
+    html+=`<div class="turn-tag">🏆 ${room.winner=='draw'?'平手！':room.winner+' 獲勝！'}</div><p>想變更強嗎？回去多答題累積經驗值就能升級，通關大關累積星星還能升級裝備品質喔！</p><button class="btn" id="b-close">結束對戰</button>`;
+    box.innerHTML=html; $('#b-close').onclick=exitBattle; return;
+  }
+  html+=`<div class="turn-tag">${myTurn?'👉 輪到你了！':'⏳ 幽靈思考中...'}</div>`+renderMenu(room.a,myTurn)+
+    `<div class="blog">${(room.log||[]).slice(-8).map(x=>'· '+x).join('<br>')}</div>`;
+  box.innerHTML=html;
+  bindMenuEvents(box,myTurn,sendAsyncAction);
+}
+function exitBattle(){
+  if(battleChannel){ sb.removeChannel(battleChannel); battleChannel=null; }
+  duelState=null;duelSub=null;
+  $('#arena-battle').classList.add('hide');$('#arena-battle').innerHTML='';
+  $('#arena-setup').classList.remove('hide');
+  startPendingListen();render();
+}
+$('#op-fight').onclick=async()=>{
+  if(!sbReady())return toast('❗ 對戰功能還沒設定好，請聯絡老師');
+  const sid=mySid();if(!sid)return toast('請先在上面「我的資料」存好「我的學號」');
+  const osid=$('#op-sid').value.trim();if(!osid)return toast('請輸入對方學號');
+  if(osid===sid)return toast('不能跟自己對戰喔！');
+  const mode=($('input[name="duel-mode"]:checked')||{value:'sync'}).value;
+  try{
+    if(mode=='async') await challengeAsync(osid); else await challengeSync(osid);
+  }catch(e){ toast('❗ 連線失敗，請確認網路連線後再試一次'); }
+};
+$('#avatar').onclick=async()=>{
+  const sid=mySid();if(!sid)return toast('請先在上面「我的資料」存好「我的學號」');
+  if(!sbReady())return toast('對戰功能還沒設定好，請聯絡老師');
+  const {data}=await sb.from('duel_records').select('*').eq('student_number',sid).maybeSingle();
+  const rec=data||{wins:0,losses:0,draws:0};
+  toast(`🏆 我的對戰總戰績<br>勝 ${rec.wins||0} 場／敗 ${rec.losses||0} 場／平手 ${rec.draws||0} 場`);
+};
+load();fillWho();render();startPendingListen();
 </script>
 </body>
 </html>
