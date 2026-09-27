@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>國一下數學戰略地圖｜數靈召喚師：二元一次聯立方程式</title>
+<style>
+:root{--ink:#161a2e;--ink2:#20264a;--line:#3a4270;--bronze:#d2a24c;--paper:#f1e8d2;--red:#d24a33;--jade:#43a58f;--txt:#e9e4d4}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(ellipse at top,#252c56,var(--ink) 65%);color:var(--txt);font-family:"Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif;min-height:100vh}
+h1,h2,h3,.serif{font-family:"Noto Serif TC","Songti TC","PMingLiU",serif}
+main{max-width:860px;margin:0 auto;padding:16px 16px 60px}
+button{font:inherit;cursor:pointer;color:inherit}
+button:focus-visible{outline:3px solid var(--bronze);outline-offset:2px}
+.hide{display:none!important}
+.card{background:var(--ink2);border:2px solid var(--line);border-radius:14px;padding:16px}
+.head{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.rank{font-size:2rem;color:var(--bronze);margin:0}
+.grow{flex:1;min-width:200px}
+.pbar{height:12px;background:var(--ink);border-radius:8px;overflow:hidden;margin:6px 0}
+#rbar{height:100%;background:linear-gradient(90deg,var(--bronze),#f0cf85);width:0;transition:width .6s}
+.ch{margin-top:16px}
+.who{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.who input{background:var(--ink);border:2px solid var(--line);border-radius:8px;padding:8px 10px;color:var(--txt);font:inherit;width:9.5em}
+.who button{background:var(--ink);border:2px solid var(--bronze);border-radius:8px;padding:8px 12px}
+.ch h2{margin:0;font-size:1.25rem;color:var(--bronze)}
+.ch small{opacity:.75}
+.nodes{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:10px}
+.node{background:var(--ink);border:2px solid var(--line);border-radius:12px;padding:10px 6px;min-height:104px;text-align:center;display:flex;flex-direction:column;justify-content:center;gap:4px}
+.node b{font-size:1.15rem}
+.node span{font-size:.85rem;line-height:1.3}
+.node:hover:not(.locked){border-color:var(--bronze);background:#2b2a3c}
+.node.boss{border-color:#8a3a2c}
+.node.locked{opacity:.45}
+.node.done{border-color:var(--jade)}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-top:10px}
+.cd{background:var(--paper);color:#2b2416;border-radius:10px;padding:10px;font-size:.85rem;line-height:1.5;min-height:110px;cursor:pointer;position:relative;transition:transform .15s}
+.cd:hover{transform:translateY(-2px)}
+.cd img{width:64px;height:64px;object-fit:contain;display:block;margin:0 auto 4px}
+.cd .cd-emoji{display:none;font-size:2.4rem;text-align:center;margin-bottom:4px}
+.cd .lv{position:absolute;top:6px;right:8px;background:var(--ink);color:var(--bronze);font-size:.75rem;font-weight:700;padding:2px 7px;border-radius:8px}
+.cd.lock{cursor:default}
+.cd.lock:hover{transform:none}
+#card-modal{position:fixed;inset:0;background:#000c;z-index:80;display:flex;align-items:center;justify-content:center;padding:20px}
+#card-modal.hide{display:none}
+.cm-box{background:var(--paper);color:#2b2416;border-radius:16px;max-width:360px;width:100%;padding:20px;text-align:center;position:relative;max-height:90vh;overflow-y:auto}
+.cm-box img{width:180px;height:180px;object-fit:contain;display:block;margin:0 auto 10px}
+.cm-box .cm-emoji{display:none;font-size:5rem;margin-bottom:10px}
+.cm-box h3{margin:0 0 4px;font-family:"Noto Serif TC","Songti TC",serif;font-size:1.4rem}
+.cm-lv{color:var(--bronze);font-weight:700;margin-bottom:8px}
+.cm-bar{height:10px;background:#0002;border-radius:6px;overflow:hidden;margin:0 0 4px}
+.cm-bar div{height:100%;background:var(--jade)}
+.cm-exp{font-size:.8rem;opacity:.75;margin-bottom:10px}
+.cm-desc{text-align:left;line-height:1.7;font-size:.9rem;border-top:1px solid #0002;padding-top:10px;margin-top:6px}
+.cm-close{position:absolute;top:8px;right:10px;background:none;border:0;font-size:1.3rem;color:#2b2416}
+.cd b{font-size:1.2rem;display:block;font-family:"Noto Serif TC","Songti TC",serif}
+.cd.lock{background:var(--ink);color:#8a8fb0;border:2px dashed var(--line)}
+#ov{position:fixed;inset:0;background:var(--ink);z-index:50}
+#fr{width:100%;height:100%;border:0}
+#x{position:absolute;top:8px;right:10px;z-index:60;background:#0008;border:2px solid var(--line);border-radius:8px;padding:2px 10px}
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--bronze);color:#2a1d05;padding:12px 20px;border-radius:10px;font-weight:700;z-index:100;text-align:center;max-width:90vw;line-height:1.6}
+.rule{margin-top:12px;line-height:1.8;font-size:.92rem}
+.tiny{margin-top:24px;text-align:center}
+.tiny button{background:none;border:1px solid var(--line);border-radius:8px;padding:6px 14px;opacity:.7}
+@media (max-width:560px){.nodes{grid-template-columns:repeat(2,1fr)}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<main>
+  <h1 class="serif" style="margin:0 0 4px">數靈召喚師：二元一次聯立方程式</h1>
+  <p style="margin:0 0 14px;opacity:.8">國一下 第一章 · 數理大陸探索日誌</p>
+
+  <section class="card head">
+    <div><p class="rank serif" id="rank"></p><small>目前稱號</small></div>
+    <div class="grow"><b id="tot"></b><div class="pbar"><div id="rbar"></div></div><small id="nxt"></small></div>
+  </section>
+
+  <section class="card rule">
+    <b>⭐ 星等規則</b><br>
+    練兵模式：最多 3 ⭐　→　拿到 2 ⭐ 解鎖「實戰模式」；拿到 3 ⭐ 解鎖「♾️ 無極限挑戰」<br>
+    實戰模式：正確率 80% 以上 → 4 ⭐　→　解鎖「修羅模式」<br>
+    修羅模式：正確率 100%（全對）→ 5 ⭐
+  </section>
+
+  <section class="card who" id="who">
+    <b>👤 我的資料</b>
+    <input id="w-cls" placeholder="班級（例：701）" maxlength="20" aria-label="班級">
+    <input id="w-no" placeholder="座號" maxlength="10" aria-label="座號">
+    <input id="w-name" placeholder="姓名或暱稱" maxlength="30" aria-label="姓名或暱稱">
+    <button id="w-save">儲存</button>
+    <button id="w-exp">📤 匯出我的進度</button>
+  </section>
+
+  <div id="map"></div>
+
+  <section class="ch">
+    <h2 class="serif">🃏 數靈捕獲圖鑑</h2>
+    <small>通關對應的關卡就能收集</small>
+    <div class="cards" id="cards"></div>
+  </section>
+
+  <p class="tiny"><button id="reset">重置我的進度</button></p>
+</main>
+
+<div id="ov" class="hide"><button id="x" aria-label="關閉">✕</button><iframe id="fr" title="關卡"></iframe></div>
+<div id="toast" class="hide"></div>
+<div id="card-modal" class="hide">
+  <div class="cm-box">
+    <button class="cm-close" id="cm-close" aria-label="關閉">✕</button>
+    <img id="cm-img" alt="">
+    <div class="cm-emoji" id="cm-emoji"></div>
+    <h3 id="cm-name"></h3>
+    <div class="cm-lv" id="cm-lv"></div>
+    <div class="cm-bar"><div id="cm-bar-fill"></div></div>
+    <div class="cm-exp" id="cm-exp"></div>
+    <div class="cm-desc" id="cm-desc"></div>
+  </div>
+</div>
+
+<script>
+/*LOGIC*/
+const CH1=[
+ {n:'1-1｜方程式的基礎森林',sub:'二元一次式與列式・方程式及其解・應用',st:[['1-1-1','雙變數蜥蜴','stage1-1-1.html'],['1-1-2','方程符文犬','stage1-1-2.html'],['1-1-3','組合袋鼠','stage1-1-3.html']]},
+ {n:'1-2｜聯立方程式的解法密室',sub:'判別解・代入消去法・加減消去法',st:[['1-2-1','雙生雙頭狼','stage1-2-1.html'],['1-2-2','替換影法師','stage1-2-2.html'],['1-2-3','抵銷天平獸','stage1-2-3.html']]},
+ {n:'1-3｜第一章最終決戰',sub:'聯立方程式的應用',st:[['1-3-1','Boss：商業金幣怪','stage1-3-1.html']]}
+];
+const RK=[[0,'見習召喚師'],[6,'數靈學徒'],[14,'數靈行者'],[24,'數靈騎士'],[32,'數靈宗師']]; // 滿星 = 關卡數(7) × 5 = 35
+const CARDS=[
+ ['1-1-1','雙變數蜥蜴','身懷 x、y 雙重屬性，被馴服後成為召喚師辨識代數式的好夥伴。','🦎'],
+ ['1-1-2','方程符文犬','鼻子最靈，一聞就知道哪組數對才是方程式真正的解。','🐕'],
+ ['1-1-3','組合袋鼠','口袋裝滿各種面額郵票，最擅長把所有組合方式一一列出。','🦘'],
+ ['1-2-1','雙生雙頭狼','兩顆頭必須同時點頭，才代表數對真的是聯立方程式的解。','🐺'],
+ ['1-2-2','替換影法師','擅長隱身替換，把一個未知數悄悄藏進另一個式子裡。','👤'],
+ ['1-2-3','抵銷天平獸','天生的平衡感，一眼就能看出該把兩式相加還是相減。','⚖️'],
+ ['1-3-1','商業金幣怪','第一章的守護者，只有真正學會列聯立方程式的召喚師才能將它捕獲。','👹']
+];
+const KEY='monster-ch1-progress-v1',PERSTAGE=5; // 每關最多 5 星（練兵3 + 實戰4 + 修羅5）
+const EXP_CORRECT=10,EXP_WRONG=4,LEVEL_STEP=50; // 答對每次+10、答錯每次+4（答對是答錯的2.5倍），每50經驗升一級
+let P={};
+const idsOf=ci=>CH1[ci].st.map(s=>s[0]);
+const flatAll=CH1.flatMap((c,i)=>idsOf(i));
+const MAXSTAR=flatAll.length*PERSTAGE;
+const b3=id=>Math.min(3,st(id)); // 解鎖用的「基本星」，最多算 3 顆
+const ebOf=id=>(P[id]&&P[id].eb)||0;
+const expOf=id=>(P[id]&&P[id].exp)||0;
+const lvOf=exp=>Math.floor(exp/LEVEL_STEP)+1;
+const st=id=>(P[id]&&P[id].stars)||0;
+const total=()=>flatAll.reduce((a,id)=>a+st(id),0);
+const rankOf=t=>RK.filter(r=>r[0]<=t).pop();
+// 1-1 群組：三關依序解鎖
+// 1-2 群組：第一關需先通關 1-1-3；其餘依序解鎖
+// 1-3（Boss）：需要 1-1、1-2 六關合計基本星 ≥ 12（滿分 18 的 2/3）
+function lockCh(ci,k){
+  if(ci===0)return k===0?'':(st(CH1[0].st[k-1][0])>0?'':`先通關 ${CH1[0].st[k-1][0]}`);
+  if(ci===1){
+    if(k===0)return st(CH1[0].st[2][0])>0?'':'先通關 1-1-3「組合袋鼠」';
+    return st(CH1[1].st[k-1][0])>0?'':`先通關 ${CH1[1].st[k-1][0]}`;
+  }
+  const need=12,ids=[...idsOf(0),...idsOf(1)],s=ids.reduce((a,id)=>a+b3(id),0);
+  return s>=need?'':`挑戰 Boss 需要前六關合計 ${need} 顆星（目前 ${s} 顆），回去重打拿更多星吧`;
+}
+const owned=()=>CARDS.filter(c=>st(c[0])>0).map(c=>c[1]);
+function makeExport(){
+  const stages={};flatAll.forEach(id=>{if(P[id])stages[id]={stars:P[id].stars||0,best:P[id].best||0,eb:P[id].eb||0}});
+  return {v:1,who:P._who||{},stages:stages,q:P._q||{},at:new Date().toISOString()};
+}
+/*UI*/
+const $=s=>document.querySelector(s);
+let cur='',tt=0;
+function load(){try{P=JSON.parse(localStorage.getItem(KEY))||{}}catch(e){P={}}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(P))}catch(e){}}
+function toast(h){const t=$('#toast');t.innerHTML=h;t.classList.remove('hide');clearTimeout(tt);tt=setTimeout(()=>t.classList.add('hide'),3800)}
+function groupHTML(){
+  return CH1.map((c,ci)=>`<section class="ch card"><h2 class="serif">${c.n}</h2><small>${c.sub}</small><div class="nodes">`+
+    c.st.map((s,k)=>{
+      const isBoss=/Boss/.test(s[1]);
+      const r=lockCh(ci,k),n=st(s[0]),cls=['node',isBoss?'boss':'',r?'locked':'',n?'done':''].join(' ');
+      return `<button class="${cls}" data-ci="${ci}" data-k="${k}"><b>${r?'🔒':isBoss?'👹':'⚔️'} ${s[0]}</b><span>${s[1]}</span><span>${n?'⭐'.repeat(n)+'☆'.repeat(5-n):'尚未通關'}</span></button>`;
+    }).join('')+`</div></section>`).join('');
+}
+const ENDLESS_NEED=3;
+function endlessHTML(){
+  return `<h2 class="serif" style="margin:28px 0 0;color:var(--bronze)">♾️ 無極限挑戰</h2>`+
+  `<p style="margin:4px 0 0;opacity:.8;line-height:1.7">關卡拿到 ${ENDLESS_NEED} ⭐ 就解鎖該關的無限題作答區，題目源源不絕，5 顆心用完為止。</p>`+
+  `<section class="ch card"><div class="nodes">`+
+  CH1.flatMap((c,ci)=>c.st.map((s,k)=>{
+    const n=st(s[0]),lk=n<ENDLESS_NEED,eb=ebOf(s[0]);
+    return `<button class="node ${lk?'locked':''} ${eb?'done':''}" data-e="1" data-ci="${ci}" data-k="${k}"><b>${lk?'🔒':'♾️'} ${s[0]}</b><span>${s[1]}</span><span>${lk?`需 ${ENDLESS_NEED} ⭐（目前 ${n}）`:(eb?'🏆 最高 '+eb+' 題':'尚無紀錄')}</span></button>`;
+  })).join('')+`</div></section>`;
+}
+function stageURL(url,id,endless){
+  return url+(url.includes('?')?'&':'?')+'stars='+st(id)+'&eb='+ebOf(id)+(endless?'&endless=1':'');
+}
+function render(){
+  const t=total(),rk=rankOf(t),nx=RK.find(r=>r[0]>t);
+  $('#rank').textContent=rk[1];$('#tot').textContent=`${t} / ${MAXSTAR} ⭐`;$('#rbar').style.width=(t/MAXSTAR*100)+'%';
+  $('#nxt').textContent=nx?`再 ${nx[0]-t} 顆星，升為「${nx[1]}」`:'你已經是最高階了！';
+  $('#map').innerHTML=groupHTML()+endlessHTML();
+  $('#cards').innerHTML=CARDS.map(c=>st(c[0])>0?
+    `<div class="cd" data-card="${c[0]}"><span class="lv">Lv.${lvOf(expOf(c[0]))}</span><img src="images/cards/${c[0]}.png" alt="${c[1]}" onerror="this.style.display='none';this.nextElementSibling.style.display='';"><div class="cd-emoji">${c[3]}</div><b>${c[1]}</b>${c[2]}</div>`
+    :`<div class="cd lock"><b>？？？</b>通關 ${c[0]} 解鎖</div>`).join('');
+}
+function openCard(id){
+  const c=CARDS.find(x=>x[0]===id);if(!c)return;
+  const exp=expOf(id),lv=lvOf(exp),cur=exp%LEVEL_STEP;
+  $('#cm-img').src='images/cards/'+id+'.png';$('#cm-img').alt=c[1];$('#cm-img').style.display='';
+  $('#cm-emoji').style.display='none';$('#cm-emoji').textContent=c[3];
+  $('#cm-img').onerror=()=>{$('#cm-img').style.display='none';$('#cm-emoji').style.display='';};
+  $('#cm-name').textContent=c[1];
+  $('#cm-lv').textContent='Lv.'+lv;
+  $('#cm-bar-fill').style.width=(cur/LEVEL_STEP*100)+'%';
+  $('#cm-exp').textContent=`經驗值 ${cur} / ${LEVEL_STEP}（累計 ${exp}）`;
+  $('#cm-desc').textContent=c[2];
+  $('#card-modal').classList.remove('hide');
+}
+function closeCard(){$('#card-modal').classList.add('hide')}
+$('#map').onclick=e=>{
+  const b=e.target.closest('.node');if(!b)return;
+  const ci=+b.dataset.ci,k=+b.dataset.k,s=CH1[ci].st[k];
+  if(b.dataset.e){
+    if(st(s[0])<ENDLESS_NEED)return toast(`🔒 ${s[0]} 要先拿到 ${ENDLESS_NEED} ⭐（目前 ${st(s[0])} ⭐）才能挑戰無限題`);
+    cur=s[0];$('#fr').src=stageURL(s[2],s[0],true);$('#ov').classList.remove('hide');return;
+  }
+  const r=lockCh(ci,k);
+  if(r)return toast('🔒 '+r);
+  cur=s[0];$('#fr').src=stageURL(s[2],s[0],false);$('#ov').classList.remove('hide');
+};
+function closeStage(){$('#ov').classList.add('hide');$('#fr').src='about:blank';render()}
+$('#x').onclick=closeStage;
+$('#cards').onclick=e=>{
+  const b=e.target.closest('.cd');if(!b)return;
+  if(b.classList.contains('lock'))return toast('🔒 這隻數靈還沒捕獲，通關對應關卡就能解鎖！');
+  openCard(b.dataset.card);
+};
+$('#cm-close').onclick=closeCard;
+$('#card-modal').onclick=e=>{if(e.target.id==='card-modal')closeCard();};
+addEventListener('keydown',e=>{if(e.key==='Escape')closeCard();});
+addEventListener('message',e=>{
+  if(e.source!==$('#fr').contentWindow)return;
+  const d=e.data||{};
+  if(d.type=='stage-result'&&!d.fail&&d.id==cur){
+    const r0=rankOf(total())[1],c0=owned().length,old=P[d.id]||{stars:0,best:0};
+    P[d.id]={...old,stars:Math.max(old.stars,d.stars),best:Math.max(old.best,d.score)};save();
+    const msg=[];
+    if(!old.stars)msg.push('🎉 首次捕獲 '+d.id+'！');
+    if(old.stars<2&&d.stars>=2)msg.push('🔓 '+d.id+' 實戰模式解鎖！');
+    if(old.stars<3&&d.stars>=3)msg.push('🔓 '+d.id+' ♾️ 無極限挑戰解鎖！');
+    if(old.stars<4&&d.stars>=4)msg.push('🔓 '+d.id+' 修羅模式解鎖！');
+    if(old.stars<5&&d.stars>=5)msg.push('👑 '+d.id+' 修羅全對，滿星 5 ⭐！');
+    if(owned().length>c0)msg.push('🃏 獲得圖鑑：'+owned().pop()+'！');
+    const r1=rankOf(total())[1];if(r1!=r0)msg.push('🎖️ 稱號提升：'+r1+'！');
+    if(msg.length)toast(msg.join('<br>'));
+  }
+  if(d.type=='wave-log'&&typeof d.id=='string'&&typeof d.qtype=='string'){
+    const key=d.id+':'+d.qtype;P._q=P._q||{};const r=P._q[key]||{n:0,ok:0};r.n++;if(d.ok)r.ok++;P._q[key]=r;
+    const old=P[d.id]||{stars:0,best:0,exp:0};
+    const oldLv=lvOf(old.exp||0);
+    const newExp=(old.exp||0)+(d.ok?EXP_CORRECT:EXP_WRONG);
+    P[d.id]={...old,exp:newExp};save();
+    if(st(d.id)>0&&lvOf(newExp)>oldLv)toast('✨ '+d.id+' 升級了！目前 Lv.'+lvOf(newExp));
+  }
+  if(d.type=='endless-result'&&d.id==cur&&Number.isFinite(d.count)){
+    const old=P[d.id]||{stars:0,best:0},o=old.eb||0;
+    if(d.count>o){P[d.id]={...old,eb:d.count};save();toast('🏆 '+d.id+' 無極限新紀錄：'+d.count+' 題！')}
+  }
+  if(d.type=='stage-exit')closeStage();
+});
+$('#reset').onclick=()=>{if(confirm('確定要清除所有星星與圖鑑嗎？這個動作無法復原。')){P={};save();render()}};
+function fillWho(){const w=P._who||{};$('#w-cls').value=w.cls||'';$('#w-no').value=w.no||'';$('#w-name').value=w.name||''}
+function saveWho(){P._who={cls:$('#w-cls').value.trim(),no:$('#w-no').value.trim(),name:$('#w-name').value.trim()};save()}
+$('#w-save').onclick=()=>{saveWho();toast('✅ 已儲存你的資料')};
+$('#w-exp').onclick=()=>{
+  saveWho();const o=makeExport(),w=o.who,safe=x=>String(x||'').replace(/[^\w\u4e00-\u9fff-]/g,'');
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(o,null,1)],{type:'application/json'}));
+  a.download=`progress-ch1-${safe(w.cls)}-${safe(w.no)}-${safe(w.name)}.json`;document.body.appendChild(a);a.click();a.remove();
+  toast('📤 已匯出，請把檔案交給老師');
+};
+load();fillWho();render();
+</script>
+</body>
+</html>

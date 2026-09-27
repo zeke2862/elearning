@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>數理大陸探索地圖｜數靈召喚師：國一下全冊</title>
+<style>
+:root{--ink:#161a2e;--ink2:#20264a;--line:#3a4270;--bronze:#d2a24c;--paper:#f1e8d2;--red:#d24a33;--jade:#43a58f;--txt:#e9e4d4}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(ellipse at top,#252c56,var(--ink) 65%);color:var(--txt);font-family:"Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif;min-height:100vh}
+h1,h2,h3,.serif{font-family:"Noto Serif TC","Songti TC","PMingLiU",serif}
+main{max-width:900px;margin:0 auto;padding:16px 16px 60px}
+a{color:inherit;text-decoration:none}
+.card{background:var(--ink2);border:2px solid var(--line);border-radius:14px;padding:16px}
+.head{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.rank{font-size:2rem;color:var(--bronze);margin:0}
+.grow{flex:1;min-width:200px}
+.pbar{height:12px;background:var(--ink);border-radius:8px;overflow:hidden;margin:6px 0}
+#rbar{height:100%;background:linear-gradient(90deg,var(--bronze),#f0cf85);width:0;transition:width .6s}
+.intro{margin-top:16px;line-height:1.8;font-size:.92rem}
+.path{position:relative;margin-top:28px;padding-left:0}
+.path::before{content:"";position:absolute;left:26px;top:10px;bottom:10px;width:4px;background:repeating-linear-gradient(var(--line),var(--line) 8px,transparent 8px,transparent 16px);z-index:0}
+@media (min-width:620px){.path::before{left:50%;transform:translateX(-2px)}}
+.node-row{position:relative;z-index:1;margin-bottom:18px;display:flex}
+@media (min-width:620px){.node-row{justify-content:flex-start}.node-row.r{justify-content:flex-end}}
+.island{display:flex;gap:14px;align-items:center;background:var(--ink2);border:2px solid var(--line);border-radius:16px;padding:14px 16px;width:100%;margin-left:56px;transition:transform .15s,border-color .15s}
+@media (min-width:620px){.island{width:calc(50% - 60px)}.node-row .island{margin-left:60px}.node-row.r .island{margin-left:0;margin-right:60px}}
+.island:not(.locked):hover{transform:translateY(-2px);border-color:var(--bronze)}
+.island.locked{opacity:.5}
+.island.done{border-color:var(--jade)}
+.dot{position:absolute;left:26px;top:50%;transform:translate(-50%,-50%);width:16px;height:16px;border-radius:50%;background:var(--ink);border:3px solid var(--line);z-index:2}
+@media (min-width:620px){.dot{left:50%}}
+.dot.done{border-color:var(--jade);background:var(--jade)}
+.emo{font-size:2.2rem;line-height:1;flex-shrink:0}
+.body{flex:1;min-width:0}
+.body .ttl{margin:0;font-size:1.05rem;color:var(--bronze)}
+.body .sub{display:block;opacity:.75;font-size:.82rem;margin:2px 0 6px}
+.mini{height:8px;background:var(--ink);border-radius:6px;overflow:hidden}
+.mini div{height:100%;background:linear-gradient(90deg,var(--bronze),#f0cf85)}
+.stat{font-size:.78rem;opacity:.85;margin-top:4px}
+.lockmsg{font-size:.8rem;color:var(--red);margin-top:4px}
+.who{margin-top:18px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.who input{background:var(--ink);border:2px solid var(--line);border-radius:8px;padding:8px 10px;color:var(--txt);font:inherit;width:9.5em}
+.who button{background:var(--ink);border:2px solid var(--bronze);border-radius:8px;padding:8px 12px;font:inherit;cursor:pointer;color:inherit}
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--bronze);color:#2a1d05;padding:12px 20px;border-radius:10px;font-weight:700;z-index:100;text-align:center;max-width:90vw;line-height:1.6}
+.hide{display:none!important}
+.tiny{margin-top:22px;text-align:center;opacity:.6;font-size:.8rem}
+</style>
+</head>
+<body>
+<main>
+  <h1 class="serif" style="margin:0 0 4px">數理大陸探索地圖</h1>
+  <p style="margin:0 0 14px;opacity:.8">數靈召喚師｜國一下全冊 六大篇章總覽</p>
+
+  <section class="card head">
+    <div><p class="rank serif" id="rank"></p><small>全大陸稱號</small></div>
+    <div class="grow"><b id="tot"></b><div class="pbar"><div id="rbar"></div></div><small id="nxt"></small></div>
+  </section>
+
+  <section class="card intro">
+    混沌黑霧籠罩「數理大陸（Arithema）」，六大元素水晶因此失衡。身為實習數靈召喚師的你，將依序踏上六大篇章的土地：方程森林、坐標高原、比例河谷、不等式關隘、統計平原，最終抵達幾何秘境，收服所有數理幻獸，平息這場混亂！點選下方地圖上的區域即可進入該章節的關卡。
+  </section>
+
+  <div class="path" id="path"></div>
+
+  <section class="card who" id="who">
+    <b>👤 我的資料</b>
+    <input id="w-cls" placeholder="班級（例：701）" maxlength="20" aria-label="班級">
+    <input id="w-no" placeholder="座號" maxlength="10" aria-label="座號">
+    <input id="w-name" placeholder="姓名或暱稱" maxlength="30" aria-label="姓名或暱稱">
+    <button id="w-save">儲存</button>
+  </section>
+
+  <p class="tiny">提示：每章節內的星星、圖鑑進度會自動保存在這台裝置的瀏覽器中，回到這張總覽地圖時也會即時顯示。</p>
+</main>
+
+<div id="toast" class="hide"></div>
+
+<script>
+const REGIONS=[
+ {id:'ch1',dir:'grade7-vol2-ch1/world-map-vol2ch1.html',key:'monster-ch1-progress-v1',
+  emo:'⚔️',title:'第一篇章｜方程森林',sub:'二元一次聯立方程式',
+  ids:['1-1-1','1-1-2','1-1-3','1-2-1','1-2-2','1-2-3','1-3-1'],
+  rk:[[0,'見習召喚師'],[6,'數靈學徒'],[14,'數靈行者'],[24,'數靈騎士'],[32,'數靈宗師']],need:0},
+ {id:'ch2',dir:'grade7-vol2-ch2/world-map-vol2ch2.html',key:'monster-ch2-progress-v1',
+  emo:'📍',title:'第二篇章｜坐標高原',sub:'平面直角坐標系',
+  ids:['2-1-1','2-1-2','2-1-3','2-2-1','2-2-2','2-2-3'],
+  rk:[[0,'見習探測師'],[5,'坐標學徒'],[12,'坐標行者'],[21,'坐標騎士'],[27,'坐標宗師']],need:1},
+ {id:'ch3',dir:'grade7-vol2-ch3/world-map-vol2ch3.html',key:'monster-ch3-progress-v1',
+  emo:'⚖️',title:'第三篇章｜比例河谷',sub:'比與比例、正比反比',
+  ids:['3-1-1','3-1-2','3-1-3','3-2-1','3-2-2','3-2-3'],
+  rk:[[0,'見習調和師'],[5,'比例學徒'],[12,'比例行者'],[21,'比例騎士'],[27,'比例宗師']],need:2},
+ {id:'ch4',dir:'grade7-vol2-ch4/world-map-vol2ch4.html',key:'monster-ch4-progress-v1',
+  emo:'🚦',title:'第四篇章｜不等式關隘',sub:'一元一次不等式',
+  ids:['4-1-1','4-1-2','4-1-3','4-2-1','4-2-2','4-2-3'],
+  rk:[[0,'見習裁決師'],[5,'不等式學徒'],[12,'不等式行者'],[21,'不等式騎士'],[27,'不等式宗師']],need:3},
+ {id:'ch5',dir:'grade7-vol2-ch5/world-map-vol2ch5.html',key:'monster-ch5-progress-v1',
+  emo:'📊',title:'第五篇章｜統計平原',sub:'統計圖表與資料分析',
+  ids:['5-1-1','5-1-2','5-1-3'],
+  rk:[[0,'見習分析師'],[3,'資料學徒'],[6,'資料行者'],[10,'資料騎士'],[14,'資料宗師']],need:4},
+ {id:'ch6',dir:'grade7-vol2-ch6/world-map-vol2ch6.html',key:'monster-ch6-progress-v1',
+  emo:'📐',title:'第六篇章｜幾何秘境',sub:'生活中的幾何圖形・全冊完結篇',
+  ids:['6-1-1','6-1-2','6-1-3'],
+  rk:[[0,'見習測量師'],[3,'幾何學徒'],[6,'幾何行者'],[10,'幾何騎士'],[14,'數理大陸傳奇召喚師']],need:5}
+];
+const UNLOCK_RATIO=.3; // 前一章節需達成其滿星的一半，才能解鎖下一章節
+const RK_ALL=[[0,'見習召喚師'],[30,'數靈學徒'],[65,'數靈行者'],[110,'數靈騎士'],[145,'數理大陸傳奇召喚師']];
+
+function readP(key){try{return JSON.parse(localStorage.getItem(key))||{}}catch(e){return{}}}
+function regionStars(r){const P=readP(r.key);return r.ids.reduce((a,id)=>a+((P[id]&&P[id].stars)||0),0)}
+function regionMax(r){return r.ids.length*5}
+function regionRank(r,t){return r.rk.filter(x=>x[0]<=t).pop()[1]}
+function locked(idx){
+  if(idx===0)return '';
+  const prev=REGIONS[idx-1],s=regionStars(prev),m=regionMax(prev),req=Math.ceil(m*UNLOCK_RATIO);
+  return s>=req?'':`先在「${prev.title}」拿到 ${req} 顆星（目前 ${s} 顆）`;
+}
+function toast(h){const t=document.getElementById('toast');t.textContent=h;t.classList.remove('hide');clearTimeout(toast._t);toast._t=setTimeout(()=>t.classList.add('hide'),3200)}
+
+function render(){
+  let grand=0,grandMax=0;
+  const html=REGIONS.map((r,idx)=>{
+    const s=regionStars(r),m=regionMax(r);grand+=s;grandMax+=m;
+    const lk=locked(idx),done=s>=m;
+    const cls=['island',lk?'locked':'',done?'done':''].join(' ');
+    const pct=Math.round(s/m*100);
+    const body=`<div class="body">
+        <p class="ttl serif">${lk?'🔒 ':''}${r.title}</p>
+        <span class="sub">${r.sub}</span>
+        <div class="mini"><div style="width:${pct}%"></div></div>
+        <div class="stat">${s} / ${m} ⭐　·　${s>0?regionRank(r,s):'尚未踏入'}</div>
+        ${lk?`<div class="lockmsg">🔒 ${lk}</div>`:''}
+      </div>`;
+    const inner=`<span class="emo">${lk?'🔒':r.emo}</span>${body}`;
+    const rowCls='node-row'+(idx%2?' r':'');
+    return `<div class="${rowCls}"><span class="dot${done?' done':''}"></span>`+
+      (lk?`<div class="${cls}" role="button" aria-disabled="true">${inner}</div>`
+          :`<a class="${cls}" href="${r.dir}">${inner}</a>`)+
+      `</div>`;
+  }).join('');
+  document.getElementById('path').innerHTML=html;
+  document.getElementById('rank').textContent=RK_ALL.filter(x=>x[0]<=grand).pop()[1];
+  document.getElementById('tot').textContent=`${grand} / ${grandMax} ⭐`;
+  document.getElementById('rbar').style.width=(grand/grandMax*100)+'%';
+  const nx=RK_ALL.find(x=>x[0]>grand);
+  document.getElementById('nxt').textContent=nx?`再 ${nx[0]-grand} 顆星，升為「${nx[1]}」`:'你已經是數理大陸的傳奇了！';
+  document.querySelectorAll('.island.locked').forEach(el=>{
+    el.addEventListener('click',()=>toast('🔒 '+el.querySelector('.lockmsg').textContent.replace('🔒 ','')));
+  });
+}
+function fillWho(){
+  try{const w=JSON.parse(localStorage.getItem('monster-ch1-progress-v1')||'{}')._who||{};
+    document.getElementById('w-cls').value=w.cls||'';document.getElementById('w-no').value=w.no||'';document.getElementById('w-name').value=w.name||'';
+  }catch(e){}
+}
+document.getElementById('w-save').onclick=()=>{
+  const who={cls:document.getElementById('w-cls').value.trim(),no:document.getElementById('w-no').value.trim(),name:document.getElementById('w-name').value.trim()};
+  REGIONS.forEach(r=>{const P=readP(r.key);P._who=who;try{localStorage.setItem(r.key,JSON.stringify(P))}catch(e){}});
+  toast('✅ 已同步儲存到六個章節');
+};
+fillWho();render();
+addEventListener('storage',render);
+</script>
+</body>
+</html>

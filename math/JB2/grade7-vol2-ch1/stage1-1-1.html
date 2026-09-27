@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>1-1-1 二元一次式與列式｜數靈召喚師</title>
+<style>
+:root{--ink:#161a2e;--ink2:#20264a;--line:#3a4270;--bronze:#d2a24c;--paper:#f1e8d2;--red:#d24a33;--jade:#43a58f;--txt:#e9e4d4}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(ellipse at top,#2a2456,var(--ink) 65%);color:var(--txt);font-family:"Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif;min-height:100vh}
+h1,h2,.serif{font-family:"Noto Serif TC","Songti TC","PMingLiU",serif}
+main{max-width:960px;margin:0 auto;padding:16px}
+.hide{display:none!important}
+button{font:inherit;cursor:pointer;color:inherit}
+button:focus-visible{outline:3px solid var(--bronze);outline-offset:2px}
+.card{background:var(--ink2);border:2px solid var(--line);border-radius:14px;padding:18px}
+.btn{background:var(--bronze);color:#2a1d05;border:0;border-radius:10px;padding:12px 22px;font-weight:700;font-size:1.05rem}
+.btn.ghost{background:transparent;color:var(--bronze);border:2px solid var(--bronze)}
+.modes{display:grid;gap:10px;margin:16px 0}
+.mode{text-align:left;background:var(--ink);border:2px solid var(--line);border-radius:12px;padding:12px 14px}
+.mode.on{border-color:var(--bronze);background:#2b2a3c}
+.mode b{font-size:1.1rem}.mode small{display:block;opacity:.75;margin-top:2px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px;font-weight:700}
+.combo{color:var(--bronze);min-width:5em;text-align:right}
+.battle-grid{display:grid;grid-template-columns:1.15fr 1fr;gap:18px;align-items:start;margin-top:10px}
+@media (max-width:720px){.battle-grid{grid-template-columns:1fr}}
+.battle-left{display:flex;flex-direction:column;gap:10px;min-width:0}
+.battle-right{display:flex;flex-direction:column;align-items:center;gap:8px;background:var(--ink2);border:2px solid var(--line);border-radius:14px;padding:18px 12px}
+.hearts-row{font-size:1.5rem;letter-spacing:4px}
+.boss-ring{position:relative;width:220px;height:220px;margin:4px auto}
+#mon{font-size:5.5rem;transition:transform .3s;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)}
+#mon-img{width:150px;height:150px;object-fit:contain;display:block}
+#mon-emoji{display:none}
+#mon.hit{transform:translate(-50%,-50%) scale(1.2) rotate(-6deg)}
+#mon.dead{opacity:0;transform:translate(-50%,-40%) rotate(20deg) scale(1.5)}
+.seal{position:absolute;top:50%;left:50%;width:30px;height:30px;margin:-15px;border-radius:50%;background:#1b1738;border:2px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:15px;opacity:.32;transition:opacity .3s,background-color .3s,border-color .3s}
+.seal.lit{opacity:1;background:var(--bronze);border-color:var(--bronze);color:#2a1d05}
+.mname{font-size:1rem;opacity:.9;margin-top:2px;text-align:center}
+.mhpwrap{margin:4px auto 0;width:85%;height:10px;background:#1b1738;border-radius:6px;overflow:hidden}
+#mhp{height:100%;background:var(--red);width:100%;transition:width .3s}
+.timebar{height:8px;background:var(--ink);border-radius:6px;overflow:hidden}
+#bar{height:100%;background:var(--jade);width:100%;transition:width .1s linear}
+.q{background:var(--paper);color:#2b2416;border-radius:12px;padding:18px;text-align:center;flex:1}
+.q .t{font-size:1.25rem;font-weight:700;line-height:1.6}
+.q .hint{margin-top:8px;font-size:.95rem;color:#7a4a12}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.opt{background:var(--ink2);border:2px solid var(--bronze);border-radius:12px;padding:14px 6px;font-size:1.15rem;font-weight:700}
+.opt:hover:not(:disabled){background:#33396b}
+.opt.ok{background:var(--jade);border-color:var(--jade);color:#06231c}
+.opt.bad{background:var(--red);border-color:var(--red)}
+.opt.cut{opacity:.15;pointer-events:none}
+.tools{display:flex;gap:8px;flex-wrap:wrap}
+.tool{flex:1;min-width:100px;background:var(--ink);border:2px solid var(--line);border-radius:10px;padding:8px}
+.tool:disabled{opacity:.35;cursor:not-allowed}
+#say{border-left:5px solid var(--bronze);background:var(--ink);padding:12px 14px;border-radius:8px;line-height:1.7}
+#say.win{border-color:var(--jade)}#say.lose{border-color:var(--red)}
+.stars{font-size:2.6rem;letter-spacing:6px}
+.jail{margin-top:12px;display:grid;gap:8px}
+.jail div{background:var(--ink);border-radius:8px;padding:10px 12px;line-height:1.6;font-size:.95rem}
+@media (max-width:480px){.opt{font-size:1rem}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<main>
+
+<section id="s-start" class="card">
+<h1 class="serif" style="margin:0">數靈召喚師：二元一次方程式</h1>
+<h2 class="serif" style="margin:6px 0 0;color:var(--bronze)">1-1 觀念一：二元一次式與列式</h2>
+<p style="line-height:1.7">【雙變數蜥蜴】身懷 x 火焰與 y 冰霜雙重屬性，吐出帶有未化簡代數式的迷霧！把 x 項與 y 項分別合併，或正確列出情境算式，就能發動「屬性歸類術」擊破牠的防護罩！</p>
+<div class="modes" id="modes">
+<button class="mode on" data-m="easy"><b>練兵模式</b><small>不限時，適合先熟悉規則</small></button>
+<button class="mode" data-m="real"><b>實戰模式</b><small>每題 15 秒，數字更多樣</small></button>
+<button class="mode" data-m="hard"><b>修羅模式</b><small>每題 10 秒，出現負係數</small></button>
+</div>
+<button class="btn" id="go">迎戰雙變數蜥蜴！</button>
+</section>
+
+<section id="s-game" class="hide">
+<div class="top"><span id="wave">第 1/10 回合</span><span class="combo" id="combo"></span></div>
+<div class="battle-grid">
+  <div class="battle-left">
+    <div class="timebar"><div id="bar"></div></div>
+    <div style="text-align:right;font-size:.85rem;opacity:.8" id="sec"></div>
+    <div class="q"><div class="t" id="qt"></div><div class="hint hide" id="hintbox"></div></div>
+    <div class="opts" id="opts"></div>
+    <div class="tools">
+      <button class="tool" id="t-hint">💡 提示</button>
+      <button class="tool" id="t-cut">✂️ 刪去法</button>
+      <button class="tool" id="t-freeze">⏳ 時間凍結</button>
+    </div>
+    <div id="say" class="hide"></div>
+  </div>
+  <div class="battle-right">
+    <div class="hearts-row" id="hearts"></div>
+    <div class="boss-ring" id="boss-ring">
+      <div id="mon"><img id="mon-img" src="images/battle/1-1-1.png" alt="雙變數蜥蜴" onerror="this.style.display='none';document.getElementById('mon-emoji').style.display='';"><span id="mon-emoji">🦎</span></div>
+    </div>
+    <div class="mname">雙變數蜥蜴</div>
+    <div class="mhpwrap"><div id="mhp"></div></div>
+  </div>
+</div>
+</section>
+
+<section id="s-end" class="card hide" style="text-align:center">
+<h2 class="serif" id="e-title" style="margin:0"></h2>
+<div class="stars" id="e-stars"></div>
+<p id="e-info" style="line-height:1.8"></p>
+<div id="e-jail" class="jail" style="text-align:left"></div>
+<p style="margin-top:16px">
+<button class="btn" id="again">再戰一次</button>
+<button class="btn ghost" id="rescue">重練錯題</button>
+<button class="btn ghost hide" id="back">返回地圖</button>
+</p>
+</section>
+
+</main>
+<script src="lessons.js"></script>
+<script src="mode-system.js"></script>
+<script>
+const $=s=>document.querySelector(s);
+const R=(a,b)=>Math.floor(Math.random()*(b-a+1))+a;
+const pick=a=>a[R(0,a.length-1)];
+const sh=a=>a.map(v=>[Math.random(),v]).sort((x,y)=>x[0]-y[0]).map(x=>x[1]);
+const MODES={easy:{t:0,max:6},real:{t:15,max:9},hard:{t:10,max:12}};
+const PLAN=['identify','combine','fracCombine','dist','bracket','decCombine','combine','identify','expr','exprDiff'];
+const ITEMS=[['紅茶','綠茶'],['原子筆','鉛筆'],['麵包','蛋糕'],['門票','套票']];
+
+function fmt(n,v){ // n*v項字串，n可能為負/0/1/-1
+  if(n===0)return '';
+  const sign=n<0?' - ':' + ';
+  const av=Math.abs(n);
+  return sign+(av===1?v:av+v);
+}
+function firstFmt(n,v){
+  if(n===0)return '';
+  const sign=n<0?'-':'';
+  const av=Math.abs(n);
+  return sign+(av===1?v:av+v);
+}
+function combineExpr(X,Y){
+  if(X===0&&Y===0)return '0';
+  if(X===0)return firstFmt(Y,'y');
+  if(Y===0)return firstFmt(X,'x');
+  return firstFmt(X,'x')+fmt(Y,'y');
+}
+function randCoef(M){let v=R(1,M.max);return Math.random()<0.5?-v:v;}
+function sumVar(terms,v){return terms.filter(t=>t.v===v).reduce((s,t)=>s+t.c,0);}
+function ensure4(ans,cands){
+  const s=new Set([ans]);
+  for(const c of cands){const cs=String(c);if(s.size<4&&cs!==ans&&cs.trim()!=='')s.add(cs);}
+  let g=1;
+  while(s.size<4){const v=(Number(ans)||0)+(g%2===0?g/2+5:-(Math.ceil(g/2)+4));const vs=String(v);if(!s.has(vs))s.add(vs);g++;}
+  return sh([...s]);
+}
+
+/* ---------- 項／係數／常數／同類項 ---------- */
+function genIdentify(M){
+  const p1=randCoef(M),p2=randCoef(M);
+  const nY=R(1,2),hasConst=Math.random()<0.7;
+  const q1=randCoef(M),q2=nY===2?randCoef(M):null;
+  const k=hasConst?randCoef(M):null;
+  const items=[{c:p1,v:'x'},{c:p2,v:'x'},{c:q1,v:'y'}];
+  if(q2!==null)items.push({c:q2,v:'y'});
+  if(k!==null)items.push({c:k,v:''});
+  const order=sh(items);
+  let text='';
+  order.forEach((it,i)=>{
+    let piece;
+    if(it.v){piece=i===0?firstFmt(it.c,it.v):fmt(it.c,it.v);}
+    else{piece=i===0?String(it.c):(it.c<0?` - ${-it.c}`:` + ${it.c}`);}
+    text+=piece;
+  });
+  const subPool=['count','coef','like'];if(k!==null)subPool.push('const');
+  const sub=pick(subPool);
+  if(sub==='count'){
+    const n=order.length;
+    return {text:`代數式　${text}　中，一共有幾「項」？（項的意思：用加號、減號隔開的每一小段）`,ans:String(n),
+      options:ensure4(String(n),[n-1,n+1,n-2>0?n-2:n+2]),
+      hint:'把式子用加、減號切開，數一數切成幾段。',explain:`${text} 共可切成 ${n} 段，所以有 ${n} 項。`};
+  }
+  if(sub==='const'){
+    return {text:`代數式　${text}　中，「常數項」是多少？（常數項：不含 x、也不含 y 的那一項）`,ans:String(k),
+      options:ensure4(String(k),[p1,p2,q1,q2].filter(v=>v!==null)),
+      hint:'找出那一項──它沒有 x、也沒有 y，只是一個單獨的數字。',explain:`常數項就是 ${k}。`};
+  }
+  if(sub==='coef'){
+    const varTerms=order.filter(it=>it.v);
+    const target=pick(varTerms);
+    const shown=target.v==='x'?(firstFmt(target.c,'x')||fmt(target.c,'x').trim()):(firstFmt(target.c,'y')||fmt(target.c,'y').trim());
+    const showSigned=shown.startsWith('-')?shown:('+'+shown);
+    return {text:`代數式　${text}　中，「${showSigned}」這一項的「係數」是多少？（係數：字母前面帶正負號的數字）`,ans:String(target.c),
+      options:ensure4(String(target.c),[-target.c,Math.abs(target.c),target.c*2]),
+      hint:'係數就是那個字母前面、連同正負號一起看的數字。',explain:`「${showSigned}」的係數是 ${target.c}。`};
+  }
+  const sum=p1+p2;
+  return {text:`代數式　${text}　中，把兩個「x」項合併成同類項後，係數是多少？（同類項：字母部分完全相同的項，才能合併）`,ans:String(sum),
+    options:ensure4(String(sum),[p1-p2,p2-p1,sum+2]),
+    hint:'兩個 x 項才是同類項，可以直接把係數相加；y 項不能跟 x 項合併。',explain:`${p1} + (${p2}) = ${sum}，所以合併後係數是 ${sum}。`};
+}
+
+/* ---------- 整數版合併同類項（高誘答力選項） ---------- */
+function genCombine(M){
+  const p1=randCoef(M),p2=randCoef(M),q1=randCoef(M),q2=randCoef(M);
+  const terms=sh([{c:p1,v:'x'},{c:p2,v:'x'},{c:q1,v:'y'},{c:q2,v:'y'}]);
+  const X=sumVar(terms,'x'),Y=sumVar(terms,'y');
+  let text='化簡：';
+  terms.forEach((tm,i)=>{text+=i===0?firstFmt(tm.c,tm.v):fmt(tm.c,tm.v);});
+  const ans=combineExpr(X,Y);
+  const swap=combineExpr(Y,X); // 誘答：x、y 係數看反
+  const flipIdx=R(0,3);
+  const flipped=terms.map((t,i)=>i===flipIdx?{...t,c:-t.c}:t);
+  const signErr=combineExpr(sumVar(flipped,'x'),sumVar(flipped,'y')); // 誘答：漏看一項的正負號
+  const dropIdx=R(0,3);
+  const dropped=terms.filter((_,i)=>i!==dropIdx);
+  const dropErr=combineExpr(sumVar(dropped,'x'),sumVar(dropped,'y')); // 誘答：漏加一項
+  return {text,ans,options:ensure4(ans,[swap,signErr,dropErr]),
+    hint:'把所有 x 項加起來、所有 y 項加起來，注意每一項前面自己帶的正負號，不要漏看、也不要跟 y 項混在一起。',
+    explain:`x 項：(${p1}) + (${p2}) = ${X}；y 項：(${q1}) + (${q2}) = ${Y}，所以化簡結果是 ${ans}。`};
+}
+
+/* ---------- 分數版合併同類項 ---------- */
+function gcdInt(a,b){a=Math.abs(a);b=Math.abs(b);return b?gcdInt(b,a%b):a}
+function mkFrac(n,d){if(d<0){n=-n;d=-d;}const g=gcdInt(n,d)||1;return {n:n/g,d:d/g};}
+function fracAdd(a,b){return mkFrac(a.n*b.d+b.n*a.d,a.d*b.d);}
+function fracStr(f){return f.d===1?String(f.n):`${f.n}/${f.d}`;}
+function fracFirstFmt(f,v){if(f.n===0)return '';const sign=f.n<0?'-':'';const av={n:Math.abs(f.n),d:f.d};const coef=av.d===1?(av.n===1?'':String(av.n)):fracStr(av);return sign+coef+v;}
+function fracFmt(f,v){if(f.n===0)return '';const sign=f.n<0?' - ':' + ';const av={n:Math.abs(f.n),d:f.d};const coef=av.d===1?(av.n===1?'':String(av.n)):fracStr(av);return sign+coef+v;}
+function combineFracExpr(X,Y){if(X.n===0&&Y.n===0)return '0';if(X.n===0)return fracFirstFmt(Y,'y');if(Y.n===0)return fracFirstFmt(X,'x');return fracFirstFmt(X,'x')+fracFmt(Y,'y');}
+function sumFracVar(terms,v){return terms.filter(t=>t.v===v).reduce((s,t)=>fracAdd(s,t.c),{n:0,d:1});}
+function genFracCombine(){
+  const d=pick([2,3,4,5]);
+  const mkT=()=>{let n=R(1,d-1);if(Math.random()<0.5)n=-n;return mkFrac(n,d);};
+  const p1=mkT(),p2=mkT(),q1=mkT(),q2=mkT();
+  const terms=sh([{c:p1,v:'x'},{c:p2,v:'x'},{c:q1,v:'y'},{c:q2,v:'y'}]);
+  const X=sumFracVar(terms,'x'),Y=sumFracVar(terms,'y');
+  let text='化簡（分數係數）：';
+  terms.forEach((tm,i)=>{text+=i===0?fracFirstFmt(tm.c,tm.v):fracFmt(tm.c,tm.v);});
+  const ans=combineFracExpr(X,Y);
+  const swap=combineFracExpr(Y,X);
+  const flipIdx=R(0,3);
+  const flipped=terms.map((t,i)=>i===flipIdx?{...t,c:mkFrac(-t.c.n,t.c.d)}:t);
+  const signErr=combineFracExpr(sumFracVar(flipped,'x'),sumFracVar(flipped,'y'));
+  const dropIdx=R(0,3);
+  const dropped=terms.filter((_,i)=>i!==dropIdx);
+  const dropErr=combineFracExpr(sumFracVar(dropped,'x'),sumFracVar(dropped,'y'));
+  return {text,ans,options:ensure4(ans,[swap,signErr,dropErr]),
+    hint:'分母相同時，分子直接相加減就好，x 項跟 x 項合併、y 項跟 y 項合併。',
+    explain:`x 項相加得 ${fracStr(X)}；y 項相加得 ${fracStr(Y)}，所以化簡結果是 ${ans}。`};
+}
+
+/* ---------- 小數版合併同類項 ---------- */
+function decNum(t){const tt=Math.abs(t);const ip=Math.floor(tt/10),dp=tt%10;return ip+'.'+dp;}
+function decValStr(t){return (t<0?'-':'')+decNum(t);}
+function decFirstFmt(t,v){if(t===0)return '';return (t<0?'-':'')+decNum(t)+v;}
+function decFmt(t,v){if(t===0)return '';return (t<0?' - ':' + ')+decNum(t)+v;}
+function combineDecExpr(X,Y){if(X===0&&Y===0)return '0';if(X===0)return decFirstFmt(Y,'y');if(Y===0)return decFirstFmt(X,'x');return decFirstFmt(X,'x')+decFmt(Y,'y');}
+function randDecT(){let t;do{t=R(1,30);}while(t%10===0);return Math.random()<0.5?-t:t;}
+function genDecCombine(){
+  const p1=randDecT(),p2=randDecT(),q1=randDecT(),q2=randDecT();
+  const terms=sh([{c:p1,v:'x'},{c:p2,v:'x'},{c:q1,v:'y'},{c:q2,v:'y'}]);
+  const X=sumVar(terms,'x'),Y=sumVar(terms,'y');
+  let text='化簡（小數係數）：';
+  terms.forEach((tm,i)=>{text+=i===0?decFirstFmt(tm.c,tm.v):decFmt(tm.c,tm.v);});
+  const ans=combineDecExpr(X,Y);
+  const swap=combineDecExpr(Y,X);
+  const flipIdx=R(0,3);
+  const flipped=terms.map((t,i)=>i===flipIdx?{...t,c:-t.c}:t);
+  const signErr=combineDecExpr(sumVar(flipped,'x'),sumVar(flipped,'y'));
+  const dropIdx=R(0,3);
+  const dropped=terms.filter((_,i)=>i!==dropIdx);
+  const dropErr=combineDecExpr(sumVar(dropped,'x'),sumVar(dropped,'y'));
+  return {text,ans,options:ensure4(ans,[swap,signErr,dropErr]),
+    hint:'小數對齊小數點直接相加減，x 項跟 x 項合併、y 項跟 y 項合併。',
+    explain:`x 項相加得 ${decValStr(X)}；y 項相加得 ${decValStr(Y)}，所以化簡結果是 ${ans}。`};
+}
+
+/* ---------- 拆括號（小括號→中括號→大括號） ---------- */
+function genBracket(M){
+  const k3=R(2,4);
+  const op1=pick(['+','-']),op2=pick(['+','-']);
+  const rng=[-5,-4,-3,-2,-1,1,2,3,4,5];
+  const a=pick(rng),b=pick(rng),c=pick(rng),d=pick(rng);
+  const op1s=op1==='+'?1:-1,op2s=op2==='+'?1:-1;
+  const X=k3*(a+op2s*op1s*c),Y=k3*(op2s*(b+op1s*d));
+  const text=`化簡：${k3}[ ${firstFmt(a,'x')} ${op2} { ${firstFmt(b,'y')} ${op1} ( ${firstFmt(c,'x')}${fmt(d,'y')} ) } ]`;
+  const ans=combineExpr(X,Y);
+  const forgetOuter=combineExpr(a+op2s*op1s*c,op2s*(b+op1s*d)); // 誘答：忘記乘最外層的 k3
+  const flipOp1=combineExpr(k3*(a+op2s*(-op1s)*c),k3*(op2s*(b+(-op1s)*d))); // 誘答：中括號那個減號忘記變號
+  const flipOp2=combineExpr(k3*(a+(-op2s)*op1s*c),k3*((-op2s)*(b+op1s*d))); // 誘答：大括號整體的正負號忘記變
+  return {text,ans,options:ensure4(ans,[forgetOuter,flipOp1,flipOp2]),
+    hint:'從最裡面的小括號開始拆，每拆一層括號，記得看清楚外面是「+」還是「－」──是「－」的話，裡面每一項都要變號，最後別忘了乘最外層的數字。',
+    explain:`由內而外展開：先拆 ( )，再拆 { }，最後拆 [ ] 並乘上 ${k3}，合併後 x 項為 ${X}、y 項為 ${Y}，答案是 ${ans}。`};
+}
+
+function genExpr(M){
+  const [A,B]=pick(ITEMS);
+  let m=R(1,M.max)*5,n=R(1,M.max)*5;
+  while(m===n)n=R(1,M.max)*5;
+  const text=`買 x 杯${A}（每杯 ${m} 元）與 y 杯${B}（每杯 ${n} 元），總價要怎麼列式？`;
+  const ans=`${m}x + ${n}y`;
+  const opts=ensure4(ans,[`${n}x + ${m}y`,`${m}x - ${n}y`,`(${m}+${n})(x+y)`]);
+  return {text,ans,options:opts,hint:'單價 × 杯數，再把兩種飲料的花費加起來。',explain:`${A}花費 ${m}x 元，${B}花費 ${n}y 元，總價為 ${ans} 元。`};
+}
+function genExprDiff(M){
+  const [A,B]=pick(ITEMS);
+  let m=R(1,M.max)*5,n=R(1,M.max)*5;
+  while(m===n)n=R(1,M.max)*5;
+  const text=`哥哥買 x 張${A}（每張 ${m} 元），弟弟買 y 張${B}（每張 ${n} 元）。哥哥比弟弟多花多少錢？請列式。`;
+  const ans=`${m}x - ${n}y`;
+  const opts=ensure4(ans,[`${n}y - ${m}x`,`${m}x + ${n}y`,`${m}y - ${n}x`]);
+  return {text,ans,options:opts,hint:'「多花多少」就是兩者花費相減：哥哥的花費 － 弟弟的花費。',explain:`哥哥花費 ${m}x 元，弟弟花費 ${n}y 元，多花的錢是 ${m}x - ${n}y 元。`};
+}
+function gen(t){
+  const M=MODES[mode];
+  if(t==='identify')return genIdentify(M);
+  if(t==='combine')return genCombine(M);
+  if(t==='fracCombine')return genFracCombine();
+  if(t==='decCombine')return genDecCombine();
+  if(t==='dist')return genDist(M);
+  if(t==='bracket')return genBracket(M);
+  if(t==='exprDiff')return genExprDiff(M);
+  return genExpr(M);
+}
+function genDist(M){
+  const k1=R(2,4),k2=R(2,4),op=pick(['+','-']);
+  const a=randCoef(M),b=randCoef(M),c=randCoef(M),d=randCoef(M);
+  const t1x=k1*a,t1y=k1*b;
+  const t2x=(op==='+'?1:-1)*k2*c,t2y=(op==='+'?1:-1)*k2*d;
+  const X=t1x+t2x,Y=t1y+t2y;
+  const text=`化簡：${k1}(${firstFmt(a,'x')}${fmt(b,'y')}) ${op} ${k2}(${firstFmt(c,'x')}${fmt(d,'y')})`;
+  const ans=combineExpr(X,Y);
+  const wrongForget=combineExpr(t1x+(op==='+'?1:-1)*c,t1y+(op==='+'?1:-1)*d); // 誘答：第二個括號忘記乘k2
+  const wrongOp=combineExpr(t1x+(op==='+'?-1:1)*k2*c,t1y+(op==='+'?-1:1)*k2*d); // 誘答：加減號看反
+  const wrongForget1=combineExpr(a+t2x,b+t2y); // 誘答：第一個括號忘記乘k1
+  return {text,ans,options:ensure4(ans,[wrongForget,wrongOp,wrongForget1]),
+    hint:'先用乘法把每個括號展開（分配律：括號裡每一項都要乘到外面的數字），再合併 x 項與 y 項。',
+    explain:`第一個括號展開：${k1}×(${firstFmt(a,'')||a}) → ${t1x}x，${k1}×(${b}) → ${t1y}y。第二個括號展開後（含 ${op}）：${t2x}x、${t2y}y。合併得 x 項 ${X}、y 項 ${Y}，答案是 ${ans}。`};
+}
+
+const EMB=window.parent!==window,SID='1-1-1';
+function log(ok){if(EMB&&!rescue)parent.postMessage({type:'wave-log',id:SID,qtype:q.type,ok:ok},'*')}
+let mode='easy',qs=[],idx=0,q=null,hearts=5,combo=0,score=0,right=0,wrongs=[],lock=true,left=0,tm=0,frozenUntil=0,rescue=false,used={},showRing=false,sealsLit=0;
+
+function show(id){['s-start','s-game','s-end'].forEach(s=>$('#'+s).classList.toggle('hide',s!=id))}
+function drawHearts(){$('#hearts').textContent='❤️'.repeat(hearts)+'🖤'.repeat(5-hearts)}
+function drawCombo(){$('#combo').textContent=combo>=2?`🔥 連擊 ×${combo}`:''}
+function say(html,cls){const e=$('#say');e.className=cls||'';e.innerHTML=html}
+function buildSeals(n){
+  const ring=$('#boss-ring');
+  ring.querySelectorAll('.seal').forEach(s=>s.remove());
+  for(let i=0;i<n;i++){
+    const ang=i*(360/n);
+    const s=document.createElement('div');
+    s.className='seal';s.dataset.i=i;s.textContent='🔒';
+    s.style.transform=`rotate(${ang}deg) translate(105px) rotate(${-ang}deg)`;
+    ring.appendChild(s);
+  }
+}
+function lightSeal(k){
+  const s=$('#boss-ring .seal[data-i="'+(k-1)+'"]');
+  if(s){s.textContent='🔓';s.classList.add('lit');}
+}
+function paint(){
+  const T=MODES[mode].t;
+  $('#bar').style.width=T?(left/T*100)+'%':'100%';
+  $('#sec').textContent=T?Math.ceil(left)+' 秒':'不限時';
+  $('#mhp').style.width=MS.hp(right,qs.length)+'%';
+}
+
+function start(types,isRescue){
+  rescue=!!isRescue;qs=MS.begin(rescue)?[]:types.map(x=>Object.assign(gen(x),{type:x}));idx=0;hearts=5;combo=0;score=0;right=0;wrongs=[];
+  used={hint:0,cut:0,freeze:0};
+  $('#mon').className='';
+  showRing=!rescue&&!MS.active();sealsLit=0;
+  if(showRing){buildSeals(qs.length||PLAN.length);}else{$('#boss-ring').querySelectorAll('.seal').forEach(s=>s.remove());}
+  show('s-game');drawHearts();drawCombo();next();
+}
+function next(){
+  clearInterval(tm);
+  if(MS.halt())return;
+  if(MS.active()){mode=MS.prep(idx+1);if(idx>=qs.length&&hearts>0){const ty=MS.pick(PLAN);qs.push(Object.assign(gen(ty),{type:ty}));}}
+  if(idx>=qs.length||hearts<=0)return finish();
+  q=qs[idx++];lock=false;
+  $('#wave').textContent=MS.wave(idx,qs.length,'回合')+(rescue?'（重練錯題）':'');
+  $('#qt').textContent=q.text;
+  $('#hintbox').classList.add('hide');
+  say('');$('#say').classList.add('hide');
+  const o=$('#opts');o.innerHTML='';
+  q.options.forEach(v=>{const b=document.createElement('button');b.className='opt';b.textContent=v;b.dataset.v=v;b.onclick=()=>answer(v,b);o.appendChild(b)});
+  $('#t-hint').disabled=!!used.hint;$('#t-cut').disabled=!!used.cut;
+  $('#t-freeze').disabled=!!used.freeze||!MODES[mode].t;
+  startTimer();paint();
+}
+function startTimer(){
+  const T=MODES[mode].t;left=T;frozenUntil=0;paint();if(!T)return;
+  tm=setInterval(()=>{
+    if(Date.now()<frozenUntil)return;
+    left-=0.1;paint();
+    if(left<=0){clearInterval(tm);miss(null)}
+  },100);
+}
+function answer(v,btn){
+  if(lock)return;
+  if(v===q.ans){
+    lock=true;clearInterval(tm);
+    btn.classList.add('ok');combo++;right++;log(true);
+    if(showRing){sealsLit++;lightSeal(sealsLit);}
+    const gain=100+(combo-1)*20;score+=gain;drawCombo();
+    $('#mon').classList.add('hit');setTimeout(()=>$('#mon').classList.remove('hit'),300);
+    paint();
+    $('#say').classList.remove('hide');
+    const last=idx>=qs.length;
+    say((last?'🔮 屬性歸類術命中要害，蜥蜴被淨化捕獲！':'⚔️ 屬性歸類術命中！')+` +${gain} 靈力`+(combo>=3?`　🔥 ${combo} 連擊！`:''),'win');
+    if(last)$('#mon').classList.add('dead');
+    setTimeout(next,1000);
+  }else{
+    btn.classList.add('bad');miss(btn);
+  }
+}
+function miss(btn){
+  if(lock)return;
+  lock=true;clearInterval(tm);
+  hearts--;combo=0;wrongs.push(q);log(false);drawHearts();drawCombo();
+  document.querySelectorAll('.opt').forEach(b=>{if(b.dataset.v===q.ans)b.classList.add('ok')});
+  $('#say').classList.remove('hide');
+  say(`<b>${btn?'💥 蜥蜴反擊，召喚師受到傷害！':'⏰ 時間到，蜥蜴逃脫了一波！'}</b><br>🐱 導師智慧貓：正確答案是 <b>${q.ans}</b>。${q.explain}<br><button class="btn" id="nx" style="margin-top:8px">${hearts<=0?'查看戰報':'下一回合'}</button>`,'lose');
+  $('#nx').onclick=next;$('#nx').focus();
+}
+function finish(){
+  clearInterval(tm);show('s-end');
+  const fail=hearts<=0,total=qs.length;
+  let stars=fail?0:wrongs.length<=1?3:wrongs.length<=3?2:1;
+  if(rescue){
+    $('#e-title').textContent='重練錯題結束';
+    $('#e-stars').textContent='';
+    $('#e-info').textContent=`成功答對 ${right}/${total} 題。`+(right==total?'全部融會貫通！':'再接再厲！');
+  }else{
+    $('#e-title').textContent=fail?'💔 收服失敗':'🎉 收服成功';
+    $('#e-stars').textContent=fail?'':'⭐'.repeat(stars)+'☆'.repeat(3-stars);
+    const rankName=fail?'':['','見習召喚師','中階召喚師','菁英召喚師'][stars];
+    $('#e-info').textContent=(rankName?rankName+'　':'')+`靈力 ${score}　答對 ${right}/${total}　剩餘生命 ${hearts} 顆心`;
+  }
+  const j=$('#e-jail');j.innerHTML='';
+  if(wrongs.length){
+    const h=document.createElement('div');h.innerHTML=`<b>📖 數靈觀察日誌（${wrongs.length} 題）</b>`;j.appendChild(h);
+    wrongs.forEach(w=>{const d=document.createElement('div');d.innerHTML=`${w.text}<br>正解：<b>${w.ans}</b>　${w.explain}`;j.appendChild(d)});
+  }
+  $('#rescue').classList.toggle('hide',!wrongs.length||rescue);
+  $('#back').classList.toggle('hide',!EMB);
+  MS.result({sid:SID,emb:EMB,rescue:rescue,mode:mode,stars:stars,fail:fail,score:score,right:right,total:total});
+}
+
+$('#modes').onclick=e=>{const b=e.target.closest('.mode');if(!b)return;mode=b.dataset.m;document.querySelectorAll('.mode').forEach(x=>x.classList.toggle('on',x==b))};
+$('#go').onclick=()=>start(PLAN,false);
+$('#back').onclick=()=>parent.postMessage({type:'stage-exit'},'*');
+$('#again').onclick=()=>show('s-start');
+$('#rescue').onclick=()=>start(wrongs.map(w=>w.type),true);
+$('#t-hint').onclick=()=>{if(lock||used.hint)return;used.hint=1;$('#t-hint').disabled=true;const h=$('#hintbox');h.textContent='💡 '+q.hint;h.classList.remove('hide')};
+$('#t-cut').onclick=()=>{if(lock||used.cut)return;used.cut=1;$('#t-cut').disabled=true;
+  sh([...document.querySelectorAll('.opt')].filter(b=>b.dataset.v!==q.ans)).slice(0,2).forEach(b=>b.classList.add('cut'))};
+$('#t-freeze').onclick=()=>{if(lock||used.freeze)return;used.freeze=1;$('#t-freeze').disabled=true;frozenUntil=Date.now()+10000;
+  $('#say').classList.remove('hide');say('⏳ 時間凍結 10 秒！慢慢想。')};
+MS.init(MODES, SID);
+</script>
+</body>
+</html>

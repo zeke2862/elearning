@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>5-1-3 資料的集中趨勢：中位數與眾數｜數靈召喚師</title>
+<style>
+:root{--ink:#161a2e;--ink2:#20264a;--line:#3a4270;--bronze:#d2a24c;--paper:#f1e8d2;--red:#d24a33;--jade:#43a58f;--txt:#e9e4d4}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(ellipse at top,#2a2456,var(--ink) 65%);color:var(--txt);font-family:"Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif;min-height:100vh}
+h1,h2,.serif{font-family:"Noto Serif TC","Songti TC","PMingLiU",serif}
+main{max-width:960px;margin:0 auto;padding:16px}
+.hide{display:none!important}
+button{font:inherit;cursor:pointer;color:inherit}
+button:focus-visible{outline:3px solid var(--bronze);outline-offset:2px}
+.card{background:var(--ink2);border:2px solid var(--line);border-radius:14px;padding:18px}
+.btn{background:var(--bronze);color:#2a1d05;border:0;border-radius:10px;padding:12px 22px;font-weight:700;font-size:1.05rem}
+.btn.ghost{background:transparent;color:var(--bronze);border:2px solid var(--bronze)}
+.modes{display:grid;gap:10px;margin:16px 0}
+.mode{text-align:left;background:var(--ink);border:2px solid var(--line);border-radius:12px;padding:12px 14px}
+.mode.on{border-color:var(--bronze);background:#2b2a3c}
+.mode b{font-size:1.1rem}.mode small{display:block;opacity:.75;margin-top:2px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px;font-weight:700}
+.combo{color:var(--bronze);min-width:5em;text-align:right}
+.battle-grid{display:grid;grid-template-columns:1.15fr 1fr;gap:18px;align-items:start;margin-top:10px}
+@media (max-width:720px){.battle-grid{grid-template-columns:1fr}}
+.battle-left{display:flex;flex-direction:column;gap:10px;min-width:0}
+.battle-right{display:flex;flex-direction:column;align-items:center;gap:8px;background:var(--ink2);border:2px solid var(--line);border-radius:14px;padding:18px 12px}
+.hearts-row{font-size:1.5rem;letter-spacing:4px}
+.boss-ring{position:relative;width:220px;height:220px;margin:4px auto}
+#mon{font-size:5.5rem;transition:transform .3s;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)}
+#mon-img{width:150px;height:150px;object-fit:contain;display:block}
+#mon-emoji{display:none}
+#mon.hit{transform:translate(-50%,-50%) scale(1.2) rotate(-6deg)}
+#mon.dead{opacity:0;transform:translate(-50%,-40%) rotate(20deg) scale(1.5)}
+.seal{position:absolute;top:50%;left:50%;width:30px;height:30px;margin:-15px;border-radius:50%;background:#1b1738;border:2px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:15px;opacity:.32;transition:opacity .3s,background-color .3s,border-color .3s}
+.seal.lit{opacity:1;background:var(--bronze);border-color:var(--bronze);color:#2a1d05}
+.mname{font-size:1rem;opacity:.9;margin-top:2px;text-align:center}
+.mhpwrap{margin:4px auto 0;width:85%;height:10px;background:#1b1738;border-radius:6px;overflow:hidden}
+#mhp{height:100%;background:var(--red);width:100%;transition:width .3s}
+.timebar{height:8px;background:var(--ink);border-radius:6px;overflow:hidden}
+#bar{height:100%;background:var(--jade);width:100%;transition:width .1s linear}
+.q{background:var(--paper);color:#2b2416;border-radius:12px;padding:18px;text-align:center;flex:1}
+.q .t{font-size:1.2rem;font-weight:700;line-height:1.6}
+.q .hint{margin-top:8px;font-size:.95rem;color:#7a4a12}
+.qsvg{margin:10px auto 0}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.opt{background:var(--ink2);border:2px solid var(--bronze);border-radius:12px;padding:14px 6px;font-size:1.05rem;font-weight:700}
+.opt:hover:not(:disabled){background:#33396b}
+.opt.ok{background:var(--jade);border-color:var(--jade);color:#06231c}
+.opt.bad{background:var(--red);border-color:var(--red)}
+.opt.cut{opacity:.15;pointer-events:none}
+.tools{display:flex;gap:8px;flex-wrap:wrap}
+.tool{flex:1;min-width:100px;background:var(--ink);border:2px solid var(--line);border-radius:10px;padding:8px}
+.tool:disabled{opacity:.35;cursor:not-allowed}
+#say{border-left:5px solid var(--bronze);background:var(--ink);padding:12px 14px;border-radius:8px;line-height:1.7}
+#say.win{border-color:var(--jade)}#say.lose{border-color:var(--red)}
+.stars{font-size:2.6rem;letter-spacing:6px}
+.jail{margin-top:12px;display:grid;gap:8px}
+.jail div{background:var(--ink);border-radius:8px;padding:10px 12px;line-height:1.6;font-size:.95rem}
+@media (max-width:480px){.opt{font-size:.95rem}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<main>
+<section id="s-start" class="card">
+<h1 class="serif" style="margin:0">數靈召喚師：統計圖表與資料分析</h1>
+<h2 class="serif" style="margin:6px 0 0;color:var(--bronze)">5-1 觀念三：資料的集中趨勢──中位數與眾數（第五章 Boss）</h2>
+<p style="line-height:1.7">【中位衆數三頭犬】三個頭分別考驗召喚師：眾數（出現次數最多的數）與中位數（由小到大排序後最中間的數）！排好序、數清楚次數，就能一次降伏三顆頭，通關第五章！</p>
+<div class="modes" id="modes">
+<button class="mode on" data-m="easy"><b>練兵模式</b><small>不限時，數字較小</small></button>
+<button class="mode" data-m="real"><b>實戰模式</b><small>每題 15 秒，數字稍微變大</small></button>
+<button class="mode" data-m="hard"><b>修羅模式</b><small>每題 10 秒，數字更大更靈活</small></button>
+</div>
+<button class="btn" id="go">挑戰第五章 Boss：中位衆數三頭犬！</button>
+</section>
+
+<section id="s-game" class="hide">
+<div class="top"><span id="wave">第 1/10 回合</span><span class="combo" id="combo"></span></div>
+<div class="battle-grid">
+  <div class="battle-left">
+    <div class="timebar"><div id="bar"></div></div>
+    <div style="text-align:right;font-size:.85rem;opacity:.8" id="sec"></div>
+    <div class="q"><div class="t" id="qt"></div><div class="hint hide" id="hintbox"></div></div>
+    <div class="opts" id="opts"></div>
+    <div class="tools">
+      <button class="tool" id="t-hint">💡 提示</button>
+      <button class="tool" id="t-cut">✂️ 刪去法</button>
+      <button class="tool" id="t-freeze">⏳ 時間凍結</button>
+    </div>
+    <div id="say" class="hide"></div>
+  </div>
+  <div class="battle-right">
+    <div class="hearts-row" id="hearts"></div>
+    <div class="boss-ring" id="boss-ring">
+      <div id="mon"><img id="mon-img" src="images/battle/5-1-3.png" alt="中位衆數三頭犬" onerror="this.style.display='none';document.getElementById('mon-emoji').style.display='';"><span id="mon-emoji">🐺</span></div>
+    </div>
+    <div class="mname">第五章 Boss：中位衆數三頭犬</div>
+    <div class="mhpwrap"><div id="mhp"></div></div>
+  </div>
+</div>
+</section>
+
+<section id="s-end" class="card hide" style="text-align:center">
+<h2 class="serif" id="e-title" style="margin:0"></h2>
+<div class="stars" id="e-stars"></div>
+<p id="e-info" style="line-height:1.8"></p>
+<div id="e-jail" class="jail" style="text-align:left"></div>
+<p style="margin-top:16px">
+<button class="btn" id="again">再戰一次</button>
+<button class="btn ghost" id="rescue">重練錯題</button>
+<button class="btn ghost hide" id="back">返回地圖</button>
+</p>
+</section>
+
+</main>
+<script src="lessons2.js"></script>
+<script src="mode-system.js"></script>
+<script>
+const $=s=>document.querySelector(s);
+const R=(a,b)=>Math.floor(Math.random()*(b-a+1))+a;
+const pick=a=>a[R(0,a.length-1)];
+const sh=a=>a.map(v=>[Math.random(),v]).sort((x,y)=>x[0]-y[0]).map(x=>x[1]);
+function ensure4(ans,cands){
+  const s=new Set([ans]);
+  for(const c of cands){const cs=String(c);if(s.size<4&&cs!==ans&&cs.trim()!=='')s.add(cs);}
+  let g=1;
+  while(s.size<4){const v=(Number(ans)||0)+(g%2===0?g/2+5:-(Math.ceil(g/2)+4));const vs=String(v);if(!s.has(vs))s.add(vs);g++;}
+  return sh([...s]);
+}
+function gcd(a,b){a=Math.abs(a);b=Math.abs(b);return b?gcd(b,a%b):(a||1)}
+function lcm(a,b){return Math.abs(a*b)/gcd(a,b)}
+/* 坐標平面 SVG 繪圖工具：points 畫點、lines 畫 ax+by=c 直線、dashedTo 畫到兩軸的虛線 */
+function lineSegPoints(a,b,c,R2){
+  const pts=[];
+  if(b!==0){[-R2,R2].forEach(x=>{const y=(c-a*x)/b;if(y>=-R2-0.0001&&y<=R2+0.0001)pts.push([x,y]);});}
+  if(a!==0){[-R2,R2].forEach(y=>{const x=(c-b*y)/a;if(x>=-R2-0.0001&&x<=R2+0.0001)pts.push([x,y]);});}
+  if(pts.length<2)return null;
+  pts.sort((p,q)=>p[0]-q[0]||p[1]-q[1]);
+  return [pts[0],pts[pts.length-1]];
+}
+function svgGrid(opts){
+  const RG=opts.range||7,S=260,C=S/2,U=(S-36)/(2*RG);
+  const toX=x=>C+x*U,toY=y=>C-y*U;
+  let g=`<div class="qsvg"><svg viewBox="0 0 ${S} ${S}" style="width:100%;max-width:260px;background:#fff;border-radius:8px" xmlns="http://www.w3.org/2000/svg">`;
+  for(let i=-RG;i<=RG;i++){
+    g+=`<line x1="${toX(i)}" y1="${toY(-RG)}" x2="${toX(i)}" y2="${toY(RG)}" stroke="#e3e3e3" stroke-width="1"/>`;
+    g+=`<line x1="${toX(-RG)}" y1="${toY(i)}" x2="${toX(RG)}" y2="${toY(i)}" stroke="#e3e3e3" stroke-width="1"/>`;
+  }
+  g+=`<line x1="${toX(-RG)}" y1="${toY(0)}" x2="${toX(RG)}" y2="${toY(0)}" stroke="#333" stroke-width="2"/>`;
+  g+=`<line x1="${toX(0)}" y1="${toY(-RG)}" x2="${toX(0)}" y2="${toY(RG)}" stroke="#333" stroke-width="2"/>`;
+  g+=`<text x="${toX(RG)-10}" y="${toY(0)-6}" font-size="12" fill="#333">x</text><text x="${toX(0)+6}" y="${toY(RG)+12}" font-size="12" fill="#333">y</text>`;
+  (opts.lines||[]).forEach(ln=>{
+    const pts=lineSegPoints(ln.a,ln.b,ln.c,RG);
+    if(pts)g+=`<line x1="${toX(pts[0][0])}" y1="${toY(pts[0][1])}" x2="${toX(pts[1][0])}" y2="${toY(pts[1][1])}" stroke="${ln.color||'#d24a33'}" stroke-width="2.5"/>`;
+  });
+  (opts.dashedTo||[]).forEach(p=>{
+    g+=`<line x1="${toX(p.x)}" y1="${toY(p.y)}" x2="${toX(p.x)}" y2="${toY(0)}" stroke="#999" stroke-width="1.3" stroke-dasharray="4,3"/>`;
+    g+=`<line x1="${toX(p.x)}" y1="${toY(p.y)}" x2="${toX(0)}" y2="${toY(p.y)}" stroke="#999" stroke-width="1.3" stroke-dasharray="4,3"/>`;
+  });
+  (opts.points||[]).forEach(p=>{
+    g+=`<circle cx="${toX(p.x)}" cy="${toY(p.y)}" r="4.5" fill="${p.color||'#d24a33'}"/>`;
+    if(p.label)g+=`<text x="${toX(p.x)+6}" y="${toY(p.y)-6}" font-size="12" font-weight="700" fill="${p.color||'#d24a33'}">${p.label}</text>`;
+  });
+  g+='</svg></div>';
+  return g;
+}
+function fmtEq(a,b,c){
+  return (a===1?'':a)+'x + '+(b===1?'':b)+'y = '+c;
+}
+function fmtEqGen(a,b,c){
+  let s=(a===1?'':a===-1?'-':a)+'x';
+  s+=b>=0?' + '+(b===1?'':b)+'y':' - '+(Math.abs(b)===1?'':Math.abs(b))+'y';
+  s+=' = '+c;
+  return s;
+}
+const QUADS=['第一象限','第二象限','第三象限','第四象限'];
+function quadName(x,y){
+  if(x===0&&y===0)return '原點（不屬於任何象限）';
+  if(x===0)return 'y 軸上（不屬於任何象限）';
+  if(y===0)return 'x 軸上（不屬於任何象限）';
+  if(x>0&&y>0)return '第一象限';
+  if(x<0&&y>0)return '第二象限';
+  if(x<0&&y<0)return '第三象限';
+  return '第四象限';
+}
+function fmtNum(n){
+  if(Number.isInteger(n))return String(n);
+  return String(Math.round(n*100)/100);
+}
+const MODES={easy:{t:0,max:10},real:{t:15,max:15},hard:{t:10,max:20}};
+const PLAN=['findMode','findMedian','combined','findMode','combined','findMedian','compareConcept','combined','findMode','findMedian'];
+const CONCEPTS=[
+  ['一組資料中出現次數最多的數，叫做這組資料的什麼？','眾數',['眾數','中位數','平均數','全距']],
+  ['把一組資料由小到大排序後，最中間的那個數（或中間兩數的平均），叫做這組資料的什麼？','中位數',['中位數','眾數','平均數','全距']],
+  ['一組資料如果有偶數個數字，中位數要怎麼求？','取中間兩個數的平均',['取中間兩個數的平均','直接取最大的那個數','直接取最小的那個數','把所有數字相加']],
+  ['一組資料的眾數可以有幾個？','可以有一個、多個，或沒有眾數',['可以有一個、多個，或沒有眾數','一定只有一個','一定要有兩個','眾數一定等於中位數']]
+];
+
+function genFindMode(M){
+  const n=R(6,9);
+  const modeVal=R(1,M.max);
+  const repeatCount=R(3,4);
+  let arr=[];
+  for(let i=0;i<repeatCount;i++)arr.push(modeVal);
+  let guard=0;
+  while(arr.length<n&&guard<100){
+    guard++;
+    const v=R(1,M.max);
+    const cnt=arr.filter(x=>x===v).length;
+    if(v!==modeVal&&cnt<repeatCount-1)arr.push(v);
+  }
+  while(arr.length<n)arr.push(R(1,M.max));
+  arr=sh(arr);
+  const text=`三頭犬吐出一組數據氣息：[${arr.join(', ')}]，請問這組資料的眾數是多少？`;
+  const ans=String(modeVal);
+  const others=[...new Set(arr)].filter(v=>v!==modeVal);
+  let wrongs=sh(others).slice(0,3).map(String);
+  let extra=1;
+  while(wrongs.length<3){wrongs.push(String(modeVal+extra));extra++;}
+  return {text,ans,options:ensure4(ans,wrongs),
+    hint:'眾數就是這組資料中「出現次數最多」的數字。',
+    explain:`把每個數字出現的次數數一數，${modeVal} 出現了 ${repeatCount} 次，次數最多，所以眾數是 ${modeVal}。`};
+}
+function genFindMedian(M){
+  const n=pick([5,6,7,8,9]);
+  let arr=[];
+  while(arr.length<n)arr.push(R(1,M.max*3));
+  const sorted=[...arr].sort((a,b)=>a-b);
+  let median;
+  if(n%2===1)median=sorted[(n-1)/2];
+  else median=(sorted[n/2-1]+sorted[n/2])/2;
+  const displayArr=sh(arr);
+  const text=`三頭犬吐出一組數據氣息：[${displayArr.join(', ')}]，請問由小到大排序後，這組資料的中位數是多少？`;
+  const ans=fmtNum(median);
+  return {text,ans,options:ensure4(ans,[fmtNum(median+1),fmtNum(median-1),String(sorted[sorted.length-1])]),
+    hint:'先把資料由小到大排序，最中間的數（或中間兩個數的平均）就是中位數。',
+    explain:`排序後：${sorted.join(', ')}，${n%2===1?`中間第 ${(n+1)/2} 個數是 ${median}`:`中間兩個數 ${sorted[n/2-1]} 與 ${sorted[n/2]} 的平均是 ${median}`}，所以中位數是 ${ans}。`};
+}
+function genCombined(M){
+  const n=8;
+  const modeVal=R(1,M.max);
+  let arr=[modeVal,modeVal,modeVal];
+  let guard=0;
+  while(arr.length<n&&guard<100){
+    guard++;
+    const v=R(1,M.max);
+    if(v!==modeVal||arr.filter(x=>x===v).length<3)arr.push(v);
+  }
+  while(arr.length<n)arr.push(R(1,M.max));
+  arr=sh(arr);
+  const sorted=[...arr].sort((a,b)=>a-b);
+  const median=(sorted[n/2-1]+sorted[n/2])/2;
+  const askMode=Math.random()<0.5;
+  const text=`三頭犬吐出一組數據氣息：[${arr.join(', ')}]（共 ${n} 個數）。三個頭之一問：這組資料的${askMode?'眾數':'中位數（由小到大排序後）'}是多少？`;
+  if(askMode){
+    const ans=String(modeVal);
+    const others=[...new Set(arr)].filter(v=>v!==modeVal);
+    let wrongs=sh(others).slice(0,3).map(String);
+    let extra=1;
+    while(wrongs.length<3){wrongs.push(String(modeVal+extra));extra++;}
+    return {text,ans,options:ensure4(ans,wrongs),
+      hint:'眾數是出現次數最多的數字。',
+      explain:`${modeVal} 出現了 3 次，是這組資料中出現次數最多的，所以眾數是 ${modeVal}。`};
+  }
+  const ans=fmtNum(median);
+  return {text,ans,options:ensure4(ans,[fmtNum(median+1),fmtNum(median-1),String(sorted[n-1])]),
+    hint:'排序後，中間兩個數的平均就是中位數（因為資料共有偶數個）。',
+    explain:`排序後：${sorted.join(', ')}，中間兩個數 ${sorted[n/2-1]} 與 ${sorted[n/2]} 的平均是 ${median}，所以中位數是 ${ans}。`};
+}
+function genCompareConcept(M){
+  const [q,ans,opts]=pick(CONCEPTS);
+  return {text:q,ans,options:sh(opts.slice()),
+    hint:'回想眾數、中位數的定義：眾數看「次數」，中位數看「排序後的位置」。',
+    explain:`正確答案是「${ans}」。`};
+}
+function gen(t){
+  const M=MODES[mode];
+  if(t==='findMode')return genFindMode(M);
+  if(t==='findMedian')return genFindMedian(M);
+  if(t==='combined')return genCombined(M);
+  return genCompareConcept(M);
+}
+const EMB=window.parent!==window,SID='5-1-3';
+function log(ok){if(EMB&&!rescue)parent.postMessage({type:'wave-log',id:SID,qtype:q.type,ok:ok},'*')}
+let mode='easy',qs=[],idx=0,q=null,hearts=5,combo=0,score=0,right=0,wrongs=[],lock=true,left=0,tm=0,frozenUntil=0,rescue=false,used={},showRing=false,sealsLit=0;
+
+function show(id){['s-start','s-game','s-end'].forEach(s=>$('#'+s).classList.toggle('hide',s!=id))}
+function drawHearts(){$('#hearts').textContent='❤️'.repeat(hearts)+'🖤'.repeat(5-hearts)}
+function drawCombo(){$('#combo').textContent=combo>=2?`🔥 連擊 ×${combo}`:''}
+function say(html,cls){const e=$('#say');e.className=cls||'';e.innerHTML=html}
+function buildSeals(n){
+  const ring=$('#boss-ring');
+  ring.querySelectorAll('.seal').forEach(s=>s.remove());
+  for(let i=0;i<n;i++){
+    const ang=i*(360/n);
+    const s=document.createElement('div');
+    s.className='seal';s.dataset.i=i;s.textContent='🔒';
+    s.style.transform=`rotate(${ang}deg) translate(105px) rotate(${-ang}deg)`;
+    ring.appendChild(s);
+  }
+}
+function lightSeal(k){
+  const s=$('#boss-ring .seal[data-i="'+(k-1)+'"]');
+  if(s){s.textContent='🔓';s.classList.add('lit');}
+}
+function paint(){
+  const T=MODES[mode].t;
+  $('#bar').style.width=T?(left/T*100)+'%':'100%';
+  $('#sec').textContent=T?Math.ceil(left)+' 秒':'不限時';
+  $('#mhp').style.width=MS.hp(right,qs.length)+'%';
+}
+
+function start(types,isRescue){
+  rescue=!!isRescue;qs=MS.begin(rescue)?[]:types.map(x=>Object.assign(gen(x),{type:x}));idx=0;hearts=5;combo=0;score=0;right=0;wrongs=[];
+  used={hint:0,cut:0,freeze:0};
+  $('#mon').className='';
+  showRing=!rescue&&!MS.active();sealsLit=0;
+  if(showRing){buildSeals(qs.length||PLAN.length);}else{$('#boss-ring').querySelectorAll('.seal').forEach(s=>s.remove());}
+  show('s-game');drawHearts();drawCombo();next();
+}
+function next(){
+  clearInterval(tm);
+  if(MS.halt())return;
+  if(MS.active()){mode=MS.prep(idx+1);if(idx>=qs.length&&hearts>0){const ty=MS.pick(PLAN);qs.push(Object.assign(gen(ty),{type:ty}));}}
+  if(idx>=qs.length||hearts<=0)return finish();
+  q=qs[idx++];lock=false;
+  $('#wave').textContent=MS.wave(idx,qs.length,'回合')+(rescue?'（重練錯題）':'');
+  $('#qt').innerHTML=q.text+(q.svg||'');
+  $('#hintbox').classList.add('hide');
+  say('');$('#say').classList.add('hide');
+  const o=$('#opts');o.innerHTML='';
+  q.options.forEach(v=>{const b=document.createElement('button');b.className='opt';b.textContent=v;b.dataset.v=v;b.onclick=()=>answer(v,b);o.appendChild(b)});
+  $('#t-hint').disabled=!!used.hint;$('#t-cut').disabled=!!used.cut;
+  $('#t-freeze').disabled=!!used.freeze||!MODES[mode].t;
+  startTimer();paint();
+}
+function startTimer(){
+  const T=MODES[mode].t;left=T;frozenUntil=0;paint();if(!T)return;
+  tm=setInterval(()=>{
+    if(Date.now()<frozenUntil)return;
+    left-=0.1;paint();
+    if(left<=0){clearInterval(tm);miss(null)}
+  },100);
+}
+function answer(v,btn){
+  if(lock)return;
+  if(v===q.ans){
+    lock=true;clearInterval(tm);
+    btn.classList.add('ok');combo++;right++;log(true);
+    if(showRing){sealsLit++;lightSeal(sealsLit);}
+    const gain=100+(combo-1)*20;score+=gain;drawCombo();
+    $('#mon').classList.add('hit');setTimeout(()=>$('#mon').classList.remove('hit'),300);
+    paint();
+    $('#say').classList.remove('hide');
+    const last=idx>=qs.length;
+    say((last?'🔮 排序封印術命中要害，三頭犬被淨化捕獲！':'⚔️ 排序封印術命中！')+` +${gain} 靈力`+(combo>=3?`　🔥 ${combo} 連擊！`:''),'win');
+    if(last)$('#mon').classList.add('dead');
+    setTimeout(next,1000);
+  }else{
+    btn.classList.add('bad');miss(btn);
+  }
+}
+function miss(btn){
+  if(lock)return;
+  lock=true;clearInterval(tm);
+  hearts--;combo=0;wrongs.push(q);log(false);drawHearts();drawCombo();
+  document.querySelectorAll('.opt').forEach(b=>{if(b.dataset.v===q.ans)b.classList.add('ok')});
+  $('#say').classList.remove('hide');
+  say(`<b>${btn?'💥 三頭犬反擊，召喚師受到傷害！':'⏰ 時間到，三頭犬逃脫了一波！'}</b><br>🐱 導師智慧貓：正確答案是 <b>${q.ans}</b>。${q.explain}<br><button class="btn" id="nx" style="margin-top:8px">${hearts<=0?'查看戰報':'下一回合'}</button>`,'lose');
+  $('#nx').onclick=next;$('#nx').focus();
+}
+function finish(){
+  clearInterval(tm);show('s-end');
+  const fail=hearts<=0,total=qs.length;
+  let stars=fail?0:wrongs.length<=1?3:wrongs.length<=3?2:1;
+  if(rescue){
+    $('#e-title').textContent='重練錯題結束';
+    $('#e-stars').textContent='';
+    $('#e-info').textContent=`成功答對 ${right}/${total} 題。`+(right==total?'全部融會貫通！':'再接再厲！');
+  }else{
+    $('#e-title').textContent=fail?'💔 收服失敗':'🎉 收服成功';
+    $('#e-stars').textContent=fail?'':'⭐'.repeat(stars)+'☆'.repeat(3-stars);
+    const rankName=fail?'':['','見習召喚師','中階召喚師','菁英召喚師'][stars];
+    $('#e-info').textContent=(rankName?rankName+'　':'')+`靈力 ${score}　答對 ${right}/${total}　剩餘生命 ${hearts} 顆心`;
+  }
+  const j=$('#e-jail');j.innerHTML='';
+  if(wrongs.length){
+    const h=document.createElement('div');h.innerHTML=`<b>📖 數靈觀察日誌（${wrongs.length} 題）</b>`;j.appendChild(h);
+    wrongs.forEach(w=>{const d=document.createElement('div');d.innerHTML=`${w.text}<br>正解：<b>${w.ans}</b>　${w.explain}`;j.appendChild(d)});
+  }
+  $('#rescue').classList.toggle('hide',!wrongs.length||rescue);
+  $('#back').classList.toggle('hide',!EMB);
+  MS.result({sid:SID,emb:EMB,rescue:rescue,mode:mode,stars:stars,fail:fail,score:score,right:right,total:total});
+}
+
+$('#modes').onclick=e=>{const b=e.target.closest('.mode');if(!b)return;mode=b.dataset.m;document.querySelectorAll('.mode').forEach(x=>x.classList.toggle('on',x==b))};
+$('#go').onclick=()=>start(PLAN,false);
+$('#back').onclick=()=>parent.postMessage({type:'stage-exit'},'*');
+$('#again').onclick=()=>show('s-start');
+$('#rescue').onclick=()=>start(wrongs.map(w=>w.type),true);
+$('#t-hint').onclick=()=>{if(lock||used.hint)return;used.hint=1;$('#t-hint').disabled=true;const h=$('#hintbox');h.textContent='💡 '+q.hint;h.classList.remove('hide')};
+$('#t-cut').onclick=()=>{if(lock||used.cut)return;used.cut=1;$('#t-cut').disabled=true;
+  sh([...document.querySelectorAll('.opt')].filter(b=>b.dataset.v!==q.ans)).slice(0,2).forEach(b=>b.classList.add('cut'))};
+$('#t-freeze').onclick=()=>{if(lock||used.freeze)return;used.freeze=1;$('#t-freeze').disabled=true;frozenUntil=Date.now()+10000;
+  $('#say').classList.remove('hide');say('⏳ 時間凍結 10 秒！慢慢想。')};
+MS.init(MODES, SID);
+</script>
+</body>
+</html>

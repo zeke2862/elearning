@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>1-3-1 第一章Boss：二元一次聯立方程式的應用｜數靈召喚師</title>
+<style>
+:root{--ink:#161a2e;--ink2:#20264a;--line:#3a4270;--bronze:#d2a24c;--paper:#f1e8d2;--red:#d24a33;--jade:#43a58f;--txt:#e9e4d4}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(ellipse at top,#2a2456,var(--ink) 65%);color:var(--txt);font-family:"Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif;min-height:100vh}
+h1,h2,.serif{font-family:"Noto Serif TC","Songti TC","PMingLiU",serif}
+main{max-width:960px;margin:0 auto;padding:16px}
+.hide{display:none!important}
+button{font:inherit;cursor:pointer;color:inherit}
+button:focus-visible{outline:3px solid var(--bronze);outline-offset:2px}
+.card{background:var(--ink2);border:2px solid var(--line);border-radius:14px;padding:18px}
+.btn{background:var(--bronze);color:#2a1d05;border:0;border-radius:10px;padding:12px 22px;font-weight:700;font-size:1.05rem}
+.btn.ghost{background:transparent;color:var(--bronze);border:2px solid var(--bronze)}
+.modes{display:grid;gap:10px;margin:16px 0}
+.mode{text-align:left;background:var(--ink);border:2px solid var(--line);border-radius:12px;padding:12px 14px}
+.mode.on{border-color:var(--bronze);background:#2b2a3c}
+.mode b{font-size:1.1rem}.mode small{display:block;opacity:.75;margin-top:2px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px;font-weight:700}
+.combo{color:var(--bronze);min-width:5em;text-align:right}
+.battle-grid{display:grid;grid-template-columns:1.15fr 1fr;gap:18px;align-items:start;margin-top:10px}
+@media (max-width:720px){.battle-grid{grid-template-columns:1fr}}
+.battle-left{display:flex;flex-direction:column;gap:10px;min-width:0}
+.battle-right{display:flex;flex-direction:column;align-items:center;gap:8px;background:var(--ink2);border:2px solid var(--line);border-radius:14px;padding:18px 12px}
+.hearts-row{font-size:1.5rem;letter-spacing:4px}
+.boss-ring{position:relative;width:220px;height:220px;margin:4px auto}
+#mon{font-size:5.5rem;transition:transform .3s;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)}
+#mon-img{width:150px;height:150px;object-fit:contain;display:block}
+#mon-emoji{display:none}
+#mon.hit{transform:translate(-50%,-50%) scale(1.2) rotate(-6deg)}
+#mon.dead{opacity:0;transform:translate(-50%,-40%) rotate(20deg) scale(1.5)}
+.seal{position:absolute;top:50%;left:50%;width:30px;height:30px;margin:-15px;border-radius:50%;background:#1b1738;border:2px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:15px;opacity:.32;transition:opacity .3s,background-color .3s,border-color .3s}
+.seal.lit{opacity:1;background:var(--bronze);border-color:var(--bronze);color:#2a1d05}
+.mname{font-size:1rem;opacity:.9;margin-top:2px;text-align:center}
+.mhpwrap{margin:4px auto 0;width:85%;height:10px;background:#1b1738;border-radius:6px;overflow:hidden}
+#mhp{height:100%;background:var(--red);width:100%;transition:width .3s}
+.timebar{height:8px;background:var(--ink);border-radius:6px;overflow:hidden}
+#bar{height:100%;background:var(--jade);width:100%;transition:width .1s linear}
+.q{background:var(--paper);color:#2b2416;border-radius:12px;padding:18px;text-align:center;flex:1}
+.q .t{font-size:1.25rem;font-weight:700;line-height:1.6}
+.q .hint{margin-top:8px;font-size:.95rem;color:#7a4a12}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.opt{background:var(--ink2);border:2px solid var(--bronze);border-radius:12px;padding:14px 6px;font-size:1.15rem;font-weight:700}
+.opt:hover:not(:disabled){background:#33396b}
+.opt.ok{background:var(--jade);border-color:var(--jade);color:#06231c}
+.opt.bad{background:var(--red);border-color:var(--red)}
+.opt.cut{opacity:.15;pointer-events:none}
+.tools{display:flex;gap:8px;flex-wrap:wrap}
+.tool{flex:1;min-width:100px;background:var(--ink);border:2px solid var(--line);border-radius:10px;padding:8px}
+.tool:disabled{opacity:.35;cursor:not-allowed}
+#say{border-left:5px solid var(--bronze);background:var(--ink);padding:12px 14px;border-radius:8px;line-height:1.7}
+#say.win{border-color:var(--jade)}#say.lose{border-color:var(--red)}
+.stars{font-size:2.6rem;letter-spacing:6px}
+.jail{margin-top:12px;display:grid;gap:8px}
+.jail div{background:var(--ink);border-radius:8px;padding:10px 12px;line-height:1.6;font-size:.95rem}
+@media (max-width:480px){.opt{font-size:1rem}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<main>
+
+<section id="s-start" class="card">
+<h1 class="serif" style="margin:0">數靈召喚師：二元一次方程式</h1>
+<h2 class="serif" style="margin:6px 0 0;color:var(--bronze)">1-3 觀念一：二元一次聯立方程式的應用（第一章 Boss 戰）</h2>
+<p style="line-height:1.7">【商業金幣怪】（HP 300）守護著古老寶箱，接連拋出三種類型的生活情境難題！設未知數、列出聯立方程式、求解，才能打敗牠、解鎖下一區域！這是本章最終決戰，回合數比一般小關更多喔。</p>
+<div class="modes" id="modes">
+<button class="mode on" data-m="easy"><b>練兵模式</b><small>不限時，適合先熟悉規則</small></button>
+<button class="mode" data-m="real"><b>實戰模式</b><small>每題 25 秒，數字更多樣</small></button>
+<button class="mode" data-m="hard"><b>修羅模式</b><small>每題 18 秒，數字範圍最大</small></button>
+</div>
+<button class="btn" id="go">挑戰第一章 Boss！</button>
+</section>
+
+<section id="s-game" class="hide">
+<div class="top"><span id="wave">第 1/10 回合</span><span class="combo" id="combo"></span></div>
+<div class="battle-grid">
+  <div class="battle-left">
+    <div class="timebar"><div id="bar"></div></div>
+    <div style="text-align:right;font-size:.85rem;opacity:.8" id="sec"></div>
+    <div class="q"><div class="t" id="qt"></div><div class="hint hide" id="hintbox"></div></div>
+    <div class="opts" id="opts"></div>
+    <div class="tools">
+      <button class="tool" id="t-hint">💡 提示</button>
+      <button class="tool" id="t-cut">✂️ 刪去法</button>
+      <button class="tool" id="t-freeze">⏳ 時間凍結</button>
+    </div>
+    <div id="say" class="hide"></div>
+  </div>
+  <div class="battle-right">
+    <div class="hearts-row" id="hearts"></div>
+    <div class="boss-ring" id="boss-ring">
+      <div id="mon"><img id="mon-img" src="images/battle/1-3-1.png" alt="商業金幣怪（第一章Boss）" onerror="this.style.display='none';document.getElementById('mon-emoji').style.display='';"><span id="mon-emoji">👹</span></div>
+    </div>
+    <div class="mname">商業金幣怪（第一章Boss）</div>
+    <div class="mhpwrap"><div id="mhp"></div></div>
+  </div>
+</div>
+</section>
+
+<section id="s-end" class="card hide" style="text-align:center">
+<h2 class="serif" id="e-title" style="margin:0"></h2>
+<div class="stars" id="e-stars"></div>
+<p id="e-info" style="line-height:1.8"></p>
+<div id="e-jail" class="jail" style="text-align:left"></div>
+<p style="margin-top:16px">
+<button class="btn" id="again">再戰一次</button>
+<button class="btn ghost" id="rescue">重練錯題</button>
+<button class="btn ghost hide" id="back">返回地圖</button>
+</p>
+</section>
+
+</main>
+<script src="lessons.js"></script>
+<script src="mode-system.js"></script>
+<script>
+const $=s=>document.querySelector(s);
+const R=(a,b)=>Math.floor(Math.random()*(b-a+1))+a;
+const pick=a=>a[R(0,a.length-1)];
+const sh=a=>a.map(v=>[Math.random(),v]).sort((x,y)=>x[0]-y[0]).map(x=>x[1]);
+const MODES={easy:{t:0,max:6},real:{t:25,max:9},hard:{t:18,max:12}};
+const PLAN=['puzzle','ticket','fruit','age','puzzle','ticket','age','fruit','puzzle','age'];
+
+function genAge(M){
+  const y0=R(5,M.max*2+4),D=R(1,M.max);
+  const x0=y0+D,S=x0+y0;
+  const askOlder=Math.random()<0.5;
+  const text=`小明和弟弟的年齡和是 ${S} 歲，小明比弟弟大 ${D} 歲。求${askOlder?'小明':'弟弟'}幾歲？`;
+  const correct=askOlder?x0:y0,other=askOlder?y0:x0;
+  return mkResult(text,correct,other,S,`設小明 x 歲、弟弟 y 歲，列出①x+y=${S}　②x－y=${D}，兩式相加可消去 y，直接求出 x。`,
+    `①＋②消去 y：2x = ${S+D}，解得 x = ${x0}；代回①得 y = ${y0}。`);
+}
+function genPuzzle(M){
+  const x0=R(3,M.max),y0=R(1,Math.max(3,Math.floor(M.max/2)));
+  let N1,N2;do{N1=R(3,M.max);N2=R(3,M.max);}while(N1===N2);
+  const L1=x0+(N1-1)*y0,L2=x0+(N2-1)*y0;
+  const askX=Math.random()<0.5;
+  const text=`玩具工廠將拼圖緊密排列：${N1} 片排列後總長 ${L1} 公分，${N2} 片排列後總長 ${L2} 公分。設每片拼圖本體長 x 公分、凸起接頭長 y 公分（緊密排列時：總長 = x + (片數－1)×y），求 ${askX?'每片本體長 x':'凸起接頭長 y'}（公分）。`;
+  const correct=askX?x0:y0,other=askX?y0:x0;
+  return mkResult(text,correct,other,L1,`設本體長 x、凸起長 y，列出①x+${N1-1}y=${L1}　②x+${N2-1}y=${L2}，兩式相減可消去 x（或 y）求解。`,
+    `①－②消去 x：${(N1-N2)}y = ${L1-L2}，解得 y = ${y0}；代回①得 x = ${x0}。`);
+}
+function genTicket(M){
+  const p2=R(1,M.max)*5,dp=R(1,3)*5,p1=p2+dp;
+  const x0=R(1,M.max),y0=R(1,M.max),N=x0+y0,T=p1*x0+p2*y0;
+  const askX=Math.random()<0.5;
+  const text=`園遊會門票：大人票每張 ${p1} 元、小孩票每張 ${p2} 元。某班師生共買了 ${N} 張門票，總共花費 ${T} 元。求買了 ${askX?'大人票':'小孩票'} 幾張？`;
+  const correct=askX?x0:y0,other=askX?y0:x0;
+  return mkResult(text,correct,other,N,`設大人票 x 張、小孩票 y 張，列出①x+y=${N}　②${p1}x+${p2}y=${T}，用代入或加減消去法求解。`,
+    `由①得 y=${N}－x，代入②：${p1}x + ${p2}(${N}－x) = ${T}，解得 x = ${x0}，y = ${y0}。`);
+}
+function genFruit(M){
+  const pb=R(1,M.max)*5,dp=R(1,3)*5,pa=pb+dp;
+  const x0=R(1,M.max),y0=R(1,M.max),W=x0+y0,T=pa*x0+pb*y0;
+  const askX=Math.random()<0.5;
+  const text=`水果攤：蘋果每公斤 ${pa} 元、橘子每公斤 ${pb} 元。小華共買了 ${W} 公斤水果，總共花費 ${T} 元。求買了${askX?'蘋果':'橘子'}幾公斤？`;
+  const correct=askX?x0:y0,other=askX?y0:x0;
+  return mkResult(text,correct,other,W,`設蘋果 x 公斤、橘子 y 公斤，列出①x+y=${W}　②${pa}x+${pb}y=${T}，用代入或加減消去法求解。`,
+    `由①得 y=${W}－x，代入②：${pa}x + ${pb}(${W}－x) = ${T}，解得 x = ${x0}，y = ${y0}。`);
+}
+function ensure4(ans,cands){
+  const s=new Set([ans]);
+  for(const c of cands){const cs=String(c);if(s.size<4&&cs!==ans&&cs.trim()!=='')s.add(cs);}
+  let g=1;
+  while(s.size<4){const v=(Number(ans)||0)+(g%2===0?g/2+3:-(Math.ceil(g/2)+2));const vs=String(v);if(!s.has(vs)&&Number(vs)>=0)s.add(vs);g++;}
+  return sh([...s]);
+}
+function mkResult(text,correct,other,total,hint,explain){
+  const ans=String(correct);
+  const cands=[String(other),String(total),String(correct+pick([-2,-1,1,2])),String(correct+pick([-3,3]))];
+  return {text,ans,options:ensure4(ans,cands),hint,explain};
+}
+function gen(t){
+  const M=MODES[mode];
+  if(t==='puzzle')return genPuzzle(M);
+  if(t==='ticket')return genTicket(M);
+  if(t==='age')return genAge(M);
+  return genFruit(M);
+}
+
+const EMB=window.parent!==window,SID='1-3-1';
+function log(ok){if(EMB&&!rescue)parent.postMessage({type:'wave-log',id:SID,qtype:q.type,ok:ok},'*')}
+let mode='easy',qs=[],idx=0,q=null,hearts=5,combo=0,score=0,right=0,wrongs=[],lock=true,left=0,tm=0,frozenUntil=0,rescue=false,used={},showRing=false,sealsLit=0;
+
+function show(id){['s-start','s-game','s-end'].forEach(s=>$('#'+s).classList.toggle('hide',s!=id))}
+function drawHearts(){$('#hearts').textContent='❤️'.repeat(hearts)+'🖤'.repeat(5-hearts)}
+function drawCombo(){$('#combo').textContent=combo>=2?`🔥 連擊 ×${combo}`:''}
+function say(html,cls){const e=$('#say');e.className=cls||'';e.innerHTML=html}
+function buildSeals(n){
+  const ring=$('#boss-ring');
+  ring.querySelectorAll('.seal').forEach(s=>s.remove());
+  for(let i=0;i<n;i++){
+    const ang=i*(360/n);
+    const s=document.createElement('div');
+    s.className='seal';s.dataset.i=i;s.textContent='🔒';
+    s.style.transform=`rotate(${ang}deg) translate(105px) rotate(${-ang}deg)`;
+    ring.appendChild(s);
+  }
+}
+function lightSeal(k){
+  const s=$('#boss-ring .seal[data-i="'+(k-1)+'"]');
+  if(s){s.textContent='🔓';s.classList.add('lit');}
+}
+function paint(){
+  const T=MODES[mode].t;
+  $('#bar').style.width=T?(left/T*100)+'%':'100%';
+  $('#sec').textContent=T?Math.ceil(left)+' 秒':'不限時';
+  $('#mhp').style.width=MS.hp(right,qs.length)+'%';
+}
+
+function start(types,isRescue){
+  rescue=!!isRescue;qs=MS.begin(rescue)?[]:types.map(x=>Object.assign(gen(x),{type:x}));idx=0;hearts=5;combo=0;score=0;right=0;wrongs=[];
+  used={hint:0,cut:0,freeze:0};
+  $('#mon').className='';
+  showRing=!rescue&&!MS.active();sealsLit=0;
+  if(showRing){buildSeals(qs.length||PLAN.length);}else{$('#boss-ring').querySelectorAll('.seal').forEach(s=>s.remove());}
+  show('s-game');drawHearts();drawCombo();next();
+}
+function next(){
+  clearInterval(tm);
+  if(MS.halt())return;
+  if(MS.active()){mode=MS.prep(idx+1);if(idx>=qs.length&&hearts>0){const ty=MS.pick(PLAN);qs.push(Object.assign(gen(ty),{type:ty}));}}
+  if(idx>=qs.length||hearts<=0)return finish();
+  q=qs[idx++];lock=false;
+  $('#wave').textContent=MS.wave(idx,qs.length,'回合')+(rescue?'（重練錯題）':'');
+  $('#qt').textContent=q.text;
+  $('#hintbox').classList.add('hide');
+  say('');$('#say').classList.add('hide');
+  const o=$('#opts');o.innerHTML='';
+  q.options.forEach(v=>{const b=document.createElement('button');b.className='opt';b.textContent=v;b.dataset.v=v;b.onclick=()=>answer(v,b);o.appendChild(b)});
+  $('#t-hint').disabled=!!used.hint;$('#t-cut').disabled=!!used.cut;
+  $('#t-freeze').disabled=!!used.freeze||!MODES[mode].t;
+  startTimer();paint();
+}
+function startTimer(){
+  const T=MODES[mode].t;left=T;frozenUntil=0;paint();if(!T)return;
+  tm=setInterval(()=>{
+    if(Date.now()<frozenUntil)return;
+    left-=0.1;paint();
+    if(left<=0){clearInterval(tm);miss(null)}
+  },100);
+}
+function answer(v,btn){
+  if(lock)return;
+  if(v===q.ans){
+    lock=true;clearInterval(tm);
+    btn.classList.add('ok');combo++;right++;log(true);
+    if(showRing){sealsLit++;lightSeal(sealsLit);}
+    const gain=100+(combo-1)*20;score+=gain;drawCombo();
+    $('#mon').classList.add('hit');setTimeout(()=>$('#mon').classList.remove('hit'),300);
+    paint();
+    $('#say').classList.remove('hide');
+    const last=idx>=qs.length;
+    say((last?'🔮 黃金封印術貫穿要害，商業金幣怪被徹底淨化！！':'⚔️ 黃金封印術命中！')+` +${gain} 靈力`+(combo>=3?`　🔥 ${combo} 連擊！`:''),'win');
+    if(last)$('#mon').classList.add('dead');
+    setTimeout(next,1000);
+  }else{
+    btn.classList.add('bad');miss(btn);
+  }
+}
+function miss(btn){
+  if(lock)return;
+  lock=true;clearInterval(tm);
+  hearts--;combo=0;wrongs.push(q);log(false);drawHearts();drawCombo();
+  document.querySelectorAll('.opt').forEach(b=>{if(b.dataset.v===q.ans)b.classList.add('ok')});
+  $('#say').classList.remove('hide');
+  say(`<b>${btn?'💥 金幣怪反擊，召喚師受到傷害！':'⏰ 時間到，金幣怪逃脫了一波！'}</b><br>🐱 導師智慧貓：正確答案是 <b>${q.ans}</b>。${q.explain}<br><button class="btn" id="nx" style="margin-top:8px">${hearts<=0?'查看戰報':'下一回合'}</button>`,'lose');
+  $('#nx').onclick=next;$('#nx').focus();
+}
+function finish(){
+  clearInterval(tm);show('s-end');
+  const fail=hearts<=0,total=qs.length;
+  let stars=fail?0:wrongs.length<=1?3:wrongs.length<=3?2:1;
+  if(rescue){
+    $('#e-title').textContent='重練錯題結束';
+    $('#e-stars').textContent='';
+    $('#e-info').textContent=`成功答對 ${right}/${total} 題。`+(right==total?'全部融會貫通！':'再接再厲！');
+  }else{
+    $('#e-title').textContent=fail?'💔 收服失敗':'🎉 收服成功';
+    $('#e-stars').textContent=fail?'':'⭐'.repeat(stars)+'☆'.repeat(3-stars);
+    const rankName=fail?'':['','見習召喚師','中階召喚師','傳說金幣獵人'][stars];
+    $('#e-info').textContent=(rankName?rankName+'　':'')+`靈力 ${score}　答對 ${right}/${total}　剩餘生命 ${hearts} 顆心`;
+  }
+  const j=$('#e-jail');j.innerHTML='';
+  if(wrongs.length){
+    const h=document.createElement('div');h.innerHTML=`<b>📖 數靈觀察日誌（${wrongs.length} 題）</b>`;j.appendChild(h);
+    wrongs.forEach(w=>{const d=document.createElement('div');d.innerHTML=`${w.text}<br>正解：<b>${w.ans}</b>　${w.explain}`;j.appendChild(d)});
+  }
+  $('#rescue').classList.toggle('hide',!wrongs.length||rescue);
+  $('#back').classList.toggle('hide',!EMB);
+  MS.result({sid:SID,emb:EMB,rescue:rescue,mode:mode,stars:stars,fail:fail,score:score,right:right,total:total});
+}
+
+$('#modes').onclick=e=>{const b=e.target.closest('.mode');if(!b)return;mode=b.dataset.m;document.querySelectorAll('.mode').forEach(x=>x.classList.toggle('on',x==b))};
+$('#go').onclick=()=>start(PLAN,false);
+$('#back').onclick=()=>parent.postMessage({type:'stage-exit'},'*');
+$('#again').onclick=()=>show('s-start');
+$('#rescue').onclick=()=>start(wrongs.map(w=>w.type),true);
+$('#t-hint').onclick=()=>{if(lock||used.hint)return;used.hint=1;$('#t-hint').disabled=true;const h=$('#hintbox');h.textContent='💡 '+q.hint;h.classList.remove('hide')};
+$('#t-cut').onclick=()=>{if(lock||used.cut)return;used.cut=1;$('#t-cut').disabled=true;
+  sh([...document.querySelectorAll('.opt')].filter(b=>b.dataset.v!==q.ans)).slice(0,2).forEach(b=>b.classList.add('cut'))};
+$('#t-freeze').onclick=()=>{if(lock||used.freeze)return;used.freeze=1;$('#t-freeze').disabled=true;frozenUntil=Date.now()+10000;
+  $('#say').classList.remove('hide');say('⏳ 時間凍結 10 秒！慢慢想。')};
+MS.init(MODES, SID);
+</script>
+</body>
+</html>
