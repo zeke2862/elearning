@@ -84,6 +84,46 @@ button:focus-visible{outline:3px solid var(--bronze);outline-offset:2px}
 .blog{margin-top:10px;font-size:.82rem;opacity:.85;line-height:1.6;max-height:120px;overflow-y:auto}
 @media (max-width:560px){.nodes{grid-template-columns:repeat(2,1fr)}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+/* ===== 🎬 對戰舞台（全螢幕）：對手在上、我方在下 ===== */
+.bt-stage{position:fixed;inset:0;z-index:90;display:flex;flex-direction:column;color:#fff;overflow:hidden;background:radial-gradient(ellipse at 50% 0%,#2b3a7a 0%,#141a3a 55%,#0b0e22 100%)}
+.bt-arena{flex:1;min-height:0;position:relative;display:flex;flex-direction:column;justify-content:space-between;padding:10px 14px}
+.bt-arena::before{content:'';position:absolute;left:6%;right:6%;top:50%;height:1px;background:linear-gradient(90deg,transparent,#c9a24a88,transparent)}
+.bt-row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.bt-card{background:#0e1230d9;border:2px solid var(--line);border-radius:12px;padding:8px 12px;flex:0 1 250px;min-width:140px;max-width:56vw}
+.bt-card b{font-size:1rem}
+.bt-card small{font-size:.75rem;opacity:.85}
+.bt-sprite{position:relative;flex:none;width:clamp(84px,22vh,150px);height:clamp(84px,22vh,150px)}
+.bt-sprite::after{content:'';position:absolute;left:12%;right:12%;bottom:-6px;height:12px;background:radial-gradient(ellipse,#000a,transparent 70%);z-index:0}
+.bt-img{position:relative;z-index:1;width:100%;height:100%;display:flex;align-items:center;justify-content:center;filter:drop-shadow(0 8px 6px #0009)}
+.bt-img .icon-wrap{width:100%;height:100%}
+.bt-img .ic-bt img,.bt-img .ic-bt .emoji-fb{width:100%;height:100%;object-fit:contain;border-radius:0}
+.bt-img .ic-bt .emoji-fb{font-size:clamp(60px,15vh,112px);align-items:center;justify-content:center}
+.bt-caption{align-self:center;text-align:center;font-size:.95rem;line-height:1.5;min-height:2.6em;max-width:94%;padding:6px 14px;background:#00000066;border-radius:10px;position:relative;z-index:2}
+.bt-caption.pop{animation:btCap .35s}
+.bt-panel{background:#0b0e22;border-top:2px solid var(--bronze);padding:10px 14px 14px;max-height:46vh;overflow-y:auto}
+.bt-panel .blog{max-height:84px}
+.bt-stage .fbar>i{transition:width .5s .25s}
+.bt-img.hurt{animation:btHurt .55s,btFlash .55s}
+.bt-sprite.cast .bt-img{animation:btCast .7s}
+.bt-sprite.defending{filter:drop-shadow(0 0 12px #5ab0ff)}
+.bt-sprite.defending::before{content:'🛡️';position:absolute;right:-8px;top:-8px;font-size:2rem;z-index:3;animation:btPulse 1.2s infinite}
+.bt-sprite.charging{animation:btCharge .9s infinite alternate}
+.bt-sprite.ko .bt-img{transform:rotate(78deg) translateY(18px);filter:grayscale(1) brightness(.6);opacity:.7;transition:all .8s}
+.bt-sprite.win .bt-img{animation:btWin .7s infinite alternate}
+.bt-float{position:absolute;left:50%;top:8%;transform:translateX(-50%);font-weight:900;font-size:1.8rem;pointer-events:none;text-shadow:0 2px 4px #000,0 0 8px #000;z-index:4;animation:btFloat 1s forwards}
+.bt-burst{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:3.4rem;pointer-events:none;z-index:4;animation:btBurst .55s forwards}
+.bt-proj{position:absolute;font-size:2.4rem;z-index:5;pointer-events:none;filter:drop-shadow(0 0 10px #9ad0ff)}
+@keyframes btHurt{0%,100%{transform:translateX(0)}12%{transform:translateX(-16px) rotate(-6deg)}28%{transform:translateX(14px) rotate(5deg)}44%{transform:translateX(-10px)}60%{transform:translateX(8px)}80%{transform:translateX(-4px)}}
+@keyframes btFlash{0%,100%{filter:drop-shadow(0 8px 6px #0009)}30%{filter:brightness(2.3) saturate(0) drop-shadow(0 0 14px #ff3b3b)}}
+@keyframes btCast{0%,100%{transform:scale(1);filter:drop-shadow(0 8px 6px #0009)}40%{transform:scale(1.18);filter:drop-shadow(0 0 22px #b48cff) brightness(1.4)}}
+@keyframes btPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
+@keyframes btCharge{from{filter:drop-shadow(0 0 4px #b48cff)}to{filter:drop-shadow(0 0 22px #ffd45a) brightness(1.25)}}
+@keyframes btWin{from{transform:translateY(0)}to{transform:translateY(-12px)}}
+@keyframes btFloat{0%{opacity:0;transform:translate(-50%,10px) scale(.7)}15%{opacity:1;transform:translate(-50%,0) scale(1.2)}100%{opacity:0;transform:translate(-50%,-64px) scale(1)}}
+@keyframes btBurst{0%{opacity:1;transform:scale(.3)}60%{opacity:1;transform:scale(1.4)}100%{opacity:0;transform:scale(1.8)}}
+@keyframes btCap{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@media (max-height:560px){.bt-sprite{width:88px;height:88px}.bt-panel{max-height:52vh}}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 </head>
@@ -464,7 +504,7 @@ $('#w-exp').onclick=()=>{
 // 下面這兩個值先留空，網頁會安靜跳過對戰功能、不影響其他部分正常運作。
 // 等您在 Supabase 建好專案、拿到 Project URL 跟 anon public key 之後，
 // 填進下面兩個空字串裡即可，其他程式碼完全不用改。
-const SUPABASE_URL = "https://qkejjznejmxcfiyxviid.supabase.co";       // 例如 "https://xxxxxxxxxxxx.supabase.co"
+const SUPABASE_URL = "https://qkejjznejmxcfiyxviid.supabase.co";       // 只填到 .supabase.co 為止，後面不要加 /rest/v1/
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFrZWpqem5lam14Y2ZpeXh2aWlkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA1MjYyODQsImV4cCI6MjEwNjEwMjI4NH0.TBzTQ98emolzRoPaBDDGRpTW8ZkDCGoOstUTfmcrWco";  // 貼上 anon public key（不是 service_role 那組）
 let sb=null;
 try{
@@ -517,8 +557,11 @@ function bumpDuelRecord(sid,field){
   const fn = field=='wins'?'bump_duel_win':field=='losses'?'bump_duel_loss':'bump_duel_draw';
   sb.rpc(fn,{p_sid:sid}).then(()=>{}).catch(()=>{});
 }
+function myRankIdx(){ return Math.max(0,RK.indexOf(rankOf(total()))); }
+// 把軍階（決定人物圖）一起放進 stats 裡上傳，不用新增資料表欄位
+function statsWithRank(){ return {...totalStats(), rank:myRankIdx()}; }
 function mkFighterObj(sid,name,level,stats){
-  return {studentId:sid,name:name||sid,level:level||1,hp:stats.hp,hpMax:stats.hp,mp:stats.mp,mpMax:stats.mp,
+  return {studentId:sid,name:name||sid,level:level||1,rank:(stats&&stats.rank)|0,hp:stats.hp,hpMax:stats.hp,mp:stats.mp,mpMax:stats.mp,
     atk:stats.atk,matk:stats.matk,def:stats.def,mdef:stats.mdef,spd:stats.spd,defending:false,charging:false};
 }
 // 每次畫面更新時，把自己目前的戰力寫到雲端 duel_users，讓別人挑戰我時查得到最新數值
@@ -526,7 +569,7 @@ function syncMyUser(){
   if(!sbReady())return;
   const sid=mySid(); if(!sid) return;
   const li=levelInfo();
-  sb.from('duel_users').upsert({student_number:sid, name:(P._who&&P._who.name)||sid, level:li.level, stats:totalStats(), updated_at:new Date().toISOString()}).then(()=>{}).catch(()=>{});
+  sb.from('duel_users').upsert({student_number:sid, name:(P._who&&P._who.name)||sid, level:li.level, stats:statsWithRank(), updated_at:new Date().toISOString()}).then(r=>{if(r&&r.error)console.warn('duel_users 上傳失敗',r.error)}).catch(e=>console.warn('duel_users 上傳失敗',e));
 }
 
 let duelState=null,duelSub=null,battleChannel=null,pendingChannel=null;
@@ -548,6 +591,7 @@ function startPendingListen(){
     .subscribe();
 }
 async function checkPendingNow(sid){
+  if(await checkResumeBattle(sid)) return;
   const {data}=await sb.from('duel_pending').select('battle_id').eq('target_id',sid).maybeSingle();
   if(data && !duelState) showPendingInvite(data.battle_id);
 }
@@ -563,9 +607,10 @@ async function showPendingInvite(battleId){
 // ---- 模式一：即時對戰（雙方都要在線）----
 async function challengeSync(osid){
   const sid=mySid(), li=levelInfo();
-  const {data:opUser}=await sb.from('duel_users').select('*').eq('student_number',osid).maybeSingle();
+  const {data:opUser,error:opErr}=await sb.from('duel_users').select('*').eq('student_number',osid).maybeSingle();
+  if(opErr){console.warn('查詢對手失敗',opErr);return toast('❗ 連線雲端失敗（'+(opErr.message||opErr.code||'未知錯誤')+'），請聯絡老師');}
   if(!opUser)return toast('❗ 找不到這位同學的資料，請他先打開遊戲、存過學號');
-  const aFighter=mkFighterObj(sid,(P._who&&P._who.name)||sid,li.level,totalStats());
+  const aFighter=mkFighterObj(sid,(P._who&&P._who.name)||sid,li.level,statsWithRank());
   const {data:battle,error}=await sb.from('duel_battles').insert({
     mode:'sync', a_id:sid, b_id:osid, a:aFighter, b:null, turn:null, over:false, winner:null,
     log:[`⚔️ ${aFighter.name} 發起了挑戰，等待 ${opUser.name||osid} 加入！`]
@@ -578,7 +623,7 @@ async function acceptSyncChallenge(battleId){
   const sid=mySid(), li=levelInfo();
   const {data:room}=await sb.from('duel_battles').select('*').eq('id',battleId).maybeSingle();
   if(!room||room.b)return toast('這場對戰已經結束或已經開始了');
-  const bFighter=mkFighterObj(sid,(P._who&&P._who.name)||sid,li.level,totalStats());
+  const bFighter=mkFighterObj(sid,(P._who&&P._who.name)||sid,li.level,statsWithRank());
   const turn=room.a.spd>=bFighter.spd?'a':'b';
   const newLog=[...(room.log||[]),`${bFighter.name} 加入戰場！⚔️ 對戰開始！`];
   await sb.from('duel_battles').update({b:bFighter,turn,log:newLog,updated_at:new Date().toISOString()}).eq('id',battleId);
@@ -592,17 +637,26 @@ function enterSyncBattle(battleId){
   $('#arena-battle').innerHTML='<p>⏳ 連線中...</p>';
   loadBattleNow(battleId);
   if(battleChannel){ sb.removeChannel(battleChannel); battleChannel=null; }
-  battleChannel = sb.channel('battle-'+battleId)
+  oppAbsentSince=null; proxyBusy=false;
+  battleChannel = sb.channel('battle-'+battleId,{config:{presence:{key:mySid()}}})
     .on('postgres_changes',{event:'UPDATE',schema:'public',table:'duel_battles',filter:'id=eq.'+battleId}, payload=>{
       if(!duelState||duelState.battleId!==battleId) return;
       duelState.room=payload.new; renderSyncBattle();
     })
-    .subscribe();
+    .on('presence',{event:'sync'},()=>{ watchTick(); })
+    .subscribe(status=>{
+      if(status==='SUBSCRIBED'){
+        // 告訴對方「我在線上」；斷線重連時也會重新進來這裡，順便抓一次最新戰況
+        battleChannel.track({sid:mySid(),t:Date.now()});
+        loadBattleNow(battleId);
+      }
+    });
+  startWatchdog();
 }
 async function loadBattleNow(battleId){
   const {data:room}=await sb.from('duel_battles').select('*').eq('id',battleId).maybeSingle();
   if(!duelState||duelState.battleId!==battleId) return;
-  if(!room){ $('#arena-battle').innerHTML='<p>⚠️ 對戰資料不見了。</p><button class="btn" id="b-close">返回</button>'; $('#b-close').onclick=exitBattle; return; }
+  if(!room){ removeStage(); $('#arena-battle').classList.remove('hide'); $('#arena-battle').innerHTML='<p>⚠️ 對戰資料不見了。</p><button class="btn" id="b-close">返回</button>'; $('#b-close').onclick=exitBattle; return; }
   duelState.room=room; renderSyncBattle();
 }
 function mySideOf(room){ const sid=mySid(); return room.a_id===sid?'a':(room.b_id===sid?'b':null); }
@@ -618,7 +672,12 @@ async function sendSyncAction(kind,move){
   const winner=over?((att.hp<=0&&def.hp<=0)?'draw':(att.hp<=0?def.name:att.name)):null;
   const patch={turn:over?room.turn:other, log, over, winner, updated_at:new Date().toISOString()};
   patch[mine]=att; patch[other]=def;
-  await sb.from('duel_battles').update(patch).eq('id',duelState.battleId);
+  const {data:upd,error:upErr}=await sb.from('duel_battles').update(patch).eq('id',duelState.battleId).eq('turn',mine).eq('over',false).select('id');
+  if(upErr||!upd||!upd.length){
+    toast('⚠️ 戰況已經更新（可能剛剛被系統代打），正在同步最新畫面…');
+    if(duelState) loadBattleNow(duelState.battleId);
+    return;
+  }
   if(over){
     const myId=mine=='a'?room.a_id:room.b_id, opId=mine=='a'?room.b_id:room.a_id;
     if(winner=='draw'){bumpDuelRecord(myId,'draws');bumpDuelRecord(opId,'draws');}
@@ -633,9 +692,10 @@ async function sendSyncAction(kind,move){
 // ---- 模式二：單挑雲端幽靈（對方不用在線，抓他存在雲端的最新數值，由簡單 AI 操作）----
 async function challengeAsync(osid){
   const sid=mySid(), li=levelInfo();
-  const {data:opUser}=await sb.from('duel_users').select('*').eq('student_number',osid).maybeSingle();
+  const {data:opUser,error:opErr}=await sb.from('duel_users').select('*').eq('student_number',osid).maybeSingle();
+  if(opErr){console.warn('查詢對手失敗',opErr);return toast('❗ 連線雲端失敗（'+(opErr.message||opErr.code||'未知錯誤')+'），請聯絡老師');}
   if(!opUser)return toast('❗ 找不到這位同學的資料，請他先打開遊戲、存過學號');
-  const a=mkFighterObj(sid,(P._who&&P._who.name)||sid,li.level,totalStats());
+  const a=mkFighterObj(sid,(P._who&&P._who.name)||sid,li.level,statsWithRank());
   const b=mkFighterObj(osid,opUser.name||osid,opUser.level||1,opUser.stats||{hp:1000,mp:300,atk:50,matk:50,def:20,mdef:20,spd:100});
   const turn=a.spd>=b.spd?'a':'b';
   duelState={mode:'async', aId:sid, bId:osid, room:{a,b,turn,over:false,winner:null,log:[`⚔️ ${a.name} 挑戰了 ${b.name} 的雲端幽靈！`]}};
@@ -666,9 +726,8 @@ function sendAsyncAction(kind,move){
   else renderAsyncBattle();
 }
 // 幽靈 AI：血量偏低時比較不會用會自傷的「衝撞」，魔力夠時有機會放魔法，其餘時候普通攻擊
-function aiTakeTurn(){
-  const room=duelState.room; if(!room||room.over||room.turn!='b')return;
-  const att=room.b; let kind,move;
+function aiPickAction(att){
+  let kind,move;
   if(att.charging){ kind='release'; }
   else{
     const roll=Math.random();
@@ -681,11 +740,124 @@ function aiTakeTurn(){
       move=pool[Math.floor(Math.random()*pool.length)];
     }
   }
+  return {kind,move};
+}
+function aiTakeTurn(){
+  const room=duelState.room; if(!room||room.over||room.turn!='b')return;
+  const att=room.b;
+  const {kind,move}=aiPickAction(att);
   const logLine=applyAction(att,room.a,kind,move);
   room.log=[...(room.log||[]).slice(-40),logLine];
   checkAsyncOver();
   if(!room.over) room.turn='a';
   renderAsyncBattle();
+}
+
+// ---- 🔌 斷線處理：對手離線時「系統代打」，離線太久就判定認輸 ----
+// 想調整時間，只要改這兩個數字（單位：毫秒）
+const PROXY_GRACE_MS = 8000;    // 對方離線超過幾秒，就開始由系統代打
+const FORFEIT_MS     = 90000;   // 對方離線超過幾秒還沒回來，就判定他認輸
+const RESUME_WINDOW_MS = 300000; // 重新開啟遊戲時，只會回到 5 分鐘內還沒結束的對戰
+let oppAbsentSince=null, proxyBusy=false, watchdog=null, bannerWasProxy=false;
+
+function startWatchdog(){ stopWatchdog(); watchdog=setInterval(watchTick,1000); }
+function stopWatchdog(){ if(watchdog){clearInterval(watchdog);watchdog=null;} oppAbsentSince=null; bannerWasProxy=false; }
+
+function opponentInfo(room){
+  const mine=mySideOf(room); if(!mine) return null;
+  const other=mine=='a'?'b':'a';
+  return {mine, other, opId: other=='a'?room.a_id:room.b_id};
+}
+function watchTick(){
+  if(!duelState||duelState.mode!=='sync'||!battleChannel) return;
+  const room=duelState.room; if(!room||!room.b||room.over) return;
+  const info=opponentInfo(room); if(!info) return;
+  const st=battleChannel.presenceState()||{};
+  // 自己都還沒連上線時，不能判斷對方有沒有離線（避免自己斷網卻誤判對方）
+  if(!st[mySid()]){ oppAbsentSince=null; updateOppBanner(); return; }
+  if(st[info.opId]){
+    if(oppAbsentSince!==null && (Date.now()-oppAbsentSince)>=PROXY_GRACE_MS){ toast('✅ 對方回來了，改回手動操作！'); }
+    oppAbsentSince=null; updateOppBanner(); return;
+  }
+  if(oppAbsentSince===null) oppAbsentSince=Date.now();
+  const gone=Date.now()-oppAbsentSince;
+  updateOppBanner();
+  if(gone>=FORFEIT_MS){ claimForfeit(); return; }
+  if(gone>=PROXY_GRACE_MS && room.turn===info.other){ proxyAct(); }
+}
+function updateOppBanner(){
+  const el=$('#opp-banner'); if(!el) return;
+  if(oppAbsentSince===null||!duelState||duelState.mode!=='sync'){ el.classList.add('hide'); return; }
+  const gone=Date.now()-oppAbsentSince;
+  if(gone<3000){ el.classList.add('hide'); return; }
+  const sec=Math.floor(gone/1000), left=Math.max(0,Math.ceil((FORFEIT_MS-gone)/1000));
+  el.classList.remove('hide');
+  el.innerHTML = gone>=PROXY_GRACE_MS
+    ? `🤖 對方已離線 ${sec} 秒，<b>系統代打中</b>。他回來就會改回手動；${left} 秒內沒回來將判定認輸。`
+    : `📡 對方連線中斷…（${sec} 秒）再等一下看看`;
+}
+// 系統代打：由「還在線上的這一方」替離線方出招，用跟幽靈 AI 同一套邏輯
+async function proxyAct(){
+  if(proxyBusy) return; proxyBusy=true;
+  try{
+    await new Promise(r=>setTimeout(r,900));   // 稍微停一下，看起來比較自然
+    if(!duelState||duelState.mode!=='sync') return;
+    const room=duelState.room; if(!room||!room.b||room.over) return;
+    const info=opponentInfo(room); if(!info||room.turn!==info.other) return;
+    if(oppAbsentSince===null) return;           // 這一秒對方剛好回來了，取消代打
+    const {mine,other}=info;
+    const att={...room[other]}, def={...room[mine]};
+    const pick=aiPickAction(att);
+    let line=applyAction(att,def,pick.kind,pick.move);
+    if(line===null) line=applyAction(att,def,'normal','slash');
+    line='🤖 系統代打｜'+line;
+    const over=att.hp<=0||def.hp<=0;
+    const draw=att.hp<=0&&def.hp<=0;
+    const winner=over?(draw?'draw':(att.hp<=0?def.name:att.name)):null;
+    const patch={turn:over?room.turn:mine, log:[...(room.log||[]).slice(-40),line], over, winner, updated_at:new Date().toISOString()};
+    patch[other]=att; patch[mine]=def;
+    // 只有「現在還是對方回合」才寫入，萬一對方剛好回來自己出招了，這次代打就會自動作廢
+    const {data:upd,error}=await sb.from('duel_battles').update(patch).eq('id',duelState.battleId).eq('turn',other).eq('over',false).select('id');
+    if(error||!upd||!upd.length){ loadBattleNow(duelState.battleId); return; }
+    if(over){
+      if(draw){bumpDuelRecord(room[mine].studentId||mySid(),'draws');bumpDuelRecord(info.opId,'draws');}
+      else if(att.hp<=0){bumpDuelRecord(mySid(),'wins');bumpDuelRecord(info.opId,'losses');}
+      else{bumpDuelRecord(mySid(),'losses');bumpDuelRecord(info.opId,'wins');}
+    }
+    duelState.room={...room,...patch}; renderSyncBattle();
+  }catch(e){ console.warn('系統代打失敗',e); }
+  finally{ proxyBusy=false; }
+}
+// 對方離線太久：判定他認輸，由還在線上的這一方寫入結果（只會寫一次）
+async function claimForfeit(){
+  if(proxyBusy) return; proxyBusy=true;
+  try{
+    const room=duelState&&duelState.room; if(!room||!room.b||room.over) return;
+    const info=opponentInfo(room); if(!info) return;
+    const {mine,other}=info;
+    const patch={over:true, winner:room[mine].name,
+      log:[...(room.log||[]).slice(-40),`🏳️ ${room[other].name} 離線超過 ${Math.round(FORFEIT_MS/1000)} 秒，判定認輸！`],
+      updated_at:new Date().toISOString()};
+    const {data:upd,error}=await sb.from('duel_battles').update(patch).eq('id',duelState.battleId).eq('over',false).select('id');
+    if(error||!upd||!upd.length){ loadBattleNow(duelState.battleId); return; }
+    bumpDuelRecord(mySid(),'wins'); bumpDuelRecord(info.opId,'losses');
+    duelState.room={...room,...patch}; renderSyncBattle();
+  }catch(e){ console.warn('認輸判定失敗',e); }
+  finally{ proxyBusy=false; }
+}
+// 重新整理／重開遊戲後，自動回到還沒打完的即時對戰（變回手動操作）
+async function checkResumeBattle(sid){
+  if(duelState) return false;
+  try{
+    const since=new Date(Date.now()-RESUME_WINDOW_MS).toISOString();
+    const {data,error}=await sb.from('duel_battles').select('id,b')
+      .eq('mode','sync').eq('over',false).or('a_id.eq.'+sid+',b_id.eq.'+sid).gte('updated_at',since)
+      .order('updated_at',{ascending:false}).limit(1);
+    if(error||!data||!data.length||!data[0].b) return false;
+    toast('⚔️ 偵測到還沒打完的對戰，已帶你回到戰場！');
+    enterSyncBattle(data[0].id);
+    return true;
+  }catch(e){ console.warn('回到對戰失敗',e); return false; }
 }
 
 // ---- 共用的戰鬥畫面（兩種模式共用同一套排版）----
@@ -710,33 +882,129 @@ function bindMenuEvents(box,myTurn,sendFn){
   const pass=box.querySelector('#b-pass'); if(pass) pass.onclick=()=>sendFn('release');
 }
 function renderBattleAgain(){ if(!duelState)return; duelState.mode=='sync'?renderSyncBattle():renderAsyncBattle(); }
+function resultPanelHTML(room){
+  return `<div class="turn-tag">🏆 ${room.winner=='draw'?'平手！':room.winner+' 獲勝！'}</div><p>想變更強嗎？回去多答題累積經驗值就能升級，通關大關累積星星還能升級裝備品質喔！</p><button class="btn" id="b-close">結束對戰</button>`;
+}
+function logHTML(room){ return `<div class="blog">${(room.log||[]).slice(-6).map(x=>'· '+x).join('<br>')}</div>`; }
 function renderSyncBattle(){
-  const room=duelState.room, mine=mySideOf(room), box=$('#arena-battle');
+  const room=duelState.room, box=$('#arena-battle');
   if(!room.b){ box.innerHTML='<p>⏳ 等待對方加入戰場...</p>'; return; }
-  const myTurn=room.turn===mine, meFighter=mine=='a'?room.a:room.b;
-  let html=renderFighterBar(room.a)+renderFighterBar(room.b);
-  if(room.over){
-    html+=`<div class="turn-tag">🏆 ${room.winner=='draw'?'平手！':room.winner+' 獲勝！'}</div><p>想變更強嗎？回去多答題累積經驗值就能升級，通關大關累積星星還能升級裝備品質喔！</p><button class="btn" id="b-close">結束對戰</button>`;
-    box.innerHTML=html; $('#b-close').onclick=exitBattle; return;
-  }
-  html+=`<div class="turn-tag">${myTurn?'👉 輪到你了！':'⏳ 等待對方出招...'}</div>`+renderMenu(meFighter,myTurn)+
-    `<div class="blog">${(room.log||[]).slice(-8).map(x=>'· '+x).join('<br>')}</div>`;
-  box.innerHTML=html;
-  bindMenuEvents(box,myTurn,sendSyncAction);
+  const mine=mySideOf(room)||'a', myTurn=room.turn===mine, meFighter=room[mine];
+  const panel = room.over ? resultPanelHTML(room) :
+    `<div id="opp-banner" class="hide" style="margin:6px 0;padding:6px 10px;border-radius:8px;background:#5a3a12;font-size:.85rem"></div>`+
+    `<div class="turn-tag">${myTurn?'👉 輪到你了！':'⏳ 等待對方出招...'}</div>`+renderMenu(meFighter,myTurn)+logHTML(room);
+  renderScene(room,mine,panel,pn=>{ if(room.over){ $('#b-close').onclick=exitBattle; } else bindMenuEvents(pn,myTurn,sendSyncAction); });
+  updateOppBanner();
 }
 function renderAsyncBattle(){
-  const room=duelState.room, box=$('#arena-battle'), myTurn=room.turn=='a';
-  let html=renderFighterBar(room.a)+renderFighterBar(room.b);
-  if(room.over){
-    html+=`<div class="turn-tag">🏆 ${room.winner=='draw'?'平手！':room.winner+' 獲勝！'}</div><p>想變更強嗎？回去多答題累積經驗值就能升級，通關大關累積星星還能升級裝備品質喔！</p><button class="btn" id="b-close">結束對戰</button>`;
-    box.innerHTML=html; $('#b-close').onclick=exitBattle; return;
-  }
-  html+=`<div class="turn-tag">${myTurn?'👉 輪到你了！':'⏳ 幽靈思考中...'}</div>`+renderMenu(room.a,myTurn)+
-    `<div class="blog">${(room.log||[]).slice(-8).map(x=>'· '+x).join('<br>')}</div>`;
-  box.innerHTML=html;
-  bindMenuEvents(box,myTurn,sendAsyncAction);
+  const room=duelState.room, myTurn=room.turn=='a';
+  const panel = room.over ? resultPanelHTML(room) :
+    `<div class="turn-tag">${myTurn?'👉 輪到你了！':'⏳ 幽靈思考中...'}</div>`+renderMenu(room.a,myTurn)+logHTML(room);
+  renderScene(room,'a',panel,pn=>{ if(room.over){ $('#b-close').onclick=exitBattle; } else bindMenuEvents(pn,myTurn,sendAsyncAction); });
+}
+
+// ---- 🎬 對戰舞台：對手在上、我方在下，出招／受傷各有動畫 ----
+let stageFor=null, stageSnap=null, stageMine='a';
+function btImg(f){ const r=Math.min(6,Math.max(0,(f&&f.rank)|0)); return iconHTML(AVIMG[r],AV[r]||'🧙','ic-bt'); }
+function btCardHTML(){
+  return `<b class="nm"></b><div class="fbar hp"><i style="width:100%"></i></div><small class="hpt"></small><div class="fbar mp"><i style="width:100%"></i></div><small class="mpt"></small>`;
+}
+function ensureStage(room,mineSide){
+  let el=$('#bt-stage');
+  if(el && stageFor===duelState) return el;
+  if(el) el.remove();
+  stageFor=duelState; stageSnap=null; stageMine=mineSide;
+  const top=mineSide=='a'?'b':'a';
+  el=document.createElement('div'); el.id='bt-stage'; el.className='bt-stage';
+  el.innerHTML=`<div class="bt-arena">
+    <div class="bt-row bt-top"><div class="bt-card" id="bt-card-top">${btCardHTML()}</div><div class="bt-sprite" id="bt-sp-top"><div class="bt-img">${btImg(room[top])}</div></div></div>
+    <div class="bt-caption" id="bt-cap"></div>
+    <div class="bt-row bt-bot"><div class="bt-sprite" id="bt-sp-bot"><div class="bt-img">${btImg(room[mineSide])}</div></div><div class="bt-card" id="bt-card-bot">${btCardHTML()}</div></div>
+  </div><div class="bt-panel" id="bt-panel"></div>`;
+  document.body.appendChild(el);
+  document.body.style.overflow='hidden';
+  const box=$('#arena-battle'); box.innerHTML=''; box.classList.add('hide');
+  return el;
+}
+function removeStage(){
+  const el=$('#bt-stage'); if(el) el.remove();
+  stageFor=null; stageSnap=null; document.body.style.overflow='';
+}
+function fillCard(card,f,rk){
+  if(!card||!f) return;
+  const rn=(RK[Math.min(6,Math.max(0,f.rank|0))]||[0,''])[1];
+  card.querySelector('.nm').textContent=`${f.name}　Lv.${f.level}${rn?'・'+rn:''}`;
+  card.querySelector('.fbar.hp>i').style.width=(Math.max(0,f.hp)/f.hpMax*100)+'%';
+  card.querySelector('.fbar.mp>i').style.width=(Math.max(0,f.mp)/f.mpMax*100)+'%';
+  card.querySelector('.hpt').textContent=`HP ${Math.max(0,f.hp)}/${f.hpMax}`;
+  card.querySelector('.mpt').textContent=`MP ${Math.max(0,f.mp)}/${f.mpMax}`;
+}
+function stageKey(room){
+  const a=room.a,b=room.b;
+  return [room.turn,room.over,a.hp,b.hp,a.mp,b.mp,!!a.defending,!!b.defending,!!a.charging,!!b.charging,(room.log||[]).slice(-1)[0]].join('|');
+}
+function btAnim(el,cls,ms){ if(!el)return; el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); setTimeout(()=>el.classList.remove(cls),ms); }
+function btFloat(sp,text,color){ const d=document.createElement('div'); d.className='bt-float'; d.style.color=color; d.textContent=text; sp.appendChild(d); setTimeout(()=>d.remove(),1000); }
+function btBurst(sp,icon){ const d=document.createElement('div'); d.className='bt-burst'; d.textContent=icon; sp.appendChild(d); setTimeout(()=>d.remove(),560); }
+function btFly(fromEl,toEl,icon,cb){
+  const stg=$('#bt-stage'); if(!stg||!fromEl.animate){ setTimeout(cb,300); return; }
+  const sr=stg.getBoundingClientRect(), a=fromEl.getBoundingClientRect(), b=toEl.getBoundingClientRect();
+  const ax=a.left+a.width/2-sr.left, ay=a.top+a.height/2-sr.top, bx=b.left+b.width/2-sr.left, by=b.top+b.height/2-sr.top;
+  const p=document.createElement('div'); p.className='bt-proj'; p.textContent=icon; p.style.left=ax+'px'; p.style.top=ay+'px'; stg.appendChild(p);
+  const an=p.animate([{transform:'translate(-50%,-50%) scale(.6)'},{transform:`translate(calc(-50% + ${bx-ax}px),calc(-50% + ${by-ay}px)) scale(1.6)`}],{duration:480,easing:'ease-in'});
+  an.onfinish=()=>{p.remove();cb&&cb();};
+}
+function btLunge(fromEl,toEl){
+  if(!fromEl.animate) return;
+  const a=fromEl.getBoundingClientRect(), b=toEl.getBoundingClientRect();
+  const dx=(b.left+b.width/2-a.left-a.width/2)*0.55, dy=(b.top+b.height/2-a.top-a.height/2)*0.55;
+  fromEl.animate([{transform:'translate(0,0)'},{transform:`translate(${dx}px,${dy}px) scale(1.15)`,offset:.4},{transform:`translate(${dx}px,${dy}px) scale(1.15)`,offset:.55},{transform:'translate(0,0)'}],{duration:700,easing:'ease-in-out'});
+}
+// 比對「上一個畫面」和「現在」，看是誰出了什麼招，播放對應動畫
+function playBattleEvent(snap,room){
+  const atkSide=snap.turn; if(atkSide!=='a'&&atkSide!=='b') return;
+  const defSide=atkSide=='a'?'b':'a';
+  const spOf=side=>$('#bt-sp-'+(side===stageMine?'bot':'top'));
+  const atkSp=spOf(atkSide), defSp=spOf(defSide); if(!atkSp||!defSp) return;
+  const line=(room.log||[]).slice(-1)[0]||'';
+  const dDef=snap[defSide+'hp']-room[defSide].hp, dAtk=snap[atkSide+'hp']-room[atkSide].hp;
+  if(/防禦姿勢/.test(line)){ btBurst(atkSp,'🛡️'); return; }
+  if(/詠唱/.test(line)){ btAnim(atkSp,'cast',700); btBurst(atkSp,'🔮'); return; }
+  if(dDef<=0&&dAtk<=0) return;                      // 認輸、加入戰場等沒有出招的訊息，不播動畫
+  const magic=/魔法/.test(line);
+  const icon = magic ? (/大魔法/.test(line)?'☄️':/中魔法/.test(line)?'🔥':'✨')
+             : (/「拳」/.test(line)?'👊':/「腳」/.test(line)?'🦶':/衝撞/.test(line)?'💥':'🗡️');
+  const hit=()=>{
+    if(dDef>0){ btAnim(defSp.querySelector('.bt-img'),'hurt',600); btFloat(defSp,'-'+dDef,magic?'#9ad0ff':'#ff6b6b'); btBurst(defSp,icon); }
+    if(dAtk>0){ btAnim(atkSp.querySelector('.bt-img'),'hurt',600); btFloat(atkSp,'-'+dAtk,'#ffb35a'); }
+  };
+  if(magic){ btAnim(atkSp,'cast',700); btFly(atkSp,defSp,icon,hit); }
+  else{ btLunge(atkSp,defSp); setTimeout(hit,280); }
+}
+function renderScene(room,mineSide,panelHTML,bindFn){
+  const stage=ensureStage(room,mineSide);
+  const top=mineSide=='a'?'b':'a';
+  const key=stageKey(room);
+  const acted = stageSnap && stageSnap.key!==key;
+  if(acted) playBattleEvent(stageSnap,room);
+  fillCard($('#bt-card-top'),room[top]); fillCard($('#bt-card-bot'),room[mineSide]);
+  // 持續性的狀態：防禦、蓄力、倒下、獲勝
+  const spTop=$('#bt-sp-top'), spBot=$('#bt-sp-bot');
+  [[spTop,room[top],top],[spBot,room[mineSide],mineSide]].forEach(([sp,f,side])=>{
+    sp.classList.toggle('defending',!!f.defending&&!room.over);
+    sp.classList.toggle('charging',!!f.charging&&!room.over);
+    const dead=f.hp<=0, other=room[side=='a'?'b':'a'];
+    const won=room.over&&room.winner!=='draw'&&!dead&&(other.hp<=0||room.winner===f.name);
+    setTimeout(()=>{ sp.classList.toggle('ko',dead); sp.classList.toggle('win',!!won); }, acted?650:0);
+  });
+  // 中間的大字幕：顯示最新一行戰況
+  const cap=$('#bt-cap'), line=(room.log||[]).slice(-1)[0]||'';
+  if(cap.textContent!==line){ cap.textContent=line; btAnim(cap,'pop',400); }
+  const panel=$('#bt-panel'); panel.innerHTML=panelHTML; bindFn&&bindFn(panel);
+  stageSnap={key,turn:room.turn,ahp:room.a.hp,bhp:room.b.hp};
 }
 function exitBattle(){
+  stopWatchdog(); removeStage();
   if(battleChannel){ sb.removeChannel(battleChannel); battleChannel=null; }
   duelState=null;duelSub=null;
   $('#arena-battle').classList.add('hide');$('#arena-battle').innerHTML='';
