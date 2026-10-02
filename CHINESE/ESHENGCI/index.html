@@ -375,8 +375,8 @@ function levelDone(p){
  $('#done').innerHTML=S.items.map(x=>`<span class="w">${x.w} <small>${x.p}</small></span>`).join('');
  $('#next').hidden=true;hud();
  if(gl){const h=$('#hLife');h.classList.remove('gain');void h.offsetWidth;h.classList.add('gain')}
- const got=[],fin=()=>{$('#next').hidden=false;$('#draw').innerHTML=got.map((d,i)=>drawHTML(d,i?'🎊 BONUS 禮物（保底菁英以上）':'🎁 過關獎勵')).join('')};
- afterLock(()=>ritual(0,d=>{got.push(d);S.clear%BONUS_EVERY==0?ritual(1,d2=>{got.push(d2);fin()}):fin()})); // 等語音唸完再開始儀式
+ const fin=()=>nextLevel(); // 抽完卡（含 BONUS）按「收下」後，自動進入下一關
+ afterLock(()=>ritual(0,()=>{S.clear%BONUS_EVERY==0?ritual(1,fin):fin()})); // 等語音唸完再開始儀式
  hud();
 }
 function over(){
