@@ -229,6 +229,11 @@ input#codeInput:focus{outline:none;border-color:var(--accent);}
           <div class="ic">⚔️</div>
           <div><div class="lbl">泰北版華文生字練習</div><div class="desc">認國字、認拼音</div></div>
         </a>
+       <div class="hub-links">
+        <a class="hub-link" id="linkESHENGCI" href="./CHINESE/ESHENGCI/index.html">
+          <div class="ic">⚔️</div>
+          <div><div class="lbl">泰北版華文生詞練習</div><div class="desc">認詞、認拼音</div></div>
+        </a>
       </div>
     </div>
 
@@ -306,6 +311,7 @@ const fenfu_URL = "./math/分數運算大冒險(負).html";
 const fenzhengfu_URL = "./math/分數運算大冒險(正負隨機).html";
 const ACTIVE_STUDENT_KEY = "keyagent_active_student";
 const ESHENGZI_URL = "./CHINESE/ESHENGZI/index.html";
+const ESHENGZI_URL = "./CHINESE/ESHENGCI/index.html";
 function fetchWithTimeout(url, opts, ms) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), ms);
