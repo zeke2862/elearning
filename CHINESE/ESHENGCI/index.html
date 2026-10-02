@@ -409,7 +409,7 @@ $('#csv').onclick=()=>{const q=v=>'"'+String(v).replace(/"/g,'""')+'"';
  const l=document.createElement('a');l.href=u;l.download='生詞遊戲分數紀錄.csv';l.click();URL.revokeObjectURL(u)};
 /* ---------- 怪物圖鑑 ---------- */
 const BONUS_EVERY=5,MAX_LV=10,BOOST_CAP=20,BOOST={E:.15,L:.25,M:.4}; // ← 連過幾關有 BONUS／怪物最高等級／機率加成封頂關數／每多一關各稀有度的機率加成
-const RARE={N:{n:'普通',p:75,c:'#8fa3b8',k:150},E:{n:'菁英',p:17,c:'#3fa7ff',k:34},L:{n:'傳說',p:6,c:'#ff9f1c',k:12},M:{n:'神話',p:2,c:'#ff3d81',k:4}};
+const RARE={N:{n:'普通',p:90,c:'#8fa3b8',k:150},E:{n:'菁英',p:9,c:'#3fa7ff',k:20},L:{n:'傳說',p:.7,c:'#ff9f1c',k:1.2},M:{n:'神話',p:.3,c:'#ff3d81',k:1}};
 const MON=[];{let i=0;for(const r in RARE)for(let k=0;k<RARE[r].k;k++){i++;MON.push({id:i,r,name:RARE[r].n+'怪 '+String(i).padStart(3,'0')})}}
 MON.forEach(m=>Object.assign(m,(window.MONSTER_INFO||{})[m.id]||{})); // monsters/monsters.js 可改名稱、稀有度
 const pad=i=>String(i).padStart(3,'0'),dxName=()=>$('#nm').value.trim()||'無名氏';
