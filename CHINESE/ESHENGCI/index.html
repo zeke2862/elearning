@@ -500,7 +500,7 @@ function sayP(txt){return new Promise(res=>{if(!TTS||!SND.sfx||!VOICE)return res
  setTimeout(fin,2500+txt.length*500)})} // 保險：萬一沒收到「唸完」訊號，最多等這麼久
 const afterLock=f=>{const w=()=>S.lock?setTimeout(w,100):setTimeout(f,400);w()};
 async function cheer(w){sfx('ok');flashOK();S.lock=1;$('#board').classList.add('lk');$('#lkt').hidden=false;
- if(TTS&&SND.sfx)speechSynthesis.cancel();await sayP(w);await sayP('你好棒');
+ if(TTS&&SND.sfx)speechSynthesis.cancel();await sayP(w);
  S.lock=0;$('#board').classList.remove('lk');$('#lkt').hidden=true} // 強制聽完整個詞語音，才能選下一個詞 // 答對：叮咚→再唸一次詞語→你好棒，同時畫面顯示「答對了」
 function tgLabel(){$$('.tg').forEach(b=>{const k=b.dataset.t;b.textContent=(k=='bgm'?'🎵 背景音樂 ':'🔊 語音音效 ')+(SND[k]?'開':'關');b.classList.toggle('sel',!!SND[k])})}
 document.addEventListener('click',e=>{const b=e.target.closest('.tg');if(!b)return;const k=b.dataset.t;SND[k]=SND[k]?0:1;try{localStorage.setItem('wg_'+k,SND[k])}catch(x){}
@@ -508,4 +508,18 @@ document.addEventListener('click',e=>{const b=e.target.closest('.tg');if(!b)retu
 $('#tTest').onclick=()=>{ac();if(TTS)speechSynthesis.cancel();sfx('ok');say('你好棒')};
 tgLabel();
 setTimeout(()=>{if(!TTS||!VOICE)$('#vn').textContent='⚠️ 這台電腦找不到中文語音，點字時不會發音（音樂和音效仍可使用）。Windows 可到「設定 → 時間與語言 → 語音」新增「中文（台灣）」語音，再重開瀏覽器。'},1500);
+// 1. 禁用滑鼠右鍵選單
+document.addEventListener('contextmenu', event => event.preventDefault());
+
+// 2. 禁用 Ctrl+S / Cmd+S 另存網頁快捷鍵
+document.addEventListener('keydown', function(e) {
+    if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        alert('本網站已啟用內容保護，暫不開放另存網頁。');
+    }
+    // 順便禁用 Ctrl+U (查看原始碼) 和 F12 (開發者工具)
+    if ((e.ctrlKey || e.metaKey) && e.key === 'u' || e.key === 'F12') {
+        e.preventDefault();
+    }
+});
 </script></body></html>
