@@ -157,6 +157,86 @@
         }
         #map-toast.show { opacity: 1; }
 
+        /* ================= 戰鬥場景背景 ================= */
+        #battle-screen {
+            position: absolute;
+            overflow: hidden;
+            background: #17212b;
+        }
+        #battle-screen::before,
+        #battle-screen::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            z-index: 0;
+        }
+        #battle-screen > * { position: relative; z-index: 1; }
+
+        /* 史萊姆棲地：發光沼澤、濕氣與水面 */
+        #battle-screen.terrain-1::before {
+            background:
+                radial-gradient(circle at 18% 72%, rgba(118,255,190,.28) 0 5%, transparent 6%),
+                radial-gradient(circle at 78% 28%, rgba(91,255,224,.20) 0 7%, transparent 8%),
+                linear-gradient(180deg, #103c3b 0%, #176b58 52%, #0b302d 100%);
+        }
+        #battle-screen.terrain-1::after {
+            background:
+                repeating-linear-gradient(90deg, transparent 0 55px, rgba(100,255,180,.10) 56px 60px),
+                linear-gradient(0deg, rgba(4,22,20,.55), transparent 35%);
+            opacity: .9;
+        }
+
+        /* 木妖森林：巨樹、深林與陽光縫隙 */
+        #battle-screen.terrain-2::before {
+            background:
+                radial-gradient(circle at 75% 12%, rgba(255,238,150,.30) 0 7%, transparent 20%),
+                linear-gradient(90deg, rgba(20,48,25,.85) 0 8%, transparent 8% 18%, rgba(20,48,25,.7) 18% 23%, transparent 23% 100%),
+                linear-gradient(180deg, #183f25 0%, #2e6b35 52%, #0d2918 100%);
+        }
+        #battle-screen.terrain-2::after {
+            background:
+                repeating-linear-gradient(105deg, transparent 0 90px, rgba(10,30,15,.45) 91px 115px),
+                linear-gradient(0deg, rgba(5,18,10,.65), transparent 45%);
+        }
+
+        /* 吸血鬼古堡：月夜、紫霧與城堡剪影 */
+        #battle-screen.terrain-3::before {
+            background:
+                radial-gradient(circle at 78% 20%, rgba(232,225,255,.95) 0 5%, rgba(180,170,230,.18) 6% 15%, transparent 16%),
+                linear-gradient(180deg, #130b2b 0%, #32134f 52%, #0b0715 100%);
+        }
+        #battle-screen.terrain-3::after {
+            background:
+                linear-gradient(90deg, rgba(5,3,12,.85) 0 10%, transparent 10% 17%, rgba(5,3,12,.8) 17% 22%, transparent 22% 31%, rgba(5,3,12,.9) 31% 39%, transparent 39%),
+                linear-gradient(0deg, rgba(5,3,12,.82), transparent 48%);
+        }
+
+        /* 殭屍墓穴：石牆、冷霧與地下墓室 */
+        #battle-screen.terrain-4::before {
+            background:
+                radial-gradient(ellipse at 50% 70%, rgba(180,205,210,.20), transparent 35%),
+                repeating-linear-gradient(0deg, rgba(255,255,255,.035) 0 2px, transparent 2px 42px),
+                linear-gradient(180deg, #18252a 0%, #35464a 50%, #10191c 100%);
+        }
+        #battle-screen.terrain-4::after {
+            background:
+                repeating-linear-gradient(90deg, rgba(0,0,0,.25) 0 3px, transparent 3px 95px),
+                linear-gradient(0deg, rgba(0,0,0,.65), transparent 55%);
+        }
+
+        /* 法老王金字塔：沙漠、夕陽與金字塔 */
+        #battle-screen.terrain-5::before {
+            background:
+                radial-gradient(circle at 78% 20%, #ffe9a0 0 7%, rgba(255,185,65,.30) 8% 17%, transparent 18%),
+                linear-gradient(180deg, #7e321c 0%, #d76b27 48%, #6b2d1c 100%);
+        }
+        #battle-screen.terrain-5::after {
+            background:
+                linear-gradient(145deg, transparent 0 42%, rgba(82,35,20,.48) 42% 55%, transparent 55%),
+                linear-gradient(0deg, rgba(77,35,18,.55), transparent 48%);
+        }
+
         /* ================= 戰鬥畫面 ================= */
         #battle-screen { padding: 20px; z-index: 10; }
 
@@ -533,29 +613,73 @@
         if (e.target.closest && e.target.closest("button, .map-node")) playClickSound();
     }, true);
 
-    // ================= 學號登入串接 =================
-    // 跟塔防/ETP/看打共用同一組登入身分（index.html 存進 localStorage 的
-    // "keyagent_active_student"），這樣進度跟代幣才能記在同一個學生名下、
-    // 也才能被 sync-client.js 一起同步到雲端。
-    const studentNumber = (typeof keyagentGetActiveStudentNumber === 'function')
-        ? keyagentGetActiveStudentNumber() : null;
+    // ================= 學號登入與可靠存檔 =================
+    // 優先使用校園共用存檔；若遊戲單獨開啟、尚未取得學號，改用本機備援。
+    // 這樣重新整理／關閉瀏覽器後，關卡與 GBit 仍會保留。
+    const ADDITION_HERO_BACKUP_PREFIX = 'additionHeroSave_v6_';
+
+    function getActiveStudentSafe() {
+        try {
+            if (typeof keyagentGetActiveStudentNumber === 'function') {
+                const n = keyagentGetActiveStudentNumber();
+                if (n) return String(n);
+            }
+            const raw = localStorage.getItem('keyagent_active_student');
+            if (raw) {
+                try {
+                    const parsed = JSON.parse(raw);
+                    if (parsed && typeof parsed === 'object') {
+                        return String(parsed.studentNumber || parsed.number || parsed.id || parsed.account || '');
+                    }
+                } catch (_) {}
+                return String(raw);
+            }
+        } catch (_) {}
+        return '';
+    }
+
+    function getPrimarySaveKey() {
+        const student = getActiveStudentSafe();
+        if (student && typeof keyagentSaveKeyFor === 'function') {
+            try { return keyagentSaveKeyFor(student); } catch (_) {}
+        }
+        return 'additionHeroSave_local';
+    }
+
+    function getBackupSaveKey() {
+        const student = getActiveStudentSafe();
+        return ADDITION_HERO_BACKUP_PREFIX + (student || 'guest');
+    }
+
+    function parseSave(raw) {
+        if (!raw) return null;
+        try {
+            const data = JSON.parse(raw);
+            return data && typeof data === 'object' ? data : null;
+        } catch (_) { return null; }
+    }
+
+    function readSaveKey(key) {
+        try { return parseSave(localStorage.getItem(key)); } catch (_) { return null; }
+    }
 
     function loadSharedSave() {
-        if (!studentNumber || typeof keyagentSaveKeyFor !== 'function') return {};
-        try {
-            const raw = localStorage.getItem(keyagentSaveKeyFor(studentNumber));
-            return raw ? JSON.parse(raw) : {};
-        } catch (e) { return {}; }
+        const primary = readSaveKey(getPrimarySaveKey()) || {};
+        const backup = readSaveKey(getBackupSaveKey()) || {};
+        // 兩份都存在時，以較新的版本為準，避免同步程式或其他遊戲剛寫入資料後被舊資料覆蓋。
+        const pTime = Number(primary.lastModified || 0);
+        const bTime = Number(backup.lastModified || 0);
+        if (bTime > pTime) return backup;
+        return primary;
     }
 
     function writeSharedSave(save) {
-        if (!studentNumber || typeof keyagentSaveKeyFor !== 'function') return;
         save.lastModified = Date.now();
-        try { localStorage.setItem(keyagentSaveKeyFor(studentNumber), JSON.stringify(save)); } catch (e) {}
+        const serialized = JSON.stringify(save);
+        try { localStorage.setItem(getPrimarySaveKey(), serialized); } catch (_) {}
+        try { localStorage.setItem(getBackupSaveKey(), serialized); } catch (_) {}
     }
 
-    // 玩家關卡進度：放在共用存檔的 additionHero 欄位下，
-    // 跟塔防(towerDefense)、ETP(etp)、看打(lookType) 各自獨立、互不覆蓋。
     let sharedSave = loadSharedSave();
     let playerProgress = (sharedSave.additionHero && sharedSave.additionHero.stages)
         ? sharedSave.additionHero.stages
@@ -563,18 +687,17 @@
     if (!playerProgress["1-1"]) playerProgress["1-1"] = { unlocked: true, stars: 0 };
 
     function saveProgress() {
-        sharedSave = loadSharedSave(); // 先讀最新的，避免蓋掉存檔裡其他系統剛寫入的資料
+        sharedSave = loadSharedSave();
         sharedSave.additionHero = { stages: playerProgress };
         writeSharedSave(sharedSave);
     }
 
-    // 過關發代幣：只在「星等進步」時發（見 endGame），避免反覆打同一關無限刷代幣。
-    // 規則：每提升 1 顆星 = 2 GBit。
+    // 過關發代幣：只在星等提升時發，每提升 1 顆星 = 2 GBit。
     function awardTokens(amount) {
         if (amount <= 0) return;
         sharedSave = loadSharedSave();
-        sharedSave.gbit = (sharedSave.gbit || 0) + amount;
-        sharedSave.gbitEarnedLifetime = (sharedSave.gbitEarnedLifetime || 0) + amount;
+        sharedSave.gbit = Number(sharedSave.gbit || 0) + amount;
+        sharedSave.gbitEarnedLifetime = Number(sharedSave.gbitEarnedLifetime || 0) + amount;
         writeSharedSave(sharedSave);
         updateGbitDisplay();
 
@@ -586,15 +709,14 @@
                 attemptedAt: Date.now()
             });
         }
-        if (typeof keyagentCloudSyncNow === 'function') {
-            keyagentCloudSyncNow();
-        }
+        if (typeof keyagentCloudSyncNow === 'function') keyagentCloudSyncNow();
     }
 
     function updateGbitDisplay() {
         const el = document.getElementById('gbit-display');
         if (!el) return;
-        el.innerText = (loadSharedSave().gbit) || 0;
+        const save = loadSharedSave();
+        el.innerText = Number(save.gbit || 0);
     }
 
     // ================= 戰鬥狀態變數 =================
@@ -846,7 +968,9 @@
         hasRevive = false;
         stageStats = { total: 0, mistakes: 0, correct: 0, times: [] };
 
-        // 設置 UI
+        // 設置 UI 與所在地戰鬥場景
+        screens.battle.classList.remove('terrain-1', 'terrain-2', 'terrain-3', 'terrain-4', 'terrain-5');
+        screens.battle.classList.add('terrain-' + currentStageObj.terrainId);
         ui.bossName.innerText = currentStageObj.boss;
         ui.bossLabel.innerText = currentStageObj.boss;
         ui.bossImg.src = currentStageObj.img;
@@ -1212,28 +1336,17 @@
         window.visualViewport.addEventListener('scroll', resizeGame);
     }
 
+    // 離開頁面前再寫一次目前已完成的進度／代幣，避免分頁關閉時來不及落盤。
+    window.addEventListener('pagehide', () => {
+        try { saveProgress(); } catch (_) {}
+    });
+
     // ================= 初始化 =================
     resizeGame();
     buildMap();
     refreshMap();
     preloadHeroGifs();
     updateGbitDisplay();
-
-    // 1. 禁用滑鼠右鍵選單
-document.addEventListener('contextmenu', event => event.preventDefault());
-
-// 2. 禁用 Ctrl+S / Cmd+S 另存網頁快捷鍵
-document.addEventListener('keydown', function(e) {
-    if ((e.ctrlKey || e.metaKey) && e.key === 's') {
-        e.preventDefault();
-        alert('本網站已啟用內容保護，暫不開放另存網頁。');
-    }
-    // 順便禁用 Ctrl+U (查看原始碼) 和 F12 (開發者工具)
-    if ((e.ctrlKey || e.metaKey) && e.key === 'u' || e.key === 'F12') {
-        e.preventDefault();
-    }
-});
-
 </script>
 </body>
 </html>
