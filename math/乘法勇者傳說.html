@@ -213,6 +213,7 @@
         .hero-avatar img { width: 140px; height: auto; display: block; }
         .boss-avatar { animation: float 3s ease-in-out infinite; }
         .boss-avatar img { max-width: 170px; max-height: 165px; width: auto; height: auto; display: block; }
+        .boss-avatar img.wide { max-width: 250px; max-height: 150px; }
         @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-14px); } }
         .char-name { font-size: 22px; font-weight: 900; margin-top: 10px; color: #fff; text-shadow: 0 0 4px #000, 2px 2px 4px #000, -1px -1px 3px #000; }
 
@@ -312,6 +313,7 @@
         #battle-screen.teach .sprite-stage { height: 140px; }
         #battle-screen.teach .hero-avatar img { width: 110px; }
         #battle-screen.teach .boss-avatar img { max-width: 135px; max-height: 135px; }
+        #battle-screen.teach .boss-avatar img.wide { max-width: 215px; max-height: 120px; }
         #battle-screen.teach .char-name { font-size: 18px; margin-top: 6px; }
         #battle-screen.teach .center-area { justify-content: center; }
         #battle-screen.teach .question-box { font-size: 22px; padding: 3px 18px; min-width: 0; border-width: 3px; border-radius: 14px; margin-bottom: 6px; }
@@ -380,11 +382,11 @@
             <h1 style="color:#2C3E50; font-size: 48px; margin-bottom: 10px;">乘法勇者傳說</h1>
             <p style="font-size: 16px; line-height: 1.5; margin-bottom: 12px;">
                 <strong>主角設定：</strong> 冷酷銀髮勇者，右眼戰術眼罩，手持黑曜石雙刃鐮刀，手臂閃爍紅光咒印。<br><br>
-                <strong>遊戲規則：</strong> 擊敗地圖上10個地方的怪物！<br>
+                <strong>遊戲規則：</strong> 擊敗地圖上所有地方的怪物！<br>
                 ✨ 怪物10滴血，答錯加0.5血。<br>
                 ✨ 勇者4滴血，答錯扣1血，每題都有限時（越後面的關卡，時間越長）。<br>
                 ✨ <strong>時間加成：</strong> 越快答對，攻擊越強（x2、x1.5）。<br>
-                🎮 <strong>兩種玩法：</strong> ⚡快速版＝直接輸入答案；🧮教學版＝用直式乘法一步步算（時間較長）。進度與星星共用，隨時可在地圖上換模式。<br>
+                🎮 <strong>兩種玩法：</strong> ⚡快速版＝直接輸入答案；🧮教學版＝用直式乘法一步步算（時間較長）。兩種模式的進度與星星各自獨立計算，隨時可在地圖上換模式。<br>
                 ✨ <strong>道具：</strong> 連對5題獲得「甦醒藥」(死後自動滿血復活)。<br>
                 挑戰全關卡 5 星評價吧！
             </p>
@@ -419,7 +421,7 @@
                 <div id="potion-ui" class="potion-badge hidden">🧪 甦醒藥 x1</div>
             </div>
             <div class="level-display" id="battle-level-display">
-                <div class="lv-main">關卡 1</div>
+                <div class="lv-main">關卡 1-1</div>
                 <div class="lv-sub">第一關 街道</div>
             </div>
             <div class="hp-bar-container">
@@ -455,7 +457,7 @@
                 <div class="sprite-stage">
                     <div id="boss-sprite" class="boss-avatar"><img id="boss-img" src="" alt="怪物" draggable="false"></div>
                 </div>
-                <div class="char-name" id="boss-label">強盜</div>
+                <div class="char-name" id="boss-label">黑道老大與混混小弟們</div>
             </div>
         </div>
 
@@ -514,50 +516,44 @@
     const HERO_ANIM_MS = { attack: 770, hurt: 2220, lose: 2760 };
 
     // ================= 關卡設定 =================
-    // 每一關 = 一個場景 + 一隻怪物（共 10 關，對應原本乘法極速跑酷的十個關卡）。
-    //   r1 / r2     ：乘數與被乘數的範圍 [最小, 最大]；'mixed' = 隨機混合前 9 關的範圍
+    // 5 大關、共 11 個小關卡；每個小關卡 = 一組怪物 + 一種乘法題型（依序由簡單到困難）。
+    //   r1 / r2     ：乘數與被乘數的範圍 [最小, 最大]；'mixed' = 兩個乘數各自隨機抽 1～4 位數
     //   limit       ：每題限時（秒）
     //   fast / quick：幾秒內答對，傷害 x2 / x1.5（也用來算星等）
     //                 乘法位數越多越難算，所以後面的關卡時間給得比加法久，想調整改這幾個數字就好
-    //   mx / my / mw：該關卡在大地圖圖片（1695×928）上的中心座標與寬度（單位：圖片像素）
+    //   mx / my / mw：該關卡「標籤」在大地圖圖片（1694×928）上的中心座標與寬度（單位：圖片像素），
+    //                 也就是點擊熱區；勇者的腳會站在標籤正上方一點點
+    //   fx / fy / fr：解鎖該關時，迷霧散開的圓心與半徑（要蓋住整個場景）
+    //   wide        ：怪物圖是橫幅型（又長又扁）時設 true，戰鬥畫面會把它放大一點
     //                 ★ 換成自己畫的地圖後，只要改這幾個數字，熱區、迷霧、勇者站位都會跟著移動
-    const MAP_W = 1695, MAP_H = 928, NODE_H = 36;
-    const SHOW_NODE_LABELS = true;   // 地圖上自己有畫關卡名稱的話，改成 false 就不會再蓋上標籤
+    const MAP_W = 1694, MAP_H = 928, NODE_H = 36;
+    const SHOW_NODE_LABELS = false;  // 新地圖已經把「1-1 黑道老大…」等標籤畫在圖上，所以這裡關掉；用別張地圖想顯示編號標籤就改成 true
     const terrains = [
         { id: 1, name: "第一關：街道", short: "第一關 街道", stages: [
-            { id: "1", boss: "強盜", r1: [1, 9], r2: [1, 9], desc: "一位數 × 一位數", limit: 60, fast: 10, quick: 20, mx: 200, my: 353, mw: 170 }
+            { id: "1-1", boss: "黑道老大與混混小弟們", r1: [1, 9], r2: [1, 9], desc: "一位數 × 一位數", limit: 60, fast: 10, quick: 20, mx: 276, my: 392, mw: 282, fx: 257, fy: 246, fr: 260 }
         ]},
-        { id: 2, name: "第二關：森林", short: "第二關 森林", stages: [
-            { id: "2", boss: "樹妖", r1: [10, 99], r2: [1, 9], desc: "兩位數 × 一位數", limit: 60, fast: 15, quick: 30, mx: 555, my: 333, mw: 170 }
+        { id: 2, name: "第二關：玩具王國", short: "第二關 玩具王國", stages: [
+            { id: "2-1", boss: "玩具士兵們", r1: [10, 99], r2: [1, 9], desc: "兩位數 × 一位數", limit: 60, fast: 15, quick: 30, mx: 164, my: 785, mw: 175, fx: 171, fy: 685, fr: 230 },
+            { id: "2-2", boss: "玩具戰馬群", r1: [10, 99], r2: [10, 99], desc: "兩位數 × 兩位數", limit: 90, fast: 25, quick: 50, mx: 434, my: 812, mw: 180, fx: 411, fy: 685, fr: 230, wide: true }
         ]},
-        { id: 3, name: "第三關：沙漠", short: "第三關 沙漠", stages: [
-            { id: "3", boss: "仙人掌怪", r1: [10, 99], r2: [10, 99], desc: "兩位數 × 兩位數", limit: 90, fast: 25, quick: 50, mx: 860, my: 352, mw: 170 }
+        { id: 3, name: "第三關：海世界", short: "第三關 海世界", stages: [
+            { id: "3-1", boss: "海龜精群", r1: [100, 999], r2: [1, 9], desc: "三位數 × 一位數", limit: 75, fast: 20, quick: 40, mx: 637, my: 310, mw: 148, fx: 697, fy: 223, fr: 220 },
+            { id: "3-2", boss: "大鯊魚精群", r1: [100, 999], r2: [10, 99], desc: "三位數 × 兩位數", limit: 120, fast: 35, quick: 70, mx: 660, my: 552, mw: 152, fx: 697, fy: 520, fr: 220 },
+            { id: "3-3", boss: "海龍王與蝦兵蟹將", r1: [100, 999], r2: [100, 999], desc: "三位數 × 三位數", limit: 180, fast: 60, quick: 120, mx: 734, my: 833, mw: 232, fx: 754, fy: 760, fr: 230 }
         ]},
-        { id: 4, name: "第四關：海底", short: "第四關 海底", stages: [
-            { id: "4", boss: "鯊魚精", r1: [100, 999], r2: [10, 99], desc: "三位數 × 兩位數", limit: 120, fast: 35, quick: 70, mx: 1135, my: 312, mw: 170 }
+        { id: 4, name: "第四關：失落之地", short: "第四關 失落之地", stages: [
+            { id: "4-1", boss: "土著聚落", r1: [1000, 9999], r2: [1, 9], desc: "四位數 × 一位數", limit: 90, fast: 25, quick: 50, mx: 1050, my: 338, mw: 148, fx: 1051, fy: 246, fr: 220 },
+            { id: "4-2", boss: "三角龍群", r1: [1000, 9999], r2: [10, 99], desc: "四位數 × 兩位數", limit: 150, fast: 45, quick: 90, mx: 1445, my: 300, mw: 150, fx: 1439, fy: 228, fr: 250, wide: true },
+            { id: "4-3", boss: "鳳凰部族", r1: [1000, 9999], r2: [100, 999], desc: "四位數 × 三位數", limit: 240, fast: 80, quick: 160, mx: 1075, my: 536, mw: 150, fx: 1062, fy: 508, fr: 215 },
+            { id: "4-4", boss: "地獄三頭犬家族", r1: [1000, 9999], r2: [1000, 9999], desc: "四位數 × 四位數", limit: 360, fast: 120, quick: 240, mx: 1199, my: 700, mw: 186, fx: 1257, fy: 634, fr: 230 }
         ]},
-        { id: 5, name: "第五關：高原極地", short: "第五關 高原極地", stages: [
-            { id: "5", boss: "冰雪公主", r1: [100, 999], r2: [100, 999], desc: "三位數 × 三位數", limit: 180, fast: 60, quick: 120, mx: 1490, my: 275, mw: 170 }
-        ]},
-        { id: 6, name: "第六關：山洞", short: "第六關 山洞", stages: [
-            { id: "6", boss: "蝙蝠", r1: [1000, 9999], r2: [1, 9], desc: "四位數 × 一位數", limit: 90, fast: 25, quick: 50, mx: 1540, my: 762, mw: 170 }
-        ]},
-        { id: 7, name: "第七關：公園", short: "第七關 公園", stages: [
-            { id: "7", boss: "一群野狗", r1: [1000, 9999], r2: [10, 99], desc: "四位數 × 兩位數", limit: 150, fast: 45, quick: 90, mx: 1280, my: 625, mw: 170 }
-        ]},
-        { id: 8, name: "第八關：廢墟", short: "第八關 廢墟", stages: [
-            { id: "8", boss: "發狂的機器人", r1: [1000, 9999], r2: [100, 999], desc: "四位數 × 三位數", limit: 240, fast: 80, quick: 160, mx: 1090, my: 760, mw: 170 }
-        ]},
-        { id: 9, name: "第九關：火山", short: "第九關 火山", stages: [
-            { id: "9", boss: "地獄三頭犬", r1: [1000, 9999], r2: [1000, 9999], desc: "四位數 × 四位數", limit: 360, fast: 120, quick: 240, mx: 945, my: 680, mw: 170 }
-        ]},
-        { id: 10, name: "第十關：雪地", short: "第十關 雪地", stages: [
-            { id: "10", boss: "大腳雪怪", r1: 'mixed', r2: 'mixed', desc: "隨機所有組合", limit: 240, fast: 80, quick: 160, mx: 598, my: 730, mw: 170 }
+        { id: 5, name: "第五關：雪地", short: "第五關 雪地", stages: [
+            { id: "5-1", boss: "大腳雪怪族群", r1: 'mixed', r2: 'mixed', desc: "隨機(一至四位數) × 隨機(一至四位數)", limit: 240, fast: 80, quick: 160, mx: 1487, my: 796, mw: 165, fx: 1473, fy: 640, fr: 260 }
         ]}
     ];
 
     // 所有關卡扁平化索引，方便切換「下一關」
-    // 怪物圖：assets/multiply-hero/monster-關卡編號.png　戰鬥背景：assets/multiply-hero/bg-關卡編號.jpg
+    // 怪物圖：assets/multiply-hero/monster-1-1.png …　戰鬥背景：assets/multiply-hero/bg-1-1.jpg …（檔名＝關卡編號）
     const allStagesList = [];
     terrains.forEach(t => {
         t.stages.forEach(s => {
@@ -582,25 +578,22 @@
     function setMode(m) {
         playMode = (m === 'teach') ? 'teach' : 'quick';
         try { localStorage.setItem('multiplyHero_mode', playMode); } catch (e) {}
+        playerProgress = loadProgress();   // 兩種模式的進度各自獨立，切換時載入該模式自己的存檔
+        heroStageId = null;                // 勇者回到該模式的「目前關卡」
         refreshModeUI();
     }
     function chooseMode(m) { setMode(m); showMap(); }
-    function toggleMode() { if (mapBusy) return; setMode(playMode === 'teach' ? 'quick' : 'teach'); showMapToast(playMode === 'teach' ? '🧮 已切換成教學版：用直式乘法作答' : '⚡ 已切換成快速版：直接輸入答案'); }
+    function toggleMode() { if (mapBusy) return; setMode(playMode === 'teach' ? 'quick' : 'teach'); placeHeroInstant(findFrontierStageId()); refreshMap(); showMapToast(playMode === 'teach' ? '🧮 已切換成教學版（進度與快速版各自獨立）' : '⚡ 已切換成快速版（進度與教學版各自獨立）'); }
 
     // ================= 每大關背景音樂 =================
-    // 目前 10 關先全部共用乘法極速跑酷原本那首 multiply-run-bgm.mp3（之後要換，
-    // 把對應關卡編號的路徑換成新檔名即可，不用改程式碼其他地方）。
+    // 目前 5 大關先全部共用乘法極速跑酷原本那首 multiply-run-bgm.mp3（之後要換，
+    // 把對應大關編號的路徑換成新檔名即可，不用改程式碼其他地方）。
     const TERRAIN_MUSIC = {
         1: "./audio/multiply-run-bgm.mp3",
         2: "./audio/multiply-run-bgm.mp3",
         3: "./audio/multiply-run-bgm.mp3",
         4: "./audio/multiply-run-bgm.mp3",
-        5: "./audio/multiply-run-bgm.mp3",
-        6: "./audio/multiply-run-bgm.mp3",
-        7: "./audio/multiply-run-bgm.mp3",
-        8: "./audio/multiply-run-bgm.mp3",
-        9: "./audio/multiply-run-bgm.mp3",
-        10: "./audio/multiply-run-bgm.mp3"
+        5: "./audio/multiply-run-bgm.mp3"
     };
 
     const bgmAudio = new Audio();
@@ -687,14 +680,20 @@
     // 玩家關卡進度：放在共用存檔的 multiplyHero 欄位下，
     // 跟加法勇者(additionHero)、塔防(towerDefense)、ETP(etp)、看打(lookType) 各自獨立、互不覆蓋。
     let sharedSave = loadSharedSave();
-    let playerProgress = (sharedSave.multiplyHero && sharedSave.multiplyHero.stages)
-        ? sharedSave.multiplyHero.stages
-        : { [FIRST_STAGE_ID]: { unlocked: true, stars: 0 } };
-    if (!playerProgress[FIRST_STAGE_ID]) playerProgress[FIRST_STAGE_ID] = { unlocked: true, stars: 0 };
+    // 兩種模式的進度各自獨立：快速版存在 multiplyHero，教學版存在 multiplyHeroTeach
+    function progressKey() { return playMode === 'teach' ? 'multiplyHeroTeach' : 'multiplyHero'; }
+    function loadProgress() {
+        const sv = loadSharedSave();
+        const saved = sv[progressKey()] && sv[progressKey()].stages;
+        const p = saved ? saved : {};
+        if (!p[FIRST_STAGE_ID]) p[FIRST_STAGE_ID] = { unlocked: true, stars: 0 };
+        return p;
+    }
+    let playerProgress = loadProgress();
 
     function saveProgress() {
         sharedSave = loadSharedSave(); // 先讀最新的，避免蓋掉存檔裡其他系統剛寫入的資料
-        sharedSave.multiplyHero = { stages: playerProgress };
+        sharedSave[progressKey()] = { stages: playerProgress };
         writeSharedSave(sharedSave);
     }
 
@@ -846,7 +845,7 @@
         svg.setAttribute('preserveAspectRatio', 'none');
         let holes = '';
         allStagesList.forEach(st => {
-            holes += '<circle id="fogc-' + st.id + '" cx="' + st.mx + '" cy="' + (st.my - 70) + '" r="0" fill="#000" data-r="' + Math.max(150, Math.round(st.mw * 0.95)) + '"></circle>';
+            holes += '<circle id="fogc-' + st.id + '" cx="' + (st.fx !== undefined ? st.fx : st.mx) + '" cy="' + (st.fy !== undefined ? st.fy : st.my - 70) + '" r="0" fill="#000" data-r="' + (st.fr !== undefined ? st.fr : Math.max(150, Math.round(st.mw * 0.95))) + '"></circle>';
         });
         svg.innerHTML =
             '<defs>' +
@@ -878,6 +877,13 @@
     function refreshMap() {
         const frontierId = findFrontierStageId();
 
+        const fogEl = document.querySelector('.map-fog');
+        if (fogEl) {
+            const allOpen = allStagesList.every(st => playerProgress[st.id] && playerProgress[st.id].unlocked);
+            fogEl.style.transition = 'opacity 1.2s';
+            fogEl.style.opacity = allOpen ? 0 : 1;
+        }
+
         allStagesList.forEach(st => {
             const hole = document.getElementById('fogc-' + st.id);
             const open = playerProgress[st.id] && playerProgress[st.id].unlocked;
@@ -891,7 +897,7 @@
             node.className = 'map-node ' + (pData.unlocked ? (pData.stars > 0 ? 'cleared' : 'unlocked') : 'locked')
                            + (s.id === frontierId ? ' frontier' : '');
             let html = '';
-            if (SHOW_NODE_LABELS) html += '<div class="node-label">' + s.id + ' ' + s.boss + '</div>';
+            if (SHOW_NODE_LABELS) html += '<div class="node-label" title="' + s.boss + '">' + s.id + '</div>';
             if (!pData.unlocked) html += '<span class="lock-badge">🔒</span>';
             if (pData.stars > 0) html += '<div class="stars-display">' + '★'.repeat(pData.stars) + '☆'.repeat(5 - pData.stars) + '</div>';
             node.innerHTML = html;
@@ -983,6 +989,7 @@
         ui.bossLabel.innerText = currentStageObj.boss;
         ui.bossImg.src = currentStageObj.img;
         ui.bossImg.alt = currentStageObj.boss;
+        ui.bossImg.classList.toggle('wide', !!currentStageObj.wide);
         ui.bossSprite.classList.remove('boss-defeated', 'lunge-reverse');
         ui.bossImg.classList.remove('hit-flash');
         resetHeroSprite();
@@ -1006,12 +1013,13 @@
     function randInt(min, max) {
         return Math.floor(Math.random() * (max - min + 1)) + min;
     }
-    // 取得這一題的兩個乘數；'mixed'（第 10 關）= 隨機借用前 9 關的範圍，兩個數字各抽各的
+    // 取得這一題的兩個乘數；'mixed'（第五關）= 兩個乘數各自先隨機抽「幾位數」（1～4 位），再抽數字
+    const DIGIT_RANGES = [[1, 9], [10, 99], [100, 999], [1000, 9999]];
     function pickFactors(stage) {
         let r1 = stage.r1, r2 = stage.r2;
         if (r1 === 'mixed') {
-            r1 = allStagesList[randInt(0, 8)].r1;
-            r2 = allStagesList[randInt(0, 8)].r2;
+            r1 = DIGIT_RANGES[randInt(0, 3)];
+            r2 = DIGIT_RANGES[randInt(0, 3)];
         }
         return [randInt(r1[0], r1[1]), randInt(r2[0], r2[1])];
     }
