@@ -2,406 +2,799 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>完美「扣」除 - 魔法密室逃脫</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>完美「扣」除 - 埃及金字塔密室逃脫</title>
+    <script src="./sync-client.js"></script>
+    <script src="./math-game-common.js"></script>
     <style>
-        :root {
-            --primary-color: #ffd700;
-            --bg-color: #1a0b2e;
-            --panel-bg: rgba(30, 15, 50, 0.9);
-            --danger-color: #ff4444;
-            --text-light: #e0d8ea;
-        }
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@700;900&family=Noto+Sans+TC:wght@700;900&display=swap');
 
+        * { box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; }
         body {
-            margin: 0;
-            padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: radial-gradient(circle at center, #2a164b 0%, #0a0414 100%);
-            color: var(--text-light);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            overflow: hidden;
+            margin: 0; padding: 0; height: 100vh; overflow: hidden;
+            font-family: 'Nunito', 'Noto Sans TC', sans-serif;
+            background: #120b04; display: flex; justify-content: center; align-items: center;
         }
-
-        /* 背景魔法光芒粒子效果的簡易替代 */
-        body::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background-image: 
-                radial-gradient(circle at 15% 50%, rgba(255, 215, 0, 0.05) 0%, transparent 20%),
-                radial-gradient(circle at 85% 30%, rgba(138, 43, 226, 0.1) 0%, transparent 25%);
-            z-index: -1;
-        }
-
         #game-container {
-            width: 90%;
-            max-width: 600px;
-            background: var(--panel-bg);
-            border: 2px solid #5a3e85;
-            border-radius: 15px;
-            padding: 30px;
-            box-shadow: 0 0 30px rgba(90, 62, 133, 0.6), inset 0 0 20px rgba(0,0,0,0.8);
-            text-align: center;
-            position: relative;
+            width: 1000px; height: 700px; position: relative; overflow: hidden; flex-shrink: 0;
+            background: radial-gradient(circle at 50% 30%, #4a3418 0%, #1a1006 100%);
+            border: 6px solid #8a5a1e; border-radius: 20px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.7), inset 0 0 60px rgba(0,0,0,0.6);
+            transform: scale(var(--scale, 1)); transform-origin: center center;
+            color: #f6e7c1;
         }
-
-        h1 {
-            color: var(--primary-color);
-            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
-            margin-top: 0;
-            letter-spacing: 2px;
-        }
-
-        .screen { display: none; }
-        .screen.active { display: block; }
-
-        .story-text {
-            font-size: 1.1em;
-            line-height: 1.6;
-            margin-bottom: 20px;
-            text-align: justify;
-        }
+        .screen { position: absolute; inset: 0; display: flex; flex-direction: column; z-index: 10; }
+        .hidden { display: none !important; }
 
         button {
-            background: linear-gradient(45deg, #4b2382, #7642c4);
-            color: white;
-            border: 1px solid #9c73e6;
-            padding: 10px 25px;
-            font-size: 1.2em;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s;
-            box-shadow: 0 0 10px rgba(118, 66, 196, 0.5);
+            background: #c0392b; color: #fff; border: none; padding: 12px 32px; font-size: 24px;
+            border-radius: 14px; cursor: pointer; box-shadow: 0 6px 0 #8e2a20; font-family: inherit;
+            font-weight: 900; transition: all .1s; touch-action: manipulation;
         }
+        button:active { transform: translateY(6px); box-shadow: 0 0 0 #8e2a20; }
+        .btn-gold { background: #d4a017; color: #3b2a05; box-shadow: 0 6px 0 #8a6a0b; }
+        .btn-gold:active { box-shadow: 0 0 0 #8a6a0b; }
+        .btn-dark { background: #5a4630; box-shadow: 0 6px 0 #3a2c1c; }
+        .btn-dark:active { box-shadow: 0 0 0 #3a2c1c; }
 
-        button:hover {
-            background: linear-gradient(45deg, #5c2c9e, #8b4ee6);
-            box-shadow: 0 0 20px rgba(139, 78, 230, 0.8);
-            transform: translateY(-2px);
+        /* ===== 浮層（開始、解釋、結果） ===== */
+        .overlay {
+            position: absolute; inset: 0; z-index: 100; background: rgba(10, 6, 2, 0.88);
+            display: flex; justify-content: center; align-items: center; text-align: center;
         }
+        .modal-box {
+            background: linear-gradient(#fff6dc, #f0dca8); color: #3b2a05; padding: 20px 36px;
+            border-radius: 20px; border: 5px solid #d4a017; box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+            width: 700px; max-height: 660px; overflow-y: auto;
+        }
+        .modal-box h1 { font-size: 36px; margin: 0 0 8px; color: #8a3b0b; }
+        .modal-box p { font-size: 18px; line-height: 1.65; margin: 0 0 14px; text-align: left; }
+        .modal-buttons { display: flex; justify-content: center; gap: 18px; margin-top: 12px; }
 
-        /* 遊戲主畫面 */
-        .status-bar {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 20px;
-            font-size: 1.2em;
-            font-weight: bold;
-            padding-bottom: 10px;
-            border-bottom: 1px solid #5a3e85;
+        /* ===== 世界地圖 ===== */
+        #map-screen { align-items: center; background: #120b04; }
+        .map-header {
+            height: 42px; width: 100%; flex-shrink: 0; display: flex; align-items: center;
+            justify-content: space-between; padding: 0 110px 0 14px; z-index: 5;
         }
+        .map-title { font-size: 18px; color: #ffe08a; text-shadow: 1px 1px 2px #000; line-height: 1.2; text-align: center; flex: 1; }
+        .inv { display: flex; gap: 3px; }
+        .inv-slot {
+            width: 26px; height: 26px; border: 2px solid #5a4630; border-radius: 6px; background: rgba(0,0,0,.45);
+            display: flex; align-items: center; justify-content: center; font-size: 11px; color: #7a6548; overflow: hidden;
+        }
+        .inv-slot img { width: 100%; height: 100%; object-fit: contain; }
+        #map-wrap {
+            position: relative; height: 636px; aspect-ratio: 1469 / 1071; border-radius: 10px; overflow: hidden;
+            box-shadow: 0 0 0 4px #8a5a1e, 0 10px 24px rgba(0,0,0,0.6); flex-shrink: 0; background: #e8d9b0;
+        }
+        #map-wrap .map-img { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+        .map-fog { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 2; pointer-events: none; }
+        .map-fog circle { transition: r 1.6s ease; }
+        .map-node {
+            position: absolute; z-index: 3; transform: translate(-50%, -50%); border: 2px dashed transparent;
+            border-radius: 10px; cursor: pointer; transition: background .2s, transform .15s;
+        }
+        .map-node.unlocked, .map-node.cleared { border-color: rgba(255, 215, 0, 0.95); }
+        .map-node.unlocked:hover, .map-node.cleared:hover { background: rgba(255,215,0,.3); transform: translate(-50%,-50%) scale(1.05); }
+        .map-node.frontier { border-style: solid; animation: node-pulse 1.2s ease-in-out infinite; }
+        @keyframes node-pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(255,215,0,.8); } 50% { box-shadow: 0 0 0 9px rgba(255,215,0,0); } }
+        .map-node.locked { cursor: not-allowed; }
+        .lock-badge {
+            position: absolute; right: -8px; top: -12px; font-size: 15px; background: rgba(0,0,0,.7);
+            border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;
+        }
+        .stars-display {
+            position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); margin-bottom: 1px;
+            font-size: 15px; color: #FFD600; white-space: nowrap; text-shadow: 0 0 3px #000, 1px 1px 2px #000; pointer-events: none;
+        }
+        #map-hero {
+            position: absolute; z-index: 5; width: 7%; height: auto; transform: translate(-50%, -100%); pointer-events: none;
+            filter: drop-shadow(0 0 2px #fff) drop-shadow(0 0 5px rgba(255,255,255,.9)) drop-shadow(0 3px 3px rgba(0,0,0,.5));
+        }
+        #map-toast {
+            position: absolute; left: 50%; bottom: 12px; transform: translateX(-50%); background: rgba(0,0,0,.8); color: #fff;
+            font-size: 18px; font-weight: 900; padding: 8px 22px; border-radius: 20px; z-index: 8; opacity: 0;
+            transition: opacity .25s; pointer-events: none; white-space: nowrap;
+        }
+        #map-toast.show { opacity: 1; }
 
-        .timer {
-            color: var(--danger-color);
-            text-shadow: 0 0 8px rgba(255, 68, 68, 0.6);
-            font-size: 1.5em;
-            display: flex;
-            align-items: center;
-            gap: 10px;
+        /* ===== 解謎畫面 ===== */
+        #puzzle-screen { padding: 14px 18px; }
+        #puzzle-bg {
+            position: absolute; inset: 0; z-index: -1; background-repeat: no-repeat; filter: blur(5px) brightness(.38) saturate(.8);
         }
+        #puzzle-screen::before { content: ''; position: absolute; inset: 0; z-index: -1; background: linear-gradient(rgba(20,10,0,.55), rgba(20,10,0,.8)); }
+        .top-bar {
+            display: flex; justify-content: space-between; align-items: center; gap: 10px;
+            background: rgba(30,18,6,.85); border: 2px solid #8a5a1e; padding: 8px 16px; border-radius: 14px; margin-bottom: 10px;
+        }
+        .top-bar .lv { text-align: center; line-height: 1.2; }
+        .top-bar .lv .a { font-size: 22px; font-weight: 900; color: #ffd54f; }
+        .top-bar .lv .b { font-size: 14px; color: #e8d6a8; }
+        .timer { font-size: 30px; font-weight: 900; color: #ff6b5a; display: flex; align-items: center; gap: 6px; min-width: 120px; justify-content: flex-end; }
+        .timer.low { animation: blink .5s infinite alternate; }
+        @keyframes blink { to { color: #fff; text-shadow: 0 0 12px #ff3b2a; } }
+        .bomb { animation: pulse 1s infinite alternate; display: inline-block; }
+        @keyframes pulse { to { transform: scale(1.18); } }
 
-        .bomb-icon {
-            font-size: 1.2em;
-            animation: pulse 1s infinite alternate;
+        .main-row { flex: 1; display: flex; gap: 14px; min-height: 0; align-items: stretch; }
+        .side-box {
+            width: 210px; flex-shrink: 0; background: rgba(30,18,6,.82); border: 3px solid #8a5a1e; border-radius: 18px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 10px; position: relative;
         }
+        .side-box .cap { font-size: 16px; font-weight: 900; margin-top: 8px; color: #ffe08a; text-align: center; }
+        .side-box .sub { font-size: 14px; color: #cdbb90; margin-top: 2px; }
+        .hero-avatar img { width: 130px; display: block; }
+        .center-area { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .obstacle {
+            font-size: 16px; line-height: 1.5; text-align: center; color: #f6e7c1; background: rgba(0,0,0,.45);
+            padding: 8px 16px; border-radius: 12px; margin-bottom: 12px; max-width: 520px;
+        }
+        .obstacle b { color: #ffd54f; }
+        .question-box {
+            background: #fff6dc; color: #3b2a05; padding: 16px 30px; border-radius: 18px; font-size: 46px; font-weight: 900;
+            border: 5px solid #d4a017; box-shadow: 0 10px 25px rgba(0,0,0,.5); white-space: nowrap; min-width: 330px; text-align: center;
+        }
+        .timer-bar { width: 80%; height: 10px; background: rgba(0,0,0,.5); border-radius: 6px; margin-top: 12px; overflow: hidden; border: 1px solid #8a5a1e; }
+        .timer-bar > div { height: 100%; width: 100%; background: linear-gradient(90deg, #ff6b5a, #ffd54f); transition: width 1s linear; }
+        .message-log { min-height: 46px; margin-top: 10px; font-size: 20px; font-weight: 900; text-align: center; text-shadow: 2px 2px 4px #000; }
 
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            100% { transform: scale(1.1); }
+        .control-area {
+            background: rgba(30,18,6,.88); border: 2px solid #8a5a1e; padding: 10px 16px; border-radius: 18px;
+            display: flex; justify-content: center; align-items: center; gap: 16px; margin-top: 10px;
         }
+        .answer-display {
+            width: 200px; height: 112px; background: #fff6dc; border: 4px solid #d4a017; border-radius: 14px; color: #3b2a05;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
+        .answer-label { font-size: 15px; color: #8a6a0b; font-weight: 900; }
+        .answer-value { font-size: 44px; font-weight: 900; min-height: 54px; line-height: 54px; letter-spacing: 2px; }
+        .answer-value.empty { color: #c9b98c; }
+        .numpad { display: grid; grid-template-columns: repeat(5, 62px); gap: 8px; }
+        .side-keys { display: flex; flex-direction: column; gap: 8px; }
+        .key-btn { padding: 0; width: 62px; height: 52px; font-size: 28px; border-radius: 12px; background: #3d8fc4; box-shadow: 0 5px 0 #2a6a97; }
+        .key-btn:active { box-shadow: 0 0 0 #2a6a97; transform: translateY(5px); }
+        .key-del { width: 150px; font-size: 20px; background: #e08e0b; box-shadow: 0 5px 0 #a86a05; }
+        .key-del:active { box-shadow: 0 0 0 #a86a05; }
+        .key-go { width: 150px; font-size: 22px; background: #c0392b; box-shadow: 0 5px 0 #8e2a20; }
+        .key-go:active { box-shadow: 0 0 0 #8e2a20; }
 
-        .obstacle-info {
-            color: #a78bfa;
-            font-size: 1.3em;
-            margin-bottom: 20px;
-        }
+        /* ===== 碎片板 ===== */
+        .shard-board { position: relative; box-shadow: 0 0 0 3px #d4a017, 0 6px 16px rgba(0,0,0,.6); background: rgba(0,0,0,.55); }
+        .cell { position: absolute; box-shadow: inset 0 0 0 1px rgba(255,215,0,.35); transition: transform 1.2s cubic-bezier(.2,.8,.2,1), opacity .4s; }
+        .cell::before { content: '?'; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 900; color: rgba(255,215,0,.35); }
+        .cell .shard { position: absolute; inset: 0; background-repeat: no-repeat; opacity: 0; transition: opacity .4s; }
+        .cell.got::before { content: ''; }
+        .cell.got .shard { opacity: 1; }
+        .cell.pop { animation: pop .6s ease; }
+        @keyframes pop { 0% { transform: scale(2.2); filter: brightness(3); } 100% { transform: scale(1); filter: brightness(1); } }
+        .shard-board.complete .cell { box-shadow: none; }
+        .shard-board.complete { box-shadow: none; background: none; }
+        .shard-board.complete.t1 { filter: drop-shadow(0 0 12px #cfd8dc); }
+        .shard-board.complete.t2 { filter: drop-shadow(0 0 14px #66bb6a); }
+        .shard-board.complete.t3 { filter: drop-shadow(0 0 16px #42a5f5); }
+        .shard-board.complete.t4 { filter: drop-shadow(0 0 20px #ffa726) drop-shadow(0 0 8px #fff3b0); }
+        .shard-board.complete.t5 { animation: rainbow 2s linear infinite; }
+        @keyframes rainbow { 0% { filter: drop-shadow(0 0 22px #ff4081) hue-rotate(0deg); } 100% { filter: drop-shadow(0 0 22px #ff4081) hue-rotate(360deg); } }
+        .synth-stage { display: flex; justify-content: center; align-items: center; height: 232px; margin: 2px 0; }
+        .synth-stage .cell.scatter { transform: translate(var(--dx), var(--dy)) rotate(var(--rot)); }
 
-        .math-problem {
-            font-size: 3em;
-            margin: 20px 0;
-            color: #fff;
-            text-shadow: 0 0 15px rgba(255, 255, 255, 0.4);
-            letter-spacing: 5px;
-        }
+        .tier-banner { display: inline-block; font-size: 26px; font-weight: 900; padding: 4px 26px; border-radius: 30px; color: #fff; text-shadow: 1px 1px 3px #000; margin: 4px 0; }
+        .tier-banner.t1 { background: #78909c; } .tier-banner.t2 { background: #43a047; }
+        .tier-banner.t3 { background: #1e88e5; } .tier-banner.t4 { background: #f57c00; }
+        .tier-banner.t5 { background: linear-gradient(90deg, #ff4081, #ffd54f, #7c4dff); }
+        .star-result { font-size: 36px; letter-spacing: 4px; color: #f1a900; text-shadow: 2px 2px 0 #3b2a05; }
+        .stats-details { background: rgba(255,255,255,.55); padding: 10px 16px; border-radius: 10px; font-size: 17px; text-align: left; border: 2px solid #c9b98c; line-height: 1.6; }
 
-        input[type="number"] {
-            font-size: 1.5em;
-            padding: 10px;
-            width: 150px;
-            text-align: center;
-            background: rgba(0, 0, 0, 0.5);
-            border: 2px solid #5a3e85;
-            color: white;
-            border-radius: 8px;
-            outline: none;
-        }
-        
-        input[type="number"]:focus {
-            border-color: var(--primary-color);
-            box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
-        }
-
-        .items-container {
-            margin-top: 20px;
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-        }
-
-        .item-slot {
-            width: 40px;
-            height: 40px;
-            border: 2px dashed #5a3e85;
-            border-radius: 5px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 0.8em;
-            color: #5a3e85;
-        }
-
-        .item-slot.filled {
-            border: 2px solid var(--primary-color);
-            background: rgba(255, 215, 0, 0.2);
-            color: var(--primary-color);
-            text-shadow: 0 0 5px var(--primary-color);
-        }
-
-        .feedback {
-            height: 24px;
-            margin-top: 15px;
-            font-weight: bold;
-        }
+        /* ===== 解釋視窗 ===== */
+        #explain-overlay .modal-box { width: 680px; }
+        #explain-overlay h1 { color: #b3261e; font-size: 34px; }
+        .vert { font-family: 'Courier New', monospace; font-size: 30px; font-weight: 900; line-height: 1.25; display: inline-block; text-align: right; background: #fff; border: 2px solid #c9b98c; border-radius: 10px; padding: 8px 16px; letter-spacing: 6px; }
+        .vert .line { border-top: 3px solid #3b2a05; margin-top: 2px; color: #0a7a2f; }
+        .steps { text-align: left; font-size: 17px; line-height: 1.6; margin: 10px 0 4px; padding-left: 0; list-style: none; }
+        .steps li { margin-bottom: 4px; background: rgba(255,255,255,.5); border-left: 5px solid #d4a017; padding: 4px 10px; border-radius: 6px; }
+        .steps li b { color: #8a3b0b; }
+        .ans-line { font-size: 20px; font-weight: 900; margin: 6px 0; }
+        .ans-line .bad { color: #b3261e; } .ans-line .good { color: #0a7a2f; }
     </style>
 </head>
 <body>
-
 <div id="game-container">
+
+    <div id="gbit-badge" style="position:absolute; top:8px; right:12px; z-index:20; background:rgba(255,255,255,.92); padding:4px 14px; border-radius:20px; font-weight:900; color:#8E44AD; font-size:15px; box-shadow:0 4px 10px rgba(0,0,0,.3);">
+        💰 <span id="gbit-display">0</span>
+    </div>
+
     <!-- 開始畫面 -->
-    <div id="screen-intro" class="screen active">
-        <h1>完美「扣」除</h1>
-        <div class="story-text">
-            你是一名充滿極高智慧的14歲天才少年。穿著俐落的校服，手中緊握著寫滿數學公式的皮革筆記本。<br><br>
-            你被困在一座充滿魔法與未知機關的古老城堡中。空氣中飄浮著微光粒子，而唯一的逃生方法，就是運用你銳利的雙眼與無可匹敵的「減法」運算能力！<br><br>
-            <strong>規則：</strong>破解障礙物旁邊的定時炸彈！每次有 30 秒，答錯扣 5 秒。在每個區域成功計算 3 次，蒐集齊 3 樣逃離物品，即可前往下一個區域！
-        </div>
-        <button onclick="startGame()">開始逃脫</button>
-    </div>
-
-    <!-- 遊戲畫面 -->
-    <div id="screen-game" class="screen">
-        <div class="status-bar">
-            <div>區域: <span id="ui-level">1/10</span></div>
-            <div class="timer"><span class="bomb-icon">💣</span> <span id="ui-time">30</span>s</div>
-        </div>
-        
-        <div class="obstacle-info">
-            目前障礙：<span id="ui-obstacle" style="color: var(--primary-color);">鐵門</span><br>
-            <span style="font-size: 0.8em; color: #ccc;">目標：收集 3 個 <span id="ui-item-name">鐵門鑰匙</span></span>
-        </div>
-
-        <div class="math-problem" id="ui-problem">? - ? = </div>
-        
-        <div>
-            <input type="number" id="answer-input" placeholder="輸入答案" onkeypress="handleEnter(event)">
-            <button onclick="checkAnswer()" style="margin-left: 10px;">解除</button>
-        </div>
-
-        <div class="feedback" id="ui-feedback"></div>
-
-        <div class="items-container" id="ui-items">
-            <div class="item-slot">空</div>
-            <div class="item-slot">空</div>
-            <div class="item-slot">空</div>
+    <div id="start-screen" class="overlay">
+        <div class="modal-box">
+            <h1>完美「扣」除</h1>
+            <div style="font-size:20px;font-weight:900;color:#8a6a0b;margin-bottom:10px;">埃及金字塔・密室逃脫</div>
+            <p>你是身手矯健的忍者勇者，不小心被困在古老的金字塔裡！要逃出去，就要一層一層破解「減法炸彈」，收集碎片、合成通關物件。</p>
+            <p>
+                🏺 金字塔共有 <b>10 層</b>，每層要解 <b>10 題</b>減法。<br>
+                💣 每題 <b>30 秒</b>，時間到炸彈就爆炸（算答錯）。<br>
+                ✅ <b>答對</b>：拿到 1 片碎片，直接進下一題。<br>
+                ❌ <b>答錯</b>：會告訴你怎麼算，按「確認」才進下一題。<br>
+                ✨ <b>答對率 60% 以上</b>就能把碎片合成通關物件：<br>
+                &nbsp;&nbsp;&nbsp;60% 普通★　70% 優良★★　80% 精緻★★★<br>
+                &nbsp;&nbsp;&nbsp;90% 傳說★★★★　100% 神話★★★★★<br>
+                🔒 不到 60%，碎片合不起來，要重新挑戰這一層喔！
+            </p>
+            <button class="btn-gold" onclick="showMap()">進入金字塔</button>
         </div>
     </div>
 
-    <!-- 結束畫面 -->
-    <div id="screen-result" class="screen">
-        <h1 id="result-title"></h1>
-        <div class="story-text" id="result-msg"></div>
-        <button onclick="resetGame()">重新挑戰</button>
+    <!-- 地圖畫面 -->
+    <div id="map-screen" class="screen hidden">
+        <div class="map-header">
+            <div class="inv" id="inv"></div>
+            <div class="map-title">🏺 金字塔十層密室　點發亮的關卡，忍者就會走過去！</div>
+        </div>
+        <div id="map-wrap">
+            <img class="map-img" src="./assets/perfect-deduct/world-map.jpg" alt="金字塔地圖" draggable="false">
+            <img id="map-hero" src="./assets/perfect-deduct/hero-idle.png" alt="忍者勇者" draggable="false">
+            <div id="map-toast"></div>
+        </div>
+    </div>
+
+    <!-- 解謎畫面 -->
+    <div id="puzzle-screen" class="screen hidden">
+        <div id="puzzle-bg"></div>
+        <div class="top-bar">
+            <button class="btn-dark" style="padding:8px 18px;font-size:18px;" onclick="quitToMap()">逃跑</button>
+            <div class="lv"><div class="a" id="pz-title">第 1 層</div><div class="b" id="pz-sub">第 1 / 10 題</div></div>
+            <div class="timer" id="pz-timer"><span class="bomb">💣</span><span id="pz-time">30</span>s</div>
+        </div>
+        <div class="main-row">
+            <div class="side-box">
+                <div class="hero-avatar"><img id="hero-avatar-el" src="./assets/perfect-deduct/hero-idle.png" alt="忍者勇者" draggable="false"></div>
+                <div class="cap">忍者勇者</div>
+                <div class="sub">答對 <span id="pz-correct">0</span> 題</div>
+            </div>
+            <div class="center-area">
+                <div class="obstacle" id="pz-story"></div>
+                <div class="question-box" id="pz-question">1 - 1 = ?</div>
+                <div class="timer-bar"><div id="pz-bar"></div></div>
+                <div class="message-log" id="pz-msg">準備拆彈！</div>
+            </div>
+            <div class="side-box">
+                <div id="pz-board-holder"></div>
+                <div class="cap" id="pz-shard-name">碎片</div>
+                <div class="sub"><span id="pz-shard-count">0</span> / 10 片</div>
+            </div>
+        </div>
+        <div class="control-area">
+            <div class="answer-display">
+                <div class="answer-label">我的答案</div>
+                <div id="answer-value" class="answer-value empty">?</div>
+            </div>
+            <div class="numpad" id="numpad">
+                <button class="key-btn" data-digit="1">1</button><button class="key-btn" data-digit="2">2</button>
+                <button class="key-btn" data-digit="3">3</button><button class="key-btn" data-digit="4">4</button>
+                <button class="key-btn" data-digit="5">5</button><button class="key-btn" data-digit="6">6</button>
+                <button class="key-btn" data-digit="7">7</button><button class="key-btn" data-digit="8">8</button>
+                <button class="key-btn" data-digit="9">9</button><button class="key-btn" data-digit="0">0</button>
+            </div>
+            <div class="side-keys">
+                <button class="key-btn key-del" id="key-del">⌫ 修正</button>
+                <button class="key-btn key-go" id="submit-btn">💣 拆彈！</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 答錯解釋 -->
+    <div id="explain-overlay" class="overlay hidden">
+        <div class="modal-box">
+            <h1 id="ex-title">答錯了</h1>
+            <div class="ans-line" id="ex-ans"></div>
+            <div id="ex-vert"></div>
+            <ul class="steps" id="ex-steps"></ul>
+            <div class="ans-line" id="ex-check" style="font-size:17px;color:#5a4630;"></div>
+            <div class="modal-buttons"><button class="btn-gold" id="ex-ok">確認，下一題</button></div>
+        </div>
+    </div>
+
+    <!-- 本層結果（合成 / 失敗） -->
+    <div id="result-overlay" class="overlay hidden">
+        <div class="modal-box" style="text-align:center;">
+            <h1 id="rs-title"></h1>
+            <div class="synth-stage" id="rs-stage"></div>
+            <div id="rs-after"></div>
+            <div class="modal-buttons" id="rs-buttons"></div>
+        </div>
     </div>
 </div>
 
 <script>
-    // 關卡設定：名稱、物品、[位數1, 位數2]
-    const levels = [
-        { obstacle: '鐵門', item: '鐵門鑰匙', digits: [1, 1] },
-        { obstacle: '房間', item: '板手', digits: [2, 1] },
-        { obstacle: '地窖', item: '指北針', digits: [2, 2] },
-        { obstacle: '迷宮', item: '斧頭', digits: [3, 1] },
-        { obstacle: '小花園', item: '剪草器', digits: [3, 2] },
-        { obstacle: '怪物區', item: '煙霧彈', digits: [3, 3] },
-        { obstacle: '火海', item: '防護衣', digits: [4, 1] },
-        { obstacle: '水牢', item: '氧氣筒', digits: [4, 2] },
-        { obstacle: '大廳', item: '鋼鐵舞鞋', digits: [4, 3] },
-        { obstacle: '城堡大門', item: '大門鑰匙', digits: [4, 4] }
+    // ================= 素材與關卡設定 =================
+    const A = './assets/perfect-deduct/';
+    const HERO_IMG = {
+        idle: A + 'hero-idle.png', runRight: A + 'hero-run-right.gif', runLeft: A + 'hero-run-left.gif',
+        attack: A + 'hero-attack.gif', hurt: A + 'hero-hurt.gif', lose: A + 'hero-lose.gif'
+    };
+    const HERO_ANIM_MS = { attack: 770, hurt: 2220, lose: 2760 };
+
+    // mx/my/mw/mh：地圖(1469×1071)上標籤中心與大小；fog：迷霧要挖開的圓 [x, y, 半徑]；iw/ih：碎片圖原始尺寸
+    const MAP_W = 1469, MAP_H = 1071;
+    const QUESTIONS_PER_LAYER = 10, PASS_ACC = 60, TIME_PER_Q = 30;
+    const layers = [
+        { id: 1, name: '地底冥界與阿努比斯審判廳', obstacle: '阿努比斯的天秤', shard: '石刻心臟碎片', item: '石刻心臟', img: 'item-1.png', iw: 138, ih: 168, digits: [1, 1],
+          story: '阿努比斯的天秤正在審判你的心！算對減法，才能取回被鎖鏈纏住的石刻心臟碎片。',
+          mx: 358, my: 108, mw: 240, mh: 92, fog: [[300, 270, 250], [358, 108, 130]] },
+        { id: 2, name: '木乃伊防腐工坊', obstacle: '木乃伊工匠', shard: '卡諾卜罐碎片', item: '卡諾卜罐', img: 'item-2.png', iw: 115, ih: 194, digits: [2, 1],
+          story: '木乃伊師傅守著一排卡諾卜罐，算出正確的差，才能拿到罐子的碎片。',
+          mx: 638, my: 150, mw: 240, mh: 48, fog: [[565, 315, 240], [638, 150, 130]] },
+        { id: 3, name: '建造者之墓與工具室', obstacle: '巨石機關', shard: '滑輪組裝圖碎片', item: '滑輪組裝圖', img: 'item-3.png', iw: 142, ih: 186, digits: [2, 2],
+          story: '一塊巨石吊在半空中！算對減法，才能找到滑輪組裝圖的碎片。',
+          mx: 222, my: 487, mw: 310, mh: 48, fog: [[210, 700, 270], [222, 487, 170]] },
+        { id: 4, name: '尼羅河豐饒祭壇', obstacle: '尼羅河水閘', shard: '埃及曆法與星座碎片', item: '埃及曆法與星座圖', img: 'item-4.png', iw: 143, ih: 173, digits: [3, 1],
+          story: '尼羅河的水位忽高忽低，算出差，才能拼出埃及曆法與星座的碎片。',
+          mx: 518, my: 632, mw: 240, mh: 48, fog: [[530, 790, 200], [518, 632, 130]] },
+        { id: 5, name: '聖甲蟲迷宮廊道', obstacle: '聖甲蟲群', shard: '迷宮路線指引碎片', item: '迷宮路線指引', img: 'item-5.png', iw: 143, ih: 151, digits: [3, 2],
+          story: '聖甲蟲爬滿了迷宮牆壁！算對減法，才能收集迷宮路線指引的碎片。',
+          mx: 806, my: 485, mw: 250, mh: 48, fog: [[790, 740, 310], [806, 485, 140]] },
+        { id: 6, name: '大祭司的星象觀測台', obstacle: '星象雕像', shard: '雕像對應碎片', item: '雕像對應圖', img: 'item-6.png', iw: 140, ih: 205, digits: [3, 3],
+          story: '四尊神像各有各的位置！算對減法，才能取得雕像對應碎片。',
+          mx: 932, my: 78, mw: 318, mh: 48, fog: [[935, 240, 240], [932, 78, 170]] },
+        { id: 7, name: '皇家藏寶庫', obstacle: '寶箱機關', shard: '黃金聖甲蟲碎片', item: '黃金聖甲蟲', img: 'item-7.png', iw: 145, ih: 158, digits: [4, 1],
+          story: '金光閃閃的寶庫裡藏著黃金聖甲蟲，算對減法才能拿到碎片。',
+          mx: 1065, my: 452, mw: 210, mh: 48, fog: [[1065, 585, 200], [1065, 452, 120]] },
+        { id: 8, name: '法老詛咒之廊', obstacle: '詛咒石棺', shard: '象形文字組合碎片', item: '象形文字組合', img: 'item-8.png', iw: 133, ih: 196, digits: [4, 2],
+          story: '法老的詛咒刻在牆上！算對減法，才能收集象形文字組合碎片。',
+          mx: 1327, my: 524, mw: 230, mh: 48, fog: [[1300, 710, 240], [1327, 524, 130]] },
+        { id: 9, name: '法老主墓室', obstacle: '地板機關', shard: '密碼鎖碎片', item: '密碼鎖', img: 'item-9.png', iw: 127, ih: 178, digits: [4, 3],
+          story: '主墓室的地板機關只認正確答案！算對減法，才能拿到密碼鎖碎片。',
+          mx: 989, my: 775, mw: 210, mh: 42, fog: [[990, 890, 230], [989, 775, 120]] },
+        { id: 10, name: '太陽神拉之巔', obstacle: '太陽神方尖碑', shard: '反射鏡使用法碎片', item: '反射鏡使用法', img: 'item-10.png', iw: 138, ih: 170, digits: [4, 4],
+          story: '太陽神拉的光芒要靠反射鏡引導！算對減法，收集反射鏡使用法碎片。',
+          mx: 1267, my: 110, mw: 280, mh: 54, fog: [[1275, 300, 240], [1267, 110, 150]] }
     ];
+    const TIERS = [
+        { min: 60,  name: '普通', stars: 1, cls: 't1' },
+        { min: 70,  name: '優良', stars: 2, cls: 't2' },
+        { min: 80,  name: '精緻', stars: 3, cls: 't3' },
+        { min: 90,  name: '傳說', stars: 4, cls: 't4' },
+        { min: 100, name: '神話', stars: 5, cls: 't5' }
+    ];
+    function tierFor(acc) { let t = null; TIERS.forEach(x => { if (acc >= x.min) t = x; }); return t; }
+    const layerById = id => layers.find(l => l.id === id);
 
-    let currentLevelIdx = 0;
-    let itemsCollected = 0;
-    let timeLeft = 30;
-    let timerInterval = null;
-    let currentAnswer = 0;
+    // 預留：之後有音樂檔，把路徑填進來即可（空字串 = 不播）
+    const LAYER_MUSIC = {};
+    const bgm = new Audio(); bgm.loop = true; bgm.volume = 0.45;
+    function playLayerMusic(id) { const s = LAYER_MUSIC[id]; if (!s) return; bgm.src = s; bgm.play().catch(() => {}); }
+    function stopMusic() { bgm.pause(); }
 
-    function switchScreen(screenId) {
-        document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
-        document.getElementById(screenId).classList.add('active');
+    // 按鈕音效
+    let audioCtx = null;
+    function playClickSound() {
+        try {
+            audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+            const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+            o.type = 'square'; o.frequency.value = 880;
+            g.gain.setValueAtTime(0.12, audioCtx.currentTime);
+            g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.12);
+            o.connect(g).connect(audioCtx.destination); o.start(); o.stop(audioCtx.currentTime + 0.12);
+        } catch (e) {}
+    }
+    document.addEventListener('click', e => { if (e.target.closest && e.target.closest('button, .map-node')) playClickSound(); }, true);
+
+    // ================= 存檔（跟加法勇者同一套學號登入） =================
+    const studentNumber = (typeof keyagentGetActiveStudentNumber === 'function') ? keyagentGetActiveStudentNumber() : null;
+    const LOCAL_KEY = 'perfect-deduct-egypt-progress';
+    function loadSharedSave() {
+        if (!studentNumber || typeof keyagentSaveKeyFor !== 'function') return {};
+        try { const raw = localStorage.getItem(keyagentSaveKeyFor(studentNumber)); return raw ? JSON.parse(raw) : {}; } catch (e) { return {}; }
+    }
+    function writeSharedSave(save) {
+        if (!studentNumber || typeof keyagentSaveKeyFor !== 'function') return;
+        save.lastModified = Date.now();
+        try { localStorage.setItem(keyagentSaveKeyFor(studentNumber), JSON.stringify(save)); } catch (e) {}
+    }
+    let progress = {};
+    (function initProgress() {
+        const s = loadSharedSave();
+        if (s.perfectDeduct && s.perfectDeduct.layers) progress = s.perfectDeduct.layers;
+        else if (!studentNumber) { try { progress = JSON.parse(localStorage.getItem(LOCAL_KEY) || '{}'); } catch (e) { progress = {}; } }
+        if (!progress[1]) progress[1] = { unlocked: true, stars: 0, acc: 0 };
+    })();
+    function saveProgress() {
+        if (studentNumber) {
+            const s = loadSharedSave(); s.perfectDeduct = { layers: progress }; writeSharedSave(s);
+        } else { try { localStorage.setItem(LOCAL_KEY, JSON.stringify(progress)); } catch (e) {} }
+    }
+    function awardTokens(n) {
+        if (n <= 0 || !studentNumber) return;
+        const s = loadSharedSave();
+        s.gbit = (s.gbit || 0) + n; s.gbitEarnedLifetime = (s.gbitEarnedLifetime || 0) + n;
+        writeSharedSave(s); updateGbitDisplay();
+        if (typeof keyagentCloudSyncNow === 'function') keyagentCloudSyncNow();
+    }
+    function updateGbitDisplay() { document.getElementById('gbit-display').innerText = (loadSharedSave().gbit) || 0; }
+
+    // ================= 勇者動畫 =================
+    const heroImgEl = document.getElementById('hero-avatar-el');
+    const gifBlobs = {}; let gifBlobUrl = null, gifSeq = 0, heroToken = 0;
+    function preloadAssets() {
+        ['attack', 'hurt', 'lose'].forEach(k => fetch(HERO_IMG[k]).then(r => r.blob()).then(b => { gifBlobs[k] = b; }).catch(() => {}));
+        [HERO_IMG.idle, HERO_IMG.runLeft, HERO_IMG.runRight].forEach(s => { new Image().src = s; });
+        layers.forEach(l => { new Image().src = A + l.img; });
+    }
+    function freshGifUrl(k) {
+        if (gifBlobUrl) { URL.revokeObjectURL(gifBlobUrl); gifBlobUrl = null; }
+        if (gifBlobs[k]) { gifBlobUrl = URL.createObjectURL(gifBlobs[k]); return gifBlobUrl; }
+        return HERO_IMG[k] + '?r=' + (++gifSeq);
+    }
+    function playHeroAnim(k, backToIdle = true) {
+        const t = ++heroToken; heroImgEl.src = freshGifUrl(k);
+        if (backToIdle) setTimeout(() => { if (t === heroToken) heroImgEl.src = HERO_IMG.idle; }, HERO_ANIM_MS[k] || 1500);
+    }
+    function resetHeroSprite() { heroToken++; heroImgEl.src = HERO_IMG.idle; }
+
+    // ================= 畫面切換 =================
+    const screens = { start: document.getElementById('start-screen'), map: document.getElementById('map-screen'), puzzle: document.getElementById('puzzle-screen') };
+    function switchScreen(n) { Object.values(screens).forEach(s => s.classList.add('hidden')); screens[n].classList.remove('hidden'); }
+
+    // ================= 世界地圖 =================
+    const mapWrap = document.getElementById('map-wrap'), mapHero = document.getElementById('map-hero'), mapToast = document.getElementById('map-toast');
+    let heroLayerId = null, mapBusy = false;
+    const pctX = x => (x / MAP_W * 100) + '%', pctY = y => (y / MAP_H * 100) + '%';
+    function heroSpot(l) { return { x: l.mx, y: l.my + l.mh / 2 + 105 }; }
+
+    function findFrontierId() {
+        for (const l of layers) { const p = progress[l.id]; if (p && p.unlocked && p.stars === 0) return l.id; }
+        return layers[layers.length - 1].id;
     }
 
-    function getRandomIntByDigits(digits) {
-        const min = Math.pow(10, digits - 1);
-        const max = Math.pow(10, digits) - 1;
+    function buildMap() {
+        const NS = 'http://www.w3.org/2000/svg';
+        const svg = document.createElementNS(NS, 'svg');
+        svg.setAttribute('class', 'map-fog'); svg.setAttribute('viewBox', `0 0 ${MAP_W} ${MAP_H}`); svg.setAttribute('preserveAspectRatio', 'none');
+        let holes = '';
+        layers.forEach(l => l.fog.forEach((f, i) => {
+            holes += `<circle id="fog-${l.id}-${i}" cx="${f[0]}" cy="${f[1]}" r="0" fill="#000" data-r="${f[2]}"></circle>`;
+        }));
+        svg.innerHTML = `<defs><filter id="fogBlur" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="26"/></filter>
+            <mask id="fogMask" maskUnits="userSpaceOnUse" x="0" y="0" width="${MAP_W}" height="${MAP_H}"><rect width="${MAP_W}" height="${MAP_H}" fill="#fff"/><g filter="url(#fogBlur)">${holes}</g></mask></defs>
+            <rect width="${MAP_W}" height="${MAP_H}" fill="#0a0603" fill-opacity="0.9" mask="url(#fogMask)"/>`;
+        mapWrap.insertBefore(svg, mapHero);
+
+        layers.forEach(l => {
+            const n = document.createElement('div');
+            n.className = 'map-node locked'; n.id = 'node-' + l.id;
+            n.title = `第 ${l.id} 層 ${l.name}`;
+            n.style.left = pctX(l.mx); n.style.top = pctY(l.my);
+            n.style.width = (l.mw / MAP_W * 100) + '%'; n.style.height = (l.mh / MAP_H * 100) + '%';
+            n.onclick = () => onNodeClick(l.id);
+            mapWrap.insertBefore(n, mapHero);
+        });
+
+        const inv = document.getElementById('inv');
+        layers.forEach(l => { const s = document.createElement('div'); s.className = 'inv-slot'; s.id = 'inv-' + l.id; s.innerText = l.id; inv.appendChild(s); });
+    }
+    const TIER_COLORS = ['#cfd8dc', '#66bb6a', '#42a5f5', '#ffa726', '#ff4081'];
+
+    function refreshMap() {
+        const frontier = findFrontierId();
+        layers.forEach(l => {
+            const p = progress[l.id] || { unlocked: false, stars: 0 };
+            l.fog.forEach((f, i) => {
+                const h = document.getElementById(`fog-${l.id}-${i}`);
+                if (h) h.style.setProperty('r', p.unlocked ? h.dataset.r + 'px' : '0px');
+            });
+            const node = document.getElementById('node-' + l.id);
+            node.className = 'map-node ' + (p.unlocked ? (p.stars > 0 ? 'cleared' : 'unlocked') : 'locked') + (l.id === frontier ? ' frontier' : '');
+            let html = '';
+            if (!p.unlocked) html += '<span class="lock-badge">🔒</span>';
+            if (p.stars > 0) html += `<div class="stars-display">${'★'.repeat(p.stars)}${'☆'.repeat(5 - p.stars)}</div>`;
+            node.innerHTML = html;
+
+            const slot = document.getElementById('inv-' + l.id);
+            if (p.stars > 0) {
+                slot.innerHTML = `<img src="${A + l.img}" alt="">`;
+                slot.style.borderColor = TIER_COLORS[p.stars - 1];
+                slot.title = `${TIERS[p.stars - 1].name}・${l.item}`;
+            } else { slot.innerHTML = l.id; slot.style.borderColor = '#5a4630'; slot.title = ''; }
+        });
+    }
+    function placeHeroInstant(id) {
+        const l = layerById(id); if (!l) return; const p = heroSpot(l);
+        mapHero.style.transition = 'none'; mapHero.style.left = pctX(p.x); mapHero.style.top = pctY(p.y);
+        mapHero.src = HERO_IMG.idle; heroLayerId = id;
+    }
+    function walkHeroTo(id, done) {
+        const from = layerById(heroLayerId), to = layerById(id);
+        if (!from || !to || from.id === to.id) { setTimeout(done, 250); return; }
+        const a = heroSpot(from), b = heroSpot(to), dx = b.x - a.x, dist = Math.hypot(dx, b.y - a.y);
+        const sec = Math.min(2.8, Math.max(0.8, dist / 420));
+        mapHero.src = dx >= 0 ? HERO_IMG.runRight : HERO_IMG.runLeft;
+        void mapHero.offsetWidth;
+        mapHero.style.transition = `left ${sec}s linear, top ${sec}s linear`;
+        mapHero.style.left = pctX(b.x); mapHero.style.top = pctY(b.y);
+        setTimeout(() => { mapHero.src = HERO_IMG.idle; heroLayerId = id; setTimeout(done, 200); }, sec * 1000 + 60);
+    }
+    function showMapToast(t) {
+        mapToast.innerText = t; mapToast.classList.add('show');
+        clearTimeout(showMapToast._t); showMapToast._t = setTimeout(() => mapToast.classList.remove('show'), 1800);
+    }
+    function onNodeClick(id) {
+        if (mapBusy) return;
+        const p = progress[id];
+        if (!p || !p.unlocked) { showMapToast('🔒 先破解前一層，這一層才會開啟喔！'); return; }
+        goToLayer(id);
+    }
+    function goToLayer(id) { mapBusy = true; walkHeroTo(id, () => { mapBusy = false; startLayer(id); }); }
+    function showMap() {
+        stopMusic();
+        ['explain-overlay', 'result-overlay'].forEach(i => document.getElementById(i).classList.add('hidden'));
+        if (heroLayerId === null) placeHeroInstant(findFrontierId());
+        switchScreen('map'); void mapWrap.offsetWidth; refreshMap();
+    }
+
+    // ================= 碎片板 =================
+    function buildBoard(layer, boxW, boxH) {
+        const cols = 5, rows = 2, s = Math.min(boxW / layer.iw, boxH / layer.ih);
+        const b = document.createElement('div'); b.className = 'shard-board';
+        b.style.width = Math.round(layer.iw * s) + 'px'; b.style.height = Math.round(layer.ih * s) + 'px';
+        for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+            const cell = document.createElement('div'); cell.className = 'cell';
+            cell.style.width = (100 / cols) + '%'; cell.style.height = (100 / rows) + '%';
+            cell.style.left = (c * 100 / cols) + '%'; cell.style.top = (r * 100 / rows) + '%';
+            const sh = document.createElement('div'); sh.className = 'shard';
+            sh.style.backgroundImage = `url(${A + layer.img})`;
+            sh.style.backgroundSize = `${cols * 100}% ${rows * 100}%`;
+            sh.style.backgroundPosition = `${c * 100 / (cols - 1)}% ${r * 100 / (rows - 1)}%`;
+            cell.appendChild(sh); b.appendChild(cell);
+        }
+        return b;
+    }
+
+    // ================= 解謎流程 =================
+    const $ = id => document.getElementById(id);
+    let curLayer = null, qs = [], qi = 0, collected = [], correctCount = 0, totalTime = 0;
+    let timeLeft = TIME_PER_Q, timerInterval = null, qStart = 0, answerStr = '', acceptingInput = false;
+    let curAns = 0, curQ = null, explainOpen = false, explainShownAt = 0, board = null;
+
+    function randByDigits(d) {
+        if (d === 1) return Math.floor(Math.random() * 9) + 1;
+        const min = Math.pow(10, d - 1), max = Math.pow(10, d) - 1;
         return Math.floor(Math.random() * (max - min + 1)) + min;
     }
-
-    function generateProblem() {
-        const levelData = levels[currentLevelIdx];
-        let num1 = getRandomIntByDigits(levelData.digits[0]);
-        let num2 = getRandomIntByDigits(levelData.digits[1]);
-
-        // 確保結果不為負數
-        if (num1 < num2) {
-            let temp = num1;
-            num1 = num2;
-            num2 = temp;
+    function makeQuestions(l) {
+        const seen = new Set(), out = []; let guard = 0;
+        while (out.length < QUESTIONS_PER_LAYER && guard++ < 1000) {
+            let a = randByDigits(l.digits[0]), b = randByDigits(l.digits[1]);
+            if (a < b) { const t = a; a = b; b = t; }
+            if (a === b) continue;
+            const k = a + '-' + b; if (seen.has(k)) continue;
+            seen.add(k); out.push({ a, b });
         }
-
-        currentAnswer = num1 - num2;
-        document.getElementById('ui-problem').innerText = `${num1} - ${num2} =`;
-        document.getElementById('answer-input').value = '';
-        document.getElementById('answer-input').focus();
+        return out;
     }
 
-    function updateUI() {
-        const levelData = levels[currentLevelIdx];
-        document.getElementById('ui-level').innerText = `${currentLevelIdx + 1}/${levels.length}`;
-        document.getElementById('ui-obstacle').innerText = levelData.obstacle;
-        document.getElementById('ui-item-name').innerText = levelData.item;
-        
-        // 更新物品槽
-        const slots = document.getElementById('ui-items').children;
-        for (let i = 0; i < 3; i++) {
-            if (i < itemsCollected) {
-                slots[i].className = 'item-slot filled';
-                slots[i].innerText = '取得';
-            } else {
-                slots[i].className = 'item-slot';
-                slots[i].innerText = '空';
-            }
-        }
+    function setPuzzleBg(l) {
+        const z = 0.95, cw = 988, ch = 688, w = MAP_W * z, h = MAP_H * z;
+        const f = l.fog[0];
+        const px = Math.min(0, Math.max(cw - w, cw / 2 - f[0] * z)), py = Math.min(0, Math.max(ch - h, ch / 2 - f[1] * z));
+        const bg = $('puzzle-bg');
+        bg.style.backgroundImage = `url(${A}world-map.jpg)`;
+        bg.style.backgroundSize = `${w}px ${h}px`; bg.style.backgroundPosition = `${px}px ${py}px`;
     }
 
-    function startTimer() {
+    function startLayer(id) {
+        curLayer = layerById(id); if (!curLayer) return;
+        qs = makeQuestions(curLayer); qi = 0; collected = new Array(QUESTIONS_PER_LAYER).fill(false);
+        correctCount = 0; totalTime = 0;
+        setPuzzleBg(curLayer); resetHeroSprite();
+        $('pz-title').innerText = `第 ${curLayer.id} 層　${curLayer.name}`;
+        $('pz-story').innerHTML = `<b>障礙：${curLayer.obstacle}</b><br>${curLayer.story}`;
+        $('pz-shard-name').innerText = curLayer.shard;
+        const holder = $('pz-board-holder'); holder.innerHTML = '';
+        board = buildBoard(curLayer, 150, 190); holder.appendChild(board);
+        $('pz-correct').innerText = 0; $('pz-shard-count').innerText = 0;
+        switchScreen('puzzle'); playLayerMusic(curLayer.id);
+        showMsg('炸彈倒數開始！', '#a78bfa');
+        nextQuestion();
+    }
+    function quitToMap() {
+        if (!confirm('要逃跑嗎？這一層的碎片會不見喔！')) return;
+        clearInterval(timerInterval); acceptingInput = false; showMap();
+    }
+
+    function renderAnswer() {
+        $('answer-value').innerText = answerStr === '' ? '?' : answerStr;
+        $('answer-value').classList.toggle('empty', answerStr === '');
+    }
+    function pressDigit(d) {
+        if (!acceptingInput) return;
+        if (answerStr === '0') answerStr = d; else if (answerStr.length < 5) answerStr += d;
+        renderAnswer();
+    }
+    function pressDelete() { if (!acceptingInput) return; answerStr = answerStr.slice(0, -1); renderAnswer(); }
+    function showMsg(t, c) { $('pz-msg').innerText = t; $('pz-msg').style.color = c; }
+
+    function setTimerUI() {
+        $('pz-time').innerText = timeLeft;
+        $('pz-timer').classList.toggle('low', timeLeft <= 10);
+        $('pz-bar').style.width = Math.max(0, timeLeft / TIME_PER_Q * 100) + '%';
+    }
+    function nextQuestion() {
         clearInterval(timerInterval);
-        timeLeft = 30;
-        document.getElementById('ui-time').innerText = timeLeft;
-        
-        timerInterval = setInterval(() => {
-            timeLeft--;
-            document.getElementById('ui-time').innerText = timeLeft;
-            if (timeLeft <= 0) {
-                gameOver(false);
-            }
-        }, 1000);
+        curQ = qs[qi]; curAns = curQ.a - curQ.b;
+        answerStr = ''; renderAnswer(); acceptingInput = true;
+        $('pz-question').innerText = `${curQ.a} − ${curQ.b} = ?`;
+        $('pz-sub').innerText = `第 ${qi + 1} / ${QUESTIONS_PER_LAYER} 題`;
+        timeLeft = TIME_PER_Q; qStart = Date.now();
+        $('pz-bar').style.transition = 'none'; setTimerUI(); void $('pz-bar').offsetWidth; $('pz-bar').style.transition = 'width 1s linear';
+        timerInterval = setInterval(() => { timeLeft--; setTimerUI(); if (timeLeft <= 0) processAnswer(true); }, 1000);
     }
+    function submitAnswer() { if (!acceptingInput || answerStr === '') return; processAnswer(false); }
 
-    function startGame() {
-        currentLevelIdx = 0;
-        itemsCollected = 0;
-        switchScreen('screen-game');
-        setupLevel();
-    }
-
-    function setupLevel() {
-        itemsCollected = 0;
-        updateUI();
-        startTimer(); // 每題重新給30秒
-        generateProblem();
-        showFeedback("炸彈倒數開始！", "#a78bfa");
-    }
-
-    function checkAnswer() {
-        const input = document.getElementById('answer-input').value;
-        if (input === "") return;
-
-        if (parseInt(input) === currentAnswer) {
-            itemsCollected++;
-            showFeedback("正確！獲得物品！", "#00ff00");
-            
-            if (itemsCollected >= 3) {
-                currentLevelIdx++;
-                if (currentLevelIdx >= levels.length) {
-                    gameOver(true); // 通關
-                } else {
-                    showFeedback(`突破 ${levels[currentLevelIdx-1].obstacle}！前往下一區！`, "var(--primary-color)");
-                    setTimeout(() => {
-                        setupLevel();
-                    }, 1500);
-                }
-            } else {
-                updateUI();
-                startTimer(); // 下一題重置時間
-                generateProblem();
-            }
+    function processAnswer(isTimeout) {
+        if (!acceptingInput) return;
+        acceptingInput = false; clearInterval(timerInterval);
+        totalTime += (Date.now() - qStart) / 1000;
+        const ok = !isTimeout && parseInt(answerStr, 10) === curAns;
+        if (ok) {
+            correctCount++; collected[qi] = true;
+            const cell = board.children[qi]; cell.classList.add('got', 'pop');
+            $('pz-correct').innerText = correctCount; $('pz-shard-count').innerText = correctCount;
+            showMsg(`答對了！獲得 1 片${curLayer.shard}！`, '#ffd54f');
+            playHeroAnim('attack');
+            setTimeout(advance, 1000);
         } else {
-            timeLeft -= 5;
-            if (timeLeft <= 0) timeLeft = 0;
-            document.getElementById('ui-time').innerText = timeLeft;
-            showFeedback("錯誤！時間減少 5 秒！", "var(--danger-color)");
-            
-            // 視覺震動效果
-            const container = document.getElementById('game-container');
-            container.style.transform = "translateX(-10px)";
-            setTimeout(() => container.style.transform = "translateX(10px)", 50);
-            setTimeout(() => container.style.transform = "translateX(-10px)", 100);
-            setTimeout(() => container.style.transform = "translateX(0)", 150);
-            
-            document.getElementById('answer-input').value = '';
-            
-            if (timeLeft <= 0) {
-                gameOver(false);
-            }
+            showMsg(isTimeout ? '💥 時間到，炸彈爆炸了！' : '答錯了！', '#ff6b5a');
+            playHeroAnim('hurt');
+            setTimeout(() => openExplain(isTimeout), 450);
         }
     }
+    function advance() {
+        qi++;
+        if (qi >= QUESTIONS_PER_LAYER) finishLayer(); else nextQuestion();
+    }
 
-    function handleEnter(e) {
-        if (e.key === 'Enter') {
-            checkAnswer();
+    // ================= 答錯：計算解釋 =================
+    const PLACES = ['個', '十', '百', '千', '萬'];
+    function buildExplain(a, b) {
+        const A_ = String(a).split('').reverse().map(Number), B_ = String(b).split('').reverse().map(Number);
+        let borrow = 0; const lines = [];
+        for (let i = 0; i < A_.length; i++) {
+            const ad = A_[i], bd = B_[i] || 0, cur = ad - borrow, need = cur < bd, val = need ? cur + 10 : cur, r = val - bd;
+            let t = '';
+            if (borrow) t += cur >= 0 ? `${ad} 被右邊借走 1，剩 ${cur}；` : `${ad} 被右邊借走 1，變成不夠了；`;
+            if (need) t += cur >= 0 ? `${cur} 不夠減 ${bd}，向左邊借 1，變成 ${val}，` : `再向左邊借 1，變成 ${val}，`;
+            t += i < B_.length ? `${val} − ${bd} = <b>${r}</b>` : `下面沒有數字了，直接寫 <b>${r}</b>`;
+            lines.push(`<li><b>${PLACES[i]}位：</b>${t}</li>`);
+            borrow = need ? 1 : 0;
         }
+        return lines;
     }
-
-    function showFeedback(msg, color) {
-        const fb = document.getElementById('ui-feedback');
-        fb.innerText = msg;
-        fb.style.color = color;
+    function openExplain(isTimeout) {
+        const a = curQ.a, b = curQ.b, len = String(a).length;
+        $('ex-title').innerText = isTimeout ? '💥 時間到了！' : '❌ 這題算錯了';
+        $('ex-ans').innerHTML = (isTimeout ? '' : `你的答案：<span class="bad">${parseInt(answerStr, 10)}</span>　`) + `正確答案：<span class="good">${curAns}</span>`;
+        const pad = s => String(s).padStart(len + 1, ' ').replace(/ /g, '&nbsp;');
+        $('ex-vert').innerHTML = `<div class="vert">${pad(a)}<br>−${String(b).padStart(len, ' ').replace(/ /g, '&nbsp;')}<div class="line">${pad(curAns)}</div></div>`;
+        $('ex-steps').innerHTML = buildExplain(a, b).join('');
+        $('ex-check').innerHTML = `🔍 驗算：${curAns} + ${b} = ${a}，所以 ${a} − ${b} = ${curAns}`;
+        $('ex-ok').innerText = qi + 1 >= QUESTIONS_PER_LAYER ? '確認，看結果' : '確認，下一題';
+        $('explain-overlay').classList.remove('hidden');
+        explainOpen = true; explainShownAt = Date.now();
     }
+    function confirmExplain() {
+        if (!explainOpen) return;
+        explainOpen = false; $('explain-overlay').classList.add('hidden');
+        resetHeroSprite(); advance();
+    }
+    $('ex-ok').addEventListener('click', confirmExplain);
 
-    function gameOver(isWin) {
-        clearInterval(timerInterval);
-        switchScreen('screen-result');
-        const title = document.getElementById('result-title');
-        const msg = document.getElementById('result-msg');
+    // ================= 本層結算：合成 / 失敗 =================
+    function finishLayer() {
+        clearInterval(timerInterval); acceptingInput = false;
+        const acc = Math.round(correctCount / QUESTIONS_PER_LAYER * 100), tier = tierFor(acc);
+        const stage = $('rs-stage'), after = $('rs-after'), btns = $('rs-buttons');
+        stage.innerHTML = ''; after.innerHTML = ''; btns.innerHTML = '';
+        const statsHtml = `<div class="stats-details">答對：<b>${correctCount}</b> / ${QUESTIONS_PER_LAYER} 題　答對率：<b>${acc}%</b>　平均作答：<b>${(totalTime / QUESTIONS_PER_LAYER).toFixed(1)}</b> 秒</div>`;
+        const b = buildBoard(curLayer, 180, 220);
+        collected.forEach((g, i) => { if (g) b.children[i].classList.add('got'); });
+        stage.appendChild(b);
+        $('result-overlay').classList.remove('hidden');
+        stopMusic();
 
-        if (isWin) {
-            title.innerText = "逃脫成功！";
-            title.style.color = "var(--primary-color)";
-            msg.innerHTML = "你推開了城堡大門，陽光灑在你俊俏自信的臉龐上。<br>你拍了拍身上的灰塵，嘴角揚起一抹知性的微笑。筆記本上的數學公式，再次證明了智慧是打破一切魔法與困境的最強武器！";
-        } else {
-            title.innerText = "Game Over (炸彈爆炸)";
-            title.style.color = "var(--danger-color)";
-            msg.innerHTML = "「轟隆！」<br>炸彈爆炸，倒數歸零。<br>強烈的衝擊波吞噬了周圍...你的計算速度還差那麼一點點，下次再來挑戰吧！";
+        if (!tier) {
+            $('rs-title').innerText = '💥 密室還沒破解';
+            after.innerHTML = `<p style="text-align:center;margin:8px 0;">只收集到 ${correctCount} 片碎片，答對率要達到 ${PASS_ACC}% 才能合成通關物件。<br>再試一次，你一定可以的！</p>` + statsHtml;
+            btns.innerHTML = `<button class="btn-gold" id="rs-retry">重新挑戰本層</button><button class="btn-dark" id="rs-map">回大地圖</button>`;
+            $('rs-retry').onclick = () => { $('result-overlay').classList.add('hidden'); startLayer(curLayer.id); };
+            $('rs-map').onclick = showMap;
+            report(false, acc, 0);
+            return;
         }
+
+        $('rs-title').innerText = `第 ${curLayer.id} 層：碎片合成`;
+        after.innerHTML = `<p style="text-align:center;margin:0;">答對率 ${acc}%！按下按鈕，把碎片合成「${curLayer.item}」吧！</p>`;
+        btns.innerHTML = `<button class="btn-gold" id="rs-synth">✨ 合成！</button>`;
+        // 碎片先散開
+        Array.from(b.children).forEach(c => {
+            c.style.setProperty('--dx', (Math.random() * 160 - 80) + 'px'); c.style.setProperty('--dy', (Math.random() * 120 - 60) + 'px');
+            c.style.setProperty('--rot', (Math.random() * 50 - 25) + 'deg'); c.classList.add('scatter');
+        });
+        $('rs-synth').onclick = () => {
+            $('rs-synth').disabled = true;
+            Array.from(b.children).forEach(c => c.classList.remove('scatter'));
+            setTimeout(() => {
+                Array.from(b.children).forEach(c => c.classList.add('got'));
+                b.classList.add('complete', tier.cls);
+                const prev = (progress[curLayer.id] && progress[curLayer.id].stars) || 0;
+                const earned = Math.max(0, tier.stars - prev) * 2;
+                const isLast = curLayer.id === layers.length;
+                $('rs-title').innerText = isLast ? '🏆 逃出金字塔！' : `🎉 第 ${curLayer.id} 層通關！`;
+                after.innerHTML = `<div class="tier-banner ${tier.cls}">${tier.name}・${curLayer.item}</div>
+                    <div class="star-result">${'★'.repeat(tier.stars)}<span style="color:#9a8a6a;">${'☆'.repeat(5 - tier.stars)}</span></div>` + statsHtml +
+                    (!studentNumber ? '' : earned > 0 ? `<div style="margin-top:6px;font-weight:900;color:#8E44AD;">獲得代幣 +${earned} GBit</div>` : `<div style="margin-top:6px;color:#7F8C8D;">（品質沒有進步，這次沒有新增代幣）</div>`) +
+                    (isLast ? `<div style="margin-top:6px;font-weight:900;color:#8a3b0b;">你推開了太陽神拉的大門，陽光灑滿全身——忍者勇者成功逃出金字塔！</div>` : '');
+                // 更新進度
+                const p = progress[curLayer.id] || (progress[curLayer.id] = { unlocked: true, stars: 0, acc: 0 });
+                if (tier.stars > p.stars) p.stars = tier.stars;
+                if (acc > p.acc) p.acc = acc;
+                if (!isLast) { const nid = curLayer.id + 1; if (!progress[nid]) progress[nid] = { unlocked: true, stars: 0, acc: 0 }; progress[nid].unlocked = true; }
+                saveProgress(); awardTokens(earned); report(true, acc, earned);
+                btns.innerHTML = (isLast ? '' : `<button class="btn-gold" id="rs-next">前往下一層</button>`) + `<button class="btn-dark" id="rs-map">回大地圖</button>`;
+                $('rs-map').onclick = showMap;
+                if (!isLast) $('rs-next').onclick = () => { const nid = curLayer.id + 1; showMap(); goToLayer(nid); };
+            }, 1400);
+        };
+    }
+    function report(passed, acc, tokens) {
+        if (typeof MathGameCommon === 'undefined') return;
+        MathGameCommon.reportResult({
+            game: '完美扣除', mode: passed ? '過關' : '挑戰失敗', topic: 'L' + curLayer.id,
+            correct: correctCount, total: QUESTIONS_PER_LAYER, timeSec: Math.round(totalTime), gbitAwarded: tokens
+        });
     }
 
-    function resetGame() {
-        switchScreen('screen-intro');
+    // ================= 事件綁定 =================
+    document.querySelectorAll('#numpad [data-digit]').forEach(b => b.addEventListener('click', () => pressDigit(b.dataset.digit)));
+    $('key-del').addEventListener('click', pressDelete);
+    $('submit-btn').addEventListener('click', submitAnswer);
+    document.addEventListener('keydown', e => {
+        if (explainOpen) { if (e.key === 'Enter' && Date.now() - explainShownAt > 500) confirmExplain(); return; }
+        if (screens.puzzle.classList.contains('hidden') || !acceptingInput) return;
+        if (/^[0-9]$/.test(e.key)) pressDigit(e.key);
+        else if (e.key === 'Backspace') { e.preventDefault(); pressDelete(); }
+        else if (e.key === 'Enter') submitAnswer();
+    });
+
+    // ================= 自動縮放 =================
+    function resizeGame() {
+        const c = $('game-container'); if (!c) return;
+        let w = window.innerWidth, h = window.innerHeight;
+        if (window.visualViewport) { w = window.visualViewport.width; h = window.visualViewport.height; }
+        c.style.setProperty('--scale', Math.min(w / 1000, h / 700)); window.scrollTo(0, 0);
     }
+    window.addEventListener('resize', resizeGame); window.addEventListener('load', resizeGame);
+    if (window.visualViewport) { window.visualViewport.addEventListener('resize', resizeGame); window.visualViewport.addEventListener('scroll', resizeGame); }
+
+    resizeGame(); buildMap(); refreshMap(); preloadAssets(); updateGbitDisplay();
+
+
+// 1. 禁用滑鼠右鍵選單
+document.addEventListener('contextmenu', event => event.preventDefault());
+
+// 2. 禁用 Ctrl+S / Cmd+S 另存網頁快捷鍵
+document.addEventListener('keydown', function(e) {
+    if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        alert('本網站已啟用內容保護，暫不開放另存網頁。');
+    }
+    // 順便禁用 Ctrl+U (查看原始碼) 和 F12 (開發者工具)
+    if ((e.ctrlKey || e.metaKey) && e.key === 'u' || e.key === 'F12') {
+        e.preventDefault();
+    }
+});
+
 </script>
 </body>
 </html>
