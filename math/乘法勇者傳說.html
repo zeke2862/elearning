@@ -358,6 +358,63 @@
         #battle-screen.teach .side-keys { flex-direction: row; }
         #battle-screen.teach .key-del { width: 100px; font-size: 20px; }
         #battle-screen.teach .key-go { width: 130px; font-size: 22px; }
+
+        /* ================= 答錯解說視窗：看完解說、按「確定」才進下一題 ================= */
+        #explain-overlay { z-index: 150; }
+        #explain-overlay .modal-box { width: 740px; max-height: 640px; display: flex; flex-direction: column; padding: 14px 26px 16px; border-color: #E67E22; }
+        #explain-overlay .ex-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding-right: 4px; }
+        #explain-overlay .modal-buttons { flex-shrink: 0; margin-top: 8px; }
+        #explain-overlay h1 { font-size: 32px; margin: 0 0 2px; color: #C0392B; }
+        .ex-note { font-size: 15px; font-weight: 900; color: #7F8C8D; margin: 0 0 4px; }
+        .ex-ans { font-size: 21px; font-weight: 900; margin: 2px 0 6px; color: #2C3E50; }
+        .ex-ans .bad { color: #C0392B; } .ex-ans .good { color: #1E8449; }
+        .ex-grid { display: inline-block; text-align: left; background: #FDFEFE; border: 2px solid #BDC3C7; border-radius: 10px; padding: 6px 14px 8px; margin: 2px 0 6px; font-weight: 900; font-size: 26px; color: #2C3E50; }
+        .xr { display: flex; align-items: center; line-height: 1.25; }
+        .xs { display: inline-block; width: var(--sw, 54px); flex-shrink: 0; text-align: right; padding-right: 8px; color: #7F8C8D; font-size: 20px; white-space: nowrap; }
+        .xr.cyrow .xs { font-size: 14px; }
+        .xc { display: inline-block; width: var(--cw, 30px); flex-shrink: 0; text-align: center; }
+        .xn { margin-left: 10px; font-size: 14px; font-weight: 900; color: #7F8C8D; white-space: nowrap; }
+        .xr.top .xc { border-top: 3px solid #2C3E50; }
+        .xr.ans .xc { color: #1E8449; }
+        .xr.cyrow { line-height: 1; }
+        .xc.cy { font-size: 15px; color: #E67E22; }
+        .xc.pre { color: #B0BEC5; } .xc.bd { color: #B0BEC5; } .xc.tp { border-top: 3px solid #2C3E50; }
+        .xc.p0 { color: #27AE60; } .xc.p1 { color: #E67E22; } .xc.p2 { color: #8E44AD; } .xc.p3 { color: #2980B9; }
+        .ex-sub { text-align: left; font-weight: 900; font-size: 15px; color: #7F8C8D; margin: 6px 0 2px; }
+        .ex-steps { list-style: none; margin: 4px 0 2px; padding: 0; text-align: left; font-size: 16px; line-height: 1.5; }
+        .ex-steps li { margin-bottom: 4px; background: #FEF9E7; border-left: 5px solid #F1C40F; padding: 4px 10px; border-radius: 6px; color: #333; }
+        .ex-steps li b { color: #C0392B; }
+        .ex-steps.mist li { background: #FDEDEC; border-left-color: #E74C3C; }
+        .ex-steps .bad { color: #C0392B; font-weight: 900; } .ex-steps .good { color: #1E8449; font-weight: 900; }
+        .ex-check { font-size: 16px; font-weight: 900; color: #5D6D7E; margin: 4px 0 2px; }
+        .ex-steps .sm { display: block; font-size: 14px; color: #7F8C8D; font-weight: 700; margin-top: 1px; }
+
+        /* ================= 角色／大魔王放大：左右各約佔 1/3 畫面，中間留給題目 ================= */
+        .character-box, #battle-screen.teach .character-box { width: 290px; padding: 0; }
+        .sprite-stage, #battle-screen.teach .sprite-stage { height: 290px; }
+        .sprite-stage::before { width: 210px; height: 24px; }
+        .hero-avatar img, #battle-screen.teach .hero-avatar img { width: 260px; height: auto; }
+        .boss-avatar img, .boss-avatar img.wide, #battle-screen.teach .boss-avatar img, #battle-screen.teach .boss-avatar img.wide {
+            width: 270px; height: 280px; max-width: none; max-height: none; object-fit: contain; object-position: bottom center;
+        }
+        .char-name, #battle-screen.teach .char-name { font-size: 24px; margin-top: 6px; }
+        .center-area { padding: 0 4px; }
+        .question-box { font-size: 40px; padding: 10px 16px; min-width: 0; border-width: 4px; border-radius: 16px; }
+        #battle-screen.teach .question-box { font-size: 24px; padding: 3px 14px; }
+        /* ===== 怪物：圖片空間改成「長型」，讓怪物比勇者更高大 ===== */
+        .battle-area { align-items: flex-end; }                  /* 勇者、怪物腳底對齊，怪物長型框會往上長高 */
+        .battle-area .center-area { align-self: center; }
+        #boss-box, #battle-screen.teach #boss-box { padding-bottom: 27px; }   /* 勇者名字下有一行「連擊」，怪物這邊留同樣高度，兩邊名字才會對齊 */
+        #boss-box .sprite-stage, #battle-screen.teach #boss-box .sprite-stage { height: 335px; }
+        #boss-box .sprite-stage::before { width: 250px; }
+        #boss-box .boss-avatar img, #boss-box .boss-avatar img.wide, #battle-screen.teach #boss-box .boss-avatar img, #battle-screen.teach #boss-box .boss-avatar img.wide {
+            width: 312px; height: 335px; max-width: none; max-height: none; object-fit: contain; object-position: bottom center;
+        }
+        .timer-box { font-size: 20px; }
+        .message-log { font-size: 17px; padding: 5px 10px; }
+        #battle-screen.teach .message-log { font-size: 15px; min-height: 24px; margin-top: 4px; padding: 3px 10px; }
+        #battle-screen.teach .teach-hint { font-size: 14px; padding: 3px 10px; margin-top: 4px; min-height: 0; }
+        #battle-screen.teach .timer-box { font-size: 15px; margin-top: 4px; padding: 1px 12px; }
     </style>
 </head>
 <body>
@@ -483,6 +540,23 @@
                 <button class="key-btn key-del" id="key-del">⌫ 修正</button>
                 <button class="key-btn key-go" id="attack-btn">⚔️ 攻擊！</button>
             </div>
+        </div>
+    </div>
+
+    <!-- 答錯解說：看完解說、按「確定」才會進下一題 -->
+    <div id="explain-overlay" class="overlay hidden">
+        <div class="modal-box">
+            <h1 id="ex-title">答錯了</h1>
+            <div class="ex-body">
+                <div class="ex-note" id="ex-note"></div>
+                <div class="ex-ans" id="ex-ans"></div>
+                <div id="ex-vert"></div>
+                <div class="ex-sub">一步一步來看：</div>
+                <ul class="ex-steps" id="ex-steps"></ul>
+                <div id="ex-mist-wrap" class="hidden"><div class="ex-sub">你填錯的地方：</div><ul class="ex-steps mist" id="ex-mist"></ul></div>
+                <div class="ex-check" id="ex-check"></div>
+            </div>
+            <div class="modal-buttons"><button id="ex-ok">確定</button></div>
         </div>
     </div>
 
@@ -738,6 +812,8 @@
     let acceptingInput = false;    // 作答中才接受按鍵，動畫播放時鎖住避免重複送出
 
     let stageStats = { total: 0, mistakes: 0, correct: 0, times: [] };
+    let curN1 = 0, curN2 = 0;      // 這一題的兩個數字（答錯解說要用）
+    let battleSeq = 0;             // 每次開戰／逃跑就 +1，讓舊的計時動作失效
 
     // ================= DOM 元素 =================
     const screens = {
@@ -965,6 +1041,7 @@
     }
 
     function showMap() {
+        hideExplain();
         stopMusic(); // 回到地圖就先停掉戰鬥音樂，進下一場戰鬥時會依地形重新播放
         if (heroStageId === null) placeHeroInstant(findFrontierStageId());
         switchScreen('map');
@@ -993,6 +1070,7 @@
         ui.bossSprite.classList.remove('boss-defeated', 'lunge-reverse');
         ui.bossImg.classList.remove('hit-flash');
         resetHeroSprite();
+        battleSeq++; hideExplain();
         screens.battle.classList.toggle('teach', playMode === 'teach');
         screens.battle.style.backgroundImage = `url('${currentStageObj.bg}')`;
         ui.levelDisp.innerHTML = `<div class="lv-main">關卡 ${currentStageObj.id}</div><div class="lv-sub">${currentStageObj.terrainName}${playMode === 'teach' ? '・教學版' : ''}</div>`;
@@ -1007,6 +1085,7 @@
     function quitToMap() {
         clearInterval(timerInterval);
         acceptingInput = false;
+        battleSeq++; hideExplain();
         showMap();
     }
 
@@ -1057,6 +1136,7 @@
         acceptingInput = true;
 
         const [num1, num2] = pickFactors(currentStageObj);
+        curN1 = num1; curN2 = num2;
         currentAnswer = num1 * num2;
 
         const qText = `${num1} × ${num2} = ?`;
@@ -1111,8 +1191,8 @@
 
         // 大小：位數越多，格子越小，才放得進畫面
         const rowUnits = 3 + partials.length + (s1.length > 1 ? 0.6 : 0) + (multi && ans.length > 1 ? 0.6 : 0);
-        const cw = Math.min(54, Math.floor(520 / (W + 1)));
-        const ch = Math.min(42, Math.floor(262 / rowUnits));
+        const cw = Math.min(54, Math.floor(290 / (W + 1)));
+        const ch = Math.min(40, Math.floor(222 / rowUnits));
         teachPanel.style.setProperty('--cw', cw + 'px');
         teachPanel.style.setProperty('--ch', ch + 'px');
         teachPanel.innerHTML = '';
@@ -1175,6 +1255,7 @@
             } else {
                 for (let k = 0; k < L; k++) {
                     const c = makeCell('input', p, p.i + k, p.value[L - 1 - k]);
+                    c.label = `「${n1} × ${p.d}」那一列的${PN[k]}位`;
                     setRowColor(c, p.i);
                     map[p.i + k] = c.el;
                     f.order.push(c);
@@ -1199,6 +1280,7 @@
         const mapA = {};
         for (let k = 0; k < ans.length; k++) {
             const c = makeCell('input', ansRow, k, ans[ans.length - 1 - k]);
+            c.label = `答案的${PN[k]}位`;
             mapA[k] = c.el;
             f.order.push(c);
         }
@@ -1304,6 +1386,7 @@
         acceptingInput = true;
 
         const [num1, num2] = pickFactors(currentStageObj);
+        curN1 = num1; curN2 = num2;
         currentAnswer = num1 * num2;
         ui.question.innerText = `${num1} × ${num2} = ?`;
         ui.question.style.fontSize = '';
@@ -1328,16 +1411,143 @@
     function submitAnswer() { return playMode === 'teach' ? teachSubmit()       : quickSubmit(); }
     function nextQuestion() { return playMode === 'teach' ? teachNextQuestion() : quickNextQuestion(); }
 
+    // ================= 答錯解說：看完解說、按「確定」才進下一題 =================
+    // 答對：直接進下一題（不用按任何東西）。答錯／時間到：先跳出這個解說視窗，按「確定」才會往下走。
+    const PN = ['個', '十', '百', '千', '萬', '十萬', '百萬', '千萬'];   // 位名（解說文字用）
+    const exEl = id => document.getElementById(id);
+    let explainOpen = false, explainShownAt = 0, afterExplain = null;
+
+    function openExplain(info) {
+        exEl('ex-title').innerText = info.title;
+        exEl('ex-note').innerText = info.note || '';
+        exEl('ex-ans').innerHTML = info.ansHtml || '';
+        exEl('ex-vert').innerHTML = info.vertHtml || '';
+        exEl('ex-steps').innerHTML = (info.steps || []).map(s => '<li>' + s + '</li>').join('');
+        exEl('ex-mist').innerHTML = (info.mistakes || []).map(s => '<li>' + s + '</li>').join('');
+        exEl('ex-mist-wrap').classList.toggle('hidden', !(info.mistakes && info.mistakes.length));
+        exEl('ex-check').innerHTML = info.check || '';
+        exEl('explain-overlay').classList.remove('hidden');
+        exEl('explain-overlay').querySelector('.ex-body').scrollTop = 0;
+        explainOpen = true; explainShownAt = Date.now();
+    }
+    function hideExplain() {
+        explainOpen = false; afterExplain = null;
+        exEl('explain-overlay').classList.add('hidden');
+    }
+    function confirmExplain() {
+        if (!explainOpen) return;
+        explainOpen = false;
+        exEl('explain-overlay').classList.add('hidden');
+        const fn = afterExplain; afterExplain = null;
+        if (fn) fn();
+    }
+    exEl('ex-ok').addEventListener('click', confirmExplain);
+
+    // 畫直式：rows = [{ sign, cells:[由左到右共 W 格], cls, note }]；cell 可以是字串或 { t, cls }
+    function exGrid(W, rows, sw) {
+        const cw = Math.max(20, Math.min(34, Math.floor(420 / (W + 1))));
+        let h = '<div class="ex-grid" style="--cw:' + cw + 'px; --sw:' + (sw || 54) + 'px">';
+        rows.forEach(r => {
+            h += '<div class="xr ' + (r.cls || '') + '"><span class="xs">' + (r.sign || '') + '</span>';
+            for (let i = 0; i < W; i++) {
+                const c = r.cells[i];
+                const t = (c && typeof c === 'object') ? c.t : (c || '');
+                const cl = (c && typeof c === 'object' && c.cls) ? c.cls : '';
+                h += '<span class="xc ' + cl + '">' + (t === '' ? '&nbsp;' : t) + '</span>';
+            }
+            h += (r.note ? '<span class="xn">' + r.note + '</span>' : '') + '</div>';
+        });
+        return h + '</div>';
+    }
+    // 把字串 str 靠右放在第 endCol 格（含），可指定顏色 class
+    function exPut(cells, str, endCol, cls) {
+        for (let k = 0; k < str.length; k++) cells[endCol - str.length + 1 + k] = cls ? { t: str[k], cls: cls } : str[k];
+    }
+
+    // ================= 答錯解說內容（直式乘法） =================
+    function exMul(n1, n2) {
+        const s1 = String(n1), s2 = String(n2), ans = n1 * n2, sA = String(ans), multi = s2.length > 1;
+        // 「n1 × d」這一列怎麼算：由右到左，每一位乘 d，再加上進位
+        function chain(d) {
+            const parts = []; let carry = 0;
+            for (let i = s1.length - 1; i >= 0; i--) {
+                const x = Number(s1[i]), v = x * d + carry;
+                parts.push({ pl: s1.length - 1 - i, text: `${x} × ${d}${carry ? ' + 進位 ' + carry : ''} = ${v}` + (i === 0 ? `，寫 <b>${v}</b>` : `，寫 <b>${v % 10}</b>，進 <b>${Math.floor(v / 10)}</b>`) });
+                carry = Math.floor(v / 10);
+            }
+            return parts;
+        }
+        const steps = [];
+        const partials = [];   // 每一列部分積：{ i, d, value }
+        if (!multi) {
+            chain(Number(s2)).forEach(c => steps.push(`<b>${PN[c.pl]}位：</b>${c.text}`));
+        } else {
+            for (let i = 0; i < s2.length; i++) {
+                const d = Number(s2[s2.length - 1 - i]), v = n1 * d;
+                partials.push({ i, d, value: String(v) });
+                if (d === 0) {
+                    steps.push(`<b>${PN[i]}位的 0：</b>${n1} × 0 = <b>0</b>（任何數乘 0 都是 0，這一列寫 0 就好）`);
+                } else {
+                    const plain = chain(d).map(c => c.text.replace(/<\/?b>/g, '')).join('；');
+                    steps.push(`<b>${PN[i]}位的 ${d}：</b>${n1} × ${d} = <b>${v}</b>` + (i > 0 ? `（${PN[i]}位，要從右邊空 ${i} 格再開始寫，也就是後面補 ${i} 個 0）` : '')
+                        + `<span class="sm">算法：${plain}</span>`);
+                }
+            }
+            const terms = partials.map(p => String(Number(p.value) * Math.pow(10, p.i)));
+            steps.push(`<b>最後：</b>把每一列加起來：${terms.join(' + ')} = <b>${ans}</b>`);
+        }
+
+        // 直式
+        let W = Math.max(sA.length, s1.length, s2.length + 1);
+        partials.forEach(p => { W = Math.max(W, p.value.length + p.i); });
+        const rows = [];
+        const r1 = new Array(W).fill(''); exPut(r1, s1, W - 1);
+        const r2 = new Array(W).fill(''); exPut(r2, s2, W - 1);
+        rows.push({ sign: '', cells: r1 });
+        rows.push({ sign: '×', cells: r2 });
+        partials.forEach((p, idx) => {
+            const c = new Array(W).fill('');
+            if (p.d === 0) exPut(c, '0', W - 1 - p.i, 'pre'); else exPut(c, p.value, W - 1 - p.i, 'p' + Math.min(p.i, 3));
+            rows.push({ sign: '', cells: c, cls: idx === 0 ? 'top' : '', note: `← ${n1} × ${p.d}` });
+        });
+        const ra = new Array(W).fill(''); exPut(ra, sA, W - 1);
+        rows.push({ sign: '', cells: ra, cls: 'top ans' });
+        return { vertHtml: exGrid(W, rows), steps: steps, check: `🔍 驗算：${ans} ÷ ${n2} = ${n1}，所以 ${n1} × ${n2} = ${ans}` };
+    }
+
+    function buildExplainInfo(isTimeout) {
+        const n1 = curN1, n2 = curN2, ans = n1 * n2;
+        const ex = exMul(n1, n2);
+        let mine = '';
+        const mistakes = [];
+        if (playMode === 'teach' && form) {
+            const cells = form.order.filter(c => c.row.type === 'answer');   // 由個位開始
+            const typed = cells.slice().reverse().map(c => c.val || '？').join('');
+            mine = /\d/.test(typed) ? typed : '';
+            form.order.forEach(c => {
+                if (c.val !== c.expect) mistakes.push(`${c.label}：你寫 <span class="bad">${c.val || '（空白）'}</span>，應該是 <span class="good">${c.expect}</span>`);
+            });
+        } else if (!isTimeout) {
+            mine = answerStr;
+        }
+        return {
+            title: isTimeout ? '⏰ 時間到了！' : '❌ 這題算錯了',
+            ansHtml: (mine ? `你的答案：<span class="bad">${mine}</span>　` : (isTimeout ? '沒有來得及送出答案　' : '')) + `正確答案：<span class="good">${ans}</span>`,
+            vertHtml: ex.vertHtml, steps: ex.steps, check: ex.check, mistakes: mistakes
+        };
+    }
+
     function processAnswer(isAttempt, isTimeout = false) {
         if (!acceptingInput) return;
         acceptingInput = false;   // 動畫播放期間鎖住鍵盤
         clearInterval(timerInterval);
         const timeTaken = (Date.now() - questionStartTime) / 1000;
         stageStats.total++;
+        const seq = battleSeq;
 
         let isCorrect = false;
         if (playMode === 'teach') {
-            // 教學版：所有計分格（各列部分積＋答案）都對才算答對；錯的格子標紅並顯示正解
+            // 教學版：所有計分格都對才算答對；錯的格子標紅
             const formOk = gradeForm();
             isCorrect = formOk && !isTimeout;
             if (!isCorrect) revealForm();
@@ -1347,9 +1557,10 @@
         }
 
         const bossName = currentStageObj.boss;
-        let waitMs = 1100;
 
         if (isCorrect) {
+            // ✅ 答對：直接進下一題（不用按任何按鈕）
+            let waitMs = 1100;
             stageStats.correct++;
             stageStats.times.push(timeTaken);
             combo++;
@@ -1383,14 +1594,22 @@
                 waitMs = 1700;
             }
 
+            updateUI();
+            setTimeout(() => {
+                if (seq !== battleSeq) return;
+                if (bossHP <= 0) endGame(true);
+                else nextQuestion();
+            }, waitMs);
+
         } else {
+            // ❌ 答錯／時間到：先跳出解說視窗，按「確定」才會繼續
             stageStats.mistakes++;
             combo = 0;
-            bossHP = Math.min(maxBossHP, bossHP + 0.5); // 答錯怪物加血不超過上限
+            bossHP = Math.min(maxBossHP, bossHP + 0.5); // 扣錯魔王加血不超過上限
             playerHP -= 1;
 
             let msg = isTimeout ? "時間到！" : "答錯了！";
-            msg += " 受到 1 傷害，怪物回復 0.5 血。" + (playMode === 'teach' ? " 紅色格子是正確答案。" : "");
+            msg += " 受到 1 傷害，怪物回復 0.5 血。";
 
             if (playerHP <= 0 && hasRevive) {
                 playerHP = maxPlayerHP;
@@ -1401,23 +1620,18 @@
 
             playBossLunge();
             showFloatingDamage('hero', '-1', '#E74C3C');
+            if (playerHP <= 0) playHeroAnim('lose', false);   // 倒地後停在地上
+            else playHeroAnim('hurt');
+            updateUI();
 
-            if (playerHP <= 0) {
-                playHeroAnim('lose', false);   // 倒地後停在地上
-                waitMs = 3000;
-            } else {
-                playHeroAnim('hurt');
-                waitMs = 2300;
-            }
+            const info = buildExplainInfo(isTimeout);   // 趁玩家填的內容還在，先把解說準備好
+            info.note = msg;
+            afterExplain = () => {
+                if (playerHP <= 0) endGame(false);
+                else { resetHeroSprite(); nextQuestion(); }
+            };
+            setTimeout(() => { if (seq !== battleSeq) return; openExplain(info); }, 800);
         }
-
-        updateUI();
-
-        setTimeout(() => {
-            if (playerHP <= 0) endGame(false);
-            else if (bossHP <= 0) endGame(true);
-            else nextQuestion();
-        }, waitMs);
     }
 
     function updateUI() {
@@ -1588,6 +1802,11 @@
 
     // 電腦實體鍵盤也能用（0-9、Backspace、Enter），不影響螢幕鍵盤
     document.addEventListener('keydown', (e) => {
+        // 解說視窗開著時：Enter 等同按「確定」（長按不算，避免一下子就跳過解說）
+        if (explainOpen) {
+            if (e.key === 'Enter') { e.preventDefault(); if (!e.repeat && Date.now() - explainShownAt > 600) confirmExplain(); }
+            return;
+        }
         if (screens.battle.classList.contains('hidden') || !acceptingInput) return;
         if (/^[0-9]$/.test(e.key)) pressDigit(e.key);
         else if (e.key === 'Backspace') { e.preventDefault(); pressDelete(); }
@@ -1651,6 +1870,49 @@ document.addEventListener('keydown', function(e) {
     }
 });
 
+</script>
+
+<script>
+// 題目框放在中間 1/3，題目太長（例如 4 位數 × 3 位數）時自動把字縮小，不會超出
+(function () {
+    const q = document.getElementById('question');
+    if (!q) return;
+    let busy = false;
+    function fit() {
+        if (busy) return; busy = true;
+        q.style.fontSize = '';
+        const box = q.parentElement, max = box.clientWidth - 8;
+        let fs = parseFloat(getComputedStyle(q).fontSize);
+        while (max > 60 && q.offsetWidth > max && fs > 16) { fs -= 2; q.style.fontSize = fs + 'px'; }
+        busy = false;
+    }
+    new MutationObserver(fit).observe(q, { childList: true, characterData: true, subtree: true });
+    window.addEventListener('resize', fit);
+})();
+</script>
+
+<script>
+// ================= 自動全螢幕 =================
+// 瀏覽器規定：一定要有人「點一下或按一個鍵」才能進全螢幕（不能一開網頁就強制）。
+// 所以第一次點畫面上任何地方（例如選「快速版／教學版」）就會自動進入全螢幕，不用再按 F11。
+// 想離開全螢幕按 Esc；離開後這次不會再被強制進入。
+(function () {
+    function isFs() { return document.fullscreenElement || document.webkitFullscreenElement; }
+    function goFs() {
+        if (isFs()) return;
+        const el = document.documentElement;
+        const fn = el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen;
+        if (fn) { try { const r = fn.call(el); if (r && r.catch) r.catch(function () {}); } catch (e) {} }
+    }
+    function once(e) {
+        if (e.type === 'keydown' && e.key === 'Escape') return;
+        goFs();
+        document.removeEventListener('pointerdown', once, true);
+        document.removeEventListener('keydown', once, true);
+    }
+    document.addEventListener('pointerdown', once, true);
+    document.addEventListener('keydown', once, true);
+})();
 </script>
 </body>
 </html>
