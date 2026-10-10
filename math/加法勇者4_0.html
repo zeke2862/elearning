@@ -295,6 +295,115 @@
         .star-result { font-size: 60px; letter-spacing: 5px; color: #F1C40F; margin: 20px 0; text-shadow: 2px 2px 0px #333;}
         .stats-details { background: #F8F9F9; padding: 15px; border-radius: 10px; margin-bottom: 25px; text-align: left; font-size: 18px; border: 2px solid #BDC3C7;}
         .modal-buttons { display: flex; justify-content: center; gap: 20px; }
+
+        /* ================= 教學版：直式算式版面 ================= */
+        .teach-panel, .teach-hint { display: none; }
+        #battle-screen.teach .quick-only { display: none; }
+        #battle-screen.teach .character-box { width: 150px; padding: 8px 4px; }
+        #battle-screen.teach .sprite-stage { height: 140px; }
+        #battle-screen.teach .hero-avatar img { width: 110px; }
+        #battle-screen.teach .boss-avatar img { max-width: 135px; max-height: 135px; }
+        #battle-screen.teach .boss-avatar img.wide { max-width: 215px; max-height: 120px; }
+        #battle-screen.teach .char-name { font-size: 18px; margin-top: 6px; }
+        #battle-screen.teach .center-area { justify-content: center; }
+        #battle-screen.teach .question-box { font-size: 22px; padding: 3px 18px; min-width: 0; border-width: 3px; border-radius: 14px; margin-bottom: 6px; }
+        #battle-screen.teach .timer-box { font-size: 17px; margin-top: 6px; padding: 2px 14px; }
+        #battle-screen.teach .message-log { font-size: 16px; min-height: 28px; margin-top: 5px; padding: 4px 12px; }
+
+        #battle-screen.teach .teach-panel {
+            display: flex; flex-direction: column; align-items: flex-end; gap: 0;
+            background: rgba(255,255,255,0.95); border-radius: 16px; padding: 8px 14px;
+            border: 4px solid #F1C40F; box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+        }
+        .tf-row { display: flex; align-items: center; }
+        .tf-cell {
+            width: var(--cw); height: var(--ch); margin: 1px; border-radius: 7px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: calc(var(--ch) * 0.66); font-weight: 900; color: #2C3E50; line-height: 1;
+        }
+        .tf-cell.sign { font-size: calc(var(--ch) * 0.5); color: #7F8C8D; }
+        .tf-cell.blank { background: transparent; }
+        .tf-cell.input { background: var(--rt, #fff); border: 3px solid var(--rc, #BDC3C7); cursor: pointer; }
+        .tf-cell.input.active { border-color: #E74C3C; box-shadow: 0 0 0 3px rgba(231,76,60,0.4); background: #FFFDE7; }
+        .tf-cell.prefill { background: #ECF0F1; color: #95A5A6; border: 3px dashed #CFD8DC; }
+        /* 進位格：比較矮、虛線，顏色跟著現在在算的那一列 */
+        .tf-cell.carry {
+            height: calc(var(--ch) * 0.62); font-size: calc(var(--ch) * 0.42);
+            border: 2px dashed var(--cc, #B0BEC5); background: var(--ct, #F4F6F7); color: #607D8B; cursor: pointer;
+        }
+        .tf-cell.carry.active { border-style: solid; border-color: #E74C3C; background: #FFFDE7; }
+        .tf-rule { align-self: stretch; height: 4px; background: #2C3E50; border-radius: 2px; margin: 3px 0; }
+        .tf-cell.ok { background: #D5F5E3 !important; border-color: #27AE60 !important; }
+        .tf-cell.bad { background: #FADBD8 !important; border-color: #E74C3C !important; }
+        .tf-cell.revealed { background: #E74C3C !important; border-color: #C0392B !important; color: #fff !important; }
+        #battle-screen.teach .teach-hint {
+            display: block; margin-top: 6px; min-height: 26px; font-size: 16px; font-weight: 900; color: #fff;
+            background: rgba(0,0,0,0.55); padding: 3px 14px; border-radius: 12px; text-align: center;
+            text-shadow: 1px 1px 2px #000;
+        }
+        /* 下方操作列：數字鍵排成一列 */
+        #battle-screen.teach .control-area { padding: 8px 12px; gap: 8px; margin-top: 6px; }
+        #battle-screen.teach .numpad { display: flex; gap: 6px; }
+        #battle-screen.teach .numpad .key-btn { width: 54px; height: 52px; font-size: 28px; }
+        #battle-screen.teach .side-keys { flex-direction: row; }
+        #battle-screen.teach .key-del { width: 100px; font-size: 20px; }
+        #battle-screen.teach .key-go { width: 130px; font-size: 22px; }
+
+        /* ================= 答錯解說視窗：看完解說、按「確定」才進下一題 ================= */
+        #explain-overlay { z-index: 150; }
+        #explain-overlay .modal-box { width: 740px; max-height: 640px; display: flex; flex-direction: column; padding: 14px 26px 16px; border-color: #E67E22; }
+        #explain-overlay .ex-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding-right: 4px; }
+        #explain-overlay .modal-buttons { flex-shrink: 0; margin-top: 8px; }
+        #explain-overlay h1 { font-size: 32px; margin: 0 0 2px; color: #C0392B; }
+        .ex-note { font-size: 15px; font-weight: 900; color: #7F8C8D; margin: 0 0 4px; }
+        .ex-ans { font-size: 21px; font-weight: 900; margin: 2px 0 6px; color: #2C3E50; }
+        .ex-ans .bad { color: #C0392B; } .ex-ans .good { color: #1E8449; }
+        .ex-grid { display: inline-block; text-align: left; background: #FDFEFE; border: 2px solid #BDC3C7; border-radius: 10px; padding: 6px 14px 8px; margin: 2px 0 6px; font-weight: 900; font-size: 26px; color: #2C3E50; }
+        .xr { display: flex; align-items: center; line-height: 1.25; }
+        .xs { display: inline-block; width: var(--sw, 54px); flex-shrink: 0; text-align: right; padding-right: 8px; color: #7F8C8D; font-size: 20px; white-space: nowrap; }
+        .xr.cyrow .xs { font-size: 14px; }
+        .xc { display: inline-block; width: var(--cw, 30px); flex-shrink: 0; text-align: center; }
+        .xn { margin-left: 10px; font-size: 14px; font-weight: 900; color: #7F8C8D; white-space: nowrap; }
+        .xr.top .xc { border-top: 3px solid #2C3E50; }
+        .xr.ans .xc { color: #1E8449; }
+        .xr.cyrow { line-height: 1; }
+        .xc.cy { font-size: 15px; color: #E67E22; }
+        .xc.pre { color: #B0BEC5; } .xc.bd { color: #B0BEC5; } .xc.tp { border-top: 3px solid #2C3E50; }
+        .xc.p0 { color: #27AE60; } .xc.p1 { color: #E67E22; } .xc.p2 { color: #8E44AD; } .xc.p3 { color: #2980B9; }
+        .ex-sub { text-align: left; font-weight: 900; font-size: 15px; color: #7F8C8D; margin: 6px 0 2px; }
+        .ex-steps { list-style: none; margin: 4px 0 2px; padding: 0; text-align: left; font-size: 16px; line-height: 1.5; }
+        .ex-steps li { margin-bottom: 4px; background: #FEF9E7; border-left: 5px solid #F1C40F; padding: 4px 10px; border-radius: 6px; color: #333; }
+        .ex-steps li b { color: #C0392B; }
+        .ex-steps.mist li { background: #FDEDEC; border-left-color: #E74C3C; }
+        .ex-steps .bad { color: #C0392B; font-weight: 900; } .ex-steps .good { color: #1E8449; font-weight: 900; }
+        .ex-check { font-size: 16px; font-weight: 900; color: #5D6D7E; margin: 4px 0 2px; }
+
+        /* ================= 角色／大魔王放大：左右各約佔 1/3 畫面，中間留給題目 ================= */
+        .character-box, #battle-screen.teach .character-box { width: 290px; padding: 0; }
+        .sprite-stage, #battle-screen.teach .sprite-stage { height: 290px; }
+        .sprite-stage::before { width: 210px; height: 24px; }
+        .hero-avatar img, #battle-screen.teach .hero-avatar img { width: 260px; height: auto; }
+        .boss-avatar img, .boss-avatar img.wide, #battle-screen.teach .boss-avatar img, #battle-screen.teach .boss-avatar img.wide {
+            width: 270px; height: 280px; max-width: none; max-height: none; object-fit: contain; object-position: bottom center;
+        }
+        .char-name, #battle-screen.teach .char-name { font-size: 24px; margin-top: 6px; }
+        .center-area { padding: 0 4px; }
+        .question-box { font-size: 40px; padding: 10px 16px; min-width: 0; border-width: 4px; border-radius: 16px; }
+        #battle-screen.teach .question-box { font-size: 24px; padding: 3px 14px; }
+        /* ===== 怪物：圖片空間改成「長型」，讓怪物比勇者更高大 ===== */
+        .battle-area { align-items: flex-end; }                  /* 勇者、怪物腳底對齊，怪物長型框會往上長高 */
+        .battle-area .center-area { align-self: center; }
+        #boss-box, #battle-screen.teach #boss-box { padding-bottom: 27px; }   /* 勇者名字下有一行「連擊」，怪物這邊留同樣高度，兩邊名字才會對齊 */
+        #boss-box .sprite-stage, #battle-screen.teach #boss-box .sprite-stage { height: 335px; }
+        #boss-box .sprite-stage::before { width: 250px; }
+        #boss-box .boss-avatar img, #boss-box .boss-avatar img.wide, #battle-screen.teach #boss-box .boss-avatar img, #battle-screen.teach #boss-box .boss-avatar img.wide {
+            width: 312px; height: 335px; max-width: none; max-height: none; object-fit: contain; object-position: bottom center;
+        }
+        .timer-box { font-size: 20px; }
+        .message-log { font-size: 17px; padding: 5px 10px; }
+        #battle-screen.teach .message-log { font-size: 15px; min-height: 24px; margin-top: 4px; padding: 3px 10px; }
+        #battle-screen.teach .teach-hint { font-size: 14px; padding: 3px 10px; margin-top: 4px; min-height: 0; }
+        #battle-screen.teach .timer-box { font-size: 15px; margin-top: 4px; padding: 1px 12px; }
     </style>
 </head>
 <body>
@@ -315,24 +424,30 @@
 
     <!-- Start 畫面 -->
     <div id="start-screen" class="screen overlay">
-        <div class="modal-box" style="background: rgba(255,255,255,0.95);">
-            <h1 style="color:#2C3E50; font-size: 56px;">加法勇者傳說</h1>
-            <p>
+        <div class="modal-box" style="background: rgba(255,255,255,0.95); padding: 22px 30px;">
+            <h1 style="color:#2C3E50; font-size: 48px; margin-bottom: 10px;">加法勇者傳說</h1>
+            <p style="font-size: 16px; line-height: 1.5; margin-bottom: 12px;">
                 <strong>主角設定：</strong> 冷酷銀髮勇者，右眼戰術眼罩，手持黑曜石雙刃鐮刀，手臂閃爍紅光咒印。<br><br>
                 <strong>遊戲規則：</strong> 擊敗地圖上5大地形的魔王！<br>
                 ✨ 魔王10滴血，答錯加0.5血。<br>
-                ✨ 勇者4滴血，答錯扣1血，限時60秒。<br>
-                ✨ <strong>時間加成：</strong> 10秒內答對攻擊x2，20秒內x1.5。<br>
+                ✨ 勇者4滴血，答錯扣1血，每題限時（教學版時間較長）。<br>
+                ✨ <strong>時間加成：</strong> 快速版 10秒內答對攻擊x2，20秒內x1.5（教學版時間加長）。<br>
+                🎮 <strong>兩種玩法：</strong> ⚡快速版＝直接輸入答案；🧮教學版＝用直式加法一步步算。兩種模式的進度與星星各自獨立計算，隨時可在地圖上換模式。<br>
+                📖 <strong>答錯會有解說：</strong> 看完解說、按「確定」才會進下一題；答對就直接進下一題。<br>
                 ✨ <strong>道具：</strong> 連對5題獲得「甦醒藥」(死後自動滿血復活)。<br>
                 挑戰全關卡 5 星評價吧！
             </p>
-            <button onclick="showMap()">進入浮空島</button>
+            <div style="display:flex; gap:18px; justify-content:center;">
+                <button onclick="chooseMode('quick')" style="font-size:24px; padding:12px 26px; line-height:1.3;">⚡ 快速版<br><span style="font-size:14px; font-weight:700;">直接輸入答案</span></button>
+                <button onclick="chooseMode('teach')" style="font-size:24px; padding:12px 26px; line-height:1.3; background:#27AE60; box-shadow:0 6px 0 #1E8449;">🧮 教學版<br><span style="font-size:14px; font-weight:700;">直式加法一步步算</span></button>
+            </div>
             <div id="login-status" style="margin-top:16px; font-size:16px; font-weight:900; line-height:1.5;"></div>
         </div>
     </div>
 
     <!-- 世界大地圖畫面（地圖圖片＋熱區＋勇者，由 JS 動態生成） -->
     <div id="map-screen" class="screen hidden">
+        <button id="mode-switch" class="btn-map" style="position:absolute; left:14px; top:8px; padding:6px 14px; font-size:15px; box-shadow:0 4px 0 #2C3E50; z-index:6;" onclick="toggleMode()"></button>
         <div class="map-header">
             <div class="map-title">🌍 浮空島嶼遺跡 - 關卡選擇</div>
             <div class="map-sub">點一下發亮的關卡，勇者就會走過去！</div>
@@ -378,6 +493,8 @@
             <!-- 題目 -->
             <div class="center-area">
                 <div id="question" class="question-box">1 + 1 = ?</div>
+                <div id="teach-panel" class="teach-panel"></div>
+                <div id="teach-hint" class="teach-hint"></div>
                 <div class="timer-box">剩餘時間: <span id="time-left">60</span>s</div>
                 <div class="message-log" id="message">準備戰鬥！</div>
             </div>
@@ -393,7 +510,7 @@
 
         <!-- 螢幕數字鍵盤：0-9、修正、攻擊 -->
         <div class="control-area">
-            <div class="answer-display">
+            <div class="answer-display quick-only">
                 <div class="answer-label">我的答案</div>
                 <div id="answer-value" class="answer-value empty">?</div>
             </div>
@@ -413,6 +530,23 @@
                 <button class="key-btn key-del" id="key-del">⌫ 修正</button>
                 <button class="key-btn key-go" id="attack-btn">⚔️ 攻擊！</button>
             </div>
+        </div>
+    </div>
+
+    <!-- 答錯解說：看完解說、按「確定」才會進下一題 -->
+    <div id="explain-overlay" class="overlay hidden">
+        <div class="modal-box">
+            <h1 id="ex-title">答錯了</h1>
+            <div class="ex-body">
+                <div class="ex-note" id="ex-note"></div>
+                <div class="ex-ans" id="ex-ans"></div>
+                <div id="ex-vert"></div>
+                <div class="ex-sub">一步一步來看：</div>
+                <ul class="ex-steps" id="ex-steps"></ul>
+                <div id="ex-mist-wrap" class="hidden"><div class="ex-sub">你填錯的地方：</div><ul class="ex-steps mist" id="ex-mist"></ul></div>
+                <div class="ex-check" id="ex-check"></div>
+            </div>
+            <div class="modal-buttons"><button id="ex-ok">確定</button></div>
         </div>
     </div>
 
@@ -492,6 +626,30 @@
             allStagesList.push({ ...s, terrainId: t.id, terrainName: t.short, img: ASSET + 'monster-' + s.id + '.png', bg: ASSET + bgName + '.jpg' });
         });
     });
+
+    // ================= 作答模式：quick（快速版）/ teach（教學版）=================
+    // 教學版要一格一格寫直式，比快速版花時間，所以每題限時與加成門檻都乘上這個倍數（想調整改這裡）
+    const TEACH_TIME_FACTOR = 1.5;
+    const BASE_VAL = { limit: 60, fast: 10, quick: 20 };   // 快速版：限時 60 秒；10 秒內傷害 x2；20 秒內 x1.5（也用來算星等）
+    let playMode = 'quick';
+    try { if (localStorage.getItem('additionHero_mode') === 'teach') playMode = 'teach'; } catch (e) {}
+    // 取得目前模式下的 限時 / 極速門檻 / 快速門檻
+    function stageVal(key) {
+        return Math.round(BASE_VAL[key] * (playMode === 'teach' ? TEACH_TIME_FACTOR : 1));
+    }
+    function refreshModeUI() {
+        const b = document.getElementById('mode-switch');
+        if (b) b.innerText = playMode === 'teach' ? '🧮 教學版（點我換成⚡快速版）' : '⚡ 快速版（點我換成🧮教學版）';
+    }
+    function setMode(m) {
+        playMode = (m === 'teach') ? 'teach' : 'quick';
+        try { localStorage.setItem('additionHero_mode', playMode); } catch (e) {}
+        playerProgress = loadProgress();   // 兩種模式的進度各自獨立，切換時載入該模式自己的存檔
+        heroStageId = null;                // 勇者回到該模式的「目前關卡」
+        refreshModeUI();
+    }
+    function chooseMode(m) { setMode(m); showMap(); }
+    function toggleMode() { if (mapBusy) return; setMode(playMode === 'teach' ? 'quick' : 'teach'); placeHeroInstant(findFrontierStageId()); refreshMap(); showMapToast(playMode === 'teach' ? '🧮 已切換成教學版（進度與快速版各自獨立）' : '⚡ 已切換成快速版（進度與教學版各自獨立）'); }
 
     // ================= 每大關背景音樂 =================
     // 目前 5 大關先全部共用同一首（之後上傳新曲目時，把對應地形 id
@@ -585,17 +743,22 @@
         return { ok: false, text: '⚠️ 沒有偵測到登入的學號（請先從學習平台登入再進入遊戲）。目前進度只暫存在這台電腦，領不到代幣。' };
     }
 
-    // 玩家關卡進度：放在共用存檔的 additionHero 欄位下，
-    // 跟塔防(towerDefense)、ETP(etp)、看打(lookType) 各自獨立、互不覆蓋。
+    // 玩家關卡進度：放在共用存檔裡，跟塔防(towerDefense)、ETP(etp)、看打(lookType) 各自獨立、互不覆蓋。
+    // 兩種模式的進度各自獨立：快速版存在 additionHero（跟舊版相同，原本的進度不會不見），教學版存在 additionHeroTeach
     let sharedSave = loadSharedSave();
-    let playerProgress = (sharedSave.additionHero && sharedSave.additionHero.stages)
-        ? sharedSave.additionHero.stages
-        : { "1-1": { unlocked: true, stars: 0 } };
-    if (!playerProgress["1-1"]) playerProgress["1-1"] = { unlocked: true, stars: 0 };
+    function progressKey() { return playMode === 'teach' ? 'additionHeroTeach' : 'additionHero'; }
+    function loadProgress() {
+        const sv = loadSharedSave();
+        const saved = sv[progressKey()] && sv[progressKey()].stages;
+        const p = saved ? saved : {};
+        if (!p["1-1"]) p["1-1"] = { unlocked: true, stars: 0 };
+        return p;
+    }
+    let playerProgress = loadProgress();
 
     function saveProgress() {
         sharedSave = loadSharedSave(); // 先讀最新的，避免蓋掉存檔裡其他系統剛寫入的資料
-        sharedSave.additionHero = { stages: playerProgress };
+        sharedSave[progressKey()] = { stages: playerProgress };
         writeSharedSave(sharedSave);
     }
 
@@ -611,6 +774,7 @@
 
         if (useStudentSave && typeof keyagentQueuePendingAttempt === 'function') {
             keyagentQueuePendingAttempt('additionHero', {
+                mode: playMode,
                 stageId: currentStageObj ? currentStageObj.id : null,
                 stars: (currentStageObj && playerProgress[currentStageObj.id]) ? playerProgress[currentStageObj.id].stars : null,
                 tokensEarned: amount,
@@ -639,6 +803,8 @@
     let acceptingInput = false;    // 作答中才接受按鍵，動畫播放時鎖住避免重複送出
 
     let stageStats = { total: 0, mistakes: 0, correct: 0, times: [] };
+    let curA = 0, curB = 0;        // 這一題的兩個加數（答錯解說要用）
+    let battleSeq = 0;             // 每次開戰／逃跑就 +1，讓舊的計時動作失效
 
     // ================= DOM 元素 =================
     const screens = {
@@ -858,6 +1024,7 @@
     }
 
     function showMap() {
+        hideExplain();
         stopMusic(); // 回到地圖就先停掉戰鬥音樂，進下一場戰鬥時會依地形重新播放
         if (heroStageId === null) placeHeroInstant(findFrontierStageId());
         switchScreen('map');
@@ -885,8 +1052,10 @@
         ui.bossSprite.classList.remove('boss-defeated', 'lunge-reverse');
         ui.bossImg.classList.remove('hit-flash');
         resetHeroSprite();
+        battleSeq++; hideExplain();
+        screens.battle.classList.toggle('teach', playMode === 'teach');
         screens.battle.style.backgroundImage = `url('${currentStageObj.bg}')`;
-        ui.levelDisp.innerHTML = `<div class="lv-main">關卡 ${currentStageObj.id}</div><div class="lv-sub">${currentStageObj.terrainName}</div>`;
+        ui.levelDisp.innerHTML = `<div class="lv-main">關卡 ${currentStageObj.id}</div><div class="lv-sub">${currentStageObj.terrainName}${playMode === 'teach' ? '・教學版' : ''}</div>`;
 
         showMessage(`${currentStageObj.boss} 出現了！戰鬥開始！`, "#2ECC71");
         updateUI();
@@ -898,6 +1067,7 @@
     function quitToMap() {
         clearInterval(timerInterval);
         acceptingInput = false;
+        battleSeq++; hideExplain();
         showMap();
     }
 
@@ -910,31 +1080,96 @@
         return Math.floor(Math.random() * (max - min + 1)) + min;
     }
 
-    // ---------- 螢幕數字鍵盤 ----------
+    // ================= 答錯解說：看完解說、按「確定」才進下一題 =================
+    // 答對：直接進下一題（不用按任何東西）。答錯／時間到：先跳出這個解說視窗，按「確定」才會往下走。
+    const PN = ['個', '十', '百', '千', '萬', '十萬', '百萬', '千萬'];   // 位名（解說文字用）
+    const exEl = id => document.getElementById(id);
+    let explainOpen = false, explainShownAt = 0, afterExplain = null;
+
+    function openExplain(info) {
+        exEl('ex-title').innerText = info.title;
+        exEl('ex-note').innerText = info.note || '';
+        exEl('ex-ans').innerHTML = info.ansHtml || '';
+        exEl('ex-vert').innerHTML = info.vertHtml || '';
+        exEl('ex-steps').innerHTML = (info.steps || []).map(s => '<li>' + s + '</li>').join('');
+        exEl('ex-mist').innerHTML = (info.mistakes || []).map(s => '<li>' + s + '</li>').join('');
+        exEl('ex-mist-wrap').classList.toggle('hidden', !(info.mistakes && info.mistakes.length));
+        exEl('ex-check').innerHTML = info.check || '';
+        exEl('explain-overlay').classList.remove('hidden');
+        exEl('explain-overlay').querySelector('.ex-body').scrollTop = 0;
+        explainOpen = true; explainShownAt = Date.now();
+    }
+    function hideExplain() {
+        explainOpen = false; afterExplain = null;
+        exEl('explain-overlay').classList.add('hidden');
+    }
+    function confirmExplain() {
+        if (!explainOpen) return;
+        explainOpen = false;
+        exEl('explain-overlay').classList.add('hidden');
+        const fn = afterExplain; afterExplain = null;
+        if (fn) fn();
+    }
+    exEl('ex-ok').addEventListener('click', confirmExplain);
+
+    // 畫直式：rows = [{ sign, cells:[由左到右共 W 格], cls, note }]；cell 可以是字串或 { t, cls }
+    function exGrid(W, rows, sw) {
+        const cw = Math.max(20, Math.min(34, Math.floor(420 / (W + 1))));
+        let h = '<div class="ex-grid" style="--cw:' + cw + 'px; --sw:' + (sw || 54) + 'px">';
+        rows.forEach(r => {
+            h += '<div class="xr ' + (r.cls || '') + '"><span class="xs">' + (r.sign || '') + '</span>';
+            for (let i = 0; i < W; i++) {
+                const c = r.cells[i];
+                const t = (c && typeof c === 'object') ? c.t : (c || '');
+                const cl = (c && typeof c === 'object' && c.cls) ? c.cls : '';
+                h += '<span class="xc ' + cl + '">' + (t === '' ? '&nbsp;' : t) + '</span>';
+            }
+            h += (r.note ? '<span class="xn">' + r.note + '</span>' : '') + '</div>';
+        });
+        return h + '</div>';
+    }
+    // 把字串 str 靠右放在第 endCol 格（含），可指定顏色 class
+    function exPut(cells, str, endCol, cls) {
+        for (let k = 0; k < str.length; k++) cells[endCol - str.length + 1 + k] = cls ? { t: str[k], cls: cls } : str[k];
+    }
+
+    // ---------- 計時 ----------
+    function startQuestionTimer() {
+        timeLeft = stageVal('limit');
+        questionStartTime = Date.now();
+        ui.timeLeft.innerText = timeLeft;
+        timerInterval = setInterval(() => {
+            timeLeft--;
+            ui.timeLeft.innerText = timeLeft;
+            if (timeLeft <= 0) processAnswer(false, true); // 超時
+        }, 1000);
+    }
+
+    // ---------- 快速版：螢幕數字鍵盤 ----------
     function renderAnswer() {
         ui.answerValue.innerText = answerStr === "" ? "?" : answerStr;
         ui.answerValue.classList.toggle('empty', answerStr === "");
     }
 
-    function pressDigit(d) {
+    function quickPressDigit(d) {
         if (!acceptingInput) return;
         if (answerStr === "0") answerStr = d;          // 避免 05 這種開頭 0
         else if (answerStr.length < 5) answerStr += d; // 最大和為 19998，最多 5 位數
         renderAnswer();
     }
 
-    function pressDelete() {
+    function quickPressDelete() {
         if (!acceptingInput) return;
         answerStr = answerStr.slice(0, -1);
         renderAnswer();
     }
 
-    function submitAnswer() {
+    function quickSubmit() {
         if (!acceptingInput || answerStr === "") return;
         processAnswer(true, false);
     }
 
-    function nextQuestion() {
+    function quickNextQuestion() {
         clearInterval(timerInterval);
         answerStr = "";
         renderAnswer();
@@ -942,19 +1177,236 @@
 
         const num1 = getRandomNumber(currentStageObj.d1);
         const num2 = getRandomNumber(currentStageObj.d2);
+        curA = num1; curB = num2;
         currentAnswer = num1 + num2;
 
         ui.question.innerText = `${num1} + ${num2} = ?`;
+        startQuestionTimer();
+    }
 
-        timeLeft = 60;
-        questionStartTime = Date.now();
-        ui.timeLeft.innerText = timeLeft;
+    // ================= 教學版：直式加法作答 =================
+    // 版面：上面一排「進位格」（寫進位用，不計分），中間是兩個加數，最下面是「答」。
+    // 計分的格子：最下面「答」那一列的每一位數字（由個位開始填）。
+    const teachPanel = document.getElementById('teach-panel');
+    const teachHint = document.getElementById('teach-hint');
+    let form = null;         // 這一題的直式表格
+    let activeCell = null;   // 目前選到的格子
 
-        timerInterval = setInterval(() => {
-            timeLeft--;
-            ui.timeLeft.innerText = timeLeft;
-            if (timeLeft <= 0) processAnswer(false, true); // 超時
-        }, 1000);
+    function tfEl(cls, text) {
+        const el = document.createElement('div');
+        el.className = 'tf-cell ' + cls;
+        if (text !== undefined) el.textContent = text;
+        return el;
+    }
+
+    function buildForm(n1, n2) {
+        const s1 = String(n1), s2 = String(n2), ans = String(n1 + n2);
+        const W = ans.length;                       // 答案一定是最長的（可能比加數多 1 位）
+        const ch = 46;
+        const cw = Math.min(54, Math.floor(290 / (W + 1)));
+        teachPanel.style.setProperty('--cw', cw + 'px');
+        teachPanel.style.setProperty('--ch', ch + 'px');
+        teachPanel.innerHTML = '';
+
+        const f = { n1, n2, s1, s2, ans, W, order: [], carry: [] };
+
+        // 一列：由右到左 col 0..W-1，最左邊多一格放符號
+        function addRow(map, signText, signStyle) {
+            const row = document.createElement('div');
+            row.className = 'tf-row';
+            const sign = tfEl('sign', signText || '');
+            if (signStyle) sign.style.cssText = signStyle;
+            row.appendChild(sign);
+            for (let col = W - 1; col >= 0; col--) row.appendChild(map[col] || tfEl('blank'));
+            teachPanel.appendChild(row);
+        }
+        function makeCell(kind, rowType, col, expect, label) {
+            const el = tfEl(kind);
+            const c = { el, kind, row: { type: rowType }, col, expect: expect === undefined ? null : expect, val: '', label: label || '' };
+            el.addEventListener('click', () => { if (acceptingInput) setActive(c); });
+            return c;
+        }
+
+        // 1) 進位格（答案是 2 位數以上才有）
+        if (W > 1) {
+            const map = {};
+            for (let col = 1; col < W; col++) {
+                const c = makeCell('carry', 'carry', col);
+                map[col] = c.el; f.carry.push(c);
+            }
+            addRow(map, '進位', 'font-size:' + Math.round(ch * 0.34) + 'px;');
+        }
+
+        // 2) 兩個加數
+        const m1 = {};
+        for (let k = 0; k < s1.length; k++) m1[k] = tfEl('', s1[s1.length - 1 - k]);
+        addRow(m1, '');
+        const m2 = {};
+        for (let k = 0; k < s2.length; k++) m2[k] = tfEl('', s2[s2.length - 1 - k]);
+        addRow(m2, '+');
+        const rule = document.createElement('div'); rule.className = 'tf-rule'; teachPanel.appendChild(rule);
+
+        // 3) 答案（由個位開始填）
+        const mapA = {};
+        for (let k = 0; k < W; k++) {
+            const c = makeCell('input', 'answer', k, ans[W - 1 - k], PN[k] + '位');
+            mapA[k] = c.el; f.order.push(c);
+        }
+        addRow(mapA, '答', 'color:#C0392B; font-weight:900;');
+
+        form = f;
+    }
+
+    function updateHint(c) {
+        if (!c) { teachHint.innerText = ''; return; }
+        if (c.kind === 'carry') { teachHint.innerText = '這是進位格：滿 10 時，可以把進位的 1 寫在這裡（不會計分）'; return; }
+        const k = c.col;
+        const d1 = k < form.s1.length ? form.s1[form.s1.length - 1 - k] : null;
+        const d2 = k < form.s2.length ? form.s2[form.s2.length - 1 - k] : null;
+        let t;
+        if (d1 === null && d2 === null) t = '最左邊：只剩下進位的 1，直接寫下來';
+        else t = `${PN[k]}位：${d1 === null ? 0 : d1} + ${d2 === null ? 0 : d2}${k > 0 ? ' + 右邊進來的進位' : ''}，只寫個位數，滿 10 就向左進 1`;
+        teachHint.innerText = t;
+    }
+
+    function setActive(c) {
+        if (activeCell) activeCell.el.classList.remove('active');
+        activeCell = c;
+        if (c) c.el.classList.add('active');
+        updateHint(c);
+    }
+
+    function cellText(c) { c.el.textContent = c.val; }
+
+    function teachPressDigit(d) {
+        if (!acceptingInput || !form) return;
+        if (!activeCell) setActive(form.order[0]);
+        const c = activeCell;
+        c.val = String(d);
+        cellText(c);
+        if (c.kind === 'input') {
+            const idx = form.order.indexOf(c);
+            if (idx < form.order.length - 1) setActive(form.order[idx + 1]);
+        }
+    }
+
+    function teachPressDelete() {
+        if (!acceptingInput || !form || !activeCell) return;
+        const c = activeCell;
+        if (c.val !== '') { c.val = ''; cellText(c); return; }
+        if (c.kind === 'input') {
+            const idx = form.order.indexOf(c);
+            if (idx > 0) {
+                const prev = form.order[idx - 1];
+                prev.val = ''; cellText(prev);
+                setActive(prev);
+            }
+        }
+    }
+
+    function teachSubmit() {
+        if (!acceptingInput || !form) return;
+        const empty = form.order.find(c => c.val === '');
+        if (empty) {
+            showMessage('還有空格沒填喔！每一格都要填好才能攻擊。', '#F1C40F');
+            setActive(empty);
+            return;
+        }
+        processAnswer(true, false);
+    }
+
+    // 批改：全部計分格都對才算答對；答錯的格子標紅色並顯示正確數字
+    function gradeForm() {
+        let ok = true;
+        if (activeCell) activeCell.el.classList.remove('active');
+        form.order.forEach(c => {
+            if (c.val === c.expect) c.el.classList.add('ok');
+            else { ok = false; c.el.classList.add('bad'); }
+        });
+        return ok;
+    }
+    function revealForm() {
+        form.order.forEach(c => {
+            if (c.val !== c.expect) { c.el.textContent = c.expect; c.el.classList.add('revealed'); }
+        });
+    }
+
+    function teachNextQuestion() {
+        clearInterval(timerInterval);
+        acceptingInput = true;
+
+        const num1 = getRandomNumber(currentStageObj.d1);
+        const num2 = getRandomNumber(currentStageObj.d2);
+        curA = num1; curB = num2;
+        currentAnswer = num1 + num2;
+        ui.question.innerText = `${num1} + ${num2} = ?`;
+        buildForm(num1, num2);
+        activeCell = null;
+        setActive(form.order[0]);
+        startQuestionTimer();
+    }
+
+    // 依目前模式分流（螢幕鍵盤、實體鍵盤、按鈕、出題都走這四個）
+    function pressDigit(d)  { return playMode === 'teach' ? teachPressDigit(d)  : quickPressDigit(d); }
+    function pressDelete()  { return playMode === 'teach' ? teachPressDelete()  : quickPressDelete(); }
+    function submitAnswer() { return playMode === 'teach' ? teachSubmit()       : quickSubmit(); }
+    function nextQuestion() { return playMode === 'teach' ? teachNextQuestion() : quickNextQuestion(); }
+
+    // ================= 答錯解說內容（直式加法） =================
+    function exAdd(a, b) {
+        const sa = String(a), sb = String(b), sum = a + b, ss = String(sum), W = ss.length;
+        const A = sa.split('').reverse().map(Number), B = sb.split('').reverse().map(Number);
+        const n = Math.max(A.length, B.length);
+        let carry = 0;
+        const steps = [], carryInto = {};
+        for (let i = 0; i < n; i++) {
+            const da = A[i], db = B[i], x = (da || 0) + (db || 0) + carry, w = x % 10, co = x >= 10 ? 1 : 0;
+            let t;
+            if (da !== undefined && db !== undefined) t = `${da} + ${db}${carry ? ' + 進位 ' + carry : ''} = ${x}`;
+            else if (carry) t = `${da !== undefined ? da : db} + 進位 ${carry} = ${x}`;
+            else t = null;
+            if (t === null) t = `只剩 ${w}，沒有數字可以加，直接寫 <b>${w}</b>`;
+            else t += co ? `，滿 10 了，寫 <b>${w}</b>，向左進 <b>1</b>` : `，寫 <b>${w}</b>`;
+            steps.push(`<b>${PN[i]}位：</b>${t}`);
+            if (co) carryInto[i + 1] = 1;
+            carry = co;
+        }
+        if (carry) steps.push(`<b>${PN[n]}位：</b>最左邊還有進位 <b>1</b>，直接寫在最前面`);
+
+        const rows = [];
+        if (Object.keys(carryInto).length) {
+            const cc = new Array(W).fill('');
+            Object.keys(carryInto).forEach(k => { cc[W - 1 - Number(k)] = { t: '1', cls: 'cy' }; });
+            rows.push({ sign: '進位', cells: cc, cls: 'cyrow' });
+        }
+        const ra = new Array(W).fill(''); exPut(ra, sa, W - 1);
+        const rb = new Array(W).fill(''); exPut(rb, sb, W - 1);
+        const rs = new Array(W).fill(''); exPut(rs, ss, W - 1);
+        rows.push({ sign: '', cells: ra });
+        rows.push({ sign: '+', cells: rb });
+        rows.push({ sign: '', cells: rs, cls: 'top ans' });
+        return { vertHtml: exGrid(W, rows), steps: steps, check: `🔍 驗算：${sum} − ${b} = ${a}，所以 ${a} + ${b} = ${sum}` };
+    }
+
+    function buildExplainInfo(isTimeout) {
+        const a = curA, b = curB, sum = a + b;
+        const ex = exAdd(a, b);
+        let mine = '';
+        const mistakes = [];
+        if (playMode === 'teach' && form) {
+            const typed = form.order.slice().reverse().map(c => c.val || '？').join('');   // order 是由個位開始，反過來才是由左到右
+            mine = /\d/.test(typed) ? typed : '';
+            form.order.forEach(c => {
+                if (c.val !== c.expect) mistakes.push(`${c.label}：你寫 <span class="bad">${c.val || '（空白）'}</span>，應該是 <span class="good">${c.expect}</span>`);
+            });
+        } else if (!isTimeout) {
+            mine = answerStr;
+        }
+        return {
+            title: isTimeout ? '⏰ 時間到了！' : '❌ 這題算錯了',
+            ansHtml: (mine ? `你的答案：<span class="bad">${mine}</span>　` : (isTimeout ? '沒有來得及送出答案　' : '')) + `正確答案：<span class="good">${sum}</span>`,
+            vertHtml: ex.vertHtml, steps: ex.steps, check: ex.check, mistakes: mistakes
+        };
     }
 
     function processAnswer(isAttempt, isTimeout = false) {
@@ -963,25 +1415,32 @@
         clearInterval(timerInterval);
         const timeTaken = (Date.now() - questionStartTime) / 1000;
         stageStats.total++;
+        const seq = battleSeq;
 
         let isCorrect = false;
-        if (!isTimeout) {
+        if (playMode === 'teach') {
+            // 教學版：所有計分格都對才算答對；錯的格子標紅
+            const formOk = gradeForm();
+            isCorrect = formOk && !isTimeout;
+            if (!isCorrect) revealForm();
+        } else if (!isTimeout) {
             const playerAns = parseInt(answerStr, 10);
             if (playerAns === currentAnswer) isCorrect = true;
         }
 
         const bossName = currentStageObj.boss;
-        let waitMs = 1100;
 
         if (isCorrect) {
+            // ✅ 答對：直接進下一題（不用按任何按鈕）
+            let waitMs = 1100;
             stageStats.correct++;
             stageStats.times.push(timeTaken);
             combo++;
 
             let damage = 1;
             let bonusText = "";
-            if (timeTaken <= 10) { damage = 2; bonusText = "(極速攻擊 x2!)"; }
-            else if (timeTaken <= 20) { damage = 1.5; bonusText = "(快速攻擊 x1.5!)"; }
+            if (timeTaken <= stageVal('fast')) { damage = 2; bonusText = "(極速攻擊 x2!)"; }
+            else if (timeTaken <= stageVal('quick')) { damage = 1.5; bonusText = "(快速攻擊 x1.5!)"; }
 
             bossHP -= damage;
             let msg = `答對了！造成 ${damage} 傷害 ${bonusText}`;
@@ -1007,7 +1466,15 @@
                 waitMs = 1700;
             }
 
+            updateUI();
+            setTimeout(() => {
+                if (seq !== battleSeq) return;
+                if (bossHP <= 0) endGame(true);
+                else nextQuestion();
+            }, waitMs);
+
         } else {
+            // ❌ 答錯／時間到：先跳出解說視窗，按「確定」才會繼續
             stageStats.mistakes++;
             combo = 0;
             bossHP = Math.min(maxBossHP, bossHP + 0.5); // 扣錯魔王加血不超過上限
@@ -1025,23 +1492,18 @@
 
             playBossLunge();
             showFloatingDamage('hero', '-1', '#E74C3C');
+            if (playerHP <= 0) playHeroAnim('lose', false);   // 倒地後停在地上
+            else playHeroAnim('hurt');
+            updateUI();
 
-            if (playerHP <= 0) {
-                playHeroAnim('lose', false);   // 倒地後停在地上
-                waitMs = 3000;
-            } else {
-                playHeroAnim('hurt');
-                waitMs = 2300;
-            }
+            const info = buildExplainInfo(isTimeout);   // 趁玩家填的內容還在，先把解說準備好
+            info.note = msg;
+            afterExplain = () => {
+                if (playerHP <= 0) endGame(false);
+                else { resetHeroSprite(); nextQuestion(); }
+            };
+            setTimeout(() => { if (seq !== battleSeq) return; openExplain(info); }, 800);
         }
-
-        updateUI();
-
-        setTimeout(() => {
-            if (playerHP <= 0) endGame(false);
-            else if (bossHP <= 0) endGame(true);
-            else nextQuestion();
-        }, waitMs);
     }
 
     function updateUI() {
@@ -1092,8 +1554,8 @@
         const acc = stageStats.correct / stageStats.total;
 
         if (stageStats.mistakes === 0) {
-            const allUnder10 = stageStats.times.every(t => t <= 10);
-            const allUnder20 = stageStats.times.every(t => t <= 20);
+            const allUnder10 = stageStats.times.every(t => t <= stageVal('fast'));
+            const allUnder20 = stageStats.times.every(t => t <= stageVal('quick'));
             if (allUnder10) stars = 5;
             else if (allUnder20) stars = 4;
             else stars = 3;
@@ -1160,7 +1622,7 @@
             // 💡 回傳這次挑戰結果給老師的電腦（admin.html 看得到），不影響上面既有的代幣/存檔邏輯
             if (typeof MathGameCommon !== 'undefined') {
                 MathGameCommon.reportResult({
-                    game: '加法勇者',
+                    game: playMode === 'teach' ? '加法勇者【教學版】' : '加法勇者',
                     mode: '過關',
                     topic: currentStageObj ? currentStageObj.id : '',
                     correct: stageStats.correct,
@@ -1181,7 +1643,7 @@
             // 💡 挑戰失敗也一併回傳，讓老師看得到練習量，不是只有過關才記錄
             if (typeof MathGameCommon !== 'undefined') {
                 MathGameCommon.reportResult({
-                    game: '加法勇者',
+                    game: playMode === 'teach' ? '加法勇者【教學版】' : '加法勇者',
                     mode: '挑戰失敗',
                     topic: currentStageObj ? currentStageObj.id : '',
                     correct: stageStats.correct,
@@ -1212,6 +1674,11 @@
 
     // 電腦實體鍵盤也能用（0-9、Backspace、Enter），不影響螢幕鍵盤
     document.addEventListener('keydown', (e) => {
+        // 解說視窗開著時：Enter 等同按「確定」（長按不算，避免一下子就跳過解說）
+        if (explainOpen) {
+            if (e.key === 'Enter') { e.preventDefault(); if (!e.repeat && Date.now() - explainShownAt > 600) confirmExplain(); }
+            return;
+        }
         if (screens.battle.classList.contains('hidden') || !acceptingInput) return;
         if (/^[0-9]$/.test(e.key)) pressDigit(e.key);
         else if (e.key === 'Backspace') { e.preventDefault(); pressDelete(); }
@@ -1251,6 +1718,7 @@
     refreshMap();
     preloadHeroGifs();
     updateGbitDisplay();
+    refreshModeUI();
     (function showLoginStatus() {
         const st = loginStatusText();
         const el = document.getElementById('login-status');
@@ -1258,23 +1726,49 @@
         const badge = document.getElementById('gbit-badge');
         if (badge) badge.title = st.text;
     })();
+</script>
 
-// 1. 禁用滑鼠右鍵選單
-document.addEventListener('contextmenu', event => event.preventDefault());
-
-// 2. 禁用 Ctrl+S / Cmd+S 另存網頁快捷鍵
-document.addEventListener('keydown', function(e) {
-    if ((e.ctrlKey || e.metaKey) && e.key === 's') {
-        e.preventDefault();
-        alert('本網站已啟用內容保護，暫不開放另存網頁。');
+<script>
+// 題目框放在中間 1/3，題目太長（例如 4 位數 × 3 位數）時自動把字縮小，不會超出
+(function () {
+    const q = document.getElementById('question');
+    if (!q) return;
+    let busy = false;
+    function fit() {
+        if (busy) return; busy = true;
+        q.style.fontSize = '';
+        const box = q.parentElement, max = box.clientWidth - 8;
+        let fs = parseFloat(getComputedStyle(q).fontSize);
+        while (max > 60 && q.offsetWidth > max && fs > 16) { fs -= 2; q.style.fontSize = fs + 'px'; }
+        busy = false;
     }
-    // 順便禁用 Ctrl+U (查看原始碼) 和 F12 (開發者工具)
-    if ((e.ctrlKey || e.metaKey) && e.key === 'u' || e.key === 'F12') {
-        e.preventDefault();
+    new MutationObserver(fit).observe(q, { childList: true, characterData: true, subtree: true });
+    window.addEventListener('resize', fit);
+})();
+</script>
+
+<script>
+// ================= 自動全螢幕 =================
+// 瀏覽器規定：一定要有人「點一下或按一個鍵」才能進全螢幕（不能一開網頁就強制）。
+// 所以第一次點畫面上任何地方（例如選「快速版／教學版」）就會自動進入全螢幕，不用再按 F11。
+// 想離開全螢幕按 Esc；離開後這次不會再被強制進入。
+(function () {
+    function isFs() { return document.fullscreenElement || document.webkitFullscreenElement; }
+    function goFs() {
+        if (isFs()) return;
+        const el = document.documentElement;
+        const fn = el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen;
+        if (fn) { try { const r = fn.call(el); if (r && r.catch) r.catch(function () {}); } catch (e) {} }
     }
-});
-
-
+    function once(e) {
+        if (e.type === 'keydown' && e.key === 'Escape') return;
+        goFs();
+        document.removeEventListener('pointerdown', once, true);
+        document.removeEventListener('keydown', once, true);
+    }
+    document.addEventListener('pointerdown', once, true);
+    document.addEventListener('keydown', once, true);
+})();
 </script>
 </body>
 </html>
