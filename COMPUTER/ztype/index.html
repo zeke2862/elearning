@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TypeStrike — 打字射擊遊戲</title>
+  <meta name="description" content="TypeStrike — 太空打字射擊遊戲。選擇練習區域，摧毀敵艦，提升打字技巧！" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;500;600&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <canvas id="gameCanvas"></canvas>
+
+  <!-- HUD -->
+  <div id="hud">
+    <div class="hud-left">
+      <div class="hud-label">SCORE</div>
+      <div class="hud-value" id="scoreDisplay">0</div>
+    </div>
+    <div class="hud-center">
+      <div class="hud-label">WAVE</div>
+      <div class="hud-value" id="waveDisplay">1</div>
+    </div>
+    <div class="hud-right">
+      <div class="hud-label">LIVES</div>
+      <div id="livesDisplay" class="lives-icons"></div>
+      <button id="fullscreenBtn" class="fullscreen-btn" title="切換全螢幕 (F11)">⛶ 全螢幕</button>
+    </div>
+  </div>
+
+  <!-- Keyboard toggle button (normal mode, including Chinese pinyin practice) -->
+  <button id="kbToggleBtn" class="kb-toggle-btn" style="display:none;">⌨️ 鍵盤</button>
+
+  <!-- On-screen keyboard -->
+  <div id="onscreenKB" class="onscreen-kb" style="display:none;"></div>
+
+  <!-- Typing indicator -->
+  <div id="typingBar">
+    <span id="typedText"></span><span class="cursor">|</span>
+  </div>
+
+  <!-- 中文模式作答提示／專家模式國字輸入框 -->
+  <div id="answerPanel" class="answer-panel" style="display:none;">
+    <div class="answer-hint" id="answerHint">請選出正確的字</div>
+    <div class="typed-pinyin-display" id="typedPinyinDisplay" aria-live="polite"></div>
+    <div class="answer-choices" id="answerChoices"></div>
+    <div class="answer-input-wrap" id="answerInputWrap" style="display:none;">
+      <input type="text" id="chineseTypeInput" class="answer-input" placeholder="輸入正確的字，按 Enter 消滅敵艦" autocomplete="off" autocapitalize="off" spellcheck="false" />
+    </div>
+  </div>
+
+  <!-- ═══════════ Screens ═══════════ -->
+
+  <!-- 1. Start / Mode Select -->
+  <div id="startScreen" class="screen active">
+    <div class="screen-content">
+      <div class="logo-glow">TYPE<span class="accent">STRIKE</span></div>
+      <p class="tagline">打字，射擊，存活</p>
+      <div class="key-hint">輸入文字來鎖定並摧毀敵艦</div>
+      <div class="mode-select">
+        <button class="mode-btn active" data-mode="normal">一般模式</button>
+        <button class="mode-btn" data-mode="expert">專家模式</button>
+      </div>
+      <button class="start-btn" id="toCategories">選擇練習範圍 →</button>
+      <div class="controls-hint">
+        <span>⌨️ 打字攻擊</span>
+        <span>ESC 暫停</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. Category Select -->
+  <div id="categoryScreen" class="screen">
+    <div class="screen-content screen-content-wide">
+      <div class="screen-title">選擇練習範圍</div>
+      <p class="category-hint">選擇你要練習的鍵盤區域</p>
+      <div class="category-grid">
+        <button class="cat-btn active" data-cat="home">
+          <span class="cat-icon">🏠</span>
+          <span class="cat-name">中列</span>
+          <span class="cat-keys">A S D F G H J K L ; '</span>
+        </button>
+        <button class="cat-btn" data-cat="top">
+          <span class="cat-icon">⬆️</span>
+          <span class="cat-name">上列</span>
+          <span class="cat-keys">Q W E R T Y U I O P</span>
+        </button>
+        <button class="cat-btn" data-cat="bottom">
+          <span class="cat-icon">⬇️</span>
+          <span class="cat-name">下列</span>
+          <span class="cat-keys">Z X C V B N M , . /</span>
+        </button>
+        <button class="cat-btn" data-cat="symbols">
+          <span class="cat-icon">🔣</span>
+          <span class="cat-name">符號</span>
+          <span class="cat-keys">! @ # $ % ; : ' " , .</span>
+        </button>
+        <button class="cat-btn" data-cat="case">
+          <span class="cat-icon">🔠</span>
+          <span class="cat-name">大小寫</span>
+          <span class="cat-keys">Shift + 字母</span>
+        </button>
+        <button class="cat-btn" data-cat="mixed">
+          <span class="cat-icon">🔀</span>
+          <span class="cat-name">混合</span>
+          <span class="cat-keys">所有按鍵隨機組合</span>
+        </button>
+        <button class="cat-btn" data-cat="words">
+          <span class="cat-icon">📝</span>
+          <span class="cat-name">單字</span>
+          <span class="cat-keys">常用英文單字</span>
+        </button>
+        <button class="cat-btn" data-cat="chinese">
+          <span class="cat-icon">🈶</span>
+          <span class="cat-name">中文</span>
+          <span class="cat-keys">看拼音選字消滅</span>
+        </button>
+      </div>
+
+      <!-- 中文文章選擇面板（選擇「中文」分類時才顯示） -->
+      <div id="chinesePanel" class="chinese-panel" style="display:none;">
+        <div class="chinese-panel-head">
+          <span class="chinese-panel-title">選擇要練習的文章（可複選）</span>
+          <div class="chinese-panel-actions">
+            <button class="mini-btn" id="selectAllArticles">全選</button>
+            <button class="mini-btn" id="selectNoneArticles">取消全選</button>
+          </div>
+        </div>
+        <div id="articleList" class="article-list"></div>
+      </div>
+
+      <div class="cat-actions">
+        <button class="link-btn" id="backToMode">← 返回</button>
+        <button class="start-btn" id="startGameBtn">開始遊戲</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. Pause -->
+  <div id="pauseScreen" class="screen">
+    <div class="screen-content">
+      <div class="screen-title">⏸ 暫停</div>
+      <button class="start-btn" id="resumeBtn">繼續遊戲</button>
+      <button class="link-btn" id="pauseMenuBtn">🏠 回主選單</button>
+    </div>
+  </div>
+
+  <!-- 4. Game Over -->
+  <div id="gameoverScreen" class="screen">
+    <div class="screen-content">
+      <div class="screen-title gameover-title">GAME OVER</div>
+      <div class="final-stats">
+        <div class="stat-row"><span>最終分數</span><span id="finalScore">0</span></div>
+        <div class="stat-row"><span>最高波次</span><span id="finalWave">0</span></div>
+        <div class="stat-row"><span>擊毀敵艦</span><span id="finalKills">0</span></div>
+        <div class="stat-row"><span>打字準確率</span><span id="finalAccuracy">0%</span></div>
+        <div class="stat-row" id="kbBonusRow" style="display:none;"><span>鍵盤隱藏加成</span><span>×1.5</span></div>
+      </div>
+      <button class="start-btn" id="restartBtn">再玩一次</button>
+      <button class="link-btn" id="overMenuBtn">🏠 回主選單</button>
+    </div>
+  </div>
+
+  <script src="chinese-articles-data.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>
