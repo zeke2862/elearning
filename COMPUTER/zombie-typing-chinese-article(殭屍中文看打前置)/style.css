@@ -1,0 +1,595 @@
+:root {
+    --bg-primary: #0a0a1a;
+    --bg-secondary: #1a1a2e;
+    --accent-primary: #6c63ff;
+    --accent-secondary: #00d4ff;
+    --accent-danger: #ff4757;
+    --accent-success: #2ed573;
+    --accent-warning: #ffa502;
+    --text-primary: #e8e8e8;
+    --text-secondary: #a0a0b0;
+    --glass-bg: rgba(255, 255, 255, 0.05);
+    --glass-border: rgba(255, 255, 255, 0.1);
+    
+    font-family: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background: linear-gradient(135deg, var(--bg-primary), var(--bg-secondary));
+    color: var(--text-primary);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+/* Loading Overlay */
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--bg-primary);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    transition: opacity 0.5s ease;
+}
+
+.loader {
+    border: 4px solid var(--glass-border);
+    border-top: 4px solid var(--accent-primary);
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    animation: spin 1s linear infinite;
+    margin-bottom: 20px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Bottom bar row — holds the ENTER-typing box (中文-文章 mode) and the icon
+   controls, side by side, right below the canvas so they never cover the
+   game screen or the pinyin text above the monsters. */
+.bottom-bar-row {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    max-width: 98vw;
+    min-height: 44px;
+    margin-top: 10px;
+}
+
+/* Top Controls Bar — now docked to the right side of .bottom-bar-row,
+   same height as the "輸入文字" typing box, instead of floating over the
+   canvas like before. */
+.top-controls-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    z-index: 20;
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: auto;
+}
+
+/* Game Container — always fills the browser viewport (占滿全螢幕) */
+.game-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100vw;
+    height: 100vh;
+    max-width: 100vw;
+    padding: 10px;
+    position: relative;
+    background: #050510;
+}
+
+/* True OS-level Fullscreen (via Fullscreen API) — same layout, kept for the fullscreen button */
+.game-container:fullscreen,
+.game-container:-webkit-full-screen {
+    width: 100vw;
+    height: 100vh;
+    max-width: 100vw;
+    padding: 10px;
+    background: #050510;
+    justify-content: center;
+}
+
+.canvas-wrapper {
+    position: relative;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 0 30px rgba(108, 99, 255, 0.2);
+    background-color: #000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: min(98vw, calc(90vh * 916 / 500));
+    height: min(90vh, calc(98vw * 500 / 916));
+    max-width: 98vw;
+    max-height: 90vh;
+}
+
+/* Pulsing glow animation for canvas border */
+.canvas-wrapper::before {
+    content: '';
+    position: absolute;
+    top: -2px; left: -2px; right: -2px; bottom: -2px;
+    background: linear-gradient(45deg, var(--accent-primary), var(--accent-secondary), var(--accent-primary));
+    z-index: -1;
+    border-radius: 14px;
+    background-size: 200% 200%;
+    animation: glowPulse 3s ease infinite;
+    opacity: 0.7;
+}
+
+@keyframes glowPulse {
+    0% { background-position: 0% 50%; box-shadow: 0 0 20px rgba(108, 99, 255, 0.3); }
+    50% { background-position: 100% 50%; box-shadow: 0 0 40px rgba(0, 212, 255, 0.5); }
+    100% { background-position: 0% 50%; box-shadow: 0 0 20px rgba(108, 99, 255, 0.3); }
+}
+
+canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    background-color: var(--bg-primary);
+}
+
+.icon-btn {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    color: var(--text-primary);
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.icon-btn svg {
+    width: 20px;
+    height: 20px;
+}
+
+.icon-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+    transform: scale(1.1);
+    box-shadow: 0 0 15px var(--accent-primary);
+    border-color: var(--accent-primary);
+}
+
+.gear-btn:hover svg {
+    animation: rotateGear 2s linear infinite;
+}
+
+@keyframes rotateGear {
+    100% { transform: rotate(360deg); }
+}
+
+.zh-typing-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 8px 16px;
+    background: rgba(10, 16, 32, 0.9);
+    border: 2px solid rgba(46, 213, 115, 0.7);
+    border-radius: 10px;
+    box-shadow: 0 0 16px rgba(46, 213, 115, 0.25);
+    flex-wrap: wrap;
+}
+
+.zh-typing-label {
+    color: #ffd700;
+    font-size: 0.85rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.zh-typing-input {
+    font-size: 1.3rem;
+    font-weight: 700;
+    text-align: center;
+    width: 160px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.95);
+    color: #111;
+    font-family: "Outfit", "Microsoft JhengHei", "PingFang SC", sans-serif;
+}
+
+.zh-typing-input:focus {
+    outline: 2px solid #2ed573;
+}
+
+.zh-typing-hint {
+    color: #a0a0b0;
+    font-size: 0.75rem;
+    white-space: nowrap;
+}
+
+.credits {
+    position: absolute;
+    bottom: 4px;
+    left: 0;
+    right: 0;
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+    text-align: center;
+    font-weight: 300;
+    letter-spacing: 0.5px;
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+/* Sprite Panel */
+.sprite-panel {
+    position: fixed;
+    top: 0;
+    right: -400px;
+    width: 100%;
+    max-width: 380px;
+    height: 100vh;
+    background: rgba(10, 10, 26, 0.85);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-left: 1px solid var(--glass-border);
+    box-shadow: -10px 0 30px rgba(0, 0, 0, 0.5);
+    z-index: 100;
+    transition: right 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    display: flex;
+    flex-direction: column;
+}
+
+.sprite-panel.open {
+    right: 0;
+}
+
+.panel-header {
+    padding: 25px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--glass-border);
+}
+
+.panel-header h2 {
+    font-size: 1.25rem;
+    font-weight: 800;
+    background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin: 0;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+}
+
+.close-btn:hover {
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.1);
+    transform: rotate(90deg);
+}
+
+.close-btn svg {
+    width: 20px;
+    height: 20px;
+}
+
+.panel-actions {
+    padding: 20px;
+    display: flex;
+    gap: 15px;
+    border-bottom: 1px solid var(--glass-border);
+}
+
+.btn {
+    flex: 1;
+    padding: 10px 15px;
+    border-radius: 8px;
+    border: none;
+    font-family: 'Outfit', sans-serif;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+}
+
+.btn svg {
+    width: 16px;
+    height: 16px;
+}
+
+.primary-btn {
+    background: linear-gradient(135deg, var(--accent-primary), #5046e5);
+    box-shadow: 0 4px 15px rgba(108, 99, 255, 0.3);
+}
+
+.primary-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(108, 99, 255, 0.5);
+}
+
+.secondary-btn {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    color: var(--text-primary);
+}
+
+.secondary-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateY(-2px);
+}
+
+.sprites-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+/* Custom Scrollbar */
+.sprites-list::-webkit-scrollbar {
+    width: 6px;
+}
+.sprites-list::-webkit-scrollbar-track {
+    background: transparent;
+}
+.sprites-list::-webkit-scrollbar-thumb {
+    background: var(--glass-border);
+    border-radius: 10px;
+}
+.sprites-list::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.sprite-item {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    padding: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.sprite-item:hover {
+    border-color: rgba(255, 255, 255, 0.2);
+    transform: translateX(-5px);
+}
+
+/* Article Bank Panel */
+.article-panel {
+    max-width: 420px;
+}
+
+.article-hint {
+    padding: 0 20px 12px;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+.article-select-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 20px 12px;
+    border-bottom: 1px solid var(--glass-border);
+    padding-bottom: 15px;
+}
+
+.mini-btn {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    color: var(--text-primary);
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.mini-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.article-count {
+    margin-left: auto;
+    font-size: 0.8rem;
+    color: var(--accent-secondary);
+    font-weight: 600;
+}
+
+.article-empty {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    padding: 10px 5px;
+    text-align: center;
+}
+
+.article-item {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 10px;
+    padding: 12px 15px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.article-item input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    accent-color: var(--accent-primary);
+    cursor: pointer;
+}
+
+.article-item-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.article-item-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.article-item-meta {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    margin-top: 2px;
+}
+
+.article-item-delete {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    width: 28px;
+    height: 28px;
+    flex-shrink: 0;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.article-item-delete:hover {
+    background: rgba(255, 71, 87, 0.2);
+    color: var(--accent-danger);
+}
+
+.sprite-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.sprite-preview {
+    width: 64px;
+    height: 64px;
+    border-radius: 8px;
+    border: 1px solid var(--glass-border);
+    background: rgba(0, 0, 0, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    /* Checkerboard pattern for transparent sprites */
+    background-image: linear-gradient(45deg, #1a1a2e 25%, transparent 25%), 
+                      linear-gradient(-45deg, #1a1a2e 25%, transparent 25%),
+                      linear-gradient(45deg, transparent 75%, #1a1a2e 75%),
+                      linear-gradient(-45deg, transparent 75%, #1a1a2e 75%);
+    background-size: 10px 10px;
+    background-position: 0 0, 0 5px, 5px -5px, -5px 0px;
+}
+
+.sprite-preview img {
+    max-width: 100%;
+    max-height: 100%;
+    image-rendering: pixelated; /* Good for retro sprites */
+}
+
+.sprite-name {
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.sprite-controls {
+    display: flex;
+    gap: 8px;
+}
+
+.action-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    border: none;
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.action-btn svg {
+    width: 16px;
+    height: 16px;
+}
+
+.action-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+    color: var(--text-primary);
+}
+
+.action-btn.danger:hover {
+    background: rgba(255, 71, 87, 0.2);
+    color: var(--accent-danger);
+}
+
+/* Typography for Game specific items */
+.pixel-text {
+    font-family: 'Press Start 2P', monospace;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1024px) {
+    .game-container {
+        padding: 10px;
+    }
+}
