@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>亡靈序曲：骷髏暴君的逆襲 2.0</title>
+<title>亡靈序曲：骷髏暴君的逆襲 2.1</title>
 <script src="./sync-client.js"></script>
 <script src="./assets/negative/forms.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
@@ -76,7 +76,8 @@ button:hover{background:var(--btnh)}button:disabled{opacity:.35;cursor:not-allow
 .ft-sg{display:flex;gap:10px;justify-content:center;margin-top:6px}.ft-sg button{font-size:26px;width:70px}
 @keyframes ftp{50%{transform:scale(1.25)}}
 .th{font-size:14px;color:#ffd86b;height:62px;overflow-y:auto;margin-top:4px}.th.warn{color:#ff8a8a}
-#ex,#sty,#arena{position:fixed;inset:0;background:#000c;display:flex;align-items:center;justify-content:center;z-index:10}
+#ex,#sty,#arena,#endp{position:fixed;inset:0;background:#000c;display:flex;align-items:center;justify-content:center;z-index:10}
+.endg{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:6px}.endc{display:flex;gap:4px}.endc>button:first-child{flex:1;text-align:left}.endx{padding:0 10px}
 .mbox{background:var(--bg2);border:2px solid var(--p);border-radius:14px;max-width:560px;width:94%;max-height:90vh;overflow:auto;padding:14px;line-height:1.7}
 .mbox h2{color:var(--ac)}.exs li{margin:4px 0 4px 20px}.good{color:#7dff9b;font-weight:bold}.bad{color:#ff8a8a;font-weight:bold}.kw{color:#ffd86b}
 .sl{margin:8px 0}.sl.hero{color:#9fe6ff}
@@ -103,7 +104,7 @@ body.ingame #app>h1{display:none}
 </style></head><body>
 <div id="app">
 <h1>💀 亡靈序曲：骷髏暴君的逆襲</h1>
-<div id="home"><div class="homebox"><p class="homep">擊敗地圖上每一處的頭目，通關可解鎖裝備、鬥技場、深淵鍛造爐與「聖光勇者」外觀。<br>🎒 裝備在通關關卡和鬥技場都有效；通關時頭目會自動套上同樣倍率的裝備，所以戰鬥節奏不變。<br>⚔️ 答對就能攻擊；答案是<b>負數</b>，勇者會變成骷髏型態，答案是<b>正數</b>就恢復勇者。<br>💰 答對 1 題 +2 金幣，連續答對每題再 ×1.5（可累加），整場全對再額外加倍。<br>📌 三種模式共用同一份進度與星等，不同模式只是限制最高星等（教學最多 2★、困難 4★、地獄 5★）；在任何模式通關都會解鎖下一關。<br>🎵 音樂依地圖章節自動播放，右下角 🔊 可以開關。</p><div class="hcards" id="hcards"></div><div id="login-status"></div></div></div>
+<div id="home"><div class="homebox"><p class="homep">擊敗地圖上每一處的頭目，通關可解鎖裝備、鬥技場、深淵鍛造爐與「聖光勇者」外觀。<br>🎒 裝備在通關關卡和鬥技場都有效；通關時頭目會自動套上同樣倍率的裝備，所以戰鬥節奏不變。<br>⚔️ 答對就能攻擊；答案是<b>負數</b>，勇者會變成骷髏型態，答案是<b>正數</b>就恢復勇者。<br>💰 答對 1 題 +2 金幣，連續答對每題再 ×1.5（可累加），整場全對再額外加倍。<br>📌 三種模式共用同一份進度與星等，不同模式只是限制最高星等（教學最多 2★、困難 4★、地獄 5★）；在任何模式通關都會解鎖下一關。<br>🎵 大地圖與大廳放 Town & Hub，進入關卡才換成該章節的音樂；右下角 🔊 可以開關。</p><div class="hcards" id="hcards"></div><div id="login-status"></div></div></div>
 <div id="menu" hidden><div id="topbar"><button onclick="goHome()">🏠 首頁</button><div class="modes" id="modes"></div><button onclick="goFs()">⛶ 全螢幕</button></div><div class="card" id="hdr"></div><div class="card" id="eq" hidden></div><div id="chs"></div></div>
 <div id="battle" hidden>
  <div id="top"><button onclick="quit()">⬅ 返回</button><span id="title"></span><span id="coinb" class="coinb"></span><span id="tb"><i id="tbar"></i></span></div>
@@ -115,6 +116,7 @@ body.ingame #app>h1{display:none}
 </div>
 <div id="ex" hidden><div class="mbox"><h2 id="ex-t"></h2><div id="ex-n"></div><div id="ex-a"></div><b>一步一步來看：</b><ul class="exs" id="ex-s"></ul><div id="ex-mw" hidden><b>你填錯的地方：</b><ul class="exs" id="ex-m"></ul></div><div id="ex-c"></div><div style="text-align:center;margin-top:8px"><button id="ex-ok">確定</button></div></div></div>
 <div id="sty" hidden><div class="mbox"><h2 id="st-t"></h2><small id="st-m"></small><div id="st-l"></div><div style="text-align:center"><button id="st-ok">出發！</button></div></div></div>
+<div id="endp" hidden><div class="mbox" id="endp-box"></div></div>
 <div id="arena" hidden><div class="mbox" id="ar-box"></div></div>
 <div id="res" hidden><div class="card" id="rc"></div></div>
 </div>
@@ -205,14 +207,13 @@ function spendTokens(n){const o=loadSave();if((o.gbit||0)<n)return false;o.gbit-
 // ===== 配樂：冒險大廳＝Town & Hub.mp3；大地圖與戰鬥＝所在章節的 1～5.mp3（檔案放在 assets/negative/）=====
 const BGM={hub:'Town & Hub.mp3',1:'1.mp3',2:'2.mp3',3:'3.mp3',4:'4.mp3',5:'5.mp3'};
 const bgmEl=new Audio();bgmEl.loop=true;bgmEl.volume=.45;let bgmKey=null,bgmMuted=!!ld('bgmMuted',false);
-
 function bgmTry(){if(bgmMuted||!bgmKey)return;const p=bgmEl.play();if(p&&p.catch)p.catch(()=>{})}
 function bgm(key){if(!BGM[key])return;if(bgmKey!==key){bgmKey=key;bgmEl.src=A+encodeURIComponent(BGM[key])}if(bgmEl.paused)bgmTry()}
 const bgmBtn=()=>{const b=$('bgmbtn');if(b)b.textContent=bgmMuted?'🔇':'🔊'};
 function bgmToggle(){bgmMuted=!bgmMuted;sv('bgmMuted',bgmMuted);if(bgmMuted)bgmEl.pause();else bgmTry();bgmBtn()}
 document.addEventListener('pointerdown',()=>{if(bgmEl.paused)bgmTry()});
 // 進度與星等：三種模式共用同一份（P[關卡編號]＝最高星等）。舊存檔（教學／困難／地獄各一份）會自動合併，取每關最高星等。
-let mode=ld('mode','teach'),P=(()=>{const o=ld('P',[]);if(Array.isArray(o))return o;const r=[];for(let i=0;i<19;i++){const v=Math.max((o.teach||[])[i]||0,(o.hard||[])[i]||0,(o.hell||[])[i]||0);if(v)r[i]=v}return r})(),Q=ld('Q',{exp:0,eq:{}}),S=null,en=0;
+let mode=ld('mode','teach'),P=(()=>{const o=ld('P',[]);if(Array.isArray(o))return o;const r=[];for(let i=0;i<19;i++){const v=Math.max((o.teach||[])[i]||0,(o.hard||[])[i]||0,(o.hell||[])[i]||0);if(v)r[i]=v}return r})(),Q=ld('Q',{exp:0,eq:{}}),S=null,E=ld('E',{});   // E[關卡編號]＝{round:目前第幾輪, best:最高輪數, snap:中途離開時保存的戰鬥進度}
 const passed=i=>(P[i]||0)>0, unlocked=i=>i===0||passed(i-1), allDone=()=>passed(ST.length-1);
 function setMode(m){mode=m;sv('mode',m);heroId=null;menu()}
 // 起始畫面 → 選模式 → 全螢幕（瀏覽器規定一定要「點一下」才能進全螢幕，所以放在按鈕的點擊裡）
@@ -245,18 +246,31 @@ function mapToast(t){const m=$('mt');if(!m)return;m.textContent=t;m.classList.ad
 function onNode(id){if(walking)return;
  if(!unlocked(id))return mapToast(`🔒 先通關 ${ST[id-1].label} ${ST[id-1].place}`);
  if(id===heroId)return go(id);
- walking=true;bgm(ST[id].ch+1);const a=POS[heroId],b=POS[id],h=$('mh'),sec=Math.min(2.4,Math.max(.7,Math.hypot(b[0]-a[0],b[1]-a[1])/380));
+ walking=true;const a=POS[heroId],b=POS[id],h=$('mh'),sec=Math.min(2.4,Math.max(.7,Math.hypot(b[0]-a[0],b[1]-a[1])/380));
  h.src=A+(b[0]>=a[0]?'hero-run-right.gif':'hero-run-left.gif');h.style.setProperty('--wd',sec+'s');
  h.style.left=b[0]/MW*100+'%';h.style.top=(b[1]-22)/MH*100+'%';
  setTimeout(()=>{walking=false;heroId=id;go(id)},sec*1000+150)}
 function menu(){
  $('home').hidden=true;document.body.classList.add('ingame');$('battle').hidden=true;$('menu').hidden=false;hdr();
  $('modes').innerHTML=Object.entries(MODES).map(([k,v])=>`<button class="${k===mode?'on':''}" onclick="setMode('${k}')">${v.n}</button>`).join('');
- if(heroId==null||!unlocked(heroId))heroId=frontier();bgm(ST[heroId].ch+1);
+ if(heroId==null||!unlocked(heroId))heroId=frontier();bgm('hub');
  $('chs').innerHTML='<div id="mapw"></div>';
  buildMap()}
 const go=i=>start(ST[i]);
-function goEndless(){en++;const c=R(0,4);start({id:ST.length+en,ch:c,k:c<4?['same','diff','paren','rand'][R(0,3)]:['f4','f5','fp'][R(0,2)],endless:1,label:`∞-${en}`})}
+// ===== ♾ 無限關卡：自己選 6-1-1～6-5-3 任一關無限挑戰；每關各自記錄輪數，中途離開會保存當下進度 =====
+const eInfo=id=>E[id]||(E[id]={round:1,best:0});
+function goEndless(){const b=$('endp-box');
+ b.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center"><h2 style="margin:0">♾ 無限關卡：選一關</h2><button onclick="$(\'endp\').hidden=true">✖ 關閉</button></div><small>每一關各自記錄「目前第幾輪」。每贏一輪，敵人就更強一點；中途離開（按「返回」或關掉網頁）會保存血量與連擊，下次選同一關可以接著打。</small>'+
+ CH.map((c,ch)=>`<h3 style="margin:10px 0 4px;color:var(--ac)">第${ch+1}關　${c.n}</h3><div class="endg">`+ST.filter(s=>s.ch===ch).map(s=>{const e=E[s.id]||{round:1,best:0},sn=e.snap;
+  return `<div class="endc"><button onclick="startEndless(${s.id})"><b>${s.label} ${s.place}</b><br><small>${sn?'💾 繼續第 '+e.round+' 輪':'第 '+e.round+' 輪'}　最高 ${e.best||0} 輪</small></button>${(sn||e.round>1)?`<button class="endx" title="清除這一關的無限進度" onclick="resetEndless(${s.id})">↺</button>`:''}</div>`}).join('')+'</div>').join('');
+ $('endp').hidden=false}
+function resetEndless(id){if(!confirm('清除 '+ST[id].label+' 的無限進度（輪數與保存的戰鬥）？最高紀錄會保留。'))return;const e=eInfo(id);e.round=1;delete e.snap;sv('E',E);goEndless()}
+function startEndless(id,fresh){$('endp').hidden=true;const e=eInfo(id);
+ start(Object.assign({},ST[id],{endless:1,label:'∞ '+ST[id].label,round:e.round,snap:fresh?null:e.snap}))}
+// 中途離開：保存這一輪目前的血量比例、連擊與答題數
+function saveEndless(){if(!S||S.over||!S.stg.endless||$('battle').hidden)return;const e=eInfo(S.stg.id);
+ e.snap={fp:S.php/S.pmax,fm:S.mhp/S.mmax,pc:S.pc,mc:S.mc,correct:S.correct,total:S.total,xp:S.xp,coins:S.coins||0};sv('E',E)}
+window.addEventListener('pagehide',saveEndless);
 // ===== 升級・裝備系統（數值規則取自「升級、戰鬥、裝備系統」）=====
 const BASE={hp:1000,atk:50,def:20,spd:100},GROWTH={hp:100,atk:5,def:3,spd:1};
 const SL={hp:'❤️血量',atk:'⚔️攻擊',def:'🛡️防禦',spd:'🏃速度'};
@@ -324,16 +338,17 @@ function forge(i){const lv=(Q.fg=Q.fg||{})[i]||0;if(lv>=FORGE_MAX)return;const c
 // ===== 戰鬥 =====
 function start(stg){bgm(stg.ch+1);
  if(!stg.endless&&stg.j===0&&!storySeen[stg.ch]){storySeen[stg.ch]=1;return showStory(stg.ch,()=>start(stg))}
- const bs=baseStats(),ts=totalStats(),lv=levelInfo().level,pa=ts.atk,sf=1+.03*(stg.endless?ST.length+en:stg.id),ma=Math.round(2*(BASE.atk+GROWTH.atk*(lv-1))*sf),md0=Math.round(.5*(BASE.def+GROWTH.def*(lv-1))*sf),kA=ts.atk/bs.atk,kH=ts.hp/bs.hp,md=Math.round(md0*kA),sj=stg.endless?R(0,[4,4,4,4,3][stg.ch]-1):stg.j;
+ const bs=baseStats(),ts=totalStats(),lv=levelInfo().level,pa=ts.atk,sf=1+.03*(stg.endless?ST.length+stg.round-1:stg.id),ma=Math.round(2*(BASE.atk+GROWTH.atk*(lv-1))*sf),md0=Math.round(.5*(BASE.def+GROWTH.def*(lv-1))*sf),kA=ts.atk/bs.atk,kH=ts.hp/bs.hp,md=Math.round(md0*kA),sj=stg.j;
  let mmax=0;for(let i=0;i<10;i++)mmax+=Math.max(1,Math.round(pa*(1+.2*i)*1.1-md));
- const names=CH[stg.ch].names,boss=stg.endless?names[R(0,names.length-1)]:stg.boss;
+ const names=CH[stg.ch].names,boss=stg.boss;
  S={stg,mode,lv,pa,ma,md,pdef:bs.def,kH,pmax:ts.hp,mmax,mc:0,pc:0,correct:0,total:0,xp:0,coins:0,lock:true,over:false,in:''};
  S.php=S.pmax;S.mhp=mmax;
- const T=(mode==='teach'?0:(stg.ch===4?40:25))*(1+(ts.spd-BASE.spd)/400);S.T=T;
+ if(stg.snap){const g=stg.snap;S.php=Math.max(1,Math.round(S.pmax*g.fp));S.mhp=Math.max(1,Math.round(mmax*g.fm));S.pc=g.pc||0;S.mc=g.mc||0;S.correct=g.correct||0;S.total=g.total||0;S.xp=g.xp||0;S.coins=g.coins||0;delete eInfo(stg.id).snap;sv('E',E)}
+ /* 作答時間固定（困難／地獄 25 秒、第 5 章 40 秒），不受裝備速度影響 */const T=(mode==='teach'?0:(stg.ch===4?40:25));S.T=T;
  $('home').hidden=true;document.body.classList.add('ingame');$('menu').hidden=true;$('battle').hidden=false;$('res').hidden=true;
  const NF=window.NEG_FORMS||{};$('stage').style.backgroundImage=`url(${(NF.bg||{})[stg.id]||A+'bg-'+(stg.ch+1)+'-'+(sj+1)+'.jpg'})`;
  $('boss').src=(NF.boss||{})[stg.id]||`${A}boss-${stg.ch+1}-${sj+1}.png`;$('bname').textContent=`${boss}　Lv.${lv}${kA>1.05?'　🛡裝備同步':''}`;
- $('title').textContent=`${stg.label} ${stg.place||'無限挑戰'}｜${CH[stg.ch].n}・${KN[stg.k]}（${MODES[mode].n.split('（')[0]}）`;
+ $('title').textContent=`${stg.label} ${stg.place||'無限挑戰'}${stg.endless?'・第'+stg.round+'輪':''}｜${CH[stg.ch].n}・${KN[stg.k]}（${MODES[mode].n.split('（')[0]}）`;
  setHintArea();$('tb').style.visibility=T?'visible':'hidden';
  heroForm='hero';sprite('idle');upd();nextQ()}
 // ===== 勇者型態：答對後，答案是「負數」→ 骷髏型態（隨解鎖越來越完整）；「正數」→ 原本的勇者 =====
@@ -582,21 +597,22 @@ function quickHint(){if(!S||S.lock||S.over||S.mode==='teach'||S.hintOn)return;
 function upd(){$('coinb').textContent='💰 本場 +'+(S.coins||0)+(S.hints?'　提示 −'+S.hints*5:'');$('php').style.width=Math.max(0,S.php/S.pmax*100)+'%';$('mhp').style.width=Math.max(0,S.mhp/S.mmax*100)+'%';
  $('ptxt').textContent=`${SK[isHoly()?'holy':'dark'].hp} ${Math.max(0,S.php)}/${S.pmax}　Lv.${S.lv}`;
  $('pc').textContent=S.pc>1?`🔥 COMBO ×${S.pc}`:'';$('mc').textContent=S.mc>1?`💢 COMBO ×${S.mc}`:''}
-function quit(){if(S){clearInterval(S.iv);S.over=true}sv('Q',Q);menu()}
+function quit(){saveEndless();if(S){clearInterval(S.iv);S.over=true}sv('Q',Q);menu()}
 function stars(win){if(!win)return 0;return Math.min(rawStars(S.correct/S.total),CAP[S.mode])}
 // 正確率→星等（三種模式共用）：100%＝5★、90%＝4★、80%＝3★、70%＝2★、60%＝1★；再由模式限制最高星等（教學2、困難4、地獄5）
 const rawStars=a=>a>=1?5:a>=.9?4:a>=.8?3:a>=.7?2:a>=.6?1:0;
 function end(win){S.over=true;clearInterval(S.iv);const s=stars(win),st=S.stg,m=S.mode,q0=qStage(st.id),prevS=P[st.id]||0;let q1=q0,tok=0;sv('Q',Q);
+ if(st.endless&&s>0){const e=eInfo(st.id);e.best=Math.max(e.best||0,e.round);e.round++;delete e.snap;st.round=e.round;sv('E',E)}else if(st.endless){delete eInfo(st.id).snap;sv('E',E)}
  if(s>0&&!st.endless){const i=st.id;P[i]=Math.max(P[i]||0,s);sv('P',P);q1=qStage(i)}
  const bonus=(win&&S.total>0&&S.correct===S.total&&S.coins>0)?S.coins:0;if(bonus)addCoins(bonus);tok=(S.coins||0)+bonus;queueCoins(tok);
  const last=ST.filter(x=>x.ch===st.ch).pop(),reward=s>0&&!st.endless&&last.id===st.id?`<br>🎁 通關道具：【${CH[st.ch].item}】`:'';
  const ii=ITEM_OF(st.id),lv1=levelInfo().level;let drop='';if(ii>=0&&q1&&q1!==q0){ensureRoll(ii);drop=`<br>🎁 ${q0?'裝備升級':'獲得裝備'}：${ITEMS[ii].ic}【${ITEMS[ii].n}】<span class="q-${q1}">${QL[q1]}</span>`}
- const owl=s>0&&!st.endless&&last.id===st.id?`<br><small>🦉 阿基米：${hl(STORY[st.ch].win)}</small>`:'';const owl2=owl+(st.id===ST.length-1&&s>0?'<br>🌟 解鎖「至高神格」！回到冒險大廳，就能切換「聖光勇者」或「骷髏暴君」外觀。':'');try{if(bestStar(3)>0)syncMyUser()}catch(e){}
+ const owl=s>0&&!st.endless&&last.id===st.id?`<br><small>🦉 阿基米：${hl(STORY[st.ch].win)}</small>`:'';const owl2=owl+(st.id===ST.length-1&&s>0&&!st.endless?'<br>🌟 解鎖「至高神格」！回到冒險大廳，就能切換「聖光勇者」或「骷髏暴君」外觀。':'');try{if(bestStar(3)>0)syncMyUser()}catch(e){}
  const first=s>0&&!st.endless&&prevS===0,ip=itemPic(st.id),fp=formPic(st.id),showItem=!!ip&&s>0&&!st.endless&&(first||drop!=='');
   let pics='';if(showItem||(first&&fp))pics='<div class="rpics">'+(showItem?`<figure><img src="${ip}"><figcaption>🎁 ${itemName(st.id)}</figcaption></figure>`:'')+(first&&fp?`<figure><img src="${fp}"><figcaption>💀 人物改變！</figcaption></figure>`:'')+'</div>';
   const hasNext=st.endless||(s>0&&st.id<ST.length-1);
  $('rc').innerHTML=`<h2>${s>0?'🏆 勝利！':'💀 挑戰失敗'}</h2>${'★'.repeat(s)||'—'}<br>答對 ${S.correct} / ${S.total} 題（${S.total?Math.round(S.correct/S.total*100):0}%）${win&&!s?'<br>正確率未達過關標準，再挑戰一次吧！':''}${s>0&&rawStars(S.correct/S.total)>CAP[m]?`<br><small>（${MODES[m].n.split('（')[0]}模式最高 ${CAP[m]}★；想拿更高星等請到更高難度挑戰）</small>`:''}${reward}${drop}${pics}${tok?`<br>💰 金幣 +${S.coins||0}${bonus?`　🌟 全對！額外再加 +${bonus}`:''}（本場共 +${tok}）${S.hints?`　💡 提示 −${S.hints*5}`:''}`:''}${owl2}<br>✨ 經驗值 +${S.xp}${lv1>S.lv?'　🎉 升級！Lv.'+lv1:''}<br><br>
- <button onclick="start(S.stg)">🔁 再戰</button> ${hasNext&&(s>0)?`<button onclick="${st.endless?'goEndless()':'go('+(st.id+1)+')'}">➡ 下一關</button>`:''} ${st.id===ST.length-1&&s>0?'<button onclick="credits()">🎬 片尾</button> ':''}<button onclick="$('res').hidden=true;menu()">🗺 選關</button>`;
+ ${st.endless&&s>0?'':'<button onclick="start(S.stg)">🔁 再戰</button>'} ${st.endless&&s>0?'<button onclick="start(S.stg)">➡ 下一輪（第 '+st.round+' 輪）</button><button onclick="$(\'res\').hidden=true;goEndless()">♾ 換一關</button>':hasNext&&(s>0)?`<button onclick="go(${st.id+1})">➡ 下一關</button>`:''} ${st.id===ST.length-1&&s>0&&!st.endless?'<button onclick="credits()">🎬 片尾</button> ':''}<button onclick="$('res').hidden=true;menu()">🗺 選關</button>`;
  $('res').hidden=false}
 // ===== ⚔️ 骷髏鬥技場（對戰規則、即時對戰、雲端幽靈 AI 皆取自 world-map.html，使用同一個 Supabase 專案）=====
 const $q=s=>document.querySelector(s);
@@ -1017,7 +1033,7 @@ function arOpen(){bgm('hub');$('arena').hidden=false;const bx=$('ar-box');
  <div class="am"><button id="ar-rec">🏆 我的戰績</button><button id="ar-close">關閉</button></div></div><div id="arena-battle" class="hide"></div>`;
  $q('#ar-net').textContent=sbReady()?'🌐 已連上雲端，可以跟同學對戰。':'⚠️ 沒有連上雲端（或沒載入 Supabase 函式庫），目前只能對戰電腦 AI。';
  $q('#w-save').onclick=()=>{who={sid:useStu?String(stuNo):($q('#w-sid').value||'').trim(),name:($q('#w-name').value||'').trim()};sv('who',who);syncMyUser();startPendingListen();toast('✅ 已儲存')};
- $q('#ar-close').onclick=()=>{$('arena').hidden=true;try{bgm(ST[heroId==null?frontier():heroId].ch+1)}catch(e){}};
+ $q('#ar-close').onclick=()=>{$('arena').hidden=true;bgm('hub')};
  $q('#ar-rec').onclick=async()=>{const sid=mySid();if(!sid||!sbReady())return toast('需要先存學號，並連上雲端才能查戰績');const {data}=await sb.from('duel_records').select('*').eq('student_number',sid).maybeSingle();const r=data||{wins:0,losses:0,draws:0};toast(`🏆 我的對戰總戰績<br>勝 ${r.wins||0} 場／敗 ${r.losses||0} 場／平手 ${r.draws||0} 場`)};
  $q('#op-fight').onclick=async()=>{const mode=($q('input[name="duel-mode"]:checked')||{value:'ai'}).value;
   if(mode==='ai')return challengeLocal();
