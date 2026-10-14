@@ -93,7 +93,18 @@ button:focus-visible{outline:3px solid var(--bronze);outline-offset:2px}
 .bt-card{background:#0e1230d9;border:2px solid var(--line);border-radius:12px;padding:8px 12px;flex:0 1 250px;min-width:140px;max-width:56vw}
 .bt-card b{font-size:1rem}
 .bt-card small{font-size:.75rem;opacity:.85}
-.bt-sprite{position:relative;flex:none;width:clamp(84px,22vh,150px);height:clamp(84px,22vh,150px)}
+.bt-stage{--sp:clamp(84px,22vh,150px)}
+.bt-sprites{position:relative;flex:none;width:var(--sp);height:var(--sp)}
+.bt-sprites.has-clone{width:calc(var(--sp)*1.5)}
+.bt-sprite{position:absolute;top:0;width:var(--sp);height:var(--sp)}
+.bt-bot .bt-sprite{left:0}.bt-bot .bt-clone{left:auto;right:0}
+.bt-top .bt-sprite{right:0}.bt-top .bt-clone{right:auto;left:0}
+.bt-eq{display:flex;flex-wrap:wrap;gap:6px 5px;margin-top:8px}
+.bt-eqi{position:relative;width:28px;height:28px;border-radius:6px;background:#0009;border:2px solid var(--qc,#b9b3a5);display:inline-flex;align-items:center;justify-content:center}
+.bt-eqi .icon-wrap{width:100%;height:100%}
+.bt-eqi img,.bt-eqi .emoji-fb{width:100%;height:100%;object-fit:contain;border-radius:3px;font-size:16px;align-items:center;justify-content:center}
+.bt-eqi i{position:absolute;right:-5px;bottom:-7px;font-style:normal;font-size:.55rem;line-height:1.3;font-weight:900;padding:0 3px;border-radius:5px;background:var(--qc,#b9b3a5);color:#111}
+.bq-normal{--qc:#b9b3a5}.bq-fine{--qc:#4cc98a}.bq-legend{--qc:#6aa0ff}.bq-myth{--qc:#ff9a52}
 .bt-sprite::after{content:'';position:absolute;left:12%;right:12%;bottom:-6px;height:12px;background:radial-gradient(ellipse,#000a,transparent 70%);z-index:0}
 .bt-img{position:relative;z-index:1;width:100%;height:100%;display:flex;align-items:center;justify-content:center;filter:drop-shadow(0 8px 6px #0009)}
 .bt-img .icon-wrap{width:100%;height:100%}
@@ -123,28 +134,41 @@ button:focus-visible{outline:3px solid var(--bronze);outline-offset:2px}
 @keyframes btFloat{0%{opacity:0;transform:translate(-50%,10px) scale(.7)}15%{opacity:1;transform:translate(-50%,0) scale(1.2)}100%{opacity:0;transform:translate(-50%,-64px) scale(1)}}
 @keyframes btBurst{0%{opacity:1;transform:scale(.3)}60%{opacity:1;transform:scale(1.4)}100%{opacity:0;transform:scale(1.8)}}
 @keyframes btCap{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
-@media (max-height:560px){.bt-sprite{width:88px;height:88px}.bt-panel{max-height:52vh}}
+@media (max-height:560px){.bt-stage{--sp:88px}.bt-eqi{width:22px;height:22px}.bt-panel{max-height:52vh}}
+#nav{margin:0 0 10px}#nav button{background:var(--ink);border:2px solid var(--bronze);border-radius:8px;padding:8px 14px}
+.flow{display:flex;align-items:stretch;gap:8px;flex-wrap:wrap;margin:10px 0 16px}
+.fnode{flex:1;min-width:210px;background:var(--ink2);border:2px solid var(--line);border-radius:14px;padding:14px;text-align:left}
+.fnode:hover,.menu4 button:hover{border-color:var(--bronze)}.fnode b{display:block;color:var(--bronze);font-size:1.1rem}
+.arr{align-self:center;font-size:1.8rem;color:var(--bronze)}
+.menu4{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px}
+.menu4 button{background:var(--ink2);border:2px solid var(--line);border-radius:14px;padding:16px 10px;font-size:1.05rem;position:relative}
+.menu4 i{position:absolute;top:6px;right:8px;background:var(--red);border-radius:10px;padding:0 8px;font-style:normal;font-size:.8rem}
+#create{position:fixed;inset:0;z-index:120;background:#0b0e22f2;display:flex;align-items:center;justify-content:center;padding:16px}
+#create .card{max-width:440px;width:100%;line-height:1.8}#create input{background:var(--ink);border:2px solid var(--line);border-radius:8px;padding:8px 10px;color:var(--txt);font:inherit;width:100%;margin:6px 0}
+#create button{background:var(--bronze);color:#2a1d05;border:0;border-radius:8px;padding:10px 16px;font-weight:700;margin-top:8px}
 </style>
+<script src="math_hero_engine.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 </head>
 <body>
 <main>
+  <div id="nav" class="hide"><button id="back">⬅ 回首頁</button></div>
   <h1 class="serif" style="margin:0 0 4px">國一數學戰略地圖</h1>
   <p style="margin:0 0 14px;opacity:.8">第一章「整數王國」× 第二章「韓信點兵：數字戰線」× 第三章「代數異世界：符號之城的覺醒」</p>
 
-  <section class="card head">
+  <section class="card head" data-v="hero">
     <div><p class="rank serif" id="rank"></p><small>目前軍階</small></div>
     <div class="grow"><b id="tot"></b><div class="pbar"><div id="rbar"></div></div><small id="nxt"></small></div>
   </section>
 
-  <section class="card rule">
+  <section class="card rule" data-v="hero">
     <b>⭐ 星等規則</b><br>
     練兵模式：最多 3 ⭐　→　拿到 3 ⭐ 解鎖「實戰模式」和「♾️ 無極限挑戰」<br>
     實戰模式：正確率 80% 以上 → 4 ⭐　→　解鎖「修羅模式」<br>
     修羅模式：正確率 100%（全對）→ 5 ⭐
   </section>
 
-  <section class="card who" id="who">
+  <section class="card who" id="who" data-v="hero arena">
     <b>👤 我的資料</b>
     <input id="w-cls" placeholder="班級（例：701）" maxlength="20" aria-label="班級">
     <input id="w-no" placeholder="座號" maxlength="10" aria-label="座號">
@@ -154,9 +178,10 @@ button:focus-visible{outline:3px solid var(--bronze);outline-offset:2px}
     <button id="w-exp">📤 匯出我的進度</button>
   </section>
 
-  <div id="map"></div>
+  <div id="home" data-v="home"></div><div id="map" data-v="ch"></div>
 
-  <section class="card" id="hero">
+  <section class="card" id="hx" data-v="hero"></section>
+  <section class="card" id="hero" data-v="hero">
     <h2 class="serif" style="margin:0 0 6px">🧙 角色戰力</h2>
     <small>每答一題就會累積經驗值，答對 +10、答錯 +1，經驗值滿了就升級！</small>
     <div class="hero-row" style="margin-top:10px">
@@ -170,13 +195,13 @@ button:focus-visible{outline:3px solid var(--bronze);outline-offset:2px}
     <div class="stat-grid" id="stats"></div>
   </section>
 
-  <section class="ch">
+  <section class="ch" data-v="hero">
     <h2 class="serif">⚔️ 裝備收藏</h2>
-    <small>通關「一整個大關」的所有小關就能獲得裝備，累積星星還能升級品質！</small>
+    <small>每通關一個小關就會掉一片裝備碎片，集滿一整個大關的碎片會自動合成裝備；累積星星還能讓裝備升級品質！</small>
     <div class="cards" id="cards"></div>
   </section>
 
-  <section class="card" id="arena">
+  <section class="card" id="arena" data-v="arena">
     <h2 class="serif" style="margin:0 0 6px">⚔️ 學號對戰</h2>
     <div id="arena-setup">
       <small>手機、平板、家裡電腦都可以玩，只要有網路就好！輸入對方學號、選好模式、按下對戰。</small>
@@ -193,11 +218,13 @@ button:focus-visible{outline:3px solid var(--bronze);outline-offset:2px}
     <div id="arena-battle" class="hide"></div>
   </section>
 
-  <p class="tiny" style="margin-top:8px;opacity:.7">👆 點一下上面「角色戰力」的頭像，可以看自己的對戰總戰績</p>
+  <p class="tiny" data-v="hero" style="margin-top:8px;opacity:.7">👆 點一下上面「角色戰力」的頭像，可以看自己的對戰總戰績</p>
 
-  <p class="tiny"><button id="reset">重置我的進度</button></p>
+  <section class="card" id="wrong" data-v="wrong"></section>
+  <p class="tiny" data-v="hero"><button id="reset">重置我的進度</button></p>
 </main>
 
+<div id="create" class="hide"></div>
 <div id="ov" class="hide"><button id="x" aria-label="關閉">✕</button><iframe id="fr" title="關卡"></iframe></div>
 <div id="toast" class="hide"></div>
 
@@ -378,7 +405,7 @@ const ECH=[['第一章｜整數王國',CH1],['第二章｜韓信點兵',CH2],['�
 function endlessHTML(){
   return `<h2 class="serif" style="margin:28px 0 0;color:var(--bronze)">♾️ 無極限挑戰</h2>`+
   `<p style="margin:4px 0 0;opacity:.8;line-height:1.7">關卡拿到 ${ENDLESS_NEED} ⭐ 就解鎖該關的無限題作答區。題目源源不絕，時間會從實戰速度慢慢縮到修羅速度，5 顆心用完為止——看你能答對幾題！</p>`+
-  ECH.map(([title,G],gi)=>`<section class="ch card"><h2 class="serif">${title}</h2><div class="nodes">`+
+  ECH.map(([title,G],gi)=>(ONLY!=null&&gi!=ONLY)?'':`<section class="ch card"><h2 class="serif">${title}</h2><div class="nodes">`+
     G.flatMap((c,ci)=>c.st.map((s,k)=>{
       const n=st(s[0]),lk=n<ENDLESS_NEED,eb=ebOf(s[0]);
       return `<button class="node enode ${lk?'locked':''} ${eb?'done':''}" data-e="1" data-g="${gi}" data-ci="${ci}" data-k="${k}"><b>${lk?'🔒':'♾️'} ${s[0]}</b><span>${s[1]}</span><span>${lk?`需 ${ENDLESS_NEED} ⭐（目前 ${n}）`:(eb?'🏆 最高 '+eb+' 題':'尚無紀錄')}</span></button>`})).join('')+
@@ -410,7 +437,8 @@ function eqCardHTML(i){
   const it=ITEMS[i],q=qualityOf(i),ids=EQUIP_GROUPS[i],n=ids.length;
   if(!q){
     const done=ids.filter(id=>st(id)>0).length;
-    return `<div class="cd lock"><b>${iconHTML(it.img,it.icon,'ic-eq')} ？？？</b><small>${it.slot}</small><div class="hint">通關「${GROUP_NAMES[i]}」全部 ${n} 個小關才能解鎖（目前 ${done}/${n}）</div></div>`;
+    const dots=ids.map(id=>st(id)>0?'🧩':'▫️').join(' ');
+    return `<div class="cd lock"><b>${iconHTML(it.img,it.icon,'ic-eq')} ？？？</b><small>${it.slot}</small><div class="hint">通關「${GROUP_NAMES[i]}」的每個小關都會掉一片碎片，集滿 ${n} 片自動合成（目前 ${done}/${n}）<br>${dots}</div></div>`;
   }
   const nq=QNEXT[q];
   const hint=nq?`⬆️ 下一階「${QLABEL[nq]}」需要這個大關累積 ${qNeedStars(n,nq)} ⭐（目前 ${groupSum(ids)} ⭐）`:'👑 已經是最高品質！';
@@ -432,14 +460,10 @@ function render(){
   const t=total(),rk=rankOf(t),nx=RK.find(r=>r[0]>t);
   $('#rank').textContent=rk[1];$('#tot').textContent=`${t} / ${MAXSTAR} ⭐`;$('#rbar').style.width=(t/MAXSTAR*100)+'%';
   $('#nxt').textContent=nx?`再 ${nx[0]-t} 顆星，升為「${nx[1]}」`:'你已經是最高階了！';
-  $('#map').innerHTML=
-    `<h2 class="serif" style="margin:20px 0 0;color:var(--bronze)">🗝️ 第一章：整數王國・數之鑰的覺醒</h2>`+
-    groupHTML(CH1,lockCh1,'1')+
-    `<h2 class="serif" style="margin:20px 0 0;color:var(--bronze)">📜 第二章：韓信點兵・數字戰線</h2>`+
-    groupHTML(CH2,lockCh2,'2')+
-    `<h2 class="serif" style="margin:20px 0 0;color:var(--bronze)">🔮 第三章：代數異世界・符號之城的覺醒</h2>`+
-    groupHTML(CH3,lockCh3,'3')+
-    endlessHTML();
+  $('#home').innerHTML=homeHTML();
+  $('#map').innerHTML=chHTML(CHI);
+  $('#hx').innerHTML=heroCardHTML();
+  $('#wrong').innerHTML=wrongHTML();
   renderHero();
   renderEquip();
   syncMyUser();
@@ -472,7 +496,18 @@ addEventListener('message',e=>{
     if(old.stars<3&&d.stars>=3)msg.push('🔓 '+d.id+' 實戰模式與無極限挑戰解鎖！');
     else if(old.stars<4&&d.stars>=4)msg.push('🔓 '+d.id+' 修羅模式解鎖！');
     else if(old.stars<5&&d.stars>=5)msg.push('👑 '+d.id+' 修羅全對，滿星 5 ⭐！');
-    if(gi>=0){const qAfter=qualityOf(gi);if(qAfter&&qAfter!==qBefore)msg.push('⚔️ 獲得裝備：'+ITEMS[gi].icon+' '+ITEMS[gi].name+'（'+QLABEL[qAfter]+'）！');}
+    // 裝備碎片邏輯：小關第一次通關 → 掉一片碎片；大關內碎片集滿 → 自動合成裝備；
+    // 裝備到手之後，累積星數提升品質，算是「重鑄升級」，訊息跟「合成」分開講，避免混淆。
+    if(gi>=0){
+      const qAfter=qualityOf(gi),n=EQUIP_GROUPS[gi].length,done=EQUIP_GROUPS[gi].filter(id=>st(id)>0).length;
+      if(!old.stars&&qBefore===null&&qAfter!==null){
+        msg.push('⚗️ 碎片收集齊全，自動合成：'+ITEMS[gi].icon+' '+ITEMS[gi].name+'（'+QLABEL[qAfter]+'）！');
+      }else if(!old.stars&&qAfter===null){
+        msg.push('🧩 獲得裝備碎片：'+ITEMS[gi].icon+' '+ITEMS[gi].name+'（'+done+'/'+n+'，集滿自動合成）');
+      }else if(qAfter&&qAfter!==qBefore){
+        msg.push('⚔️ 裝備升級：'+ITEMS[gi].icon+' '+ITEMS[gi].name+'（'+QLABEL[qAfter]+'）！');
+      }
+    }
     const r1=rankOf(total())[1];if(r1!=r0)msg.push('🎖️ 升官了：'+r1+'！');
     if(msg.length)toast(msg.join('<br>'));
   }
@@ -559,9 +594,14 @@ function bumpDuelRecord(sid,field){
 }
 function myRankIdx(){ return Math.max(0,RK.indexOf(rankOf(total()))); }
 // 把軍階（決定人物圖）一起放進 stats 裡上傳，不用新增資料表欄位
-function statsWithRank(){ return {...totalStats(), rank:myRankIdx()}; }
+// eq＝12 件裝備的品質字串（-未擁有 n普通 f精良 l傳說 m神話）；clone＝分身星數（0～5）
+const QCODE={normal:'n',fine:'f',legend:'l',myth:'m'}, QDECODE={n:'normal',f:'fine',l:'legend',m:'myth'};
+const CLONE_IDX=ITEMS.findIndex(it=>it.special);
+function myEquipCode(){ return ITEMS.map((it,i)=>{const q=qualityOf(i);return q?QCODE[q]:'-';}).join(''); }
+function myCloneStars(){ const ids=EQUIP_GROUPS[CLONE_IDX]; return (ids&&groupDone(ids))?Math.min(5,groupSum(ids)):0; }
+function statsWithRank(){ return {...totalStats(), rank:myRankIdx(), eq:myEquipCode(), clone:myCloneStars()}; }
 function mkFighterObj(sid,name,level,stats){
-  return {studentId:sid,name:name||sid,level:level||1,rank:(stats&&stats.rank)|0,hp:stats.hp,hpMax:stats.hp,mp:stats.mp,mpMax:stats.mp,
+  return {studentId:sid,name:name||sid,level:level||1,rank:(stats&&stats.rank)|0,eq:(stats&&stats.eq)||null,clone:(stats&&stats.clone)|0,hp:stats.hp,hpMax:stats.hp,mp:stats.mp,mpMax:stats.mp,
     atk:stats.atk,matk:stats.matk,def:stats.def,mdef:stats.mdef,spd:stats.spd,defending:false,charging:false};
 }
 // 每次畫面更新時，把自己目前的戰力寫到雲端 duel_users，讓別人挑戰我時查得到最新數值
@@ -599,7 +639,7 @@ async function showPendingInvite(battleId){
   const {data:battle}=await sb.from('duel_battles').select('a').eq('id',battleId).maybeSingle();
   const box=$('#arena-pending'); if(!box||!battle) return;
   const name=(battle.a&&battle.a.name)||'同學';
-  box.classList.remove('hide');
+  box.classList.remove('hide');INV=true;toast('⚔️ '+name+' 邀請你對戰！請到首頁「對戰邀請」接受');if(VIEW==='home')render();
   box.innerHTML=`<div class="fighter"><b>⚔️ ${name} 想要挑戰你！</b><div class="amenu"><button id="ap-accept">接受挑戰</button></div></div>`;
   $('#ap-accept').onclick=()=>acceptSyncChallenge(battleId);
 }
@@ -906,8 +946,25 @@ function renderAsyncBattle(){
 // ---- 🎬 對戰舞台：對手在上、我方在下，出招／受傷各有動畫 ----
 let stageFor=null, stageSnap=null, stageMine='a';
 function btImg(f){ const r=Math.min(6,Math.max(0,(f&&f.rank)|0)); return iconHTML(AVIMG[r],AV[r]||'🧙','ic-bt'); }
-function btCardHTML(){
-  return `<b class="nm"></b><div class="fbar hp"><i style="width:100%"></i></div><small class="hpt"></small><div class="fbar mp"><i style="width:100%"></i></div><small class="mpt"></small>`;
+const QSHORT={normal:'普',fine:'精',legend:'傳',myth:'神'};
+function btEquipHTML(f){
+  if(!f||!f.eq) return '';
+  let h='';
+  for(let i=0;i<ITEMS.length&&i<f.eq.length;i++){
+    const q=QDECODE[f.eq[i]]; if(!q) continue;
+    const it=ITEMS[i], extra=(i===CLONE_IDX&&f.clone)?`（${f.clone}★）`:'';
+    h+=`<span class="bt-eqi bq-${q}" title="${it.name}・${QLABEL[q]}${extra}">${iconHTML(it.img,it.icon,'ic-bq')}<i>${QSHORT[q]}</i></span>`;
+  }
+  return h?`<div class="bt-eq">${h}</div>`:`<div class="bt-eq"><small>尚無裝備</small></div>`;
+}
+function btSpritesHTML(f,role){
+  const cs=Math.min(5,Math.max(0,(f&&f.clone)|0));
+  return `<div class="bt-sprites ${cs?'has-clone':''}">`+
+    (cs?`<div class="bt-sprite bt-clone" id="bt-cl-${role}" style="opacity:${(cs*0.2).toFixed(2)}" title="分身 ${cs}★"><div class="bt-img">${btImg(f)}</div></div>`:'')+
+    `<div class="bt-sprite" id="bt-sp-${role}"><div class="bt-img">${btImg(f)}</div></div></div>`;
+}
+function btCardHTML(f){
+  return `<b class="nm"></b><div class="fbar hp"><i style="width:100%"></i></div><small class="hpt"></small><div class="fbar mp"><i style="width:100%"></i></div><small class="mpt"></small>${btEquipHTML(f)}`;
 }
 function ensureStage(room,mineSide){
   let el=$('#bt-stage');
@@ -917,9 +974,9 @@ function ensureStage(room,mineSide){
   const top=mineSide=='a'?'b':'a';
   el=document.createElement('div'); el.id='bt-stage'; el.className='bt-stage';
   el.innerHTML=`<div class="bt-arena">
-    <div class="bt-row bt-top"><div class="bt-card" id="bt-card-top">${btCardHTML()}</div><div class="bt-sprite" id="bt-sp-top"><div class="bt-img">${btImg(room[top])}</div></div></div>
+    <div class="bt-row bt-top"><div class="bt-card" id="bt-card-top">${btCardHTML(room[top])}</div>${btSpritesHTML(room[top],'top')}</div>
     <div class="bt-caption" id="bt-cap"></div>
-    <div class="bt-row bt-bot"><div class="bt-sprite" id="bt-sp-bot"><div class="bt-img">${btImg(room[mineSide])}</div></div><div class="bt-card" id="bt-card-bot">${btCardHTML()}</div></div>
+    <div class="bt-row bt-bot">${btSpritesHTML(room[mineSide],'bot')}<div class="bt-card" id="bt-card-bot">${btCardHTML(room[mineSide])}</div></div>
   </div><div class="bt-panel" id="bt-panel"></div>`;
   document.body.appendChild(el);
   document.body.style.overflow='hidden';
@@ -966,20 +1023,22 @@ function playBattleEvent(snap,room){
   const defSide=atkSide=='a'?'b':'a';
   const spOf=side=>$('#bt-sp-'+(side===stageMine?'bot':'top'));
   const atkSp=spOf(atkSide), defSp=spOf(defSide); if(!atkSp||!defSp) return;
+  const clOf=side=>$('#bt-cl-'+(side===stageMine?'bot':'top'));
+  const atkCl=clOf(atkSide), defCl=clOf(defSide);
   const line=(room.log||[]).slice(-1)[0]||'';
   const dDef=snap[defSide+'hp']-room[defSide].hp, dAtk=snap[atkSide+'hp']-room[atkSide].hp;
   if(/防禦姿勢/.test(line)){ btBurst(atkSp,'🛡️'); return; }
-  if(/詠唱/.test(line)){ btAnim(atkSp,'cast',700); btBurst(atkSp,'🔮'); return; }
+  if(/詠唱/.test(line)){ btAnim(atkSp,'cast',700); if(atkCl) btAnim(atkCl,'cast',700); btBurst(atkSp,'🔮'); return; }
   if(dDef<=0&&dAtk<=0) return;                      // 認輸、加入戰場等沒有出招的訊息，不播動畫
   const magic=/魔法/.test(line);
   const icon = magic ? (/大魔法/.test(line)?'☄️':/中魔法/.test(line)?'🔥':'✨')
              : (/「拳」/.test(line)?'👊':/「腳」/.test(line)?'🦶':/衝撞/.test(line)?'💥':'🗡️');
   const hit=()=>{
-    if(dDef>0){ btAnim(defSp.querySelector('.bt-img'),'hurt',600); btFloat(defSp,'-'+dDef,magic?'#9ad0ff':'#ff6b6b'); btBurst(defSp,icon); }
-    if(dAtk>0){ btAnim(atkSp.querySelector('.bt-img'),'hurt',600); btFloat(atkSp,'-'+dAtk,'#ffb35a'); }
+    if(dDef>0){ btAnim(defSp.querySelector('.bt-img'),'hurt',600); if(defCl) btAnim(defCl.querySelector('.bt-img'),'hurt',600); btFloat(defSp,'-'+dDef,magic?'#9ad0ff':'#ff6b6b'); btBurst(defSp,icon); }
+    if(dAtk>0){ btAnim(atkSp.querySelector('.bt-img'),'hurt',600); if(atkCl) btAnim(atkCl.querySelector('.bt-img'),'hurt',600); btFloat(atkSp,'-'+dAtk,'#ffb35a'); }
   };
-  if(magic){ btAnim(atkSp,'cast',700); btFly(atkSp,defSp,icon,hit); }
-  else{ btLunge(atkSp,defSp); setTimeout(hit,280); }
+  if(magic){ btAnim(atkSp,'cast',700); if(atkCl) btAnim(atkCl,'cast',700); btFly(atkSp,defSp,icon,hit); }
+  else{ btLunge(atkSp,defSp); if(atkCl) btLunge(atkCl,defSp); setTimeout(hit,280); }
 }
 function renderScene(room,mineSide,panelHTML,bindFn){
   const stage=ensureStage(room,mineSide);
@@ -990,12 +1049,12 @@ function renderScene(room,mineSide,panelHTML,bindFn){
   fillCard($('#bt-card-top'),room[top]); fillCard($('#bt-card-bot'),room[mineSide]);
   // 持續性的狀態：防禦、蓄力、倒下、獲勝
   const spTop=$('#bt-sp-top'), spBot=$('#bt-sp-bot');
-  [[spTop,room[top],top],[spBot,room[mineSide],mineSide]].forEach(([sp,f,side])=>{
-    sp.classList.toggle('defending',!!f.defending&&!room.over);
-    sp.classList.toggle('charging',!!f.charging&&!room.over);
+  [[spTop,room[top],top,$('#bt-cl-top')],[spBot,room[mineSide],mineSide,$('#bt-cl-bot')]].forEach(([sp,f,side,cl])=>{
+    const els=cl?[sp,cl]:[sp];
+    els.forEach(e=>{ e.classList.toggle('defending',!!f.defending&&!room.over); e.classList.toggle('charging',!!f.charging&&!room.over); });
     const dead=f.hp<=0, other=room[side=='a'?'b':'a'];
     const won=room.over&&room.winner!=='draw'&&!dead&&(other.hp<=0||room.winner===f.name);
-    setTimeout(()=>{ sp.classList.toggle('ko',dead); sp.classList.toggle('win',!!won); }, acted?650:0);
+    setTimeout(()=>{ els.forEach(e=>{ e.classList.toggle('ko',dead); e.classList.toggle('win',!!won); }); }, acted?650:0);
   });
   // 中間的大字幕：顯示最新一行戰況
   const cap=$('#bt-cap'), line=(room.log||[]).slice(-1)[0]||'';
@@ -1028,7 +1087,49 @@ $('#avatar').onclick=async()=>{
   const rec=data||{wins:0,losses:0,draws:0};
   toast(`🏆 我的對戰總戰績<br>勝 ${rec.wins||0} 場／敗 ${rec.losses||0} 場／平手 ${rec.draws||0} 場`);
 };
-load();fillWho();render();startPendingListen();
+
+/* ===== 🏠 新首頁：章節流程圖／角色分析／對戰邀請／錯題練習 ===== */
+let VIEW='home',CHI=0,ONLY=null,INV=false;
+const CHS=[['🗝️ 第一章：整數王國',CH1,lockCh1,'1'],['📜 第二章：韓信點兵',CH2,lockCh2,'2'],['🔮 第三章：代數異世界',CH3,lockCh3,'3']];
+const SMAP={};CHS.forEach(c=>c[1].forEach(g=>g.st.forEach(x=>SMAP[x[0]]=x)));
+function show(v,ci){VIEW=v;if(ci!=null)CHI=ci;
+  document.querySelectorAll('[data-v]').forEach(e=>e.classList.toggle('hide',!e.dataset.v.split(' ').includes(v)));
+  $('#nav').classList.toggle('hide',v==='home');render();scrollTo(0,0)}
+function chProg(ci){const ids=CHS[ci][1].flatMap((c,i)=>idsOf(CHS[ci][1],i));return [ids.reduce((a,id)=>a+st(id),0),ids.length*PERSTAGE]}
+function homeHTML(){
+  const fl=CHS.map((c,i)=>{const [a,b]=chProg(i);return `<button class="fnode" data-go="ch" data-ci="${i}"><b>${c[0]}</b>${c[1].length} 大關｜⭐ ${a}/${b}<div class="pbar"><div style="height:100%;width:${a/b*100}%;background:var(--bronze)"></div></div></button>`}).join('<span class="arr">➜</span>');
+  return `<h2 class="serif" style="color:var(--bronze);margin:6px 0 0">🧭 冒險路線（點章節進入）</h2><div class="flow">${fl}</div>
+  <div class="menu4"><button data-go="hero">🧙 角色分析<br><small>屬性・裝備・章節熟練度</small></button>
+  <button data-go="arena">⚔️ 對戰邀請${INV?'<i>新</i>':''}<br><small>學號對戰</small></button>
+  <button data-go="wrong">📝 錯題練習<br><small>找出弱點題型</small></button></div>`}
+function chHTML(ci){const c=CHS[ci];ONLY=ci;
+  return `<h2 class="serif" style="margin:6px 0 0;color:var(--bronze)">${c[0]}</h2>`+groupHTML(c[1],c[2],c[3])+endlessHTML()}
+function heroCardHTML(){const h=P._hero;
+  const bars=CHS.map((c,i)=>{const [a,b]=chProg(i);return `<div style="margin:6px 0">${c[0]}　${a}/${b} ⭐<div class="pbar"><div style="height:100%;width:${a/b*100}%;background:var(--jade)"></div></div></div>`}).join('');
+  const hs=h?`<b>${h.name}</b>｜流派：<b>${h.archetype}</b>｜骰子 ${h.dice.sum}<div class="stat-grid">${['HP','ATK','DEF','SPD','MATK','MDEF'].map(k=>`<div class="sbox"><b>${h.stats[k]}</b><span>${k}</span></div>`).join('')}</div>`:'尚未建立角色';
+  return `<h2 class="serif" style="margin:0 0 6px">📊 角色分析</h2>${hs}<h3 class="serif" style="margin:14px 0 4px">章節熟練情形</h3>${bars}`}
+function wrongHTML(){const q=P._q||{};
+  const L=Object.entries(q).filter(([k,r])=>r.n>=3&&r.ok/r.n<0.8).sort((a,b)=>a[1].ok/a[1].n-b[1].ok/b[1].n).slice(0,8);
+  return `<h2 class="serif" style="margin:0 0 6px">📝 錯題練習</h2><small>依你的作答紀錄，找出正確率偏低的題型，點「去練習」直接進入該關。</small>`+
+  (L.length?L.map(([k,r])=>{const id=k.split(':')[0],s=SMAP[id];return `<div class="fighter"><b>${id} ${s?s[1]:''}</b>｜題型 ${k.split(':')[1]}｜正確率 ${Math.round(r.ok/r.n*100)}%（${r.ok}/${r.n}）${s&&s[2]?` <button class="node" style="display:inline;min-height:0;padding:4px 10px" data-wr="${id}">去練習</button>`:''}</div>`}).join(''):'<p>🎉 目前沒有正確率偏低的題型，繼續闖關累積更多作答紀錄吧！</p>')}
+$('#home').onclick=e=>{const b=e.target.closest('[data-go]');if(!b)return;const g=b.dataset.go;if(g==='ch')show('ch',+b.dataset.ci);else{if(g==='arena')INV=false;show(g)}};
+$('#back').onclick=()=>show('home');
+$('#wrong').onclick=e=>{const b=e.target.closest('[data-wr]');if(!b)return;const s=SMAP[b.dataset.wr];cur=s[0];$('#fr').src=stageURL(s[2],s[0],false);$('#ov').classList.remove('hide')};
+/* ===== 🎲 第一次登入：建立角色（依 math_hero_engine） ===== */
+function maybeCreate(){if(P._hero)return;const box=$('#create');box.classList.remove('hide');
+  box.innerHTML=`<div class="card"><h2 class="serif" style="margin:0;color:var(--bronze)">🧙 建立你的勇者</h2>
+  <div>請輸入角色名（英文名會自動計算字母值；中文名請填姓名總筆劃）</div>
+  <input id="cr-name" placeholder="角色名" maxlength="20"><input id="cr-str" class="hide" type="number" min="1" placeholder="姓名總筆劃（中文名必填）">
+  <div id="cr-msg" style="color:#ff9a8a"></div><button id="cr-go">🎲 擲骰子並建立角色</button></div>`;
+  $('#cr-name').oninput=e=>$('#cr-str').classList.toggle('hide',!/[^\x00-\x7F]/.test(e.target.value));
+  $('#cr-go').onclick=()=>{try{const h=MathHeroEngine.createCharacter({name:$('#cr-name').value,chineseStrokeTotal:$('#cr-str').value});
+    P._hero=h;P._who=P._who||{};P._who.name=h.name;save();fillWho();
+    box.innerHTML=`<div class="card"><h2 class="serif" style="margin:0;color:var(--bronze)">✨ ${h.name}，你是「${h.archetype}」！</h2>
+    <div>骰子：${h.dice.die1}＋${h.dice.die2}＝${h.dice.sum}　（${h.nameValue.method} ${h.nameValue.total}，餘數 ${h.remainder}）</div>
+    <div class="stat-grid">${['HP','ATK','DEF','SPD','MATK','MDEF'].map(k=>`<div class="sbox"><b>${h.stats[k]}</b><span>${k}</span></div>`).join('')}</div>
+    <button id="cr-ok">⚔️ 出發冒險！</button></div>`;
+    $('#cr-ok').onclick=()=>{box.classList.add('hide');box.innerHTML='';render()}}catch(err){$('#cr-msg').textContent=err.message}}}
+load();fillWho();show('home');startPendingListen();maybeCreate();
 </script>
 </body>
 </html>

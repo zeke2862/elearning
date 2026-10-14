@@ -247,6 +247,8 @@
       $s.textContent = o.fail ? '💔' : starStr(pass ? gain : S.stars);
       var add2 = '<br>🎯 正確率 ' + pct + '%（目標 ' + Math.round(need * 100) + '%）　' + (pass ? '✅ 達標！' : '❌ 未達標，星數不變');
       if (pass && gain > prev2) add2 += '<br>⭐ 這一關升到 ' + gain + ' 星！' + (real ? '🔓 修羅模式解鎖！' : '');
+      if(!real){try{var pk='ms-pity-'+o.sid,pc=pass?0:(+localStorage.getItem(pk)||0)+1;localStorage.setItem(pk,pc);
+        if(pc>=3)add2+='<br>🛡️ 已連續挑戰修羅 '+pc+' 次沒過，先回練兵模式看教學、複習觀念，再回來挑戰會更有把握！';}catch(e){}}
       $i.innerHTML += add2;
       if (o.emb) post({ type: 'stage-result', id: o.sid, stars: gain, fail: !pass, score: o.score, right: o.right, total: o.total, mode: o.mode });
       refresh();
