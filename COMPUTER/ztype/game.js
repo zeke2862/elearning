@@ -1037,9 +1037,9 @@ function destroyEnemy(en) {
   if (en.word.length > 8) spawnExplosion(ex, ey, '#ff9933');
 
   let wordScore = en.word.length * 10 * wave;
-  // Keyboard hidden bonus: ×1.5 (英文模式限定，中文選字模式不適用)
-  if (!showKeyboard && mode === 'normal' && category !== 'chinese') {
-    wordScore = Math.round(wordScore * 1.5);
+  // Keyboard hidden bonus: ×5 for all modes and categories.
+  if (!showKeyboard) {
+    wordScore = Math.round(wordScore * 5);
   }
   score += wordScore;
   killCount++;
@@ -1188,9 +1188,9 @@ function gameOver() {
   document.getElementById('finalKills').textContent = killCount;
   document.getElementById('finalAccuracy').textContent = acc + '%';
 
-  // Show keyboard bonus indicator
+  // Show keyboard bonus indicator whenever the on-screen keyboard was hidden.
   const bonusRow = document.getElementById('kbBonusRow');
-  if (mode === 'normal' && !showKeyboard && category !== 'chinese') {
+  if (!showKeyboard) {
     bonusRow.style.display = 'flex';
   } else {
     bonusRow.style.display = 'none';
