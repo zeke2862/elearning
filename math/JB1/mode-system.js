@@ -138,6 +138,18 @@
     });
   }
 
+  // 速度評價：平均每題秒數 vs 該模式時限；並記錄個人最快平均
+  function speedLine(o, ok) {
+    if (!S.t0 || !o.total) return '';
+    var av = (Date.now() - S.t0) / 1000 / o.total, lim = (S.orig && S.orig[o.mode]) || 0, h = '<br>⏱️ 平均每題 ' + av.toFixed(1) + ' 秒';
+    if (lim) h += '　' + (av / lim < 0.5 ? '⚡ 神速' : av / lim < 0.8 ? '🏃 迅捷' : '🐢 穩健');
+    try {
+      var k = 'ms-spd-' + o.sid + '-' + o.mode, b = parseFloat(localStorage.getItem(k));
+      if (ok && (!b || av < b)) { localStorage.setItem(k, av.toFixed(2)); if (b) h += '　🏅 刷新最快紀錄！'; }
+      else if (b) h += '（最快 ' + b.toFixed(1) + ' 秒）';
+    } catch (e) {}
+    return h;
+  }
   var MS = {
     cfg: CFG,
     // 每個關卡主程式最後呼叫一次：MS.init(MODES, SID)
@@ -173,11 +185,13 @@
           };
         }
       }
+      var pm = qp.get('mode');
+      if (pm && !S.flag && !lockMsg(pm)) { var pb = $('#modes .mode[data-m="' + pm + '"]'); if (pb) pb.click(); }
       refresh();
     },
     // start() 裡呼叫：回傳 true 代表這一局是無極限（題目改成一題一題現場出）
     begin: function (rescue) {
-      S.ended = false; S.lastType = null;
+      S.ended = false; S.lastType = null; S.t0 = Date.now();
       S.active = S.flag && !rescue && S.stars >= CFG.ENDLESS_NEED;
       if (!S.active) restore();
       return S.active;
@@ -205,6 +219,7 @@
     // finish() 最後呼叫：依模式結算星數、畫結算畫面、通知地圖
     result: function (o) {
       if (o.rescue) return;
+      tone(o.fail ? SFX.lose : SFX.win);
       var $t = $('#e-title'), $s = $('#e-stars'), $i = $('#e-info');
 
       /* ---- 無極限 ---- */
@@ -229,7 +244,7 @@
         S.stars = Math.max(S.stars, o.stars);
         var add = '<br>📊 本關目前最高：' + starStr(S.stars);
         if (prev < CFG.REAL_NEED && S.stars >= CFG.REAL_NEED) add += '<br>🔓 實戰模式與無極限挑戰解鎖！';
-        $i.innerHTML += add;
+        $i.innerHTML += add + speedLine(o, !o.fail);
         if (o.emb) post({ type: 'stage-result', id: o.sid, stars: o.stars, fail: o.fail, score: o.score, right: o.right, total: o.total, mode: 'easy' });
         refresh();
         return;
@@ -249,10 +264,51 @@
       if (pass && gain > prev2) add2 += '<br>⭐ 這一關升到 ' + gain + ' 星！' + (real ? '🔓 修羅模式解鎖！' : '');
       if(!real){try{var pk='ms-pity-'+o.sid,pc=pass?0:(+localStorage.getItem(pk)||0)+1;localStorage.setItem(pk,pc);
         if(pc>=3)add2+='<br>🛡️ 已連續挑戰修羅 '+pc+' 次沒過，先回練兵模式看教學、複習觀念，再回來挑戰會更有把握！';}catch(e){}}
-      $i.innerHTML += add2;
+      $i.innerHTML += add2 + speedLine(o, pass);
       if (o.emb) post({ type: 'stage-result', id: o.sid, stars: gain, fail: !pass, score: o.score, right: o.right, total: o.total, mode: o.mode });
       refresh();
     }
   };
+  /* ---- 🔊 音效（WebAudio 合成，不需音檔）：答對／答錯／過關／失敗 ---- */
+  var AC = null, mute = false;
+  try { mute = localStorage.getItem('ms-mute') === '1'; } catch (e) {}
+  var SFX = {
+    ok: [[660, .1, 'square', 0], [880, .14, 'square', .09]],
+    bad: [[220, .18, 'sawtooth', 0], [165, .25, 'sawtooth', .14]],
+    win: [[523, .12, 'square', 0], [659, .12, 'square', .12], [784, .12, 'square', .24], [1047, .3, 'square', .36]],
+    lose: [[330, .2, 'triangle', 0], [262, .2, 'triangle', .2], [196, .4, 'triangle', .4]]
+  };
+  function tone(seq) {
+    if (mute) return;
+    try {
+      AC = AC || new (window.AudioContext || window.webkitAudioContext)();
+      var t = AC.currentTime;
+      seq.forEach(function (n) {
+        var o = AC.createOscillator(), g = AC.createGain();
+        o.type = n[2]; o.frequency.value = n[0];
+        g.gain.setValueAtTime(0.08, t + n[3]); g.gain.exponentialRampToValueAtTime(0.001, t + n[3] + n[1]);
+        o.connect(g); g.connect(AC.destination); o.start(t + n[3]); o.stop(t + n[3] + n[1] + 0.02);
+      });
+    } catch (e) {}
+  }
+  MS.sfx = function (k) { tone(SFX[k]); };
+  function initSfx() {
+    var b = document.createElement('button');
+    b.textContent = mute ? '🔇' : '🔊'; b.title = '音效開關';
+    b.style.cssText = 'position:fixed;right:8px;bottom:8px;z-index:50;border:1px solid #888;border-radius:50%;width:36px;height:36px;background:#0008;color:#fff;font-size:18px;cursor:pointer';
+    b.onclick = function () { mute = !mute; b.textContent = mute ? '🔇' : '🔊'; try { localStorage.setItem('ms-mute', mute ? '1' : '0'); } catch (e) {} };
+    document.body.appendChild(b);
+    new MutationObserver(function (list) {
+      var bad = 0, ok = 0;
+      list.forEach(function (r) {
+        var c = r.target.classList, old = r.oldValue || '';
+        if (!c) return;
+        if (c.contains('bad') && !/\bbad\b/.test(old)) bad = 1;
+        if (c.contains('ok') && !/\bok\b/.test(old)) ok = 1;
+      });
+      if (bad) tone(SFX.bad); else if (ok) tone(SFX.ok);
+    }).observe(document.body, { attributes: true, attributeFilter: ['class'], subtree: true, attributeOldValue: true });
+  }
+  if (document.body) initSfx(); else document.addEventListener('DOMContentLoaded', initSfx);
   window.MS = MS;
 })();
