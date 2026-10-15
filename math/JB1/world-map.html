@@ -157,8 +157,21 @@ button:focus-visible{outline:3px solid var(--bronze);outline-offset:2px}
 #mhero.l img{transform:scaleX(-1)}#mhero.walk img{animation:bob .25s infinite alternate}
 #gp{position:fixed;inset:0;z-index:110;background:#0b0e22d9;display:flex;align-items:center;justify-content:center;padding:14px}
 #gp .card{max-width:520px;width:100%;max-height:86vh;overflow:auto}.gprow{display:flex;gap:6px;margin:6px 0}
+.fog{position:absolute;left:0;top:0;pointer-events:none;z-index:2}
+.gr2{align-items:center;flex-wrap:wrap}.ginfo{flex:1;min-width:170px;text-align:left}.mbtns{display:flex;gap:6px}
+.mbtn{background:var(--ink2);border:2px solid var(--line);border-radius:10px;padding:6px 8px;min-width:62px;line-height:1.3;font-size:.9rem}
+.mbtn:disabled{opacity:.4}.mbtn.easy{border-color:#4aa86b}.mbtn.real{border-color:#d2a24c}.mbtn.hard{border-color:#d9503f}
+#mutebtn{position:fixed;right:10px;bottom:10px;z-index:60;border:1px solid #888;border-radius:50%;width:40px;height:40px;background:#0009;color:#fff;font-size:20px;cursor:pointer}
+#forge{position:fixed;inset:0;z-index:300;background:#000b;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.fg-box{text-align:center;color:#fff}.fg-anvil{font-size:80px;transform-origin:80% 90%;animation:hm .45s ease-in 3}
+@keyframes hm{0%{transform:rotate(-40deg)}60%,100%{transform:rotate(25deg)}}
+.fg-spark{font-size:34px;opacity:0;animation:sp .45s 3}@keyframes sp{50%{opacity:1;transform:scale(1.4)}}
+.fg-item{font-size:90px;opacity:0;animation:rv .6s 1.35s forwards;filter:drop-shadow(0 0 18px gold)}
+@keyframes rv{from{opacity:0;transform:scale(.3) rotate(-30deg)}to{opacity:1;transform:scale(1)}}
+.fg-name{opacity:0;animation:rv2 .5s 1.7s forwards;font-size:1.2rem;line-height:1.7}@keyframes rv2{to{opacity:1}}
 </style>
 <script src="math_hero_engine.js"></script>
+<script src="bgm.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 </head>
 <body>
@@ -215,7 +228,7 @@ button:focus-visible{outline:3px solid var(--bronze);outline-offset:2px}
   <section class="card" id="arena" data-v="arena">
     <h2 class="serif" style="margin:0 0 6px">⚔️ 學號對戰</h2>
     <div id="arena-setup">
-      <small>手機、平板、家裡電腦都可以玩，只要有網路就好！輸入對方學號、選好模式、按下對戰。</small>
+      <small>手機、平板、家裡電腦都可以玩，只要有網路就好！輸入對方學號、選好模式、按下對戰。<br>⚡ 出手順序依雙方「速度」輪流：速度越快，出手越頻繁。</small>
       <div class="who" style="margin-top:10px">
         <label style="display:inline-flex;align-items:center;gap:4px"><input type="radio" name="duel-mode" value="sync" checked>⚡即時對戰（雙方都要在線）</label>
         <label style="display:inline-flex;align-items:center;gap:4px"><input type="radio" name="duel-mode" value="async">👻單挑幽靈AI（對方不用在線）</label>
@@ -231,12 +244,16 @@ button:focus-visible{outline:3px solid var(--bronze);outline-offset:2px}
 
   <p class="tiny" data-v="hero" style="margin-top:8px;opacity:.7">👆 點一下上面「角色戰力」的頭像，可以看自己的對戰總戰績</p>
 
+  <section class="card" id="shop" data-v="shop"></section>
+  <section class="card" id="bag" data-v="bag"></section>
+  <section class="card" id="rank" data-v="arena"></section>
   <section class="card" id="wrong" data-v="wrong"></section>
   <p class="tiny" data-v="hero"><button id="reset">重置我的進度</button></p>
 </main>
 
 <div id="create" class="hide"></div>
 <div id="gp" class="hide"></div>
+<button id="mutebtn" title="音樂與音效開關">🔊</button>
 <div id="ov" class="hide"><button id="x" aria-label="關閉">✕</button><iframe id="fr" title="關卡"></iframe></div>
 <div id="toast" class="hide"></div>
 
@@ -368,7 +385,7 @@ function effStats(i){
   const it=ITEMS[i],q=qualityOf(i);
   if(!q||it.special)return {};
   ensureRoll(i);
-  const roll=P._eq[i],mul=QMUL[q],out={};
+  const roll=P._eq[i],mul=QMUL[q]*(1+.1*((P._forge||{})[i]||0)),out={};
   it.stats.forEach(([k])=>{out[k]=Math.round(roll[k]*mul);});
   return out;
 }
@@ -473,7 +490,7 @@ function render(){
   $('#rank').textContent=rk[1];$('#tot').textContent=`${t} / ${MAXSTAR} ⭐`;$('#rbar').style.width=(t/MAXSTAR*100)+'%';
   $('#nxt').textContent=nx?`再 ${nx[0]-t} 顆星，升為「${nx[1]}」`:'你已經是最高階了！';
   $('#home').innerHTML=homeHTML();
-  if(VIEW==='ch')mapBuild();
+  if(VIEW==='ch')mapBuild();if(VIEW==='shop')shopBuild();if(VIEW==='bag')bagBuild();
   $('#hx').innerHTML=heroCardHTML();
   $('#wrong').innerHTML=wrongHTML();
   renderHero();
@@ -486,15 +503,15 @@ $('#map').onclick=e=>{
   if(b.dataset.e){ // 無極限挑戰節點
     const s=ECH[+b.dataset.g][1][+b.dataset.ci].st[+b.dataset.k];
     if(st(s[0])<ENDLESS_NEED)return toast(`🔒 ${s[0]} 要先拿到 ${ENDLESS_NEED} ⭐（目前 ${st(s[0])} ⭐）才能挑戰無限題`);
-    cur=s[0];$('#fr').src=stageURL(s[2],s[0],true);$('#ov').classList.remove('hide');return;
+    cur=s[0];$('#fr').src=stageURL(s[2],s[0],true);(window.BGM&&BGM.stop(),$('#ov').classList.remove('hide'));return;
   }
   const chapterTag=b.dataset.ch,[GROUPS,lockFn]={1:[CH1,lockCh1],2:[CH2,lockCh2],3:[CH3,lockCh3]}[chapterTag];
   const ci=+b.dataset.ci,k=+b.dataset.k,s=GROUPS[ci].st[k],r=lockFn(ci,k);
-  if(r)return toast('🔒 '+r);
+  if(r)return toast('🔒 '+cm(r));
   if(!s[2])return toast('🔨 這一關還在建造中，敬請期待！');
-  cur=s[0];$('#fr').src=stageURL(s[2],s[0],false);$('#ov').classList.remove('hide');
+  cur=s[0];$('#fr').src=stageURL(s[2],s[0],false);(window.BGM&&BGM.stop(),$('#ov').classList.remove('hide'));
 };
-function closeStage(){$('#ov').classList.add('hide');$('#fr').src='about:blank';render()}
+function closeStage(){$('#ov').classList.add('hide');$('#fr').src='about:blank';render();window.BGM&&BGM.play(VIEW==='arena'?'arena':'map')}
 $('#x').onclick=closeStage;
 addEventListener('message',e=>{
   if(e.source!==$('#fr').contentWindow)return;
@@ -503,13 +520,12 @@ addEventListener('message',e=>{
     const r0=rankOf(total())[1];
     const gi=EQUIP_GROUPS.findIndex(ids=>ids.includes(d.id)),qBefore=gi>=0?qualityOf(gi):null;
     const old=P[d.id]||{stars:0,best:0};
-    P[d.id]={...old,stars:Math.max(old.stars,d.stars),best:Math.max(old.best,d.score)};save();
+    const oms=old.ms||{};P[d.id]={...old,stars:Math.max(old.stars,d.stars),best:Math.max(old.best,d.score),ms:{...oms,[d.mode]:Math.max(oms[d.mode]||0,d.stars)}};save();
     const gg=Math.max(0,d.stars-(old.stars||0))*20;if(gg){P._gold=(P._gold||0)+gg;save();}
     const msg=[];
     if(gg)msg.push('🪙 獲得 '+gg+' 金幣');
     if(!old.stars)msg.push('🎉 首次通關 '+d.id+'！');
-    if(old.stars<3&&d.stars>=3)msg.push('🔓 '+d.id+' 實戰模式與無極限挑戰解鎖！');
-    else if(old.stars<4&&d.stars>=4)msg.push('🔓 '+d.id+' 修羅模式解鎖！');
+    if(old.stars<3&&d.stars>=3)msg.push('🔓 '+d.id+' 無極限挑戰解鎖！');
     else if(old.stars<5&&d.stars>=5)msg.push('👑 '+d.id+' 修羅全對，滿星 5 ⭐！');
     // 裝備碎片邏輯：小關第一次通關 → 掉一片碎片；大關內碎片集滿 → 自動合成裝備；
     // 裝備到手之後，累積星數提升品質，算是「重鑄升級」，訊息跟「合成」分開講，避免混淆。
@@ -524,7 +540,8 @@ addEventListener('message',e=>{
       }
     }
     const r1=rankOf(total())[1];if(r1!=r0)msg.push('🎖️ 升官了：'+r1+'！');
-    if(msg.length)toast(msg.join('<br>'));
+    if(msg.length)toast(cm(msg.join('<br>')));
+    if(gi>=0){const qA=qualityOf(gi);if(qA&&qA!==qBefore)forgeAnim({icon:ITEMS[gi].icon,name:ITEMS[gi].name,q:QLABEL[qA],up:qBefore!==null})}
   }
   if(d.type=='wave-log'&&typeof d.id=='string'&&typeof d.qtype=='string'){
     const key=d.id+':'+d.qtype;P._q=P._q||{};const r=P._q[key]||{n:0,ok:0};r.n++;if(d.ok)r.ok++;P._q[key]=r;
@@ -578,7 +595,7 @@ function dealDamageLocal(att,def,base,isMagic){
 }
 // 執行一次出招，直接修改 att/def 物件本身，回傳這回合的戰鬥紀錄文字；
 // MP 不夠等無效狀況回傳 null。att 正在蓄力時，不管傳進來什麼 kind 都強制視為 release。
-function applyAction(att,def,kind,move){
+function applyAction0(att,def,kind,move){
   if(att.charging) kind='release';
   if(kind=='defend'){ att.defending=true; return `${att.name} 擺出防禦姿勢，防禦力 ×2！`; }
   if(kind=='normal'){
@@ -602,10 +619,15 @@ function applyAction(att,def,kind,move){
   }
   return null;
 }
+function nextSide(fa,fb){
+  const A={name:fa.name,stats:{SPD:fa.spd||100},initiativeMeter:fa.im||0,temporary:{}},B={name:fb.name,stats:{SPD:fb.spd||100},initiativeMeter:fb.im||0,temporary:{}};
+  const r=MathHeroEngine.nextAttacker(A,B);fa.im=A.initiativeMeter;fb.im=B.initiativeMeter;return r.actor===A?'a':'b'}
+const seasonId=()=>new Date(Date.now()+7*36e5).toISOString().slice(0,7);
 function bumpDuelRecord(sid,field){
   if(!sbReady()||!sid)return;
   const fn = field=='wins'?'bump_duel_win':field=='losses'?'bump_duel_loss':'bump_duel_draw';
   sb.rpc(fn,{p_sid:sid}).then(()=>{}).catch(()=>{});
+  sb.rpc('bump_duel_season',{p_season:seasonId(),p_sid:sid,p_name:sid===mySid()?((P._who&&P._who.name)||null):null,p_field:field}).then(()=>{}).catch(()=>{});
 }
 function myRankIdx(){ return Math.max(0,RK.indexOf(rankOf(total()))); }
 // 把軍階（決定人物圖）一起放進 stats 裡上傳，不用新增資料表欄位
@@ -665,7 +687,7 @@ async function challengeSync(osid){
   const {data:opUser,error:opErr}=await sb.from('duel_users').select('*').eq('student_number',osid).maybeSingle();
   if(opErr){console.warn('查詢對手失敗',opErr);return toast('❗ 連線雲端失敗（'+(opErr.message||opErr.code||'未知錯誤')+'），請聯絡老師');}
   if(!opUser)return toast('❗ 找不到這位同學的資料，請他先打開遊戲、存過學號');
-  const aFighter=mkFighterObj(sid,(P._who&&P._who.name)||sid,li.level,statsWithRank());
+  const aFighter=withRevive(mkFighterObj(sid,(P._who&&P._who.name)||sid,li.level,statsWithRank()));
   const {data:battle,error}=await sb.from('duel_battles').insert({
     mode:'sync', a_id:sid, b_id:osid, a:aFighter, b:null, turn:null, over:false, winner:null,
     log:[`⚔️ ${aFighter.name} 發起了挑戰，等待 ${opUser.name||osid} 加入！`]
@@ -678,10 +700,10 @@ async function acceptSyncChallenge(battleId){
   const sid=mySid(), li=levelInfo();
   const {data:room}=await sb.from('duel_battles').select('*').eq('id',battleId).maybeSingle();
   if(!room||room.b)return toast('這場對戰已經結束或已經開始了');
-  const bFighter=mkFighterObj(sid,(P._who&&P._who.name)||sid,li.level,statsWithRank());
-  const turn=room.a.spd>=bFighter.spd?'a':'b';
+  const bFighter=withRevive(mkFighterObj(sid,(P._who&&P._who.name)||sid,li.level,statsWithRank()));
+  const turn=nextSide(room.a,bFighter);
   const newLog=[...(room.log||[]),`${bFighter.name} 加入戰場！⚔️ 對戰開始！`];
-  await sb.from('duel_battles').update({b:bFighter,turn,log:newLog,updated_at:new Date().toISOString()}).eq('id',battleId);
+  await sb.from('duel_battles').update({a:room.a,b:bFighter,turn,log:newLog,updated_at:new Date().toISOString()}).eq('id',battleId);
   await sb.from('duel_pending').delete().eq('target_id',sid);
   enterSyncBattle(battleId);
 }
@@ -719,13 +741,14 @@ async function sendSyncAction(kind,move){
   const room=duelState.room, mine=mySideOf(room), other=mine=='a'?'b':'a';
   if(!room||room.turn!==mine) return;
   const att={...room[mine]}, def={...room[other]};
+  if(kind=='item'&&!consumeItem(move)){toast('沒有這個道具了');duelSub=null;renderSyncBattle();return;}
   const logLine=applyAction(att,def,kind,move);
   duelSub=null;
   if(logLine===null){ toast('魔力不夠喔'); renderSyncBattle(); return; }
   const log=[...(room.log||[]).slice(-40),logLine];
   const over=att.hp<=0||def.hp<=0;
   const winner=over?((att.hp<=0&&def.hp<=0)?'draw':(att.hp<=0?def.name:att.name)):null;
-  const patch={turn:over?room.turn:other, log, over, winner, updated_at:new Date().toISOString()};
+  const patch={turn:over?room.turn:nextSide(mine=='a'?att:def,mine=='a'?def:att), log, over, winner, updated_at:new Date().toISOString()};
   patch[mine]=att; patch[other]=def;
   const {data:upd,error:upErr}=await sb.from('duel_battles').update(patch).eq('id',duelState.battleId).eq('turn',mine).eq('over',false).select('id');
   if(upErr||!upd||!upd.length){
@@ -750,9 +773,9 @@ async function challengeAsync(osid){
   const {data:opUser,error:opErr}=await sb.from('duel_users').select('*').eq('student_number',osid).maybeSingle();
   if(opErr){console.warn('查詢對手失敗',opErr);return toast('❗ 連線雲端失敗（'+(opErr.message||opErr.code||'未知錯誤')+'），請聯絡老師');}
   if(!opUser)return toast('❗ 找不到這位同學的資料，請他先打開遊戲、存過學號');
-  const a=mkFighterObj(sid,(P._who&&P._who.name)||sid,li.level,statsWithRank());
+  const a=withRevive(mkFighterObj(sid,(P._who&&P._who.name)||sid,li.level,statsWithRank()));
   const b=mkFighterObj(osid,opUser.name||osid,opUser.level||1,opUser.stats||{hp:1000,mp:300,atk:50,matk:50,def:20,mdef:20,spd:100});
-  const turn=a.spd>=b.spd?'a':'b';
+  const turn=nextSide(a,b);
   duelState={mode:'async', aId:sid, bId:osid, room:{a,b,turn,over:false,winner:null,log:[`⚔️ ${a.name} 挑戰了 ${b.name} 的雲端幽靈！`]}};
   duelSub=null;
   $('#arena-setup').classList.add('hide');$('#arena-battle').classList.remove('hide');
@@ -772,12 +795,13 @@ function checkAsyncOver(){
 }
 function sendAsyncAction(kind,move){
   const room=duelState.room; if(room.turn!='a')return;
+  if(kind=='item'&&!consumeItem(move)){toast('沒有這個道具了');duelSub=null;renderAsyncBattle();return;}
   const logLine=applyAction(room.a,room.b,kind,move);
   duelSub=null;
   if(logLine===null){ toast('魔力不夠喔'); renderAsyncBattle(); return; }
   room.log=[...(room.log||[]).slice(-40),logLine];
   checkAsyncOver();
-  if(!room.over){ room.turn='b'; renderAsyncBattle(); setTimeout(aiTakeTurn,700); }
+  if(!room.over){ room.turn=nextSide(room.a,room.b); renderAsyncBattle(); if(room.turn=='b')setTimeout(aiTakeTurn,700); }
   else renderAsyncBattle();
 }
 // 幽靈 AI：血量偏低時比較不會用會自傷的「衝撞」，魔力夠時有機會放魔法，其餘時候普通攻擊
@@ -804,8 +828,9 @@ function aiTakeTurn(){
   const logLine=applyAction(att,room.a,kind,move);
   room.log=[...(room.log||[]).slice(-40),logLine];
   checkAsyncOver();
-  if(!room.over) room.turn='a';
+  if(!room.over) room.turn=nextSide(room.a,room.b);
   renderAsyncBattle();
+  if(!room.over&&room.turn=='b') setTimeout(aiTakeTurn,700);
 }
 
 // ---- 🔌 斷線處理：對手離線時「系統代打」，離線太久就判定認輸 ----
@@ -869,7 +894,7 @@ async function proxyAct(){
     const over=att.hp<=0||def.hp<=0;
     const draw=att.hp<=0&&def.hp<=0;
     const winner=over?(draw?'draw':(att.hp<=0?def.name:att.name)):null;
-    const patch={turn:over?room.turn:mine, log:[...(room.log||[]).slice(-40),line], over, winner, updated_at:new Date().toISOString()};
+    const patch={turn:over?room.turn:nextSide(other=='a'?att:def,other=='a'?def:att), log:[...(room.log||[]).slice(-40),line], over, winner, updated_at:new Date().toISOString()};
     patch[other]=att; patch[mine]=def;
     // 只有「現在還是對方回合」才寫入，萬一對方剛好回來自己出招了，這次代打就會自動作廢
     const {data:upd,error}=await sb.from('duel_battles').update(patch).eq('id',duelState.battleId).eq('turn',other).eq('over',false).select('id');
@@ -924,14 +949,16 @@ function renderFighterBar(f){
 function renderMenu(meFighter,myTurn){
   if(!myTurn) return '';
   if(meFighter.charging) return `<p>⏳ 你正在蓄力中，這回合會自動發動大魔法！</p><div class="amenu"><button id="b-pass">確定</button></div>`;
-  if(!duelSub) return `<div class="amenu"><button data-m="n">⚔️ 普通攻擊</button><button data-m="m">✨ 魔法攻擊</button><button data-m="d">🛡️ 防禦</button></div>`;
+  if(!duelSub) return `<div class="amenu"><button data-m="n">⚔️ 普通攻擊</button><button data-m="m">✨ 魔法攻擊</button><button data-m="d">🛡️ 防禦</button><button data-m="i">🎒 道具</button></div>`;
   if(duelSub=='n') return `<div class="amenu">`+NMOVES.map(m=>`<button data-n="${m[0]}">${m[1]}（×${m[2]}）</button>`).join('')+`<button data-back="1">返回</button></div>`;
+  if(duelSub=='i') return `<div class="amenu">`+SHOP.filter(x=>x.battle).map(x=>`<button data-it="${x.id}" ${(bagN(x.id)<1||(x.battle.spd&&meFighter.fast))?'disabled':''}>${x.icon} ${x.name} ×${bagN(x.id)}</button>`).join('')+`<button data-back="1">返回</button></div>`;
   if(duelSub=='m') return `<div class="amenu">`+MMOVES.map(m=>`<button data-mg="${m[0]}" ${meFighter.mp<m[2]?'disabled':''}>${m[1]}（耗魔${m[2]}／×${m[3]}）</button>`).join('')+`<button data-back="1">返回</button></div>`;
 }
 function bindMenuEvents(box,myTurn,sendFn){
   if(!myTurn)return;
   box.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{const m=b.dataset.m;if(m=='d'){sendFn('defend');}else{duelSub=m;renderBattleAgain();}});
   box.querySelectorAll('[data-back]').forEach(b=>b.onclick=()=>{duelSub=null;renderBattleAgain();});
+  box.querySelectorAll('[data-it]').forEach(b=>b.onclick=()=>sendFn('item',b.dataset.it));
   box.querySelectorAll('[data-n]').forEach(b=>b.onclick=()=>sendFn('normal',b.dataset.n));
   box.querySelectorAll('[data-mg]').forEach(b=>b.onclick=()=>sendFn('magic',b.dataset.mg));
   const pass=box.querySelector('#b-pass'); if(pass) pass.onclick=()=>sendFn('release');
@@ -1107,39 +1134,53 @@ $('#avatar').onclick=async()=>{
 let VIEW='home',CHI=0,ONLY=null,INV=false;
 const CHS=[['🗝️ 第一章：整數王國',CH1,lockCh1,'1'],['📜 第二章：韓信點兵',CH2,lockCh2,'2'],['🔮 第三章：代數異世界',CH3,lockCh3,'3']];
 const SMAP={};CHS.forEach(c=>c[1].forEach(g=>g.st.forEach(x=>SMAP[x[0]]=x)));
-function show(v,ci){VIEW=v;if(ci!=null){CHI=ci;if(v==='ch')MFOC=MNODES.findIndex(n=>n.gi===ci)}
+function show(v,ci){VIEW=v;if(ci!=null)CHI=ci;if(v==='ch'){MINIT=false;MFOC=null}
   document.querySelectorAll('[data-v]').forEach(e=>e.classList.toggle('hide',!e.dataset.v.split(' ').includes(v)));
-  $('#nav').classList.toggle('hide',v==='home');render();scrollTo(0,0)}
+  $('#nav').classList.toggle('hide',v==='home');if(v==='arena')rankBuild();window.BGM&&BGM.play(v==='arena'?'arena':'map');render();scrollTo(0,0)}
 function chProg(ci){const ids=CHS[ci][1].flatMap((c,i)=>idsOf(CHS[ci][1],i));return [ids.reduce((a,id)=>a+st(id),0),ids.length*PERSTAGE]}
 function homeHTML(){
   const fl=CHS.map((c,i)=>{const [a,b]=chProg(i);return `<button class="fnode" data-go="ch" data-ci="${i}"><b>${c[0]}</b>${c[1].length} 大關｜⭐ ${a}/${b}<div class="pbar"><div style="height:100%;width:${a/b*100}%;background:var(--bronze)"></div></div></button>`}).join('<span class="arr">➜</span>');
   return `<h2 class="serif" style="color:var(--bronze);margin:6px 0 0">🧭 冒險路線（點章節進入）</h2><div class="flow">${fl}</div>
   <div class="menu4"><button data-go="hero">🧙 角色分析<br><small>屬性・裝備・章節熟練度</small></button>
   <button data-go="arena">⚔️ 對戰邀請${INV?'<i>新</i>':''}<br><small>學號對戰</small></button>
-  <button data-go="wrong">📝 錯題練習<br><small>找出弱點題型</small></button></div>`}
+  <button data-go="wrong">📝 錯題練習<br><small>找出弱點題型</small></button>
+  <button data-go="shop">🛒 商店<br><small>用金幣買道具</small></button>
+  <button data-go="bag">🎒 背包<br><small>查看與使用道具</small></button></div>`}
 function chHTML(ci){const c=CHS[ci];ONLY=ci;
   return `<h2 class="serif" style="margin:6px 0 0;color:var(--bronze)">${c[0]}</h2>`+groupHTML(c[1],c[2],c[3])+endlessHTML()}
 function heroCardHTML(){const h=P._hero;
   const bars=CHS.map((c,i)=>{const [a,b]=chProg(i);return `<div style="margin:6px 0">${c[0]}　${a}/${b} ⭐<div class="pbar"><div style="height:100%;width:${a/b*100}%;background:var(--jade)"></div></div></div>`}).join('');
   const hs=h?`<b>${h.name}</b>｜流派：<b>${h.archetype}</b>｜骰子 ${h.dice.sum}<div class="stat-grid">${['HP','ATK','DEF','SPD','MATK','MDEF'].map(k=>`<div class="sbox"><b>${h.stats[k]}</b><span>${k}</span></div>`).join('')}</div>`:'尚未建立角色';
-  const sk=h?`<h3 class="serif" style="margin:14px 0 4px">🔮 招式研發</h3>🪙 金幣 <b>${P._gold||0}</b>　<button id="draw" class="btn">研發招式（${h.nextSkillCost||50} 金幣）</button><div>${(h.skills||[]).map(x=>`<span class="chip" style="display:inline-block;margin:3px">${x.name}・${x.rarity}</span>`).join('')||'<small>還沒有招式，闖關賺金幣來研發吧！每星 20 金幣。</small>'}</div>`:'';
+  if(h){const m={};(h.skills||[]).forEach(x=>m[x.category]=x);h.skills=Object.values(m)}
+  const sk=h?`<h3 class="serif" style="margin:14px 0 4px">🔮 招式研發</h3>🪙 金幣 <b>${P._gold||0}</b>　<button id="draw" class="btn">研發招式（${h.nextSkillCost||50} 金幣）</button>${P._pendSkill?`　<button id="pend" class="btn">⚠️ 有新招式等你決定</button>`:''}<div>${['physical','magic','speed'].map(c=>{const x=(h.skills||[]).find(y=>y.category===c);return `<div class="fighter" style="margin:4px 0"><b>${CATL[c]}招式</b>：${x?skillText(x):'<small>（空）</small>'}</div>`}).join('')}</div><small>每種類型只能裝備 1 個招式，抽到同類型時可選擇是否交換。</small>`:'';
   return `<h2 class="serif" style="margin:0 0 6px">📊 角色分析</h2>${hs}${sk}<h3 class="serif" style="margin:14px 0 4px">章節熟練情形</h3>${bars}`}
 function wrongHTML(){const q=P._q||{};
   const L=Object.entries(q).filter(([k,r])=>r.n>=3&&r.ok/r.n<0.8).sort((a,b)=>a[1].ok/a[1].n-b[1].ok/b[1].n).slice(0,8);
   return `<h2 class="serif" style="margin:0 0 6px">📝 錯題練習</h2><small>依你的作答紀錄，找出正確率偏低的題型，點「去練習」直接進入該關。</small>`+
-  (L.length?L.map(([k,r])=>{const id=k.split(':')[0],s=SMAP[id];return `<div class="fighter"><b>${id} ${s?s[1]:''}</b>｜題型 ${k.split(':')[1]}｜正確率 ${Math.round(r.ok/r.n*100)}%（${r.ok}/${r.n}）${s&&s[2]?` <button class="node" style="display:inline;min-height:0;padding:4px 10px" data-wr="${id}">去練習</button>`:''}</div>`}).join(''):'<p>🎉 目前沒有正確率偏低的題型，繼續闖關累積更多作答紀錄吧！</p>')}
+  (L.length?L.map(([k,r])=>{const id=k.split(':')[0],s=SMAP[id];return `<div class="fighter"><b>${SLAB[id]||id} ${s?s[1]:''}</b>｜題型 ${k.split(':')[1]}｜正確率 ${Math.round(r.ok/r.n*100)}%（${r.ok}/${r.n}）${s&&s[2]?` <button class="node" style="display:inline;min-height:0;padding:4px 10px" data-wr="${id}">去練習</button>`:''}</div>`}).join(''):'<p>🎉 目前沒有正確率偏低的題型，繼續闖關累積更多作答紀錄吧！</p>')}
 $('#home').onclick=e=>{const b=e.target.closest('[data-go]');if(!b)return;const g=b.dataset.go;if(g==='ch')show('ch',+b.dataset.ci);else{if(g==='arena')INV=false;show(g)}};
 $('#back').onclick=()=>show('home');
-$('#hx').onclick=e=>{if(!e.target.closest('#draw')||!P._hero)return;const r=MathHeroEngine.learnSkill(P._hero,{gold:P._gold||0});
+$('#hx').onclick=e=>{if(!P._hero)return;
+  if(e.target.closest('#pend')&&P._pendSkill)return offerSkill(P._pendSkill);
+  if(!e.target.closest('#draw'))return;
+  if(P._pendSkill)return toast('請先決定上一個新招式要不要換上');
+  const h=P._hero,prev=h.skills.slice(),r=MathHeroEngine.learnSkill(h,{gold:P._gold||0});
   if(!r.success)return toast('🪙 金幣不足，需要 '+r.cost+' 金幣，去闖關賺金幣吧！');
-  P._gold=r.goldRemaining;save();toast('🔮 研發成功！獲得「'+r.skill.name+'」（'+r.skill.rarity+'）');render()};
-$('#wrong').onclick=e=>{const b=e.target.closest('[data-wr]');if(!b)return;const s=SMAP[b.dataset.wr];cur=s[0];$('#fr').src=stageURL(s[2],s[0],false);$('#ov').classList.remove('hide')};
+  h.skills=prev;P._gold=r.goldRemaining;P._pendSkill=r.skill;save();offerSkill(r.skill)};
+$('#wrong').onclick=e=>{const b=e.target.closest('[data-wr]');if(!b)return;const s=SMAP[b.dataset.wr];cur=s[0];$('#fr').src=stageURL(s[2],s[0],false);(window.BGM&&BGM.stop(),$('#ov').classList.remove('hide'))};
 
 /* ===== 🗺️ 冒險地圖：可拖曳的完整地圖、勇者跑動、頂端選模式 ===== */
 const MAPIMG=encodeURI('images/數學世界探險圖：三章奇幻地圖.png');
 const MPOS=[[274,377],[468,268],[640,491],[246,594],[748,92],[994,246],[1199,286],[1125,451],[690,672],[879,674],[731,868],[1422,640]];
 const MNODES=[];CHS.forEach((c,gi)=>c[1].forEach((g,ci)=>MNODES.push({gi,ci,g,lock:c[2]})));
-const MODEL={easy:'練兵',real:'實戰',hard:'修羅'},MODENEED={easy:0,real:3,hard:4};
+const MODEL={easy:'練兵',real:'實戰',hard:'修羅'};
+// 名稱全部採用地圖上印的名稱（第 1-2 關在地圖上沒有地名，維持編號）
+const L5=(p,n)=>Array.from({length:n},(_,i)=>p+'-'+(i+1));
+const MAPN=[['整數王國',L5('1-1',4)],['第 1-2 關',L5('1-2',3)],['運算塔',L5('1-3',4)],['星辰塔',L5('1-4',4)],['迷霧山脈',L5('2-1',4)],['點兵營地',L5('2-2',4)],['因數峽谷',L5('2-3',4)],['戰術平原',L5('2-4',4)],['符語之森',L5('3-1',2)],['封印之城',L5('3-2',5)],['真實之鏡',L5('3-3',2)],['終點：數學之巔',['3-3-3']]];
+const SLAB={};MNODES.forEach((n,i)=>n.g.st.forEach((x,k)=>SLAB[x[0]]=MAPN[i][1][k]));
+const GT=[];MNODES.forEach((n,i)=>{if(n.gi===2&&n.g.st.length>1)GT.push([n.g.n.replace(/^第三章[^、]*、/,''),MAPN[i][0]])});
+const SRE=new RegExp('(?<![\\w-])('+Object.keys(SLAB).sort((a,b)=>b.length-a.length).map(x=>x.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('|')+')(?![\\w-])','g');
+const cm=t=>{let r=String(t).replace(SRE,x=>SLAB[x]);GT.forEach(([a,b])=>{r=r.split(a).join(b)});return r};
 let HN=null,MWALK=false,MSX=0,MSY=0,MFOC=null,MINIT=false;
 const getMode=()=>P._mm||'easy';
 const nUn=n=>n.lock(n.ci,0)==='';
@@ -1147,12 +1188,13 @@ const nDone=n=>n.g.st.every(s=>!s[2]||st(s[0])>0);
 function mapFr(){const i=MNODES.findIndex(n=>nUn(n)&&!nDone(n));return i<0?MNODES.length-1:i}
 function heroImg(){const ri=Math.max(0,RK.indexOf(rankOf(total())));return `<img src="${AVIMG[ri]}" height="64" alt="" onerror="this.outerHTML='<span style=font-size:44px>${AV[ri]||'🧙'}</span>'">`}
 function mapBuild(){
-  if(HN==null)HN=mapFr();
-  const fr=mapFr(),md=getMode(),hp=MPOS[HN];
+  if(HN==null)HN=(P._hn!=null&&MNODES[P._hn]&&nUn(MNODES[P._hn]))?P._hn:mapFr();
+  const fr=mapFr(),hp=MPOS[HN],all=MNODES.every(nDone);
+  const fog=all?'':`<svg class="fog" viewBox="0 0 1536 1024" width="1536" height="1024"><defs><filter id="fb" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="45"/></filter><mask id="fm"><rect width="1536" height="1024" fill="#fff"/>${MNODES.map((n,i)=>nUn(n)?`<circle cx="${MPOS[i][0]}" cy="${MPOS[i][1]}" r="170" fill="#000" filter="url(#fb)"/>`:'').join('')}</mask></defs><rect width="1536" height="1024" fill="#04020c" opacity=".9" mask="url(#fm)"/></svg>`;
   const nodes=MNODES.map((n,i)=>{const [x,y]=MPOS[i],un=nUn(n),dn=nDone(n);
     return `<button class="mn ${un?'':'lk'} ${dn?'done':''} ${un&&!dn&&i===fr?'pulse':''}" style="left:${x}px;top:${y}px" data-n="${i}" title="${n.g.n}">${un?(dn?'★':i+1):'🔒'}</button>`}).join('');
-  $('#map').innerHTML=`<div class="mp-bar"><b>選擇模式：</b>${Object.keys(MODEL).map(k=>`<button data-md="${k}" class="${k===md?'on':''}">${{easy:'🎯',real:'⚔️',hard:'🔥'}[k]} ${MODEL[k]}</button>`).join('')}<small>拖曳地圖移動，點圓圈讓勇者前往該大關</small></div>
-  <div id="mapvp"><div id="mapin"><img src="${MAPIMG}" draggable="false" alt="數學世界探險圖">${nodes}<div id="mhero" style="left:${hp[0]}px;top:${hp[1]+8}px">${heroImg()}</div></div></div>`;
+  $('#map').innerHTML=`<div class="mp-bar"><button data-here="1">📍 回到勇者位置</button><small>拖曳地圖移動，點圓圈讓勇者前往｜🎯練兵最高 2⭐・⚔️實戰最高 4⭐・🔥修羅最高 5⭐，三種模式隨時可選${all?'｜🎉 全通關，所有地圖已開放':'｜黑霧區域＝尚未抵達'}</small></div>
+  <div id="mapvp"><div id="mapin"><img src="${MAPIMG}" draggable="false" alt="數學世界探險圖">${fog}${nodes}<div id="mhero" style="left:${hp[0]}px;top:${hp[1]+8}px">${heroImg()}</div></div></div>`;
   const vp=$('#mapvp');
   vp.onscroll=()=>{MSX=vp.scrollLeft;MSY=vp.scrollTop};
   const ctr=i=>{vp.scrollLeft=MPOS[i][0]-vp.clientWidth/2;vp.scrollTop=MPOS[i][1]-vp.clientHeight/2};
@@ -1164,40 +1206,124 @@ function mapBuild(){
   vp.addEventListener('click',e=>{if(dr&&dr.m){e.stopPropagation();e.preventDefault()}},true);
 }
 function mapClick(e){
-  const m=e.target.closest('[data-md]');
-  if(m){P._mm=m.dataset.md;save();document.querySelectorAll('.mp-bar [data-md]').forEach(b=>b.classList.toggle('on',b===m));return toast('已選擇「'+MODEL[P._mm]+'」模式')}
+  if(e.target.closest('[data-here]')){const vp=$('#mapvp');vp.scrollTo({left:MPOS[HN][0]-vp.clientWidth/2,top:MPOS[HN][1]-vp.clientHeight/2,behavior:'smooth'});return}
   const n=e.target.closest('.mn');if(n)onMapNode(+n.dataset.n);
 }
 function onMapNode(i){
   if(MWALK)return;const n=MNODES[i],r=n.lock(n.ci,0);
-  if(r)return toast('🔒 '+r);
+  if(r)return toast('🔒 '+cm(r));
   if(i===HN)return showGroup(i);
   const a=MPOS[HN],b=MPOS[i],h=$('#mhero'),vp=$('#mapvp'),sec=Math.min(2.4,Math.max(.7,Math.hypot(b[0]-a[0],b[1]-a[1])/380));
   MWALK=true;h.classList.toggle('l',b[0]<a[0]);h.classList.add('walk');h.style.setProperty('--wd',sec+'s');h.style.left=b[0]+'px';h.style.top=(b[1]+8)+'px';
   vp.scrollTo({left:b[0]-vp.clientWidth/2,top:b[1]-vp.clientHeight/2,behavior:'smooth'});
-  setTimeout(()=>{MWALK=false;HN=i;h.classList.remove('walk');showGroup(i)},sec*1000+150);
+  setTimeout(()=>{MWALK=false;HN=i;P._hn=i;save();h.classList.remove('walk');showGroup(i)},sec*1000+150);
 }
 function showGroup(i){
-  const n=MNODES[i],md=getMode(),need=MODENEED[md];
-  const rows=n.g.st.map((s,k)=>{const r=n.lock(n.ci,k),v=st(s[0]),boss=/Boss/.test(s[1]),ml=v<need?`需 ${need} ⭐（目前 ${v}）才能${MODEL[md]}`:'';
-    return `<div class="gprow"><button class="node ${r?'locked':''} ${v?'done':''}" data-gs="${i}:${k}" style="flex:1"><b>${r?'🔒':boss?'👹':'⚔️'} ${s[0]}</b><span>${s[1]}</span><span>${!s[2]?'建造中':r?r:ml?'🔒 '+ml:(v?'⭐'.repeat(v)+'☆'.repeat(5-v):'尚未通關')}</span></button>${v>=ENDLESS_NEED?`<button class="node" data-ge="${i}:${k}" title="無極限挑戰">♾️</button>`:''}</div>`}).join('');
-  $('#gp').innerHTML=`<div class="card"><h2 class="serif" style="margin:0;color:var(--bronze)">${n.g.n}</h2><small>${n.g.sub||''}</small><div style="margin:6px 0">目前模式：<b>${MODEL[md]}</b>（回地圖上方可更換）</div>${rows}<div style="text-align:center;margin-top:8px"><button id="gp-x" class="btn">關閉</button></div></div>`;
+  const n=MNODES[i],labs=MAPN[i][1],ic={easy:'🎯',real:'⚔️',hard:'🔥'};
+  const rows=n.g.st.map((s,k)=>{const r=n.lock(n.ci,k),v=st(s[0]),boss=/Boss/.test(s[1]),ms=(P[s[0]]&&P[s[0]].ms)||{},off=r||!s[2];
+    const info=`<div class="ginfo"><b>${r?'🔒':boss?'👹':'⚔️'} ${labs[k]}</b>　${s[1]}<br><small>${!s[2]?'建造中':r?cm(r):(v?'⭐'.repeat(v)+'☆'.repeat(5-v):'尚未通關')}</small></div>`;
+    const btns=['easy','real','hard'].map(m=>`<button class="mbtn ${m}" data-gm="${i}:${k}:${m}" ${off?'disabled':''}>${ic[m]} ${MODEL[m]}${ms[m]?'<br>⭐'+ms[m]:''}</button>`).join('')+(v>=ENDLESS_NEED&&!off?`<button class="mbtn" data-gm="${i}:${k}:endless" title="無極限挑戰">♾️</button>`:'');
+    return `<div class="gprow gr2">${info}<div class="mbtns">${btns}</div></div>`}).join('');
+  $('#gp').innerHTML=`<div class="card"><h2 class="serif" style="margin:0;color:var(--bronze)">${MAPN[i][0]}</h2><small>${n.g.sub||''}</small><div style="margin:6px 0;font-size:.9rem">三種模式隨時可選：🎯練兵最高 2⭐　⚔️實戰最高 4⭐　🔥修羅最高 5⭐</div>${rows}<div style="text-align:center;margin-top:8px"><button id="gp-x" class="btn">關閉</button></div></div>`;
   $('#gp').classList.remove('hide');
 }
-function openMapStage(i,k,endless){
-  const n=MNODES[i],s=n.g.st[k],r=n.lock(n.ci,k),md=getMode();
-  if(r)return toast('🔒 '+r);
+function openMapStage(i,k,md){
+  const n=MNODES[i],s=n.g.st[k],r=n.lock(n.ci,k),en=md==='endless';
+  if(r)return toast('🔒 '+cm(r));
   if(!s[2])return toast('🔨 這一關還在建造中，敬請期待！');
-  if(!endless&&st(s[0])<MODENEED[md])return toast(`🔒 ${s[0]} 要先拿到 ${MODENEED[md]} ⭐ 才能挑戰${MODEL[md]}`);
+  if(en&&st(s[0])<ENDLESS_NEED)return toast(`🔒 ${SLAB[s[0]]} 要先拿到 ${ENDLESS_NEED} ⭐ 才能挑戰無限題`);
   cur=s[0];$('#gp').classList.add('hide');
-  $('#fr').src=stageURL(s[2],s[0],endless)+(endless?'':'&mode='+md);$('#ov').classList.remove('hide');
+  $('#fr').src=stageURL(s[2],s[0],en)+(en?'':'&mode='+md);(window.BGM&&BGM.stop(),$('#ov').classList.remove('hide'));
 }
 $('#gp').onclick=e=>{
   if(e.target.id==='gp'||e.target.id==='gp-x')return $('#gp').classList.add('hide');
-  const a=e.target.closest('[data-gs]'),b=e.target.closest('[data-ge]');
-  if(a){const [i,k]=a.dataset.gs.split(':');openMapStage(+i,+k,false)}
-  else if(b){const [i,k]=b.dataset.ge.split(':');openMapStage(+i,+k,true)}
+  const pk=e.target.closest('[data-pk]');if(pk&&PK){const f=PK;PK=null;$('#gp').classList.add('hide');return f(+pk.dataset.pk)}
+  const b=e.target.closest('[data-gm]');if(b){const [i,k,m]=b.dataset.gm.split(':');openMapStage(+i,+k,m)}
 };
+/* ===== 🔨 鍛造動畫 ===== */
+function forgeAnim(f){
+  const o=document.createElement('div');o.id='forge';
+  o.innerHTML=`<div class="fg-box"><div class="fg-anvil">🔨</div><div class="fg-spark">✨ ✦ ✨</div><div class="fg-item">${f.icon}</div><div class="fg-name">${f.up?'⚔️ 裝備升級':'⚗️ 鍛造完成'}<br><b>${f.name}</b>（${f.q}）</div></div>`;
+  document.body.appendChild(o);[220,670,1120].forEach(t=>setTimeout(()=>window.BGM&&BGM.clang(),t));
+  o.onclick=()=>o.remove();setTimeout(()=>o.remove(),3400);
+}
+/* ===== 🏆 賽季排行榜與對戰徽章 ===== */
+const BADGES=[['🥉','初戰告捷','贏 1 場',r=>r.wins>=1],['🥈','小有名氣','贏 5 場',r=>r.wins>=5],['🥇','常勝將軍','贏 15 場',r=>r.wins>=15],['👑','對戰王者','贏 30 場',r=>r.wins>=30],['⚔️','身經百戰','出戰 20 場',r=>r.wins+r.losses+r.draws>=20],['🤝','惺惺相惜','打平 1 場',r=>r.draws>=1],['🏅','賽季前三','本月排行前三名',r=>r.top3]];
+async function rankBuild(){
+  const box=$('#rank');if(!box)return;
+  if(!sbReady()){box.innerHTML='<h2 class="serif" style="margin:0">🏆 賽季排行榜</h2><small>對戰功能還沒設定好，請聯絡老師。</small>';return}
+  box.innerHTML='<h2 class="serif" style="margin:0">🏆 賽季排行榜</h2><small>讀取中…</small>';
+  const sid=mySid(),season=seasonId();let rows=null,rec={wins:0,losses:0,draws:0};
+  try{const r1=await sb.from('duel_season').select('*').eq('season',season).order('wins',{ascending:false}).order('losses',{ascending:true}).limit(10);if(!r1.error)rows=r1.data;
+    if(sid){const r2=await sb.from('duel_records').select('*').eq('student_number',sid).maybeSingle();if(r2.data)rec={wins:r2.data.wins||0,losses:r2.data.losses||0,draws:r2.data.draws||0}}}catch(e){}
+  const top3=!!(rows&&sid&&rows.slice(0,3).some(x=>x.student_number===sid&&x.wins>0)),R={...rec,top3},medal=['🥇','🥈','🥉'];
+  const board=rows===null?'<p>排行榜尚未啟用（老師需在 Supabase 執行 season.sql 建立資料表）。</p>':rows.length?`<ol style="padding-left:0;list-style:none">${rows.map((x,i)=>`<li style="margin:4px 0;${x.student_number===sid?'color:var(--bronze);font-weight:700':''}">${medal[i]||(i+1)+'.'} ${x.name||x.student_number}　勝 ${x.wins}／敗 ${x.losses}／平 ${x.draws}</li>`).join('')}</ol>`:'<p>這個月還沒有人對戰，快來搶下第一名！</p>';
+  box.innerHTML=`<h2 class="serif" style="margin:0 0 4px">🏆 ${season} 賽季排行榜</h2><small>每月 1 日重新計算，依勝場排名。</small>${board}<h3 class="serif" style="margin:14px 0 4px">🎖️ 我的對戰徽章</h3>`+(sid?BADGES.map(([ic,n,h,f])=>{const ok=f(R);return `<span style="display:inline-block;margin:3px;padding:4px 10px;border:2px solid ${ok?'var(--bronze)':'var(--line)'};border-radius:10px;opacity:${ok?1:.45}" title="${h}">${ic} ${n}${ok?'':'（'+h+'）'}</span>`}).join(''):'<small>請先在「我的資料」存好學號。</small>');
+}
+
+/* ===== 🛒 商店與🎒背包（道具資料集中在 SHOP，之後補細項只要改這張表） =====
+   cat：分類；battle：對戰中使用的效果；passive：進入對戰時自動裝備；fx：背包使用的效果 */
+const CATL={physical:'物理',magic:'魔法',speed:'速度'};
+const SHOPCAT={heal:'🧪 補血',revive:'🪶 復活',speed:'💨 加速（對戰）',points:'📘 加積分',forge:'🔨 鍛造',body:'🧬 天生體質調整',equip:'💎 裝備數值修正'};
+const SHOP=[
+ {id:'heal_s',cat:'heal',icon:'🧪',name:'小補血瓶',price:30,desc:'對戰中使用：恢復 30% 生命',battle:{heal:.3}},
+ {id:'heal_l',cat:'heal',icon:'⚗️',name:'大補血瓶',price:100,desc:'對戰中使用：恢復 70% 生命',battle:{heal:.7}},
+ {id:'revive',cat:'revive',icon:'🪶',name:'復活羽毛',price:250,desc:'進入對戰時自動帶上（用掉 1 個）：生命歸零時以 30% 生命復活一次',passive:true},
+ {id:'speed_s',cat:'speed',icon:'💨',name:'疾風藥水',price:15,desc:'對戰中使用：本場速度 +30%（每場限用 1 次）',battle:{spd:.3}},
+ {id:'exp_s',cat:'points',icon:'📘',name:'積分卡（小）',price:50,desc:'使用：經驗值 +100',fx:{exp:100}},
+ {id:'exp_l',cat:'points',icon:'📚',name:'積分卡（大）',price:200,desc:'使用：經驗值 +500',fx:{exp:500}},
+ {id:'forge',cat:'forge',icon:'🔨',name:'鍛造石',price:120,desc:'使用：選一件已擁有的裝備，鍛造等級 +1（數值 +10%，最高 +5）',fx:{forge:1}},
+ {id:'body',cat:'body',icon:'🧬',name:'體質調整券',price:1000,desc:'使用：選一項天生體質（HP／ATK／DEF／SPD／MATK／MDEF），數值 +1',fx:{body:1}},
+ {id:'reroll',cat:'equip',icon:'💎',name:'洗鍊石',price:300,desc:'使用：選一件已擁有的裝備，重新洗鍊它的基礎數值（結果隨機）',fx:{reroll:1}}
+];
+const SHOPMAP={};SHOP.forEach(x=>SHOPMAP[x.id]=x);
+const bagN=id=>((P._bag||{})[id])|0;
+function bagAdd(id,n){P._bag=P._bag||{};P._bag[id]=Math.max(0,bagN(id)+n);save()}
+function consumeItem(id){if(bagN(id)<1)return false;bagAdd(id,-1);return true}
+function withRevive(f){if(bagN('revive')>0){bagAdd('revive',-1);f.revive=true}return f}
+function applyAction(att,def,kind,move){
+  if(kind=='item'){const it=SHOPMAP[move];if(!it||!it.battle)return null;
+    if(it.battle.heal){const g=Math.max(0,Math.min(att.hpMax-att.hp,Math.round(att.hpMax*it.battle.heal)));att.hp+=g;return `${att.name} 使用「${it.name}」，恢復了 ${g} 點血！`}
+    if(it.battle.spd){if(att.fast)return null;att.spd=Math.round(att.spd*(1+it.battle.spd));att.fast=true;return `${att.name} 使用「${it.name}」，速度提升 ${Math.round(it.battle.spd*100)}%！`}
+    return null}
+  let line=applyAction0(att,def,kind,move);
+  if(line!==null)[def,att].forEach(f=>{if(f.hp<=0&&f.revive){f.revive=false;f.hp=Math.round(f.hpMax*.3);line+=`<br>🪶 ${f.name} 的復活羽毛發動，以 30% 生命重新站起來！`}});
+  return line}
+function shopBuild(){
+  const g=P._gold||0;
+  $('#shop').innerHTML=`<h2 class="serif" style="margin:0 0 4px">🛒 商店</h2>🪙 金幣 <b>${g}</b>　<small>闖關每拿到 1 顆新星 = 20 金幣</small>`+
+  Object.keys(SHOPCAT).map(c=>`<h3 class="serif" style="margin:14px 0 4px">${SHOPCAT[c]}</h3>`+SHOP.filter(x=>x.cat===c).map(x=>`<div class="fighter" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><div style="flex:1;min-width:180px"><b>${x.icon} ${x.name}</b>　<small>已有 ${bagN(x.id)}</small><br><small>${x.desc}</small></div><button class="btn" data-buy="${x.id}" ${g<x.price?'disabled':''}>🪙 ${x.price} 購買</button></div>`).join('')).join('');
+}
+function bagBuild(){
+  const L=SHOP.filter(x=>bagN(x.id)>0);
+  $('#bag').innerHTML=`<h2 class="serif" style="margin:0 0 4px">🎒 背包</h2>🪙 金幣 <b>${P._gold||0}</b>`+(L.length?L.map(x=>`<div class="fighter" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><div style="flex:1;min-width:180px"><b>${x.icon} ${x.name} ×${bagN(x.id)}</b><br><small>${x.desc}</small></div>${x.fx?`<button class="btn" data-use="${x.id}">使用</button>`:`<small>${x.passive?'對戰時自動帶上':'對戰中選「🎒 道具」使用'}</small>`}</div>`).join(''):'<p>背包是空的，到商店用金幣買些道具吧！</p>');
+}
+$('#shop').onclick=e=>{const b=e.target.closest('[data-buy]');if(!b)return;const x=SHOPMAP[b.dataset.buy];if((P._gold||0)<x.price)return toast('🪙 金幣不夠');
+  P._gold-=x.price;bagAdd(x.id,1);toast(`🛒 買到了 ${x.icon} ${x.name}`);shopBuild()};
+let PK=null;
+function pick(title,opts,cb){PK=cb;$('#gp').innerHTML=`<div class="card"><h2 class="serif" style="margin:0 0 8px;color:var(--bronze)">${title}</h2>${opts.map((o,i)=>`<button class="node" data-pk="${i}" style="display:block;width:100%;margin:6px 0;text-align:left">${o}</button>`).join('')}<div style="text-align:center"><button id="gp-x" class="btn">取消</button></div></div>`;$('#gp').classList.remove('hide')}
+const ownedEq=()=>ITEMS.map((_,i)=>i).filter(i=>qualityOf(i)&&!ITEMS[i].special);
+$('#bag').onclick=e=>{const b=e.target.closest('[data-use]');if(!b)return;const x=SHOPMAP[b.dataset.use];if(bagN(x.id)<1)return;
+  if(x.fx.exp){bagAdd(x.id,-1);P._exp=(P._exp||0)+x.fx.exp;save();toast(`📘 經驗值 +${x.fx.exp}`);renderHero();return bagBuild()}
+  if(x.fx.body){if(!P._hero)return toast('請先建立角色');const ks=['HP','ATK','DEF','SPD','MATK','MDEF'];
+    return pick('🧬 要調整哪一項天生體質？',ks.map(k=>`${k}　目前 ${P._hero.stats[k]} → ${P._hero.stats[k]+1}`),i=>{if(!consumeItem(x.id))return;P._hero.stats[ks[i]]+=1;save();toast(`🧬 ${ks[i]} +1`);render()})}
+  const eq=ownedEq();if(!eq.length)return toast('你還沒有裝備，先去闖關合成裝備吧！');
+  if(x.fx.forge)return pick('🔨 要鍛造哪一件裝備？',eq.map(i=>`${ITEMS[i].icon} ${ITEMS[i].name}（${QLABEL[qualityOf(i)]}）　鍛造 +${(P._forge||{})[i]||0}${((P._forge||{})[i]||0)>=5?'（已滿）':''}`),k=>{const i=eq[k];P._forge=P._forge||{};
+    if((P._forge[i]||0)>=5)return toast('這件裝備已經鍛造到最高等級了');if(!consumeItem(x.id))return;P._forge[i]=(P._forge[i]||0)+1;save();
+    forgeAnim({icon:ITEMS[i].icon,name:`${ITEMS[i].name} +${P._forge[i]}`,q:QLABEL[qualityOf(i)],up:true});render()});
+  if(x.fx.reroll)return pick('💎 要洗鍊哪一件裝備？（結果隨機）',eq.map(i=>`${ITEMS[i].icon} ${ITEMS[i].name}（${QLABEL[qualityOf(i)]}）`),k=>{const i=eq[k];if(!consumeItem(x.id))return;
+    delete P._eq[i];ensureRoll(i);const es=effStats(i);toast(`💎 ${ITEMS[i].name} 洗鍊完成：`+Object.entries(es).map(([a,v])=>a+' '+v).join('、'));render()})};
+/* ===== 🔮 招式研發：抽到後與「同類型」現有招式交換 ===== */
+function skillText(x){return `<b>${x.name}</b>・${x.rarity}　威力 ×${x.multiplier}${x.selfSpeedPenalty?`　自身速度 −${x.selfSpeedPenalty}`:''}${x.targetSpeedPenalty?`　對方速度 −${x.targetSpeedPenalty}`:''}`}
+function offerSkill(sk){
+  const h=P._hero,cur=(h.skills||[]).find(x=>x.category===sk.category),box=$('#gp');
+  const done=(swap)=>{if(swap){h.skills=(h.skills||[]).filter(x=>x.category!==sk.category).concat(sk);toast(`🔮 已換上「${sk.name}」`)}else toast('🔮 保留原本的招式');P._pendSkill=null;save();box.classList.add('hide');render()};
+  if(!cur)return done(true);
+  box.innerHTML=`<div class="card"><h2 class="serif" style="margin:0 0 6px;color:var(--bronze)">🔮 研發出新的${CATL[sk.category]}招式！</h2><small>${CATL[sk.category]}招式只能和${CATL[sk.category]}招式交換。</small>
+  <div class="fighter" style="margin:8px 0"><b>目前：</b>${skillText(cur)}</div><div class="fighter" style="margin:8px 0"><b>新的：</b>${skillText(sk)}</div>
+  <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap"><button class="btn" id="sk-swap">換上新招式</button><button class="btn" id="sk-keep">保留現在的</button></div></div>`;
+  box.classList.remove('hide');$('#sk-swap').onclick=()=>done(true);$('#sk-keep').onclick=()=>done(false);
+}
 /* ===== 🎲 第一次登入：建立角色（依 math_hero_engine） ===== */
 function maybeCreate(){if(P._hero)return;const box=$('#create');box.classList.remove('hide');
   box.innerHTML=`<div class="card"><h2 class="serif" style="margin:0;color:var(--bronze)">🧙 建立你的勇者</h2>
@@ -1212,6 +1338,8 @@ function maybeCreate(){if(P._hero)return;const box=$('#create');box.classList.re
     <div class="stat-grid">${['HP','ATK','DEF','SPD','MATK','MDEF'].map(k=>`<div class="sbox"><b>${h.stats[k]}</b><span>${k}</span></div>`).join('')}</div>
     <button id="cr-ok">⚔️ 出發冒險！</button></div>`;
     $('#cr-ok').onclick=()=>{box.classList.add('hide');box.innerHTML='';render()}}catch(err){$('#cr-msg').textContent=err.message}}}
+(()=>{const mb=$('#mutebtn'),mu=()=>{try{return localStorage.getItem('ms-mute')==='1'}catch(e){return false}};mb.textContent=mu()?'🔇':'🔊';
+  mb.onclick=()=>{try{localStorage.setItem('ms-mute',mu()?'0':'1')}catch(e){}mb.textContent=mu()?'🔇':'🔊'}})();
 load();fillWho();show('home');startPendingListen();maybeCreate();
 </script>
 </body>

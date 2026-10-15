@@ -3,9 +3,11 @@
    所有關卡 HTML 都會載入這一支（放在同一個資料夾即可）。
 
    【星等規則】（想調整數字，改下面 CFG 就好）
-   練兵模式：照原本規則，最多 3 星
-   實戰模式：需先有 3 星；正確率 ≥ 80% → 4 星
-   修羅模式：需先有 4 星；正確率 100%   → 5 星
+   三種模式可同時選擇（不需解鎖）：
+   練兵模式：最多 2 星
+   實戰模式：正確率 ≥ 60% → 3 星、≥ 80% → 4 星
+   修羅模式：正確率 100%   → 5 星
+   連續 2 次沒過關，結算畫面會給練習建議
    無極限挑戰：該關有 3 星就解鎖；題目無限，時間從實戰速度慢慢縮到修羅速度
 
    【網址參數】由 world-map.html 開關卡時帶入
@@ -15,9 +17,13 @@
    ===================================================================== */
 (function () {
   'use strict';
+  (function(){ var sc = document.createElement('script'); sc.src = 'bgm.js'; sc.onload = function(){ if (window.BGM) BGM.play('battle'); }; document.head.appendChild(sc); })();
   var CFG = {
-    REAL_NEED: 3,      // 解鎖實戰所需星數
-    HARD_NEED: 4,      // 解鎖修羅所需星數
+    REAL_NEED: 0,      // 三種模式皆可直接挑戰
+    HARD_NEED: 0,
+    EASY_MAX: 2,       // 練兵最高星數
+    REAL_MID: 0.6,     // 實戰 3 星所需正確率
+    REAL_MIDSTAR: 3,
     ENDLESS_NEED: 3,   // 解鎖無極限所需星數
     REAL_PASS: 0.8,    // 實戰達標正確率
     HARD_PASS: 1,      // 修羅達標正確率
@@ -46,8 +52,8 @@
     return '';
   }
   var RULE = {
-    easy: '🎯 依錯題數拿 1～3 ⭐',
-    real: '🎯 正確率 ' + Math.round(CFG.REAL_PASS * 100) + '% 以上 → ' + CFG.REAL_STAR + ' ⭐',
+    easy: '🎯 依錯題數拿 1～2 ⭐（最高 2 ⭐）',
+    real: '🎯 正確率 ' + Math.round(CFG.REAL_MID * 100) + '% → 3 ⭐、' + Math.round(CFG.REAL_PASS * 100) + '% 以上 → ' + CFG.REAL_STAR + ' ⭐',
     hard: '🎯 正確率 ' + Math.round(CFG.HARD_PASS * 100) + '%（全對）→ ' + CFG.HARD_STAR + ' ⭐'
   };
   // 第 n 題的作答秒數：從實戰時間慢慢縮到修羅時間，之後維持修羅時間
@@ -125,7 +131,7 @@
       return;
     }
     panel.innerHTML = '<b>本關目前 ' + starStr(S.stars) + '</b><br>' +
-      '練兵拿到 3 ⭐ → 解鎖實戰與無極限挑戰；實戰拿到 4 ⭐ → 解鎖修羅。';
+      '三種模式可自由挑戰：練兵最高 2 ⭐、實戰最高 4 ⭐、修羅最高 5 ⭐，星數取各模式最高；拿到 3 ⭐ 就解鎖無極限挑戰。';
     if (!box) return;
     Array.prototype.forEach.call(box.querySelectorAll('.mode'), function (b) {
       var m = b.dataset.m, r = lockMsg(m);
@@ -138,6 +144,15 @@
     });
   }
 
+  // 連續失敗 2 次 → 練習建議（過關即歸零）
+  function pityLine(o, ok) {
+    try {
+      var k = 'ms-pity-' + o.sid, c = ok ? 0 : (+localStorage.getItem(k) || 0) + 1;
+      localStorage.setItem(k, c);
+      if (c >= 2) return '<br>💡 這一關已經連續 ' + c + ' 次沒過囉！練習建議：<br>① 回到關卡開頭，先看「課前複習」的觀念與影片<br>② 改用 🎯 練兵模式（不計時）慢慢練<br>③ 回地圖首頁的「錯題練習」，看看哪種題型最容易錯';
+    } catch (e) {}
+    return '';
+  }
   // 速度評價：平均每題秒數 vs 該模式時限；並記錄個人最快平均
   function speedLine(o, ok) {
     if (!S.t0 || !o.total) return '';
@@ -219,7 +234,7 @@
     // finish() 最後呼叫：依模式結算星數、畫結算畫面、通知地圖
     result: function (o) {
       if (o.rescue) return;
-      tone(o.fail ? SFX.lose : SFX.win);
+      tone(o.fail ? SFX.lose : SFX.win); if (window.BGM) BGM.stop();
       var $t = $('#e-title'), $s = $('#e-stars'), $i = $('#e-info');
 
       /* ---- 無極限 ---- */
@@ -239,13 +254,12 @@
 
       /* ---- 練兵 ---- */
       if (o.mode === 'easy') {
-        var prev = S.stars;
-        if (!o.fail) $s.textContent = starStr(o.stars);
-        S.stars = Math.max(S.stars, o.stars);
-        var add = '<br>📊 本關目前最高：' + starStr(S.stars);
-        if (prev < CFG.REAL_NEED && S.stars >= CFG.REAL_NEED) add += '<br>🔓 實戰模式與無極限挑戰解鎖！';
-        $i.innerHTML += add + speedLine(o, !o.fail);
-        if (o.emb) post({ type: 'stage-result', id: o.sid, stars: o.stars, fail: o.fail, score: o.score, right: o.right, total: o.total, mode: 'easy' });
+        var es = Math.min(CFG.EASY_MAX, o.stars);
+        if (!o.fail) $s.textContent = starStr(es);
+        S.stars = Math.max(S.stars, es);
+        var add = '<br>📊 本關目前最高：' + starStr(S.stars) + '（練兵最高 2 ⭐，想拿更多請挑戰實戰與修羅）';
+        $i.innerHTML += add + speedLine(o, !o.fail) + pityLine(o, !o.fail);
+        if (o.emb) post({ type: 'stage-result', id: o.sid, stars: es, fail: o.fail, score: o.score, right: o.right, total: o.total, mode: 'easy' });
         refresh();
         return;
       }
@@ -254,17 +268,17 @@
       var real = o.mode === 'real';
       var need = real ? CFG.REAL_PASS : CFG.HARD_PASS, prize = real ? CFG.REAL_STAR : CFG.HARD_STAR;
       var acc = o.total ? o.right / o.total : 0, pct = Math.round(acc * 100);
-      var pass = !o.fail && acc + 1e-9 >= need, gain = pass ? prize : 0, prev2 = S.stars;
+      var gain = 0;
+      if (!o.fail) { if (real) gain = acc + 1e-9 >= CFG.REAL_PASS ? CFG.REAL_STAR : (acc + 1e-9 >= CFG.REAL_MID ? CFG.REAL_MIDSTAR : 0); else if (acc + 1e-9 >= need) gain = prize; }
+      var pass = gain > 0, prev2 = S.stars;
       if (pass) S.stars = Math.max(S.stars, gain);
       var orig = $t.textContent;
       if (!pass) { if (!o.fail) $t.textContent = '差一點就達標了！'; }
       else if (/凱旋！$/.test(orig)) $t.textContent = (real ? '將軍' : '兵仙') + '　凱旋！';   // Boss 關保留原本標題
       $s.textContent = o.fail ? '💔' : starStr(pass ? gain : S.stars);
-      var add2 = '<br>🎯 正確率 ' + pct + '%（目標 ' + Math.round(need * 100) + '%）　' + (pass ? '✅ 達標！' : '❌ 未達標，星數不變');
-      if (pass && gain > prev2) add2 += '<br>⭐ 這一關升到 ' + gain + ' 星！' + (real ? '🔓 修羅模式解鎖！' : '');
-      if(!real){try{var pk='ms-pity-'+o.sid,pc=pass?0:(+localStorage.getItem(pk)||0)+1;localStorage.setItem(pk,pc);
-        if(pc>=3)add2+='<br>🛡️ 已連續挑戰修羅 '+pc+' 次沒過，先回練兵模式看教學、複習觀念，再回來挑戰會更有把握！';}catch(e){}}
-      $i.innerHTML += add2 + speedLine(o, pass);
+      var add2 = '<br>🎯 正確率 ' + pct + '%（' + (real ? '3 ⭐ 需 60%、4 ⭐ 需 80%' : '5 ⭐ 需全對') + '）　' + (pass ? '✅ 拿到 ' + gain + ' ⭐' : '❌ 未達標，星數不變');
+      if (pass && gain > prev2) add2 += '<br>⭐ 這一關升到 ' + gain + ' 星！';
+      $i.innerHTML += add2 + speedLine(o, pass) + pityLine(o, pass);
       if (o.emb) post({ type: 'stage-result', id: o.sid, stars: gain, fail: !pass, score: o.score, right: o.right, total: o.total, mode: o.mode });
       refresh();
     }
