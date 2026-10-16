@@ -101,6 +101,7 @@ small{opacity:.75;}
 
 </main>
 <script src="lessons.js"></script>
+<script src="game-config.js"></script>
 <script src="mode-system.js"></script>
 <script>
 const VARS = ['x','y','a','b','m','k','n','c'];
@@ -752,7 +753,7 @@ function answer(i, btn){
 function miss(btn){
   if(lock) return;
   lock=true; clearInterval(tm);
-  hearts--; combo=0; wrongs.push(q); log(false,q.qtype); drawHearts(); drawCombo();
+  hearts=Math.max(0,hearts-((typeof mode!=='undefined'&&mode==='hard'&&window.MS&&!MS.active())?MS.stage('hardHeartLoss',2):MS.stage('normalHeartLoss',1))); combo=0; wrongs.push(q); log(false,q.qtype); drawHearts(); drawCombo();
   document.querySelectorAll('#opts .opt').forEach((b,bi)=>{ b.disabled=true; if(bi===q.correctIndex) b.classList.add('ok'); });
   $('#say').classList.remove('hide');
   say(`<b>${btn?'💥 再想想～':'⏰ 時間到！'}</b><br>🧙 解析：${q.explain}<br><button class="btn" id="nx" style="margin-top:8px">${hearts<=0?'查看戰報':'下一題'}</button>`,'lose');

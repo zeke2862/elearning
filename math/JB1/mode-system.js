@@ -18,21 +18,16 @@
 (function () {
   'use strict';
   (function(){ var sc = document.createElement('script'); sc.src = 'bgm.js'; sc.onload = function(){ if (window.BGM) BGM.play('battle'); }; document.head.appendChild(sc); })();
-  var CFG = {
-    REAL_NEED: 0,      // 三種模式皆可直接挑戰
-    HARD_NEED: 0,
-    EASY_MAX: 2,       // 練兵最高星數
-    REAL_MID: 0.6,     // 實戰 3 星所需正確率
-    REAL_MIDSTAR: 3,
-    ENDLESS_NEED: 3,   // 解鎖無極限所需星數
-    REAL_PASS: 0.8,    // 實戰達標正確率
-    HARD_PASS: 1,      // 修羅達標正確率
-    REAL_STAR: 4,
-    HARD_STAR: 5,
-    MAXSTAR: 5,
-    RAMP: 30,          // 無極限：作答到第幾題時，時間縮到修羅速度
-    SWITCH: 15         // 無極限：第幾題之後，改用修羅難度出題
+  var GC = window.GAME_CONFIG || {}, GS = GC.stars || {}, GT = GC.stage || {};   // 所有數值來自 game-config.js
+  var CFG = { REAL_NEED: 0, HARD_NEED: 0, ENDLESS_NEED: GS.endlessNeed || 3, MAXSTAR: GS.maxStar || 5, RAMP: GT.endlessRamp || 30, SWITCH: GT.endlessSwitch || 15 };
+  var TIERS = {
+    easy: GS.easy || [{ acc: 0.6, stars: 1 }, { acc: 1, stars: 2 }],
+    real: GS.real || [{ acc: 0.6, stars: 3 }, { acc: 0.9, stars: 4 }],
+    hard: GS.hard || [{ acc: 0.6, stars: 3 }, { acc: 0.8, stars: 4 }, { acc: 1, stars: 5 }]
   };
+  function starsFor(mode, acc) { var g = 0; (TIERS[mode] || []).forEach(function (t) { if (acc + 1e-9 >= t.acc && t.stars > g) g = t.stars; }); return g; }
+  function maxStarOf(mode) { var g = 0; (TIERS[mode] || []).forEach(function (t) { if (t.stars > g) g = t.stars; }); return g; }
+  function ruleText(mode) { return '🎯 正確率 ' + (TIERS[mode] || []).map(function (t) { return Math.round(t.acc * 100) + '% → ' + t.stars + ' ⭐'; }).join('、'); }
 
   var qp = new URLSearchParams(location.search);
   var clamp = function (v, a, b) { return Math.max(a, Math.min(b, v)); };
@@ -51,11 +46,7 @@
     if (m === 'hard' && S.stars < CFG.HARD_NEED) return '需先在實戰模式拿到 ' + CFG.HARD_NEED + ' ⭐（目前 ' + S.stars + ' ⭐）';
     return '';
   }
-  var RULE = {
-    easy: '🎯 依錯題數拿 1～2 ⭐（最高 2 ⭐）',
-    real: '🎯 正確率 ' + Math.round(CFG.REAL_MID * 100) + '% → 3 ⭐、' + Math.round(CFG.REAL_PASS * 100) + '% 以上 → ' + CFG.REAL_STAR + ' ⭐',
-    hard: '🎯 正確率 ' + Math.round(CFG.HARD_PASS * 100) + '%（全對）→ ' + CFG.HARD_STAR + ' ⭐'
-  };
+  var RULE = { easy: ruleText('easy'), real: ruleText('real'), hard: ruleText('hard') };
   // 第 n 題的作答秒數：從實戰時間慢慢縮到修羅時間，之後維持修羅時間
   function timeFor(n, tr, th) {
     var k = Math.min(1, (n - 1) / (CFG.RAMP - 1));
@@ -131,7 +122,8 @@
       return;
     }
     panel.innerHTML = '<b>本關目前 ' + starStr(S.stars) + '</b><br>' +
-      '三種模式可自由挑戰：練兵最高 2 ⭐、實戰最高 4 ⭐、修羅最高 5 ⭐，星數取各模式最高；拿到 3 ⭐ 就解鎖無極限挑戰。';
+      '三種模式可自由挑戰：練兵最高 ' + maxStarOf('easy') + ' ⭐、實戰最高 ' + maxStarOf('real') + ' ⭐、修羅最高 ' + maxStarOf('hard') + ' ⭐，星數取各模式最高；拿到 ' + CFG.ENDLESS_NEED + ' ⭐ 就解鎖無極限挑戰。';
+    if (S.pre) { panel.innerHTML += '<br>🎮 已選擇：<b>' + ({ easy: '🎯 練兵', real: '⚔️ 實戰', hard: '🔥 修羅' })[S.pre] + ' 模式</b>　' + RULE[S.pre] + '<br><small>想換模式，請回地圖重新選擇</small>'; return; }
     if (!box) return;
     Array.prototype.forEach.call(box.querySelectorAll('.mode'), function (b) {
       var m = b.dataset.m, r = lockMsg(m);
@@ -162,7 +154,7 @@
     window.addEventListener('message', function (e) {
       var d = e.data || {};
       if (d.type !== 'item-ok' || d.id !== 'revive_m') return;
-      rvUsed = true; rvLeft--; hearts = 3; if (typeof drawHearts === 'function') drawHearts();
+      rvUsed = true; rvLeft--; hearts = GT.reviveHearts || 3; if (typeof drawHearts === 'function') drawHearts();
       var nx = document.getElementById('nx'), b = document.getElementById('rvbtn');
       if (nx) nx.textContent = '下一題 ▶'; if (b) b.remove();
     });
@@ -172,7 +164,7 @@
     try {
       var k = 'ms-pity-' + o.sid, c = ok ? 0 : (+localStorage.getItem(k) || 0) + 1;
       localStorage.setItem(k, c);
-      if (c >= 2) return '<br>💡 這一關已經連續 ' + c + ' 次沒過囉！練習建議：<br>① 回到關卡開頭，先看「課前複習」的觀念與影片<br>② 改用 🎯 練兵模式（不計時）慢慢練<br>③ 回地圖首頁的「錯題練習」，看看哪種題型最容易錯';
+      if (c >= (GT.pityFails || 2)) return '<br>💡 這一關已經連續 ' + c + ' 次沒過囉！練習建議：<br>① 回到關卡開頭，先看「課前複習」的觀念與影片<br>② 改用 🎯 練兵模式（不計時）慢慢練<br>③ 回地圖首頁的「錯題練習」，看看哪種題型最容易錯';
     } catch (e) {}
     return '';
   }
@@ -190,11 +182,15 @@
   }
   var MS = {
     cfg: CFG,
+    stage: function (k, d) { return GT[k] != null ? GT[k] : d; },
     // 每個關卡主程式最後呼叫一次：MS.init(MODES, SID)
     init: function (M, sid) {
       S.M = M || null;
       S.sid = sid || '';
-      if (M && M.real && M.hard) S.orig = { real: M.real.t, hard: M.hard.t };
+      if (M && M.real && M.hard) {
+        M.real.t = Math.round(M.real.t * (GT.timeScaleReal || 1) * 10) / 10; M.hard.t = Math.round(M.hard.t * (GT.timeScaleHard || 1) * 10) / 10;
+        S.orig = { real: M.real.t, hard: M.hard.t };
+      }
       injectStyle();
       var anchor = $('#modes');
       if (anchor) {
@@ -225,7 +221,7 @@
       }
       setupRevive();
       var pm = qp.get('mode');
-      if (pm && !S.flag && !lockMsg(pm)) { var pb = $('#modes .mode[data-m="' + pm + '"]'); if (pb) pb.click(); }
+      if (pm && !S.flag && !lockMsg(pm)) { var pb = $('#modes .mode[data-m="' + pm + '"]'); if (pb) { pb.click(); S.pre = pm; var bx = $('#modes'); if (bx) bx.style.display = 'none'; } }
       refresh();
     },
     // start() 裡呼叫：回傳 true 代表這一局是無極限（題目改成一題一題現場出）
@@ -278,10 +274,10 @@
 
       /* ---- 練兵 ---- */
       if (o.mode === 'easy') {
-        var es = Math.min(CFG.EASY_MAX, o.stars);
+        var accE = o.total ? o.right / o.total : 0, es = o.fail ? 0 : starsFor('easy', accE);
         if (!o.fail) $s.textContent = starStr(es);
         S.stars = Math.max(S.stars, es);
-        var add = '<br>📊 本關目前最高：' + starStr(S.stars) + '（練兵最高 2 ⭐，想拿更多請挑戰實戰與修羅）';
+        var add = '<br>🎯 正確率 ' + Math.round(accE * 100) + '%（' + ruleText('easy').replace('🎯 正確率 ', '') + '）<br>📊 本關目前最高：' + starStr(S.stars) + '（練兵最高 ' + maxStarOf('easy') + ' ⭐，想拿更多請挑戰實戰與修羅）';
         $i.innerHTML += add + speedLine(o, !o.fail) + pityLine(o, !o.fail);
         if (o.emb) post({ type: 'stage-result', id: o.sid, stars: es, fail: o.fail, score: o.score, right: o.right, total: o.total, mode: 'easy' });
         refresh();
@@ -290,17 +286,15 @@
 
       /* ---- 實戰 / 修羅 ---- */
       var real = o.mode === 'real';
-      var need = real ? CFG.REAL_PASS : CFG.HARD_PASS, prize = real ? CFG.REAL_STAR : CFG.HARD_STAR;
       var acc = o.total ? o.right / o.total : 0, pct = Math.round(acc * 100);
-      var gain = 0;
-      if (!o.fail) { if (real) gain = acc + 1e-9 >= CFG.REAL_PASS ? CFG.REAL_STAR : (acc + 1e-9 >= CFG.REAL_MID ? CFG.REAL_MIDSTAR : 0); else if (acc + 1e-9 >= need) gain = prize; }
+      var gain = o.fail ? 0 : starsFor(o.mode, acc);
       var pass = gain > 0, prev2 = S.stars;
       if (pass) S.stars = Math.max(S.stars, gain);
       var orig = $t.textContent;
       if (!pass) { if (!o.fail) $t.textContent = '差一點就達標了！'; }
       else if (/凱旋！$/.test(orig)) $t.textContent = (real ? '將軍' : '兵仙') + '　凱旋！';   // Boss 關保留原本標題
       $s.textContent = o.fail ? '💔' : starStr(pass ? gain : S.stars);
-      var add2 = '<br>🎯 正確率 ' + pct + '%（' + (real ? '3 ⭐ 需 60%、4 ⭐ 需 80%' : '5 ⭐ 需全對') + '）　' + (pass ? '✅ 拿到 ' + gain + ' ⭐' : '❌ 未達標，星數不變');
+      var add2 = '<br>🎯 正確率 ' + pct + '%（' + ruleText(o.mode).replace('🎯 正確率 ', '') + '）　' + (pass ? '✅ 拿到 ' + gain + ' ⭐' : '❌ 未達標，星數不變');
       if (pass && gain > prev2) add2 += '<br>⭐ 這一關升到 ' + gain + ' 星！';
       $i.innerHTML += add2 + speedLine(o, pass) + pityLine(o, pass);
       if (o.emb) post({ type: 'stage-result', id: o.sid, stars: gain, fail: !pass, score: o.score, right: o.right, total: o.total, mode: o.mode });

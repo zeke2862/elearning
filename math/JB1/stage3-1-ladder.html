@@ -119,6 +119,7 @@ button:focus-visible{outline:3px solid var(--bronze);outline-offset:2px}
 
 </main>
 <script src="lessons.js"></script>
+<script src="game-config.js"></script>
 <script src="mode-system.js"></script>
 <script>
 const $=s=>document.querySelector(s);
@@ -195,7 +196,7 @@ function buildPanel(){
     wrong++;combo=0;drawCombo();
     if(wrong>=3){
       if(!q._failed){
-        q._failed=true;hearts--;wrongs.push(q);log(false);drawHearts();
+        q._failed=true;hearts=Math.max(0,hearts-((typeof mode!=='undefined'&&mode==='hard'&&window.MS&&!MS.active())?MS.stage('hardHeartLoss',2):MS.stage('normalHeartLoss',1)));wrongs.push(q);log(false);drawHearts();
         $('#say').classList.remove('hide');
         say(`💥 已經連續答錯 3 次，扣了 1 顆心！別灰心，你可以繼續在下面慢慢拆解，拆對後就會自動前進下一波。<br><button class="btn ghost" id="skipnext" style="margin-top:8px">${hearts<=0?'查看戰報':'先跳到下一波'}</button>`,'lose');
         $('#skipnext').onclick=()=>{lock=true;clearInterval(tm);next()};
@@ -275,7 +276,7 @@ function startTimer(){
       clearInterval(tm);
       if(q.kind=='squad'){
         if(!q._failed){
-          q._failed=true;hearts--;wrongs.push(q);log(false);drawHearts();
+          q._failed=true;hearts=Math.max(0,hearts-((typeof mode!=='undefined'&&mode==='hard'&&window.MS&&!MS.active())?MS.stage('hardHeartLoss',2):MS.stage('normalHeartLoss',1)));wrongs.push(q);log(false);drawHearts();
           $('#say').classList.remove('hide');
           say(`⏰ 時間到，扣了 1 顆心！不過沒關係，你可以放慢腳步繼續完成短除法，拆對後就會自動前進下一波。<br><button class="btn ghost" id="skipnext" style="margin-top:8px">${hearts<=0?'查看戰報':'先跳到下一波'}</button>`,'lose');
           $('#skipnext').onclick=()=>{lock=true;next()};
@@ -303,7 +304,7 @@ function answer(v,btn){
 function miss(btn){
   if(lock)return;
   lock=true;clearInterval(tm);
-  hearts--;combo=0;wrongs.push(q);log(false);drawHearts();drawCombo();
+  hearts=Math.max(0,hearts-((typeof mode!=='undefined'&&mode==='hard'&&window.MS&&!MS.active())?MS.stage('hardHeartLoss',2):MS.stage('normalHeartLoss',1)));combo=0;wrongs.push(q);log(false);drawHearts();drawCombo();
   document.querySelectorAll('.opt').forEach(b=>{if(b.dataset.v===String(q.ans))b.classList.add('ok')});
   $('#say').classList.remove('hide');
   say(`<b>${btn?'❌ 城牆受損！':'⏰ 時間到，敵軍撞上城牆！'}</b><br>🧙 軍師說：正確答案是 <b>${q.ansText!==undefined?q.ansText:q.ans}</b>。${q.explain}<br><button class="btn" id="nx" style="margin-top:8px">${hearts<=0?'查看戰報':'下一波'}</button>`,'lose');

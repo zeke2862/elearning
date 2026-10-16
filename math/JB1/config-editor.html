@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>🛠️ 數值修改器</title>
+<style>
+:root{--ink:#161a2e;--ink2:#20264a;--line:#3a4270;--bronze:#d2a24c;--jade:#43a58f;--red:#d24a33;--txt:#e9e4d4}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ink);color:var(--txt);font-family:"Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif;line-height:1.6}
+header{position:sticky;top:0;z-index:5;background:#10132a;border-bottom:2px solid var(--bronze);padding:10px 14px}
+h1{margin:0 0 6px;font-size:1.25rem;color:var(--bronze)}
+.bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+button{background:var(--ink2);color:var(--txt);border:2px solid var(--bronze);border-radius:10px;padding:7px 12px;font:inherit;cursor:pointer}
+button:hover{background:#2c3566}button.go{background:var(--bronze);color:#2a1d05;font-weight:700}
+input[type=search]{flex:1;min-width:160px;background:var(--ink);color:var(--txt);border:2px solid var(--line);border-radius:8px;padding:7px 10px;font:inherit}
+main{max-width:1100px;margin:0 auto;padding:12px}
+.note{background:#20264a;border:1px dashed var(--line);border-radius:10px;padding:10px 12px;margin:10px 0;font-size:.92rem}
+details{background:#1a1f3d;border:2px solid var(--line);border-radius:12px;margin:12px 0;padding:6px 12px}
+summary{cursor:pointer;font-weight:700;font-size:1.08rem;color:var(--bronze);padding:6px 0}
+fieldset{border:1px solid var(--line);border-radius:10px;margin:10px 0;padding:6px 12px}
+legend{color:var(--jade);font-weight:700;padding:0 6px}
+.row{display:flex;align-items:center;gap:8px;margin:5px 0;flex-wrap:wrap}
+.row>span.lb{flex:1;min-width:230px}
+input[type=number],input[type=text]{background:var(--ink);color:var(--txt);border:2px solid var(--line);border-radius:8px;padding:5px 8px;font:inherit;width:110px}
+input[type=text]{width:100%}
+input.changed{border-color:var(--bronze);background:#2a2412}
+.tbl{overflow-x:auto}table{border-collapse:collapse;min-width:100%}
+th,td{border:1px solid var(--line);padding:4px 6px;vertical-align:top;font-size:.9rem}th{background:#20264a;color:var(--bronze);white-space:nowrap}
+td input[type=text]{min-width:130px}td input[type=number]{width:90px}
+.arr{display:flex;gap:6px;flex-wrap:wrap}
+.msg{margin-left:8px;color:var(--jade)}
+.hide{display:none!important}
+small{opacity:.75}
+</style>
+</head>
+<body>
+<header>
+  <h1>🛠️ 數值修改器</h1>
+  <div class="bar">
+    <input type="search" id="q" placeholder="🔍 搜尋設定項目（例如：寶箱、價格、星）">
+    <button id="b-save" class="go">💾 儲存到本機（測試用）</button>
+    <button id="b-down">⬇️ 下載 game-config.js</button>
+    <button id="b-up">📂 匯入設定檔</button>
+    <button id="b-reset">♻️ 清除本機測試設定</button>
+    <input type="file" id="file" accept=".js,.json,.txt" class="hide">
+    <span class="msg" id="msg"></span>
+  </div>
+</header>
+<main>
+  <div class="note">
+    <b>怎麼用？</b><br>
+    ① 在下面修改數值（改過的欄位會變黃色）。<br>
+    ② 想先自己試玩：按「💾 儲存到本機」，再開遊戲（只有這台電腦的這個瀏覽器會生效，不會影響學生）。<br>
+    ③ 確定要讓全校生效：按「⬇️ 下載 game-config.js」，把下載的檔案<b>覆蓋</b>到遊戲資料夾（跟 world-map.html 同一層）的舊檔，學生重新整理頁面就會套用。<br>
+    ④ 想回到上線的設定：按「♻️ 清除本機測試設定」。<br>
+    <small>提醒：每一關各自的題目數字範圍、題數、作答秒數等，還寫在各關卡檔裡，這裡暫時沒有；這裡可以用「倍率」調整實戰與修羅的作答時間。</small>
+    <div id="state"></div>
+  </div>
+  <div id="root"></div>
+</main>
+<script src="game-config.js"></script>
+<script>
+const LABELS=window.GAME_CONFIG_LABELS||{};
+let cfg=JSON.parse(JSON.stringify(window.GAME_CONFIG)),orig=JSON.parse(JSON.stringify(window.GAME_CONFIG_DEFAULT));
+const $=s=>document.querySelector(s);
+const norm=p=>p.replace(/\[\d+\]/g,'[]');
+const lab=p=>LABELS[norm(p)]||p.split('.').pop().replace(/\[\d+\]/g,'');
+const isNum=v=>typeof v==='number';
+function getAt(o,path){return path.reduce((a,k)=>a==null?a:a[k],o)}
+function setAt(o,path,v){let a=o;for(let i=0;i<path.length-1;i++){if(a[path[i]]==null||typeof a[path[i]]!=='object')a[path[i]]={};a=a[path[i]]}
+  if(v===undefined)delete a[path[path.length-1]];else a[path[path.length-1]]=v}
+function input(path,val,numeric){
+  const el=document.createElement('input');el.type=numeric?'number':'text';if(numeric)el.step='any';
+  el.value=val==null?'':val;
+  const o=getAt(orig,path);
+  const mark=()=>{el.classList.toggle('changed',String(o??'')!==el.value)};mark();
+  el.onchange=()=>{const v=el.value;
+    if(v==='')setAt(cfg,path,undefined);
+    else if(numeric){const n=Number(v);if(isNaN(n)){el.value=val;return}setAt(cfg,path,n)}
+    else setAt(cfg,path,v);
+    mark()};
+  return el}
+function flatKeys(row,pre,out){for(const k in row){const v=row[k];if(v&&typeof v==='object'&&!Array.isArray(v))flatKeys(v,pre+k+'.',out);else if(!out.includes(pre+k))out.push(pre+k)}return out}
+function build(val,path,parent,title){
+  const ps=path.map(x=>typeof x==='number'?`[${x}]`:x);
+  const ppath=ps.join('.').replace(/\.\[/g,'[');
+  if(Array.isArray(val)){
+    if(val.every(x=>typeof x!=='object')){
+      const row=document.createElement('div');row.className='row';row.dataset.l=lab(ppath);
+      row.innerHTML=`<span class="lb">${lab(ppath)}</span>`;const a=document.createElement('div');a.className='arr';
+      val.forEach((v,i)=>a.appendChild(input([...path,i],v,isNum(v))));row.appendChild(a);parent.appendChild(row);return}
+    const fs=document.createElement('fieldset');fs.dataset.l=lab(ppath);fs.innerHTML=`<legend>${lab(ppath)}</legend>`;
+    const cols=[];val.forEach(r=>flatKeys(r,'',cols));
+    const numCol={};val.forEach(r=>cols.forEach(c=>{const v=getAt(r,c.split('.'));if(isNum(v))numCol[c]=true}));
+    const wrap=document.createElement('div');wrap.className='tbl';
+    const t=document.createElement('table');
+    t.innerHTML='<thead><tr>'+cols.map(c=>`<th>${LABELS[norm(ppath)+'[].'+c]||c}</th>`).join('')+'<th></th></tr></thead>';
+    const tb=document.createElement('tbody');
+    val.forEach((r,i)=>{const tr=document.createElement('tr');tr.dataset.l=JSON.stringify(r);
+      cols.forEach(c=>{const td=document.createElement('td');td.appendChild(input([...path,i,...c.split('.')],getAt(r,c.split('.')),!!numCol[c]));tr.appendChild(td)});
+      const td=document.createElement('td');const b=document.createElement('button');b.textContent='🗑';b.title='刪除這一列';b.onclick=()=>{if(confirm('確定刪除這一列？')){val.splice(i,1);render()}};td.appendChild(b);tr.appendChild(td);tb.appendChild(tr)});
+    t.appendChild(tb);wrap.appendChild(t);fs.appendChild(wrap);
+    const add=document.createElement('button');add.textContent='＋ 新增一列（複製最後一列）';add.style.marginTop='8px';
+    add.onclick=()=>{if(val.length){val.push(JSON.parse(JSON.stringify(val[val.length-1])))}render()};fs.appendChild(add);
+    parent.appendChild(fs);return}
+  if(val&&typeof val==='object'){
+    const fs=document.createElement('fieldset');fs.dataset.l=lab(ppath);fs.innerHTML=`<legend>${lab(ppath)}</legend>`;
+    for(const k in val)build(val[k],[...path,k],fs);parent.appendChild(fs);return}
+  const row=document.createElement('div');row.className='row';row.dataset.l=lab(ppath);
+  row.innerHTML=`<span class="lb">${lab(ppath)}</span>`;row.appendChild(input(path,val,isNum(val)));parent.appendChild(row)}
+function render(){
+  const root=$('#root');root.innerHTML='';
+  for(const k in cfg){
+    const d=document.createElement('details');d.open=false;d.dataset.l=lab(k);
+    d.innerHTML=`<summary>${lab(k)}</summary>`;
+    const v=cfg[k];
+    if(v&&typeof v==='object'&&!Array.isArray(v)){for(const kk in v)build(v[kk],[k,kk],d)}else build(v,[k],d);
+    root.appendChild(d)}
+  filter()}
+function filter(){
+  const q=$('#q').value.trim().toLowerCase();
+  document.querySelectorAll('details').forEach(d=>{
+    let any=!q;
+    d.querySelectorAll('.row,tr,fieldset').forEach(e=>{const hit=!q||(e.dataset.l||'').toLowerCase().includes(q)||e.textContent.toLowerCase().includes(q);if(e.tagName==='TR'||e.classList.contains('row'))e.classList.toggle('hide',!hit);if(hit)any=true});
+    d.classList.toggle('hide',!any&&!(d.dataset.l||'').toLowerCase().includes(q));
+    if(q&&any)d.open=true});
+}
+function say(t){const m=$('#msg');m.textContent=t;clearTimeout(say.t);say.t=setTimeout(()=>m.textContent='',4000)}
+function state(){let o=null;try{o=localStorage.getItem('jb-config-override')}catch(e){}$('#state').innerHTML=o?'<br>🟡 <b>這個瀏覽器目前啟用了「本機測試設定」</b>（遊戲會用你儲存的數值）':'<br>🟢 目前沒有本機測試設定（遊戲使用 game-config.js 的數值）'}
+$('#q').oninput=filter;
+$('#b-save').onclick=()=>{try{localStorage.setItem('jb-config-override',JSON.stringify(cfg));say('✅ 已儲存到本機，重新整理遊戲就會生效');state()}catch(e){say('❌ 儲存失敗：'+e.message)}};
+$('#b-reset').onclick=()=>{if(!confirm('清除後，遊戲會改回使用 game-config.js 的數值。確定嗎？'))return;localStorage.removeItem('jb-config-override');cfg=JSON.parse(JSON.stringify(window.GAME_CONFIG_DEFAULT));render();state();say('已清除本機測試設定')};
+$('#b-down').onclick=()=>{
+  const txt=`/* game-config.js ── 全遊戲數值設定檔（由數值修改器產生於 ${new Date().toLocaleString()}）\n   用法：覆蓋遊戲資料夾裡的 game-config.js，學生重新整理即可套用。 */\n`+
+   `window.GAME_CONFIG_DEFAULT = ${JSON.stringify(cfg,null,1)};\nwindow.GAME_CONFIG_LABELS = ${JSON.stringify(LABELS,null,1)};\nwindow.GAME_CONFIG_BOOT = ${window.GAME_CONFIG_BOOT.toString()};\nwindow.GAME_CONFIG_BOOT();\n`;
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([txt],{type:'text/javascript'}));a.download='game-config.js';a.click();say('⬇️ 已下載 game-config.js，請覆蓋到遊戲資料夾')};
+$('#b-up').onclick=()=>$('#file').click();
+$('#file').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{
+  try{const t=r.result;let o;
+    if(t.includes('GAME_CONFIG_DEFAULT'))o=new Function('window','localStorage',t+';return window.GAME_CONFIG_DEFAULT')({},{getItem(){return null}});else o=JSON.parse(t);
+    if(!o||typeof o!=='object'||!o.stars)throw new Error('這不是正確的設定檔');
+    cfg=o;render();say('📂 匯入成功（按「儲存到本機」可以試玩，或直接下載）')}catch(err){say('❌ 匯入失敗：'+err.message)}};r.readAsText(f);e.target.value=''};
+render();state();
+</script>
+</body>
+</html>

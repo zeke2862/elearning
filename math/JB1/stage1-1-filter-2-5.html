@@ -99,6 +99,7 @@ button:focus-visible{outline:3px solid var(--bronze);outline-offset:2px}
 
 </main>
 <script src="lessons.js"></script>
+<script src="game-config.js"></script>
 <script src="mode-system.js"></script>
 <script>
 const $=s=>document.querySelector(s);
@@ -196,7 +197,7 @@ function answer(v,btn){
 function miss(btn){
   if(lock)return;
   lock=true;clearInterval(tm);
-  hearts--;combo=0;wrongs.push(q);log(false);drawHearts();drawCombo();
+  hearts=Math.max(0,hearts-((typeof mode!=='undefined'&&mode==='hard'&&window.MS&&!MS.active())?MS.stage('hardHeartLoss',2):MS.stage('normalHeartLoss',1)));combo=0;wrongs.push(q);log(false);drawHearts();drawCombo();
   document.querySelectorAll('.opt').forEach(b=>{if(+b.dataset.v===q.ans)b.classList.add('ok')});
   $('#say').classList.remove('hide');
   say(`<b>${btn?'❌ 城牆受損！':'⏰ 時間到，敵軍撞上城牆！'}</b><br>🧙 軍師說：正確答案是 <b>${q.ans}</b>。${q.explain}<br><button class="btn" id="nx" style="margin-top:8px">${hearts<=0?'查看戰報':'下一波'}</button>`,'lose');
