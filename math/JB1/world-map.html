@@ -168,7 +168,7 @@ button:focus-visible{outline:3px solid var(--bronze);outline-offset:2px}
 .fg-spark{font-size:34px;opacity:0;animation:sp .45s 3}@keyframes sp{50%{opacity:1;transform:scale(1.4)}}
 .fg-item{font-size:90px;opacity:0;animation:rv .6s 1.35s forwards;filter:drop-shadow(0 0 18px gold)}
 @keyframes rv{from{opacity:0;transform:scale(.3) rotate(-30deg)}to{opacity:1;transform:scale(1)}}
-.fg-name{opacity:0;animation:rv2 .5s 1.7s forwards;font-size:1.2rem;line-height:1.7}@keyframes rv2{to{opacity:1}}
+.fg-name{opacity:0;animation:rv2 .5s 1.7s forwards;font-size:1.2rem;line-height:1.7}@keyframes rv2{to{opacity:1}}@keyframes shk{25%{transform:rotate(-12deg)}75%{transform:rotate(12deg)}}
 </style>
 <script src="math_hero_engine.js"></script>
 <script src="bgm.js"></script>
@@ -365,7 +365,7 @@ const QNEXT={normal:'fine',fine:'legend',legend:'myth',myth:null};
 const groupSum=ids=>ids.reduce((a,id)=>a+st(id),0);
 const groupDone=ids=>ids.every(id=>st(id)>0);
 function qNeedStars(n,q){return q=='fine'?n*3:q=='legend'?n*4:n*5;}
-function qualityOf(i){
+function qualityOldRule(i){
   const ids=EQUIP_GROUPS[i];
   if(!groupDone(ids))return null;
   const n=ids.length,s=groupSum(ids);
@@ -373,6 +373,44 @@ function qualityOf(i){
   if(s>=n*4)return 'legend';
   if(s>=n*3)return 'fine';
   return 'normal';
+}
+/* ===== 📦 寶箱與裝備碎片 =====
+   通關得 1 個寶箱（記錄當時星數）；打開時依星數對應的品質為中心抽碎片，機率不顯示。
+   距離中心 0／1／2／3 階的機率 90／9／0.7／0.3（%）；同距離的機率由上下兩階平分，沒有那一階就落空 → 什麼都沒得到。
+   同一品質的碎片集滿 FRAG_NEED 片，才能合成該品質的裝備（比現有品質更高才會合成）。 */
+const QORD=['normal','fine','legend','myth'],FRAG_NEED=10,CHEST_P=[90,9,0.7,0.3];
+const starTier=s=>s>=5?3:s>=4?2:s>=3?1:0;
+function qualityOf(i){ if(ITEMS[i].special)return qualityOldRule(i); return (P._eqQ&&P._eqQ[i])||null; }
+function fragInit(){
+  if(P._eqQ)return;
+  P._eqQ={};P._frag={};P._chests=[];
+  ITEMS.forEach((it,i)=>{if(!it.special){const q=qualityOldRule(i);if(q)P._eqQ[i]=q}});
+  save();
+}
+const fragTarget=g=>ITEMS[g].special?[8,9,10][Math.floor(Math.random()*3)]:g;
+function addFrag(i,t){
+  P._frag=P._frag||{};const a=P._frag[i]||(P._frag[i]=[0,0,0,0]);a[t]++;
+  const cur=QORD.indexOf(qualityOf(i));
+  if(a[t]>=FRAG_NEED&&t>cur){a[t]-=FRAG_NEED;P._eqQ=P._eqQ||{};P._eqQ[i]=QORD[t];return {i,q:QORD[t],up:cur>=0}}
+  return null;
+}
+function openOneChest(){
+  const c=(P._chests||[]).shift();if(!c)return null;
+  const c0=starTier(c.s),w=QORD.map((_,t)=>{const d=Math.abs(t-c0);return CHEST_P[d]/(d?2:1)});
+  let r=Math.random()*100,t=-1;for(let k=0;k<4;k++){if(r<w[k]){t=k;break}r-=w[k]}
+  const res={t,i:t<0?-1:fragTarget(c.g)};
+  if(t>=0)res.synth=addFrag(res.i,t);
+  dq('chest',1);save();return res;
+}
+function chestOpen(all){
+  const n=all?(P._chests||[]).length:1;if(!n)return toast('📦 沒有寶箱可以打開，去闖關吧！');
+  const rs=[];for(let k=0;k<n;k++)rs.push(openOneChest());
+  const o=document.createElement('div');o.id='forge';
+  const line=r=>r.t<0?'💨 空空如也':`${ITEMS[r.i].icon} ${ITEMS[r.i].name}・<b class="q-${QORD[r.t]}">${QLABEL[QORD[r.t]]}</b>碎片 ×1`;
+  o.innerHTML=`<div class="fg-box"><div class="fg-anvil" style="animation:shk .3s 4">📦</div><div class="fg-name" style="animation:rv2 .4s .9s forwards;max-height:60vh;overflow:auto">${rs.map(line).join('<br>')}</div></div>`;
+  document.body.appendChild(o);o.onclick=()=>o.remove();setTimeout(()=>o.remove(),all?6000:3400);
+  rs.filter(r=>r.synth).forEach((r,k)=>setTimeout(()=>forgeAnim({icon:ITEMS[r.synth.i].icon,name:ITEMS[r.synth.i].name,q:QLABEL[r.synth.q],up:r.synth.up}),(all?6200:3500)+k*3500));
+  window.BGM&&BGM.clang();render();
 }
 function ensureRoll(i){
   P._eq=P._eq||{};
@@ -403,7 +441,24 @@ function levelInfo(){
   while(rem>=expNeed(lv)){rem-=expNeed(lv);lv++;}
   return {level:lv,cur:rem,need:expNeed(lv),exp:exp};
 }
+/* ===== ⚔️ 對戰基本值 =====
+   基本值 ＝ 職業比例 ×（六項數值 × 等級 ＋ 裝備效果）＝ 職業比例×六項數值×等級 ＋ 職業比例×裝備效果
+   六項數值：角色建立時的 HP／ATK／DEF／SPD／MATK／MDEF（含體質調整券的加成）；魔力 MP 不在六項內，維持原本算法 */
+const PRO_RATIO={
+ '聖騎士':{hp:1.1,atk:1.0,def:1.4,spd:0.9,matk:0.8,mdef:1.2},
+ '刺客':{hp:0.9,atk:1.2,def:0.8,spd:1.5,matk:0.9,mdef:0.8},
+ '狂戰士':{hp:1.4,atk:1.4,def:1.0,spd:0.9,matk:0.6,mdef:0.8},
+ '大魔導士':{hp:0.8,atk:0.7,def:0.7,spd:1.0,matk:1.5,mdef:1.4}};
+const SIX={hp:'HP',atk:'ATK',def:'DEF',spd:'SPD',matk:'MATK',mdef:'MDEF'};
 function totalStats(){
+  const h=P._hero;if(!h||!h.stats)return totalStatsOld();
+  const lv=levelInfo().level,r=PRO_RATIO[h.archetype]||{},eq={},out={};
+  ITEMS.forEach((it,i)=>{const es=effStats(i);STATKEYS.forEach(k=>{if(es[k])eq[k]=(eq[k]||0)+es[k]})});
+  Object.keys(SIX).forEach(k=>{out[k]=Math.max(1,Math.round((r[k]||1)*((h.stats[SIX[k]]||0)*lv+(eq[k]||0))))});
+  out.mp=BASE.mp+GROWTH.mp*(lv-1)+(eq.mp||0);
+  return out;
+}
+function totalStatsOld(){
   const li=levelInfo(),out={};
   STATKEYS.forEach(k=>out[k]=BASE[k]+GROWTH[k]*(li.level-1));
   ITEMS.forEach((it,i)=>{const es=effStats(i);STATKEYS.forEach(k=>{if(es[k])out[k]+=es[k];});});
@@ -441,7 +496,7 @@ function endlessHTML(){
     `</div></section>`).join('');
 }
 function stageURL(url,id,endless){
-  return url+(url.includes('?')?'&':'?')+'stars='+st(id)+'&eb='+ebOf(id)+(endless?'&endless=1':'');
+  return url+(url.includes('?')?'&':'?')+'stars='+st(id)+'&eb='+ebOf(id)+'&rv='+bagN('revive_m')+(endless?'&endless=1':'');
 }
 // ===== 🖼️ 圖片區（新增）=====
 // 把您做好的圖片依照下面的檔名放進 world-map.html 同一層的 images 資料夾即可自動套用；
@@ -464,20 +519,21 @@ function renderHero(){
 // ===== ⚔️ 裝備卡片（取代原本的歷史人物收藏卡） =====
 function eqCardHTML(i){
   const it=ITEMS[i],q=qualityOf(i),ids=EQUIP_GROUPS[i],n=ids.length;
+  const fr=(P._frag&&P._frag[i])||[0,0,0,0],frl=QORD.map((k,t)=>`<span class="q-${k}">${QLABEL[k]} ${fr[t]}/${FRAG_NEED}</span>`).join('　');
   if(!q){
-    const done=ids.filter(id=>st(id)>0).length;
-    const dots=ids.map(id=>st(id)>0?'🧩':'▫️').join(' ');
-    return `<div class="cd lock"><b>${iconHTML(it.img,it.icon,'ic-eq')} ？？？</b><small>${it.slot}</small><div class="hint">通關「${GROUP_NAMES[i]}」的每個小關都會掉一片碎片，集滿 ${n} 片自動合成（目前 ${done}/${n}）<br>${dots}</div></div>`;
+    const how=it.special?`通關「${GROUP_NAMES[i]}」就能取得`:`通關「${GROUP_NAMES[i]}」的關卡會獲得寶箱，打開後有機會得到碎片；同一品質集滿 ${FRAG_NEED} 片就能合成`;
+    return `<div class="cd lock"><b>${iconHTML(it.img,it.icon,'ic-eq')} ？？？</b><small>${it.slot}</small><div class="hint">${how}${it.special?'':'<br>碎片：'+frl}</div></div>`;
   }
   const nq=QNEXT[q];
-  const hint=nq?`⬆️ 下一階「${QLABEL[nq]}」需要這個大關累積 ${qNeedStars(n,nq)} ⭐（目前 ${groupSum(ids)} ⭐）`:'👑 已經是最高品質！';
+  const hint=it.special?(nq?`⬆️ 下一階「${QLABEL[nq]}」需要這個大關累積 ${qNeedStars(n,nq)} ⭐（目前 ${groupSum(ids)} ⭐）`:'👑 已經是最高品質！')
+    :(nq?`⬆️ 下一階「${QLABEL[nq]}」需要 ${FRAG_NEED} 片${QLABEL[nq]}碎片（目前 ${fr[QORD.indexOf(nq)]}/${FRAG_NEED}）<br>碎片：${frl}`:'👑 已經是最高品質！');
   let lines;
   if(it.special){
     const pct=Math.min(100,st('7-3')*20);
     lines=`對戰複製你目前所有戰力，攻擊力雙倍！（依 7-3 星等，目前加成 ${pct}%）`;
   }else{
-    const es=effStats(i);
-    lines=it.stats.map(([k])=>`${STATLABEL[k]} ${es[k]>=0?'+':''}${es[k]}`).join('　');
+    const es=effStats(i),fl=(P._forge||{})[i]||0;
+    lines=it.stats.map(([k])=>`${STATLABEL[k]} ${es[k]>=0?'+':''}${es[k]}`).join('　')+(fl?`　<small>🔨鍛造 +${fl}</small>`:'');
   }
   return `<div class="cd"><b>${iconHTML(it.img,it.icon,'ic-eq')} ${it.name}</b><small>${it.slot}／<b class="q-${q}">${QLABEL[q]}</b></small>
     <div class="es">${lines}</div>
@@ -516,29 +572,23 @@ $('#x').onclick=closeStage;
 addEventListener('message',e=>{
   if(e.source!==$('#fr').contentWindow)return;
   const d=e.data||{};
+  if(d.type=='use-item'&&d.id=='revive_m'){if(consumeItem('revive_m')){$('#fr').contentWindow.postMessage({type:'item-ok',id:'revive_m'},'*');toast('💖 戰場復活藥生效！城牆恢復 3 顆心')}return}
   if(d.type=='stage-result'&&!d.fail&&d.id==cur){
     const r0=rankOf(total())[1];
     const gi=EQUIP_GROUPS.findIndex(ids=>ids.includes(d.id)),qBefore=gi>=0?qualityOf(gi):null;
     const old=P[d.id]||{stars:0,best:0};
     const oms=old.ms||{};P[d.id]={...old,stars:Math.max(old.stars,d.stars),best:Math.max(old.best,d.score),ms:{...oms,[d.mode]:Math.max(oms[d.mode]||0,d.stars)}};save();
-    const gg=Math.max(0,d.stars-(old.stars||0))*20;if(gg){P._gold=(P._gold||0)+gg;save();}
+    const gg=Math.max(0,d.stars-(old.stars||0))*20;let sc=d.score|0,boosted=false;if((P._mboost|0)>0){sc=Math.round(sc*1.5);P._mboost--;boosted=true}
+    P._merit=(P._merit||0)+sc;if(gg){P._gold=(P._gold||0)+gg;}save();
+    dq('clear',1);dq('right',d.right|0);if(d.mode==='hard')dq('hard',1);if(d.mode==='real')dq('real',1);if(gg)dq('star',gg/20);
     const msg=[];
+    if(sc)msg.push('🏅 戰功 +'+sc+(boosted?'（加成券生效）':''));
     if(gg)msg.push('🪙 獲得 '+gg+' 金幣');
     if(!old.stars)msg.push('🎉 首次通關 '+d.id+'！');
     if(old.stars<3&&d.stars>=3)msg.push('🔓 '+d.id+' 無極限挑戰解鎖！');
     else if(old.stars<5&&d.stars>=5)msg.push('👑 '+d.id+' 修羅全對，滿星 5 ⭐！');
-    // 裝備碎片邏輯：小關第一次通關 → 掉一片碎片；大關內碎片集滿 → 自動合成裝備；
-    // 裝備到手之後，累積星數提升品質，算是「重鑄升級」，訊息跟「合成」分開講，避免混淆。
-    if(gi>=0){
-      const qAfter=qualityOf(gi),n=EQUIP_GROUPS[gi].length,done=EQUIP_GROUPS[gi].filter(id=>st(id)>0).length;
-      if(!old.stars&&qBefore===null&&qAfter!==null){
-        msg.push('⚗️ 碎片收集齊全，自動合成：'+ITEMS[gi].icon+' '+ITEMS[gi].name+'（'+QLABEL[qAfter]+'）！');
-      }else if(!old.stars&&qAfter===null){
-        msg.push('🧩 獲得裝備碎片：'+ITEMS[gi].icon+' '+ITEMS[gi].name+'（'+done+'/'+n+'，集滿自動合成）');
-      }else if(qAfter&&qAfter!==qBefore){
-        msg.push('⚔️ 裝備升級：'+ITEMS[gi].icon+' '+ITEMS[gi].name+'（'+QLABEL[qAfter]+'）！');
-      }
-    }
+    // 通關給寶箱（取代原本固定掉落碎片），到背包打開才會抽碎片
+    if(gi>=0){P._chests=P._chests||[];P._chests.push({s:d.stars,g:gi});save();msg.push('📦 獲得寶箱！（到背包打開）')}
     const r1=rankOf(total())[1];if(r1!=r0)msg.push('🎖️ 升官了：'+r1+'！');
     if(msg.length)toast(cm(msg.join('<br>')));
     if(gi>=0){const qA=qualityOf(gi);if(qA&&qA!==qBefore)forgeAnim({icon:ITEMS[gi].icon,name:ITEMS[gi].name,q:QLABEL[qA],up:qBefore!==null})}
@@ -624,6 +674,7 @@ function nextSide(fa,fb){
   const r=MathHeroEngine.nextAttacker(A,B);fa.im=A.initiativeMeter;fb.im=B.initiativeMeter;return r.actor===A?'a':'b'}
 const seasonId=()=>new Date(Date.now()+7*36e5).toISOString().slice(0,7);
 function bumpDuelRecord(sid,field){
+  if(sid&&sid===mySid())dq('duel',1);
   if(!sbReady()||!sid)return;
   const fn = field=='wins'?'bump_duel_win':field=='losses'?'bump_duel_loss':'bump_duel_draw';
   sb.rpc(fn,{p_sid:sid}).then(()=>{}).catch(()=>{});
@@ -636,10 +687,10 @@ const QCODE={normal:'n',fine:'f',legend:'l',myth:'m'}, QDECODE={n:'normal',f:'fi
 const CLONE_IDX=ITEMS.findIndex(it=>it.special);
 function myEquipCode(){ return ITEMS.map((it,i)=>{const q=qualityOf(i);return q?QCODE[q]:'-';}).join(''); }
 function myCloneStars(){ const ids=EQUIP_GROUPS[CLONE_IDX]; return (ids&&groupDone(ids))?Math.min(5,groupSum(ids)):0; }
-function statsWithRank(){ return {...totalStats(), rank:myRankIdx(), eq:myEquipCode(), clone:myCloneStars()}; }
+function statsWithRank(){ return {...totalStats(), rank:myRankIdx(), eq:myEquipCode(), clone:myCloneStars(), sk:packSkills()}; }
 function mkFighterObj(sid,name,level,stats){
   return {studentId:sid,name:name||sid,level:level||1,rank:(stats&&stats.rank)|0,eq:(stats&&stats.eq)||null,clone:(stats&&stats.clone)|0,hp:stats.hp,hpMax:stats.hp,mp:stats.mp,mpMax:stats.mp,
-    atk:stats.atk,matk:stats.matk,def:stats.def,mdef:stats.mdef,spd:stats.spd,defending:false,charging:false};
+    atk:stats.atk,matk:stats.matk,def:stats.def,mdef:stats.mdef,spd:stats.spd,defending:false,charging:false,skills:(stats&&stats.sk)||[],su:{}};
 }
 // 每次畫面更新時，把自己目前的戰力寫到雲端 duel_users，讓別人挑戰我時查得到最新數值
 function syncMyUser(){
@@ -807,6 +858,8 @@ function sendAsyncAction(kind,move){
 // 幽靈 AI：血量偏低時比較不會用會自傷的「衝撞」，魔力夠時有機會放魔法，其餘時候普通攻擊
 function aiPickAction(att){
   let kind,move;
+  const ready=(att.skills||[]).filter(x=>skillLeft(att,x)>0);
+  if(!att.charging&&ready.length&&Math.random()<.3)return {kind:'skill',move:ready[Math.floor(Math.random()*ready.length)].c};
   if(att.charging){ kind='release'; }
   else{
     const roll=Math.random();
@@ -949,8 +1002,9 @@ function renderFighterBar(f){
 function renderMenu(meFighter,myTurn){
   if(!myTurn) return '';
   if(meFighter.charging) return `<p>⏳ 你正在蓄力中，這回合會自動發動大魔法！</p><div class="amenu"><button id="b-pass">確定</button></div>`;
-  if(!duelSub) return `<div class="amenu"><button data-m="n">⚔️ 普通攻擊</button><button data-m="m">✨ 魔法攻擊</button><button data-m="d">🛡️ 防禦</button><button data-m="i">🎒 道具</button></div>`;
+  if(!duelSub) return `<div class="amenu"><button data-m="n">⚔️ 普通攻擊</button><button data-m="m">✨ 魔法攻擊</button><button data-m="d">🛡️ 防禦</button><button data-m="i">🎒 道具</button>${(meFighter.skills||[]).length?'<button data-m="k">🔮 招式</button>':''}</div>`;
   if(duelSub=='n') return `<div class="amenu">`+NMOVES.map(m=>`<button data-n="${m[0]}">${m[1]}（×${m[2]}）</button>`).join('')+`<button data-back="1">返回</button></div>`;
+  if(duelSub=='k') return `<div class="amenu">`+(meFighter.skills||[]).map(x=>`<button data-sk="${x.c}" ${skillLeft(meFighter,x)<=0?'disabled':''}>${CATL[x.c]}・${x.n}（${x.r}・剩 ${Math.max(0,skillLeft(meFighter,x))} 次）</button>`).join('')+`<button data-back="1">返回</button></div>`;
   if(duelSub=='i') return `<div class="amenu">`+SHOP.filter(x=>x.battle).map(x=>`<button data-it="${x.id}" ${(bagN(x.id)<1||(x.battle.spd&&meFighter.fast))?'disabled':''}>${x.icon} ${x.name} ×${bagN(x.id)}</button>`).join('')+`<button data-back="1">返回</button></div>`;
   if(duelSub=='m') return `<div class="amenu">`+MMOVES.map(m=>`<button data-mg="${m[0]}" ${meFighter.mp<m[2]?'disabled':''}>${m[1]}（耗魔${m[2]}／×${m[3]}）</button>`).join('')+`<button data-back="1">返回</button></div>`;
 }
@@ -958,6 +1012,7 @@ function bindMenuEvents(box,myTurn,sendFn){
   if(!myTurn)return;
   box.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{const m=b.dataset.m;if(m=='d'){sendFn('defend');}else{duelSub=m;renderBattleAgain();}});
   box.querySelectorAll('[data-back]').forEach(b=>b.onclick=()=>{duelSub=null;renderBattleAgain();});
+  box.querySelectorAll('[data-sk]').forEach(b=>b.onclick=()=>sendFn('skill',b.dataset.sk));
   box.querySelectorAll('[data-it]').forEach(b=>b.onclick=()=>sendFn('item',b.dataset.it));
   box.querySelectorAll('[data-n]').forEach(b=>b.onclick=()=>sendFn('normal',b.dataset.n));
   box.querySelectorAll('[data-mg]').forEach(b=>b.onclick=()=>sendFn('magic',b.dataset.mg));
@@ -1145,28 +1200,28 @@ function homeHTML(){
   <button data-go="arena">⚔️ 對戰邀請${INV?'<i>新</i>':''}<br><small>學號對戰</small></button>
   <button data-go="wrong">📝 錯題練習<br><small>找出弱點題型</small></button>
   <button data-go="shop">🛒 商店<br><small>用金幣買道具</small></button>
-  <button data-go="bag">🎒 背包<br><small>查看與使用道具</small></button></div>`}
+  <button data-go="bag">🎒 背包<br><small>查看與使用道具</small></button></div>${dqHTML()}`}
 function chHTML(ci){const c=CHS[ci];ONLY=ci;
   return `<h2 class="serif" style="margin:6px 0 0;color:var(--bronze)">${c[0]}</h2>`+groupHTML(c[1],c[2],c[3])+endlessHTML()}
 function heroCardHTML(){const h=P._hero;
   const bars=CHS.map((c,i)=>{const [a,b]=chProg(i);return `<div style="margin:6px 0">${c[0]}　${a}/${b} ⭐<div class="pbar"><div style="height:100%;width:${a/b*100}%;background:var(--jade)"></div></div></div>`}).join('');
-  const hs=h?`<b>${h.name}</b>｜流派：<b>${h.archetype}</b>｜骰子 ${h.dice.sum}<div class="stat-grid">${['HP','ATK','DEF','SPD','MATK','MDEF'].map(k=>`<div class="sbox"><b>${h.stats[k]}</b><span>${k}</span></div>`).join('')}</div>`:'尚未建立角色';
+  const hs=h?`<b>${h.name}</b>｜職業：<b>${h.archetype}</b>｜骰子 ${h.dice.sum}<div class="stat-grid">${['HP','ATK','DEF','SPD','MATK','MDEF'].map(k=>`<div class="sbox"><b>${h.stats[k]}</b><span>${k}</span></div>`).join('')}</div>`:'尚未建立角色';
   if(h){const m={};(h.skills||[]).forEach(x=>m[x.category]=x);h.skills=Object.values(m)}
-  const sk=h?`<h3 class="serif" style="margin:14px 0 4px">🔮 招式研發</h3>🪙 金幣 <b>${P._gold||0}</b>　<button id="draw" class="btn">研發招式（${h.nextSkillCost||50} 金幣）</button>${P._pendSkill?`　<button id="pend" class="btn">⚠️ 有新招式等你決定</button>`:''}<div>${['physical','magic','speed'].map(c=>{const x=(h.skills||[]).find(y=>y.category===c);return `<div class="fighter" style="margin:4px 0"><b>${CATL[c]}招式</b>：${x?skillText(x):'<small>（空）</small>'}</div>`}).join('')}</div><small>每種類型只能裝備 1 個招式，抽到同類型時可選擇是否交換。</small>`:'';
-  return `<h2 class="serif" style="margin:0 0 6px">📊 角色分析</h2>${hs}${sk}<h3 class="serif" style="margin:14px 0 4px">章節熟練情形</h3>${bars}`}
+  const sk=h?`<h3 class="serif" style="margin:14px 0 4px">🔮 招式研發</h3>🏅 戰功 <b>${P._merit||0}</b>　<button id="draw" class="btn">研發招式（${skillCost(h)} 戰功）</button>　<small>🪙 金幣 ${P._gold||0}（用途研究中）</small>${P._pendSkill?`　<button id="pend" class="btn">⚠️ 有新招式等你決定</button>`:''}<div>${['physical','magic','speed'].map(c=>{const x=(h.skills||[]).find(y=>y.category===c);return `<div class="fighter" style="margin:4px 0"><b>${CATL[c]}招式</b>：${x?skillText(x):'<small>（空）</small>'}</div>`}).join('')}</div><small>每種類型只能裝備 1 個招式，抽到同類型時可選擇是否交換。</small>`:'';
+  return `<h2 class="serif" style="margin:0 0 6px">📊 角色分析</h2>${hs}<small>對戰基本值 ＝ 職業比例 ×（六項數值 × 等級 ＋ 裝備效果）</small>${sk}<h3 class="serif" style="margin:14px 0 4px">章節熟練情形</h3>${bars}${badgeHTML()}`}
 function wrongHTML(){const q=P._q||{};
   const L=Object.entries(q).filter(([k,r])=>r.n>=3&&r.ok/r.n<0.8).sort((a,b)=>a[1].ok/a[1].n-b[1].ok/b[1].n).slice(0,8);
   return `<h2 class="serif" style="margin:0 0 6px">📝 錯題練習</h2><small>依你的作答紀錄，找出正確率偏低的題型，點「去練習」直接進入該關。</small>`+
   (L.length?L.map(([k,r])=>{const id=k.split(':')[0],s=SMAP[id];return `<div class="fighter"><b>${SLAB[id]||id} ${s?s[1]:''}</b>｜題型 ${k.split(':')[1]}｜正確率 ${Math.round(r.ok/r.n*100)}%（${r.ok}/${r.n}）${s&&s[2]?` <button class="node" style="display:inline;min-height:0;padding:4px 10px" data-wr="${id}">去練習</button>`:''}</div>`}).join(''):'<p>🎉 目前沒有正確率偏低的題型，繼續闖關累積更多作答紀錄吧！</p>')}
-$('#home').onclick=e=>{const b=e.target.closest('[data-go]');if(!b)return;const g=b.dataset.go;if(g==='ch')show('ch',+b.dataset.ci);else{if(g==='arena')INV=false;show(g)}};
+$('#home').onclick=e=>{const dc=e.target.closest('[data-dq]');if(dc)return claimDq(dc.dataset.dq);const b=e.target.closest('[data-go]');if(!b)return;const g=b.dataset.go;if(g==='ch')show('ch',+b.dataset.ci);else{if(g==='arena')INV=false;show(g)}};
 $('#back').onclick=()=>show('home');
 $('#hx').onclick=e=>{if(!P._hero)return;
   if(e.target.closest('#pend')&&P._pendSkill)return offerSkill(P._pendSkill);
   if(!e.target.closest('#draw'))return;
   if(P._pendSkill)return toast('請先決定上一個新招式要不要換上');
-  const h=P._hero,prev=h.skills.slice(),r=MathHeroEngine.learnSkill(h,{gold:P._gold||0});
-  if(!r.success)return toast('🪙 金幣不足，需要 '+r.cost+' 金幣，去闖關賺金幣吧！');
-  h.skills=prev;P._gold=r.goldRemaining;P._pendSkill=r.skill;save();offerSkill(r.skill)};
+  const h=P._hero,prev=h.skills.slice(),r=MathHeroEngine.learnSkill(h,{gold:P._merit||0,rules:SKILL_RULES});
+  if(!r.success)return toast('🏅 戰功不足，需要 '+r.cost+' 戰功，繼續闖關累積吧！');
+  h.skills=prev;P._merit=r.goldRemaining;P._pendSkill=r.skill;save();offerSkill(r.skill)};
 $('#wrong').onclick=e=>{const b=e.target.closest('[data-wr]');if(!b)return;const s=SMAP[b.dataset.wr];cur=s[0];$('#fr').src=stageURL(s[2],s[0],false);(window.BGM&&BGM.stop(),$('#ov').classList.remove('hide'))};
 
 /* ===== 🗺️ 冒險地圖：可拖曳的完整地圖、勇者跑動、頂端選模式 ===== */
@@ -1183,14 +1238,15 @@ const SRE=new RegExp('(?<![\\w-])('+Object.keys(SLAB).sort((a,b)=>b.length-a.len
 const cm=t=>{let r=String(t).replace(SRE,x=>SLAB[x]);GT.forEach(([a,b])=>{r=r.split(a).join(b)});return r};
 let HN=null,MWALK=false,MSX=0,MSY=0,MFOC=null,MINIT=false;
 const getMode=()=>P._mm||'easy';
-const nUn=n=>n.lock(n.ci,0)==='';
+const preMsg=i=>i===11&&!nDone(MNODES[10])?'要先通關「真實之鏡」，終點才會開啟':'';
+const nUn=n=>n.lock(n.ci,0)===''&&!preMsg(MNODES.indexOf(n));
 const nDone=n=>n.g.st.every(s=>!s[2]||st(s[0])>0);
 function mapFr(){const i=MNODES.findIndex(n=>nUn(n)&&!nDone(n));return i<0?MNODES.length-1:i}
 function heroImg(){const ri=Math.max(0,RK.indexOf(rankOf(total())));return `<img src="${AVIMG[ri]}" height="64" alt="" onerror="this.outerHTML='<span style=font-size:44px>${AV[ri]||'🧙'}</span>'">`}
 function mapBuild(){
   if(HN==null)HN=(P._hn!=null&&MNODES[P._hn]&&nUn(MNODES[P._hn]))?P._hn:mapFr();
   const fr=mapFr(),hp=MPOS[HN],all=MNODES.every(nDone);
-  const fog=all?'':`<svg class="fog" viewBox="0 0 1536 1024" width="1536" height="1024"><defs><filter id="fb" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="45"/></filter><mask id="fm"><rect width="1536" height="1024" fill="#fff"/>${MNODES.map((n,i)=>nUn(n)?`<circle cx="${MPOS[i][0]}" cy="${MPOS[i][1]}" r="170" fill="#000" filter="url(#fb)"/>`:'').join('')}</mask></defs><rect width="1536" height="1024" fill="#04020c" opacity=".9" mask="url(#fm)"/></svg>`;
+  const fog=all?'':`<svg class="fog" viewBox="0 0 1536 1024" width="1536" height="1024"><defs><filter id="fb" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="45"/></filter><mask id="fm"><rect width="1536" height="1024" fill="#fff"/>${MNODES.map((n,i)=>nUn(n)?`<circle cx="${MPOS[i][0]}" cy="${MPOS[i][1]}" r="170" fill="#000" filter="url(#fb)"/>`:'').join('')}</mask></defs><rect width="1536" height="1024" fill="#000" opacity="1" mask="url(#fm)"/></svg>`;
   const nodes=MNODES.map((n,i)=>{const [x,y]=MPOS[i],un=nUn(n),dn=nDone(n);
     return `<button class="mn ${un?'':'lk'} ${dn?'done':''} ${un&&!dn&&i===fr?'pulse':''}" style="left:${x}px;top:${y}px" data-n="${i}" title="${n.g.n}">${un?(dn?'★':i+1):'🔒'}</button>`}).join('');
   $('#map').innerHTML=`<div class="mp-bar"><button data-here="1">📍 回到勇者位置</button><small>拖曳地圖移動，點圓圈讓勇者前往｜🎯練兵最高 2⭐・⚔️實戰最高 4⭐・🔥修羅最高 5⭐，三種模式隨時可選${all?'｜🎉 全通關，所有地圖已開放':'｜黑霧區域＝尚未抵達'}</small></div>
@@ -1210,7 +1266,7 @@ function mapClick(e){
   const n=e.target.closest('.mn');if(n)onMapNode(+n.dataset.n);
 }
 function onMapNode(i){
-  if(MWALK)return;const n=MNODES[i],r=n.lock(n.ci,0);
+  if(MWALK)return;const n=MNODES[i],r=n.lock(n.ci,0)||preMsg(i);
   if(r)return toast('🔒 '+cm(r));
   if(i===HN)return showGroup(i);
   const a=MPOS[HN],b=MPOS[i],h=$('#mhero'),vp=$('#mapvp'),sec=Math.min(2.4,Math.max(.7,Math.hypot(b[0]-a[0],b[1]-a[1])/380));
@@ -1220,7 +1276,7 @@ function onMapNode(i){
 }
 function showGroup(i){
   const n=MNODES[i],labs=MAPN[i][1],ic={easy:'🎯',real:'⚔️',hard:'🔥'};
-  const rows=n.g.st.map((s,k)=>{const r=n.lock(n.ci,k),v=st(s[0]),boss=/Boss/.test(s[1]),ms=(P[s[0]]&&P[s[0]].ms)||{},off=r||!s[2];
+  const rows=n.g.st.map((s,k)=>{const r=n.lock(n.ci,k)||preMsg(i),v=st(s[0]),boss=/Boss/.test(s[1]),ms=(P[s[0]]&&P[s[0]].ms)||{},off=r||!s[2];
     const info=`<div class="ginfo"><b>${r?'🔒':boss?'👹':'⚔️'} ${labs[k]}</b>　${s[1]}<br><small>${!s[2]?'建造中':r?cm(r):(v?'⭐'.repeat(v)+'☆'.repeat(5-v):'尚未通關')}</small></div>`;
     const btns=['easy','real','hard'].map(m=>`<button class="mbtn ${m}" data-gm="${i}:${k}:${m}" ${off?'disabled':''}>${ic[m]} ${MODEL[m]}${ms[m]?'<br>⭐'+ms[m]:''}</button>`).join('')+(v>=ENDLESS_NEED&&!off?`<button class="mbtn" data-gm="${i}:${k}:endless" title="無極限挑戰">♾️</button>`:'');
     return `<div class="gprow gr2">${info}<div class="mbtns">${btns}</div></div>`}).join('');
@@ -1228,7 +1284,7 @@ function showGroup(i){
   $('#gp').classList.remove('hide');
 }
 function openMapStage(i,k,md){
-  const n=MNODES[i],s=n.g.st[k],r=n.lock(n.ci,k),en=md==='endless';
+  const n=MNODES[i],s=n.g.st[k],r=n.lock(n.ci,k)||preMsg(i),en=md==='endless';
   if(r)return toast('🔒 '+cm(r));
   if(!s[2])return toast('🔨 這一關還在建造中，敬請期待！');
   if(en&&st(s[0])<ENDLESS_NEED)return toast(`🔒 ${SLAB[s[0]]} 要先拿到 ${ENDLESS_NEED} ⭐ 才能挑戰無限題`);
@@ -1264,17 +1320,62 @@ async function rankBuild(){
 /* ===== 🛒 商店與🎒背包（道具資料集中在 SHOP，之後補細項只要改這張表） =====
    cat：分類；battle：對戰中使用的效果；passive：進入對戰時自動裝備；fx：背包使用的效果 */
 const CATL={physical:'物理',magic:'魔法',speed:'速度'};
-const SHOPCAT={heal:'🧪 補血',revive:'🪶 復活',speed:'💨 加速（對戰）',points:'📘 加積分',forge:'🔨 鍛造',body:'🧬 天生體質調整',equip:'💎 裝備數值修正'};
+/* ===== 📅 每日任務（每天 3 個，依日期固定抽出；獎勵：經驗值／戰功／道具／特殊徽章） ===== */
+const bkkDay=()=>new Date(Date.now()+7*36e5).toISOString().slice(0,10);
+const DQPOOL=[
+ {id:'clear3',t:'通關任意關卡 3 次',k:'clear',n:3,r:{merit:300}},
+ {id:'right30',t:'累計答對 30 題',k:'right',n:30,r:{exp:200}},
+ {id:'hard1',t:'修羅模式全對通關 1 次',k:'hard',n:1,r:{badge:'dq_hard'}},
+ {id:'real2',t:'實戰模式通關 2 次',k:'real',n:2,r:{merit:400}},
+ {id:'chest2',t:'打開 2 個寶箱',k:'chest',n:2,r:{item:['speed_s',1]}},
+ {id:'duel1',t:'進行 1 場對戰',k:'duel',n:1,r:{item:['heal_s',2]}},
+ {id:'buy1',t:'在商店兌換 1 個道具',k:'buy',n:1,r:{exp:100}},
+ {id:'star1',t:'拿到 1 顆新的星星',k:'star',n:1,r:{badge:'dq_star'}}];
+const SPB={dq_hard:['🔥','修羅挑戰者'],dq_star:['⭐','摘星新手'],dq_d3:['☀️','三日勤學'],dq_d7:['🌟','七日勤學'],dq_d15:['🌠','十五日勤學'],dq_d30:['👑','三十日勤學']};
+const DQDAYS={3:'dq_d3',7:'dq_d7',15:'dq_d15',30:'dq_d30'};
+function dqState(){const d=bkkDay();if(!P._dq||P._dq.d!==d)P._dq={d,p:{},c:{}};return P._dq}
+function dqToday(){
+  let h=0;for(const c of bkkDay())h=(h*31+c.charCodeAt(0))|0;
+  const rnd=()=>{h=(h+0x6D2B79F5)|0;let t=Math.imul(h^h>>>15,1|h);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
+  const a=DQPOOL.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1));[a[i],a[j]]=[a[j],a[i]]}
+  return a.slice(0,3);
+}
+function dq(k,n){const q=dqState();q.p[k]=(q.p[k]||0)+n;save()}
+function rewardText(r){return r.merit?`🏅 戰功 +${r.merit}`:r.exp?`📘 經驗值 +${r.exp}`:r.item?`${SHOPMAP[r.item[0]].icon} ${SHOPMAP[r.item[0]].name} ×${r.item[1]}`:r.badge?`🎖️ 特殊徽章「${SPB[r.badge][1]}」`:''}
+function giveBadge(id){P._badges=P._badges||{};if(P._badges[id])return false;P._badges[id]=1;return true}
+function claimDq(id){
+  const q=dqState(),t=DQPOOL.find(x=>x.id===id);if(!t||q.c[id]||(q.p[t.k]||0)<t.n)return;
+  q.c[id]=1;const r=t.r;let msg='🎁 領取成功：'+rewardText(r);
+  if(r.merit)P._merit=(P._merit||0)+r.merit;
+  if(r.exp)P._exp=(P._exp||0)+r.exp;
+  if(r.item)bagAdd(r.item[0],r.item[1]);
+  if(r.badge&&!giveBadge(r.badge)){P._merit=(P._merit||0)+150;msg+='（已擁有，改發 🏅 戰功 +150）'}
+  if(dqToday().every(x=>q.c[x.id])){P._dqDays=(P._dqDays||0)+1;msg+='<br>🎉 今天的任務全部完成！累計 '+P._dqDays+' 天';const bid=DQDAYS[P._dqDays];if(bid&&giveBadge(bid))msg+='<br>🎖️ 獲得特殊徽章「'+SPB[bid][1]+'」！'}
+  save();toast(msg);render();
+}
+function dqHTML(){
+  const q=dqState(),L=dqToday();
+  return `<div class="card" style="margin-top:14px"><h2 class="serif" style="margin:0 0 4px">📅 每日任務</h2><small>每天自動更新（泰國時間）；全部完成累計天數，可得特殊徽章。已累計 ${P._dqDays||0} 天</small>`+
+  L.map(t=>{const v=Math.min(t.n,q.p[t.k]||0),ok=v>=t.n,got=q.c[t.id];
+    return `<div class="fighter" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><div style="flex:1;min-width:190px"><b>${t.t}</b>　<small>${v}/${t.n}</small><div class="pbar"><div style="height:100%;width:${v/t.n*100}%;background:var(--jade)"></div></div><small>獎勵：${rewardText(t.r)}</small></div>${got?'<small>✅ 已領取</small>':`<button class="btn" data-dq="${t.id}" ${ok?'':'disabled'}>領取</button>`}</div>`}).join('')+`</div>`;
+}
+function badgeHTML(){const b=P._badges||{},ks=Object.keys(b);return `<h3 class="serif" style="margin:14px 0 4px">🏵️ 特殊徽章</h3>`+(ks.length?ks.map(k=>`<span style="display:inline-block;margin:3px;padding:4px 10px;border:2px solid var(--bronze);border-radius:10px">${SPB[k][0]} ${SPB[k][1]}</span>`).join(''):'<small>完成每日任務可以獲得特殊徽章</small>')}
+const SKILL_RULES={skillBaseCost:500,skillCostIncrease:500};
+const skillCost=h=>SKILL_RULES.skillBaseCost+(h.skillsCreated|0)*SKILL_RULES.skillCostIncrease;
+function meritInit(){if(P._merit==null){P._merit=flatAll.reduce((a,id)=>a+((P[id]&&P[id].best)|0),0);save()}}
+const SHOPCAT={heal:'🧪 補血',revive:'🪶 復活',speed:'💨 加速（對戰）',points:'🏅 加積分（戰功）',exp:'📘 加經驗值',forge:'🔨 鍛造',body:'🧬 天生體質調整',equip:'💎 裝備數值修正'};
 const SHOP=[
- {id:'heal_s',cat:'heal',icon:'🧪',name:'小補血瓶',price:30,desc:'對戰中使用：恢復 30% 生命',battle:{heal:.3}},
- {id:'heal_l',cat:'heal',icon:'⚗️',name:'大補血瓶',price:100,desc:'對戰中使用：恢復 70% 生命',battle:{heal:.7}},
- {id:'revive',cat:'revive',icon:'🪶',name:'復活羽毛',price:250,desc:'進入對戰時自動帶上（用掉 1 個）：生命歸零時以 30% 生命復活一次',passive:true},
- {id:'speed_s',cat:'speed',icon:'💨',name:'疾風藥水',price:15,desc:'對戰中使用：本場速度 +30%（每場限用 1 次）',battle:{spd:.3}},
- {id:'exp_s',cat:'points',icon:'📘',name:'積分卡（小）',price:50,desc:'使用：經驗值 +100',fx:{exp:100}},
- {id:'exp_l',cat:'points',icon:'📚',name:'積分卡（大）',price:200,desc:'使用：經驗值 +500',fx:{exp:500}},
- {id:'forge',cat:'forge',icon:'🔨',name:'鍛造石',price:120,desc:'使用：選一件已擁有的裝備，鍛造等級 +1（數值 +10%，最高 +5）',fx:{forge:1}},
+ {id:'heal_s',cat:'heal',icon:'🧪',name:'小補血瓶',price:300,desc:'對戰中使用：恢復 30% 生命',battle:{heal:.3}},
+ {id:'heal_l',cat:'heal',icon:'⚗️',name:'大補血瓶',price:800,desc:'對戰中使用：恢復 70% 生命',battle:{heal:.7}},
+ {id:'revive',cat:'revive',icon:'🪶',name:'復活羽毛',price:1500,desc:'進入對戰時自動帶上（用掉 1 個）：生命歸零時以 30% 生命復活一次',passive:true},
+ {id:'revive_m',cat:'revive',icon:'💖',name:'戰場復活藥',price:800,desc:'闖關時城牆被打倒的瞬間可以使用：恢復 3 顆心繼續作答（每次闖關限用 1 瓶）',stageUse:true},
+ {id:'speed_s',cat:'speed',icon:'💨',name:'疾風藥水',price:600,desc:'對戰中使用：本場速度 +30%（每場限用 1 次）',battle:{spd:.3}},
+ {id:'mb_s',cat:'points',icon:'🏅',name:'戰功加成券',price:600,desc:'使用：接下來 3 次通關，戰功 +50%',fx:{mboost:3}},
+ {id:'exp_s',cat:'exp',icon:'📘',name:'經驗書（小）',price:500,desc:'使用：經驗值 +100',fx:{exp:100}},
+ {id:'exp_l',cat:'exp',icon:'📚',name:'經驗書（大）',price:2000,desc:'使用：經驗值 +500',fx:{exp:500}},
+ {id:'forge',cat:'forge',icon:'🔨',name:'鍛造石',price:1200,desc:'使用：選一件已擁有的裝備，鍛造等級 +1（數值 +10%，最高 +5）',fx:{forge:1}},
  {id:'body',cat:'body',icon:'🧬',name:'體質調整券',price:1000,desc:'使用：選一項天生體質（HP／ATK／DEF／SPD／MATK／MDEF），數值 +1',fx:{body:1}},
- {id:'reroll',cat:'equip',icon:'💎',name:'洗鍊石',price:300,desc:'使用：選一件已擁有的裝備，重新洗鍊它的基礎數值（結果隨機）',fx:{reroll:1}}
+ {id:'reroll',cat:'equip',icon:'💎',name:'洗鍊石',price:900,desc:'使用：選一件已擁有的裝備，重新洗鍊它的基礎數值（結果隨機）',fx:{reroll:1}}
 ];
 const SHOPMAP={};SHOP.forEach(x=>SHOPMAP[x.id]=x);
 const bagN=id=>((P._bag||{})[id])|0;
@@ -1286,24 +1387,45 @@ function applyAction(att,def,kind,move){
     if(it.battle.heal){const g=Math.max(0,Math.min(att.hpMax-att.hp,Math.round(att.hpMax*it.battle.heal)));att.hp+=g;return `${att.name} 使用「${it.name}」，恢復了 ${g} 點血！`}
     if(it.battle.spd){if(att.fast)return null;att.spd=Math.round(att.spd*(1+it.battle.spd));att.fast=true;return `${att.name} 使用「${it.name}」，速度提升 ${Math.round(it.battle.spd*100)}%！`}
     return null}
-  let line=applyAction0(att,def,kind,move);
+  let line;
+  if(kind=='skill')line=useSkill(att,def,move);
+  else if(att.triple&&kind=='normal'){att.triple=false;const ls=[0,1,2].map(()=>applyAction0(att,def,kind,move));line=ls.includes(null)?null:`⚡ ${att.name} 神速連擊！<br>`+ls.join('<br>')}
+  else line=applyAction0(att,def,kind,move);
   if(line!==null)[def,att].forEach(f=>{if(f.hp<=0&&f.revive){f.revive=false;f.hp=Math.round(f.hpMax*.3);line+=`<br>🪶 ${f.name} 的復活羽毛發動，以 30% 生命重新站起來！`}});
   return line}
+/* ===== 🔮 研發的招式在對戰中的效果 =====
+   速度數值：引擎的 1 點 ≈ 對戰速度的 3%；每場使用次數：普通 3、強力 2、傳說 1 */
+const RUSES={'普通':3,'強力':2,'傳說':1};
+const skillLeft=(f,x)=>(RUSES[x.r]||2)-((f.su||{})[x.c]||0);
+function packSkills(){return ((P._hero&&P._hero.skills)||[]).map(x=>({n:x.name,r:x.rarity,c:x.category,m:x.multiplier||0,t:x.type,s:x.selfSpeedPenalty||0,tp:x.targetSpeedPenalty||0,sm:x.speedMultiplier||0,sb:x.selfSpeedBonus||0}))}
+function useSkill(att,def,cat){
+  const x=(att.skills||[]).find(y=>y.c===cat);if(!x||skillLeft(att,x)<=0)return null;
+  att.su=att.su||{};att.su[cat]=(att.su[cat]||0)+1;
+  let dmg=0,extra='';
+  if(x.t==='damage')dmg=dealDamageLocal(att,def,(cat==='magic'?att.matk:att.atk)*x.m,cat==='magic');
+  else if(x.t==='speedAttack'){dmg=Math.max(1,Math.round(att.atk+att.spd*.5));def.hp-=dmg}
+  else if(x.t==='speedDamage'){dmg=Math.max(1,Math.round(att.spd*x.sm*.6));def.hp-=dmg}
+  else if(x.t==='speedBuff'){att.spd=Math.round(att.spd*(1+x.sb*.03));att.triple=true;return `${att.name} 使用${x.r}招式「${x.n}」，速度提升 ${x.sb*3}%，下一次普通攻擊會連擊 3 次！`}
+  else return null;
+  if(x.s){att.spd=Math.round(att.spd*(1-x.s*.03));extra+=`，自己速度下降 ${x.s*3}%`}
+  if(x.tp){def.spd=Math.round(def.spd*(1-x.tp*.03));extra+=`，${def.name} 速度下降 ${x.tp*3}%`}
+  return `${att.name} 使用${x.r}招式「${x.n}」${x.t.startsWith('speed')?'（無視防禦）':''}，對 ${def.name} 造成 ${dmg} 點傷害${extra}！`}
 function shopBuild(){
-  const g=P._gold||0;
-  $('#shop').innerHTML=`<h2 class="serif" style="margin:0 0 4px">🛒 商店</h2>🪙 金幣 <b>${g}</b>　<small>闖關每拿到 1 顆新星 = 20 金幣</small>`+
-  Object.keys(SHOPCAT).map(c=>`<h3 class="serif" style="margin:14px 0 4px">${SHOPCAT[c]}</h3>`+SHOP.filter(x=>x.cat===c).map(x=>`<div class="fighter" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><div style="flex:1;min-width:180px"><b>${x.icon} ${x.name}</b>　<small>已有 ${bagN(x.id)}</small><br><small>${x.desc}</small></div><button class="btn" data-buy="${x.id}" ${g<x.price?'disabled':''}>🪙 ${x.price} 購買</button></div>`).join('')).join('');
+  const g=P._merit||0;
+  $('#shop').innerHTML=`<h2 class="serif" style="margin:0 0 4px">🛒 商店</h2>🏅 戰功 <b>${g}</b>　<small>每次通關結算的戰功都會累積，可在這裡兌換道具</small>`+
+  Object.keys(SHOPCAT).map(c=>`<h3 class="serif" style="margin:14px 0 4px">${SHOPCAT[c]}</h3>`+SHOP.filter(x=>x.cat===c).map(x=>`<div class="fighter" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><div style="flex:1;min-width:180px"><b>${x.icon} ${x.name}</b>　<small>已有 ${bagN(x.id)}</small><br><small>${x.desc}</small></div><button class="btn" data-buy="${x.id}" ${g<x.price?'disabled':''}>🏅 ${x.price} 兌換</button></div>`).join('')).join('');
 }
 function bagBuild(){
   const L=SHOP.filter(x=>bagN(x.id)>0);
-  $('#bag').innerHTML=`<h2 class="serif" style="margin:0 0 4px">🎒 背包</h2>🪙 金幣 <b>${P._gold||0}</b>`+(L.length?L.map(x=>`<div class="fighter" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><div style="flex:1;min-width:180px"><b>${x.icon} ${x.name} ×${bagN(x.id)}</b><br><small>${x.desc}</small></div>${x.fx?`<button class="btn" data-use="${x.id}">使用</button>`:`<small>${x.passive?'對戰時自動帶上':'對戰中選「🎒 道具」使用'}</small>`}</div>`).join(''):'<p>背包是空的，到商店用金幣買些道具吧！</p>');
+  $('#bag').innerHTML=`<h2 class="serif" style="margin:0 0 4px">🎒 背包</h2>🏅 戰功 <b>${P._merit||0}</b>`+`<div class="fighter" style="margin:8px 0"><b>📦 寶箱 ×${(P._chests||[]).length}</b>　<button class="btn" data-chest="1">打開 1 個</button> <button class="btn" data-chest="all">全部打開</button><br><small>通關關卡會獲得寶箱；打開後隨機得到裝備碎片，同一品質集滿 ${FRAG_NEED} 片即可合成裝備</small></div>`+(L.length?L.map(x=>`<div class="fighter" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><div style="flex:1;min-width:180px"><b>${x.icon} ${x.name} ×${bagN(x.id)}</b><br><small>${x.desc}</small></div>${x.fx?`<button class="btn" data-use="${x.id}">使用</button>`:`<small>${x.stageUse?'闖關被打倒時會詢問是否使用':x.passive?'對戰時自動帶上':'對戰中選「🎒 道具」使用'}</small>`}</div>`).join(''):'<p>背包是空的，到商店用金幣買些道具吧！</p>');
 }
-$('#shop').onclick=e=>{const b=e.target.closest('[data-buy]');if(!b)return;const x=SHOPMAP[b.dataset.buy];if((P._gold||0)<x.price)return toast('🪙 金幣不夠');
-  P._gold-=x.price;bagAdd(x.id,1);toast(`🛒 買到了 ${x.icon} ${x.name}`);shopBuild()};
+$('#shop').onclick=e=>{const b=e.target.closest('[data-buy]');if(!b)return;const x=SHOPMAP[b.dataset.buy];if((P._merit||0)<x.price)return toast('🏅 戰功不夠，繼續闖關累積吧！');
+  P._merit-=x.price;bagAdd(x.id,1);dq('buy',1);toast(`🛒 兌換了 ${x.icon} ${x.name}`);shopBuild()};
 let PK=null;
 function pick(title,opts,cb){PK=cb;$('#gp').innerHTML=`<div class="card"><h2 class="serif" style="margin:0 0 8px;color:var(--bronze)">${title}</h2>${opts.map((o,i)=>`<button class="node" data-pk="${i}" style="display:block;width:100%;margin:6px 0;text-align:left">${o}</button>`).join('')}<div style="text-align:center"><button id="gp-x" class="btn">取消</button></div></div>`;$('#gp').classList.remove('hide')}
 const ownedEq=()=>ITEMS.map((_,i)=>i).filter(i=>qualityOf(i)&&!ITEMS[i].special);
-$('#bag').onclick=e=>{const b=e.target.closest('[data-use]');if(!b)return;const x=SHOPMAP[b.dataset.use];if(bagN(x.id)<1)return;
+$('#bag').onclick=e=>{const cb=e.target.closest('[data-chest]');if(cb)return chestOpen(cb.dataset.chest==='all');const b=e.target.closest('[data-use]');if(!b)return;const x=SHOPMAP[b.dataset.use];if(bagN(x.id)<1)return;
+  if(x.fx.mboost){bagAdd(x.id,-1);P._mboost=(P._mboost||0)+x.fx.mboost;save();toast(`🏅 接下來 ${P._mboost} 次通關戰功 +50%`);return bagBuild()}
   if(x.fx.exp){bagAdd(x.id,-1);P._exp=(P._exp||0)+x.fx.exp;save();toast(`📘 經驗值 +${x.fx.exp}`);renderHero();return bagBuild()}
   if(x.fx.body){if(!P._hero)return toast('請先建立角色');const ks=['HP','ATK','DEF','SPD','MATK','MDEF'];
     return pick('🧬 要調整哪一項天生體質？',ks.map(k=>`${k}　目前 ${P._hero.stats[k]} → ${P._hero.stats[k]+1}`),i=>{if(!consumeItem(x.id))return;P._hero.stats[ks[i]]+=1;save();toast(`🧬 ${ks[i]} +1`);render()})}
@@ -1340,7 +1462,7 @@ function maybeCreate(){if(P._hero)return;const box=$('#create');box.classList.re
     $('#cr-ok').onclick=()=>{box.classList.add('hide');box.innerHTML='';render()}}catch(err){$('#cr-msg').textContent=err.message}}}
 (()=>{const mb=$('#mutebtn'),mu=()=>{try{return localStorage.getItem('ms-mute')==='1'}catch(e){return false}};mb.textContent=mu()?'🔇':'🔊';
   mb.onclick=()=>{try{localStorage.setItem('ms-mute',mu()?'0':'1')}catch(e){}mb.textContent=mu()?'🔇':'🔊'}})();
-load();fillWho();show('home');startPendingListen();maybeCreate();
+load();meritInit();fragInit();fillWho();show('home');startPendingListen();maybeCreate();
 </script>
 </body>
 </html>

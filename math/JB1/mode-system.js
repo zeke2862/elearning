@@ -144,6 +144,29 @@
     });
   }
 
+  // 戰場復活藥：城牆被打倒（hearts<=0）、出現「查看戰報」時，多一顆復活按鈕；每次闖關限用 1 瓶
+  var rvLeft = parseInt(qp.get('rv') || '0', 10), rvUsed = false;
+  function setupRevive() {
+    var box = document.getElementById('say');
+    if (!rvLeft || !box || window.parent === window) return;
+    new MutationObserver(function () {
+      var nx = document.getElementById('nx');
+      if (!nx || rvUsed || nx.dataset.rv || typeof hearts === 'undefined' || hearts > 0) return;
+      nx.dataset.rv = '1';
+      var b = document.createElement('button');
+      b.className = 'btn'; b.id = 'rvbtn'; b.style.cssText = 'margin:8px 0 0 8px';
+      b.textContent = '🧪 使用戰場復活藥（剩 ' + rvLeft + '）';
+      b.onclick = function () { post({ type: 'use-item', id: 'revive_m' }); b.disabled = true; b.textContent = '復活中…'; };
+      nx.parentNode.appendChild(b);
+    }).observe(box, { childList: true, subtree: true });
+    window.addEventListener('message', function (e) {
+      var d = e.data || {};
+      if (d.type !== 'item-ok' || d.id !== 'revive_m') return;
+      rvUsed = true; rvLeft--; hearts = 3; if (typeof drawHearts === 'function') drawHearts();
+      var nx = document.getElementById('nx'), b = document.getElementById('rvbtn');
+      if (nx) nx.textContent = '下一題 ▶'; if (b) b.remove();
+    });
+  }
   // 連續失敗 2 次 → 練習建議（過關即歸零）
   function pityLine(o, ok) {
     try {
@@ -200,6 +223,7 @@
           };
         }
       }
+      setupRevive();
       var pm = qp.get('mode');
       if (pm && !S.flag && !lockMsg(pm)) { var pb = $('#modes .mode[data-m="' + pm + '"]'); if (pb) pb.click(); }
       refresh();
