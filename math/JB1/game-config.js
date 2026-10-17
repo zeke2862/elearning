@@ -378,7 +378,9 @@ window.GAME_CONFIG_DEFAULT = {
    "desc": "對戰中使用：恢復 30% 生命",
    "battle": {
     "heal": 0.3
-   }
+   },
+   "daily": 10,
+   "file": "potion-heal-small"
   },
   {
    "id": "heal_l",
@@ -389,7 +391,9 @@ window.GAME_CONFIG_DEFAULT = {
    "desc": "對戰中使用：恢復 70% 生命",
    "battle": {
     "heal": 0.7
-   }
+   },
+   "daily": 3,
+   "file": "potion-heal-large"
   },
   {
    "id": "revive",
@@ -398,7 +402,9 @@ window.GAME_CONFIG_DEFAULT = {
    "name": "復活羽毛",
    "price": 3000,
    "desc": "進入對戰時自動帶上（用掉 1 個）：生命歸零時以 30% 生命復活一次",
-   "passive": true
+   "passive": true,
+   "daily": 1,
+   "file": "feather-revive"
   },
   {
    "id": "revive_m",
@@ -407,7 +413,9 @@ window.GAME_CONFIG_DEFAULT = {
    "name": "戰場復活藥",
    "price": 800,
    "desc": "闖關時城牆被打倒的瞬間可以使用：恢復 3 顆心繼續作答（每次闖關限用 1 瓶）",
-   "stageUse": true
+   "stageUse": true,
+   "daily": 3,
+   "file": "potion-revive"
   },
   {
    "id": "speed_s",
@@ -418,7 +426,9 @@ window.GAME_CONFIG_DEFAULT = {
    "desc": "對戰中使用：本場速度 +30%（每場限用 1 次）",
    "battle": {
     "spd": 0.3
-   }
+   },
+   "daily": 5,
+   "file": "potion-speed"
   },
   {
    "id": "mb_s",
@@ -429,7 +439,9 @@ window.GAME_CONFIG_DEFAULT = {
    "desc": "使用：接下來 3 次通關，戰功 +50%",
    "fx": {
     "mboost": 3
-   }
+   },
+   "daily": 3,
+   "file": "ticket-merit-small"
   },
   {
    "id": "exp_s",
@@ -440,7 +452,9 @@ window.GAME_CONFIG_DEFAULT = {
    "desc": "使用：經驗值 +100",
    "fx": {
     "exp": 100
-   }
+   },
+   "daily": 5,
+   "file": "book-exp-small"
   },
   {
    "id": "exp_l",
@@ -451,7 +465,9 @@ window.GAME_CONFIG_DEFAULT = {
    "desc": "使用：經驗值 +500",
    "fx": {
     "exp": 500
-   }
+   },
+   "daily": 2,
+   "file": "book-exp-large"
   },
   {
    "id": "forge",
@@ -462,7 +478,9 @@ window.GAME_CONFIG_DEFAULT = {
    "desc": "使用：選一件已擁有的裝備，鍛造等級 +1（數值 +10%，最高 +5）",
    "fx": {
     "forge": 1
-   }
+   },
+   "daily": 3,
+   "file": "stone-forge"
   },
   {
    "id": "body",
@@ -473,7 +491,9 @@ window.GAME_CONFIG_DEFAULT = {
    "desc": "使用：選一項天生體質（HP／ATK／DEF／SPD／MATK／MDEF），數值 +1",
    "fx": {
     "body": 1
-   }
+   },
+   "daily": 1,
+   "file": "ticket-body"
   },
   {
    "id": "reroll",
@@ -484,9 +504,642 @@ window.GAME_CONFIG_DEFAULT = {
    "desc": "使用：選一件已擁有的裝備，重新洗鍊它的基礎數值（結果隨機）",
    "fx": {
     "reroll": 1
+   },
+   "daily": 2,
+   "file": "stone-reroll"
+  },
+  {
+   "id": "heal_m",
+   "cat": "heal",
+   "icon": "🍶",
+   "name": "中補血瓶",
+   "price": 500,
+   "desc": "對戰中使用：恢復 50% 生命（每場最多喝 3 瓶血）",
+   "battle": {
+    "heal": 0.5
+   },
+   "daily": 6,
+   "file": "potion-heal-medium"
+  },
+  {
+   "id": "shield_s",
+   "cat": "shield",
+   "icon": "🛡️",
+   "name": "小護盾",
+   "price": 500,
+   "desc": "對戰中使用：擋下對方的下 1 次攻擊（傷害變 0）",
+   "battle": {
+    "shield": 1
+   },
+   "daily": 5,
+   "file": "shield-small"
+  },
+  {
+   "id": "shield_m",
+   "cat": "shield",
+   "icon": "🔰",
+   "name": "中護盾",
+   "price": 900,
+   "desc": "對戰中使用：擋下對方的下 2 次攻擊",
+   "battle": {
+    "shield": 2
+   },
+   "daily": 3,
+   "file": "shield-medium"
+  },
+  {
+   "id": "shield_l",
+   "cat": "shield",
+   "icon": "🏰",
+   "name": "城牆護盾",
+   "price": 1300,
+   "desc": "對戰中使用：擋下對方的下 3 次攻擊",
+   "battle": {
+    "shield": 3
+   },
+   "daily": 2,
+   "file": "shield-castle"
+  },
+  {
+   "id": "mb_l",
+   "cat": "points",
+   "icon": "🎖️",
+   "name": "戰功加成券（大）",
+   "price": 1000,
+   "desc": "使用：接下來 6 次通關，戰功 +50%（每天限買 1 張，避免衝爆排行榜）",
+   "fx": {
+    "mboost": 6
+   },
+   "daily": 1,
+   "file": "ticket-merit-large"
+  },
+  {
+   "id": "ttl_1",
+   "cat": "title",
+   "icon": "📝",
+   "name": "數學學徒",
+   "price": 1500,
+   "desc": "稱號：顯示在角色名稱前面",
+   "cos": {
+    "slot": "title",
+    "text": "數學學徒"
+   },
+   "file": "title-apprentice"
+  },
+  {
+   "id": "ttl_2",
+   "cat": "title",
+   "icon": "🧮",
+   "name": "計算能手",
+   "price": 3000,
+   "desc": "稱號：顯示在角色名稱前面",
+   "cos": {
+    "slot": "title",
+    "text": "計算能手"
+   },
+   "file": "title-calculator"
+  },
+  {
+   "id": "ttl_3",
+   "cat": "title",
+   "icon": "🏹",
+   "name": "因數獵人",
+   "price": 4000,
+   "desc": "稱號：顯示在角色名稱前面",
+   "cos": {
+    "slot": "title",
+    "text": "因數獵人"
+   },
+   "file": "title-factor-hunter"
+  },
+  {
+   "id": "ttl_4",
+   "cat": "title",
+   "icon": "💠",
+   "name": "質數守護者",
+   "price": 5000,
+   "desc": "稱號：顯示在角色名稱前面",
+   "cos": {
+    "slot": "title",
+    "text": "質數守護者"
+   },
+   "file": "title-prime-guardian"
+  },
+  {
+   "id": "ttl_5",
+   "cat": "title",
+   "icon": "🥁",
+   "name": "韓信再世",
+   "price": 8000,
+   "desc": "稱號：顯示在角色名稱前面",
+   "cos": {
+    "slot": "title",
+    "text": "韓信再世"
+   },
+   "file": "title-han-xin"
+  },
+  {
+   "id": "ttl_6",
+   "cat": "title",
+   "icon": "🔮",
+   "name": "代數賢者",
+   "price": 12000,
+   "desc": "稱號：顯示在角色名稱前面",
+   "cos": {
+    "slot": "title",
+    "text": "代數賢者"
+   },
+   "file": "title-algebra-sage"
+  },
+  {
+   "id": "frm_1",
+   "cat": "frame",
+   "icon": "🟤",
+   "name": "青銅光環",
+   "price": 2000,
+   "desc": "頭像框：角色頭像外圍的光環",
+   "cos": {
+    "slot": "frame",
+    "color": "#d2a24c",
+    "glow": 8
+   },
+   "file": "frame-bronze"
+  },
+  {
+   "id": "frm_2",
+   "cat": "frame",
+   "icon": "🟢",
+   "name": "翡翠光環",
+   "price": 2500,
+   "desc": "頭像框：角色頭像外圍的光環",
+   "cos": {
+    "slot": "frame",
+    "color": "#43e0a8",
+    "glow": 12
+   },
+   "file": "frame-jade"
+  },
+  {
+   "id": "frm_3",
+   "cat": "frame",
+   "icon": "🔵",
+   "name": "冰藍光環",
+   "price": 4000,
+   "desc": "頭像框：角色頭像外圍的光環",
+   "cos": {
+    "slot": "frame",
+    "color": "#6ad0ff",
+    "glow": 14
+   },
+   "file": "frame-ice"
+  },
+  {
+   "id": "frm_4",
+   "cat": "frame",
+   "icon": "🔴",
+   "name": "赤焰光環",
+   "price": 4000,
+   "desc": "頭像框：角色頭像外圍的光環",
+   "cos": {
+    "slot": "frame",
+    "color": "#ff6a3d",
+    "glow": 14
+   },
+   "file": "frame-flame"
+  },
+  {
+   "id": "frm_5",
+   "cat": "frame",
+   "icon": "🟣",
+   "name": "紫電光環",
+   "price": 6000,
+   "desc": "頭像框：角色頭像外圍的光環",
+   "cos": {
+    "slot": "frame",
+    "color": "#b07cff",
+    "glow": 18
+   },
+   "file": "frame-thunder"
+  },
+  {
+   "id": "frm_6",
+   "cat": "frame",
+   "icon": "🌟",
+   "name": "傳說金光",
+   "price": 8000,
+   "desc": "頭像框：最閃亮的金色光環",
+   "cos": {
+    "slot": "frame",
+    "color": "#ffd84a",
+    "glow": 24
+   },
+   "file": "frame-legend"
+  },
+  {
+   "id": "acc_4",
+   "cat": "acc",
+   "icon": "🐱",
+   "name": "貓咪夥伴",
+   "price": 3000,
+   "desc": "夥伴：站在勇者旁邊的陪在你身邊的小貓",
+   "cos": {
+    "slot": "acc",
+    "emoji": "🐱",
+    "pet": true
+   },
+   "file": "pet-cat"
+  },
+  {
+   "id": "acc_5",
+   "cat": "acc",
+   "icon": "🦉",
+   "name": "貓頭鷹博士",
+   "price": 5000,
+   "desc": "夥伴：站在勇者旁邊的聰明的貓頭鷹博士",
+   "cos": {
+    "slot": "acc",
+    "emoji": "🦉",
+    "pet": true
+   },
+   "file": "pet-owl"
+  },
+  {
+   "id": "acc_8",
+   "cat": "acc",
+   "icon": "🐉",
+   "name": "小龍夥伴",
+   "price": 9000,
+   "desc": "夥伴：站在勇者旁邊的會噴小火花的小龍",
+   "cos": {
+    "slot": "acc",
+    "emoji": "🐉",
+    "pet": true
+   },
+   "file": "pet-dragon"
+  },
+  {
+   "id": "rename",
+   "cat": "rename",
+   "icon": "🪪",
+   "name": "改名卡",
+   "price": 2000,
+   "desc": "使用：幫角色改一個新名字（最多 8 個字，不能使用不雅字眼）",
+   "fx": {
+    "rename": 1
+   },
+   "file": "card-rename"
+  },
+  {
+   "id": "th_sea",
+   "cat": "theme",
+   "icon": "🏖️",
+   "name": "海邊小屋",
+   "price": 4000,
+   "desc": "小屋主題：把大廳換成明亮的海邊小屋（到背包切換）",
+   "cos": {
+    "slot": "theme",
+    "wall": "#bfe6f2",
+    "wall2": "#8fcbe0",
+    "floor": "#f1d9a0",
+    "floor2": "#d9b56a",
+    "rail": "#b07a3c"
+   },
+   "file": "theme-seaside"
+  },
+  {
+   "id": "th_star",
+   "cat": "theme",
+   "icon": "🌌",
+   "name": "星空閣樓",
+   "price": 8000,
+   "desc": "小屋主題：把大廳換成滿天星斗的閣樓",
+   "cos": {
+    "slot": "theme",
+    "wall": "#2a2f6b",
+    "wall2": "#171a45",
+    "floor": "#6a5240",
+    "floor2": "#3d2e24",
+    "rail": "#8a6a3a"
+   },
+   "file": "theme-starry-attic"
+  },
+  {
+   "id": "th_snow",
+   "cat": "theme",
+   "icon": "❄️",
+   "name": "雪夜暖屋",
+   "price": 8000,
+   "desc": "小屋主題：把大廳換成溫暖的雪夜木屋",
+   "cos": {
+    "slot": "theme",
+    "wall": "#e3ecf6",
+    "wall2": "#b8c8dc",
+    "floor": "#b5834f",
+    "floor2": "#7e5233",
+    "rail": "#6b4426"
+   },
+   "file": "theme-snow-cabin"
+  },
+  {
+   "id": "th_magic",
+   "cat": "theme",
+   "icon": "🔮",
+   "name": "魔法書房",
+   "price": 15000,
+   "desc": "小屋主題：把大廳換成神祕的魔法書房",
+   "cos": {
+    "slot": "theme",
+    "wall": "#5a2f6d",
+    "wall2": "#3a1c4a",
+    "floor": "#74502f",
+    "floor2": "#4a3220",
+    "rail": "#b8863a"
+   },
+   "file": "theme-magic-study"
+  },
+  {
+   "id": "dc_1",
+   "cat": "decor",
+   "icon": "🪴",
+   "name": "盆栽",
+   "price": 1500,
+   "desc": "房間飾品：買了就會擺在大廳裡",
+   "cos": {
+    "slot": "decor",
+    "emoji": "🪴",
+    "x": 8,
+    "y": 25,
+    "size": 9
+   },
+   "file": "decor-plant"
+  },
+  {
+   "id": "dc_2",
+   "cat": "decor",
+   "icon": "🎐",
+   "name": "風鈴",
+   "price": 2000,
+   "desc": "房間飾品：掛在大廳的牆上",
+   "cos": {
+    "slot": "decor",
+    "emoji": "🎐",
+    "x": 88,
+    "y": 64,
+    "size": 6,
+    "onWall": true
+   },
+   "file": "decor-windchime"
+  },
+  {
+   "id": "dc_3",
+   "cat": "decor",
+   "icon": "🏮",
+   "name": "紅燈籠",
+   "price": 2500,
+   "desc": "房間飾品：掛在大廳的牆上",
+   "cos": {
+    "slot": "decor",
+    "emoji": "🏮",
+    "x": 72,
+    "y": 62,
+    "size": 7,
+    "onWall": true
+   },
+   "file": "decor-lantern"
+  },
+  {
+   "id": "dc_4",
+   "cat": "decor",
+   "icon": "📚",
+   "name": "書堆",
+   "price": 3000,
+   "desc": "房間飾品：買了就會擺在大廳裡",
+   "cos": {
+    "slot": "decor",
+    "emoji": "📚",
+    "x": 80,
+    "y": 25,
+    "size": 8
+   },
+   "file": "decor-books"
+  },
+  {
+   "id": "dc_5",
+   "cat": "decor",
+   "icon": "🧸",
+   "name": "玩偶",
+   "price": 3500,
+   "desc": "房間飾品：買了就會擺在大廳裡",
+   "cos": {
+    "slot": "decor",
+    "emoji": "🧸",
+    "x": 64,
+    "y": 25,
+    "size": 7
+   },
+   "file": "decor-plush"
+  },
+  {
+   "id": "dc_6",
+   "cat": "decor",
+   "icon": "🖼️",
+   "name": "掛畫",
+   "price": 5000,
+   "desc": "房間飾品：掛在大廳的牆上",
+   "cos": {
+    "slot": "decor",
+    "emoji": "🖼️",
+    "x": 18,
+    "y": 58,
+    "size": 10,
+    "onWall": true
+   },
+   "file": "decor-painting"
+  },
+  {
+   "id": "dc_7",
+   "cat": "decor",
+   "icon": "🕰️",
+   "name": "古董時鐘",
+   "price": 6000,
+   "desc": "房間飾品：掛在大廳的牆上",
+   "cos": {
+    "slot": "decor",
+    "emoji": "🕰️",
+    "x": 50,
+    "y": 66,
+    "size": 8,
+    "onWall": true
+   },
+   "file": "decor-clock"
+  },
+  {
+   "id": "dc_8",
+   "cat": "decor",
+   "icon": "🏆",
+   "name": "數學獎盃",
+   "price": 8000,
+   "desc": "房間飾品：擺在大廳裡，閃閃發亮",
+   "cos": {
+    "slot": "decor",
+    "emoji": "🏆",
+    "x": 91,
+    "y": 27,
+    "size": 7
+   },
+   "file": "decor-trophy"
+  },
+  {
+   "id": "bk_1",
+   "cat": "back",
+   "icon": "🪽",
+   "name": "光之翅膀",
+   "price": 6000,
+   "desc": "背後特效：在勇者背後展開光之翅膀（放在人物後面，不會蓋住人物）",
+   "file": "wings-light",
+   "cos": {
+    "slot": "back",
+    "kind": "wings",
+    "c1": "#ffffff",
+    "c2": "#ffe08a"
+   }
+  },
+  {
+   "id": "bk_2",
+   "cat": "back",
+   "icon": "🦇",
+   "name": "暗影之翼",
+   "price": 9000,
+   "desc": "背後特效：在勇者背後展開暗影之翼",
+   "file": "wings-shadow",
+   "cos": {
+    "slot": "back",
+    "kind": "wings",
+    "c1": "#b07cff",
+    "c2": "#2a1650"
+   }
+  },
+  {
+   "id": "bk_3",
+   "cat": "back",
+   "icon": "😇",
+   "name": "神聖光輪",
+   "price": 4000,
+   "desc": "背後特效：勇者身後散發金色光輪",
+   "file": "halo-holy",
+   "cos": {
+    "slot": "back",
+    "kind": "halo",
+    "c1": "#ffd86b",
+    "c2": "#fff3c0"
+   }
+  },
+  {
+   "id": "ft_1",
+   "cat": "feet",
+   "icon": "🔵",
+   "name": "青色魔法陣",
+   "price": 3000,
+   "desc": "腳下特效：腳下浮現旋轉的魔法陣",
+   "file": "circle-cyan",
+   "cos": {
+    "slot": "feet",
+    "color": "#4fe0ff"
+   }
+  },
+  {
+   "id": "ft_2",
+   "cat": "feet",
+   "icon": "🟡",
+   "name": "金色魔法陣",
+   "price": 6000,
+   "desc": "腳下特效：腳下浮現旋轉的魔法陣",
+   "file": "circle-gold",
+   "cos": {
+    "slot": "feet",
+    "color": "#ffd24a"
+   }
+  },
+  {
+   "id": "ft_3",
+   "cat": "feet",
+   "icon": "🔴",
+   "name": "紅蓮魔法陣",
+   "price": 9000,
+   "desc": "腳下特效：腳下浮現旋轉的魔法陣",
+   "file": "circle-crimson",
+   "cos": {
+    "slot": "feet",
+    "color": "#ff5a4a"
+   }
+  },
+  {
+   "id": "ob_1",
+   "cat": "orbit",
+   "icon": "🧚",
+   "name": "小精靈",
+   "price": 3500,
+   "desc": "環繞特效：一隻小精靈繞著勇者飛",
+   "file": "orbit-fairy",
+   "cos": {
+    "slot": "orbit",
+    "emoji": "🧚",
+    "n": 1
+   }
+  },
+  {
+   "id": "ob_2",
+   "cat": "orbit",
+   "icon": "🔮",
+   "name": "魔法水晶",
+   "price": 5000,
+   "desc": "環繞特效：三顆魔法水晶繞著勇者旋轉",
+   "file": "orbit-crystal",
+   "cos": {
+    "slot": "orbit",
+    "emoji": "🔮",
+    "n": 3
+   }
+  },
+  {
+   "id": "ob_3",
+   "cat": "orbit",
+   "icon": "🦋",
+   "name": "飛舞蝴蝶",
+   "price": 4000,
+   "desc": "環繞特效：兩隻蝴蝶繞著勇者飛舞",
+   "file": "orbit-butterfly",
+   "cos": {
+    "slot": "orbit",
+    "emoji": "🦋",
+    "n": 2
    }
   }
- ]
+ ],
+ "shopRules": {
+  "bagCap": 30,
+  "maxHealPerDuel": 3,
+  "nameMaxLen": 8,
+  "badWords": [
+   "幹",
+   "靠北",
+   "白痴",
+   "智障",
+   "垃圾",
+   "去死",
+   "三小",
+   "屁",
+   "屎",
+   "幹你娘",
+   "操",
+   "fuck",
+   "shit"
+  ],
+  "starterGift": {
+   "heal_s": 2,
+   "shield_s": 1
+  }
+ }
 };
 window.GAME_CONFIG_LABELS = {
  "stars": "⭐ 星數標準",
@@ -646,7 +1299,37 @@ window.GAME_CONFIG_LABELS = {
  "proRatio.聖騎士": "聖騎士",
  "proRatio.刺客": "刺客",
  "proRatio.狂戰士": "狂戰士",
- "proRatio.大魔導士": "大魔導士"
+ "proRatio.大魔導士": "大魔導士",
+ "shopRules": "🛒 商店規則",
+ "shopRules.bagCap": "每種消耗品的持有上限（買到這個數量就不能再買）",
+ "shopRules.maxHealPerDuel": "每場對戰最多可以喝幾瓶補血瓶",
+ "shopRules.nameMaxLen": "改名卡：名字最多幾個字",
+ "shopRules.badWords": "改名卡：不能使用的字眼（含有就不能改名）",
+ "shop[].daily": "每日限購（每人每天最多買幾個，空白＝不限）",
+ "shop[].cos": "外觀資料（稱號／頭像框／飾品，請勿改欄位名稱）",
+ "shop[].cos.slot": "外觀欄位代號（請勿改）",
+ "shop[].cos.text": "稱號文字",
+ "shop[].cos.color": "顏色",
+ "shop[].cos.glow": "頭像框光暈大小",
+ "shop[].cos.emoji": "飾品圖示",
+ "shop[].battle.shield": "護盾可擋下幾次攻擊",
+ "shop[].fx.rename": "改名（1＝啟用）",
+ "shopRules.starterGift": "🎁 新手禮（第一次通關送的道具：道具代號與數量）",
+ "shop[].cos.onWall": "掛在牆上（true／false）",
+ "shop[].cos.wall": "小屋牆面顏色（上）",
+ "shop[].cos.wall2": "小屋牆面顏色（下）",
+ "shop[].cos.floor": "小屋地板顏色（上）",
+ "shop[].cos.floor2": "小屋地板顏色（下）",
+ "shop[].cos.rail": "小屋牆腳木板顏色",
+ "shop[].cos.x": "飾品位置：左右（0～100）",
+ "shop[].cos.y": "飾品位置：離地高度（0～100）",
+ "shop[].cos.size": "飾品大小",
+ "shop[].cos.pet": "夥伴（true＝站在勇者旁邊）",
+ "shop[].file": "圖片檔名（不含 .png；商店圖放 images/shop/，大廳圖放 images/lobby/，兩邊同名）",
+ "shop[].cos.kind": "背後特效種類（wings 翅膀／halo 光輪）",
+ "shop[].cos.c1": "特效顏色 1",
+ "shop[].cos.c2": "特效顏色 2",
+ "shop[].cos.n": "環繞的數量"
 };
 window.GAME_CONFIG_BOOT = function () {
   function merge(a, b) {
