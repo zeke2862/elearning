@@ -41,7 +41,7 @@ button:focus-visible{outline:3px solid var(--bronze);outline-offset:2px}
 #ov{position:fixed;inset:0;background:var(--ink);z-index:50}
 #fr{width:100%;height:100%;border:0}
 #x{position:absolute;top:8px;right:10px;z-index:60;background:#0008;border:2px solid var(--line);border-radius:8px;padding:2px 10px}
-#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--bronze);color:#2a1d05;padding:12px 20px;border-radius:10px;font-weight:700;z-index:100;text-align:center;max-width:90vw;line-height:1.6}
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--bronze);color:#2a1d05;padding:12px 20px;border-radius:10px;font-weight:700;z-index:130;text-align:center;max-width:90vw;line-height:1.6}
 .enode{min-height:84px}
 .enode.done{border-color:#c9a13b}
 .rule{margin-top:12px;line-height:1.8;font-size:.92rem}
@@ -74,6 +74,14 @@ button:focus-visible{outline:3px solid var(--bronze);outline-offset:2px}
 .av-acc{position:absolute;right:-8px;bottom:-8px;font-size:1.5rem;background:var(--ink);border:2px solid var(--line);border-radius:50%;width:34px;height:34px;display:flex;align-items:center;justify-content:center;line-height:1}
 .ttl{color:var(--bronze);font-weight:700}
 /* ===== 🏡 大廳（玩家與休息區）===== */
+.trial{position:fixed;inset:0;z-index:120;background:#0b0e22ea;display:flex;align-items:center;justify-content:center;padding:12px;overflow:auto}
+.trial .tbox{width:min(96vw,720px);display:flex;flex-direction:column;gap:8px}
+.trial .tt{font-weight:800;font-size:1.1rem;color:var(--bronze);text-align:center}
+.trial .lb-dock,.trial .lb-gift,.trial p.tiny{display:none}
+.trial .tbar{height:12px;border-radius:8px;background:#ffffff22;overflow:hidden}.trial .tbar i{display:block;height:100%;width:100%;background:linear-gradient(90deg,#ffd24a,#ff8a3d)}
+.trial .tt2{text-align:center}.trial .ask{background:#1a1f3d;border:2px solid var(--bronze);border-radius:16px;padding:18px;text-align:center;max-width:420px;margin:auto}
+.trial .ask .big{font-size:3rem;line-height:1.2}.trial .ask .btn{margin:4px}
+.tryb{margin-left:4px}
 .lobby{position:relative;width:100%;aspect-ratio:16/9;min-height:340px;border-radius:18px;overflow:hidden;border:3px solid #6b4426;box-shadow:0 6px 18px #0008;container-type:inline-size;user-select:none;
   --w1:#d9e6bd;--w2:#bcd29a;--f1:#ecb866;--f2:#c98a3e;--rail:#8a5a2b}
 .lb-wall{position:absolute;left:0;right:0;top:0;height:58%;background:linear-gradient(var(--w1),var(--w2))}
@@ -86,13 +94,19 @@ button:focus-visible{outline:3px solid var(--bronze);outline-offset:2px}
 .lb-d .icon-wrap,.lb-pet .icon-wrap{width:100%;height:100%}
 .lb-d img,.lb-pet img{width:100%;height:100%;object-fit:contain}
 .lb-d .emoji-fb,.lb-pet .emoji-fb{width:100%;height:100%;align-items:center;justify-content:center;line-height:1}
-.lb-hero{position:absolute;left:30%;bottom:23%;height:54%;transform:translateX(-50%);z-index:3;cursor:pointer}
+.lb-hero{position:absolute;left:30%;bottom:5%;height:56%;transform:translateX(-50%);z-index:3;cursor:pointer}
 .lb-hero::after{content:'';position:absolute;left:12%;right:12%;bottom:-3%;height:7%;background:radial-gradient(ellipse,#0007,transparent 70%);z-index:-1}
 /* 人物圖完整顯示（不裁切、不變形） */
 .lb-hero{display:flex;align-items:flex-end;justify-content:center}
 .lb-hero>img{position:relative;z-index:1;height:100%;width:auto;max-width:none;object-fit:contain;display:block;animation:lbBreath 3.2s ease-in-out infinite;transform-origin:50% 100%}
 .lb-back{position:absolute;left:50%;bottom:16%;height:82%;aspect-ratio:2/1;transform:translateX(-50%);z-index:0;pointer-events:none;animation:wingFlap 3.6s ease-in-out infinite;transform-origin:50% 70%}
 .lb-back.halo{height:100%;bottom:2%;aspect-ratio:1}
+.lb-back.halo{bottom:auto;height:auto;width:50%;aspect-ratio:2/1;z-index:2;transform:none;margin-left:-25%;margin-top:-8.5%;animation:haloFloat 3.2s ease-in-out infinite}
+.lb-back.halo .fx-img{filter:drop-shadow(0 0 10px #ffe9a0)}
+.lb-back.halo .fx-halo{inset:8% 19% 26% 19%;background:none;border:.8cqw solid var(--c1);box-shadow:0 0 1.8cqw var(--c2),inset 0 0 1.2cqw var(--c2);animation:none}
+@keyframes haloFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+.lb-orbit.b{z-index:0;clip-path:inset(-60% -60% 54% -60%)}
+.lb-orbit.f{z-index:2;clip-path:inset(46% -60% -60% -60%)}
 .lb-back .fx-svg,.lb-back .fx-img{width:100%;height:100%;display:block;object-fit:contain;filter:drop-shadow(0 3px 5px #0007)}
 .fx-halo{position:absolute;inset:6% 6% 30% 6%;border-radius:50%;background:radial-gradient(circle,#0000 0 38%,var(--c1) 46%,var(--c2) 52%,#0000 72%);opacity:.8;animation:haloPulse 3s ease-in-out infinite}
 @keyframes wingFlap{50%{transform:translateX(-50%) scale(1.04,.97)}}
@@ -109,28 +123,35 @@ button:focus-visible{outline:3px solid var(--bronze);outline-offset:2px}
 @keyframes orbUn{from{transform:translate(-50%,-50%) rotate(0) scaleY(2.78)}to{transform:translate(-50%,-50%) rotate(-360deg) scaleY(2.78)}}
 .lb-emo2{font-size:22cqw;line-height:1}
 @keyframes lbBreath{50%{transform:scaleY(1.025)}}
-.lb-pet{position:absolute;left:58%;bottom:24%;width:14cqw;height:14cqw;transform:translateX(-50%);z-index:3;cursor:pointer;animation:lbHop 2.4s ease-in-out infinite}
+.lb-pet{position:absolute;left:58%;bottom:5%;width:14cqw;height:14cqw;transform:translateX(-50%);z-index:3;cursor:pointer;animation:lbHop 2.4s ease-in-out infinite}
 .lb-pet .emoji-fb{font-size:11cqw}
 @keyframes lbHop{0%,70%,100%{transform:translateX(-50%)}80%{transform:translateX(-50%) translateY(-8%)}90%{transform:translateX(-50%)}}
-.lb-wear{position:absolute;left:calc(30% + 12cqw);bottom:60%;font-size:6cqw;line-height:1;background:#fff8e6e0;border:2px solid #b9792f;border-radius:50%;width:9cqw;height:9cqw;display:flex;align-items:center;justify-content:center;z-index:4;box-shadow:0 2px 6px #0006}
+.lb-wear{position:absolute;left:calc(30% + 12cqw);bottom:58%;font-size:6cqw;line-height:1;background:#fff8e6e0;border:2px solid #b9792f;border-radius:50%;width:9cqw;height:9cqw;display:flex;align-items:center;justify-content:center;z-index:4;box-shadow:0 2px 6px #0006}
 .lb-plate{position:absolute;left:2.5%;top:3%;max-width:62%;background:#1c1208c8;border:2px solid #e3b866;border-radius:12px;padding:6px 12px;font-size:clamp(12px,2.2cqw,16px);line-height:1.5;z-index:5;color:#fff6df}
 .lb-plate .ttl{color:#ffd86b}
 .lb-merit{position:absolute;right:2.5%;top:3%;background:#1c1208c8;border:2px solid #e3b866;border-radius:20px;padding:4px 12px;font-size:clamp(12px,2.2cqw,16px);z-index:5;color:#fff6df}
 .lb-gift{position:absolute;right:2.5%;top:calc(3% + 42px);background:#d24a33;border:2px solid #ffd7c8;border-radius:14px;padding:3px 12px;font-size:clamp(11px,2cqw,14px);z-index:5;color:#fff;animation:lbPulse 1.6s infinite}
 @keyframes lbPulse{50%{transform:scale(1.05)}}
-.lb-say{position:absolute;left:30%;bottom:78%;transform:translateX(-50%);background:#fffaf0;color:#4a2a0c;border:3px solid #b9792f;border-radius:14px;padding:6px 12px;font-weight:700;font-size:clamp(12px,2.4cqw,16px);z-index:6;white-space:nowrap;display:none}
+.lb-say{position:absolute;left:30%;bottom:64%;transform:translateX(-50%);background:#fffaf0;color:#4a2a0c;border:3px solid #b9792f;border-radius:14px;padding:6px 12px;font-weight:700;font-size:clamp(12px,2.4cqw,16px);z-index:6;white-space:nowrap;display:none}
 .lb-say.on{display:block;animation:lbPop .25s}
 @keyframes lbPop{from{transform:translateX(-50%) scale(.6);opacity:0}}
-.lb-dock{position:absolute;left:0;right:0;bottom:1.5%;display:flex;justify-content:center;align-items:flex-end;gap:clamp(3px,1.4cqw,14px);padding:0 4px;z-index:7}
-.lb-c{position:relative;width:clamp(48px,10.5cqw,86px);height:clamp(48px,10.5cqw,86px);border-radius:50%;border:3px solid #fff3d6;background:radial-gradient(circle at 50% 30%,#fffaf0,#f4d79b);box-shadow:0 0 0 2px #b9792f,0 5px 9px #0007;color:#4a2a0c;font-weight:700;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:clamp(10px,2.1cqw,14px);line-height:1.15;padding:0}
-.lb-c.big{width:clamp(60px,13.5cqw,108px);height:clamp(60px,13.5cqw,108px);font-size:clamp(11px,2.5cqw,16px)}
-.lb-c:hover{transform:translateY(-3px);border-color:#ffd86b}
-.lb-c .ic-ui{width:clamp(20px,4.6cqw,38px);height:clamp(20px,4.6cqw,38px)}
-.lb-c .big-ic .ic-ui{width:clamp(26px,6cqw,50px);height:clamp(26px,6cqw,50px)}
+.lb-dock{position:absolute;right:1.5%;top:11%;display:flex;flex-direction:column;align-items:center;gap:4px;z-index:7}
+.lb-menu{display:none;flex-direction:column;align-items:center;gap:clamp(3px,.5cqw,5px)}
+.lb-dock.open .lb-menu{display:flex;animation:lbMenu .22s ease-out}
+@keyframes lbMenu{from{opacity:0;transform:translateY(-8px)}}
+.lb-tg{position:relative;width:clamp(36px,4.9cqw,50px);height:clamp(36px,4.9cqw,50px);border-radius:50%;border:3px solid #fff3d6;background:radial-gradient(circle at 50% 30%,#fffaf0,#f4d79b);box-shadow:0 0 0 2px #b9792f,0 4px 8px #0007;color:#4a2a0c;font-weight:800;font-size:clamp(9px,1.7cqw,12px);line-height:1.1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0;cursor:pointer}
+.lb-tg b{font-size:clamp(14px,2.6cqw,20px);line-height:1}
+.lb-tg i{position:absolute;top:-3px;right:-3px;background:var(--red);border:2px solid #fff;border-radius:50%;width:12px;height:12px;padding:0}
+.lb-dock.open .lb-tg i{display:none}
+.lb-c{position:relative;width:clamp(34px,4.6cqw,48px);height:clamp(34px,4.6cqw,48px);border-radius:50%;border:2px solid #fff3d6;background:radial-gradient(circle at 50% 30%,#fffaf0,#f4d79b);box-shadow:0 0 0 2px #b9792f,0 3px 7px #0007;color:#4a2a0c;font-weight:700;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:clamp(8px,1.45cqw,11px);line-height:1.05;padding:0;cursor:pointer}
+.lb-c.big{width:clamp(40px,5.3cqw,54px);height:clamp(40px,5.3cqw,54px);font-size:clamp(9px,1.6cqw,12px)}
+.lb-c:hover{transform:translateX(-3px);border-color:#ffd86b}
+.lb-c .ic-ui{width:clamp(16px,2.8cqw,26px);height:clamp(16px,2.8cqw,26px)}
+.lb-c .big-ic .ic-ui{width:clamp(20px,3.4cqw,32px);height:clamp(20px,3.4cqw,32px)}
 .ic-ui img,.ic-ui .emoji-fb{width:100%;height:100%;object-fit:contain;border-radius:0}
-.ic-ui .emoji-fb{font-size:clamp(18px,4cqw,34px);align-items:center;justify-content:center}
+.ic-ui .emoji-fb{font-size:clamp(14px,2.4cqw,22px);align-items:center;justify-content:center}
 .lb-c i{position:absolute;top:-2px;right:-2px;background:var(--red);color:#fff;border-radius:10px;padding:0 6px;font-style:normal;font-size:.75rem;border:2px solid #fff}
-@media (max-width:640px){.lobby{aspect-ratio:4/5}.lb-hero{left:34%;height:44%}.lb-pet{left:70%;width:22cqw;height:22cqw}.lb-pet .emoji-fb{font-size:17cqw}.lb-wear{left:calc(34% + 18cqw);bottom:56%;width:12cqw;height:12cqw;font-size:8cqw}.lb-say{left:34%;bottom:70%}.lb-d{font-size:inherit}}
+@media (max-width:640px){.lobby{aspect-ratio:4/5}.lb-hero{left:34%;height:44%}.lb-pet{left:70%;width:22cqw;height:22cqw}.lb-pet .emoji-fb{font-size:17cqw}.lb-wear{left:calc(34% + 18cqw);bottom:50%;width:12cqw;height:12cqw;font-size:8cqw}.lb-say{left:34%;bottom:56%}.lb-d{font-size:inherit}}
 .tabs{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 4px}
 .tab{background:var(--ink);border:2px solid var(--line);border-radius:12px;padding:8px 14px;font-weight:700}
 .tab.on{background:var(--bronze);color:#2a1d05;border-color:var(--bronze)}
@@ -174,6 +195,7 @@ button:focus-visible{outline:3px solid var(--bronze);outline-offset:2px}
 .mp-bar button[data-chsel]{padding:6px 10px}
 .ic-sh{width:44px;height:44px}
 .ic-sh img,.ic-sh .emoji-fb{width:44px;height:44px;font-size:34px}
+.ic-sh.ic-th img,.ic-sh.ic-th .emoji-fb{width:88px;height:50px;object-fit:cover;border-radius:6px;border:1px solid #fff4}
 .fighter{background:var(--ink);border:2px solid var(--line);border-radius:12px;padding:10px 12px;margin:8px 0}
 .fighter b{font-size:1.05rem}
 .fbar{height:10px;background:#2a2f52;border-radius:6px;overflow:hidden;margin:4px 0}
@@ -275,7 +297,7 @@ button:focus-visible{outline:3px solid var(--bronze);outline-offset:2px}
 .btn{background:var(--ink2);color:var(--txt);border:2px solid var(--bronze);border-radius:10px;padding:8px 14px;font:inherit;cursor:pointer}
 .btn:hover:not(:disabled){background:#2c3566}.btn:disabled{opacity:.45;cursor:not-allowed}
 </style>
-<script src="game-config.js?v=20261017"></script>
+<script src="game-config.js?v=20261018g"></script>
 <script src="math_hero_engine.js"></script>
 <script src="bgm.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
@@ -595,8 +617,9 @@ function stageURL(url,id,endless){
 // ===== 🖼️ 圖片區（新增）=====
 // 把您做好的圖片依照下面的檔名放進 world-map.html 同一層的 images 資料夾即可自動套用；
 // 圖片還沒準備好的項目，會自動顯示表情符號代替，不會壞版面。
+function imgNext(el){const m=/^(.*)\.(png|jpe?g|webp)$/i.exec(el.getAttribute('src')||''),L=['png','jpg','jpeg','webp'];if(!m)return false;const i=L.indexOf(m[2].toLowerCase());if(i<0||i>=L.length-1)return false;el.src=m[1]+'.'+L[i+1];return true}
 function iconHTML(src,emoji,cls){
-  return `<span class="icon-wrap ${cls}"><img src="${src}" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex'"><span class="emoji-fb">${emoji}</span></span>`;
+  return `<span class="icon-wrap ${cls}"><img src="${src}" alt="" onerror="if(imgNext(this))return;this.style.display='none';this.nextElementSibling.style.display='inline-flex'"><span class="emoji-fb">${emoji}</span></span>`;
 }
 // ===== 🧙 角色戰力面板（新增） =====
 const AV=['🧑‍🎓','🥋','🛡️','⚔️','🐉','🧞','🧙‍♂️'];
@@ -604,7 +627,7 @@ const AVIMG=['images/avatar-0.png','images/avatar-1.png','images/avatar-2.png','
 function renderHero(){
   const li=levelInfo(),rk=RK.indexOf(rankOf(total())),ri=Math.max(0,rk);
   const _t=cosOn('title'),_f=cosOn('frame'),_a=cosOn('acc'),av=$('#avatar');
-  av.innerHTML=iconHTML(AVIMG[ri],AV[ri]||'🧙','ic-av')+(_a?`<span class="av-acc" title="${_a.name}">${_a.cos.emoji}</span>`:'');
+  av.innerHTML=iconHTML(AVIMG[ri],AV[ri]||'🧙','ic-av')+(_a?`<span class="av-acc">${_a.cos.emoji}</span>`:'');
   av.style.borderColor=_f?_f.cos.color:'';av.style.boxShadow=_f?`0 0 ${_f.cos.glow}px ${_f.cos.color}`:'';
   $('#lv-txt').innerHTML=`${_t?`<span class="ttl">【${_t.cos.text}】</span> `:''}${(P._hero&&P._hero.name)||''}　<b>Lv.${li.level}</b>`;
   $('#ebar').style.width=(li.cur/li.need*100)+'%';
@@ -713,7 +736,7 @@ addEventListener('message',e=>{
 $('#reset').onclick=()=>{if(confirm('確定要清除所有星星與收藏卡嗎？這個動作無法復原。')){P={};save();render()}};
 function fillWho(){const w=P._who||{};try{$('#who-d').open=!(w.sid&&String(w.sid).trim())}catch(e){}$('#w-cls').value=w.cls||'';$('#w-no').value=w.no||'';$('#w-name').value=w.name||'';$('#w-sid').value=w.sid||''}
 function saveWho(){P._who={cls:$('#w-cls').value.trim(),no:$('#w-no').value.trim(),name:$('#w-name').value.trim(),sid:$('#w-sid').value.trim()};save()}
-$('#w-save').onclick=()=>{saveWho();syncMyUser();toast('✅ 已儲存你的資料');startPendingListen()};
+$('#w-save').onclick=()=>{saveWho();syncMyUser();toast('✅ 已儲存你的資料');startPendingListen();checkGifts()};
 $('#w-exp').onclick=()=>{
   saveWho();const o=makeExport(),w=o.who,safe=x=>String(x||'').replace(/[^\w\u4e00-\u9fff-]/g,'');
   const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(o,null,1)],{type:'application/json'}));
@@ -1314,21 +1337,23 @@ const LB_SAY=['今天也一起加油！','答對一題，戰功就多一點！',
 const UIF={"hero": "hero", "arena": "duel", "wrong": "wrong-practice", "adv": "adventure", "daily": "daily-quest", "shop": "shop", "bag": "bag"};
 /* ===== ✨ 勇者特效圖層（都不會和人物衝突）：背後翅膀／光輪、腳下魔法陣、環繞精靈 =====
    有放圖片就用圖片（images/lobby/檔名.png），沒有就用程式畫的簡易版 */
-function fxImg(it,fb){return `<img class="fx-img" src="${lobbyImg(it)}" alt="" style="display:none" onload="this.style.display='block';this.nextElementSibling.style.display='none'" onerror="this.remove()">${fb}`}
+function fxImg(it,fb){return `<img class="fx-img" src="${lobbyImg(it)}" alt="" style="display:none" onload="this.style.display='block';this.nextElementSibling.style.display='none'" onerror="if(imgNext(this))return;this.remove()">${fb}`}
 function wingsSVG(c1,c2,id){const w='M104 80 C 84 82, 52 72, 6 26 C 22 22, 40 24, 52 30 C 36 31, 22 35, 12 42 C 32 45, 52 53, 70 59 C 52 57, 40 61, 30 68 C 52 74, 78 78, 104 76 Z';
   return `<svg class="fx-svg" viewBox="0 0 220 110"><defs><linearGradient id="wg-${id}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${c1}"/><stop offset="1" stop-color="${c2}"/></linearGradient></defs><g fill="url(#wg-${id})" stroke="#ffffffcc" stroke-width="1.6" stroke-linejoin="round"><path d="${w}"/><path transform="translate(220,0) scale(-1,1)" d="${w}"/></g></svg>`}
-function fxBack(it){const c=it.cos;
-  if(c.kind==='halo')return `<div class="lb-back halo" title="${it.name}">${fxImg(it,`<div class="fx-halo" style="--c1:${c.c1};--c2:${c.c2}"></div>`)}</div>`;
-  return `<div class="lb-back" title="${it.name}">${fxImg(it,wingsSVG(c.c1,c.c2,it.id))}</div>`}
+/* 各勇者圖頭頂位置（左右中心、頭頂高度，皆為占圖寬／高的比例），光輪靠它放在頭上 */
+const HEAD=[[.55,.033],[.61,.053],[.56,.033],[.45,0],[.59,.053],[.47,.003],[.49,0]];
+function fxBack(it,ri){const c=it.cos,[hx,ht]=HEAD[ri]||[.5,0];
+  if(c.kind==='halo')return `<div class="lb-back halo" style="left:${hx*100}%;top:${(ht-.05)*100}%">${fxImg(it,`<div class="fx-halo" style="--c1:${c.c1};--c2:${c.c2}"></div>`)}</div>`;
+  return `<div class="lb-back">${fxImg(it,wingsSVG(c.c1,c.c2,it.id))}</div>`}
 function fxFeet(it){const c=it.cos.color;
-  return `<div class="lb-feet" title="${it.name}">${fxImg(it,`<svg class="fx-svg" viewBox="0 0 320 100" style="filter:drop-shadow(0 0 7px ${c})"><ellipse cx="160" cy="50" rx="150" ry="42" fill="${c}22" stroke="${c}" stroke-width="3"/><ellipse cx="160" cy="50" rx="118" ry="32" fill="none" stroke="${c}" stroke-width="2.5" stroke-dasharray="14 9" class="fx-dash"/><ellipse cx="160" cy="50" rx="82" ry="22" fill="none" stroke="${c}" stroke-width="2" opacity=".8"/><path d="M160 12 L168 50 L160 88 L152 50 Z M44 50 L160 42 L276 50 L160 58 Z" fill="${c}44" stroke="${c}" stroke-width="1.5"/></svg>`)}</div>`}
-function fxOrbit(it){const n=it.cos.n||1;
-  return `<div class="lb-orbit" title="${it.name}"><div class="orb-ring">${Array.from({length:n},(_,i)=>`<div class="orb-spin" style="animation-delay:${(-5*i/n).toFixed(2)}s"><span class="orb" style="animation-delay:${(-5*i/n).toFixed(2)}s">${iconHTML(lobbyImg(it),it.cos.emoji,'ic-orb')}</span></div>`).join('')}</div></div>`}
+  return `<div class="lb-feet">${fxImg(it,`<svg class="fx-svg" viewBox="0 0 320 100" style="filter:drop-shadow(0 0 7px ${c})"><ellipse cx="160" cy="50" rx="150" ry="42" fill="${c}22" stroke="${c}" stroke-width="3"/><ellipse cx="160" cy="50" rx="118" ry="32" fill="none" stroke="${c}" stroke-width="2.5" stroke-dasharray="14 9" class="fx-dash"/><ellipse cx="160" cy="50" rx="82" ry="22" fill="none" stroke="${c}" stroke-width="2" opacity=".8"/><path d="M160 12 L168 50 L160 88 L152 50 Z M44 50 L160 42 L276 50 L160 58 Z" fill="${c}44" stroke="${c}" stroke-width="1.5"/></svg>`)}</div>`}
+function fxOrbit(it,layer){const n=it.cos.n||1;
+  return `<div class="lb-orbit ${layer}"><div class="orb-ring">${Array.from({length:n},(_,i)=>`<div class="orb-spin" style="animation-delay:${(-5*i/n).toFixed(2)}s"><span class="orb" style="animation-delay:${(-5*i/n).toFixed(2)}s">${iconHTML(lobbyImg(it),it.cos.emoji,'ic-orb')}</span></div>`).join('')}</div></div>`}
 function lobbyHTML(){
   const ri=Math.max(0,RK.indexOf(rankOf(total()))),li=levelInfo();
   const th=cosOn('theme'),T=Object.assign({},THEME0,th?th.cos:{}),tid=th?th.id:'th_0';
   const ti=cosOn('title'),fr=cosOn('frame'),ac=cosOn('acc');
-  const decor=SHOP.filter(x=>x.cos&&x.cos.slot==='decor'&&cosOwned(x.id));
+  const decor=SHOP.filter(x=>x.cos&&x.cos.slot==='decor'&&(cosOwned(x.id)||x.id===TRIAL));
   const glow=fr?`filter:drop-shadow(0 0 ${Math.round(fr.cos.glow/2)}px ${fr.cos.color}) drop-shadow(0 0 ${fr.cos.glow}px ${fr.cos.color})`:'';
   const pet=ac&&ac.cos.pet?ac:null,bk=cosOn('back'),ft=cosOn('feet'),ob=cosOn('orbit');
   const nm=(P._hero&&P._hero.name)||'勇者';
@@ -1336,15 +1361,15 @@ function lobbyHTML(){
   const bd={arena:INV?'新':'',daily:dqClaimable()||'',bag:(P._chests||[]).length||''};
   return `<div class="lobby" style="--w1:${T.wall};--w2:${T.wall2};--f1:${T.floor};--f2:${T.floor2};--rail:${T.rail}">
     <div class="lb-wall"></div><div class="lb-rail"></div><div class="lb-floor"></div>
-    <div class="lb-bgimg" style="background-image:url('images/lobby/${th?(th.file||th.id):'theme-default'}.png')"></div>
-    ${decor.map(x=>{const c=x.cos;return `<div class="lb-d" title="${x.name}" style="left:${c.x}%;bottom:${c.y}%;width:${c.size}cqw;height:${c.size}cqw;font-size:${c.size*0.85}cqw">${iconHTML(lobbyImg(x),c.emoji,'ic-lb')}</div>`}).join('')}
+    <div class="lb-bgimg" style="background-image:${['png','jpg','jpeg','webp'].map(e=>`url('images/lobby/${encodeURI(th?fileBase(th):'theme-default')}.${e}')`).join(',')}"></div>
+    ${decor.map(x=>{const c=x.cos;return `<div class="lb-d" style="left:${c.x}%;bottom:${c.onWall?c.y:Math.max(3,c.y-19)}%;width:${c.size}cqw;height:${c.size}cqw;font-size:${c.size*0.85}cqw">${iconHTML(lobbyImg(x),c.emoji,'ic-lb')}</div>`}).join('')}
     <div class="lb-plate">${ti?`<span class="ttl">【${ti.cos.text}】</span>`:''}<b>${nm}</b><br><small>Lv.${li.level}｜${rankOf(total())[1]}</small></div>
     <div class="lb-merit">🏅 ${P._merit||0}</div>
     ${P._gift?'':'<div class="lb-gift">🎁 通關第一關，領新手禮！</div>'}
     <div class="lb-say" id="lb-say"></div>
-    ${pet?`<div class="lb-pet" data-lb="pet" title="${pet.name}">${iconHTML(lobbyImg(pet),pet.cos.emoji,'ic-lb')}</div>`:''}
-    <div class="lb-hero" data-lb="hero">${bk?fxBack(bk):''}${ft?fxFeet(ft):''}<img src="${AVIMG[ri]}" alt="" style="${glow}" onerror="this.outerHTML='<span class=lb-emo2>${AV[ri]||'🧙'}</span>'">${ob?fxOrbit(ob):''}</div>
-    <div class="lb-dock">${dk.map(([k,e,t])=>`<button class="lb-c ${k==='adv'?'big':''}" data-go="${k}" title="${t}"><span class="${k==='adv'?'big-ic':''}">${iconHTML('images/ui/'+UIF[k]+'.png',e,'ic-ui')}</span>${t}${bd[k]?`<i>${bd[k]}</i>`:''}</button>`).join('')}</div>
+    ${pet?`<div class="lb-pet" data-lb="pet">${iconHTML(lobbyImg(pet),pet.cos.emoji,'ic-lb')}</div>`:''}
+    <div class="lb-hero" data-lb="hero">${bk?fxBack(bk,ri):''}${ft?fxFeet(ft):''}${ob?fxOrbit(ob,'b'):''}<img src="${AVIMG[ri]}" alt="" style="${glow}" onerror="this.outerHTML='<span class=lb-emo2>${AV[ri]||'🧙'}</span>'">${ob?fxOrbit(ob,'f'):''}</div>
+    <div class="lb-dock ${LBMENU?'open':''}"><button class="lb-tg" data-tg="1" title="功能選單"><b>☰</b>選單${Object.values(bd).some(v=>v)?'<i></i>':''}</button><div class="lb-menu">${dk.map(([k,e,t])=>`<button class="lb-c ${k==='adv'?'big':''}" data-go="${k}" title="${t}"><span class="${k==='adv'?'big-ic':''}">${iconHTML('images/ui/'+UIF[k]+'.png',e,'ic-ui')}</span>${t}${bd[k]?`<i>${bd[k]}</i>`:''}</button>`).join('')}</div></div>
   </div>
   <p class="tiny" style="opacity:.7;margin:8px 0 0;text-align:center">點一下勇者會說話喔！在商店買的稱號、頭像框、夥伴、小屋主題和飾品，都會出現在這裡。</p>`}
 function homeHTML(){
@@ -1368,7 +1393,8 @@ function wrongHTML(){const q=P._q||{};
   const L=Object.entries(q).filter(([k,r])=>r.n>=3&&r.ok/r.n<0.8).sort((a,b)=>a[1].ok/a[1].n-b[1].ok/b[1].n).slice(0,8);
   return `<h2 class="serif" style="margin:0 0 6px">📝 錯題練習</h2><small>依你的作答紀錄，找出正確率偏低的題型，點「去練習」直接進入該關。</small>`+
   (L.length?L.map(([k,r])=>{const id=k.split(':')[0],s=SMAP[id];return `<div class="fighter"><b>${SLAB[id]||id} ${s?s[1]:''}</b>｜題型 ${k.split(':')[1]}｜正確率 ${Math.round(r.ok/r.n*100)}%（${r.ok}/${r.n}）${s&&s[2]?` <button class="node" style="display:inline;min-height:0;padding:4px 10px" data-wr="${id}">去練習</button>`:''}</div>`}).join(''):'<p>🎉 目前沒有正確率偏低的題型，繼續闖關累積更多作答紀錄吧！</p>')}
-$('#home').onclick=e=>{const lb=e.target.closest('[data-lb]');if(lb){const sy=$('#lb-say');if(sy){sy.textContent=LB_SAY[Math.floor(Math.random()*LB_SAY.length)];sy.classList.remove('on');void sy.offsetWidth;sy.classList.add('on');clearTimeout(window._lbt);window._lbt=setTimeout(()=>sy.classList.remove('on'),2200)}return}
+$('#home').onclick=e=>{const tg=e.target.closest('[data-tg]');if(tg){LBMENU=!LBMENU;tg.closest('.lb-dock').classList.toggle('open',LBMENU);return}
+  const lb=e.target.closest('[data-lb]');if(lb){const sy=$('#lb-say');if(sy){sy.textContent=LB_SAY[Math.floor(Math.random()*LB_SAY.length)];sy.classList.remove('on');void sy.offsetWidth;sy.classList.add('on');clearTimeout(window._lbt);window._lbt=setTimeout(()=>sy.classList.remove('on'),2200)}return}
   const dc=e.target.closest('[data-dq]');if(dc)return claimDq(dc.dataset.dq);const b=e.target.closest('[data-go]');if(!b)return;const g=b.dataset.go;if(g==='adv'){MSEL=true;show('ch')}else if(g==='ch')show('ch',+b.dataset.ci);else{if(g==='arena')INV=false;show(g)}};
 $('#back').onclick=()=>show('home');
 $('#cards').onclick=e=>{const b=e.target.closest('[data-eq]');if(b)popup(eqCardHTML(+b.dataset.eq))};
@@ -1535,11 +1561,7 @@ let SHOPTAB='use';
 const SHOPCAT={theme:'🏡 小屋主題（買了到背包切換）',decor:'🪑 房間飾品（買了就擺在大廳）',heal:'🧪 補血',shield:'🛡️ 護盾（對戰）',revive:'🪶 復活',speed:'💨 加速（對戰）',points:'🏅 加積分（戰功）',exp:'📘 加經驗值',forge:'🔨 鍛造',body:'🧬 天生體質調整',equip:'💎 裝備數值修正',title:'📜 稱號（買一次永久擁有）',frame:'🖼️ 頭像框（買一次永久擁有）',acc:'🐾 夥伴（買一次永久擁有）',back:'🪽 背後特效（買一次永久擁有）',feet:'🔯 腳下魔法陣（買一次永久擁有）',orbit:'✨ 環繞精靈（買一次永久擁有）',rename:'🪪 改名卡'};
 const SHOP_VER='v2';
 /* 內建後備清單：game-config.js 是舊版、或修改器的「本機測試設定」蓋掉商店時，這些新商品仍會出現（以代號補上缺少的，不會覆蓋您已改過的價格） */
-const SHOP_EXTRA=[{"id": "heal_m", "cat": "heal", "icon": "🍶", "name": "中補血瓶", "price": 500, "desc": "對戰中使用：恢復 50% 生命（每場最多喝 3 瓶血）", "battle": {"heal": 0.5}, "daily": 6, "file": "potion-heal-medium"}, {"id": "shield_s", "cat": "shield", "icon": "🛡️", "name": "小護盾", "price": 500, "desc": "對戰中使用：擋下對方的下 1 次攻擊（傷害變 0）", "battle": {"shield": 1}, "daily": 5, "file": "shield-small"}, {"id": "shield_m", "cat": "shield", "icon": "🔰", "name": "中護盾", "price": 900, "desc": "對戰中使用：擋下對方的下 2 次攻擊", "battle": {"shield": 2}, "daily": 3, "file": "shield-medium"}, {"id": "shield_l", "cat": "shield", "icon": "🏰", "name": "城牆護盾", "price": 1300, "desc": "對戰中使用：擋下對方的下 3 次攻擊", "battle": {"shield": 3}, "daily": 2, "file": "shield-castle"}, {"id": "mb_l", "cat": "points", "icon": "🎖️", "name": "戰功加成券（大）", "price": 1000, "desc": "使用：接下來 6 次通關，戰功 +50%（每天限買 1 張，避免衝爆排行榜）", "fx": {"mboost": 6}, "daily": 1, "file": "ticket-merit-large"}, {"id": "ttl_1", "cat": "title", "icon": "📝", "name": "數學學徒", "price": 1500, "desc": "稱號：顯示在角色名稱前面", "cos": {"slot": "title", "text": "數學學徒"}, "file": "title-apprentice"}, {"id": "ttl_2", "cat": "title", "icon": "🧮", "name": "計算能手", "price": 3000, "desc": "稱號：顯示在角色名稱前面", "cos": {"slot": "title", "text": "計算能手"}, "file": "title-calculator"}, {"id": "ttl_3", "cat": "title", "icon": "🏹", "name": "因數獵人", "price": 4000, "desc": "稱號：顯示在角色名稱前面", "cos": {"slot": "title", "text": "因數獵人"}, "file": "title-factor-hunter"}, {"id": "ttl_4", "cat": "title", "icon": "💠", "name": "質數守護者", "price": 5000, "desc": "稱號：顯示在角色名稱前面", "cos": {"slot": "title", "text": "質數守護者"}, "file": "title-prime-guardian"}, {"id": "ttl_5", "cat": "title", "icon": "🥁", "name": "韓信再世", "price": 8000, "desc": "稱號：顯示在角色名稱前面", "cos": {"slot": "title", "text": "韓信再世"}, "file": "title-han-xin"}, {"id": "ttl_6", "cat": "title", "icon": "🔮", "name": "代數賢者", "price": 12000, "desc": "稱號：顯示在角色名稱前面", "cos": {"slot": "title", "text": "代數賢者"}, "file": "title-algebra-sage"}, {"id": "frm_1", "cat": "frame", "icon": "🟤", "name": "青銅光環", "price": 2000, "desc": "頭像框：角色頭像外圍的光環", "cos": {"slot": "frame", "color": "#d2a24c", "glow": 8}, "file": "frame-bronze"}, {"id": "frm_2", "cat": "frame", "icon": "🟢", "name": "翡翠光環", "price": 2500, "desc": "頭像框：角色頭像外圍的光環", "cos": {"slot": "frame", "color": "#43e0a8", "glow": 12}, "file": "frame-jade"}, {"id": "frm_3", "cat": "frame", "icon": "🔵", "name": "冰藍光環", "price": 4000, "desc": "頭像框：角色頭像外圍的光環", "cos": {"slot": "frame", "color": "#6ad0ff", "glow": 14}, "file": "frame-ice"}, {"id": "frm_4", "cat": "frame", "icon": "🔴", "name": "赤焰光環", "price": 4000, "desc": "頭像框：角色頭像外圍的光環", "cos": {"slot": "frame", "color": "#ff6a3d", "glow": 14}, "file": "frame-flame"}, {"id": "frm_5", "cat": "frame", "icon": "🟣", "name": "紫電光環", "price": 6000, "desc": "頭像框：角色頭像外圍的光環", "cos": {"slot": "frame", "color": "#b07cff", "glow": 18}, "file": "frame-thunder"}, {"id": "frm_6", "cat": "frame", "icon": "🌟", "name": "傳說金光", "price": 8000, "desc": "頭像框：最閃亮的金色光環", "cos": {"slot": "frame", "color": "#ffd84a", "glow": 24}, "file": "frame-legend"}, {"id": "acc_4", "cat": "acc", "icon": "🐱", "name": "貓咪夥伴", "price": 3000, "desc": "夥伴：站在勇者旁邊的陪在你身邊的小貓", "cos": {"slot": "acc", "emoji": "🐱", "pet": true}, "file": "pet-cat"}, {"id": "acc_5", "cat": "acc", "icon": "🦉", "name": "貓頭鷹博士", "price": 5000, "desc": "夥伴：站在勇者旁邊的聰明的貓頭鷹博士", "cos": {"slot": "acc", "emoji": "🦉", "pet": true}, "file": "pet-owl"}, {"id": "acc_8", "cat": "acc", "icon": "🐉", "name": "小龍夥伴", "price": 9000, "desc": "夥伴：站在勇者旁邊的會噴小火花的小龍", "cos": {"slot": "acc", "emoji": "🐉", "pet": true}, "file": "pet-dragon"}, {"id": "rename", "cat": "rename", "icon": "🪪", "name": "改名卡", "price": 2000, "desc": "使用：幫角色改一個新名字（最多 8 個字，不能使用不雅字眼）", "fx": {"rename": 1}, "file": "card-rename"}, {"id": "th_sea", "cat": "theme", "icon": "🏖️", "name": "海邊小屋", "price": 4000, "desc": "小屋主題：把大廳換成明亮的海邊小屋（到背包切換）", "cos": {"slot": "theme", "wall": "#bfe6f2", "wall2": "#8fcbe0", "floor": "#f1d9a0", "floor2": "#d9b56a", "rail": "#b07a3c"}, "file": "theme-seaside"}, {"id": "th_star", "cat": "theme", "icon": "🌌", "name": "星空閣樓", "price": 8000, "desc": "小屋主題：把大廳換成滿天星斗的閣樓", "cos": {"slot": "theme", "wall": "#2a2f6b", "wall2": "#171a45", "floor": "#6a5240", "floor2": "#3d2e24", "rail": "#8a6a3a"}, "file": "theme-starry-attic"}, {"id": "th_snow", "cat": "theme", "icon": "❄️", "name": "雪夜暖屋", "price": 8000, "desc": "小屋主題：把大廳換成溫暖的雪夜木屋", "cos": {"slot": "theme", "wall": "#e3ecf6", "wall2": "#b8c8dc", "floor": "#b5834f", "floor2": "#7e5233", "rail": "#6b4426"}, "file": "theme-snow-cabin"}, {"id": "th_magic", "cat": "theme", "icon": "🔮", "name": "魔法書房", "price": 15000, "desc": "小屋主題：把大廳換成神祕的魔法書房", "cos": {"slot": "theme", "wall": "#5a2f6d", "wall2": "#3a1c4a", "floor": "#74502f", "floor2": "#4a3220", "rail": "#b8863a"}, "file": "theme-magic-study"}, {"id": "dc_1", "cat": "decor", "icon": "🪴", "name": "盆栽", "price": 1500, "desc": "房間飾品：買了就會擺在大廳裡", "cos": {"slot": "decor", "emoji": "🪴", "x": 8, "y": 25, "size": 9}, "file": "decor-plant"}, {"id": "dc_2", "cat": "decor", "icon": "🎐", "name": "風鈴", "price": 2000, "desc": "房間飾品：掛在大廳的牆上", "cos": {"slot": "decor", "emoji": "🎐", "x": 88, "y": 64, "size": 6, "onWall": true}, "file": "decor-windchime"}, {"id": "dc_3", "cat": "decor", "icon": "🏮", "name": "紅燈籠", "price": 2500, "desc": "房間飾品：掛在大廳的牆上", "cos": {"slot": "decor", "emoji": "🏮", "x": 72, "y": 62, "size": 7, "onWall": true}, "file": "decor-lantern"}, {"id": "dc_4", "cat": "decor", "icon": "📚", "name": "書堆", "price": 3000, "desc": "房間飾品：買了就會擺在大廳裡", "cos": {"slot": "decor", "emoji": "📚", "x": 80, "y": 25, "size": 8}, "file": "decor-books"}, {"id": "dc_5", "cat": "decor", "icon": "🧸", "name": "玩偶", "price": 3500, "desc": "房間飾品：買了就會擺在大廳裡", "cos": {"slot": "decor", "emoji": "🧸", "x": 64, "y": 25, "size": 7}, "file": "decor-plush"}, {"id": "dc_6", "cat": "decor", "icon": "🖼️", "name": "掛畫", "price": 5000, "desc": "房間飾品：掛在大廳的牆上", "cos": {"slot": "decor", "emoji": "🖼️", "x": 18, "y": 58, "size": 10, "onWall": true}, "file": "decor-painting"}, {"id": "dc_7", "cat": "decor", "icon": "🕰️", "name": "古董時鐘", "price": 6000, "desc": "房間飾品：掛在大廳的牆上", "cos": {"slot": "decor", "emoji": "🕰️", "x": 50, "y": 66, "size": 8, "onWall": true}, "file": "decor-clock"}, {"id": "dc_8", "cat": "decor", "icon": "🏆", "name": "數學獎盃", "price": 8000, "desc": "房間飾品：擺在大廳裡，閃閃發亮", "cos": {"slot": "decor", "emoji": "🏆", "x": 91, "y": 27, "size": 7}, "file": "decor-trophy"}, {"id": "bk_1", "cat": "back", "icon": "🪽", "name": "光之翅膀", "price": 6000, "desc": "背後特效：在勇者背後展開光之翅膀（放在人物後面，不會蓋住人物）", "file": "wings-light", "cos": {"slot": "back", "kind": "wings", "c1": "#ffffff", "c2": "#ffe08a"}}, {"id": "bk_2", "cat": "back", "icon": "🦇", "name": "暗影之翼", "price": 9000, "desc": "背後特效：在勇者背後展開暗影之翼", "file": "wings-shadow", "cos": {"slot": "back", "kind": "wings", "c1": "#b07cff", "c2": "#2a1650"}}, {"id": "bk_3", "cat": "back", "icon": "😇", "name": "神聖光輪", "price": 4000, "desc": "背後特效：勇者身後散發金色光輪", "file": "halo-holy", "cos": {"slot": "back", "kind": "halo", "c1": "#ffd86b", "c2": "#fff3c0"}}, {"id": "ft_1", "cat": "feet", "icon": "🔵", "name": "青色魔法陣", "price": 3000, "desc": "腳下特效：腳下浮現旋轉的魔法陣", "file": "circle-cyan", "cos": {"slot": "feet", "color": "#4fe0ff"}}, {"id": "ft_2", "cat": "feet", "icon": "🟡", "name": "金色魔法陣", "price": 6000, "desc": "腳下特效：腳下浮現旋轉的魔法陣", "file": "circle-gold", "cos": {"slot": "feet", "color": "#ffd24a"}}, {"id": "ft_3", "cat": "feet", "icon": "🔴", "name": "紅蓮魔法陣", "price": 9000, "desc": "腳下特效：腳下浮現旋轉的魔法陣", "file": "circle-crimson", "cos": {"slot": "feet", "color": "#ff5a4a"}}, {"id": "ob_1", "cat": "orbit", "icon": "🧚", "name": "小精靈", "price": 3500, "desc": "環繞特效：一隻小精靈繞著勇者飛", "file": "orbit-fairy", "cos": {"slot": "orbit", "emoji": "🧚", "n": 1}}, {"id": "ob_2", "cat": "orbit", "icon": "🔮", "name": "魔法水晶", "price": 5000, "desc": "環繞特效：三顆魔法水晶繞著勇者旋轉", "file": "orbit-crystal", "cos": {"slot": "orbit", "emoji": "🔮", "n": 3}}, {"id": "ob_3", "cat": "orbit", "icon": "🦋", "name": "飛舞蝴蝶", "price": 4000, "desc": "環繞特效：兩隻蝴蝶繞著勇者飛舞", "file": "orbit-butterfly", "cos": {"slot": "orbit", "emoji": "🦋", "n": 2}}];
-const SHOP_FILES={"heal_s": "potion-heal-small", "heal_l": "potion-heal-large", "revive": "feather-revive", "revive_m": "potion-revive", "speed_s": "potion-speed", "mb_s": "ticket-merit-small", "exp_s": "book-exp-small", "exp_l": "book-exp-large", "forge": "stone-forge", "body": "ticket-body", "reroll": "stone-reroll", "heal_m": "potion-heal-medium", "shield_s": "shield-small", "shield_m": "shield-medium", "shield_l": "shield-castle", "mb_l": "ticket-merit-large", "ttl_1": "title-apprentice", "ttl_2": "title-calculator", "ttl_3": "title-factor-hunter", "ttl_4": "title-prime-guardian", "ttl_5": "title-han-xin", "ttl_6": "title-algebra-sage", "frm_1": "frame-bronze", "frm_2": "frame-jade", "frm_3": "frame-ice", "frm_4": "frame-flame", "frm_5": "frame-thunder", "frm_6": "frame-legend", "acc_4": "pet-cat", "acc_5": "pet-owl", "acc_8": "pet-dragon", "rename": "card-rename", "th_sea": "theme-seaside", "th_star": "theme-starry-attic", "th_snow": "theme-snow-cabin", "th_magic": "theme-magic-study", "dc_1": "decor-plant", "dc_2": "decor-windchime", "dc_3": "decor-lantern", "dc_4": "decor-books", "dc_5": "decor-plush", "dc_6": "decor-painting", "dc_7": "decor-clock", "dc_8": "decor-trophy", "bk_1": "wings-light", "bk_2": "wings-shadow", "bk_3": "halo-holy", "ft_1": "circle-cyan", "ft_2": "circle-gold", "ft_3": "circle-crimson", "ob_1": "orbit-fairy", "ob_2": "orbit-crystal", "ob_3": "orbit-butterfly"};
-const SHOP_DAILY={"heal_s": 10, "heal_l": 3, "revive": 1, "revive_m": 3, "speed_s": 5, "mb_s": 3, "exp_s": 5, "exp_l": 2, "forge": 3, "body": 1, "reroll": 2};
-const SR=Object.assign({"bagCap": 30, "maxHealPerDuel": 3, "nameMaxLen": 8, "badWords": ["幹", "靠北", "白痴", "智障", "垃圾", "去死", "三小", "屁", "屎", "幹你娘", "操", "fuck", "shit"], "starterGift": {"heal_s": 2, "shield_s": 1}},GC.shopRules||{});
-(function(){const have={};GC.shop.forEach(x=>{have[x.id]=1;if(!x.file&&SHOP_FILES[x.id])x.file=SHOP_FILES[x.id]});SHOP_EXTRA.forEach(x=>{if(!have[x.id])GC.shop.push(JSON.parse(JSON.stringify(x)))});GC.shop.forEach(x=>{if(x.daily===undefined&&SHOP_DAILY[x.id])x.daily=SHOP_DAILY[x.id]})})();
+const SR=Object.assign({"bagCap": 30, "maxHealPerDuel": 3, "nameMaxLen": 8, "trialSec": 10, "badWords": ["幹", "靠北", "白痴", "智障", "垃圾", "去死", "三小", "屁", "屎", "幹你娘", "操", "fuck", "shit"], "starterGift": {"heal_s": 2, "shield_s": 1}},GC.shopRules||{});
 const SHOP=GC.shop;
 const SHOPMAP={};SHOP.forEach(x=>SHOPMAP[x.id]=x);
 const bagN=id=>((P._bag||{})[id])|0;
@@ -1577,8 +1599,15 @@ function useSkill(att,def,cat){
   if(x.tp){def.spd=Math.round(def.spd*(1-x.tp*SPP));extra+=`，${def.name} 速度下降 ${Math.round(x.tp*SPP*100)}%`}
   return `${att.name} 使用${x.r}招式「${x.n}」${x.t.startsWith('speed')?'（無視防禦）':''}，對 ${def.name} 造成 ${dmg} 點傷害${extra}！`}
 const DEV=/[?&]dev=1/.test(location.search);
-const shopImg=x=>'images/shop/'+(x.file||x.id)+'.png',lobbyImg=x=>'images/lobby/'+(x.file||x.id)+'.png';
-const shopIcon=x=>iconHTML(shopImg(x),x.icon,'ic-sh');
+const fileBase=x=>String(x.file||x.id).trim().replace(/\.(png|jpe?g|webp|gif)$/i,'');
+const shopImg=x=>'images/shop/'+encodeURI(fileBase(x))+'.png',lobbyImg=x=>'images/lobby/'+encodeURI(fileBase(x))+'.png';
+const LOBBYSLOT=['decor','acc','back','feet','orbit'];
+function shopIcon(x){
+  const sl=x.cos&&x.cos.slot,th=sl==='theme';
+  const a=th?lobbyImg(x):shopImg(x),b=th?shopImg(x):(LOBBYSLOT.includes(sl)?lobbyImg(x):'');
+  const hide="this.style.display='none';this.nextElementSibling.style.display='inline-flex'";
+  return `<span class="icon-wrap ic-sh ${th?'ic-th':''}"><img src="${a}" alt="" onerror="if(imgNext(this))return;${b?`if(!this.dataset.f){this.dataset.f=1;this.src='${b}'}else{${hide}}`:hide}"><span class="emoji-fb">${x.icon}</span></span>`}
+const trialSec=()=>Math.max(3,Math.min(60,Number(SR.trialSec)||10));
 function giveStarterGift(){
   if(P._gift)return '';P._gift=1;
   const L=Object.entries(SR.starterGift||{}).filter(([id,n])=>SHOPMAP[id]&&n>0);
@@ -1586,7 +1615,8 @@ function giveStarterGift(){
   return L.length?'🎁 新手禮：'+L.map(([id,n])=>SHOPMAP[id].icon+SHOPMAP[id].name+' ×'+n).join('、')+'（到背包看看）':''}
 function buyState(){const d=bkkDay();if(!P._buy||P._buy.d!==d)P._buy={d,n:{}};return P._buy}
 const cosOwned=id=>!!((P._cos||{}).own||{})[id];
-const cosOn=slot=>{const id=((P._cos||{}).on||{})[slot];return id&&cosOwned(id)?SHOPMAP[id]:null};
+let TRIAL=null,TRIALT=null,LBMENU=false;
+const cosOn=slot=>{if(TRIAL&&SHOPMAP[TRIAL]&&SHOPMAP[TRIAL].cos&&SHOPMAP[TRIAL].cos.slot===slot)return SHOPMAP[TRIAL];const id=((P._cos||{}).on||{})[slot];return id&&cosOwned(id)?SHOPMAP[id]:null};
 function buyStatus(x){ // 回傳 {ok, label}
   const g=P._merit||0;
   if(x.cos)return cosOwned(x.id)?{ok:false,label:'✅ 已擁有'}:{ok:g>=x.price,label:'🏅 '+x.price+' 兌換'};
@@ -1603,7 +1633,7 @@ function shopBuild(){
   tab[2].map(c=>{const L=SHOP.filter(x=>x.cat===c);if(!L.length)return '';return `<h3 class="serif" style="margin:14px 0 4px">${SHOPCAT[c]}</h3>`+L.map(x=>{const st=buyStatus(x),b=buyState().n[x.id]|0;
     const meta=x.cos?'':`<small>已有 ${bagN(x.id)}${x.daily?`｜今日 ${b}/${x.daily}`:''}</small>`;
     const tag=(!P._gift&&sg[x.id])?'<span class="tag-star">新手推薦</span>':'';
-    return `<div class="fighter" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">${shopIcon(x)}<div style="flex:1;min-width:170px"><b>${x.name}</b>${tag}　${meta}<br><small>${x.desc}</small>${DEV?`<br><small style="opacity:.6">圖片：${shopImg(x)}${x.cos&&['decor','acc','back','feet','orbit','theme'].includes(x.cos.slot)?'　＋　'+lobbyImg(x):''}</small>`:''}</div><button class="btn" data-buy="${x.id}" ${st.ok?'':'disabled'}>${st.label}</button></div>`}).join('')}).join('');
+    return `<div class="fighter" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">${shopIcon(x)}<div style="flex:1;min-width:170px"><b>${x.name}</b>${tag}　${meta}<br><small>${x.desc}</small>${DEV?`<br><small style="opacity:.6">圖片：${shopImg(x)}${x.cos&&['decor','acc','back','feet','orbit','theme'].includes(x.cos.slot)?'　＋　'+lobbyImg(x):''}</small>`:''}</div><div style="display:flex;gap:6px;flex-wrap:wrap">${x.cos&&!cosOwned(x.id)?`<button class="btn tryb" data-try="${x.id}">👀 試用 ${trialSec()} 秒</button>`:''}<button class="btn" data-buy="${x.id}" ${st.ok?'':'disabled'}>${st.label}</button></div></div>`}).join('')}).join('');
 }
 const COSSLOT={title:'📜 稱號',frame:'🖼️ 頭像框',acc:'🐾 夥伴',back:'🪽 背後特效',feet:'🔯 腳下魔法陣',orbit:'✨ 環繞精靈',theme:'🏡 小屋主題'};
 function cosBagHTML(){
@@ -1617,7 +1647,9 @@ function bagBuild(){
   $('#bag').innerHTML=`<h2 class="serif" style="margin:0 0 4px">🎒 背包</h2>🏅 戰功 <b>${P._merit||0}</b>`+`<div class="fighter" style="margin:8px 0"><b>📦 寶箱 ×${(P._chests||[]).length}</b>　<button class="btn" data-chest="1">打開 1 個</button> <button class="btn" data-chest="all">全部打開</button><br><small>通關關卡會獲得寶箱；打開後隨機得到裝備碎片，同一品質集滿 ${FRAG_NEED} 片即可合成裝備</small></div>`+cosBagHTML()+(L.length?L.map(x=>`<div class="fighter" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">${shopIcon(x)}<div style="flex:1;min-width:170px"><b>${x.name} ×${bagN(x.id)}</b><br><small>${x.desc}</small></div>${x.fx?`<button class="btn" data-use="${x.id}">使用</button>`:`<small>${x.stageUse?'闖關被打倒時會詢問是否使用':x.passive?'對戰時自動帶上':'對戰中選「🎒 道具」使用'}</small>`}</div>`).join(''):'<p>背包裡還沒有道具，到商店用戰功買些道具吧！</p>');
 }
 $('#shop').onclick=e=>{const tb=e.target.closest('[data-tab]');if(tb){SHOPTAB=tb.dataset.tab;return shopBuild()}
-  const b=e.target.closest('[data-buy]');if(!b)return;const x=SHOPMAP[b.dataset.buy];if(!x)return;
+  const tr=e.target.closest('[data-try]');if(tr){const y=SHOPMAP[tr.dataset.try];if(y)trialStart(y);return}
+  const b=e.target.closest('[data-buy]');if(!b)return;const x=SHOPMAP[b.dataset.buy];if(!x)return;buyItem(x)};
+function buyItem(x){
   if((P._merit||0)<x.price)return toast('🏅 戰功不夠，繼續闖關累積吧！');
   const st=buyStatus(x);if(!st.ok)return toast(st.label==='已達持有上限'?`🎒 ${x.name} 已經有 ${SR.bagCap} 個了，先用掉一些吧！`:st.label);
   P._merit-=x.price;
@@ -1625,7 +1657,22 @@ $('#shop').onclick=e=>{const tb=e.target.closest('[data-tab]');if(tb){SHOPTAB=tb
     toast(`🛒 買到了 ${x.icon} ${x.name}！${x.cos.slot==='decor'?'已擺進大廳':x.cos.slot==='theme'?'大廳已換新主題':'已自動裝上（可到背包更換）'}，回首頁看看吧！`)}
   else{bagAdd(x.id,1);toast(`🛒 兌換了 ${x.icon} ${x.name}`)}
   if(x.daily){const t=buyState();t.n[x.id]=(t.n[x.id]|0)+1}
-  dq('buy',1);save();render();shopBuild()};
+  dq('buy',1);save();render();shopBuild()}
+/* ===== 試用：10 秒預覽，結束後詢問是否購買 ===== */
+function trialStop(){clearInterval(TRIALT);TRIALT=null;TRIAL=null;const el=document.getElementById('trial');if(el)el.remove()}
+function trialStart(x){
+  trialStop();TRIAL=x.id;const el=document.createElement('div');el.id='trial';el.className='trial';document.body.appendChild(el);
+  el.innerHTML=`<div class="tbox"><div class="tt">👀 試用中：${x.icon} ${x.name}</div>${lobbyHTML().replace('id="lb-say"','')}<div class="tbar"><i id="tbar"></i></div><div class="tt2"><b id="tsec">${trialSec()}</b> 秒後自動結束　<button class="btn" id="t-end">提早結束</button></div></div>`;
+  const t0=Date.now(),D=trialSec()*1000;
+  TRIALT=setInterval(()=>{const left=Math.max(0,D-(Date.now()-t0));const b=document.getElementById('tbar'),sc=document.getElementById('tsec');if(b)b.style.width=(left/D*100)+'%';if(sc)sc.textContent=Math.ceil(left/1000);if(left<=0)trialAsk(x)},100);
+  document.getElementById('t-end').onclick=()=>trialAsk(x)}
+function trialAsk(x){
+  trialStop();const el=document.createElement('div');el.id='trial';el.className='trial';document.body.appendChild(el);
+  const st=buyStatus(x),enough=(P._merit||0)>=x.price;
+  el.innerHTML=`<div class="ask"><div class="big">${x.icon}</div><h3 class="serif" style="margin:6px 0;color:var(--bronze)">試用結束！喜歡「${x.name}」嗎？</h3><p style="margin:6px 0">價格 🏅 <b>${x.price}</b>　你有 🏅 <b>${P._merit||0}</b>${enough?'':'<br><small style="color:#ff9a8a">戰功還不夠，繼續闖關累積吧！</small>'}</p><div><button class="btn go" id="t-buy" ${st.ok?'':'disabled'}>🛒 買下來</button><button class="btn" id="t-again">👀 再試用一次</button><button class="btn" id="t-no">先不買</button></div></div>`;
+  document.getElementById('t-buy').onclick=()=>{trialStop();buyItem(x)};
+  document.getElementById('t-again').onclick=()=>trialStart(x);
+  document.getElementById('t-no').onclick=trialStop}
 let PK=null;
 function pick(title,opts,cb){PK=cb;$('#gp').innerHTML=`<div class="card"><h2 class="serif" style="margin:0 0 8px;color:var(--bronze)">${title}</h2>${opts.map((o,i)=>`<button class="node" data-pk="${i}" style="display:block;width:100%;margin:6px 0;text-align:left">${o}</button>`).join('')}<div style="text-align:center"><button id="gp-x" class="btn">取消</button></div></div>`;$('#gp').classList.remove('hide')}
 const ownedEq=()=>ITEMS.map((_,i)=>i).filter(i=>qualityOf(i)&&!ITEMS[i].special);
@@ -1684,10 +1731,53 @@ function maybeCreate(){if(P._hero)return;const box=$('#create');box.classList.re
     <div>骰子：${h.dice.die1}＋${h.dice.die2}＝${h.dice.sum}　（${h.nameValue.method} ${h.nameValue.total}，餘數 ${h.remainder}）</div>
     <div class="stat-grid">${['HP','ATK','DEF','SPD','MATK','MDEF'].map(k=>`<div class="sbox"><b>${h.stats[k]}</b><span>${k}</span></div>`).join('')}</div>
     <button id="cr-ok">⚔️ 出發冒險！</button></div>`;
-    $('#cr-ok').onclick=()=>{box.classList.add('hide');box.innerHTML='';render()}}catch(err){$('#cr-msg').textContent=err.message}}}
+    $('#cr-ok').onclick=()=>{box.classList.add('hide');box.innerHTML='';render();checkGifts()}}catch(err){$('#cr-msg').textContent=err.message}}}
 (()=>{const mb=$('#mutebtn'),mu=()=>{try{return localStorage.getItem('ms-mute')==='1'}catch(e){return false}};mb.textContent=mu()?'🔇':'🔊';
   mb.onclick=()=>{try{localStorage.setItem('ms-mute',mu()?'0':'1')}catch(e){}mb.textContent=mu()?'🔇':'🔊'}})();
-load();meritInit();fragInit();fillWho();show('home');startPendingListen();maybeCreate();
+
+/* ===== 🎁 老師發放的獎勵 =====
+   老師在 config-editor.html 的「獎勵發放」建立禮物 → 下載 game-config.js 覆蓋 → 學生下次進遊戲就會自動收到。
+   每份禮物有唯一代號（id），領過的代號記在 P._giftsGot，同一份禮物同一台裝置不會重複領。
+   對象：全校 / 指定班級（比對「我的資料」的班級）/ 指定學號（比對「我的資料」的學號）。 */
+const giftEsc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function giftMatch(g){
+  if(!g||!g.id||g.on===false)return false;
+  const now=Date.now();
+  if(g.from&&Date.parse(g.from+'T00:00:00+07:00')>now)return false;
+  if(g.until&&Date.parse(g.until+'T23:59:59+07:00')<now)return false;
+  const to=g.to||{mode:'all'},w=P._who||{},cls=String(w.cls||'').trim(),sid=String(w.sid||'').trim();
+  const list=(to.list||[]).map(x=>String(x).trim()).filter(Boolean);
+  if(to.mode==='cls')return !!cls&&list.includes(cls);
+  if(to.mode==='sid')return !!sid&&list.includes(sid);
+  return true;
+}
+function giftApply(g){
+  const got=[],m=g.merit|0,e=g.exp|0,ch=g.chests|0;
+  if(m>0){P._merit=(P._merit||0)+m;got.push('🏅 戰功 +'+m)}
+  if(e>0){P._exp=(P._exp||0)+e;got.push('📘 經驗值 +'+e)}
+  if(ch>0){P._chests=P._chests||[];const cs=Math.max(1,Math.min(GC.stars.maxStar,(g.chestStars|0)||3));
+    for(let k=0;k<ch;k++)P._chests.push({s:cs,g:Math.floor(Math.random()*ITEMS.length)});got.push('📦 寶箱 ×'+ch+'（到背包打開）')}
+  Object.entries(g.items||{}).forEach(([id,n])=>{
+    n=n|0;const x=SHOPMAP[id];if(!x||n<=0)return;
+    if(x.cos){P._cos=P._cos||{};P._cos.own=P._cos.own||{};P._cos.on=P._cos.on||{};
+      if(P._cos.own[id])return got.push(x.icon+' '+x.name+'（你已經有了）');
+      P._cos.own[id]=1;if(!P._cos.on[x.cos.slot])P._cos.on[x.cos.slot]=id;got.push(x.icon+' '+x.name+'（已加入收藏，到背包裝備）')}
+    else{bagAdd(id,n);got.push(x.icon+' '+x.name+' ×'+n)}});
+  return got;
+}
+function checkGifts(){
+  if(!P._hero)return;                       // 還沒建立角色：等建立完再發
+  const L=(GC.gifts||[]).filter(g=>giftMatch(g)&&!(P._giftsGot||{})[g.id]);
+  if(!L.length)return;
+  P._giftsGot=P._giftsGot||{};
+  const html=L.map(g=>{P._giftsGot[g.id]=Date.now();const got=giftApply(g);
+    return `<div class="fighter" style="margin:8px 0"><b>${giftEsc(g.title||'老師送你的禮物')}</b>${g.msg?`<br><small>💬 ${giftEsc(g.msg)}</small>`:''}<br>${got.length?got.join('<br>'):'<small>（這份禮物沒有內容）</small>'}</div>`}).join('');
+  save();
+  popup(`<h2 class="serif" style="margin:0;color:var(--bronze);text-align:center">🎁 老師送來禮物了！</h2>${html}`);
+  window.BGM&&BGM.clang&&BGM.clang();
+  render();
+}
+load();meritInit();fragInit();fillWho();show('home');startPendingListen();maybeCreate();checkGifts();
 </script>
 </body>
 </html>

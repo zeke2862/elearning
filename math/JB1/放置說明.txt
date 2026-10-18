@@ -1,0 +1,30 @@
+【放置位置】四個檔案都放進遊戲資料夾（跟 stage-int.html 同一層），同名的直接覆蓋：
+  world-map.html          （學生版：新增「老師送來禮物」自動領取）  → 覆蓋
+  game-config.js          （新增 gifts 欄位，其餘數值不變）          → 覆蓋
+  config-editor.html      （修改器：新增「🎁 獎勵發放」區）           → 覆蓋
+  world-map-teacher.html  （教師版：全解鎖＋教師工具）                → 新增，只放在老師自己的電腦，不要上傳給學生
+
+【發禮物流程】
+  1. 打開 config-editor.html → 最上面「🎁 獎勵發放」→「＋ 新增禮物」
+  2. 選對象（全校／指定班級／指定學號）、填戰功／經驗值／寶箱／道具
+  3. 按「⬇️ 下載 game-config.js」→ 覆蓋到遊戲資料夾
+  4. 學生下次進遊戲（或在「我的資料」按儲存）就會跳出「老師送來禮物了」
+
+【README Changelog（可貼到 README.md）】
+- [2026-10-18] feat: 新增教師版 world-map-teacher.html（全關卡/無極限解鎖、教師工具），並在修改器加入「獎勵發放」（戰功/經驗/寶箱/道具，可指定全校/班級/學號），存放於 output/
+
+【一鍵存檔】
+  git add .
+  git commit -m "feat: 新增教師版與修改器獎勵發放功能（戰功/道具/經驗/寶箱）"
+【還原】 git log 查版本，git checkout <版本號> 即可回到此時狀態
+
+==== 2026-10-18 第二次更新 ====
+【放置位置】
+  world-map.html                → 覆蓋遊戲資料夾裡的同名檔
+  world-map-teacher.html        → 覆蓋（只放老師電腦）
+  images/lobby/halo-holy.png    → 覆蓋 images/lobby 裡的同名圖（新的金色光輪，沒有灰邊）
+【README Changelog】
+- [2026-10-18] fix: 環繞物分前後兩層繞勇者、神聖光輪移到頭頂（依各勇者頭部位置）、移除購買物品的滑鼠說明，存放於 output/
+【一鍵存檔】
+  git add .
+  git commit -m "fix: 環繞物前後繞行、光輪移至頭頂、移除購買物品滑鼠說明"

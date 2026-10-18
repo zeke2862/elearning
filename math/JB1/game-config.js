@@ -1,6 +1,7 @@
-/* game-config.js ── 全遊戲數值設定檔（由數值修改器產生於 2026/10/16 下午7:27:45）
+/* game-config.js ── 全遊戲數值設定檔（由數值修改器產生於 2026/10/18 下午2:03:44）
    用法：覆蓋遊戲資料夾裡的 game-config.js，學生重新整理即可套用。 */
 window.GAME_CONFIG_DEFAULT = {
+ "gifts": [],
  "stars": {
   "easy": [
    {
@@ -747,7 +748,7 @@ window.GAME_CONFIG_DEFAULT = {
     "emoji": "🐱",
     "pet": true
    },
-   "file": "pet-cat"
+   "file": "pet16"
   },
   {
    "id": "acc_5",
@@ -761,7 +762,7 @@ window.GAME_CONFIG_DEFAULT = {
     "emoji": "🦉",
     "pet": true
    },
-   "file": "pet-owl"
+   "file": "pet13"
   },
   {
    "id": "acc_8",
@@ -775,7 +776,189 @@ window.GAME_CONFIG_DEFAULT = {
     "emoji": "🐉",
     "pet": true
    },
-   "file": "pet-dragon"
+   "file": "pet5"
+  },
+  {
+   "id": "acc_9",
+   "cat": "acc",
+   "icon": "🐉",
+   "name": "鼠",
+   "price": 9000,
+   "desc": "夥伴：站在勇者旁邊的鼠",
+   "cos": {
+    "slot": "acc",
+    "emoji": "🐉",
+    "pet": true
+   },
+   "file": "pet1"
+  },
+  {
+   "id": "acc_10",
+   "cat": "acc",
+   "icon": "🐉",
+   "name": "牛",
+   "price": 9000,
+   "desc": "夥伴：站在勇者旁邊的牛",
+   "cos": {
+    "slot": "acc",
+    "emoji": "🐉",
+    "pet": true
+   },
+   "file": "pet2"
+  },
+  {
+   "id": "acc_11",
+   "cat": "acc",
+   "icon": "🐉",
+   "name": "虎",
+   "price": 9000,
+   "desc": "夥伴：站在勇者旁邊的虎",
+   "cos": {
+    "slot": "acc",
+    "emoji": "🐉",
+    "pet": true
+   },
+   "file": "pet3"
+  },
+  {
+   "id": "acc_12",
+   "cat": "acc",
+   "icon": "🐉",
+   "name": "兔",
+   "price": 9000,
+   "desc": "夥伴：站在勇者旁邊的兔",
+   "cos": {
+    "slot": "acc",
+    "emoji": "🐉",
+    "pet": true
+   },
+   "file": "pet4"
+  },
+  {
+   "id": "acc_13",
+   "cat": "acc",
+   "icon": "🐉",
+   "name": "蛇",
+   "price": 9000,
+   "desc": "夥伴：站在勇者旁邊的蛇",
+   "cos": {
+    "slot": "acc",
+    "emoji": "🐉",
+    "pet": true
+   },
+   "file": "pet6"
+  },
+  {
+   "id": "acc_14",
+   "cat": "acc",
+   "icon": "🐉",
+   "name": "馬",
+   "price": 9000,
+   "desc": "夥伴：站在勇者旁邊的馬",
+   "cos": {
+    "slot": "acc",
+    "emoji": "🐉",
+    "pet": true
+   },
+   "file": "pet7"
+  },
+  {
+   "id": "acc_15",
+   "cat": "acc",
+   "icon": "🐉",
+   "name": "羊",
+   "price": 9000,
+   "desc": "夥伴：站在勇者旁邊的羊",
+   "cos": {
+    "slot": "acc",
+    "emoji": "🐉",
+    "pet": true
+   },
+   "file": "pet8"
+  },
+  {
+   "id": "acc_16",
+   "cat": "acc",
+   "icon": "🐉",
+   "name": "猴",
+   "price": 9000,
+   "desc": "夥伴：站在勇者旁邊的猴",
+   "cos": {
+    "slot": "acc",
+    "emoji": "🐉",
+    "pet": true
+   },
+   "file": "pet9"
+  },
+  {
+   "id": "acc_17",
+   "cat": "acc",
+   "icon": "🐉",
+   "name": "雞",
+   "price": 9000,
+   "desc": "夥伴：站在勇者旁邊的雞",
+   "cos": {
+    "slot": "acc",
+    "emoji": "🐉",
+    "pet": true
+   },
+   "file": "pet10"
+  },
+  {
+   "id": "acc_18",
+   "cat": "acc",
+   "icon": "🐉",
+   "name": "狗",
+   "price": 9000,
+   "desc": "夥伴：站在勇者旁邊的狗",
+   "cos": {
+    "slot": "acc",
+    "emoji": "🐉",
+    "pet": true
+   },
+   "file": "pet11"
+  },
+  {
+   "id": "acc_19",
+   "cat": "acc",
+   "icon": "🐉",
+   "name": "豬",
+   "price": 9000,
+   "desc": "夥伴：站在勇者旁邊的豬",
+   "cos": {
+    "slot": "acc",
+    "emoji": "🐉",
+    "pet": true
+   },
+   "file": "pet12"
+  },
+  {
+   "id": "acc_20",
+   "cat": "acc",
+   "icon": "🐉",
+   "name": "貓熊",
+   "price": 9000,
+   "desc": "夥伴：站在勇者旁邊的貓熊",
+   "cos": {
+    "slot": "acc",
+    "emoji": "🐉",
+    "pet": true
+   },
+   "file": "pet14"
+  },
+  {
+   "id": "acc_21",
+   "cat": "acc",
+   "icon": "🐉",
+   "name": "小象",
+   "price": 9000,
+   "desc": "夥伴：站在勇者旁邊的小象",
+   "cos": {
+    "slot": "acc",
+    "emoji": "🐉",
+    "pet": true
+   },
+   "file": "pet15"
   },
   {
    "id": "rename",
@@ -856,6 +1039,74 @@ window.GAME_CONFIG_DEFAULT = {
     "rail": "#b8863a"
    },
    "file": "theme-magic-study"
+  },
+  {
+   "id": "th_magic_2",
+   "cat": "theme",
+   "name": "軍營",
+   "price": 2000,
+   "desc": "小屋主題：把大廳換成軍營",
+   "cos": {
+    "slot": "theme",
+    "wall": "#5a2f6d",
+    "wall2": "#3a1c4a",
+    "floor": "#74502f",
+    "floor2": "#4a3220",
+    "rail": "#b8863a"
+   },
+   "file": "1",
+   "icon": "🔮"
+  },
+  {
+   "id": "th_magic_3",
+   "cat": "theme",
+   "name": "森林樹屋",
+   "price": 2000,
+   "desc": "小屋主題：把大廳換成森林樹屋",
+   "cos": {
+    "slot": "theme",
+    "wall": "#5a2f6d",
+    "wall2": "#3a1c4a",
+    "floor": "#74502f",
+    "floor2": "#4a3220",
+    "rail": "#b8863a"
+   },
+   "file": "2",
+   "icon": "🔮"
+  },
+  {
+   "id": "th_magic_4",
+   "cat": "theme",
+   "name": "糖果屋",
+   "price": 2000,
+   "desc": "小屋主題：把大廳換成糖果屋",
+   "cos": {
+    "slot": "theme",
+    "wall": "#5a2f6d",
+    "wall2": "#3a1c4a",
+    "floor": "#74502f",
+    "floor2": "#4a3220",
+    "rail": "#b8863a"
+   },
+   "file": "3",
+   "icon": "🔮"
+  },
+  {
+   "id": "th_magic_5",
+   "cat": "theme",
+   "name": "城堡",
+   "price": 2000,
+   "desc": "小屋主題：把大廳換成城堡",
+   "cos": {
+    "slot": "theme",
+    "wall": "#5a2f6d",
+    "wall2": "#3a1c4a",
+    "floor": "#74502f",
+    "floor2": "#4a3220",
+    "rail": "#b8863a"
+   },
+   "file": "6",
+   "icon": "🔮"
   },
   {
    "id": "dc_1",
@@ -996,7 +1247,7 @@ window.GAME_CONFIG_DEFAULT = {
    "name": "光之翅膀",
    "price": 6000,
    "desc": "背後特效：在勇者背後展開光之翅膀（放在人物後面，不會蓋住人物）",
-   "file": "wings-light",
+   "file": "wings-light2",
    "cos": {
     "slot": "back",
     "kind": "wings",
@@ -1011,7 +1262,7 @@ window.GAME_CONFIG_DEFAULT = {
    "name": "暗影之翼",
    "price": 9000,
    "desc": "背後特效：在勇者背後展開暗影之翼",
-   "file": "wings-shadow",
+   "file": "wings-shadow2",
    "cos": {
     "slot": "back",
     "kind": "wings",
@@ -1030,6 +1281,66 @@ window.GAME_CONFIG_DEFAULT = {
    "cos": {
     "slot": "back",
     "kind": "halo",
+    "c1": "#ffd86b",
+    "c2": "#fff3c0"
+   }
+  },
+  {
+   "id": "bk_4",
+   "cat": "back",
+   "icon": "😇",
+   "name": "天使翅膀",
+   "price": 4000,
+   "desc": "背後特效：勇者身後長出天使翅膀",
+   "file": "wings-light1",
+   "cos": {
+    "slot": "back",
+    "kind": "wings",
+    "c1": "#ffd86b",
+    "c2": "#fff3c0"
+   }
+  },
+  {
+   "id": "bk_5",
+   "cat": "back",
+   "icon": "😇",
+   "name": "惡魔翅膀",
+   "price": 4000,
+   "desc": "背後特效：勇者身後長出惡魔翅膀",
+   "file": "wings-shadow1",
+   "cos": {
+    "slot": "back",
+    "kind": "wings",
+    "c1": "#ffd86b",
+    "c2": "#fff3c0"
+   }
+  },
+  {
+   "id": "bk_6",
+   "cat": "back",
+   "icon": "😇",
+   "name": "??翅膀",
+   "price": 400,
+   "desc": "背後特效：勇者身後長出??翅膀",
+   "file": "wings-shadow",
+   "cos": {
+    "slot": "back",
+    "kind": "wings",
+    "c1": "#ffd86b",
+    "c2": "#fff3c0"
+   }
+  },
+  {
+   "id": "bk_7",
+   "cat": "back",
+   "icon": "😇",
+   "name": "??翅膀",
+   "price": 400,
+   "desc": "背後特效：勇者身後長出??翅膀",
+   "file": "wings-light",
+   "cos": {
+    "slot": "back",
+    "kind": "wings",
     "c1": "#ffd86b",
     "c2": "#fff3c0"
    }
@@ -1120,6 +1431,7 @@ window.GAME_CONFIG_DEFAULT = {
   "bagCap": 30,
   "maxHealPerDuel": 3,
   "nameMaxLen": 8,
+  "trialSec": 10,
   "badWords": [
    "幹",
    "靠北",
@@ -1142,6 +1454,7 @@ window.GAME_CONFIG_DEFAULT = {
  }
 };
 window.GAME_CONFIG_LABELS = {
+ "gifts": "🎁 獎勵發放（戰功／道具／經驗值／寶箱，學生進遊戲自動收到）",
  "stars": "⭐ 星數標準",
  "stars.easy": "練兵模式：正確率達標 → 星數（取達標中最高的）",
  "stars.real": "實戰模式：正確率達標 → 星數",
@@ -1303,6 +1616,7 @@ window.GAME_CONFIG_LABELS = {
  "shopRules": "🛒 商店規則",
  "shopRules.bagCap": "每種消耗品的持有上限（買到這個數量就不能再買）",
  "shopRules.maxHealPerDuel": "每場對戰最多可以喝幾瓶補血瓶",
+ "shopRules.trialSec": "試用功能：試用幾秒（到時間自動關閉並詢問是否購買）",
  "shopRules.nameMaxLen": "改名卡：名字最多幾個字",
  "shopRules.badWords": "改名卡：不能使用的字眼（含有就不能改名）",
  "shop[].daily": "每日限購（每人每天最多買幾個，空白＝不限）",
@@ -1316,11 +1630,6 @@ window.GAME_CONFIG_LABELS = {
  "shop[].fx.rename": "改名（1＝啟用）",
  "shopRules.starterGift": "🎁 新手禮（第一次通關送的道具：道具代號與數量）",
  "shop[].cos.onWall": "掛在牆上（true／false）",
- "shop[].cos.wall": "小屋牆面顏色（上）",
- "shop[].cos.wall2": "小屋牆面顏色（下）",
- "shop[].cos.floor": "小屋地板顏色（上）",
- "shop[].cos.floor2": "小屋地板顏色（下）",
- "shop[].cos.rail": "小屋牆腳木板顏色",
  "shop[].cos.x": "飾品位置：左右（0～100）",
  "shop[].cos.y": "飾品位置：離地高度（0～100）",
  "shop[].cos.size": "飾品大小",

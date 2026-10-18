@@ -1,0 +1,1855 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>【教師版】國一數學戰略地圖｜韓信點兵 × 代數異世界</title>
+<style>
+:root{--ink:#161a2e;--ink2:#20264a;--line:#3a4270;--bronze:#d2a24c;--paper:#f1e8d2;--red:#d24a33;--jade:#43a58f;--txt:#e9e4d4}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(ellipse at top,#252c56,var(--ink) 65%);color:var(--txt);font-family:"Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif;min-height:100vh}
+h1,h2,h3,.serif{font-family:"Noto Serif TC","Songti TC","PMingLiU",serif}
+main{max-width:860px;margin:0 auto;padding:16px 16px 60px}
+button{font:inherit;cursor:pointer;color:inherit}
+button:focus-visible{outline:3px solid var(--bronze);outline-offset:2px}
+.hide{display:none!important}
+.card{background:var(--ink2);border:2px solid var(--line);border-radius:14px;padding:16px}
+.head{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.rank{font-size:2rem;color:var(--bronze);margin:0}
+.grow{flex:1;min-width:200px}
+.pbar{height:12px;background:var(--ink);border-radius:8px;overflow:hidden;margin:6px 0}
+#rbar{height:100%;background:linear-gradient(90deg,var(--bronze),#f0cf85);width:0;transition:width .6s}
+.ch{margin-top:16px}
+.who{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.who input{background:var(--ink);border:2px solid var(--line);border-radius:8px;padding:8px 10px;color:var(--txt);font:inherit;width:9.5em}
+.who button{background:var(--ink);border:2px solid var(--bronze);border-radius:8px;padding:8px 12px}
+.ch h2{margin:0;font-size:1.25rem;color:var(--bronze)}
+.ch small{opacity:.75}
+.nodes{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:10px}
+.node{background:var(--ink);border:2px solid var(--line);border-radius:12px;padding:10px 6px;min-height:104px;text-align:center;display:flex;flex-direction:column;justify-content:center;gap:4px}
+.node b{font-size:1.15rem}
+.node span{font-size:.85rem;line-height:1.3}
+.node:hover:not(.locked){border-color:var(--bronze);background:#2b2a3c}
+.node.boss{border-color:#8a3a2c}
+.node.locked{opacity:.45}
+.node.done{border-color:var(--jade)}
+.node.soon{border-style:dashed}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px;margin-top:10px}
+.cd{background:var(--paper);color:#2b2416;border-radius:10px;padding:10px;font-size:.85rem;line-height:1.5;min-height:130px}
+.cd b{font-size:1.1rem;display:block;font-family:"Noto Serif TC","Songti TC",serif}
+.cd.lock{background:var(--ink);color:#8a8fb0;border:2px dashed var(--line)}
+#ov{position:fixed;inset:0;background:var(--ink);z-index:50}
+#fr{width:100%;height:100%;border:0}
+#x{position:absolute;top:8px;right:10px;z-index:60;background:#0008;border:2px solid var(--line);border-radius:8px;padding:2px 10px}
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--bronze);color:#2a1d05;padding:12px 20px;border-radius:10px;font-weight:700;z-index:130;text-align:center;max-width:90vw;line-height:1.6}
+.enode{min-height:84px}
+.enode.done{border-color:#c9a13b}
+.rule{margin-top:12px;line-height:1.8;font-size:.92rem}
+.tiny{margin-top:24px;text-align:center}
+.tiny button{background:none;border:1px solid var(--line);border-radius:8px;padding:6px 14px;opacity:.7}
+/* ===== 角色戰力／裝備（新增） ===== */
+.hero-row{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.avatar{background:var(--ink);border:2px solid var(--bronze);border-radius:14px}
+#ebar{height:100%;background:linear-gradient(90deg,var(--jade),#7be0c9);width:0;transition:width .6s}
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(105px,1fr));gap:8px;margin-top:12px}
+.sbox{background:var(--ink);border:2px solid var(--line);border-radius:10px;padding:8px 6px;text-align:center}
+.sbox b{font-size:1.1rem;display:block}
+.sbox span{font-size:.75rem;opacity:.8}
+.icon-wrap{display:inline-flex;align-items:center;justify-content:center;vertical-align:middle}
+.icon-wrap img{display:block;object-fit:contain;border-radius:6px}
+.icon-wrap .emoji-fb{display:none;line-height:1}
+.ic-eq{width:30px;height:30px}
+.ic-eq img,.ic-eq .emoji-fb{width:30px;height:30px;font-size:26px}
+.avatar{width:78px;height:78px;padding:0;display:flex;align-items:center;justify-content:center}
+.ic-av{width:100%;height:100%}
+.ic-av img,.ic-av .emoji-fb{width:100%;height:100%;font-size:2.6rem}
+.cd .es{margin:6px 0;font-weight:700}
+.cd .hint{font-size:.76rem;opacity:.8;margin-bottom:4px}
+.cd .desc{font-size:.76rem;opacity:.85;line-height:1.5}
+.q-normal{color:#5a5245}
+.q-fine{color:#2f7d4f}
+.q-legend{color:#2b4fc4}
+.q-myth{color:#b8542c}
+.avatar{cursor:pointer;position:relative}
+.av-acc{position:absolute;right:-8px;bottom:-8px;font-size:1.5rem;background:var(--ink);border:2px solid var(--line);border-radius:50%;width:34px;height:34px;display:flex;align-items:center;justify-content:center;line-height:1}
+.ttl{color:var(--bronze);font-weight:700}
+/* ===== 🏡 大廳（玩家與休息區）===== */
+.trial{position:fixed;inset:0;z-index:120;background:#0b0e22ea;display:flex;align-items:center;justify-content:center;padding:12px;overflow:auto}
+.trial .tbox{width:min(96vw,720px);display:flex;flex-direction:column;gap:8px}
+.trial .tt{font-weight:800;font-size:1.1rem;color:var(--bronze);text-align:center}
+.trial .lb-dock,.trial .lb-gift,.trial p.tiny{display:none}
+.trial .tbar{height:12px;border-radius:8px;background:#ffffff22;overflow:hidden}.trial .tbar i{display:block;height:100%;width:100%;background:linear-gradient(90deg,#ffd24a,#ff8a3d)}
+.trial .tt2{text-align:center}.trial .ask{background:#1a1f3d;border:2px solid var(--bronze);border-radius:16px;padding:18px;text-align:center;max-width:420px;margin:auto}
+.trial .ask .big{font-size:3rem;line-height:1.2}.trial .ask .btn{margin:4px}
+.tryb{margin-left:4px}
+.lobby{position:relative;width:100%;aspect-ratio:16/9;min-height:340px;border-radius:18px;overflow:hidden;border:3px solid #6b4426;box-shadow:0 6px 18px #0008;container-type:inline-size;user-select:none;
+  --w1:#d9e6bd;--w2:#bcd29a;--f1:#ecb866;--f2:#c98a3e;--rail:#8a5a2b}
+.lb-wall{position:absolute;left:0;right:0;top:0;height:58%;background:linear-gradient(var(--w1),var(--w2))}
+.lb-wall::before,.lb-wall::after{content:'';position:absolute;top:0;bottom:0;width:7%;background:linear-gradient(90deg,#00000030,transparent),var(--rail)}
+.lb-wall::before{left:0}.lb-wall::after{right:0;transform:scaleX(-1)}
+.lb-rail{position:absolute;left:0;right:0;top:58%;height:3.2%;background:linear-gradient(var(--rail),#00000040),var(--rail);box-shadow:0 3px 6px #0005}
+.lb-floor{position:absolute;left:0;right:0;top:61.2%;bottom:0;background:repeating-linear-gradient(90deg,#0000 0 11.2%,#0002 11.2% 11.6%),linear-gradient(var(--f1),var(--f2))}
+.lb-bgimg{position:absolute;inset:0;background-size:cover;background-position:center}
+.lb-d{position:absolute;transform:translateX(-50%);display:flex;align-items:flex-end;justify-content:center;filter:drop-shadow(0 4px 3px #0006);z-index:2}
+.lb-d .icon-wrap,.lb-pet .icon-wrap{width:100%;height:100%}
+.lb-d img,.lb-pet img{width:100%;height:100%;object-fit:contain}
+.lb-d .emoji-fb,.lb-pet .emoji-fb{width:100%;height:100%;align-items:center;justify-content:center;line-height:1}
+.lb-hero{position:absolute;left:30%;bottom:5%;height:56%;transform:translateX(-50%);z-index:3;cursor:pointer}
+.lb-hero::after{content:'';position:absolute;left:12%;right:12%;bottom:-3%;height:7%;background:radial-gradient(ellipse,#0007,transparent 70%);z-index:-1}
+/* 人物圖完整顯示（不裁切、不變形） */
+.lb-hero{display:flex;align-items:flex-end;justify-content:center}
+.lb-hero>img{position:relative;z-index:1;height:100%;width:auto;max-width:none;object-fit:contain;display:block;animation:lbBreath 3.2s ease-in-out infinite;transform-origin:50% 100%}
+.lb-back{position:absolute;left:50%;bottom:16%;height:82%;aspect-ratio:2/1;transform:translateX(-50%);z-index:0;pointer-events:none;animation:wingFlap 3.6s ease-in-out infinite;transform-origin:50% 70%}
+.lb-back.halo{height:100%;bottom:2%;aspect-ratio:1}
+.lb-back.halo{bottom:auto;height:auto;width:50%;aspect-ratio:2/1;z-index:2;transform:none;margin-left:-25%;margin-top:-8.5%;animation:haloFloat 3.2s ease-in-out infinite}
+.lb-back.halo .fx-img{filter:drop-shadow(0 0 10px #ffe9a0)}
+.lb-back.halo .fx-halo{inset:8% 19% 26% 19%;background:none;border:.8cqw solid var(--c1);box-shadow:0 0 1.8cqw var(--c2),inset 0 0 1.2cqw var(--c2);animation:none}
+@keyframes haloFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+.lb-orbit.b{z-index:0;clip-path:inset(-60% -60% 54% -60%)}
+.lb-orbit.f{z-index:2;clip-path:inset(46% -60% -60% -60%)}
+.lb-back .fx-svg,.lb-back .fx-img{width:100%;height:100%;display:block;object-fit:contain;filter:drop-shadow(0 3px 5px #0007)}
+.fx-halo{position:absolute;inset:6% 6% 30% 6%;border-radius:50%;background:radial-gradient(circle,#0000 0 38%,var(--c1) 46%,var(--c2) 52%,#0000 72%);opacity:.8;animation:haloPulse 3s ease-in-out infinite}
+@keyframes wingFlap{50%{transform:translateX(-50%) scale(1.04,.97)}}
+@keyframes haloPulse{50%{opacity:.5;transform:scale(1.06)}}
+.lb-feet{position:absolute;left:50%;bottom:-7%;width:140%;aspect-ratio:3.2;transform:translateX(-50%);z-index:0;pointer-events:none}
+.lb-feet .fx-svg,.lb-feet .fx-img{width:100%;height:100%;display:block;object-fit:contain}
+.fx-dash{animation:dashMove 6s linear infinite}@keyframes dashMove{to{stroke-dashoffset:-230}}
+.lb-orbit{position:absolute;inset:0;z-index:2;pointer-events:none}
+.orb-ring{position:absolute;left:50%;top:46%;width:125%;aspect-ratio:1;transform:translate(-50%,-50%) scaleY(.36)}
+.orb-spin{position:absolute;inset:0;animation:orbSpin 5s linear infinite}
+.orb{position:absolute;top:0;left:50%;width:7cqw;height:7cqw;animation:orbUn 5s linear infinite;animation-delay:var(--d);--sy:2.78}
+.orb .icon-wrap,.orb img{width:100%;height:100%;object-fit:contain}.orb .emoji-fb{font-size:6cqw;width:100%;height:100%;align-items:center;justify-content:center;filter:drop-shadow(0 2px 3px #0008)}
+@keyframes orbSpin{to{transform:rotate(360deg)}}
+@keyframes orbUn{from{transform:translate(-50%,-50%) rotate(0) scaleY(2.78)}to{transform:translate(-50%,-50%) rotate(-360deg) scaleY(2.78)}}
+.lb-emo2{font-size:22cqw;line-height:1}
+@keyframes lbBreath{50%{transform:scaleY(1.025)}}
+.lb-pet{position:absolute;left:58%;bottom:5%;width:14cqw;height:14cqw;transform:translateX(-50%);z-index:3;cursor:pointer;animation:lbHop 2.4s ease-in-out infinite}
+.lb-pet .emoji-fb{font-size:11cqw}
+@keyframes lbHop{0%,70%,100%{transform:translateX(-50%)}80%{transform:translateX(-50%) translateY(-8%)}90%{transform:translateX(-50%)}}
+.lb-wear{position:absolute;left:calc(30% + 12cqw);bottom:58%;font-size:6cqw;line-height:1;background:#fff8e6e0;border:2px solid #b9792f;border-radius:50%;width:9cqw;height:9cqw;display:flex;align-items:center;justify-content:center;z-index:4;box-shadow:0 2px 6px #0006}
+.lb-plate{position:absolute;left:2.5%;top:3%;max-width:62%;background:#1c1208c8;border:2px solid #e3b866;border-radius:12px;padding:6px 12px;font-size:clamp(12px,2.2cqw,16px);line-height:1.5;z-index:5;color:#fff6df}
+.lb-plate .ttl{color:#ffd86b}
+.lb-merit{position:absolute;right:2.5%;top:3%;background:#1c1208c8;border:2px solid #e3b866;border-radius:20px;padding:4px 12px;font-size:clamp(12px,2.2cqw,16px);z-index:5;color:#fff6df}
+.lb-gift{position:absolute;right:2.5%;top:calc(3% + 42px);background:#d24a33;border:2px solid #ffd7c8;border-radius:14px;padding:3px 12px;font-size:clamp(11px,2cqw,14px);z-index:5;color:#fff;animation:lbPulse 1.6s infinite}
+@keyframes lbPulse{50%{transform:scale(1.05)}}
+.lb-say{position:absolute;left:30%;bottom:64%;transform:translateX(-50%);background:#fffaf0;color:#4a2a0c;border:3px solid #b9792f;border-radius:14px;padding:6px 12px;font-weight:700;font-size:clamp(12px,2.4cqw,16px);z-index:6;white-space:nowrap;display:none}
+.lb-say.on{display:block;animation:lbPop .25s}
+@keyframes lbPop{from{transform:translateX(-50%) scale(.6);opacity:0}}
+.lb-dock{position:absolute;right:1.5%;top:11%;display:flex;flex-direction:column;align-items:center;gap:4px;z-index:7}
+.lb-menu{display:none;flex-direction:column;align-items:center;gap:clamp(3px,.5cqw,5px)}
+.lb-dock.open .lb-menu{display:flex;animation:lbMenu .22s ease-out}
+@keyframes lbMenu{from{opacity:0;transform:translateY(-8px)}}
+.lb-tg{position:relative;width:clamp(36px,4.9cqw,50px);height:clamp(36px,4.9cqw,50px);border-radius:50%;border:3px solid #fff3d6;background:radial-gradient(circle at 50% 30%,#fffaf0,#f4d79b);box-shadow:0 0 0 2px #b9792f,0 4px 8px #0007;color:#4a2a0c;font-weight:800;font-size:clamp(9px,1.7cqw,12px);line-height:1.1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0;cursor:pointer}
+.lb-tg b{font-size:clamp(14px,2.6cqw,20px);line-height:1}
+.lb-tg i{position:absolute;top:-3px;right:-3px;background:var(--red);border:2px solid #fff;border-radius:50%;width:12px;height:12px;padding:0}
+.lb-dock.open .lb-tg i{display:none}
+.lb-c{position:relative;width:clamp(34px,4.6cqw,48px);height:clamp(34px,4.6cqw,48px);border-radius:50%;border:2px solid #fff3d6;background:radial-gradient(circle at 50% 30%,#fffaf0,#f4d79b);box-shadow:0 0 0 2px #b9792f,0 3px 7px #0007;color:#4a2a0c;font-weight:700;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:clamp(8px,1.45cqw,11px);line-height:1.05;padding:0;cursor:pointer}
+.lb-c.big{width:clamp(40px,5.3cqw,54px);height:clamp(40px,5.3cqw,54px);font-size:clamp(9px,1.6cqw,12px)}
+.lb-c:hover{transform:translateX(-3px);border-color:#ffd86b}
+.lb-c .ic-ui{width:clamp(16px,2.8cqw,26px);height:clamp(16px,2.8cqw,26px)}
+.lb-c .big-ic .ic-ui{width:clamp(20px,3.4cqw,32px);height:clamp(20px,3.4cqw,32px)}
+.ic-ui img,.ic-ui .emoji-fb{width:100%;height:100%;object-fit:contain;border-radius:0}
+.ic-ui .emoji-fb{font-size:clamp(14px,2.4cqw,22px);align-items:center;justify-content:center}
+.lb-c i{position:absolute;top:-2px;right:-2px;background:var(--red);color:#fff;border-radius:10px;padding:0 6px;font-style:normal;font-size:.75rem;border:2px solid #fff}
+@media (max-width:640px){.lobby{aspect-ratio:4/5}.lb-hero{left:34%;height:44%}.lb-pet{left:70%;width:22cqw;height:22cqw}.lb-pet .emoji-fb{font-size:17cqw}.lb-wear{left:calc(34% + 18cqw);bottom:50%;width:12cqw;height:12cqw;font-size:8cqw}.lb-say{left:34%;bottom:56%}.lb-d{font-size:inherit}}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 4px}
+.tab{background:var(--ink);border:2px solid var(--line);border-radius:12px;padding:8px 14px;font-weight:700}
+.tab.on{background:var(--bronze);color:#2a1d05;border-color:var(--bronze)}
+.tag-star{display:inline-block;background:var(--red);color:#fff;border-radius:8px;padding:0 6px;font-size:.75rem;margin-left:4px}
+/* 護盾特效 */
+.bt-shield{position:absolute;left:-6%;right:-6%;top:-4%;bottom:0;border-radius:50%;border:3px solid #8fd6ff;background:radial-gradient(circle at 35% 30%,#cdeeff66,#4aa8ff22 60%,transparent 72%);box-shadow:0 0 18px #62b8ff,inset 0 0 16px #8fd6ff88;z-index:2;pointer-events:none;display:none;animation:btShield 2s ease-in-out infinite}
+.bt-shield.on{display:block}
+.bt-shield i{position:absolute;right:4%;top:0;font-style:normal;background:#2a6fb8;border:2px solid #cdeeff;border-radius:12px;padding:0 6px;font-size:.8rem;color:#fff}
+@keyframes btShield{50%{transform:scale(1.04);opacity:.78}}
+.bt-sprite.blocked .bt-shield{animation:btBlock .5s}
+@keyframes btBlock{0%{transform:scale(1);filter:brightness(1)}30%{transform:scale(1.2);filter:brightness(2.4)}100%{transform:scale(1);filter:brightness(1)}}
+.shake{animation:bShake .35s}
+@keyframes bShake{0%,100%{transform:translate(0)}20%{transform:translate(-5px,2px)}40%{transform:translate(5px,-2px)}60%{transform:translate(-3px,1px)}80%{transform:translate(3px,0)}}
+.rkwrap{display:flex;align-items:center;gap:8px}.rkic{font-size:2rem}
+.stat-grid{grid-template-columns:repeat(auto-fill,minmax(78px,1fr))!important}
+.sbox{cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px}
+.sbox .si{font-size:1.5rem;line-height:1}
+.icrow{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:6px 0 12px}
+.icrow .lab{font-size:1.4rem;width:34px;text-align:center}
+.slot{position:relative;width:60px;height:60px;border-radius:14px;border:3px solid var(--line);background:var(--ink);display:flex;align-items:center;justify-content:center;font-size:1.7rem;padding:0}
+.slot.on{border-color:var(--bronze)}
+.slot i{position:absolute;right:-6px;bottom:-6px;background:var(--bronze);color:#2a1d05;border-radius:10px;padding:0 6px;font-style:normal;font-size:.7rem;font-weight:700}
+.slot small{position:absolute;left:0;right:0;bottom:-18px;text-align:center;font-size:.7rem}
+.eqgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:10px;margin-top:6px}
+.eqs{position:relative;aspect-ratio:1;border-radius:14px;border:3px solid var(--line);background:var(--ink);display:flex;align-items:center;justify-content:center;padding:4px}
+.eqs .icon-wrap{width:100%;height:100%}.eqs img{width:100%;height:100%;object-fit:contain}.eqs .emoji-fb{font-size:1.8rem;width:100%;height:100%;align-items:center;justify-content:center}
+.eqs.lock{border-style:dashed;opacity:.55;filter:grayscale(1)}
+.eqs.q-normal{border-color:#b9b3a3}.eqs.q-fine{border-color:#46b87a}.eqs.q-legend{border-color:#5a7dff}.eqs.q-myth{border-color:#ff8a4a;box-shadow:0 0 10px #ff8a4a88}
+.eqs i{position:absolute;right:-5px;top:-7px;font-style:normal;font-size:.7rem;background:var(--bronze);color:#2a1d05;border-radius:8px;padding:0 5px;font-weight:700}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{flex:1;min-width:92px;background:var(--ink);border:2px solid var(--line);border-radius:12px;padding:8px;text-align:center;font-size:.9rem}
+.chip .e{font-size:1.5rem;display:block}
+.bdg{display:inline-flex;align-items:center;justify-content:center;width:42px;height:42px;font-size:1.6rem;border:2px solid var(--bronze);border-radius:50%;margin:3px;background:var(--ink)}
+.popbig{font-size:3rem;text-align:center;line-height:1.2}
+.mapblur{filter:blur(7px) brightness(.6);pointer-events:none}
+#chsel{position:absolute;inset:0;display:flex;align-items:center;align-content:center;justify-content:center;gap:14px;flex-wrap:wrap;padding:12px;z-index:20}
+.chbtn{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:170px;gap:3px;background:radial-gradient(circle at 50% 25%,#fffaf0,#f4d79b);color:#4a2a0c;border:4px solid #fff3d6;box-shadow:0 0 0 2px #b9792f,0 8px 18px #000a;border-radius:26px;padding:14px 12px;width:clamp(100px,28%,180px);font-weight:700;line-height:1.3}
+.chbtn:hover{transform:translateY(-4px)}
+.chbtn .no{font-size:2.4rem;line-height:1;font-family:serif}.chbtn .em{font-size:1.6rem}
+.chbtn.lk{filter:grayscale(.9);opacity:.75}
+.mp-bar button[data-chsel]{padding:6px 10px}
+.ic-sh{width:44px;height:44px}
+.ic-sh img,.ic-sh .emoji-fb{width:44px;height:44px;font-size:34px}
+.ic-sh.ic-th img,.ic-sh.ic-th .emoji-fb{width:88px;height:50px;object-fit:cover;border-radius:6px;border:1px solid #fff4}
+.fighter{background:var(--ink);border:2px solid var(--line);border-radius:12px;padding:10px 12px;margin:8px 0}
+.fighter b{font-size:1.05rem}
+.fbar{height:10px;background:#2a2f52;border-radius:6px;overflow:hidden;margin:4px 0}
+.fbar>i{display:block;height:100%;transition:width .3s}
+.fbar.hp>i{background:linear-gradient(90deg,#43a58f,#7be0c9)}
+.fbar.mp>i{background:linear-gradient(90deg,#3a6fd2,#7fb0f2)}
+.turn-tag{display:inline-block;background:var(--bronze);color:#2a1d05;padding:2px 10px;border-radius:8px;font-weight:700;font-size:.85rem;margin-bottom:6px}
+.amenu{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.amenu button{background:var(--ink);border:2px solid var(--bronze);border-radius:8px;padding:8px 12px;font-size:.88rem}
+.amenu button:disabled{opacity:.35;cursor:not-allowed}
+.blog{margin-top:10px;font-size:.82rem;opacity:.85;line-height:1.6;max-height:120px;overflow-y:auto}
+@media (max-width:560px){.nodes{grid-template-columns:repeat(2,1fr)}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+/* ===== 🎬 對戰舞台（全螢幕）：對手在上、我方在下 ===== */
+.bt-stage{position:fixed;inset:0;z-index:90;display:flex;flex-direction:column;color:#fff;overflow:hidden;background:radial-gradient(ellipse at 50% 0%,#2b3a7a 0%,#141a3a 55%,#0b0e22 100%)}
+.bt-arena{flex:1;min-height:0;position:relative;display:flex;flex-direction:column;justify-content:space-between;padding:10px 14px}
+.bt-arena::before{content:'';position:absolute;left:6%;right:6%;top:50%;height:1px;background:linear-gradient(90deg,transparent,#c9a24a88,transparent)}
+.bt-row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.bt-card{background:#0e1230d9;border:2px solid var(--line);border-radius:12px;padding:8px 12px;flex:0 1 250px;min-width:140px;max-width:56vw}
+.bt-card b{font-size:1rem}
+.bt-card small{font-size:.75rem;opacity:.85}
+.bt-stage{--sp:clamp(84px,22vh,150px)}
+.bt-sprites{position:relative;flex:none;width:var(--sp);height:var(--sp)}
+.bt-sprites.has-clone{width:calc(var(--sp)*1.5)}
+.bt-sprite{position:absolute;top:0;width:var(--sp);height:var(--sp)}
+.bt-bot .bt-sprite{left:0}.bt-bot .bt-clone{left:auto;right:0}
+.bt-top .bt-sprite{right:0}.bt-top .bt-clone{right:auto;left:0}
+.bt-eq{display:flex;flex-wrap:wrap;gap:6px 5px;margin-top:8px}
+.bt-eqi{position:relative;width:28px;height:28px;border-radius:6px;background:#0009;border:2px solid var(--qc,#b9b3a5);display:inline-flex;align-items:center;justify-content:center}
+.bt-eqi .icon-wrap{width:100%;height:100%}
+.bt-eqi img,.bt-eqi .emoji-fb{width:100%;height:100%;object-fit:contain;border-radius:3px;font-size:16px;align-items:center;justify-content:center}
+.bt-eqi i{position:absolute;right:-5px;bottom:-7px;font-style:normal;font-size:.55rem;line-height:1.3;font-weight:900;padding:0 3px;border-radius:5px;background:var(--qc,#b9b3a5);color:#111}
+.bq-normal{--qc:#b9b3a5}.bq-fine{--qc:#4cc98a}.bq-legend{--qc:#6aa0ff}.bq-myth{--qc:#ff9a52}
+.bt-sprite::after{content:'';position:absolute;left:12%;right:12%;bottom:-6px;height:12px;background:radial-gradient(ellipse,#000a,transparent 70%);z-index:0}
+.bt-img{position:relative;z-index:1;width:100%;height:100%;display:flex;align-items:center;justify-content:center;filter:drop-shadow(0 8px 6px #0009)}
+.bt-img .icon-wrap{width:100%;height:100%}
+.bt-img .ic-bt img,.bt-img .ic-bt .emoji-fb{width:100%;height:100%;object-fit:contain;border-radius:0}
+.bt-img .ic-bt .emoji-fb{font-size:clamp(60px,15vh,112px);align-items:center;justify-content:center}
+.bt-caption{align-self:center;text-align:center;font-size:.95rem;line-height:1.5;min-height:2.6em;max-width:94%;padding:6px 14px;background:#00000066;border-radius:10px;position:relative;z-index:2}
+.bt-caption.pop{animation:btCap .35s}
+.bt-panel{background:#0b0e22;border-top:2px solid var(--bronze);padding:10px 14px 14px;max-height:46vh;overflow-y:auto}
+.bt-panel .blog{max-height:84px}
+.bt-stage .fbar>i{transition:width .5s .25s}
+.bt-img.hurt{animation:btHurt .55s,btFlash .55s}
+.bt-sprite.cast .bt-img{animation:btCast .7s}
+.bt-sprite.defending{filter:drop-shadow(0 0 12px #5ab0ff)}
+.bt-sprite.defending::before{content:'🛡️';position:absolute;right:-8px;top:-8px;font-size:2rem;z-index:3;animation:btPulse 1.2s infinite}
+.bt-sprite.charging{animation:btCharge .9s infinite alternate}
+.bt-sprite.ko .bt-img{transform:rotate(78deg) translateY(18px);filter:grayscale(1) brightness(.6);opacity:.7;transition:all .8s}
+.bt-sprite.win .bt-img{animation:btWin .7s infinite alternate}
+.bt-float{position:absolute;left:50%;top:8%;transform:translateX(-50%);font-weight:900;font-size:1.8rem;pointer-events:none;text-shadow:0 2px 4px #000,0 0 8px #000;z-index:4;animation:btFloat 1s forwards}
+.bt-burst{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:3.4rem;pointer-events:none;z-index:4;animation:btBurst .55s forwards}
+.bt-proj{position:absolute;font-size:2.4rem;z-index:5;pointer-events:none;filter:drop-shadow(0 0 10px #9ad0ff)}
+@keyframes btHurt{0%,100%{transform:translateX(0)}12%{transform:translateX(-16px) rotate(-6deg)}28%{transform:translateX(14px) rotate(5deg)}44%{transform:translateX(-10px)}60%{transform:translateX(8px)}80%{transform:translateX(-4px)}}
+@keyframes btFlash{0%,100%{filter:drop-shadow(0 8px 6px #0009)}30%{filter:brightness(2.3) saturate(0) drop-shadow(0 0 14px #ff3b3b)}}
+@keyframes btCast{0%,100%{transform:scale(1);filter:drop-shadow(0 8px 6px #0009)}40%{transform:scale(1.18);filter:drop-shadow(0 0 22px #b48cff) brightness(1.4)}}
+@keyframes btPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
+@keyframes btCharge{from{filter:drop-shadow(0 0 4px #b48cff)}to{filter:drop-shadow(0 0 22px #ffd45a) brightness(1.25)}}
+@keyframes btWin{from{transform:translateY(0)}to{transform:translateY(-12px)}}
+@keyframes btFloat{0%{opacity:0;transform:translate(-50%,10px) scale(.7)}15%{opacity:1;transform:translate(-50%,0) scale(1.2)}100%{opacity:0;transform:translate(-50%,-64px) scale(1)}}
+@keyframes btBurst{0%{opacity:1;transform:scale(.3)}60%{opacity:1;transform:scale(1.4)}100%{opacity:0;transform:scale(1.8)}}
+@keyframes btCap{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@media (max-height:560px){.bt-stage{--sp:88px}.bt-eqi{width:22px;height:22px}.bt-panel{max-height:52vh}}
+#nav{margin:0 0 10px}#nav button{background:var(--ink);border:2px solid var(--bronze);border-radius:8px;padding:8px 14px}
+.flow{display:flex;align-items:stretch;gap:8px;flex-wrap:wrap;margin:10px 0 16px}
+.fnode{flex:1;min-width:210px;background:var(--ink2);border:2px solid var(--line);border-radius:14px;padding:14px;text-align:left}
+.fnode:hover,.menu4 button:hover{border-color:var(--bronze)}.fnode b{display:block;color:var(--bronze);font-size:1.1rem}
+.arr{align-self:center;font-size:1.8rem;color:var(--bronze)}
+.menu4{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px}
+.menu4 button{background:var(--ink2);border:2px solid var(--line);border-radius:14px;padding:16px 10px;font-size:1.05rem;position:relative}
+.menu4 i{position:absolute;top:6px;right:8px;background:var(--red);border-radius:10px;padding:0 8px;font-style:normal;font-size:.8rem}
+#create{position:fixed;inset:0;z-index:120;background:#0b0e22f2;display:flex;align-items:center;justify-content:center;padding:16px}
+#create .card{max-width:440px;width:100%;line-height:1.8}#create input{background:var(--ink);border:2px solid var(--line);border-radius:8px;padding:8px 10px;color:var(--txt);font:inherit;width:100%;margin:6px 0}
+#create button{background:var(--bronze);color:#2a1d05;border:0;border-radius:8px;padding:10px 16px;font-weight:700;margin-top:8px}
+#mapvp{height:72vh;min-height:360px;overflow:auto;border:2px solid var(--bronze);border-radius:12px;cursor:grab;background:#0b0e22;scrollbar-width:thin}
+#mapin{position:relative;width:1536px;height:1024px}#mapin>img{width:1536px;height:1024px;display:block;user-select:none;-webkit-user-drag:none}
+.mp-bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px}.mp-bar button{background:var(--ink2);border:2px solid var(--line);border-radius:8px;padding:6px 12px}
+.mp-bar button.on{background:var(--bronze);color:#2a1d05;border-color:var(--bronze);font-weight:700}
+.mn{position:absolute;transform:translate(-50%,-50%);width:50px;height:50px;border-radius:50%;border:4px solid var(--bronze);background:#1b1f40;color:#fff;font-weight:700;font-size:1.05rem;cursor:pointer;z-index:3;box-shadow:0 2px 8px #000a}
+.mn.lk{filter:grayscale(1);opacity:.8}.mn.done{border-color:#ffd86b;background:#6b5513}.mn.pulse{animation:pls 1.2s infinite}
+@keyframes pls{50%{box-shadow:0 0 0 16px #ffd86b55}}@keyframes bob{to{transform:translateY(-8px)}}
+#mhero{position:absolute;transform:translate(-50%,-100%);transition:left var(--wd,1s) linear,top var(--wd,1s) linear;pointer-events:none;z-index:5;filter:drop-shadow(0 3px 3px #000)}
+#mhero.l img{transform:scaleX(-1)}#mhero.walk img{animation:bob .25s infinite alternate}
+#gp{position:fixed;inset:0;z-index:110;background:#0b0e22d9;display:flex;align-items:center;justify-content:center;padding:14px}
+#gp .card{max-width:520px;width:100%;max-height:86vh;overflow:auto}.gprow{display:flex;gap:6px;margin:6px 0}
+.fog{position:absolute;left:0;top:0;pointer-events:none;z-index:2}
+.gr2{align-items:center;flex-wrap:wrap}.ginfo{flex:1;min-width:170px;text-align:left}.mbtns{display:flex;gap:6px}
+.mbtn{background:var(--ink2);border:2px solid var(--line);border-radius:10px;padding:6px 8px;min-width:62px;line-height:1.3;font-size:.9rem}
+.mbtn:disabled{opacity:.4}.mbtn.easy{border-color:#4aa86b}.mbtn.real{border-color:#d2a24c}.mbtn.hard{border-color:#d9503f}
+#mutebtn{position:fixed;right:10px;bottom:10px;z-index:60;border:1px solid #888;border-radius:50%;width:40px;height:40px;background:#0009;color:#fff;font-size:20px;cursor:pointer}
+#forge{position:fixed;inset:0;z-index:300;background:#000b;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.fg-box{text-align:center;color:#fff}.fg-anvil{font-size:80px;transform-origin:80% 90%;animation:hm .45s ease-in 3}
+@keyframes hm{0%{transform:rotate(-40deg)}60%,100%{transform:rotate(25deg)}}
+.fg-spark{font-size:34px;opacity:0;animation:sp .45s 3}@keyframes sp{50%{opacity:1;transform:scale(1.4)}}
+.fg-item{font-size:90px;opacity:0;animation:rv .6s 1.35s forwards;filter:drop-shadow(0 0 18px gold)}
+@keyframes rv{from{opacity:0;transform:scale(.3) rotate(-30deg)}to{opacity:1;transform:scale(1)}}
+.fg-name{opacity:0;animation:rv2 .5s 1.7s forwards;font-size:1.2rem;line-height:1.7}@keyframes rv2{to{opacity:1}}@keyframes shk{25%{transform:rotate(-12deg)}75%{transform:rotate(12deg)}}
+.btn{background:var(--ink2);color:var(--txt);border:2px solid var(--bronze);border-radius:10px;padding:8px 14px;font:inherit;cursor:pointer}
+.btn:hover:not(:disabled){background:#2c3566}.btn:disabled{opacity:.45;cursor:not-allowed}
+</style>
+<script src="game-config.js?v=20261018g"></script>
+<script src="math_hero_engine.js"></script>
+<script src="bgm.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+</head>
+<body>
+<main>
+  <div id="nav" class="hide"><button id="back">⬅ 回首頁</button></div>
+  <h1 class="serif" style="margin:0 0 4px">國一數學戰略地圖 <span style="font-size:.6em;background:#d24a33;color:#fff;border-radius:8px;padding:2px 8px;vertical-align:middle">教師版・全解鎖</span></h1>
+  <p style="margin:0 0 14px;opacity:.8">第一章「整數王國」× 第二章「韓信點兵：數字戰線」× 第三章「代數異世界：符號之城的覺醒」</p>
+
+  <section class="card head" data-v="hero" id="headc" title="軍階">
+    <div class="rkwrap"><span class="rkic">🎖️</span><p class="rank serif" id="rank"></p></div>
+    <div class="grow"><b id="tot"></b><div class="pbar"><div id="rbar"></div></div><small id="nxt" class="hide"></small></div>
+  </section>
+
+  <section class="card who" id="who" data-v="hero arena">
+    <details id="who-d" style="width:100%"><summary style="cursor:pointer;font-weight:700">👤 我的資料</summary><div class="who">
+    <input id="w-cls" placeholder="班級（例：701）" maxlength="20" aria-label="班級">
+    <input id="w-no" placeholder="座號" maxlength="10" aria-label="座號">
+    <input id="w-name" placeholder="姓名或暱稱" maxlength="30" aria-label="姓名或暱稱">
+    <input id="w-sid" placeholder="我的學號（對戰要用）" maxlength="20" aria-label="我的學號">
+    <button id="w-save">儲存</button>
+    <button id="w-exp">📤 匯出我的進度</button>
+  </div></details></section>
+
+  <div id="home" data-v="home adv daily"></div><div id="map" data-v="ch"></div>
+
+  <section class="card" id="hero" data-v="hero">
+    <div class="hero-row">
+      <div class="avatar" id="avatar">🧙</div>
+      <div class="grow">
+        <b id="lv-txt"></b>
+        <div class="pbar"><div id="ebar"></div></div>
+        <small id="exp-txt"></small>
+      </div>
+    </div>
+    <div class="stat-grid" id="stats"></div>
+  </section>
+
+  <section class="card" id="hx" data-v="hero"></section>
+
+  <section class="card" data-v="hero">
+    <h2 class="serif" style="margin:0 0 4px">⚔️</h2>
+    <div class="eqgrid" id="cards"></div>
+  </section>
+
+  <section class="card" id="arena" data-v="arena">
+    <h2 class="serif" style="margin:0 0 6px">⚔️ 學號對戰</h2>
+    <div id="arena-setup">
+      <small>手機、平板、家裡電腦都可以玩，只要有網路就好！輸入對方學號、選好模式、按下對戰。<br>⚡ 出手順序依雙方「速度」輪流：速度越快，出手越頻繁。</small>
+      <div class="who" style="margin-top:10px">
+        <label style="display:inline-flex;align-items:center;gap:4px"><input type="radio" name="duel-mode" value="sync" checked>⚡即時對戰（雙方都要在線）</label>
+        <label style="display:inline-flex;align-items:center;gap:4px"><input type="radio" name="duel-mode" value="async">👻單挑幽靈AI（對方不用在線）</label>
+      </div>
+      <div class="who" style="margin-top:8px">
+        <input id="op-sid" placeholder="對方學號">
+        <button id="op-fight">⚔️ 輸入學號，對戰！</button>
+      </div>
+      <div id="arena-pending" class="hide" style="margin-top:10px"></div>
+    </div>
+    <div id="arena-battle" class="hide"></div>
+  </section>
+
+
+  <section class="card" id="shop" data-v="shop"></section>
+  <section class="card" id="bag" data-v="bag"></section>
+  <section class="card" id="rank" data-v="arena"></section>
+  <section class="card" id="wrong" data-v="wrong"></section>
+  <p class="tiny" data-v="hero"><button id="reset">重置我的進度</button></p>
+</main>
+
+<div id="create" class="hide"></div>
+<div id="gp" class="hide"></div>
+<button id="mutebtn" title="音樂與音效開關">🔊</button>
+<div id="ov" class="hide"><button id="x" aria-label="關閉">✕</button><iframe id="fr" title="關卡"></iframe></div>
+<div id="toast" class="hide"></div>
+
+<script>
+const TEACHER=true; // 教師版：解鎖全部關卡／無極限，並附教師工具
+const GC=window.GAME_CONFIG; // 所有可調數值都在 game-config.js（用 config-editor.html 修改）
+/*LOGIC*/
+const CH1=[{"n": "第 1 大關｜玉山極寒試煉", "sub": "基準點・數線・相反數與絕對值・去括號", "st": [["I-1-1", "基準點與符號", "stage-int.html?id=I-1-1"], ["I-1-2", "數線與比大小", "stage-int.html?id=I-1-2"], ["I-1-3", "相反數與絕對值", "stage-int.html?id=I-1-3"], ["I-1-4", "番外：結界破除", "stage-int.html?id=I-1-4"]]}, {"n": "第 2 大關｜中心線的拉鋸", "sub": "整數加法・減法・距離與中點", "st": [["II-1-1", "整數加法", "stage-int.html?id=II-1-1"], ["II-1-2", "整數減法", "stage-int.html?id=II-1-2"], ["II-1-3", "距離、座標與中點", "stage-int.html?id=II-1-3"]]}, {"n": "第 3 大關｜算籌鏡像迷宮", "sub": "乘法・除法・四則運算・分配律", "st": [["III-1-1", "整數乘法", "stage-int.html?id=III-1-1"], ["III-1-2", "整數除法", "stage-int.html?id=III-1-2"], ["III-1-3", "整數四則運算", "stage-int.html?id=III-1-3"], ["III-1-4", "分配律", "stage-int.html?id=III-1-4"]]}, {"n": "第 4 大關｜星際縮放之鑰", "sub": "指數簡記・乘方運算・科學記號", "st": [["IV-1-1", "指數簡記", "stage-int.html?id=IV-1-1"], ["IV-1-2", "乘方的加減乘除", "stage-int.html?id=IV-1-2"], ["IV-1-3", "科學記號", "stage-int.html?id=IV-1-3"], ["IV-1-4", "Boss：星際縮放大師", "stage-int.html?id=IV-1-4"]]}];
+const CH2=[
+ {n:'第二章一、密碼森林',sub:'因倍數判別',st:[['1-1','2 與 5 濾鏡','stage1-1-filter-2-5.html'],['1-2','3 與 9 濾鏡','stage1-2-filter-3-9.html'],['1-3','11 濾鏡','stage1-3-filter-11.html'],['1-4','Boss：迷霧斥候長','stage1-4-boss-scout.html']]},
+ {n:'第二章二、質數堡壘',sub:'質數與合數',st:[['2-1','基地搭建','stage2-1-tiles.html'],['2-2','質數篩選塔','stage2-2-sieve-tower.html'],['2-3','蜈蚣圖 6n±1','stage2-3-centipede.html'],['2-4','Boss：偽裝者 91','stage2-4-boss-disguiser.html']]},
+ {n:'第二章三、鍊金實驗室',sub:'短除法與最大公因數',st:[['3-1','短除法拆解','stage3-1-ladder.html'],['3-2','標準分解式','stage3-2-blocks.html'],['3-3','最大公因數','stage3-3-gcd.html'],['3-4','Boss：混沌煉金術士','stage3-4-boss-alchemist.html']]},
+ {n:'第二章四、垓下之戰',sub:'公因數與公倍數的應用',st:[['4-1','戰術辨識','stage4-1-tactics.html'],['4-2','找因數行動','stage4-2-divisors.html'],['4-3','找倍數行動','stage4-3-multiples.html'],['4-4','終極 Boss：韓信點兵','stage4-4-final-boss.html']]}
+];
+const CH3=[
+ {n:'第三章一、符號森林的遺失咒語',sub:'代數式的簡記與求值',st:[['5-1','咒語簡記修復','algebra-stage.html?id=5-1'],['5-2','能量注入求值','algebra-stage.html?id=5-2']]},
+ {n:'第三章二、分配律的平衡天秤',sub:'去括號、化簡與解方程式',st:[['6-1','括號封印解除','algebra-stage.html?id=6-1'],['6-2','複合化簡試煉','algebra-stage.html?id=6-2'],['6-3','身分鑑定','algebra-stage.html?id=6-3'],['6-4','解方程式・基礎','algebra-stage.html?id=6-4'],['6-5','解方程式・綜合','algebra-stage.html?id=6-5']]},
+ {n:'第三章三、符號商人的生存戰',sub:'方程式的應用與合理性',st:[['7-1','生活情境列式大挑戰','algebra-stage.html?id=7-1'],['7-2','合理性之鏡','algebra-stage.html?id=7-2']]},
+ {n:'第三章・最終試煉',sub:'綜合九大試煉題型',st:[['7-3','Boss：符號大師認證考試','algebra-stage.html?id=7-3']]}
+];
+const RK=GC.rank.map(r=>[r.min,r.name]); // 滿星 = 關卡數 × 5
+const KEY='hanxin-progress-teacher-v1',PERSTAGE=GC.stars.maxStar; // 每關星數上限（在 game-config.js 設定）
+let P={};
+const idsOf=(GROUPS,ci)=>GROUPS[ci].st.map(s=>s[0]);
+const flat1=CH1.flatMap((c,i)=>idsOf(CH1,i));
+const flat2=CH2.flatMap((c,i)=>idsOf(CH2,i));
+const flat3=CH3.flatMap((c,i)=>idsOf(CH3,i));
+const flatAll=[...flat1,...flat2,...flat3];
+const MAXSTAR=flatAll.length*PERSTAGE;
+const b3=id=>Math.min(3,st(id)); // 解鎖章節／Boss 用的「基本星」（最多算 3 顆，維持原本的推進難度）
+const ebOf=id=>(P[id]&&P[id].eb)||0;
+const st=id=>(P[id]&&P[id].stars)||0;
+const total=()=>flatAll.reduce((a,id)=>a+st(id),0);
+const rankOf=t=>RK.filter(r=>r[0]<=t).pop();
+// 第一章：小關依序解鎖；下一大關需前一大關最後一關 ≥1 星。第二、三章維持原規則，不受第一章限制。
+function lockCh1(ci,k){if(TEACHER)return '';const prev=k>0?CH1[ci].st[k-1][0]:ci>0?CH1[ci-1].st[CH1[ci-1].st.length-1][0]:null;return prev==null||st(prev)>0?'':`先通關 ${prev}`}
+// 第二章：每大關 4 關（前 3 關依序解鎖，第 4 關 Boss 需要前 3 關共 6 顆星）
+function lockCh2(ci,k){
+  if(TEACHER)return '';
+  const d=idsOf(CH2,ci);
+  if(k==0)return ci==0||st(CH2[ci-1].st[3][0])>0?'':`先打倒上一大關的「${CH2[ci-1].st[3][1].split('：').pop()}」`;
+  if(k<3)return st(d[k-1])>0?'':`先通關 ${d[k-1]}`;
+  if(!(st(d[0])&&st(d[1])&&st(d[2])))return `先通關 ${d[0]}、${d[1]}、${d[2]}`;
+  const s=b3(d[0])+b3(d[1])+b3(d[2]);
+  return s>=6?'':`挑戰 Boss 需要前三關共 6 顆星（目前 ${s} 顆），回去重打拿更多星吧`;
+}
+// 第三章：每一大關內依序解鎖；下一大關需要上一大關全部完成；
+// 最終 Boss 需要第三章九個試煉合計 18 顆星（滿分 27 的 2/3）
+function lockCh3(ci,k){
+  if(TEACHER||(ci==0&&k==0))return '';
+  const g=CH3[ci];
+  if(g.st.length==1){ // 最終試煉／Boss 大關
+    const need=18,s=flat3.filter(id=>id!='7-3').reduce((a,id)=>a+b3(id),0);
+    return s>=need?'':`挑戰 Boss 需要第三章其餘試煉共 ${need} 顆星（目前 ${s} 顆），回去重打拿更多星吧`;
+  }
+  if(k>0){const prev=g.st[k-1][0];return st(prev)>0?'':`先通關 ${prev}`;}
+  const prevGroup=CH3[ci-1],allDone=prevGroup.st.every(s=>st(s[0])>0);
+  return allDone?'':`先完成「${prevGroup.n.replace(/^第三章[^、]*、/,'')}」的所有試煉`;
+}
+
+/* ===== ⚔️ 裝備系統（新增） =====
+   每一個「大關」通關（大關內所有小關都拿到 ≥1 顆星）就會掉落一件裝備，
+   對應順序：第一章 4 大關 → 第二章 4 大關 → 第三章 4 大關，共 12 大關 = 12 件裝備。
+   品質＝這個大關目前累積的總星數 ÷ 大關內小關數：
+     普通：小關全通關　精良：總星數 ≥ 小關數×3　傳說：≥×4　神話：≥×5（滿星）
+   數值規則（重要）：每件裝備第一次解鎖時，會在範圍內「抽一次」基礎數值，
+   之後永遠固定不變；品質升級時只是把這個固定的基礎數值乘上倍率顯示出來，
+   不會重新抽獎，所以裝備數值不會忽大忽小。 */
+const ITEMS=[
+ {name:'奧術附魔劍',en:'Arcane Infused Greatsword',icon:'🗡️',img:'images/item-01.png',slot:'武器',
+  stats:[['atk',35,50],['matk',40,60],['spd',2,5]],
+  desc:'核心輸出武器，大幅同時提升普攻與魔攻，並微幅增加揮刀與移動速度。'},
+ {name:'符文鎧・褲',en:'',icon:'👖',img:'images/item-02.png',slot:'下裝',
+  stats:[['hp',80,120],['def',20,30],['mdef',15,25]],
+  desc:'下半身防具，提供均衡的雙防與血量，提升戰場生存力。'},
+ {name:'魔力編織戰盔',en:'Manastitch Helm',icon:'⛑️',img:'images/item-03.png',slot:'頭部',
+  stats:[['mp',60,90],['matk',15,25],['mdef',10,18]],
+  desc:'頭部防具，大幅擴充續航用的魔力池，並強化魔法傷害與魔防。'},
+ {name:'符文鎧・上衣',en:'',icon:'🥋',img:'images/item-04.png',slot:'上衣',
+  stats:[['hp',150,200],['def',35,50],['spd',-2,-1]],
+  desc:'核心重防具，提供全遊戲最高額的血量與物防，但會微幅犧牲速度。'},
+ {name:'元素烙印護手',en:'Gauntlets of Elemental Brand',icon:'🧤',img:'images/item-05.png',slot:'手部',
+  stats:[['atk',15,25],['matk',15,25],['spd',5,8]],
+  desc:'手部攻擊裝，同時提升普攻與魔攻，並顯著增加施法與攻擊速度。'},
+ {name:'閃現長靴',en:'Boots of Arcane Blink',icon:'👢',img:'images/item-06.png',slot:'足部',
+  stats:[['spd',15,25],['hp',30,50],['mp',20,40]],
+  desc:'足部移動裝，提供全遊戲最高的速度加成，讓法師在戰場上靈活走位。'},
+ {name:'魔武流轉項鍊',en:'Amulet of Convergence',icon:'📿',img:'images/item-07.png',slot:'項鍊',
+  stats:[['atk',10,20],['matk',10,20],['mp',40,60]],
+  desc:'配件，專為魔武雙修設計，均衡提升雙攻，並增加魔力以便頻繁施法。'},
+ {name:'混沌元素戒指',en:'Ring of Chaos Alignment',icon:'💍',img:'images/item-08.png',slot:'戒指',
+  stats:[['matk',30,45],['mp',30,50]],
+  desc:'飾品，極致追求純魔法輸出的戒指，提供高額魔攻與魔力上限。'},
+ {name:'賢者吸魔戒',en:"Sage's Siphon Signet",icon:'💠',img:'images/item-09.png',slot:'戒指',
+  stats:[['atk',20,30],['hp',40,60]],
+  desc:'飾品，偏向近戰與續航的戒指，提升普攻傷害並增加血量容錯率。'},
+ {name:'戰法精靈',en:'',icon:'🧚',img:'images/item-10.png',slot:'寵物',
+  stats:[['hp',50,80],['mp',50,80],['spd',3,6]],
+  desc:'全能型夥伴，全方位補足角色的基礎三圍（血、魔、速），不佔用身體防具欄位。'},
+ {name:'減速披風',en:'Cloak of the Chrono-Stasis',icon:'🧣',img:'images/item-11.png',slot:'背部',
+  stats:[['def',15,25],['mdef',25,40],['spd',5,10]],
+  desc:'終極通關背部裝備，提供極高的魔法防禦與速度，幫助法師在後期關卡抗衡高壓法術。'},
+ {name:'分身',en:'',icon:'👥',img:'images/item-12.png',slot:'特殊',
+  stats:[],special:true,
+  desc:'完全複製角色資訊（含裝備），在對戰模式中可以造成雙倍攻擊！'}
+];
+const EQUIP_GROUPS=[idsOf(CH1,0),idsOf(CH1,1),idsOf(CH1,2),idsOf(CH1,3),idsOf(CH2,0),idsOf(CH2,1),idsOf(CH2,2),idsOf(CH2,3),idsOf(CH3,0),idsOf(CH3,1),idsOf(CH3,2),idsOf(CH3,3)];
+const GROUP_NAMES=[...CH1.map(c=>c.n),...CH2.map(c=>c.n),...CH3.map(c=>c.n)];
+const QMUL=GC.equip.qualityMul;
+const QLABEL={normal:'普通',fine:'精良',legend:'傳說',myth:'神話'};
+const QNEXT={normal:'fine',fine:'legend',legend:'myth',myth:null};
+const groupSum=ids=>ids.reduce((a,id)=>a+st(id),0);
+const groupDone=ids=>ids.every(id=>st(id)>0);
+function qNeedStars(n,q){return q=='fine'?n*3:q=='legend'?n*4:n*5;}
+function qualityOldRule(i){
+  const ids=EQUIP_GROUPS[i];
+  if(!groupDone(ids))return null;
+  const n=ids.length,s=groupSum(ids);
+  if(s>=n*5)return 'myth';
+  if(s>=n*4)return 'legend';
+  if(s>=n*3)return 'fine';
+  return 'normal';
+}
+/* ===== 📦 寶箱與裝備碎片 =====
+   通關得 1 個寶箱（記錄當時星數）；打開時依星數對應的品質為中心抽碎片，機率不顯示。
+   距離中心 0／1／2／3 階的機率 90／9／0.7／0.3（%）；同距離的機率由上下兩階平分，沒有那一階就落空 → 什麼都沒得到。
+   同一品質的碎片集滿 FRAG_NEED 片，才能合成該品質的裝備（比現有品質更高才會合成）。 */
+const QORD=['normal','fine','legend','myth'],FRAG_NEED=GC.chest.fragNeed,CHEST_P=GC.chest.prob;
+const starTier=s=>{let t=0;GC.chest.tierMinStars.forEach((m,k)=>{if(s>=m)t=k});return t};
+function qualityOf(i){ if(ITEMS[i].special)return qualityOldRule(i); return (P._eqQ&&P._eqQ[i])||null; }
+function fragInit(){
+  if(P._eqQ)return;
+  P._eqQ={};P._frag={};P._chests=[];
+  ITEMS.forEach((it,i)=>{if(!it.special){const q=qualityOldRule(i);if(q)P._eqQ[i]=q}});
+  save();
+}
+const fragTarget=g=>ITEMS[g].special?[8,9,10][Math.floor(Math.random()*3)]:g;
+function addFrag(i,t){
+  P._frag=P._frag||{};const a=P._frag[i]||(P._frag[i]=[0,0,0,0]);a[t]++;
+  const cur=QORD.indexOf(qualityOf(i));
+  if(a[t]>=FRAG_NEED&&t>cur){a[t]-=FRAG_NEED;P._eqQ=P._eqQ||{};P._eqQ[i]=QORD[t];return {i,q:QORD[t],up:cur>=0}}
+  return null;
+}
+function openOneChest(){
+  const c=(P._chests||[]).shift();if(!c)return null;
+  const c0=starTier(c.s),w=QORD.map((_,t)=>{const d=Math.abs(t-c0);return CHEST_P[d]/(d?2:1)});
+  let r=Math.random()*100,t=-1;for(let k=0;k<4;k++){if(r<w[k]){t=k;break}r-=w[k]}
+  const res={t,i:t<0?-1:fragTarget(c.g)};
+  if(t>=0)res.synth=addFrag(res.i,t);
+  dq('chest',1);save();return res;
+}
+function chestOpen(all){
+  const n=all?(P._chests||[]).length:1;if(!n)return toast('📦 沒有寶箱可以打開，去闖關吧！');
+  const rs=[];for(let k=0;k<n;k++)rs.push(openOneChest());
+  const o=document.createElement('div');o.id='forge';
+  const line=r=>r.t<0?'💨 空空如也':`${ITEMS[r.i].icon} ${ITEMS[r.i].name}・<b class="q-${QORD[r.t]}">${QLABEL[QORD[r.t]]}</b>碎片 ×1`;
+  o.innerHTML=`<div class="fg-box"><div class="fg-anvil" style="animation:shk .3s 4">📦</div><div class="fg-name" style="animation:rv2 .4s .9s forwards;max-height:60vh;overflow:auto">${rs.map(line).join('<br>')}</div></div>`;
+  document.body.appendChild(o);o.onclick=()=>o.remove();setTimeout(()=>o.remove(),all?6000:3400);
+  rs.filter(r=>r.synth).forEach((r,k)=>setTimeout(()=>forgeAnim({icon:ITEMS[r.synth.i].icon,name:ITEMS[r.synth.i].name,q:QLABEL[r.synth.q],up:r.synth.up}),(all?6200:3500)+k*3500));
+  window.BGM&&BGM.clang();render();
+}
+function ensureRoll(i){
+  P._eq=P._eq||{};
+  if(P._eq[i])return;
+  const it=ITEMS[i],r={};
+  it.stats.forEach(([k,lo,hi])=>{r[k]=lo+Math.random()*(hi-lo);});
+  P._eq[i]=r;save();
+}
+function effStats(i){
+  const it=ITEMS[i],q=qualityOf(i);
+  if(!q||it.special)return {};
+  ensureRoll(i);
+  const roll=P._eq[i],mul=QMUL[q]*(1+GC.equip.forgePct/100*((P._forge||{})[i]||0)),out={};
+  it.stats.forEach(([k])=>{out[k]=Math.round(roll[k]*mul);});
+  return out;
+}
+
+/* ===== 🧙 經驗值 / 等級（新增）=====
+   答對一題 +10 經驗值、答錯一題 +1 經驗值。
+   升到下一級所需經驗值＝50 + 目前等級的平方 × 50（等級 1→2 需要 100，2→3 需要 250…）。 */
+const STATKEYS=['hp','mp','atk','matk','def','mdef','spd'];
+const STATICON={hp:'❤️',mp:'🔹',atk:'⚔️',matk:'✨',def:'🛡️',mdef:'🔮',spd:'🏃'};
+const STATDESC={hp:'血量：歸零就輸了',mp:'魔力：施放魔法要花魔力',atk:'普通攻擊的力量',matk:'魔法攻擊的力量',def:'擋下普通攻擊，越高越不怕痛',mdef:'擋下魔法攻擊，越高越不怕魔法',spd:'速度：越快，出手越頻繁'};
+const BASE=GC.stats.base,GROWTH=GC.stats.growth;
+const STATLABEL={hp:'❤️血量',mp:'🔹魔力',atk:'⚔️普攻',matk:'✨魔攻',def:'🛡️物防',mdef:'🔮魔防',spd:'🏃速度'};
+function expNeed(lv){return GC.exp.base+lv*lv*GC.exp.quad;}
+function levelInfo(){
+  const exp=P._exp||0;let lv=1,rem=exp;
+  while(rem>=expNeed(lv)){rem-=expNeed(lv);lv++;}
+  return {level:lv,cur:rem,need:expNeed(lv),exp:exp};
+}
+/* ===== ⚔️ 對戰基本值 =====
+   基本值 ＝ 職業比例 ×（六項數值 × 等級 ＋ 裝備效果）＝ 職業比例×六項數值×等級 ＋ 職業比例×裝備效果
+   六項數值：角色建立時的 HP／ATK／DEF／SPD／MATK／MDEF（含體質調整券的加成）；魔力 MP 不在六項內，維持原本算法 */
+const PRO_RATIO=GC.proRatio;
+const SIX={hp:'HP',atk:'ATK',def:'DEF',spd:'SPD',matk:'MATK',mdef:'MDEF'};
+function totalStats(){
+  const h=P._hero;if(!h||!h.stats)return totalStatsOld();
+  const lv=levelInfo().level,r=PRO_RATIO[h.archetype]||{},eq={},out={};
+  ITEMS.forEach((it,i)=>{const es=effStats(i);STATKEYS.forEach(k=>{if(es[k])eq[k]=(eq[k]||0)+es[k]})});
+  Object.keys(SIX).forEach(k=>{out[k]=Math.max(1,Math.round((r[k]||1)*((h.stats[SIX[k]]||0)*lv+(eq[k]||0))))});
+  out.mp=BASE.mp+GROWTH.mp*(lv-1)+(eq.mp||0);
+  return out;
+}
+function totalStatsOld(){
+  const li=levelInfo(),out={};
+  STATKEYS.forEach(k=>out[k]=BASE[k]+GROWTH[k]*(li.level-1));
+  ITEMS.forEach((it,i)=>{const es=effStats(i);STATKEYS.forEach(k=>{if(es[k])out[k]+=es[k];});});
+  return out;
+}
+function makeExport(){
+  const stages={};flatAll.forEach(id=>{if(P[id])stages[id]={stars:P[id].stars||0,best:P[id].best||0,eb:P[id].eb||0}});
+  const li=levelInfo(),equip={};ITEMS.forEach((it,i)=>{const q=qualityOf(i);if(q)equip[it.name]=q;});
+  return {v:2,who:P._who||{},stages:stages,q:P._q||{},exp:li.exp,level:li.level,equip:equip,at:new Date().toISOString()};
+}
+/*UI*/
+const $=s=>document.querySelector(s);
+let cur='',tt=0;
+function load(){try{P=JSON.parse(localStorage.getItem(KEY))||{}}catch(e){P={}}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(P))}catch(e){}}
+function toast(h){const t=$('#toast');t.innerHTML=h;t.classList.remove('hide');clearTimeout(tt);tt=setTimeout(()=>t.classList.add('hide'),3800)}
+function groupHTML(GROUPS,lockFn,chapterTag){
+  return GROUPS.map((c,ci)=>`<section class="ch card"><h2 class="serif">${c.n}</h2><small>${c.sub}</small><div class="nodes">`+
+    c.st.map((s,k)=>{
+      const isBoss=/Boss/.test(s[1]);
+      const r=lockFn(ci,k),n=st(s[0]),cls=['node',isBoss?'boss':'',r?'locked':'',n?'done':'',!s[2]?'soon':''].join(' ');
+      return `<button class="${cls}" data-ch="${chapterTag}" data-ci="${ci}" data-k="${k}"><b>${r?'🔒':isBoss?'👹':'⚔️'} ${s[0]}</b><span>${s[1]}</span><span>${s[2]?(n?'⭐'.repeat(n)+'☆'.repeat(5-n):'尚未通關'):'建造中'}</span></button>`;
+    }).join('')+`</div></section>`).join('');
+}
+// ===== ♾️ 無極限挑戰：關卡拿到 3 星就解鎖該關的無限題 =====
+const ENDLESS_NEED=GC.stars.endlessNeed;
+const ECH=[['第一章｜整數王國',CH1],['第二章｜韓信點兵',CH2],['第三章｜代數異世界',CH3]];
+function endlessHTML(){
+  return `<h2 class="serif" style="margin:28px 0 0;color:var(--bronze)">♾️ 無極限挑戰</h2>`+
+  `<p style="margin:4px 0 0;opacity:.8;line-height:1.7">關卡拿到 ${ENDLESS_NEED} ⭐ 就解鎖該關的無限題作答區。題目源源不絕，時間會從實戰速度慢慢縮到修羅速度，5 顆心用完為止——看你能答對幾題！</p>`+
+  ECH.map(([title,G],gi)=>(ONLY!=null&&gi!=ONLY)?'':`<section class="ch card"><h2 class="serif">${title}</h2><div class="nodes">`+
+    G.flatMap((c,ci)=>c.st.map((s,k)=>{
+      const n=st(s[0]),lk=!TEACHER&&n<ENDLESS_NEED,eb=ebOf(s[0]);
+      return `<button class="node enode ${lk?'locked':''} ${eb?'done':''}" data-e="1" data-g="${gi}" data-ci="${ci}" data-k="${k}"><b>${lk?'🔒':'♾️'} ${s[0]}</b><span>${s[1]}</span><span>${lk?`需 ${ENDLESS_NEED} ⭐（目前 ${n}）`:(eb?'🏆 最高 '+eb+' 題':'尚無紀錄')}</span></button>`})).join('')+
+    `</div></section>`).join('');
+}
+function stageURL(url,id,endless){
+  return url+(url.includes('?')?'&':'?')+'stars='+(TEACHER?GC.stars.maxStar:st(id))+'&eb='+ebOf(id)+'&rv='+bagN('revive_m')+(endless?'&endless=1':'');
+}
+// ===== 🖼️ 圖片區（新增）=====
+// 把您做好的圖片依照下面的檔名放進 world-map.html 同一層的 images 資料夾即可自動套用；
+// 圖片還沒準備好的項目，會自動顯示表情符號代替，不會壞版面。
+function imgNext(el){const m=/^(.*)\.(png|jpe?g|webp)$/i.exec(el.getAttribute('src')||''),L=['png','jpg','jpeg','webp'];if(!m)return false;const i=L.indexOf(m[2].toLowerCase());if(i<0||i>=L.length-1)return false;el.src=m[1]+'.'+L[i+1];return true}
+function iconHTML(src,emoji,cls){
+  return `<span class="icon-wrap ${cls}"><img src="${src}" alt="" onerror="if(imgNext(this))return;this.style.display='none';this.nextElementSibling.style.display='inline-flex'"><span class="emoji-fb">${emoji}</span></span>`;
+}
+// ===== 🧙 角色戰力面板（新增） =====
+const AV=['🧑‍🎓','🥋','🛡️','⚔️','🐉','🧞','🧙‍♂️'];
+const AVIMG=['images/avatar-0.png','images/avatar-1.png','images/avatar-2.png','images/avatar-3.png','images/avatar-4.png','images/avatar-5.png','images/avatar-6.png'];
+function renderHero(){
+  const li=levelInfo(),rk=RK.indexOf(rankOf(total())),ri=Math.max(0,rk);
+  const _t=cosOn('title'),_f=cosOn('frame'),_a=cosOn('acc'),av=$('#avatar');
+  av.innerHTML=iconHTML(AVIMG[ri],AV[ri]||'🧙','ic-av')+(_a?`<span class="av-acc">${_a.cos.emoji}</span>`:'');
+  av.style.borderColor=_f?_f.cos.color:'';av.style.boxShadow=_f?`0 0 ${_f.cos.glow}px ${_f.cos.color}`:'';
+  $('#lv-txt').innerHTML=`${_t?`<span class="ttl">【${_t.cos.text}】</span> `:''}${(P._hero&&P._hero.name)||''}　<b>Lv.${li.level}</b>`;
+  $('#ebar').style.width=(li.cur/li.need*100)+'%';
+  $('#exp-txt').textContent=`✨ ${li.cur} / ${li.need}`;
+  const ts=totalStats();
+  $('#stats').innerHTML=STATKEYS.map(k=>`<div class="sbox" data-stat="${k}" title="${STATLABEL[k]}"><span class="si">${STATICON[k]}</span><b>${ts[k]}</b></div>`).join('');
+}
+// ===== ⚔️ 裝備卡片（取代原本的歷史人物收藏卡） =====
+function eqCardHTML(i){
+  const it=ITEMS[i],q=qualityOf(i),ids=EQUIP_GROUPS[i],n=ids.length;
+  const fr=(P._frag&&P._frag[i])||[0,0,0,0],frl=QORD.map((k,t)=>`<span class="q-${k}">${QLABEL[k]} ${fr[t]}/${FRAG_NEED}</span>`).join('　');
+  if(!q){
+    const how=it.special?`通關「${GROUP_NAMES[i]}」就能取得`:`通關「${GROUP_NAMES[i]}」的關卡會獲得寶箱，打開後有機會得到碎片；同一品質集滿 ${FRAG_NEED} 片就能合成`;
+    return `<div class="cd lock"><b>${iconHTML(it.img,it.icon,'ic-eq')} ？？？</b><small>${it.slot}</small><div class="hint">${how}${it.special?'':'<br>碎片：'+frl}</div></div>`;
+  }
+  const nq=QNEXT[q];
+  const hint=it.special?(nq?`⬆️ 下一階「${QLABEL[nq]}」需要這個大關累積 ${qNeedStars(n,nq)} ⭐（目前 ${groupSum(ids)} ⭐）`:'👑 已經是最高品質！')
+    :(nq?`⬆️ 下一階「${QLABEL[nq]}」需要 ${FRAG_NEED} 片${QLABEL[nq]}碎片（目前 ${fr[QORD.indexOf(nq)]}/${FRAG_NEED}）<br>碎片：${frl}`:'👑 已經是最高品質！');
+  let lines;
+  if(it.special){
+    const pct=Math.min(100,st('7-3')*20);
+    lines=`對戰複製你目前所有戰力，攻擊力雙倍！（依 7-3 星等，目前加成 ${pct}%）`;
+  }else{
+    const es=effStats(i),fl=(P._forge||{})[i]||0;
+    lines=it.stats.map(([k])=>`${STATLABEL[k]} ${es[k]>=0?'+':''}${es[k]}`).join('　')+(fl?`　<small>🔨鍛造 +${fl}</small>`:'');
+  }
+  return `<div class="cd"><b>${iconHTML(it.img,it.icon,'ic-eq')} ${it.name}</b><small>${it.slot}／<b class="q-${q}">${QLABEL[q]}</b></small>
+    <div class="es">${lines}</div>
+    <div class="hint">${hint}</div>
+    <div class="desc">${it.desc}</div></div>`;
+}
+function renderEquip(){$('#cards').innerHTML=ITEMS.map((it,i)=>{const q=qualityOf(i),fl=(P._forge||{})[i]||0;
+  return q?`<button class="eqs q-${q}" data-eq="${i}" title="${it.name}">${iconHTML(it.img,it.icon,'ic-eq2')}${fl?`<i>+${fl}</i>`:''}</button>`
+          :`<button class="eqs lock" data-eq="${i}" title="尚未取得">${iconHTML(it.img,it.icon,'ic-eq2')}</button>`}).join('')}
+function popup(html){$('#gp').innerHTML=`<div class="card">${html}<div style="text-align:center;margin-top:10px"><button id="gp-x" class="btn">✕</button></div></div>`;$('#gp').classList.remove('hide')}
+function render(){
+  const t=total(),rk=rankOf(t),nx=RK.find(r=>r[0]>t);
+  $('#rank').textContent=rk[1];$('#tot').textContent=`${t} / ${MAXSTAR} ⭐`;$('#rbar').style.width=(t/MAXSTAR*100)+'%';
+  $('#nxt').textContent=nx?`再 ${nx[0]-t} 顆星，升為「${nx[1]}」`:'你已經是最高階了！';
+  $('#home').innerHTML=homeHTML();
+  if(VIEW==='ch')mapBuild();if(VIEW==='shop')shopBuild();if(VIEW==='bag')bagBuild();
+  $('#hx').innerHTML=heroCardHTML();
+  $('#wrong').innerHTML=wrongHTML();
+  renderHero();
+  renderEquip();
+  syncMyUser();
+}
+$('#map').onclick=e=>{
+  if(e.target.closest('#mapvp,.mp-bar,#chsel'))return mapClick(e);
+  const b=e.target.closest('.node');if(!b)return;
+  if(b.dataset.e){ // 無極限挑戰節點
+    const s=ECH[+b.dataset.g][1][+b.dataset.ci].st[+b.dataset.k];
+    if((!TEACHER&&st(s[0])<ENDLESS_NEED))return toast(`🔒 ${s[0]} 要先拿到 ${ENDLESS_NEED} ⭐（目前 ${st(s[0])} ⭐）才能挑戰無限題`);
+    cur=s[0];$('#fr').src=stageURL(s[2],s[0],true);(window.BGM&&BGM.stop(),$('#ov').classList.remove('hide'));return;
+  }
+  const chapterTag=b.dataset.ch,[GROUPS,lockFn]={1:[CH1,lockCh1],2:[CH2,lockCh2],3:[CH3,lockCh3]}[chapterTag];
+  const ci=+b.dataset.ci,k=+b.dataset.k,s=GROUPS[ci].st[k],r=lockFn(ci,k);
+  if(r)return toast('🔒 '+cm(r));
+  if(!s[2])return toast('🔨 這一關還在建造中，敬請期待！');
+  cur=s[0];$('#fr').src=stageURL(s[2],s[0],false);(window.BGM&&BGM.stop(),$('#ov').classList.remove('hide'));
+};
+function closeStage(){$('#ov').classList.add('hide');$('#fr').src='about:blank';render();window.BGM&&BGM.play(VIEW==='arena'?'arena':'map')}
+$('#x').onclick=closeStage;
+addEventListener('message',e=>{
+  if(e.source!==$('#fr').contentWindow)return;
+  const d=e.data||{};
+  if(d.type=='use-item'&&d.id=='revive_m'){if(consumeItem('revive_m')){$('#fr').contentWindow.postMessage({type:'item-ok',id:'revive_m'},'*');toast('💖 戰場復活藥生效！城牆恢復 3 顆心')}return}
+  if(d.type=='stage-result'&&!d.fail&&d.id==cur){
+    const r0=rankOf(total())[1];
+    const gi=EQUIP_GROUPS.findIndex(ids=>ids.includes(d.id)),qBefore=gi>=0?qualityOf(gi):null;
+    const old=P[d.id]||{stars:0,best:0};
+    const oms=old.ms||{};P[d.id]={...old,stars:Math.max(old.stars,d.stars),best:Math.max(old.best,d.score),ms:{...oms,[d.mode]:Math.max(oms[d.mode]||0,d.stars)}};save();
+    const gg=Math.max(0,d.stars-(old.stars||0))*GC.economy.goldPerStar;let sc=d.score|0,boosted=false;if((P._mboost|0)>0){sc=Math.round(sc*(1+GC.economy.meritBoostPct/100));P._mboost--;boosted=true}
+    P._merit=(P._merit||0)+sc;if(gg){P._gold=(P._gold||0)+gg;}save();
+    dq('clear',1);dq('right',d.right|0);if(d.mode==='hard')dq('hard',1);if(d.mode==='real')dq('real',1);if(gg)dq('star',gg/GC.economy.goldPerStar);
+    const msg=[];
+    if(sc)msg.push('🏅 戰功 +'+sc+(boosted?'（加成券生效）':''));
+    if(gg)msg.push('🪙 獲得 '+gg+' 金幣');
+    if(!old.stars)msg.push('🎉 首次通關 '+d.id+'！');
+    const gm=giveStarterGift();if(gm)msg.push(gm);
+    if(old.stars<ENDLESS_NEED&&d.stars>=ENDLESS_NEED)msg.push('🔓 '+d.id+' 無極限挑戰解鎖！');
+    else if(old.stars<GC.stars.maxStar&&d.stars>=GC.stars.maxStar)msg.push('👑 '+d.id+' 拿到滿星 '+GC.stars.maxStar+' ⭐！');
+    // 通關給寶箱（取代原本固定掉落碎片），到背包打開才會抽碎片
+    if(gi>=0){P._chests=P._chests||[];
+      const cd=(P._cdy&&P._cdy.d===bkkDay())?P._cdy:(P._cdy={d:bkkDay(),n:{}}),used=cd.n[d.id]||0,lim=GC.chest.perStagePerDay;
+      if(used<lim){cd.n[d.id]=used+1;for(let k=0;k<GC.chest.perClear;k++)P._chests.push({s:d.stars,g:gi});save();msg.push(`📦 獲得寶箱！（這一關今天 ${used+1}/${lim}，到背包打開）`)}
+      else msg.push(`📦 這一關今天的寶箱已領滿 ${lim} 次，明天再來吧！`)}
+    const r1=rankOf(total())[1];if(r1!=r0)msg.push('🎖️ 升官了：'+r1+'！');
+    if(msg.length)toast(cm(msg.join('<br>')));
+    if(gi>=0){const qA=qualityOf(gi);if(qA&&qA!==qBefore)forgeAnim({icon:ITEMS[gi].icon,name:ITEMS[gi].name,q:QLABEL[qA],up:qBefore!==null})}
+  }
+  if(d.type=='wave-log'&&typeof d.id=='string'&&typeof d.qtype=='string'){
+    const key=d.id+':'+d.qtype;P._q=P._q||{};const r=P._q[key]||{n:0,ok:0};r.n++;if(d.ok)r.ok++;P._q[key]=r;
+    const before=levelInfo().level;
+    P._exp=(P._exp||0)+(d.ok?GC.exp.perCorrect:GC.exp.perWrong);save();
+    const after=levelInfo().level;
+    if(after>before)toast('🎉 升級了！Lv.'+before+' → Lv.'+after);
+    renderHero();
+  }
+  if(d.type=='endless-result'&&d.id==cur&&Number.isFinite(d.count)){
+    const old=P[d.id]||{stars:0,best:0},o=old.eb||0;
+    if(d.count>o){P[d.id]={...old,eb:d.count};save();toast('🏆 '+d.id+' 無極限新紀錄：'+d.count+' 題！')}
+  }
+  if(d.type=='stage-exit')closeStage();
+});
+$('#reset').onclick=()=>{if(confirm('確定要清除所有星星與收藏卡嗎？這個動作無法復原。')){P={};save();render()}};
+function fillWho(){const w=P._who||{};try{$('#who-d').open=!(w.sid&&String(w.sid).trim())}catch(e){}$('#w-cls').value=w.cls||'';$('#w-no').value=w.no||'';$('#w-name').value=w.name||'';$('#w-sid').value=w.sid||''}
+function saveWho(){P._who={cls:$('#w-cls').value.trim(),no:$('#w-no').value.trim(),name:$('#w-name').value.trim(),sid:$('#w-sid').value.trim()};save()}
+$('#w-save').onclick=()=>{saveWho();syncMyUser();toast('✅ 已儲存你的資料');startPendingListen();checkGifts()};
+$('#w-exp').onclick=()=>{
+  saveWho();const o=makeExport(),w=o.who,safe=x=>String(x||'').replace(/[^\w\u4e00-\u9fff-]/g,'');
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(o,null,1)],{type:'application/json'}));
+  a.download=`progress-${safe(w.cls)}-${safe(w.no)}-${safe(w.name)}.json`;document.body.appendChild(a);a.click();a.remove();
+  toast('📤 已匯出，請把檔案交給老師');
+};
+// ===== ⚔️ 對戰系統（改用 Supabase，手機用自己的網路也能玩）=====
+// 下面這兩個值先留空，網頁會安靜跳過對戰功能、不影響其他部分正常運作。
+// 等您在 Supabase 建好專案、拿到 Project URL 跟 anon public key 之後，
+// 填進下面兩個空字串裡即可，其他程式碼完全不用改。
+const SUPABASE_URL = "https://qkejjznejmxcfiyxviid.supabase.co";       // 只填到 .supabase.co 為止，後面不要加 /rest/v1/
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFrZWpqem5lam14Y2ZpeXh2aWlkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA1MjYyODQsImV4cCI6MjEwNjEwMjI4NH0.TBzTQ98emolzRoPaBDDGRpTW8ZkDCGoOstUTfmcrWco";  // 貼上 anon public key（不是 service_role 那組）
+let sb=null;
+try{
+  if(SUPABASE_URL && SUPABASE_ANON_KEY && typeof supabase!=='undefined'){
+    sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  }
+}catch(e){ console.warn('Supabase 尚未設定或初始化失敗，對戰功能停用', e); }
+function sbReady(){ return !!sb; }
+function mySid(){const w=P._who||{};return w.sid?String(w.sid).trim():null;}
+
+// 傷害/招式規則：跟前面「角色戰力」共用同一套公式，兩種對戰模式（即時／幽靈AI）都呼叫這裡，
+// 之後如果要調整戰鬥數值，改這裡就好，不用兩邊分別改。
+const NMOVES=GC.battle.normalMoves.map(m=>[m.id,m.name,m.mult]);
+const MMOVES=GC.battle.magicMoves.map(m=>[m.id,m.name,m.mp,m.mult]);
+function hurt(def,dmg){if((def.shield|0)>0){def.shield--;def.shieldHit=true;return 0}def.hp-=dmg;return dmg}
+function dealDamageLocal(att,def,base,isMagic){
+  if((def.shield|0)>0){def.shield--;def.shieldHit=true;return 0}
+  const raw=base*(GC.battle.damageMin+Math.random()*(GC.battle.damageMax-GC.battle.damageMin));
+  const dfv=(isMagic?def.mdef:def.def)*(def.defending?GC.battle.defendMul:1);
+  let dmg=Math.round(raw-dfv); if(dmg<1)dmg=1;
+  def.hp-=dmg; if(def.defending)def.defending=false;
+  return dmg;
+}
+// 執行一次出招，直接修改 att/def 物件本身，回傳這回合的戰鬥紀錄文字；
+// MP 不夠等無效狀況回傳 null。att 正在蓄力時，不管傳進來什麼 kind 都強制視為 release。
+function applyAction0(att,def,kind,move){
+  if(att.charging) kind='release';
+  if(kind=='defend'){ att.defending=true; return `${att.name} 擺出防禦姿勢，防禦力 ×${GC.battle.defendMul}！`; }
+  if(kind=='normal'){
+    const mv=NMOVES.find(m=>m[0]==move); if(!mv) return null;
+    const dmg=dealDamageLocal(att,def,att.atk*mv[2],false);
+    let extra=''; if(move=='charge'){const sh=Math.round(dmg*GC.battle.chargeRecoil);att.hp-=sh;extra=`，自己也反噬 ${sh} 點血`;}
+    return `${att.name} 使用「${mv[1]}」，對 ${def.name} 造成 ${dmg} 點傷害${extra}！`;
+  }
+  if(kind=='magic'){
+    const mv=MMOVES.find(m=>m[0]==move); if(!mv) return null;
+    if(att.mp<mv[2]) return null;
+    att.mp-=mv[2];
+    if(move=='l'){ att.charging=true; return `${att.name} 開始詠唱「大魔法」，這回合先暫停攻擊！`; }
+    const dmg=dealDamageLocal(att,def,att.matk*mv[3],true);
+    return `${att.name} 使用「${mv[1]}魔法」，對 ${def.name} 造成 ${dmg} 點傷害！`;
+  }
+  if(kind=='release'){
+    att.charging=false;
+    const dmg=dealDamageLocal(att,def,att.matk*GC.battle.releaseMul,true);
+    return `${att.name} 的大魔法發動了！對 ${def.name} 造成 ${dmg} 點傷害！`;
+  }
+  return null;
+}
+function nextSide(fa,fb){
+  const A={name:fa.name,stats:{SPD:fa.spd||100},initiativeMeter:fa.im||0,temporary:{}},B={name:fb.name,stats:{SPD:fb.spd||100},initiativeMeter:fb.im||0,temporary:{}};
+  const r=MathHeroEngine.nextAttacker(A,B);fa.im=A.initiativeMeter;fb.im=B.initiativeMeter;return r.actor===A?'a':'b'}
+const seasonId=()=>new Date(Date.now()+7*36e5).toISOString().slice(0,7);
+function bumpDuelRecord(sid,field){
+  if(sid&&sid===mySid())dq('duel',1);
+  if(!sbReady()||!sid)return;
+  const fn = field=='wins'?'bump_duel_win':field=='losses'?'bump_duel_loss':'bump_duel_draw';
+  sb.rpc(fn,{p_sid:sid}).then(()=>{}).catch(()=>{});
+  sb.rpc('bump_duel_season',{p_season:seasonId(),p_sid:sid,p_name:sid===mySid()?((P._who&&P._who.name)||null):null,p_field:field}).then(()=>{}).catch(()=>{});
+}
+function myRankIdx(){ return Math.max(0,RK.indexOf(rankOf(total()))); }
+// 把軍階（決定人物圖）一起放進 stats 裡上傳，不用新增資料表欄位
+// eq＝12 件裝備的品質字串（-未擁有 n普通 f精良 l傳說 m神話）；clone＝分身星數（0～5）
+const QCODE={normal:'n',fine:'f',legend:'l',myth:'m'}, QDECODE={n:'normal',f:'fine',l:'legend',m:'myth'};
+const CLONE_IDX=ITEMS.findIndex(it=>it.special);
+function myEquipCode(){ return ITEMS.map((it,i)=>{const q=qualityOf(i);return q?QCODE[q]:'-';}).join(''); }
+function myCloneStars(){ const ids=EQUIP_GROUPS[CLONE_IDX]; return (ids&&groupDone(ids))?Math.min(5,groupSum(ids)):0; }
+function statsWithRank(){ return {...totalStats(), rank:myRankIdx(), eq:myEquipCode(), clone:myCloneStars(), sk:packSkills()}; }
+function mkFighterObj(sid,name,level,stats){
+  return {studentId:sid,name:name||sid,level:level||1,rank:(stats&&stats.rank)|0,eq:(stats&&stats.eq)||null,clone:(stats&&stats.clone)|0,hp:stats.hp,hpMax:stats.hp,mp:stats.mp,mpMax:stats.mp,
+    atk:stats.atk,matk:stats.matk,def:stats.def,mdef:stats.mdef,spd:stats.spd,defending:false,charging:false,skills:(stats&&stats.sk)||[],su:{}};
+}
+// 每次畫面更新時，把自己目前的戰力寫到雲端 duel_users，讓別人挑戰我時查得到最新數值
+function syncMyUser(){
+  if(!sbReady())return;
+  const sid=mySid(); if(!sid) return;
+  const li=levelInfo();
+  sb.from('duel_users').upsert({student_number:sid, name:(P._who&&P._who.name)||sid, level:li.level, stats:statsWithRank(), updated_at:new Date().toISOString()}).then(r=>{if(r&&r.error)console.warn('duel_users 上傳失敗',r.error)}).catch(e=>console.warn('duel_users 上傳失敗',e));
+}
+
+let duelState=null,duelSub=null,battleChannel=null,pendingChannel=null;
+
+// ---- 有人挑戰我時的通知（即時對戰模式用）----
+function startPendingListen(){
+  if(!sbReady())return;
+  const sid=mySid(); if(!sid) return;
+  if(pendingChannel){ sb.removeChannel(pendingChannel); pendingChannel=null; }
+  checkPendingNow(sid);
+  pendingChannel = sb.channel('pending-'+sid)
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'duel_pending',filter:'target_id=eq.'+sid}, payload=>{
+      if(duelState) return;
+      showPendingInvite(payload.new.battle_id);
+    })
+    .on('postgres_changes',{event:'DELETE',schema:'public',table:'duel_pending',filter:'target_id=eq.'+sid}, ()=>{
+      const box=$('#arena-pending'); if(box){box.classList.add('hide');box.innerHTML='';}
+    })
+    .subscribe();
+}
+async function checkPendingNow(sid){
+  if(await checkResumeBattle(sid)) return;
+  const {data}=await sb.from('duel_pending').select('battle_id').eq('target_id',sid).maybeSingle();
+  if(data && !duelState) showPendingInvite(data.battle_id);
+}
+async function showPendingInvite(battleId){
+  const {data:battle}=await sb.from('duel_battles').select('a').eq('id',battleId).maybeSingle();
+  const box=$('#arena-pending'); if(!box||!battle) return;
+  const name=(battle.a&&battle.a.name)||'同學';
+  box.classList.remove('hide');INV=true;toast('⚔️ '+name+' 邀請你對戰！請到首頁「對戰邀請」接受');if(VIEW==='home')render();
+  box.innerHTML=`<div class="fighter"><b>⚔️ ${name} 想要挑戰你！</b><div class="amenu"><button id="ap-accept">接受挑戰</button></div></div>`;
+  $('#ap-accept').onclick=()=>acceptSyncChallenge(battleId);
+}
+
+// ---- 模式一：即時對戰（雙方都要在線）----
+async function challengeSync(osid){
+  const sid=mySid(), li=levelInfo();
+  const {data:opUser,error:opErr}=await sb.from('duel_users').select('*').eq('student_number',osid).maybeSingle();
+  if(opErr){console.warn('查詢對手失敗',opErr);return toast('❗ 連線雲端失敗（'+(opErr.message||opErr.code||'未知錯誤')+'），請聯絡老師');}
+  if(!opUser)return toast('❗ 找不到這位同學的資料，請他先打開遊戲、存過學號');
+  const aFighter=withRevive(mkFighterObj(sid,(P._who&&P._who.name)||sid,li.level,statsWithRank()));
+  const {data:battle,error}=await sb.from('duel_battles').insert({
+    mode:'sync', a_id:sid, b_id:osid, a:aFighter, b:null, turn:null, over:false, winner:null,
+    log:[`⚔️ ${aFighter.name} 發起了挑戰，等待 ${opUser.name||osid} 加入！`]
+  }).select().single();
+  if(error||!battle)return toast('❗ 建立對戰失敗，請再試一次');
+  await sb.from('duel_pending').upsert({target_id:osid, battle_id:battle.id});
+  enterSyncBattle(battle.id);
+}
+async function acceptSyncChallenge(battleId){
+  const sid=mySid(), li=levelInfo();
+  const {data:room}=await sb.from('duel_battles').select('*').eq('id',battleId).maybeSingle();
+  if(!room||room.b)return toast('這場對戰已經結束或已經開始了');
+  const bFighter=withRevive(mkFighterObj(sid,(P._who&&P._who.name)||sid,li.level,statsWithRank()));
+  const turn=nextSide(room.a,bFighter);
+  const newLog=[...(room.log||[]),`${bFighter.name} 加入戰場！⚔️ 對戰開始！`];
+  await sb.from('duel_battles').update({a:room.a,b:bFighter,turn,log:newLog,updated_at:new Date().toISOString()}).eq('id',battleId);
+  await sb.from('duel_pending').delete().eq('target_id',sid);
+  enterSyncBattle(battleId);
+}
+function enterSyncBattle(battleId){
+  if(pendingChannel){ sb.removeChannel(pendingChannel); pendingChannel=null; }
+  duelState={mode:'sync', battleId, room:null}; duelSub=null;
+  $('#arena-setup').classList.add('hide');$('#arena-battle').classList.remove('hide');
+  $('#arena-battle').innerHTML='<p>⏳ 連線中...</p>';
+  loadBattleNow(battleId);
+  if(battleChannel){ sb.removeChannel(battleChannel); battleChannel=null; }
+  oppAbsentSince=null; proxyBusy=false;
+  battleChannel = sb.channel('battle-'+battleId,{config:{presence:{key:mySid()}}})
+    .on('postgres_changes',{event:'UPDATE',schema:'public',table:'duel_battles',filter:'id=eq.'+battleId}, payload=>{
+      if(!duelState||duelState.battleId!==battleId) return;
+      duelState.room=payload.new; renderSyncBattle();
+    })
+    .on('presence',{event:'sync'},()=>{ watchTick(); })
+    .subscribe(status=>{
+      if(status==='SUBSCRIBED'){
+        // 告訴對方「我在線上」；斷線重連時也會重新進來這裡，順便抓一次最新戰況
+        battleChannel.track({sid:mySid(),t:Date.now()});
+        loadBattleNow(battleId);
+      }
+    });
+  startWatchdog();
+}
+async function loadBattleNow(battleId){
+  const {data:room}=await sb.from('duel_battles').select('*').eq('id',battleId).maybeSingle();
+  if(!duelState||duelState.battleId!==battleId) return;
+  if(!room){ removeStage(); $('#arena-battle').classList.remove('hide'); $('#arena-battle').innerHTML='<p>⚠️ 對戰資料不見了。</p><button class="btn" id="b-close">返回</button>'; $('#b-close').onclick=exitBattle; return; }
+  duelState.room=room; renderSyncBattle();
+}
+function mySideOf(room){ const sid=mySid(); return room.a_id===sid?'a':(room.b_id===sid?'b':null); }
+async function sendSyncAction(kind,move){
+  const room=duelState.room, mine=mySideOf(room), other=mine=='a'?'b':'a';
+  if(!room||room.turn!==mine) return;
+  const att={...room[mine]}, def={...room[other]};
+  if(kind=='item'&&!consumeItem(move)){toast('沒有這個道具了');duelSub=null;renderSyncBattle();return;}
+  const logLine=applyAction(att,def,kind,move);
+  duelSub=null;
+  if(logLine===null){ toast('魔力不夠喔'); renderSyncBattle(); return; }
+  const log=[...(room.log||[]).slice(-40),logLine];
+  const over=att.hp<=0||def.hp<=0;
+  const winner=over?((att.hp<=0&&def.hp<=0)?'draw':(att.hp<=0?def.name:att.name)):null;
+  const patch={turn:over?room.turn:nextSide(mine=='a'?att:def,mine=='a'?def:att), log, over, winner, updated_at:new Date().toISOString()};
+  patch[mine]=att; patch[other]=def;
+  const {data:upd,error:upErr}=await sb.from('duel_battles').update(patch).eq('id',duelState.battleId).eq('turn',mine).eq('over',false).select('id');
+  if(upErr||!upd||!upd.length){
+    toast('⚠️ 戰況已經更新（可能剛剛被系統代打），正在同步最新畫面…');
+    if(duelState) loadBattleNow(duelState.battleId);
+    return;
+  }
+  if(over){
+    const myId=mine=='a'?room.a_id:room.b_id, opId=mine=='a'?room.b_id:room.a_id;
+    if(winner=='draw'){bumpDuelRecord(myId,'draws');bumpDuelRecord(opId,'draws');}
+    else if(winner==att.name){bumpDuelRecord(myId,'wins');bumpDuelRecord(opId,'losses');}
+    else{bumpDuelRecord(myId,'losses');bumpDuelRecord(opId,'wins');}
+  }
+  // Realtime 訊息偶爾會晚一點才到，先自己手動更新一次畫面，操作起來比較不卡頓
+  duelState.room={...room,...patch};
+  renderSyncBattle();
+}
+
+// ---- 模式二：單挑雲端幽靈（對方不用在線，抓他存在雲端的最新數值，由簡單 AI 操作）----
+async function challengeAsync(osid){
+  const sid=mySid(), li=levelInfo();
+  const {data:opUser,error:opErr}=await sb.from('duel_users').select('*').eq('student_number',osid).maybeSingle();
+  if(opErr){console.warn('查詢對手失敗',opErr);return toast('❗ 連線雲端失敗（'+(opErr.message||opErr.code||'未知錯誤')+'），請聯絡老師');}
+  if(!opUser)return toast('❗ 找不到這位同學的資料，請他先打開遊戲、存過學號');
+  const a=withRevive(mkFighterObj(sid,(P._who&&P._who.name)||sid,li.level,statsWithRank()));
+  const b=mkFighterObj(osid,opUser.name||osid,opUser.level||1,opUser.stats||{hp:1000,mp:300,atk:50,matk:50,def:20,mdef:20,spd:100});
+  const turn=nextSide(a,b);
+  duelState={mode:'async', aId:sid, bId:osid, room:{a,b,turn,over:false,winner:null,log:[`⚔️ ${a.name} 挑戰了 ${b.name} 的雲端幽靈！`]}};
+  duelSub=null;
+  $('#arena-setup').classList.add('hide');$('#arena-battle').classList.remove('hide');
+  renderAsyncBattle();
+  if(duelState.room.turn=='b') setTimeout(aiTakeTurn,700);
+}
+function checkAsyncOver(){
+  const room=duelState.room;
+  if(room.a.hp<=0||room.b.hp<=0){
+    room.over=true;
+    room.winner=(room.a.hp<=0&&room.b.hp<=0)?'draw':(room.a.hp<=0?room.b.name:room.a.name);
+    const myId=duelState.aId, opId=duelState.bId;
+    if(room.winner=='draw'){bumpDuelRecord(myId,'draws');bumpDuelRecord(opId,'draws');}
+    else if(room.winner==room.a.name){bumpDuelRecord(myId,'wins');bumpDuelRecord(opId,'losses');}
+    else{bumpDuelRecord(myId,'losses');bumpDuelRecord(opId,'wins');}
+  }
+}
+function sendAsyncAction(kind,move){
+  const room=duelState.room; if(room.turn!='a')return;
+  if(kind=='item'&&!consumeItem(move)){toast('沒有這個道具了');duelSub=null;renderAsyncBattle();return;}
+  const logLine=applyAction(room.a,room.b,kind,move);
+  duelSub=null;
+  if(logLine===null){ toast('魔力不夠喔'); renderAsyncBattle(); return; }
+  room.log=[...(room.log||[]).slice(-40),logLine];
+  checkAsyncOver();
+  if(!room.over){ room.turn=nextSide(room.a,room.b); renderAsyncBattle(); if(room.turn=='b')setTimeout(aiTakeTurn,700); }
+  else renderAsyncBattle();
+}
+// 幽靈 AI：血量偏低時比較不會用會自傷的「衝撞」，魔力夠時有機會放魔法，其餘時候普通攻擊
+function aiPickAction(att){
+  let kind,move;
+  const ready=(att.skills||[]).filter(x=>skillLeft(att,x)>0);
+  if(!att.charging&&ready.length&&Math.random()<GC.skill.aiSkillProb)return {kind:'skill',move:ready[Math.floor(Math.random()*ready.length)].c};
+  if(att.charging){ kind='release'; }
+  else{
+    const roll=Math.random();
+    if(att.mp>=30 && roll<0.35){ kind='magic'; move= att.mp>=90&&roll<0.1 ? 'l' : (att.mp>=45&&roll<0.22 ? 'm' : 's'); }
+    else if(roll<0.15){ kind='defend'; }
+    else{
+      kind='normal';
+      const safe=att.hp>att.hpMax*0.3;
+      const pool= safe? ['fist','kick','charge','slash','slash'] : ['fist','kick','slash','slash'];
+      move=pool[Math.floor(Math.random()*pool.length)];
+    }
+  }
+  return {kind,move};
+}
+function aiTakeTurn(){
+  const room=duelState.room; if(!room||room.over||room.turn!='b')return;
+  const att=room.b;
+  const {kind,move}=aiPickAction(att);
+  const logLine=applyAction(att,room.a,kind,move);
+  room.log=[...(room.log||[]).slice(-40),logLine];
+  checkAsyncOver();
+  if(!room.over) room.turn=nextSide(room.a,room.b);
+  renderAsyncBattle();
+  if(!room.over&&room.turn=='b') setTimeout(aiTakeTurn,700);
+}
+
+// ---- 🔌 斷線處理：對手離線時「系統代打」，離線太久就判定認輸 ----
+// 想調整時間，只要改這兩個數字（單位：毫秒）
+const PROXY_GRACE_MS = 8000;    // 對方離線超過幾秒，就開始由系統代打
+const FORFEIT_MS     = 90000;   // 對方離線超過幾秒還沒回來，就判定他認輸
+const RESUME_WINDOW_MS = 300000; // 重新開啟遊戲時，只會回到 5 分鐘內還沒結束的對戰
+let oppAbsentSince=null, proxyBusy=false, watchdog=null, bannerWasProxy=false;
+
+function startWatchdog(){ stopWatchdog(); watchdog=setInterval(watchTick,1000); }
+function stopWatchdog(){ if(watchdog){clearInterval(watchdog);watchdog=null;} oppAbsentSince=null; bannerWasProxy=false; }
+
+function opponentInfo(room){
+  const mine=mySideOf(room); if(!mine) return null;
+  const other=mine=='a'?'b':'a';
+  return {mine, other, opId: other=='a'?room.a_id:room.b_id};
+}
+function watchTick(){
+  if(!duelState||duelState.mode!=='sync'||!battleChannel) return;
+  const room=duelState.room; if(!room||!room.b||room.over) return;
+  const info=opponentInfo(room); if(!info) return;
+  const st=battleChannel.presenceState()||{};
+  // 自己都還沒連上線時，不能判斷對方有沒有離線（避免自己斷網卻誤判對方）
+  if(!st[mySid()]){ oppAbsentSince=null; updateOppBanner(); return; }
+  if(st[info.opId]){
+    if(oppAbsentSince!==null && (Date.now()-oppAbsentSince)>=PROXY_GRACE_MS){ toast('✅ 對方回來了，改回手動操作！'); }
+    oppAbsentSince=null; updateOppBanner(); return;
+  }
+  if(oppAbsentSince===null) oppAbsentSince=Date.now();
+  const gone=Date.now()-oppAbsentSince;
+  updateOppBanner();
+  if(gone>=FORFEIT_MS){ claimForfeit(); return; }
+  if(gone>=PROXY_GRACE_MS && room.turn===info.other){ proxyAct(); }
+}
+function updateOppBanner(){
+  const el=$('#opp-banner'); if(!el) return;
+  if(oppAbsentSince===null||!duelState||duelState.mode!=='sync'){ el.classList.add('hide'); return; }
+  const gone=Date.now()-oppAbsentSince;
+  if(gone<3000){ el.classList.add('hide'); return; }
+  const sec=Math.floor(gone/1000), left=Math.max(0,Math.ceil((FORFEIT_MS-gone)/1000));
+  el.classList.remove('hide');
+  el.innerHTML = gone>=PROXY_GRACE_MS
+    ? `🤖 對方已離線 ${sec} 秒，<b>系統代打中</b>。他回來就會改回手動；${left} 秒內沒回來將判定認輸。`
+    : `📡 對方連線中斷…（${sec} 秒）再等一下看看`;
+}
+// 系統代打：由「還在線上的這一方」替離線方出招，用跟幽靈 AI 同一套邏輯
+async function proxyAct(){
+  if(proxyBusy) return; proxyBusy=true;
+  try{
+    await new Promise(r=>setTimeout(r,900));   // 稍微停一下，看起來比較自然
+    if(!duelState||duelState.mode!=='sync') return;
+    const room=duelState.room; if(!room||!room.b||room.over) return;
+    const info=opponentInfo(room); if(!info||room.turn!==info.other) return;
+    if(oppAbsentSince===null) return;           // 這一秒對方剛好回來了，取消代打
+    const {mine,other}=info;
+    const att={...room[other]}, def={...room[mine]};
+    const pick=aiPickAction(att);
+    let line=applyAction(att,def,pick.kind,pick.move);
+    if(line===null) line=applyAction(att,def,'normal','slash');
+    line='🤖 系統代打｜'+line;
+    const over=att.hp<=0||def.hp<=0;
+    const draw=att.hp<=0&&def.hp<=0;
+    const winner=over?(draw?'draw':(att.hp<=0?def.name:att.name)):null;
+    const patch={turn:over?room.turn:nextSide(other=='a'?att:def,other=='a'?def:att), log:[...(room.log||[]).slice(-40),line], over, winner, updated_at:new Date().toISOString()};
+    patch[other]=att; patch[mine]=def;
+    // 只有「現在還是對方回合」才寫入，萬一對方剛好回來自己出招了，這次代打就會自動作廢
+    const {data:upd,error}=await sb.from('duel_battles').update(patch).eq('id',duelState.battleId).eq('turn',other).eq('over',false).select('id');
+    if(error||!upd||!upd.length){ loadBattleNow(duelState.battleId); return; }
+    if(over){
+      if(draw){bumpDuelRecord(room[mine].studentId||mySid(),'draws');bumpDuelRecord(info.opId,'draws');}
+      else if(att.hp<=0){bumpDuelRecord(mySid(),'wins');bumpDuelRecord(info.opId,'losses');}
+      else{bumpDuelRecord(mySid(),'losses');bumpDuelRecord(info.opId,'wins');}
+    }
+    duelState.room={...room,...patch}; renderSyncBattle();
+  }catch(e){ console.warn('系統代打失敗',e); }
+  finally{ proxyBusy=false; }
+}
+// 對方離線太久：判定他認輸，由還在線上的這一方寫入結果（只會寫一次）
+async function claimForfeit(){
+  if(proxyBusy) return; proxyBusy=true;
+  try{
+    const room=duelState&&duelState.room; if(!room||!room.b||room.over) return;
+    const info=opponentInfo(room); if(!info) return;
+    const {mine,other}=info;
+    const patch={over:true, winner:room[mine].name,
+      log:[...(room.log||[]).slice(-40),`🏳️ ${room[other].name} 離線超過 ${Math.round(FORFEIT_MS/1000)} 秒，判定認輸！`],
+      updated_at:new Date().toISOString()};
+    const {data:upd,error}=await sb.from('duel_battles').update(patch).eq('id',duelState.battleId).eq('over',false).select('id');
+    if(error||!upd||!upd.length){ loadBattleNow(duelState.battleId); return; }
+    bumpDuelRecord(mySid(),'wins'); bumpDuelRecord(info.opId,'losses');
+    duelState.room={...room,...patch}; renderSyncBattle();
+  }catch(e){ console.warn('認輸判定失敗',e); }
+  finally{ proxyBusy=false; }
+}
+// 重新整理／重開遊戲後，自動回到還沒打完的即時對戰（變回手動操作）
+async function checkResumeBattle(sid){
+  if(duelState) return false;
+  try{
+    const since=new Date(Date.now()-RESUME_WINDOW_MS).toISOString();
+    const {data,error}=await sb.from('duel_battles').select('id,b')
+      .eq('mode','sync').eq('over',false).or('a_id.eq.'+sid+',b_id.eq.'+sid).gte('updated_at',since)
+      .order('updated_at',{ascending:false}).limit(1);
+    if(error||!data||!data.length||!data[0].b) return false;
+    toast('⚔️ 偵測到還沒打完的對戰，已帶你回到戰場！');
+    enterSyncBattle(data[0].id);
+    return true;
+  }catch(e){ console.warn('回到對戰失敗',e); return false; }
+}
+
+// ---- 共用的戰鬥畫面（兩種模式共用同一套排版）----
+function renderFighterBar(f){
+  return `<div class="fighter"><b>${f.name}　Lv.${f.level}</b>
+    <div class="fbar hp"><i style="width:${Math.max(0,f.hp)/f.hpMax*100}%"></i></div><small>HP ${Math.max(0,f.hp)}/${f.hpMax}</small>
+    <div class="fbar mp"><i style="width:${Math.max(0,f.mp)/f.mpMax*100}%"></i></div><small>MP ${Math.max(0,f.mp)}/${f.mpMax}</small>${(f.shield|0)>0?`　<small>🛡️ 護盾 ×${f.shield}</small>`:''}</div>`;
+}
+function renderMenu(meFighter,myTurn){
+  if(!myTurn) return '';
+  if(meFighter.charging) return `<p>⏳ 你正在蓄力中，這回合會自動發動大魔法！</p><div class="amenu"><button id="b-pass">確定</button></div>`;
+  if(!duelSub) return `<div class="amenu"><button data-m="n">⚔️ 普通攻擊</button><button data-m="m">✨ 魔法攻擊</button><button data-m="d">🛡️ 防禦</button><button data-m="i">🎒 道具</button>${(meFighter.skills||[]).length?'<button data-m="k">🔮 招式</button>':''}</div>`;
+  if(duelSub=='n') return `<div class="amenu">`+NMOVES.map(m=>`<button data-n="${m[0]}">${m[1]}（×${m[2]}）</button>`).join('')+`<button data-back="1">返回</button></div>`;
+  if(duelSub=='k') return `<div class="amenu">`+(meFighter.skills||[]).map(x=>`<button data-sk="${x.c}" ${skillLeft(meFighter,x)<=0?'disabled':''}>${CATL[x.c]}・${x.n}（${x.r}・剩 ${Math.max(0,skillLeft(meFighter,x))} 次）</button>`).join('')+`<button data-back="1">返回</button></div>`;
+  if(duelSub=='i') return `<div class="amenu">`+SHOP.filter(x=>x.battle).map(x=>`<button data-it="${x.id}" ${(bagN(x.id)<1||(x.battle.spd&&meFighter.fast)||(x.battle.heal&&(meFighter.healN|0)>=SR.maxHealPerDuel))?'disabled':''}>${x.icon} ${x.name} ×${bagN(x.id)}</button>`).join('')+`<button data-back="1">返回</button></div>`;
+  if(duelSub=='m') return `<div class="amenu">`+MMOVES.map(m=>`<button data-mg="${m[0]}" ${meFighter.mp<m[2]?'disabled':''}>${m[1]}（耗魔${m[2]}／×${m[3]}）</button>`).join('')+`<button data-back="1">返回</button></div>`;
+}
+function bindMenuEvents(box,myTurn,sendFn){
+  if(!myTurn)return;
+  box.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{const m=b.dataset.m;if(m=='d'){sendFn('defend');}else{duelSub=m;renderBattleAgain();}});
+  box.querySelectorAll('[data-back]').forEach(b=>b.onclick=()=>{duelSub=null;renderBattleAgain();});
+  box.querySelectorAll('[data-sk]').forEach(b=>b.onclick=()=>sendFn('skill',b.dataset.sk));
+  box.querySelectorAll('[data-it]').forEach(b=>b.onclick=()=>sendFn('item',b.dataset.it));
+  box.querySelectorAll('[data-n]').forEach(b=>b.onclick=()=>sendFn('normal',b.dataset.n));
+  box.querySelectorAll('[data-mg]').forEach(b=>b.onclick=()=>sendFn('magic',b.dataset.mg));
+  const pass=box.querySelector('#b-pass'); if(pass) pass.onclick=()=>sendFn('release');
+}
+function renderBattleAgain(){ if(!duelState)return; duelState.mode=='sync'?renderSyncBattle():renderAsyncBattle(); }
+function resultPanelHTML(room){
+  return `<div class="turn-tag">🏆 ${room.winner=='draw'?'平手！':room.winner+' 獲勝！'}</div><p>想變更強嗎？回去多答題累積經驗值就能升級，通關大關累積星星還能升級裝備品質喔！</p><button class="btn" id="b-close">結束對戰</button>`;
+}
+function logHTML(room){ return `<div class="blog">${(room.log||[]).slice(-6).map(x=>'· '+x).join('<br>')}</div>`; }
+function renderSyncBattle(){
+  const room=duelState.room, box=$('#arena-battle');
+  if(!room.b){ box.innerHTML='<p>⏳ 等待對方加入戰場...</p>'; return; }
+  const mine=mySideOf(room)||'a', myTurn=room.turn===mine, meFighter=room[mine];
+  const panel = room.over ? resultPanelHTML(room) :
+    `<div id="opp-banner" class="hide" style="margin:6px 0;padding:6px 10px;border-radius:8px;background:#5a3a12;font-size:.85rem"></div>`+
+    `<div class="turn-tag">${myTurn?'👉 輪到你了！':'⏳ 等待對方出招...'}</div>`+renderMenu(meFighter,myTurn)+logHTML(room);
+  renderScene(room,mine,panel,pn=>{ if(room.over){ $('#b-close').onclick=exitBattle; } else bindMenuEvents(pn,myTurn,sendSyncAction); });
+  updateOppBanner();
+}
+function renderAsyncBattle(){
+  const room=duelState.room, myTurn=room.turn=='a';
+  const panel = room.over ? resultPanelHTML(room) :
+    `<div class="turn-tag">${myTurn?'👉 輪到你了！':'⏳ 幽靈思考中...'}</div>`+renderMenu(room.a,myTurn)+logHTML(room);
+  renderScene(room,'a',panel,pn=>{ if(room.over){ $('#b-close').onclick=exitBattle; } else bindMenuEvents(pn,myTurn,sendAsyncAction); });
+}
+
+// ---- 🎬 對戰舞台：對手在上、我方在下，出招／受傷各有動畫 ----
+let stageFor=null, stageSnap=null, stageMine='a';
+function btImg(f){ const r=Math.min(6,Math.max(0,(f&&f.rank)|0)); return iconHTML(AVIMG[r],AV[r]||'🧙','ic-bt'); }
+const QSHORT={normal:'普',fine:'精',legend:'傳',myth:'神'};
+function btEquipHTML(f){
+  if(!f||!f.eq) return '';
+  let h='';
+  for(let i=0;i<ITEMS.length&&i<f.eq.length;i++){
+    const q=QDECODE[f.eq[i]]; if(!q) continue;
+    const it=ITEMS[i], extra=(i===CLONE_IDX&&f.clone)?`（${f.clone}★）`:'';
+    h+=`<span class="bt-eqi bq-${q}" title="${it.name}・${QLABEL[q]}${extra}">${iconHTML(it.img,it.icon,'ic-bq')}<i>${QSHORT[q]}</i></span>`;
+  }
+  return h?`<div class="bt-eq">${h}</div>`:`<div class="bt-eq"><small>尚無裝備</small></div>`;
+}
+function btSpritesHTML(f,role){
+  const cs=Math.min(5,Math.max(0,(f&&f.clone)|0));
+  return `<div class="bt-sprites ${cs?'has-clone':''}">`+
+    (cs?`<div class="bt-sprite bt-clone" id="bt-cl-${role}" style="opacity:${(cs*0.2).toFixed(2)}" title="分身 ${cs}★"><div class="bt-img">${btImg(f)}</div></div>`:'')+
+    `<div class="bt-sprite" id="bt-sp-${role}"><div class="bt-img">${btImg(f)}</div></div></div>`;
+}
+function btCardHTML(f){
+  return `<b class="nm"></b><div class="fbar hp"><i style="width:100%"></i></div><small class="hpt"></small><div class="fbar mp"><i style="width:100%"></i></div><small class="mpt"></small>${btEquipHTML(f)}`;
+}
+function ensureStage(room,mineSide){
+  let el=$('#bt-stage');
+  if(el && stageFor===duelState) return el;
+  if(el) el.remove();
+  stageFor=duelState; stageSnap=null; stageMine=mineSide;
+  const top=mineSide=='a'?'b':'a';
+  el=document.createElement('div'); el.id='bt-stage'; el.className='bt-stage';
+  el.innerHTML=`<div class="bt-arena">
+    <div class="bt-row bt-top"><div class="bt-card" id="bt-card-top">${btCardHTML(room[top])}</div>${btSpritesHTML(room[top],'top')}</div>
+    <div class="bt-caption" id="bt-cap"></div>
+    <div class="bt-row bt-bot">${btSpritesHTML(room[mineSide],'bot')}<div class="bt-card" id="bt-card-bot">${btCardHTML(room[mineSide])}</div></div>
+  </div><div class="bt-panel" id="bt-panel"></div>`;
+  document.body.appendChild(el);
+  document.body.style.overflow='hidden';
+  const box=$('#arena-battle'); box.innerHTML=''; box.classList.add('hide');
+  return el;
+}
+function removeStage(){
+  const el=$('#bt-stage'); if(el) el.remove();
+  stageFor=null; stageSnap=null; document.body.style.overflow='';
+}
+function fillCard(card,f,rk){
+  if(!card||!f) return;
+  const rn=(RK[Math.min(6,Math.max(0,f.rank|0))]||[0,''])[1];
+  card.querySelector('.nm').textContent=`${f.name}　Lv.${f.level}${rn?'・'+rn:''}`;
+  card.querySelector('.fbar.hp>i').style.width=(Math.max(0,f.hp)/f.hpMax*100)+'%';
+  card.querySelector('.fbar.mp>i').style.width=(Math.max(0,f.mp)/f.mpMax*100)+'%';
+  card.querySelector('.hpt').textContent=`HP ${Math.max(0,f.hp)}/${f.hpMax}`;
+  card.querySelector('.mpt').textContent=`MP ${Math.max(0,f.mp)}/${f.mpMax}`;
+}
+function stageKey(room){
+  const a=room.a,b=room.b;
+  return [room.turn,room.over,a.hp,b.hp,a.mp,b.mp,!!a.defending,!!b.defending,!!a.charging,!!b.charging,(room.log||[]).slice(-1)[0]].join('|');
+}
+function btAnim(el,cls,ms){ if(!el)return; el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); setTimeout(()=>el.classList.remove(cls),ms); }
+function btFloat(sp,text,color){ const d=document.createElement('div'); d.className='bt-float'; d.style.color=color; d.textContent=text; sp.appendChild(d); setTimeout(()=>d.remove(),1000); }
+function btBurst(sp,icon){ const d=document.createElement('div'); d.className='bt-burst'; d.textContent=icon; sp.appendChild(d); setTimeout(()=>d.remove(),560); }
+function btFly(fromEl,toEl,icon,cb){
+  const stg=$('#bt-stage'); if(!stg||!fromEl.animate){ setTimeout(cb,300); return; }
+  const sr=stg.getBoundingClientRect(), a=fromEl.getBoundingClientRect(), b=toEl.getBoundingClientRect();
+  const ax=a.left+a.width/2-sr.left, ay=a.top+a.height/2-sr.top, bx=b.left+b.width/2-sr.left, by=b.top+b.height/2-sr.top;
+  const p=document.createElement('div'); p.className='bt-proj'; p.textContent=icon; p.style.left=ax+'px'; p.style.top=ay+'px'; stg.appendChild(p);
+  const an=p.animate([{transform:'translate(-50%,-50%) scale(.6)'},{transform:`translate(calc(-50% + ${bx-ax}px),calc(-50% + ${by-ay}px)) scale(1.6)`}],{duration:480,easing:'ease-in'});
+  an.onfinish=()=>{p.remove();cb&&cb();};
+}
+function btLunge(fromEl,toEl){
+  if(!fromEl.animate) return;
+  const a=fromEl.getBoundingClientRect(), b=toEl.getBoundingClientRect();
+  const dx=(b.left+b.width/2-a.left-a.width/2)*0.55, dy=(b.top+b.height/2-a.top-a.height/2)*0.55;
+  fromEl.animate([{transform:'translate(0,0)'},{transform:`translate(${dx}px,${dy}px) scale(1.15)`,offset:.4},{transform:`translate(${dx}px,${dy}px) scale(1.15)`,offset:.55},{transform:'translate(0,0)'}],{duration:700,easing:'ease-in-out'});
+}
+// 比對「上一個畫面」和「現在」，看是誰出了什麼招，播放對應動畫
+function playBattleEvent(snap,room){
+  const atkSide=snap.turn; if(atkSide!=='a'&&atkSide!=='b') return;
+  const defSide=atkSide=='a'?'b':'a';
+  const spOf=side=>$('#bt-sp-'+(side===stageMine?'bot':'top'));
+  const atkSp=spOf(atkSide), defSp=spOf(defSide); if(!atkSp||!defSp) return;
+  const clOf=side=>$('#bt-cl-'+(side===stageMine?'bot':'top'));
+  const atkCl=clOf(atkSide), defCl=clOf(defSide);
+  const line=(room.log||[]).slice(-1)[0]||'';
+  const dDef=snap[defSide+'hp']-room[defSide].hp, dAtk=snap[atkSide+'hp']-room[atkSide].hp;
+  if(/防禦姿勢/.test(line)){ btBurst(atkSp,'🛡️'); return; }
+  if(/張開了護盾/.test(line)){ btBurst(atkSp,'🛡️'); btFloat(atkSp,'護盾展開！','#8fd6ff'); return; }
+  if(/護盾擋下了攻擊/.test(line)&&dDef<=0){
+    btLunge(atkSp,defSp); if(atkCl) btLunge(atkCl,defSp);
+    setTimeout(()=>{ btAnim(defSp,'blocked',520); btFloat(defSp,'擋下！','#8fd6ff'); btBurst(defSp,'🛡️'); const bx=$('#arena-battle'); if(bx) btAnim(bx,'shake',360); },280);
+    return; }
+  if(/詠唱/.test(line)){ btAnim(atkSp,'cast',700); if(atkCl) btAnim(atkCl,'cast',700); btBurst(atkSp,'🔮'); return; }
+  if(dDef<=0&&dAtk<=0) return;                      // 認輸、加入戰場等沒有出招的訊息，不播動畫
+  const magic=/魔法/.test(line);
+  const icon = magic ? (/大魔法/.test(line)?'☄️':/中魔法/.test(line)?'🔥':'✨')
+             : (/「拳」/.test(line)?'👊':/「腳」/.test(line)?'🦶':/衝撞/.test(line)?'💥':'🗡️');
+  const hit=()=>{
+    if(dDef>0){ btAnim(defSp.querySelector('.bt-img'),'hurt',600); if(defCl) btAnim(defCl.querySelector('.bt-img'),'hurt',600); btFloat(defSp,'-'+dDef,magic?'#9ad0ff':'#ff6b6b'); btBurst(defSp,icon); }
+    if(dAtk>0){ btAnim(atkSp.querySelector('.bt-img'),'hurt',600); if(atkCl) btAnim(atkCl.querySelector('.bt-img'),'hurt',600); btFloat(atkSp,'-'+dAtk,'#ffb35a'); }
+  };
+  if(magic){ btAnim(atkSp,'cast',700); if(atkCl) btAnim(atkCl,'cast',700); btFly(atkSp,defSp,icon,hit); }
+  else{ btLunge(atkSp,defSp); if(atkCl) btLunge(atkCl,defSp); setTimeout(hit,280); }
+}
+function renderScene(room,mineSide,panelHTML,bindFn){
+  const stage=ensureStage(room,mineSide);
+  const top=mineSide=='a'?'b':'a';
+  const key=stageKey(room);
+  const acted = stageSnap && stageSnap.key!==key;
+  if(acted) playBattleEvent(stageSnap,room);
+  fillCard($('#bt-card-top'),room[top]); fillCard($('#bt-card-bot'),room[mineSide]);
+  // 持續性的狀態：防禦、蓄力、倒下、獲勝
+  const spTop=$('#bt-sp-top'), spBot=$('#bt-sp-bot');
+  [[spTop,room[top],top,$('#bt-cl-top')],[spBot,room[mineSide],mineSide,$('#bt-cl-bot')]].forEach(([sp,f,side,cl])=>{
+    const els=cl?[sp,cl]:[sp];
+    els.forEach(e=>{ e.classList.toggle('defending',!!f.defending&&!room.over); e.classList.toggle('charging',!!f.charging&&!room.over); });
+    let sh=sp.querySelector('.bt-shield');if(!sh){sh=document.createElement('div');sh.className='bt-shield';sp.appendChild(sh)}
+    const sn=f.shield|0;sh.classList.toggle('on',sn>0&&!room.over);sh.innerHTML=sn>0?`<i>×${sn}</i>`:'';
+    const dead=f.hp<=0, other=room[side=='a'?'b':'a'];
+    const won=room.over&&room.winner!=='draw'&&!dead&&(other.hp<=0||room.winner===f.name);
+    setTimeout(()=>{ els.forEach(e=>{ e.classList.toggle('ko',dead); e.classList.toggle('win',!!won); }); }, acted?650:0);
+  });
+  // 中間的大字幕：顯示最新一行戰況
+  const cap=$('#bt-cap'), line=(room.log||[]).slice(-1)[0]||'';
+  if(cap.textContent!==line){ cap.textContent=line; btAnim(cap,'pop',400); }
+  const panel=$('#bt-panel'); panel.innerHTML=panelHTML; bindFn&&bindFn(panel);
+  stageSnap={key,turn:room.turn,ahp:room.a.hp,bhp:room.b.hp};
+}
+function exitBattle(){
+  stopWatchdog(); removeStage();
+  if(battleChannel){ sb.removeChannel(battleChannel); battleChannel=null; }
+  duelState=null;duelSub=null;
+  $('#arena-battle').classList.add('hide');$('#arena-battle').innerHTML='';
+  $('#arena-setup').classList.remove('hide');
+  startPendingListen();render();
+}
+$('#op-fight').onclick=async()=>{
+  if(!sbReady())return toast('❗ 對戰功能還沒設定好，請聯絡老師');
+  const sid=mySid();if(!sid)return toast('請先在上面「我的資料」存好「我的學號」');
+  const osid=$('#op-sid').value.trim();if(!osid)return toast('請輸入對方學號');
+  if(osid===sid)return toast('不能跟自己對戰喔！');
+  const mode=($('input[name="duel-mode"]:checked')||{value:'sync'}).value;
+  try{
+    if(mode=='async') await challengeAsync(osid); else await challengeSync(osid);
+  }catch(e){ toast('❗ 連線失敗，請確認網路連線後再試一次'); }
+};
+$('#avatar').onclick=async()=>{
+  const sid=mySid();if(!sid)return toast('請先在上面「我的資料」存好「我的學號」');
+  if(!sbReady())return toast('對戰功能還沒設定好，請聯絡老師');
+  const {data}=await sb.from('duel_records').select('*').eq('student_number',sid).maybeSingle();
+  const rec=data||{wins:0,losses:0,draws:0};
+  toast(`🏆 我的對戰總戰績<br>勝 ${rec.wins||0} 場／敗 ${rec.losses||0} 場／平手 ${rec.draws||0} 場`);
+};
+
+/* ===== 🏠 新首頁：章節流程圖／角色分析／對戰邀請／錯題練習 ===== */
+let VIEW='home',CHI=0,ONLY=null,INV=false;
+const CHS=[['🗝️ 第一章：整數王國',CH1,lockCh1,'1'],['📜 第二章：韓信點兵',CH2,lockCh2,'2'],['🔮 第三章：代數異世界',CH3,lockCh3,'3']];
+const SMAP={};CHS.forEach(c=>c[1].forEach(g=>g.st.forEach(x=>SMAP[x[0]]=x)));
+function show(v,ci){VIEW=v;if(ci!=null)CHI=ci;if(v==='ch'){MINIT=false;MFOC=null}
+  document.querySelectorAll('[data-v]').forEach(e=>e.classList.toggle('hide',!e.dataset.v.split(' ').includes(v)));
+  $('#nav').classList.toggle('hide',v==='home');if(v==='arena')rankBuild();window.BGM&&BGM.play(v==='arena'?'arena':'map');render();scrollTo(0,0)}
+function chProg(ci){const ids=CHS[ci][1].flatMap((c,i)=>idsOf(CHS[ci][1],i));return [ids.reduce((a,id)=>a+st(id),0),ids.length*PERSTAGE]}
+function advHTML(){
+  const fl=CHS.map((c,i)=>{const [a,b]=chProg(i);return `<button class="fnode" data-go="ch" data-ci="${i}"><b>${c[0]}</b>${c[1].length} 大關｜⭐ ${a}/${b}<div class="pbar"><div style="height:100%;width:${a/b*100}%;background:var(--bronze)"></div></div></button>`}).join('<span class="arr">➜</span>');
+  return `<h2 class="serif" style="color:var(--bronze);margin:6px 0 0">🧭 冒險路線（點章節進入）</h2><div class="flow">${fl}</div>`}
+function dqClaimable(){const q=dqState();return dqToday().filter(t=>!q.c[t.id]&&(q.p[t.k]||0)>=t.n).length}
+const THEME0={wall:'#d9e6bd',wall2:'#bcd29a',floor:'#ecb866',floor2:'#c98a3e',rail:'#8a5a2b'};
+const LB_SAY=['今天也一起加油！','答對一題，戰功就多一點！','商店有新的小屋飾品喔～','挑戰一下更高的星星吧！','休息夠了，出發冒險！','錯題練習可以補強弱點喔！'];
+const UIF={"hero": "hero", "arena": "duel", "wrong": "wrong-practice", "adv": "adventure", "daily": "daily-quest", "shop": "shop", "bag": "bag"};
+/* ===== ✨ 勇者特效圖層（都不會和人物衝突）：背後翅膀／光輪、腳下魔法陣、環繞精靈 =====
+   有放圖片就用圖片（images/lobby/檔名.png），沒有就用程式畫的簡易版 */
+function fxImg(it,fb){return `<img class="fx-img" src="${lobbyImg(it)}" alt="" style="display:none" onload="this.style.display='block';this.nextElementSibling.style.display='none'" onerror="if(imgNext(this))return;this.remove()">${fb}`}
+function wingsSVG(c1,c2,id){const w='M104 80 C 84 82, 52 72, 6 26 C 22 22, 40 24, 52 30 C 36 31, 22 35, 12 42 C 32 45, 52 53, 70 59 C 52 57, 40 61, 30 68 C 52 74, 78 78, 104 76 Z';
+  return `<svg class="fx-svg" viewBox="0 0 220 110"><defs><linearGradient id="wg-${id}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${c1}"/><stop offset="1" stop-color="${c2}"/></linearGradient></defs><g fill="url(#wg-${id})" stroke="#ffffffcc" stroke-width="1.6" stroke-linejoin="round"><path d="${w}"/><path transform="translate(220,0) scale(-1,1)" d="${w}"/></g></svg>`}
+/* 各勇者圖頭頂位置（左右中心、頭頂高度，皆為占圖寬／高的比例），光輪靠它放在頭上 */
+const HEAD=[[.55,.033],[.61,.053],[.56,.033],[.45,0],[.59,.053],[.47,.003],[.49,0]];
+function fxBack(it,ri){const c=it.cos,[hx,ht]=HEAD[ri]||[.5,0];
+  if(c.kind==='halo')return `<div class="lb-back halo" style="left:${hx*100}%;top:${(ht-.05)*100}%">${fxImg(it,`<div class="fx-halo" style="--c1:${c.c1};--c2:${c.c2}"></div>`)}</div>`;
+  return `<div class="lb-back">${fxImg(it,wingsSVG(c.c1,c.c2,it.id))}</div>`}
+function fxFeet(it){const c=it.cos.color;
+  return `<div class="lb-feet">${fxImg(it,`<svg class="fx-svg" viewBox="0 0 320 100" style="filter:drop-shadow(0 0 7px ${c})"><ellipse cx="160" cy="50" rx="150" ry="42" fill="${c}22" stroke="${c}" stroke-width="3"/><ellipse cx="160" cy="50" rx="118" ry="32" fill="none" stroke="${c}" stroke-width="2.5" stroke-dasharray="14 9" class="fx-dash"/><ellipse cx="160" cy="50" rx="82" ry="22" fill="none" stroke="${c}" stroke-width="2" opacity=".8"/><path d="M160 12 L168 50 L160 88 L152 50 Z M44 50 L160 42 L276 50 L160 58 Z" fill="${c}44" stroke="${c}" stroke-width="1.5"/></svg>`)}</div>`}
+function fxOrbit(it,layer){const n=it.cos.n||1;
+  return `<div class="lb-orbit ${layer}"><div class="orb-ring">${Array.from({length:n},(_,i)=>`<div class="orb-spin" style="animation-delay:${(-5*i/n).toFixed(2)}s"><span class="orb" style="animation-delay:${(-5*i/n).toFixed(2)}s">${iconHTML(lobbyImg(it),it.cos.emoji,'ic-orb')}</span></div>`).join('')}</div></div>`}
+function lobbyHTML(){
+  const ri=Math.max(0,RK.indexOf(rankOf(total()))),li=levelInfo();
+  const th=cosOn('theme'),T=Object.assign({},THEME0,th?th.cos:{}),tid=th?th.id:'th_0';
+  const ti=cosOn('title'),fr=cosOn('frame'),ac=cosOn('acc');
+  const decor=SHOP.filter(x=>x.cos&&x.cos.slot==='decor'&&(cosOwned(x.id)||x.id===TRIAL));
+  const glow=fr?`filter:drop-shadow(0 0 ${Math.round(fr.cos.glow/2)}px ${fr.cos.color}) drop-shadow(0 0 ${fr.cos.glow}px ${fr.cos.color})`:'';
+  const pet=ac&&ac.cos.pet?ac:null,bk=cosOn('back'),ft=cosOn('feet'),ob=cosOn('orbit');
+  const nm=(P._hero&&P._hero.name)||'勇者';
+  const dk=[['hero','🧙','角色'],['arena','⚔️','對戰'],['wrong','📝','錯題'],['adv','🗺️','冒險'],['daily','📅','每日'],['shop','🛒','商店'],['bag','🎒','背包']];
+  const bd={arena:INV?'新':'',daily:dqClaimable()||'',bag:(P._chests||[]).length||''};
+  return `<div class="lobby" style="--w1:${T.wall};--w2:${T.wall2};--f1:${T.floor};--f2:${T.floor2};--rail:${T.rail}">
+    <div class="lb-wall"></div><div class="lb-rail"></div><div class="lb-floor"></div>
+    <div class="lb-bgimg" style="background-image:${['png','jpg','jpeg','webp'].map(e=>`url('images/lobby/${encodeURI(th?fileBase(th):'theme-default')}.${e}')`).join(',')}"></div>
+    ${decor.map(x=>{const c=x.cos;return `<div class="lb-d" style="left:${c.x}%;bottom:${c.onWall?c.y:Math.max(3,c.y-19)}%;width:${c.size}cqw;height:${c.size}cqw;font-size:${c.size*0.85}cqw">${iconHTML(lobbyImg(x),c.emoji,'ic-lb')}</div>`}).join('')}
+    <div class="lb-plate">${ti?`<span class="ttl">【${ti.cos.text}】</span>`:''}<b>${nm}</b><br><small>Lv.${li.level}｜${rankOf(total())[1]}</small></div>
+    <div class="lb-merit">🏅 ${P._merit||0}</div>
+    ${P._gift?'':'<div class="lb-gift">🎁 通關第一關，領新手禮！</div>'}
+    <div class="lb-say" id="lb-say"></div>
+    ${pet?`<div class="lb-pet" data-lb="pet">${iconHTML(lobbyImg(pet),pet.cos.emoji,'ic-lb')}</div>`:''}
+    <div class="lb-hero" data-lb="hero">${bk?fxBack(bk,ri):''}${ft?fxFeet(ft):''}${ob?fxOrbit(ob,'b'):''}<img src="${AVIMG[ri]}" alt="" style="${glow}" onerror="this.outerHTML='<span class=lb-emo2>${AV[ri]||'🧙'}</span>'">${ob?fxOrbit(ob,'f'):''}</div>
+    <div class="lb-dock ${LBMENU?'open':''}"><button class="lb-tg" data-tg="1" title="功能選單"><b>☰</b>選單${Object.values(bd).some(v=>v)?'<i></i>':''}</button><div class="lb-menu">${dk.map(([k,e,t])=>`<button class="lb-c ${k==='adv'?'big':''}" data-go="${k}" title="${t}"><span class="${k==='adv'?'big-ic':''}">${iconHTML('images/ui/'+UIF[k]+'.png',e,'ic-ui')}</span>${t}${bd[k]?`<i>${bd[k]}</i>`:''}</button>`).join('')}</div></div>
+  </div>
+  <p class="tiny" style="opacity:.7;margin:8px 0 0;text-align:center">點一下勇者會說話喔！在商店買的稱號、頭像框、夥伴、小屋主題和飾品，都會出現在這裡。</p>`}
+function homeHTML(){
+  if(VIEW==='adv')return advHTML();
+  if(VIEW==='daily')return dqHTML();
+  return lobbyHTML()}
+function chHTML(ci){const c=CHS[ci];ONLY=ci;
+  return `<h2 class="serif" style="margin:6px 0 0;color:var(--bronze)">${c[0]}</h2>`+groupHTML(c[1],c[2],c[3])+endlessHTML()}
+const SKICON={physical:'⚔️',magic:'✨',speed:'💨'};
+const SKCOL={'普通':'#9fb3c8','強力':'#b07cff','傳說':'#ffb23d'};
+function heroCardHTML(){const h=P._hero;
+  if(!h)return '<p>🧙 尚未建立角色</p>';
+  if(h){const m={};(h.skills||[]).forEach(x=>m[x.category]=x);h.skills=Object.values(m)}
+  const slots=['physical','magic','speed'].map(c=>{const x=(h.skills||[]).find(y=>y.category===c);
+    return x?`<button class="slot on" data-skinfo="${c}" style="border-color:${SKCOL[x.rarity]||'var(--bronze)'}" title="${CATL[c]}招式">${SKICON[c]}<i>${(x.rarity||'')[0]||''}</i></button>`
+            :`<button class="slot" data-skinfo="${c}" title="${CATL[c]}招式（空）" style="opacity:.5">${SKICON[c]}</button>`}).join('');
+  const sk=`<div class="icrow"><span class="lab">🔮</span>${slots}<button id="draw" class="slot on" title="研發招式" style="border-color:var(--jade)">🎲<i>${skillCost(h)}</i></button>${P._pendSkill?`<button id="pend" class="slot on" style="border-color:var(--red)" title="有新招式等你決定">⚠️</button>`:''}</div>`;
+  const ch=`<div class="icrow"><span class="lab">🗺️</span><div class="chips" style="flex:1">`+CHS.map((c,i)=>{const [a,b]=chProg(i);return `<div class="chip" data-chinfo="${i}" title="${c[0]}"><span class="e">${c[0].split(' ')[0]}</span>⭐ ${a}/${b}<div class="pbar"><div style="height:100%;width:${a/b*100}%;background:var(--jade)"></div></div></div>`}).join('')+`</div></div>`;
+  return `${sk}${ch}${badgeHTML()}`}
+function wrongHTML(){const q=P._q||{};
+  const L=Object.entries(q).filter(([k,r])=>r.n>=3&&r.ok/r.n<0.8).sort((a,b)=>a[1].ok/a[1].n-b[1].ok/b[1].n).slice(0,8);
+  return `<h2 class="serif" style="margin:0 0 6px">📝 錯題練習</h2><small>依你的作答紀錄，找出正確率偏低的題型，點「去練習」直接進入該關。</small>`+
+  (L.length?L.map(([k,r])=>{const id=k.split(':')[0],s=SMAP[id];return `<div class="fighter"><b>${SLAB[id]||id} ${s?s[1]:''}</b>｜題型 ${k.split(':')[1]}｜正確率 ${Math.round(r.ok/r.n*100)}%（${r.ok}/${r.n}）${s&&s[2]?` <button class="node" style="display:inline;min-height:0;padding:4px 10px" data-wr="${id}">去練習</button>`:''}</div>`}).join(''):'<p>🎉 目前沒有正確率偏低的題型，繼續闖關累積更多作答紀錄吧！</p>')}
+$('#home').onclick=e=>{const tg=e.target.closest('[data-tg]');if(tg){LBMENU=!LBMENU;tg.closest('.lb-dock').classList.toggle('open',LBMENU);return}
+  const lb=e.target.closest('[data-lb]');if(lb){const sy=$('#lb-say');if(sy){sy.textContent=LB_SAY[Math.floor(Math.random()*LB_SAY.length)];sy.classList.remove('on');void sy.offsetWidth;sy.classList.add('on');clearTimeout(window._lbt);window._lbt=setTimeout(()=>sy.classList.remove('on'),2200)}return}
+  const dc=e.target.closest('[data-dq]');if(dc)return claimDq(dc.dataset.dq);const b=e.target.closest('[data-go]');if(!b)return;const g=b.dataset.go;if(g==='adv'){MSEL=true;show('ch')}else if(g==='ch')show('ch',+b.dataset.ci);else{if(g==='arena')INV=false;show(g)}};
+$('#back').onclick=()=>show('home');
+$('#cards').onclick=e=>{const b=e.target.closest('[data-eq]');if(b)popup(eqCardHTML(+b.dataset.eq))};
+$('#stats').onclick=e=>{const b=e.target.closest('[data-stat]');if(!b)return;const k=b.dataset.stat;popup(`<div class="popbig">${STATICON[k]}</div><h3 class="serif" style="text-align:center;margin:0">${STATLABEL[k].replace(/^[^\u4e00-\u9fa5A-Za-z]+/,'')}　${totalStats()[k]}</h3><p style="text-align:center">${STATDESC[k]}</p><small>對戰基本值 ＝ 職業比例 ×（六項數值 × 等級 ＋ 裝備效果）</small>`)};
+$('#headc').onclick=()=>{const t=total(),nx=RK.find(r=>r[0]>t);popup(`<div class="popbig">🎖️</div><h3 class="serif" style="text-align:center;margin:0">${rankOf(t)[1]}</h3><p style="text-align:center">⭐ ${t} / ${MAXSTAR}<br>${nx?`再 ${nx[0]-t} 顆星，升為「${nx[1]}」`:'你已經是最高階了！'}</p>`)};
+$('#hx').addEventListener('click',e=>{
+  const sk=e.target.closest('[data-skinfo]');if(sk){const c=sk.dataset.skinfo,x=((P._hero&&P._hero.skills)||[]).find(y=>y.category===c);return popup(`<div class="popbig">${SKICON[c]}</div><h3 class="serif" style="text-align:center;margin:0">${CATL[c]}招式</h3><p style="text-align:center">${x?skillText(x)+`<br><small>每場對戰可用 ${RUSES[x.rarity]||2} 次</small>`:'（還沒有招式，按 🎲 研發）'}</p><small>每種類型只能裝備 1 個招式，抽到同類型時可選擇是否交換。</small>`)}
+  if(e.target.closest('#draw'))return popup(`<div class="popbig">🎲</div><h3 class="serif" style="text-align:center;margin:0">研發招式</h3><p style="text-align:center">🏅 戰功 <b>${P._merit||0}</b>　需要 <b>${skillCost(P._hero)}</b></p><div style="text-align:center"><button class="btn" id="draw2">🎲 研發</button></div>`);
+  const ci=e.target.closest('[data-chinfo]');if(ci){const i=+ci.dataset.chinfo,[a,b]=chProg(i);return popup(`<div class="popbig">${CHS[i][0].split(' ')[0]}</div><h3 class="serif" style="text-align:center;margin:0">${CHS[i][0].replace(/^\S+\s/,'')}</h3><p style="text-align:center">⭐ ${a} / ${b}</p>`)}
+  const bd=e.target.closest('[data-bdg]');if(bd)return popup(`<div class="popbig">${SPB[bd.dataset.bdg][0]}</div><h3 class="serif" style="text-align:center;margin:0">${SPB[bd.dataset.bdg][1]}</h3>`)
+},true);
+$('#gp').addEventListener('click',e=>{if(e.target.id==='draw2'){$('#gp').classList.add('hide');drawSkill()}});
+$('#hx').onclick=e=>{if(!P._hero)return;
+  if(e.target.closest('#pend')&&P._pendSkill)return offerSkill(P._pendSkill);
+  };
+function drawSkill(){
+  if(!P._hero)return;
+  if(P._pendSkill)return toast('請先決定上一個新招式要不要換上');
+  const h=P._hero,prev=h.skills.slice(),r=MathHeroEngine.learnSkill(h,{gold:P._merit||0,rules:SKILL_RULES});
+  if(!r.success)return toast('🏅 戰功不足，需要 '+r.cost+' 戰功，繼續闖關累積吧！');
+  h.skills=prev;P._merit=r.goldRemaining;P._pendSkill=r.skill;save();offerSkill(r.skill)}
+$('#wrong').onclick=e=>{const b=e.target.closest('[data-wr]');if(!b)return;const s=SMAP[b.dataset.wr];cur=s[0];$('#fr').src=stageURL(s[2],s[0],false);(window.BGM&&BGM.stop(),$('#ov').classList.remove('hide'))};
+
+/* ===== 🗺️ 冒險地圖：可拖曳的完整地圖、勇者跑動、頂端選模式 ===== */
+const MAPIMG=encodeURI('images/數學世界探險圖：三章奇幻地圖.png');
+const MPOS=[[274,377],[468,268],[640,491],[246,594],[748,92],[994,246],[1199,286],[1125,451],[690,672],[879,674],[731,868],[1422,640]];
+const MNODES=[];CHS.forEach((c,gi)=>c[1].forEach((g,ci)=>MNODES.push({gi,ci,g,lock:c[2]})));
+const MODEL={easy:'練兵',real:'實戰',hard:'修羅'};
+// 名稱全部採用地圖上印的名稱（第 1-2 關在地圖上沒有地名，維持編號）
+const L5=(p,n)=>Array.from({length:n},(_,i)=>p+'-'+(i+1));
+const MAPN=[['整數王國',L5('1-1',4)],['第 1-2 關',L5('1-2',3)],['運算塔',L5('1-3',4)],['星辰塔',L5('1-4',4)],['迷霧山脈',L5('2-1',4)],['點兵營地',L5('2-2',4)],['因數峽谷',L5('2-3',4)],['戰術平原',L5('2-4',4)],['符語之森',L5('3-1',2)],['封印之城',L5('3-2',5)],['真實之鏡',L5('3-3',2)],['終點：數學之巔',['3-3-3']]];
+const SLAB={};MNODES.forEach((n,i)=>n.g.st.forEach((x,k)=>SLAB[x[0]]=MAPN[i][1][k]));
+const GT=[];MNODES.forEach((n,i)=>{if(n.gi===2&&n.g.st.length>1)GT.push([n.g.n.replace(/^第三章[^、]*、/,''),MAPN[i][0]])});
+const SRE=new RegExp('(?<![\\w-])('+Object.keys(SLAB).sort((a,b)=>b.length-a.length).map(x=>x.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('|')+')(?![\\w-])','g');
+const cm=t=>{let r=String(t).replace(SRE,x=>SLAB[x]);GT.forEach(([a,b])=>{r=r.split(a).join(b)});return r};
+let HN=null,MWALK=false,MSX=0,MSY=0,MFOC=null,MINIT=false,MSEL=false;
+const getMode=()=>P._mm||'easy';
+const preMsg=i=>TEACHER?'':i===11&&!nDone(MNODES[10])?'要先通關「真實之鏡」，終點才會開啟':'';
+const nUn=n=>n.lock(n.ci,0)===''&&!preMsg(MNODES.indexOf(n));
+const nDone=n=>n.g.st.every(s=>!s[2]||st(s[0])>0);
+function mapFr(){const i=MNODES.findIndex(n=>nUn(n)&&!nDone(n));return i<0?MNODES.length-1:i}
+function heroImg(){const ri=Math.max(0,RK.indexOf(rankOf(total())));return `<img src="${AVIMG[ri]}" height="64" alt="" onerror="this.outerHTML='<span style=font-size:44px>${AV[ri]||'🧙'}</span>'">`}
+function mapBuild(){
+  if(HN==null)HN=(P._hn!=null&&MNODES[P._hn]&&nUn(MNODES[P._hn]))?P._hn:mapFr();
+  const fr=mapFr(),hp=MPOS[HN],all=MNODES.every(nDone);
+  const fog=all?'':`<svg class="fog" viewBox="0 0 1536 1024" width="1536" height="1024"><defs><filter id="fb" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="45"/></filter><mask id="fm"><rect width="1536" height="1024" fill="#fff"/>${MNODES.map((n,i)=>nUn(n)?`<circle cx="${MPOS[i][0]}" cy="${MPOS[i][1]}" r="170" fill="#000" filter="url(#fb)"/>`:'').join('')}</mask></defs><rect width="1536" height="1024" fill="#000" opacity="1" mask="url(#fm)"/></svg>`;
+  const nodes=MNODES.map((n,i)=>{const [x,y]=MPOS[i],un=nUn(n),dn=nDone(n);
+    return `<button class="mn ${un?'':'lk'} ${dn?'done':''} ${un&&!dn&&i===fr?'pulse':''}" style="left:${x}px;top:${y}px" data-n="${i}" title="${n.g.n}">${un?(dn?'★':i+1):'🔒'}</button>`}).join('');
+  const chsel=MSEL?`<div id="chsel">${CHS.map((c,i)=>{const [a,b]=chProg(i),fi=MNODES.findIndex(n=>n.gi===i),lk=!nUn(MNODES[fi]);return `<button class="chbtn ${lk?'lk':''}" data-chsel="${i}"><span class="no">${lk?'🔒':i+1}</span><span class="em">${c[0].split(' ')[0]}</span><b>${c[0].replace(/^\S+\s第.章：?/,'')}</b><span>⭐ ${a}/${b}</span><div class="pbar" style="width:80%"><div style="height:100%;width:${a/b*100}%;background:var(--jade)"></div></div></button>`}).join('')}</div>`:'';
+  $('#map').innerHTML=`<div class="mp-bar"><button data-here="1">📍 回到勇者位置</button>${CHS.map((c,i)=>`<button data-chsel="${i}" title="${c[0]}">${c[0].split(' ')[0]} ${i+1}</button>`).join('')}${all?'<small>🎉</small>':''}</div>
+  <div style="position:relative"><div id="mapvp" class="${MSEL?'mapblur':''}"><div id="mapin"><img src="${MAPIMG}" draggable="false" alt="數學世界探險圖">${fog}${nodes}<div id="mhero" style="left:${hp[0]}px;top:${hp[1]+8}px">${heroImg()}</div></div></div>${chsel}</div>`;
+  const vp=$('#mapvp');
+  vp.onscroll=()=>{MSX=vp.scrollLeft;MSY=vp.scrollTop};
+  const ctr=i=>{vp.scrollLeft=MPOS[i][0]-vp.clientWidth/2;vp.scrollTop=MPOS[i][1]-vp.clientHeight/2};
+  if(MFOC!=null){ctr(MFOC);MFOC=null;MINIT=true}else if(!MINIT){ctr(HN);MINIT=true}else{vp.scrollLeft=MSX;vp.scrollTop=MSY}
+  let dr=null;
+  vp.onpointerdown=e=>{if(e.pointerType!=='mouse'||e.button)return;dr={x:e.clientX,y:e.clientY,l:vp.scrollLeft,t:vp.scrollTop,m:0};vp.style.cursor='grabbing'};
+  vp.onpointermove=e=>{if(!dr)return;const dx=e.clientX-dr.x,dy=e.clientY-dr.y;if(Math.abs(dx)+Math.abs(dy)>5)dr.m=1;vp.scrollLeft=dr.l-dx;vp.scrollTop=dr.t-dy};
+  vp.onpointerup=vp.onpointerleave=()=>{vp.style.cursor='grab';setTimeout(()=>{dr=null})};
+  vp.addEventListener('click',e=>{if(dr&&dr.m){e.stopPropagation();e.preventDefault()}},true);
+}
+function pickChapter(gi){
+  const idx=MNODES.map((n,i)=>i).filter(i=>MNODES[i].gi===gi);
+  if(!nUn(MNODES[idx[0]])){const r=MNODES[idx[0]].lock(MNODES[idx[0]].ci,0);return toast('🔒 '+cm(r||'這一章還沒開放，先通關前一章吧！'))}
+  const t=idx.find(i=>nUn(MNODES[i])&&!nDone(MNODES[i]))??idx.filter(i=>nUn(MNODES[i])).pop();
+  HN=t;P._hn=t;save();MSEL=false;MFOC=t;mapBuild()}
+function mapClick(e){
+  const cs=e.target.closest('[data-chsel]');if(cs)return pickChapter(+cs.dataset.chsel);
+  if(e.target.closest('[data-here]')){const vp=$('#mapvp');vp.scrollTo({left:MPOS[HN][0]-vp.clientWidth/2,top:MPOS[HN][1]-vp.clientHeight/2,behavior:'smooth'});return}
+  const n=e.target.closest('.mn');if(n)onMapNode(+n.dataset.n);
+}
+function onMapNode(i){
+  if(MWALK)return;const n=MNODES[i],r=n.lock(n.ci,0)||preMsg(i);
+  if(r)return toast('🔒 '+cm(r));
+  if(i===HN)return showGroup(i);
+  const a=MPOS[HN],b=MPOS[i],h=$('#mhero'),vp=$('#mapvp'),sec=Math.min(2.4,Math.max(.7,Math.hypot(b[0]-a[0],b[1]-a[1])/380));
+  MWALK=true;h.classList.toggle('l',b[0]<a[0]);h.classList.add('walk');h.style.setProperty('--wd',sec+'s');h.style.left=b[0]+'px';h.style.top=(b[1]+8)+'px';
+  vp.scrollTo({left:b[0]-vp.clientWidth/2,top:b[1]-vp.clientHeight/2,behavior:'smooth'});
+  setTimeout(()=>{MWALK=false;HN=i;P._hn=i;save();h.classList.remove('walk');showGroup(i)},sec*1000+150);
+}
+function showGroup(i){
+  const n=MNODES[i],labs=MAPN[i][1],ic={easy:'🎯',real:'⚔️',hard:'🔥'};
+  const rows=n.g.st.map((s,k)=>{const r=n.lock(n.ci,k)||preMsg(i),v=st(s[0]),boss=/Boss/.test(s[1]),ms=(P[s[0]]&&P[s[0]].ms)||{},off=r||!s[2];
+    const info=`<div class="ginfo"><b>${r?'🔒':boss?'👹':'⚔️'} ${labs[k]}</b>　${s[1]}<br><small>${!s[2]?'建造中':r?cm(r):(v?'⭐'.repeat(v)+'☆'.repeat(5-v):'尚未通關')}</small></div>`;
+    const btns=['easy','real','hard'].map(m=>`<button class="mbtn ${m}" data-gm="${i}:${k}:${m}" ${off?'disabled':''}>${ic[m]} ${MODEL[m]}${ms[m]?'<br>⭐'+ms[m]:''}</button>`).join('')+((TEACHER||v>=ENDLESS_NEED)&&!off?`<button class="mbtn" data-gm="${i}:${k}:endless" title="無極限挑戰">♾️</button>`:'');
+    return `<div class="gprow gr2">${info}<div class="mbtns">${btns}</div></div>`}).join('');
+  $('#gp').innerHTML=`<div class="card"><h2 class="serif" style="margin:0;color:var(--bronze)">${MAPN[i][0]}</h2><small>${n.g.sub||''}</small>${rows}<div style="text-align:center;margin-top:8px"><button id="gp-x" class="btn">關閉</button></div></div>`;
+  $('#gp').classList.remove('hide');
+}
+function openMapStage(i,k,md){
+  const n=MNODES[i],s=n.g.st[k],r=n.lock(n.ci,k)||preMsg(i),en=md==='endless';
+  if(r)return toast('🔒 '+cm(r));
+  if(!s[2])return toast('🔨 這一關還在建造中，敬請期待！');
+  if(en&&(!TEACHER&&st(s[0])<ENDLESS_NEED))return toast(`🔒 ${SLAB[s[0]]} 要先拿到 ${ENDLESS_NEED} ⭐ 才能挑戰無限題`);
+  cur=s[0];$('#gp').classList.add('hide');
+  $('#fr').src=stageURL(s[2],s[0],en)+(en?'':'&mode='+md);(window.BGM&&BGM.stop(),$('#ov').classList.remove('hide'));
+}
+$('#gp').onclick=e=>{
+  if(e.target.id==='gp'||e.target.id==='gp-x')return $('#gp').classList.add('hide');
+  const pk=e.target.closest('[data-pk]');if(pk&&PK){const f=PK;PK=null;$('#gp').classList.add('hide');return f(+pk.dataset.pk)}
+  const b=e.target.closest('[data-gm]');if(b){const [i,k,m]=b.dataset.gm.split(':');openMapStage(+i,+k,m)}
+};
+/* ===== 🔨 鍛造動畫 ===== */
+function forgeAnim(f){
+  const o=document.createElement('div');o.id='forge';
+  o.innerHTML=`<div class="fg-box"><div class="fg-anvil">🔨</div><div class="fg-spark">✨ ✦ ✨</div><div class="fg-item">${f.icon}</div><div class="fg-name">${f.up?'⚔️ 裝備升級':'⚗️ 鍛造完成'}<br><b>${f.name}</b>（${f.q}）</div></div>`;
+  document.body.appendChild(o);[220,670,1120].forEach(t=>setTimeout(()=>window.BGM&&BGM.clang(),t));
+  o.onclick=()=>o.remove();setTimeout(()=>o.remove(),3400);
+}
+/* ===== 🏆 賽季排行榜與對戰徽章 ===== */
+const BADGES=[['🥉','初戰告捷','贏 1 場',r=>r.wins>=1],['🥈','小有名氣','贏 5 場',r=>r.wins>=5],['🥇','常勝將軍','贏 15 場',r=>r.wins>=15],['👑','對戰王者','贏 30 場',r=>r.wins>=30],['⚔️','身經百戰','出戰 20 場',r=>r.wins+r.losses+r.draws>=20],['🤝','惺惺相惜','打平 1 場',r=>r.draws>=1],['🏅','賽季前三','本月排行前三名',r=>r.top3]];
+async function rankBuild(){
+  const box=$('#rank');if(!box)return;
+  if(!sbReady()){box.innerHTML='<h2 class="serif" style="margin:0">🏆 賽季排行榜</h2><small>對戰功能還沒設定好，請聯絡老師。</small>';return}
+  box.innerHTML='<h2 class="serif" style="margin:0">🏆 賽季排行榜</h2><small>讀取中…</small>';
+  const sid=mySid(),season=seasonId();let rows=null,rec={wins:0,losses:0,draws:0};
+  try{const r1=await sb.from('duel_season').select('*').eq('season',season).order('wins',{ascending:false}).order('losses',{ascending:true}).limit(10);if(!r1.error)rows=r1.data;
+    if(sid){const r2=await sb.from('duel_records').select('*').eq('student_number',sid).maybeSingle();if(r2.data)rec={wins:r2.data.wins||0,losses:r2.data.losses||0,draws:r2.data.draws||0}}}catch(e){}
+  const top3=!!(rows&&sid&&rows.slice(0,3).some(x=>x.student_number===sid&&x.wins>0)),R={...rec,top3},medal=['🥇','🥈','🥉'];
+  const board=rows===null?'<p>排行榜尚未啟用（老師需在 Supabase 執行 season.sql 建立資料表）。</p>':rows.length?`<ol style="padding-left:0;list-style:none">${rows.map((x,i)=>`<li style="margin:4px 0;${x.student_number===sid?'color:var(--bronze);font-weight:700':''}">${medal[i]||(i+1)+'.'} ${x.name||x.student_number}　勝 ${x.wins}／敗 ${x.losses}／平 ${x.draws}</li>`).join('')}</ol>`:'<p>這個月還沒有人對戰，快來搶下第一名！</p>';
+  box.innerHTML=`<h2 class="serif" style="margin:0 0 4px">🏆 ${season} 賽季排行榜</h2><small>每月 1 日重新計算，依勝場排名。</small>${board}<h3 class="serif" style="margin:14px 0 4px">🎖️ 我的對戰徽章</h3>`+(sid?BADGES.map(([ic,n,h,f])=>{const ok=f(R);return `<span style="display:inline-block;margin:3px;padding:4px 10px;border:2px solid ${ok?'var(--bronze)':'var(--line)'};border-radius:10px;opacity:${ok?1:.45}" title="${h}">${ic} ${n}${ok?'':'（'+h+'）'}</span>`}).join(''):'<small>請先在「我的資料」存好學號。</small>');
+}
+
+/* ===== 🛒 商店與🎒背包（道具資料集中在 SHOP，之後補細項只要改這張表） =====
+   cat：分類；battle：對戰中使用的效果；passive：進入對戰時自動裝備；fx：背包使用的效果 */
+const CATL={physical:'物理',magic:'魔法',speed:'速度'};
+/* ===== 📅 每日任務（每天 3 個，依日期固定抽出；獎勵：經驗值／戰功／道具／特殊徽章） ===== */
+const bkkDay=()=>new Date(Date.now()+7*36e5).toISOString().slice(0,10);
+const DQPOOL=GC.daily.pool;
+const SPB={};GC.daily.badges.forEach(b=>SPB[b.id]=[b.icon,b.name]);
+const DQDAYS={};GC.daily.streak.forEach(x=>DQDAYS[x.days]=x.badge);
+function dqState(){const d=bkkDay();if(!P._dq||P._dq.d!==d)P._dq={d,p:{},c:{}};return P._dq}
+function dqToday(){
+  let h=0;for(const c of bkkDay())h=(h*31+c.charCodeAt(0))|0;
+  const rnd=()=>{h=(h+0x6D2B79F5)|0;let t=Math.imul(h^h>>>15,1|h);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
+  const a=DQPOOL.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1));[a[i],a[j]]=[a[j],a[i]]}
+  return a.slice(0,GC.daily.perDay);
+}
+function dq(k,n){const q=dqState();q.p[k]=(q.p[k]||0)+n;save()}
+function rewardText(r){return r.merit?`🏅 戰功 +${r.merit}`:r.exp?`📘 經驗值 +${r.exp}`:r.item?`${SHOPMAP[r.item].icon} ${SHOPMAP[r.item].name} ×${r.itemCount||1}`:r.badge?`🎖️ 特殊徽章「${SPB[r.badge][1]}」`:''}
+function giveBadge(id){P._badges=P._badges||{};if(P._badges[id])return false;P._badges[id]=1;return true}
+function claimDq(id){
+  const q=dqState(),t=DQPOOL.find(x=>x.id===id);if(!t||q.c[id]||(q.p[t.k]||0)<t.n)return;
+  q.c[id]=1;const r=t.r;let msg='🎁 領取成功：'+rewardText(r);
+  if(r.merit)P._merit=(P._merit||0)+r.merit;
+  if(r.exp)P._exp=(P._exp||0)+r.exp;
+  if(r.item)bagAdd(r.item,r.itemCount||1);
+  if(r.badge&&!giveBadge(r.badge)){P._merit=(P._merit||0)+GC.daily.dupBadgeMerit;msg+=`（已擁有，改發 🏅 戰功 +${GC.daily.dupBadgeMerit}）`}
+  if(dqToday().every(x=>q.c[x.id])){P._dqDays=(P._dqDays||0)+1;msg+='<br>🎉 今天的任務全部完成！累計 '+P._dqDays+' 天';const bid=DQDAYS[P._dqDays];if(bid&&giveBadge(bid))msg+='<br>🎖️ 獲得特殊徽章「'+SPB[bid][1]+'」！'}
+  save();toast(msg);render();
+}
+function dqHTML(){
+  const q=dqState(),L=dqToday();
+  return `<div class="card" style="margin-top:14px"><h2 class="serif" style="margin:0 0 4px">📅 每日任務</h2><small>每天自動更新（泰國時間）；全部完成累計天數，可得特殊徽章。已累計 ${P._dqDays||0} 天</small>`+
+  L.map(t=>{const v=Math.min(t.n,q.p[t.k]||0),ok=v>=t.n,got=q.c[t.id];
+    return `<div class="fighter" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><div style="flex:1;min-width:190px"><b>${t.t}</b>　<small>${v}/${t.n}</small><div class="pbar"><div style="height:100%;width:${v/t.n*100}%;background:var(--jade)"></div></div><small>獎勵：${rewardText(t.r)}</small></div>${got?'<small>✅ 已領取</small>':`<button class="btn" data-dq="${t.id}" ${ok?'':'disabled'}>領取</button>`}</div>`}).join('')+`</div>`;
+}
+function badgeHTML(){const b=P._badges||{},ks=Object.keys(b);return `<div class="icrow"><span class="lab">🏵️</span>`+(ks.length?ks.map(k=>`<span class="bdg" data-bdg="${k}" title="${SPB[k][1]}">${SPB[k][0]}</span>`).join(''):'<span style="opacity:.5">—</span>')+`</div>`}
+const SKILL_RULES={skillBaseCost:GC.skill.baseCost,skillCostIncrease:GC.skill.costStep};
+const skillCost=h=>SKILL_RULES.skillBaseCost+(h.skillsCreated|0)*SKILL_RULES.skillCostIncrease;
+function meritInit(){if(P._merit==null){P._merit=flatAll.reduce((a,id)=>a+((P[id]&&P[id].best)|0),0);save()}}
+const SHOPTABS=[['use','🧪 道具',['heal','shield','revive','speed','points','exp']],['grow','⚒️ 成長',['forge','body','equip']],['look','🎨 外觀',['title','frame','rename']],['fx','✨ 特效',['acc','back','feet','orbit']],['room','🏡 小屋',['theme','decor']]];
+let SHOPTAB='use';
+const SHOPCAT={theme:'🏡 小屋主題（買了到背包切換）',decor:'🪑 房間飾品（買了就擺在大廳）',heal:'🧪 補血',shield:'🛡️ 護盾（對戰）',revive:'🪶 復活',speed:'💨 加速（對戰）',points:'🏅 加積分（戰功）',exp:'📘 加經驗值',forge:'🔨 鍛造',body:'🧬 天生體質調整',equip:'💎 裝備數值修正',title:'📜 稱號（買一次永久擁有）',frame:'🖼️ 頭像框（買一次永久擁有）',acc:'🐾 夥伴（買一次永久擁有）',back:'🪽 背後特效（買一次永久擁有）',feet:'🔯 腳下魔法陣（買一次永久擁有）',orbit:'✨ 環繞精靈（買一次永久擁有）',rename:'🪪 改名卡'};
+const SHOP_VER='v2';
+/* 內建後備清單：game-config.js 是舊版、或修改器的「本機測試設定」蓋掉商店時，這些新商品仍會出現（以代號補上缺少的，不會覆蓋您已改過的價格） */
+const SR=Object.assign({"bagCap": 30, "maxHealPerDuel": 3, "nameMaxLen": 8, "trialSec": 10, "badWords": ["幹", "靠北", "白痴", "智障", "垃圾", "去死", "三小", "屁", "屎", "幹你娘", "操", "fuck", "shit"], "starterGift": {"heal_s": 2, "shield_s": 1}},GC.shopRules||{});
+const SHOP=GC.shop;
+const SHOPMAP={};SHOP.forEach(x=>SHOPMAP[x.id]=x);
+const bagN=id=>((P._bag||{})[id])|0;
+function bagAdd(id,n){P._bag=P._bag||{};P._bag[id]=Math.max(0,bagN(id)+n);save()}
+function consumeItem(id){if(bagN(id)<1)return false;bagAdd(id,-1);return true}
+function withRevive(f){if(bagN('revive')>0){bagAdd('revive',-1);f.revive=true}return f}
+function applyAction(att,def,kind,move){
+  if(kind=='item'){const it=SHOPMAP[move];if(!it||!it.battle)return null;
+    if(it.battle.shield){att.shield=(att.shield|0)+it.battle.shield;return `${att.name} 使用「${it.name}」，張開了護盾，可以擋下接下來 ${att.shield} 次攻擊！`}
+    if(it.battle.heal){att.healN=(att.healN|0)+1;const g=Math.max(0,Math.min(att.hpMax-att.hp,Math.round(att.hpMax*it.battle.heal)));att.hp+=g;return `${att.name} 使用「${it.name}」，恢復了 ${g} 點血！`}
+    if(it.battle.spd){if(att.fast)return null;att.spd=Math.round(att.spd*(1+it.battle.spd));att.fast=true;return `${att.name} 使用「${it.name}」，速度提升 ${Math.round(it.battle.spd*100)}%！`}
+    return null}
+  let line;
+  if(kind=='skill')line=useSkill(att,def,move);
+  else if(att.triple&&kind=='normal'){att.triple=false;const ls=Array.from({length:GC.skill.tripleHits},()=>applyAction0(att,def,kind,move));line=ls.includes(null)?null:`⚡ ${att.name} 神速連擊（${GC.skill.tripleHits} 連）！<br>`+ls.join('<br>')}
+  else line=applyAction0(att,def,kind,move);
+  if(line!==null&&def.shieldHit){def.shieldHit=false;line+=`<br>🛡️ ${def.name} 的護盾擋下了攻擊！${def.shield>0?'（還剩 '+def.shield+' 次）':'（護盾用完了）'}`}
+  if(line!==null)[def,att].forEach(f=>{if(f.hp<=0&&f.revive){f.revive=false;f.hp=Math.round(f.hpMax*GC.battle.revivePct/100);line+=`<br>🪶 ${f.name} 的復活羽毛發動，以 ${GC.battle.revivePct}% 生命重新站起來！`}});
+  return line}
+/* ===== 🔮 研發的招式在對戰中的效果 =====
+   速度數值：引擎的 1 點 ≈ 對戰速度的 3%；每場使用次數：普通 3、強力 2、傳說 1 */
+const RUSES=GC.skill.uses,SPP=GC.skill.speedPctPerPoint/100;
+const skillLeft=(f,x)=>(RUSES[x.r]||2)-((f.su||{})[x.c]||0);
+function packSkills(){return ((P._hero&&P._hero.skills)||[]).map(x=>({n:x.name,r:x.rarity,c:x.category,m:x.multiplier||0,t:x.type,s:x.selfSpeedPenalty||0,tp:x.targetSpeedPenalty||0,sm:x.speedMultiplier||0,sb:x.selfSpeedBonus||0}))}
+function useSkill(att,def,cat){
+  const x=(att.skills||[]).find(y=>y.c===cat);if(!x||skillLeft(att,x)<=0)return null;
+  att.su=att.su||{};att.su[cat]=(att.su[cat]||0)+1;
+  let dmg=0,extra='';
+  if(x.t==='damage')dmg=dealDamageLocal(att,def,(cat==='magic'?att.matk:att.atk)*x.m,cat==='magic');
+  else if(x.t==='speedAttack'){dmg=hurt(def,Math.max(1,Math.round(att.atk+att.spd*GC.skill.speedAttackSpdRatio)))}
+  else if(x.t==='speedDamage'){dmg=hurt(def,Math.max(1,Math.round(att.spd*x.sm*GC.skill.speedDamageRatio)))}
+  else if(x.t==='speedBuff'){att.spd=Math.round(att.spd*(1+x.sb*SPP));att.triple=true;return `${att.name} 使用${x.r}招式「${x.n}」，速度提升 ${Math.round(x.sb*SPP*100)}%，下一次普通攻擊會連擊 ${GC.skill.tripleHits} 次！`}
+  else return null;
+  if(x.s){att.spd=Math.round(att.spd*(1-x.s*SPP));extra+=`，自己速度下降 ${Math.round(x.s*SPP*100)}%`}
+  if(x.tp){def.spd=Math.round(def.spd*(1-x.tp*SPP));extra+=`，${def.name} 速度下降 ${Math.round(x.tp*SPP*100)}%`}
+  return `${att.name} 使用${x.r}招式「${x.n}」${x.t.startsWith('speed')?'（無視防禦）':''}，對 ${def.name} 造成 ${dmg} 點傷害${extra}！`}
+const DEV=/[?&]dev=1/.test(location.search);
+const fileBase=x=>String(x.file||x.id).trim().replace(/\.(png|jpe?g|webp|gif)$/i,'');
+const shopImg=x=>'images/shop/'+encodeURI(fileBase(x))+'.png',lobbyImg=x=>'images/lobby/'+encodeURI(fileBase(x))+'.png';
+const LOBBYSLOT=['decor','acc','back','feet','orbit'];
+function shopIcon(x){
+  const sl=x.cos&&x.cos.slot,th=sl==='theme';
+  const a=th?lobbyImg(x):shopImg(x),b=th?shopImg(x):(LOBBYSLOT.includes(sl)?lobbyImg(x):'');
+  const hide="this.style.display='none';this.nextElementSibling.style.display='inline-flex'";
+  return `<span class="icon-wrap ic-sh ${th?'ic-th':''}"><img src="${a}" alt="" onerror="if(imgNext(this))return;${b?`if(!this.dataset.f){this.dataset.f=1;this.src='${b}'}else{${hide}}`:hide}"><span class="emoji-fb">${x.icon}</span></span>`}
+const trialSec=()=>Math.max(3,Math.min(60,Number(SR.trialSec)||10));
+function giveStarterGift(){
+  if(P._gift)return '';P._gift=1;
+  const L=Object.entries(SR.starterGift||{}).filter(([id,n])=>SHOPMAP[id]&&n>0);
+  L.forEach(([id,n])=>bagAdd(id,n));save();
+  return L.length?'🎁 新手禮：'+L.map(([id,n])=>SHOPMAP[id].icon+SHOPMAP[id].name+' ×'+n).join('、')+'（到背包看看）':''}
+function buyState(){const d=bkkDay();if(!P._buy||P._buy.d!==d)P._buy={d,n:{}};return P._buy}
+const cosOwned=id=>!!((P._cos||{}).own||{})[id];
+let TRIAL=null,TRIALT=null,LBMENU=false;
+const cosOn=slot=>{if(TRIAL&&SHOPMAP[TRIAL]&&SHOPMAP[TRIAL].cos&&SHOPMAP[TRIAL].cos.slot===slot)return SHOPMAP[TRIAL];const id=((P._cos||{}).on||{})[slot];return id&&cosOwned(id)?SHOPMAP[id]:null};
+function buyStatus(x){ // 回傳 {ok, label}
+  const g=P._merit||0;
+  if(x.cos)return cosOwned(x.id)?{ok:false,label:'✅ 已擁有'}:{ok:g>=x.price,label:'🏅 '+x.price+' 兌換'};
+  const b=buyState().n[x.id]|0;
+  if(x.daily&&b>=x.daily)return {ok:false,label:'今日已買完'};
+  if(!x.fx||!x.fx.rename){if(bagN(x.id)>=SR.bagCap)return {ok:false,label:'已達持有上限'}}
+  return {ok:g>=x.price,label:'🏅 '+x.price+' 兌換'};
+}
+function shopBuild(){
+  const g=P._merit||0,tab=SHOPTABS.find(t=>t[0]===SHOPTAB)||SHOPTABS[0],sg=SR.starterGift||{};
+  const banner=P._gift?'':`<div class="fighter" style="border-color:var(--red)">🎁 <b>新手禮</b>：通關第一關就會收到 ${Object.entries(sg).map(([id,n])=>SHOPMAP[id]?SHOPMAP[id].name+' ×'+n:'').filter(Boolean).join('、')}！先去闖一關再來逛逛吧。</div>`;
+  $('#shop').innerHTML=`<h2 class="serif" style="margin:0 0 4px">🛒 商店 <small style="opacity:.55;font-weight:400">${SHOP_VER}｜共 ${SHOP.length} 項</small></h2>🏅 戰功 <b>${g}</b>　<small>每次通關結算的戰功都會累積，可在這裡兌換。消耗品每種每天有限購數量，最多持有 ${SR.bagCap} 個。</small>`+banner+
+  `<div class="tabs">${SHOPTABS.map(t=>`<button class="tab ${t[0]===tab[0]?'on':''}" data-tab="${t[0]}">${t[1]}</button>`).join('')}</div>`+
+  tab[2].map(c=>{const L=SHOP.filter(x=>x.cat===c);if(!L.length)return '';return `<h3 class="serif" style="margin:14px 0 4px">${SHOPCAT[c]}</h3>`+L.map(x=>{const st=buyStatus(x),b=buyState().n[x.id]|0;
+    const meta=x.cos?'':`<small>已有 ${bagN(x.id)}${x.daily?`｜今日 ${b}/${x.daily}`:''}</small>`;
+    const tag=(!P._gift&&sg[x.id])?'<span class="tag-star">新手推薦</span>':'';
+    return `<div class="fighter" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">${shopIcon(x)}<div style="flex:1;min-width:170px"><b>${x.name}</b>${tag}　${meta}<br><small>${x.desc}</small>${DEV?`<br><small style="opacity:.6">圖片：${shopImg(x)}${x.cos&&['decor','acc','back','feet','orbit','theme'].includes(x.cos.slot)?'　＋　'+lobbyImg(x):''}</small>`:''}</div><div style="display:flex;gap:6px;flex-wrap:wrap">${x.cos&&!cosOwned(x.id)?`<button class="btn tryb" data-try="${x.id}">👀 試用 ${trialSec()} 秒</button>`:''}<button class="btn" data-buy="${x.id}" ${st.ok?'':'disabled'}>${st.label}</button></div></div>`}).join('')}).join('');
+}
+const COSSLOT={title:'📜 稱號',frame:'🖼️ 頭像框',acc:'🐾 夥伴',back:'🪽 背後特效',feet:'🔯 腳下魔法陣',orbit:'✨ 環繞精靈',theme:'🏡 小屋主題'};
+function cosBagHTML(){
+  const own=SHOP.filter(x=>x.cos&&cosOwned(x.id));
+  if(!own.length)return '';
+  return `<h3 class="serif" style="margin:14px 0 4px">🎨 我的外觀</h3>`+Object.keys(COSSLOT).map(sl=>{const L=own.filter(x=>x.cos.slot===sl);if(!L.length)return '';const on=cosOn(sl);
+    return `<div class="fighter"><b>${COSSLOT[sl]}</b>　<small>目前：${on?on.name:'（沒有）'}</small><div style="margin-top:6px">`+L.map(x=>`<button class="btn" style="margin:2px" data-cos="${x.id}">${x.icon} ${x.name}${on&&on.id===x.id?'（已裝上・點一下卸下）':''}</button>`).join('')+`</div></div>`}).join('');
+}
+function bagBuild(){
+  const L=SHOP.filter(x=>bagN(x.id)>0);
+  $('#bag').innerHTML=`<h2 class="serif" style="margin:0 0 4px">🎒 背包</h2>🏅 戰功 <b>${P._merit||0}</b>`+`<div class="fighter" style="margin:8px 0"><b>📦 寶箱 ×${(P._chests||[]).length}</b>　<button class="btn" data-chest="1">打開 1 個</button> <button class="btn" data-chest="all">全部打開</button><br><small>通關關卡會獲得寶箱；打開後隨機得到裝備碎片，同一品質集滿 ${FRAG_NEED} 片即可合成裝備</small></div>`+cosBagHTML()+(L.length?L.map(x=>`<div class="fighter" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">${shopIcon(x)}<div style="flex:1;min-width:170px"><b>${x.name} ×${bagN(x.id)}</b><br><small>${x.desc}</small></div>${x.fx?`<button class="btn" data-use="${x.id}">使用</button>`:`<small>${x.stageUse?'闖關被打倒時會詢問是否使用':x.passive?'對戰時自動帶上':'對戰中選「🎒 道具」使用'}</small>`}</div>`).join(''):'<p>背包裡還沒有道具，到商店用戰功買些道具吧！</p>');
+}
+$('#shop').onclick=e=>{const tb=e.target.closest('[data-tab]');if(tb){SHOPTAB=tb.dataset.tab;return shopBuild()}
+  const tr=e.target.closest('[data-try]');if(tr){const y=SHOPMAP[tr.dataset.try];if(y)trialStart(y);return}
+  const b=e.target.closest('[data-buy]');if(!b)return;const x=SHOPMAP[b.dataset.buy];if(!x)return;buyItem(x)};
+function buyItem(x){
+  if((P._merit||0)<x.price)return toast('🏅 戰功不夠，繼續闖關累積吧！');
+  const st=buyStatus(x);if(!st.ok)return toast(st.label==='已達持有上限'?`🎒 ${x.name} 已經有 ${SR.bagCap} 個了，先用掉一些吧！`:st.label);
+  P._merit-=x.price;
+  if(x.cos){P._cos=P._cos||{own:{},on:{}};P._cos.own[x.id]=1;P._cos.on[x.cos.slot]=(x.cos.slot==='theme')?x.id:(P._cos.on[x.cos.slot]||x.id);save();
+    toast(`🛒 買到了 ${x.icon} ${x.name}！${x.cos.slot==='decor'?'已擺進大廳':x.cos.slot==='theme'?'大廳已換新主題':'已自動裝上（可到背包更換）'}，回首頁看看吧！`)}
+  else{bagAdd(x.id,1);toast(`🛒 兌換了 ${x.icon} ${x.name}`)}
+  if(x.daily){const t=buyState();t.n[x.id]=(t.n[x.id]|0)+1}
+  dq('buy',1);save();render();shopBuild()}
+/* ===== 試用：10 秒預覽，結束後詢問是否購買 ===== */
+function trialStop(){clearInterval(TRIALT);TRIALT=null;TRIAL=null;const el=document.getElementById('trial');if(el)el.remove()}
+function trialStart(x){
+  trialStop();TRIAL=x.id;const el=document.createElement('div');el.id='trial';el.className='trial';document.body.appendChild(el);
+  el.innerHTML=`<div class="tbox"><div class="tt">👀 試用中：${x.icon} ${x.name}</div>${lobbyHTML().replace('id="lb-say"','')}<div class="tbar"><i id="tbar"></i></div><div class="tt2"><b id="tsec">${trialSec()}</b> 秒後自動結束　<button class="btn" id="t-end">提早結束</button></div></div>`;
+  const t0=Date.now(),D=trialSec()*1000;
+  TRIALT=setInterval(()=>{const left=Math.max(0,D-(Date.now()-t0));const b=document.getElementById('tbar'),sc=document.getElementById('tsec');if(b)b.style.width=(left/D*100)+'%';if(sc)sc.textContent=Math.ceil(left/1000);if(left<=0)trialAsk(x)},100);
+  document.getElementById('t-end').onclick=()=>trialAsk(x)}
+function trialAsk(x){
+  trialStop();const el=document.createElement('div');el.id='trial';el.className='trial';document.body.appendChild(el);
+  const st=buyStatus(x),enough=(P._merit||0)>=x.price;
+  el.innerHTML=`<div class="ask"><div class="big">${x.icon}</div><h3 class="serif" style="margin:6px 0;color:var(--bronze)">試用結束！喜歡「${x.name}」嗎？</h3><p style="margin:6px 0">價格 🏅 <b>${x.price}</b>　你有 🏅 <b>${P._merit||0}</b>${enough?'':'<br><small style="color:#ff9a8a">戰功還不夠，繼續闖關累積吧！</small>'}</p><div><button class="btn go" id="t-buy" ${st.ok?'':'disabled'}>🛒 買下來</button><button class="btn" id="t-again">👀 再試用一次</button><button class="btn" id="t-no">先不買</button></div></div>`;
+  document.getElementById('t-buy').onclick=()=>{trialStop();buyItem(x)};
+  document.getElementById('t-again').onclick=()=>trialStart(x);
+  document.getElementById('t-no').onclick=trialStop}
+let PK=null;
+function pick(title,opts,cb){PK=cb;$('#gp').innerHTML=`<div class="card"><h2 class="serif" style="margin:0 0 8px;color:var(--bronze)">${title}</h2>${opts.map((o,i)=>`<button class="node" data-pk="${i}" style="display:block;width:100%;margin:6px 0;text-align:left">${o}</button>`).join('')}<div style="text-align:center"><button id="gp-x" class="btn">取消</button></div></div>`;$('#gp').classList.remove('hide')}
+const ownedEq=()=>ITEMS.map((_,i)=>i).filter(i=>qualityOf(i)&&!ITEMS[i].special);
+$('#bag').onclick=e=>{const cb=e.target.closest('[data-chest]');if(cb)return chestOpen(cb.dataset.chest==='all');
+  const co=e.target.closest('[data-cos]');if(co){const x=SHOPMAP[co.dataset.cos];if(!x||!cosOwned(x.id))return;P._cos.on=P._cos.on||{};P._cos.on[x.cos.slot]=(P._cos.on[x.cos.slot]===x.id)?null:x.id;save();render();return bagBuild()}
+  const b=e.target.closest('[data-use]');if(!b)return;const x=SHOPMAP[b.dataset.use];if(bagN(x.id)<1)return;
+  if(x.fx.rename)return renameDialog(x);
+  if(x.fx.mboost){bagAdd(x.id,-1);P._mboost=(P._mboost||0)+x.fx.mboost;save();toast(`🏅 接下來 ${P._mboost} 次通關戰功 +50%`);return bagBuild()}
+  if(x.fx.exp){bagAdd(x.id,-1);P._exp=(P._exp||0)+x.fx.exp;save();toast(`📘 經驗值 +${x.fx.exp}`);renderHero();return bagBuild()}
+  if(x.fx.body){if(!P._hero)return toast('請先建立角色');const ks=['HP','ATK','DEF','SPD','MATK','MDEF'];
+    return pick('🧬 要調整哪一項天生體質？',ks.map(k=>`${k}　目前 ${P._hero.stats[k]} → ${P._hero.stats[k]+1}`),i=>{if(!consumeItem(x.id))return;P._hero.stats[ks[i]]+=1;save();toast(`🧬 ${ks[i]} +1`);render()})}
+  const eq=ownedEq();if(!eq.length)return toast('你還沒有裝備，先去闖關合成裝備吧！');
+  if(x.fx.forge)return pick('🔨 要鍛造哪一件裝備？',eq.map(i=>`${ITEMS[i].icon} ${ITEMS[i].name}（${QLABEL[qualityOf(i)]}）　鍛造 +${(P._forge||{})[i]||0}${((P._forge||{})[i]||0)>=GC.equip.forgeMax?'（已滿）':''}`),k=>{const i=eq[k];P._forge=P._forge||{};
+    if((P._forge[i]||0)>=GC.equip.forgeMax)return toast('這件裝備已經鍛造到最高等級了');if(!consumeItem(x.id))return;P._forge[i]=(P._forge[i]||0)+1;save();
+    forgeAnim({icon:ITEMS[i].icon,name:`${ITEMS[i].name} +${P._forge[i]}`,q:QLABEL[qualityOf(i)],up:true});render()});
+  if(x.fx.reroll)return pick('💎 要洗鍊哪一件裝備？（結果隨機）',eq.map(i=>`${ITEMS[i].icon} ${ITEMS[i].name}（${QLABEL[qualityOf(i)]}）`),k=>{const i=eq[k];if(!consumeItem(x.id))return;
+    delete P._eq[i];ensureRoll(i);const es=effStats(i);toast(`💎 ${ITEMS[i].name} 洗鍊完成：`+Object.entries(es).map(([a,v])=>a+' '+v).join('、'));render()})};
+/* ===== 🪪 改名卡 ===== */
+function renameDialog(x){
+  const cur=(P._hero&&P._hero.name)||(P._who&&P._who.name)||'';
+  $('#gp').innerHTML=`<div class="card"><h2 class="serif" style="margin:0 0 8px;color:var(--bronze)">🪪 使用改名卡</h2><p>目前的名字：<b>${cur||'（還沒取名）'}</b><br><small>最多 ${SR.nameMaxLen} 個字，不能使用不雅字眼。名字會用在對戰與排行榜，不會改變你的能力值。</small></p><input id="rn-in" maxlength="${SR.nameMaxLen}" style="width:100%;padding:8px;font:inherit;border-radius:8px;border:2px solid var(--line);background:var(--ink);color:inherit" placeholder="輸入新名字"><div style="text-align:center;margin-top:10px"><button id="rn-ok" class="btn">確定改名</button> <button id="gp-x" class="btn">取消</button></div></div>`;
+  $('#gp').classList.remove('hide');
+  $('#rn-ok').onclick=()=>{
+    const v=$('#rn-in').value.trim();
+    if(!v)return toast('請輸入新名字');
+    if(v.length>SR.nameMaxLen)return toast(`名字最多 ${SR.nameMaxLen} 個字`);
+    const low=v.toLowerCase();if(SR.badWords.some(w=>w&&low.includes(String(w).toLowerCase())))return toast('這個名字有不適合的字眼，換一個吧！');
+    if(v===cur)return toast('跟原本的名字一樣喔');
+    if(!consumeItem(x.id))return toast('沒有改名卡了');
+    if(P._hero)P._hero.name=v;P._who=P._who||{};P._who.name=v;save();
+    try{fillWho()}catch(e){}
+    $('#gp').classList.add('hide');toast(`🪪 改名成功！新名字：<b>${v}</b>`);try{syncMyUser()}catch(e){}render();bagBuild()};
+}
+/* ===== 🔮 招式研發：抽到後與「同類型」現有招式交換 ===== */
+function skillText(x){return `<b>${x.name}</b>・${x.rarity}　威力 ×${x.multiplier}${x.selfSpeedPenalty?`　自身速度 −${x.selfSpeedPenalty}`:''}${x.targetSpeedPenalty?`　對方速度 −${x.targetSpeedPenalty}`:''}`}
+function offerSkill(sk){
+  const h=P._hero,cur=(h.skills||[]).find(x=>x.category===sk.category),box=$('#gp');
+  const done=(swap)=>{if(swap){h.skills=(h.skills||[]).filter(x=>x.category!==sk.category).concat(sk);toast(`🔮 已換上「${sk.name}」`)}else toast('🔮 保留原本的招式');P._pendSkill=null;save();box.classList.add('hide');render()};
+  if(!cur)return done(true);
+  box.innerHTML=`<div class="card"><h2 class="serif" style="margin:0 0 6px;color:var(--bronze)">🔮 研發出新的${CATL[sk.category]}招式！</h2><small>${CATL[sk.category]}招式只能和${CATL[sk.category]}招式交換。</small>
+  <div class="fighter" style="margin:8px 0"><b>目前：</b>${skillText(cur)}</div><div class="fighter" style="margin:8px 0"><b>新的：</b>${skillText(sk)}</div>
+  <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap"><button class="btn" id="sk-swap">換上新招式</button><button class="btn" id="sk-keep">保留現在的</button></div></div>`;
+  box.classList.remove('hide');$('#sk-swap').onclick=()=>done(true);$('#sk-keep').onclick=()=>done(false);
+}
+/* ===== 🎲 第一次登入：建立角色（依 math_hero_engine） ===== */
+function maybeCreate(){if(P._hero)return;const box=$('#create');box.classList.remove('hide');
+  box.innerHTML=`<div class="card"><h2 class="serif" style="margin:0;color:var(--bronze)">🧙 建立你的勇者</h2>
+  <div>請輸入角色名（英文名會自動計算字母值；中文名請填姓名總筆劃）</div>
+  <div style="margin:6px 0;color:var(--bronze);font-weight:700">⚠️ 第一次取名免費，取好之後<u>無法自己修改</u>，想改名要在商店買「改名卡」。請想清楚再按喔！</div>
+  <input id="cr-name" placeholder="角色名" maxlength="20"><input id="cr-str" class="hide" type="number" min="1" placeholder="姓名總筆劃（中文名必填）">
+  <div id="cr-msg" style="color:#ff9a8a"></div><button id="cr-go">🎲 擲骰子並建立角色</button></div>`;
+  $('#cr-name').oninput=e=>$('#cr-str').classList.toggle('hide',!/[^\x00-\x7F]/.test(e.target.value));
+  $('#cr-go').onclick=()=>{try{const h=MathHeroEngine.createCharacter({name:$('#cr-name').value,chineseStrokeTotal:$('#cr-str').value});
+    P._hero=h;P._who=P._who||{};P._who.name=h.name;save();fillWho();
+    box.innerHTML=`<div class="card"><h2 class="serif" style="margin:0;color:var(--bronze)">✨ ${h.name}，你是「${h.archetype}」！</h2>
+    <div>骰子：${h.dice.die1}＋${h.dice.die2}＝${h.dice.sum}　（${h.nameValue.method} ${h.nameValue.total}，餘數 ${h.remainder}）</div>
+    <div class="stat-grid">${['HP','ATK','DEF','SPD','MATK','MDEF'].map(k=>`<div class="sbox"><b>${h.stats[k]}</b><span>${k}</span></div>`).join('')}</div>
+    <button id="cr-ok">⚔️ 出發冒險！</button></div>`;
+    $('#cr-ok').onclick=()=>{box.classList.add('hide');box.innerHTML='';render();checkGifts()}}catch(err){$('#cr-msg').textContent=err.message}}}
+(()=>{const mb=$('#mutebtn'),mu=()=>{try{return localStorage.getItem('ms-mute')==='1'}catch(e){return false}};mb.textContent=mu()?'🔇':'🔊';
+  mb.onclick=()=>{try{localStorage.setItem('ms-mute',mu()?'0':'1')}catch(e){}mb.textContent=mu()?'🔇':'🔊'}})();
+
+/* ===== 🎁 老師發放的獎勵 =====
+   老師在 config-editor.html 的「獎勵發放」建立禮物 → 下載 game-config.js 覆蓋 → 學生下次進遊戲就會自動收到。
+   每份禮物有唯一代號（id），領過的代號記在 P._giftsGot，同一份禮物同一台裝置不會重複領。
+   對象：全校 / 指定班級（比對「我的資料」的班級）/ 指定學號（比對「我的資料」的學號）。 */
+const giftEsc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function giftMatch(g){
+  if(!g||!g.id||g.on===false)return false;
+  const now=Date.now();
+  if(g.from&&Date.parse(g.from+'T00:00:00+07:00')>now)return false;
+  if(g.until&&Date.parse(g.until+'T23:59:59+07:00')<now)return false;
+  const to=g.to||{mode:'all'},w=P._who||{},cls=String(w.cls||'').trim(),sid=String(w.sid||'').trim();
+  const list=(to.list||[]).map(x=>String(x).trim()).filter(Boolean);
+  if(to.mode==='cls')return !!cls&&list.includes(cls);
+  if(to.mode==='sid')return !!sid&&list.includes(sid);
+  return true;
+}
+function giftApply(g){
+  const got=[],m=g.merit|0,e=g.exp|0,ch=g.chests|0;
+  if(m>0){P._merit=(P._merit||0)+m;got.push('🏅 戰功 +'+m)}
+  if(e>0){P._exp=(P._exp||0)+e;got.push('📘 經驗值 +'+e)}
+  if(ch>0){P._chests=P._chests||[];const cs=Math.max(1,Math.min(GC.stars.maxStar,(g.chestStars|0)||3));
+    for(let k=0;k<ch;k++)P._chests.push({s:cs,g:Math.floor(Math.random()*ITEMS.length)});got.push('📦 寶箱 ×'+ch+'（到背包打開）')}
+  Object.entries(g.items||{}).forEach(([id,n])=>{
+    n=n|0;const x=SHOPMAP[id];if(!x||n<=0)return;
+    if(x.cos){P._cos=P._cos||{};P._cos.own=P._cos.own||{};P._cos.on=P._cos.on||{};
+      if(P._cos.own[id])return got.push(x.icon+' '+x.name+'（你已經有了）');
+      P._cos.own[id]=1;if(!P._cos.on[x.cos.slot])P._cos.on[x.cos.slot]=id;got.push(x.icon+' '+x.name+'（已加入收藏，到背包裝備）')}
+    else{bagAdd(id,n);got.push(x.icon+' '+x.name+' ×'+n)}});
+  return got;
+}
+function checkGifts(){
+  if(!P._hero)return;                       // 還沒建立角色：等建立完再發
+  const L=(GC.gifts||[]).filter(g=>giftMatch(g)&&!(P._giftsGot||{})[g.id]);
+  if(!L.length)return;
+  P._giftsGot=P._giftsGot||{};
+  const html=L.map(g=>{P._giftsGot[g.id]=Date.now();const got=giftApply(g);
+    return `<div class="fighter" style="margin:8px 0"><b>${giftEsc(g.title||'老師送你的禮物')}</b>${g.msg?`<br><small>💬 ${giftEsc(g.msg)}</small>`:''}<br>${got.length?got.join('<br>'):'<small>（這份禮物沒有內容）</small>'}</div>`}).join('');
+  save();
+  popup(`<h2 class="serif" style="margin:0;color:var(--bronze);text-align:center">🎁 老師送來禮物了！</h2>${html}`);
+  window.BGM&&BGM.clang&&BGM.clang();
+  render();
+}
+load();meritInit();fragInit();fillWho();show('home');startPendingListen();maybeCreate();checkGifts();
+
+/* ===== 🛠️ 教師工具（只存在於 world-map-teacher.html） ===== */
+(()=>{
+  const css=document.createElement('style');
+  css.textContent=`#tbtn{position:fixed;left:10px;bottom:10px;z-index:60;background:#d24a33;color:#fff;border:2px solid #fff6;border-radius:24px;padding:8px 14px;font:inherit;font-weight:700;cursor:pointer;box-shadow:0 4px 14px #0008}
+  #tpanel{position:fixed;inset:0;z-index:70;background:#000a;display:none;overflow:auto;padding:12px}
+  #tpanel .tb{max-width:760px;margin:0 auto;background:#161a2e;border:2px solid #d24a33;border-radius:14px;padding:12px 16px;color:#e9e4d4}
+  #tpanel h3{margin:14px 0 6px;color:#d2a24c}#tpanel .r{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:6px 0}
+  #tpanel input,#tpanel select{background:#20264a;color:#e9e4d4;border:2px solid #3a4270;border-radius:8px;padding:5px 8px;font:inherit}
+  #tpanel input[type=number]{width:100px}#tpanel button{background:#20264a;color:#e9e4d4;border:2px solid #d2a24c;border-radius:8px;padding:6px 10px;font:inherit;cursor:pointer}
+  #tpanel button:hover{background:#2c3566}#tpanel .dg{border-color:#d24a33}`;
+  document.head.appendChild(css);
+  const btn=document.createElement('button');btn.id='tbtn';btn.textContent='🛠️ 教師工具';document.body.appendChild(btn);
+  const pan=document.createElement('div');pan.id='tpanel';document.body.appendChild(pan);
+  const MAXS=GC.stars.maxStar;
+  const shopOpts=GC.shop.map(x=>`<option value="${x.id}">${x.icon||''} ${x.name}${x.cos?'（外觀）':''}</option>`).join('');
+  const stageOpts=flatAll.map(id=>`<option>${id}</option>`).join('');
+  const starOpts=(def)=>Array.from({length:MAXS+1},(_,i)=>`<option value="${i}"${i===def?' selected':''}>${i} ⭐</option>`).join('');
+  const lvTotal=L=>{let s=0;for(let l=1;l<L;l++)s+=expNeed(l);return s};
+  function draw(){
+    const gifts=(GC.gifts||[]).map(g=>`<li>${giftEsc(g.title||g.id)}　<small>${g.on===false?'⛔停用':giftMatch(g)?'✅ 符合目前「我的資料」':'⏸ 不符合（對象／期間）'}　${(P._giftsGot||{})[g.id]?'📬 已領過':'尚未領'}</small></li>`).join('')||'<li><small>目前 game-config.js 沒有任何禮物</small></li>';
+    pan.innerHTML=`<div class="tb"><div class="r"><b style="font-size:1.2rem">🛠️ 教師工具</b><span style="flex:1"></span><button id="t-x">✕ 關閉</button></div>
+    <small>這是教師版：存檔與學生完全分開（只存在這個瀏覽器），所有關卡與無極限挑戰已全部解鎖。請勿把這個檔案放到學生能連到的網站。</small>
+    <h3>🏅 戰功／✨ 經驗</h3>
+    <div class="r">戰功 目前 <b>${P._merit||0}</b> <input type="number" id="t-m" value="1000"><button data-a="m+">增加</button><button data-a="m=">直接設為</button></div>
+    <div class="r">等級 目前 <b>Lv.${levelInfo().level}</b> <input type="number" id="t-l" value="10" min="1"><button data-a="lv">設為此等級</button><input type="number" id="t-e" value="500"><button data-a="e+">增加經驗值</button></div>
+    <h3>⭐ 星數／關卡</h3>
+    <div class="r">全部關卡一次設為 <select id="t-as">${starOpts(MAXS)}</select><button data-a="allst">套用</button></div>
+    <div class="r">單一關卡 <select id="t-sid">${stageOpts}</select><select id="t-ss">${starOpts(MAXS)}</select><button data-a="onest">套用</button></div>
+    <h3>🎒 道具／外觀</h3>
+    <div class="r"><select id="t-it">${shopOpts}</select>× <input type="number" id="t-n" value="5" min="1"><button data-a="give">放進背包</button></div>
+    <div class="r"><button data-a="allitems">全部消耗品各 +10</button><button data-a="allcos">解鎖全部外觀（稱號／框／特效／小屋）</button></div>
+    <h3>📦 寶箱／⚔️ 裝備</h3>
+    <div class="r">寶箱 +<input type="number" id="t-c" value="10" min="1"> 星數 <select id="t-cs">${starOpts(3).replace('<option value="0">0 ⭐</option>','')}</select><button data-a="chest">發放寶箱</button></div>
+    <div class="r">全部裝備直接設為 <select id="t-q"><option value="normal">普通</option><option value="fine">精良</option><option value="legend">傳說</option><option value="myth" selected>神話</option></select><button data-a="eq">套用</button> <small>（「分身」依 7-3 星數，請先把星數設滿）</small></div>
+    <h3>🎁 測試「獎勵發放」</h3>
+    <ul style="margin:4px 0;padding-left:1.2em">${gifts}</ul>
+    <div class="r"><button data-a="gnow">立刻檢查並領取禮物</button><button data-a="gclr">清除禮物領取紀錄（可重測）</button></div>
+    <small>想測「指定班級／學號」：先在畫面上的「👤 我的資料」填班級或學號並按儲存，再回來看上面的清單。</small>
+    <h3>⚠️ 危險區</h3>
+    <div class="r"><button class="dg" data-a="reset">重置教師版存檔（不影響學生）</button></div></div>`;
+  }
+  const num=id=>Math.max(0,Number(pan.querySelector(id).value)||0);
+  const val=id=>pan.querySelector(id).value;
+  const A={
+    'm+':()=>{P._merit=(P._merit||0)+num('#t-m')},
+    'm=':()=>{P._merit=num('#t-m')},
+    'lv':()=>{P._exp=lvTotal(Math.max(1,num('#t-l')))},
+    'e+':()=>{P._exp=(P._exp||0)+num('#t-e')},
+    'allst':()=>{const n=+val('#t-as');flatAll.forEach(id=>{const o=P[id]||{};P[id]={...o,stars:n,best:Math.max(o.best||0,n*100),ms:n?{easy:Math.min(n,2),real:Math.min(n,4),hard:n}:{}}})},
+    'onest':()=>{const id=val('#t-sid'),n=+val('#t-ss'),o=P[id]||{};P[id]={...o,stars:n,best:Math.max(o.best||0,n*100)}},
+    'give':()=>{giftApply({items:{[val('#t-it')]:num('#t-n')||1}})},
+    'allitems':()=>{GC.shop.filter(x=>!x.cos).forEach(x=>bagAdd(x.id,10))},
+    'allcos':()=>{const it={};GC.shop.filter(x=>x.cos).forEach(x=>it[x.id]=1);giftApply({items:it})},
+    'chest':()=>{giftApply({chests:num('#t-c')||1,chestStars:+val('#t-cs')||MAXS})},
+    'eq':()=>{P._eqQ=P._eqQ||{};ITEMS.forEach((it,i)=>{if(!it.special)P._eqQ[i]=val('#t-q')})},
+    'gnow':()=>{pan.style.display='none';checkGifts();return 'skip'},
+    'gclr':()=>{P._giftsGot={}},
+    'reset':()=>{if(!confirm('確定清除教師版的所有存檔？'))return 'skip';P={};}
+  };
+  pan.onclick=e=>{
+    if(e.target.id==='t-x'||e.target===pan){pan.style.display='none';return}
+    const a=e.target.dataset.a;if(!a||!A[a])return;
+    const r=A[a]();if(r==='skip')return;
+    save();if(a==='reset'){location.reload();return}
+    render();draw();toast('✅ 已套用');
+  };
+  btn.onclick=()=>{if(!P._hero){toast('請先建立勇者角色，再開啟教師工具');return}draw();pan.style.display='block'};
+})();
+
+</script>
+</body>
+</html>

@@ -32,6 +32,32 @@ td input[type=text]{min-width:130px}td input[type=number]{width:90px}
 .msg{margin-left:8px;color:var(--jade)}
 .hide{display:none!important}
 small{opacity:.75}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}.tabs button.on{background:var(--bronze);color:#2a1d05;font-weight:700}
+.pv{display:inline-block;min-width:44px;text-align:center;font-size:1.6rem;line-height:1.2}
+.sw{display:inline-block;width:38px;height:38px;border-radius:50%;border:3px solid #fff3}
+.rm{display:inline-block;width:70px;height:44px;border-radius:6px;border:1px solid #fff4;overflow:hidden;position:relative}
+.rm i{position:absolute;left:0;right:0}
+td.na{opacity:.25;text-align:center}
+.cc{display:flex;gap:4px;align-items:center}.cc input[type=color]{width:36px;height:32px;padding:0;border:2px solid var(--line);border-radius:6px;background:none}
+input[type=checkbox]{width:22px;height:22px}
+.th{display:flex;flex-direction:column;gap:6px;align-items:center;min-width:92px}
+.th .fg{display:flex;gap:6px;align-items:flex-start}.th figure{margin:0;text-align:center;font-size:.72rem}
+.th figure{width:var(--w);max-width:var(--w)}.th figcaption,.th figure>div:last-child{word-break:break-all;line-height:1.25}
+.th .bx{overflow:hidden;border-radius:6px}
+.th img{display:block;max-width:100%;background:repeating-conic-gradient(#2a3060 0 25%,#1a1f3d 0 50%) 0 0/12px 12px;border:1px solid #fff4;border-radius:6px;object-fit:contain}
+.th .ok{color:#7fe3b0}.th .no{color:#ff9a8a}
+.th .miss{display:flex;align-items:center;justify-content:center;border:1px dashed #ff9a8a;border-radius:6px;font-size:1.6rem}
+.tip{font-size:.85rem;opacity:.8;margin:4px 0}
+.gc{border:2px solid var(--line);border-radius:12px;padding:8px 12px;margin:10px 0;background:#1a1f3d}
+.gc.off{opacity:.55}
+.gc h4{margin:0 0 6px;color:var(--jade)}
+.gc .row input[type=text],.gc .row select,.gc .row textarea{background:var(--ink);color:var(--txt);border:2px solid var(--line);border-radius:8px;padding:5px 8px;font:inherit}
+.gc .row input[type=text]{width:auto;min-width:200px;flex:1}
+.gc .row input[type=number]{width:90px}
+.gc .row input[type=date]{background:var(--ink);color:var(--txt);border:2px solid var(--line);border-radius:8px;padding:4px 8px;font:inherit}
+.gc textarea{flex:1;min-width:240px;min-height:44px}
+.gc .lbl{min-width:84px;color:var(--bronze)}
+.gc .sum{font-size:.85rem;opacity:.85;margin-top:6px}
 </style>
 </head>
 <body>
@@ -59,7 +85,7 @@ small{opacity:.75}
   </div>
   <div id="root"></div>
 </main>
-<script src="game-config.js?v=20261017"></script>
+<script src="game-config.js?v=20261018g"></script>
 <script>
 const LABELS=window.GAME_CONFIG_LABELS||{};
 let cfg=JSON.parse(JSON.stringify(window.GAME_CONFIG)),orig=JSON.parse(JSON.stringify(window.GAME_CONFIG_DEFAULT));
@@ -109,12 +135,165 @@ function build(val,path,parent,title){
     for(const k in val)build(val[k],[...path,k],fs);parent.appendChild(fs);return}
   const row=document.createElement('div');row.className='row';row.dataset.l=lab(ppath);
   row.innerHTML=`<span class="lb">${lab(ppath)}</span>`;row.appendChild(input(path,val,isNum(val)));parent.appendChild(row)}
+
+/* ===== 商店專用編輯區（道具／外觀／特效／小屋）===== */
+const SG=[['道具','🧪',['heal','shield','revive','speed','points','exp','forge','body','equip'],'補血、護盾、經驗書、鍛造石等會被「使用」的東西'],
+ ['外觀','🎭',['title','frame','rename'],'稱號、頭像框、改名卡'],
+ ['特效','✨',['acc','back','feet','orbit'],'夥伴、背後特效（翅膀/光輪）、腳下魔法陣、環繞物'],
+ ['小屋','🏠',['theme','decor'],'小屋主題（牆壁地板顏色）、小屋擺飾（位置與大小）']];
+const CATN={heal:'補血',shield:'護盾',revive:'復活',speed:'加速',points:'戰功券',exp:'經驗書',forge:'鍛造',body:'體質',equip:'裝備',title:'稱號',frame:'頭像框',rename:'改名卡',acc:'夥伴',back:'背後特效（翅膀／光輪）',feet:'腳下魔法陣',orbit:'環繞物',theme:'小屋主題',decor:'小屋擺飾'};
+const CATH={decor:'位置 x：0＝最左、100＝最右；y：離地高度（掛牆的物件 y 約 55～70）；size：大小（約 6～10）。勾「掛在牆上」會畫在牆面。',theme:'壁紙請放在 images/lobby/，檔名要和「圖片檔名」一致；表格裡的縮圖就是遊戲實際會用的圖。',back:'種類 wings＝翅膀、halo＝光輪；顏色 1、2 是漸層的兩端。',orbit:'環繞數量 n：會有幾個小物件繞著勇者轉。',acc:'「夥伴」打勾＝站在勇者旁邊。',frame:'光暈大小越大越亮。',feet:'魔法陣顏色。',title:'稱號文字會顯示在角色名稱前面。'};
+const COMMON=[['name','名稱'],['price','價格（戰功）'],['daily','每日限購（空白＝不限）'],['desc','說明']];
+const SKIP=['slot','emoji','wall','wall2','floor','floor2','rail'];
+let shopTab=0;
+function exKeys(items){const out=[];items.forEach(it=>['battle','fx','cos','passive'].forEach(g=>{const o=it[g];if(o&&typeof o==='object')for(const k in o){if(g==='cos'&&SKIP.includes(k))continue;const p=g+'.'+k;if(!out.includes(p))out.push(p)}}));return out}
+const ZH={'battle.heal':'回血比例（0.3＝30%）','battle.spd':'速度提升比例','battle.shield':'擋下幾次攻擊','fx.exp':'給多少經驗','fx.mboost':'戰功加成幾次通關','fx.forge':'鍛造等級＋','fx.body':'體質＋','fx.reroll':'洗鍊(1=啟用)','fx.rename':'改名(1=啟用)','cos.text':'稱號文字','cos.color':'顏色','cos.glow':'光暈大小','cos.emoji':'圖示(表情符號)','cos.pet':'夥伴（站旁邊）','cos.wall':'牆面上色','cos.wall2':'牆面下色','cos.floor':'地板上色','cos.floor2':'地板下色','cos.rail':'牆腳板色','cos.x':'位置 x（左右）','cos.y':'位置 y（高度）','cos.size':'大小','cos.onWall':'掛在牆上','cos.kind':'種類','cos.c1':'顏色 1','cos.c2':'顏色 2','cos.n':'環繞數量'};
+const HEX=/^#[0-9a-f]{6}$/i;
+function typeOf(items,path){for(const it of items){const v=getAt(it,path.split('.'));if(v!==undefined)return typeof v==='boolean'?'b':typeof v==='number'?'n':(typeof v==='string'&&HEX.test(v))?'c':'t'}return 't'}
+function sCell(it,path,type,wide){
+  const pp=path.split('.'),o=orig.shop&&orig.shop.find(x=>x.id===it.id),ov=o?getAt(o,pp):undefined,cur=getAt(it,pp);
+  const mk=el=>el.classList.toggle('changed',String(ov??'')!==String(el.type==='checkbox'?(el.checked?'true':''):el.value));
+  if(path==='cos.kind'){const sel=document.createElement('select');sel.style.cssText='background:#161a2e;color:#e9e4d4;border:2px solid #3a4270;border-radius:8px;padding:5px';['wings','halo'].forEach(k=>{const op=document.createElement('option');op.value=k;op.textContent=k==='wings'?'wings 翅膀':'halo 光輪';sel.appendChild(op)});sel.value=cur||'wings';sel.onchange=()=>{setAt(it,pp,sel.value);pv()};return sel}
+  if(type==='b'){const c=document.createElement('input');c.type='checkbox';c.checked=cur===true;c.onchange=()=>{setAt(it,pp,c.checked?true:undefined);mk(c)};return c}
+  if(type==='c'){const w=document.createElement('div');w.className='cc';const c=document.createElement('input');c.type='color';c.value=HEX.test(cur||'')?cur:'#ffffff';const t=document.createElement('input');t.type='text';t.value=cur||'';t.style.width='92px';t.style.minWidth='0';
+    const set=v=>{setAt(it,pp,v);t.value=v;if(HEX.test(v))c.value=v;mk(t);pv()};c.oninput=()=>set(c.value);t.onchange=()=>set(t.value);mk(t);w.append(c,t);return w}
+  const e=document.createElement('input');e.type=type==='n'?'number':'text';if(type==='n')e.step='any';e.value=cur==null?'':cur;if(wide)e.style.minWidth='220px';if(path==='icon'||path==='cos.emoji')e.style.cssText='width:70px;min-width:0;font-size:1.3rem;text-align:center';
+  e.onchange=()=>{if(path==='file')e.value=e.value.trim().replace(/\.(png|jpe?g|webp|gif)$/i,'');const v=e.value;if(v==='')setAt(it,pp,undefined);else if(type==='n'){const n=Number(v);if(isNaN(n)){e.value=cur;return}setAt(it,pp,n)}else setAt(it,pp,v);mk(e);pv()};mk(e);return e}
+let pv=()=>{};
+const TS=Date.now();
+function thumbs(it){
+  const f=encodeURI(String(it.file||it.id).trim().replace(/\.(png|jpe?g|webp|gif)$/i,'')),c=it.cos||{},sl=c.slot,wide=sl==='theme',L=['theme','decor','acc','back','feet','orbit'].includes(sl);
+  const d=document.createElement('div');d.className='th';
+  const fg=document.createElement('div');fg.className='fg';
+  const one=(label,url,w,h,fb,cover)=>{const fi=document.createElement('figure');fi.style.setProperty('--w',Math.max(w,80)+'px');const box=document.createElement('div');box.className='bx';box.style.margin='0 auto';box.style.cssText=`width:${w}px;height:${h}px`;const cap=document.createElement('div');cap.textContent=label;
+    const im=new Image();im.width=w;im.height=h;im.alt='';im.style.cssText=`width:${w}px;height:${h}px;object-fit:${wide?'cover':'contain'}`;
+    const EX=['png','jpg','jpeg','webp'];let ei=0;
+    im.onload=()=>{cap.innerHTML=label+' <span class="ok">✔ 已讀到</span><br><small>'+url.split('/').pop()+'.'+EX[ei]+'</small>'};
+    im.onerror=()=>{if(ei<EX.length-1){ei++;im.src=url+'.'+EX[ei]+'?t='+TS;return}const m=document.createElement('div');m.className='miss';m.style.cssText=`width:${w}px;height:${h}px;`+(fb.style||'');m.innerHTML=fb.html;im.replaceWith(m);cap.innerHTML=label+' <span class="no">✘ 找不到</span>';cap.title=url+'.png'};
+    im.src=url+'.png?t='+TS;box.appendChild(im);fi.append(box,cap);return fi};
+  const fbIcon={html:it.icon||'❔'};
+  if(wide){fg.appendChild(one('大廳壁紙','images/lobby/'+f,128,72,{html:'🖼️'}));}
+  if(!wide||true)fg.appendChild(one('商店圖','images/shop/'+f,wide?64:64,wide?36:64,fbIcon));
+  if(L&&!wide){const bw=sl==='back'?96:sl==='feet'?96:64,bh=sl==='back'?48:sl==='feet'?30:64;fg.appendChild(one('大廳圖','images/lobby/'+f,bw,bh,sl==='feet'?{html:'✘'}:sl==='back'?{html:'✘'}:{html:c.emoji||it.icon}));}
+  d.appendChild(fg);
+  return d}
+function preview(it){return thumbs(it)}
+function previewOld(it){const c=it.cos||{},d=document.createElement('div');
+  if(c.slot==='theme'){d.innerHTML=`<span class="rm"><i style="top:0;height:58%;background:linear-gradient(${c.wall},${c.wall2})"></i><i style="top:58%;height:6%;background:${c.rail}"></i><i style="top:64%;bottom:0;background:linear-gradient(${c.floor},${c.floor2})"></i></span>`}
+  else if(c.slot==='frame'||c.slot==='feet'){d.innerHTML=`<span class="sw" style="background:${c.color}33;box-shadow:0 0 ${c.glow||10}px ${c.color};border-color:${c.color}"></span>`}
+  else if(c.slot==='back'){d.innerHTML=`<span class="sw" style="border-radius:8px;width:60px;background:linear-gradient(135deg,${c.c1},${c.c2})"></span>`}
+  else d.innerHTML=`<span class="pv">${c.emoji||it.icon||''}</span>`;return d}
+function buildShop(d){
+  const shop=cfg.shop;
+  d.insertAdjacentHTML('beforeend','<div class="tip">這裡分成四個分頁：<b>道具／外觀／特效／小屋</b>。改過的欄位會變黃色。新增商品請按每張表下方的「＋新增」，再改名稱與價格；圖片檔名請看「商店圖片清單.md」。<br>👉 <b>預覽欄顯示的是真正的圖片縮圖</b>：寫好「圖片檔名」後會自動重新讀取；顯示 ✔ 代表讀到了，✘ 代表 images 資料夾裡找不到同名 PNG（大廳壁紙放 images/lobby/、商店圖放 images/shop/）。有壁紙圖時，下面的牆壁／地板顏色只是備用。圖片檔名<b>不要寫 .png</b>（寫了也會自動刪掉）；支援 png、jpg、jpeg、webp。</div>');
+  const tabs=document.createElement('div');tabs.className='tabs';d.appendChild(tabs);
+  const body=document.createElement('div');d.appendChild(body);
+  function draw(){
+    tabs.innerHTML='';SG.forEach((g,i)=>{const n=shop.filter(x=>g[2].includes(x.cat)).length;const b=document.createElement('button');b.textContent=`${g[1]} ${g[0]}（${n}）`;if(i===shopTab)b.className='on';b.onclick=()=>{shopTab=i;draw()};tabs.appendChild(b)});
+    body.innerHTML='';const g=SG[shopTab];body.insertAdjacentHTML('beforeend',`<div class="tip">${g[3]}</div>`);
+    g[2].forEach(cat=>{const items=shop.filter(x=>x.cat===cat);if(!items.length&&!['title','frame','acc','back','feet','orbit','theme','decor'].includes(cat))return;
+      const fs=document.createElement('fieldset');fs.dataset.l=CATN[cat];fs.innerHTML=`<legend>${CATN[cat]}（${items.length}）</legend>`+(CATH[cat]?`<div class="tip">${CATH[cat]}</div>`:'');
+      const ex=exKeys(items);const wrap=document.createElement('div');wrap.className='tbl';const t=document.createElement('table');
+      t.innerHTML='<thead><tr><th>圖示／預覽<br><small>（實際圖片縮圖）</small></th><th>代號</th>'+COMMON.map(c=>`<th>${c[1]}</th>`).join('')+ex.map(p=>`<th>${ZH[p]||p}</th>`).join('')+'<th>圖片檔名（不含.png）</th><th></th></tr></thead>';
+      const tb=document.createElement('tbody');
+      items.forEach(it=>{const tr=document.createElement('tr');tr.dataset.l=it.id+' '+it.name+' '+CATN[cat];
+        const add=(el,cls)=>{const td=document.createElement('td');if(cls)td.className=cls;if(el)td.appendChild(el);tr.appendChild(td);return td};
+        const pt=add(preview(it));
+        add(Object.assign(document.createElement('small'),{textContent:it.id}));
+        COMMON.forEach(c=>add(sCell(it,c[0],c[0]==='price'||c[0]==='daily'?'n':'t',c[0]==='desc'||c[0]==='name')));
+        ex.forEach(p=>{const has=getAt(it,p.split('.'))!==undefined;const ty=typeOf(items,p);if(has||ty==='b')add(sCell(it,p,ty),ty==='b'?'':'');else add(null,'na')});
+        add(sCell(it,'file','t'));
+        const bt=document.createElement('button');bt.textContent='🗑';bt.title='刪除';bt.onclick=()=>{if(confirm('確定刪除「'+it.name+'」？（已買過的同學背包裡會看不到）')){shop.splice(shop.indexOf(it),1);draw()}};add(bt);
+        const refresh=()=>{const n=preview(it);pt.replaceChildren(n)};tr.addEventListener('change',refresh);tr.addEventListener('input',refresh);
+        tb.appendChild(tr)});
+      t.appendChild(tb);wrap.appendChild(t);fs.appendChild(wrap);
+      const nb=document.createElement('button');nb.textContent='＋ 新增一個「'+CATN[cat]+'」（複製最後一個）';nb.style.marginTop='8px';
+      nb.onclick=()=>{const last=items[items.length-1]||shop.find(x=>x.cat===cat);if(!last){say('這個分類還沒有範本，請先匯入含有此類商品的設定檔');return}
+        const nn=JSON.parse(JSON.stringify(last));const m=/^(.*?)(\d+)$/.exec(last.id);const pre=m?m[1]:last.id+'_';let k=m?+m[2]+1:2;while(shop.some(x=>x.id===pre+k))k++;nn.id=pre+k;nn.name='新商品'+k;nn.file=((last.file||last.id).split('-')[0])+'-new-'+k;shop.splice(shop.indexOf(last)+1,0,nn);draw();say('已新增 '+nn.id+'，請修改名稱、價格與檔名')};
+      fs.appendChild(nb);body.appendChild(fs)});
+  }
+  draw();pv=()=>{};
+}
+
+/* ===== 🎁 獎勵發放編輯區 ===== */
+const gEsc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function gNewId(){const d=new Date(),p=n=>String(n).padStart(2,'0');return 'gift-'+d.getFullYear()+p(d.getMonth()+1)+p(d.getDate())+'-'+Math.random().toString(36).slice(2,6)}
+function gSummary(g){
+  const t=g.to||{mode:'all'},who=t.mode==='cls'?'班級 '+((t.list||[]).join('、')||'（未填）'):t.mode==='sid'?'學號 '+((t.list||[]).join('、')||'（未填）'):'全校';
+  const r=[];if(g.merit)r.push('🏅 戰功 '+g.merit);if(g.exp)r.push('📘 經驗 '+g.exp);if(g.chests)r.push('📦 寶箱 '+g.chests);
+  Object.entries(g.items||{}).forEach(([id,n])=>{const x=(cfg.shop||[]).find(y=>y.id===id);r.push((x?x.icon+' '+x.name:id)+' ×'+n)});
+  return '👥 '+who+'　🎁 '+(r.join('、')||'（還沒設定獎勵）');
+}
+function buildGifts(d){
+  if(!Array.isArray(cfg.gifts))cfg.gifts=[];
+  const box=document.createElement('div');
+  box.innerHTML=`<div class="note">
+   <b>怎麼發獎勵？</b><br>
+   ① 按「＋ 新增禮物」，選擇發給誰（全校／某些班級／某些學號），再填戰功、經驗值、寶箱、道具。<br>
+   ② 按最上面的「⬇️ 下載 game-config.js」，覆蓋到遊戲資料夾。<br>
+   ③ 學生<b>下次打開遊戲</b>（或在「我的資料」按儲存）就會跳出「老師送來禮物了」並自動入袋。<br>
+   <small>・每份禮物有一個「代號」，同一台裝置領過就不會重領；想<b>再發一次</b>請新增一份（代號不同）。<br>
+   ・「指定班級／學號」是比對學生在遊戲「我的資料」填的班級、學號，要寫得一模一樣（例：701）。多個用逗號隔開。<br>
+   ・學生要先建立角色才會收到；不想再發就取消「啟用」或刪除。想先試用，可用教師版 world-map-teacher.html 檢查。</small></div>`;
+  const list=document.createElement('div');box.appendChild(list);
+  const shopOpts=(cfg.shop||[]).map(x=>`<option value="${gEsc(x.id)}">${gEsc(x.icon||'')} ${gEsc(x.name)}（${gEsc(CATN[x.cat]||x.cat)}）</option>`).join('');
+  cfg.gifts.forEach((g,gi)=>{
+    g.to=g.to||{mode:'all',list:[]};g.items=g.items||{};
+    const c=document.createElement('div');c.className='gc'+(g.on===false?' off':'');c.dataset.l=(g.title||'')+(g.id||'');
+    const num=(k,w)=>`<input type="number" min="0" data-k="${k}" value="${g[k]||''}" placeholder="0">`;
+    c.innerHTML=`<h4>🎁 禮物 ${gi+1}</h4>
+     <div class="row"><span class="lbl">啟用</span><label><input type="checkbox" data-k="on" ${g.on===false?'':'checked'}> 打勾＝學生會收到</label></div>
+     <div class="row"><span class="lbl">標題</span><input type="text" data-k="title" value="${gEsc(g.title)}" placeholder="例：段考加油禮包"></div>
+     <div class="row"><span class="lbl">留言</span><textarea data-k="msg" placeholder="給學生的一句話（可空白）">${gEsc(g.msg)}</textarea></div>
+     <div class="row"><span class="lbl">發給誰</span>
+       <select data-k="mode"><option value="all">全校</option><option value="cls">指定班級</option><option value="sid">指定學號</option></select>
+       <input type="text" data-k="list" value="${gEsc((g.to.list||[]).join(','))}" placeholder="班級或學號，用逗號隔開（例：701,702）"></div>
+     <div class="row"><span class="lbl">獎勵</span>🏅 戰功 ${num('merit')} 📘 經驗值 ${num('exp')} 📦 寶箱 ${num('chests')} 寶箱星數 <input type="number" min="1" max="5" data-k="chestStars" value="${g.chestStars||3}" title="寶箱星數越高，越容易開出高品質碎片"></div>
+     <div class="row"><span class="lbl">道具</span><div class="its" style="flex:1"></div></div>
+     <div class="row"><span class="lbl">期間</span>從 <input type="date" data-k="from" value="${gEsc(g.from)}"> 到 <input type="date" data-k="until" value="${gEsc(g.until)}"> <small>（空白＝不限；泰國時間）</small></div>
+     <div class="row"><span class="lbl">代號</span><input type="text" data-k="id" value="${gEsc(g.id)}"> <small>領取紀錄就是靠它，請勿重複</small></div>
+     <div class="row"><button data-act="dup">📋 複製成新禮物</button><button data-act="del">🗑 刪除這份禮物</button></div>
+     <div class="sum"></div>`;
+    c.querySelector('[data-k=mode]').value=g.to.mode||'all';
+    const upd=()=>{c.querySelector('.sum').textContent=gSummary(g);c.classList.toggle('off',g.on===false);c.querySelector('[data-k=list]').disabled=(g.to.mode||'all')==='all'};
+    const its=c.querySelector('.its');
+    const drawIts=()=>{its.innerHTML='';
+      Object.entries(g.items).forEach(([id,n])=>{
+        const r=document.createElement('div');r.className='arr';r.style.margin='3px 0';
+        r.innerHTML=`<select>${shopOpts}</select> × <input type="number" min="1" value="${n}"> <button title="移除">✕</button>`;
+        const sel=r.querySelector('select'),nn=r.querySelector('input');sel.value=id;
+        sel.onchange=()=>{const v=g.items[id];delete g.items[id];g.items[sel.value]=(g.items[sel.value]||0)+v;drawIts();upd()};
+        nn.oninput=()=>{g.items[id]=Math.max(1,nn.value|0);upd()};
+        r.querySelector('button').onclick=()=>{delete g.items[id];drawIts();upd()};
+        its.appendChild(r)});
+      const add=document.createElement('button');add.textContent='＋ 加一種道具／外觀';
+      add.onclick=()=>{const first=(cfg.shop||[]).find(x=>!g.items[x.id]);if(!first)return;g.items[first.id]=1;drawIts();upd()};its.appendChild(add)};
+    drawIts();
+    c.addEventListener('input',e=>{const k=e.target.dataset.k;if(!k)return;const v=e.target;
+      if(k==='on')g.on=v.checked;
+      else if(k==='mode')g.to.mode=v.value;
+      else if(k==='list')g.to.list=v.value.split(/[,，、\s]+/).map(s=>s.trim()).filter(Boolean);
+      else if(['merit','exp','chests','chestStars'].includes(k)){const n=Math.max(0,v.value|0);if(n)g[k]=n;else delete g[k]}
+      else if(k==='from'||k==='until'){if(v.value)g[k]=v.value;else delete g[k]}
+      else g[k]=v.value;
+      upd()});
+    c.addEventListener('click',e=>{const a=e.target.dataset.act;if(!a)return;
+      if(a==='del'){if(confirm('確定刪除這份禮物？（已經領過的學生不受影響）')){cfg.gifts.splice(gi,1);render()}}
+      if(a==='dup'){const n=JSON.parse(JSON.stringify(g));n.id=gNewId();cfg.gifts.splice(gi+1,0,n);render()}});
+    upd();list.appendChild(c)});
+  const add=document.createElement('button');add.className='go';add.textContent='＋ 新增禮物';
+  add.onclick=()=>{cfg.gifts.push({id:gNewId(),on:true,title:'老師的禮物',msg:'',to:{mode:'all',list:[]},merit:100,items:{}});render();setTimeout(()=>{const o=document.querySelector('details[data-g]');if(o)o.open=true},0)};
+  box.appendChild(add);d.appendChild(box);
+}
 function render(){
   const root=$('#root');root.innerHTML='';
-  for(const k in cfg){
+  if(!Array.isArray(cfg.gifts))cfg.gifts=[];
+  {const d=document.createElement('details');d.open=true;d.dataset.g='1';d.dataset.l=lab('gifts');d.innerHTML=`<summary>${lab('gifts')}　<small>（目前 ${cfg.gifts.length} 份）</small></summary>`;buildGifts(d);root.appendChild(d)}
+  for(const k in cfg){if(k==='gifts')continue;
     const d=document.createElement('details');d.open=false;d.dataset.l=lab(k);
     d.innerHTML=`<summary>${lab(k)}</summary>`;
     const v=cfg[k];
+    if(k==='shop'){buildShop(d)}else
     if(v&&typeof v==='object'&&!Array.isArray(v)){for(const kk in v)build(v[kk],[k,kk],d)}else build(v,[k],d);
     root.appendChild(d)}
   filter()}
