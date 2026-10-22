@@ -37,6 +37,84 @@ function saveWrongHistory() {
 
 let wrongHistory = loadWrongHistory(); // { "天": { pinyin: "tiān", count: 3 }, ... }
 
+/* ===== 休息小遊戲（relax-break）=====
+   觸發：每答 10 題，或連續答對 5 題（先到先觸發）→ 在「關卡／波次之間」隨機出一款小遊戲，一局決勝負，贏了得寶箱／關卡獎勵。
+   年級：用「練習範圍的最高冊數」換算，2 冊 1 個年級（1-2 冊＝1 年級 … 11-12 冊＝6 年級）。
+   解鎖：「同一款」小遊戲累積贏電腦 3 次，這一款就能在首頁「🎮 遊戲區」直接玩（不看冊數）；遊戲區每一款每天各玩 2 回。
+   電腦強度：依該款的勝場數與勝率慢慢調高，一律從最簡單開始。進度存在這台電腦的瀏覽器裡。 */
+const RB_ALL={whack:null,downstairs:null,memory:null,catmouse:null,reversi:null,snake:null,upstairs:null,gomoku9:null,checkers:null,
+  banqi:null,hexxagon:['small37','random37','classic','square7'],pickupred:null,oldmaid:null,sevens:null,xiangqi:null,minesweeper:null,go9:null};
+const RB_PICK=(...ids)=>Object.fromEntries(ids.map(k=>[k,RB_ALL[k]]));
+const RB_GRADE_GAMES={
+ 1:RB_PICK('whack','downstairs','memory','catmouse'),
+ 2:RB_PICK('reversi','snake','upstairs','memory'),
+ 3:RB_PICK('gomoku9','reversi','checkers','memory'),
+ 4:RB_PICK('gomoku9','banqi','hexxagon','pickupred','oldmaid','sevens'),
+ 5:RB_PICK('gomoku9','xiangqi','banqi','pickupred','sevens','minesweeper'),
+ 6:RB_PICK(...Object.keys(RB_ALL))};   // 6 年級：各年級小遊戲＋圍棋
+const rbGradeOf=vol=>Math.max(1,Math.min(6,Math.ceil((+vol||1)/2)));
+
+// ── 一輪不重複／補課預習 ──
+let zUsed = new Set(), zRound = 1, zGrowSet = new Set(), zCut = 0;
+function zResetRound() { zUsed = new Set(); zRound = 1; zGrowSet = new Set(); zCut = 0; }
+function zBaseHit(b, l) {
+  if (rangeMode === 'combined') return combinedBooks.has(b.book);
+  return b.book === selectedBook && (selectedLessons.size === 0 || selectedLessons.has(l.lesson));
+}
+function zScopeLessons() {   // 目前練習範圍（含補課／預習加進來的課）→ [[冊序,課序],...]
+  const out = [];
+  if (typeof CHAR_BOOKS === 'undefined') return out;
+  CHAR_BOOKS.forEach((b, bi) => b.lessons.forEach((l, li) => { if (zBaseHit(b, l) || zGrowSet.has(bi + ':' + li)) out.push([bi, li]); }));
+  return out;
+}
+function zGrowScope() {      // 先往前補課（直到第1冊第1課），補完再往後預習（直到最後一課）
+  const all = [];
+  CHAR_BOOKS.forEach((b, bi) => b.lessons.forEach((l, li) => all.push([bi, li])));
+  const ids = [];
+  all.forEach((x, i) => { if (zBaseHit(CHAR_BOOKS[x[0]], CHAR_BOOKS[x[0]].lessons[x[1]]) || zGrowSet.has(x[0] + ':' + x[1])) ids.push(i); });
+  if (!ids.length) return '';
+  const lo = Math.min(...ids), hi = Math.max(...ids);
+  let a, k;
+  if (lo > 0) { a = all[lo - 1]; k = '📚 補課：加入'; }
+  else if (hi < all.length - 1) { a = all[hi + 1]; k = '🔭 預習：加入'; }
+  else return '🏁 已涵蓋全部課文';
+  zGrowSet.add(a[0] + ':' + a[1]);
+  const bk = CHAR_BOOKS[a[0]];
+  return k + bk.label + ' 第' + (+bk.lessons[a[1]].lesson) + '課';
+}
+function zToast(t) {
+  const d = document.createElement('div'); d.textContent = t;
+  d.style.cssText = 'position:fixed;left:50%;top:84px;transform:translateX(-50%);background:#2b2150ee;color:#ffd84d;border:2px solid #7a64e8;border-radius:12px;padding:8px 16px;z-index:1000;font:700 16px "Noto Sans TC",sans-serif;pointer-events:none;max-width:92vw;text-align:center';
+  document.body.appendChild(d); setTimeout(() => d.remove(), 4200);
+}
+// ── 小遊戲 ──
+let zPrev = null;
+RelaxBreak.init({every:10,streak:5,level:'easy',unlockWins:3,dailyLimit:2,storageKey:'hy_relax_v1',deferred:true,
+  rewardLabels:{chest:'寶箱（生命 +1）',stage:'關卡獎勵（下一波敵艦少 4 艘）'},
+  rewards:{
+    chest:()=>{ if (lives < maxLives) { lives++; return '❤️ 生命 +1'; } const b = 300 * wave; score += b; return '🏅 生命已滿，改發分數 +' + b; },
+    stage:()=>{ zCut = 4; return '🛡️ 下一波敵艦少 4 艘'; }},
+  onStart:()=>{ zPrev = { st: state, pn: document.getElementById('answerPanel').style.display }; state = STATE.MINI; document.getElementById('answerPanel').style.display = 'none'; },
+  onEnd:info=>{ if (zPrev) { state = zPrev.st; document.getElementById('answerPanel').style.display = zPrev.pn; zPrev = null; }
+    updateHUD(); const c = zCont; zCont = null; if (c && !info.zone) c(); }});
+let zCont = null;
+function rbAnsZ(ok) { try { RelaxBreak.answered(!!ok); } catch (e) {} }
+function zVol() {
+  let m = 0;
+  if (rangeMode === 'wrong') CHAR_BOOKS.forEach((b, bi) => { if (b.lessons.some(l => l.chars.concat(l.words || []).some(p => wrongHistory[p[0]]))) m = bi; });
+  else zScopeLessons().forEach(x => { m = Math.max(m, x[0]); });
+  return m + 1;
+}
+function rbHoldZ(cont) {   // 每一波之間才彈出小遊戲，不會打斷作答
+  if (!window.RelaxBreak || RelaxBreak.active) { cont(); return; }
+  RelaxBreak.configure({ games: RB_GRADE_GAMES[rbGradeOf(zVol())] });
+  zCont = cont;
+  if (RelaxBreak.poll()) return;
+  zCont = null; cont();
+}
+document.getElementById('zoneBtn').addEventListener('click', () => { RelaxBreak.configure({ games: RB_GRADE_GAMES[6] }); RelaxBreak.openZone(); });
+
+
 // 答錯（含被敵艦撞到）時呼叫：累計這個字/詞的錯誤次數
 function recordWrong(item) {
   const key = item.hanzi;
@@ -83,7 +161,7 @@ function getCombinedLessonList() {
 // 同時混合單字（生字）與多字詞語（詞語），讓練習內容不限於單一國字
 function getCharPool() {
   if (rangeMode === 'wrong') return getWrongPool();
-  const lessons = rangeMode === 'combined' ? getCombinedLessonList() : getSelectedLessonList();
+  const lessons = zScopeLessons().map(([bi, li]) => CHAR_BOOKS[bi].lessons[li]);
   const pool = [];
   for (const l of lessons) {
     for (const pair of l.chars) {
@@ -104,7 +182,18 @@ function randomInt(min, max) {
 function pickChineseTarget() {
   const pool = getCharPool();
   if (pool.length === 0) return null;
-  return pool[Math.floor(Math.random() * pool.length)];
+  if (rangeMode === 'wrong') return pool[Math.floor(Math.random() * pool.length)];   // 常錯題：保持加權隨機
+  // 一輪內不重複：題庫全部出過一遍才算一輪；答完一輪自動補課（往前）／預習（往後）加一課
+  let fresh = pool.filter(x => !zUsed.has(x.hanzi));
+  if (fresh.length === 0) {
+    zUsed = new Set(); zRound++;
+    const note = zGrowScope();
+    zToast('🔄 題庫答完一輪（第 ' + zRound + ' 輪）｜' + note);
+    fresh = getCharPool();
+  }
+  const t = fresh[Math.floor(Math.random() * fresh.length)];
+  zUsed.add(t.hanzi);
+  return t;
 }
 
 // 產生選項（1 個正確答案 + 其餘干擾選項）
@@ -180,6 +269,7 @@ const STATE = {
   CATEGORIES: 'categories',
   PLAYING: 'playing',
   PAUSED: 'paused',
+  MINI: 'mini',
   GAMEOVER: 'gameover'
 };
 
@@ -631,7 +721,8 @@ function waveEnemyCount_(w) {
 }
 
 function startWave() {
-  waveEnemyCount = waveEnemyCount_(wave);
+  waveEnemyCount = Math.max(3, waveEnemyCount_(wave) - zCut);
+  zCut = 0;
   spawnedThisWave = 0;
   waveTimer = 0;
   waveDone = false;
@@ -718,6 +809,7 @@ function handleChineseAnswer(enemy, choice, btnEl) {
   if (state !== STATE.PLAYING) return;
   if (lockedTarget !== enemy || !enemies.includes(enemy)) return; // 已消滅的敵艦，忽略舊的作答
   totalAnswers++;
+  rbAnsZ(choice === (mode === 'expert' ? enemy.pinyin : enemy.hanzi));
 
   const correctVal = mode === 'expert' ? enemy.pinyin : enemy.hanzi;
   if (choice === correctVal) {
@@ -791,6 +883,7 @@ function drawFloaters() {
 
 // ── Enemy reaches bottom ───────────────────────
 function enemyReached(en) {
+  rbAnsZ(false);
   lives--;
   ship.shieldFlash = 1;
   spawnExplosion(canvas.width / 2, ship.cy, '#ff0055');
@@ -846,6 +939,8 @@ function startGame() {
   score = 0; wave = 1; lives = maxLives; killCount = 0;
   totalAnswers = 0; correctAnswers = 0;
   wrongAnswers = [];
+  zResetRound();
+  if (window.RelaxBreak) RelaxBreak.reset();
   gameStartTime = Date.now();
   gameEndTime = 0;
   lockedTarget = null;
@@ -1208,7 +1303,7 @@ function checkWaveComplete() {
     wave++;
     updateHUD();
     setTimeout(() => {
-      if (state === STATE.PLAYING) startWave();
+      if (state === STATE.PLAYING) rbHoldZ(() => startWave());
     }, 1500);
   }
 }
@@ -1285,7 +1380,7 @@ function gameLoop(timestamp) {
     drawShip();
     updateParticles(dt);
     drawFloaters();
-  } else if (state === STATE.PAUSED || state === STATE.GAMEOVER) {
+  } else if (state === STATE.PAUSED || state === STATE.GAMEOVER || state === STATE.MINI) {
     for (const en of enemies) en.draw();
     drawShip();
   } else {
