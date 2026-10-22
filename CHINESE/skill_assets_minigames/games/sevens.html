@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>排七接龍</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"Microsoft JhengHei","PingFang TC",sans-serif;background:#0b5d3b;background:radial-gradient(circle at 50% 30%,#117a4d,#073d27);color:#fff;min-height:100vh;user-select:none}
+#app{max-width:1000px;margin:0 auto;padding:10px}
+h1{text-align:center;font-size:24px;margin:6px 0}
+.panel{background:rgba(0,0,0,.28);border-radius:12px;padding:10px;margin-bottom:8px}
+#top{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.pl{flex:1;min-width:120px;max-width:230px;text-align:center;padding:8px;border-radius:10px;background:rgba(0,0,0,.3);border:3px solid transparent}
+.pl.turn{border-color:#ffd54a;background:rgba(255,213,74,.18)}
+.pl.out{opacity:.55}
+.pl .nm{font-weight:bold}
+.pl .st{font-size:13px;opacity:.9;margin-top:3px}
+#board{display:flex;flex-direction:column;gap:4px}
+.row{display:grid;grid-template-columns:22px repeat(13,1fr);gap:3px;align-items:center}
+.sl{font-size:18px;text-align:center}
+.cell{aspect-ratio:2/2.7;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:clamp(9px,2vw,15px);border:1px dashed rgba(255,255,255,.25);color:rgba(255,255,255,.3)}
+.cell.on{background:#fff;border:1px solid #888;font-weight:bold;flex-direction:column;line-height:1.05}
+.red{color:#d62828}.blk{color:#111}
+#msg{text-align:center;min-height:26px;font-size:17px;font-weight:bold;color:#ffe9a0;margin:6px 0}
+#hand{display:flex;flex-wrap:wrap;justify-content:center;gap:5px;min-height:90px}
+.card{width:clamp(42px,9vw,62px);aspect-ratio:2/2.9;background:#fff;border-radius:7px;border:2px solid #999;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:bold;font-size:clamp(15px,3.4vw,22px);line-height:1.1;cursor:pointer;transition:transform .12s}
+.card.ok{border-color:#ffd54a;box-shadow:0 0 10px #ffd54a;transform:translateY(-8px)}
+.card.no{opacity:.55}
+.card.cv{border-color:#e85d5d;opacity:1}
+.card.pub{outline:3px solid #3da5ff}
+.btns{text-align:center;margin-top:8px}
+button{font-size:16px;padding:8px 16px;border:0;border-radius:8px;background:#ffd54a;color:#333;font-weight:bold;cursor:pointer;margin:3px}
+button.g{background:#ddd}
+.mask{position:fixed;inset:0;background:rgba(0,0,0,.75);display:flex;align-items:center;justify-content:center;z-index:9;padding:12px}
+.box{background:#fffdf3;color:#222;border-radius:14px;padding:18px;max-width:560px;width:100%;max-height:90vh;overflow:auto;line-height:1.7}
+.box h2{margin-bottom:8px}
+.box li{margin-left:20px}
+.res{margin:8px 0;padding:8px;border-radius:8px;background:#eee}
+.res.win{background:#fff0b3;border:2px solid #e0a800}
+.mini{display:inline-block;background:#fff;border:1px solid #999;border-radius:4px;padding:0 4px;margin:1px;font-size:14px;font-weight:bold}
+.hidden{display:none}
+.rb button[onclick="showStart()"]{display:none}
+</style>
+</head>
+<body>
+<div id="app">
+<h1>🃏 排七接龍</h1>
+<div id="top" class="panel"></div>
+<div class="panel"><div id="board"></div></div>
+<div id="bottom" class="panel hidden" style="text-align:center;padding:6px"></div>
+<div id="msg"></div>
+<div class="panel"><div id="hand"></div>
+<div class="btns"><button id="coverBtn" style="display:none;background:#ff9d9d" onclick="coverBtn()">🙈 沒牌可出（蓋牌）</button></div>
+<div class="btns"><button id="hintBtn" class="g" onclick="toggleHint()">💡 提示：開</button><button class="g" onclick="showRules()">📖 規則</button><button class="g" onclick="showStart()">🔄 重新開始</button></div></div>
+</div>
+<div id="modal"></div>
+
+<script>
+/* ===== 休息小遊戲「嵌入模式」（relax-break 協定 v1）=====
+   由 relax-break.js 以 iframe 載入，設定放在 iframe 的 name（RB:xxx）或網址 ?embed=1&v=&lv=&err=&id=。
+   embed=1：略過選單、直接開一局、結束時 postMessage({source:'relax',type:'result',result:'win|lose|draw'})
+   v=玩法代號  lv=easy|normal|hard  err=0~1（電腦隨機亂走的機率，連續平手時由外面調高）   */
+var RB=(function(){var q;try{if(location.search.indexOf('embed=1')>=0)q=new URLSearchParams(location.search);else if(String(window.name).indexOf('RB:')===0)q=new URLSearchParams(String(window.name).slice(3));}catch(e){}
+if(!q)q=new URLSearchParams('');var on=q.get('embed')==='1';if(on)document.documentElement.classList.add('rb');var sent=false;
+return{embed:on,v:q.get('v')||'',lv:q.get('lv')||'normal',err:Math.max(0,Math.min(1,parseFloat(q.get('err'))||0)),id:q.get('id')||'',
+done:function(r,info){if(!on||sent)return;sent=true;try{parent.postMessage({source:'relax',type:'result',id:q.get('id')||'',result:r,info:info||''},'*')}catch(e){}}};})();
+
+const SUITS=['♠','♥','♦','♣'],NAMES=['','A','2','3','4','5','6','7','8','9','10','J','Q','K'];
+const isRed=s=>s===1||s===2;
+let P=[],board,cur,started,outCount,over,busy,N=4,myName='我',hint=true,coverMode=false,bottomCard=null,bottomOwner=0,humanReady=false;
+function toggleHint(){hint=!hint;coverMode=false;document.getElementById('hintBtn').textContent=hint?'💡 提示：開':'💡 提示：關';render();if(!over&&cur===0&&!busy)turn()}
+function coverBtn(){
+  if(over||busy||cur!==0||P[0].out||!humanReady)return;
+  if(!started){setMsg('要先出黑桃7喔！');return}
+  if(P[0].hand.some(playable)){setMsg('🤔 你還有牌可以出喔，再看看！');return}
+  coverMode=true;setMsg('對，沒牌可出！請點一張最小的牌蓋起來');
+}
+
+function showModal(h){document.getElementById('modal').innerHTML='<div class="mask"><div class="box">'+h+'</div></div>'}
+function closeModal(){document.getElementById('modal').innerHTML=''}
+function showRules(){showModal(`<h2>📖 排七規則</h2><ul>
+<li>用 52 張牌（沒有鬼牌）。4 人每人 13 張；3 人每人 17 張，多的 1 張當「海底牌」蓋在旁邊不用。</li>
+<li>拿到<b>黑桃7</b>的人先出，開始遊戲。3 人局時，這個人還要拿走<b>公開的海底牌</b>（所有人都看得到）。</li>
+<li>輪流出牌（順時針）。可以出：<b>任何花色的 7</b>，或是<b>跟桌上同花色、數字相連</b>的牌（例如桌上有♠7，可以接♠6或♠8）。</li>
+<li>能出牌就<b>一定要出</b>。真的都不能出，就選 1 張「蓋牌」（面朝下），盡量蓋小的。</li>
+<li>手牌全部用完就離場。所有人都用完後翻開蓋牌算分：A=1、J=11、Q=12、K=13，其他看數字。</li>
+<li><b>蓋牌點數最少的人獲勝</b>（同分時，比較早出完牌的人）。</li>
+<li>🌟 特別規則：如果有人<b>所有的牌都蓋掉</b>（一張都沒出過），直接獲勝！</li>
+<li>💡 可以關掉「提示」，自己判斷哪些牌能出；沒牌可出時要按「沒牌可出（蓋牌）」。</li></ul>
+<div class="btns"><button onclick="closeModal()">知道了</button></div>`)}
+
+function showStart(){showModal(`<h2>🃏 排七接龍</h2>
+<p>你的名字：<input id="nm" value="${myName}" maxlength="6" style="font-size:16px;padding:4px;width:120px"></p>
+<p style="margin-top:8px"><label><input type="checkbox" id="hintck" ${hint?'checked':''}> 💡 提示能出的牌（取消勾選可練習自己判斷）</label></p>
+<p style="margin-top:8px">要幾個人玩？（你 + 電腦）</p>
+<div class="btns"><button onclick="start(3)">3 人（17 張）</button><button onclick="start(4)">4 人（13 張）</button></div>
+<div class="btns"><button class="g" onclick="showRules()">📖 看規則</button></div>`)}
+
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+
+function start(n){
+  const v=document.getElementById('nm');if(v&&v.value.trim())myName=v.value.trim();
+  const hk=document.getElementById('hintck');if(hk)hint=hk.checked;
+  document.getElementById('hintBtn').textContent=hint?'💡 提示：開':'💡 提示：關';
+  coverMode=false;bottomCard=null;
+  N=n;closeModal();
+  const per=n===3?17:13;
+  let deck,ok=false;
+  while(!ok){
+    deck=[];for(let s=0;s<4;s++)for(let r=1;r<=13;r++)deck.push({s,r});
+    shuffle(deck);
+    const idx=deck.findIndex(c=>c.s===0&&c.r===7);
+    ok=idx<per*n;
+  }
+  const names=[myName,'小明','小華','小美'];
+  P=[];
+  for(let i=0;i<n;i++)P.push({name:names[i],human:i===0,hand:deck.slice(i*per,(i+1)*per),cover:[],out:false,order:0,played:0});
+  board=[0,1,2,3].map(()=>Array(14).fill(false));
+  started=false;outCount=0;over=false;busy=false;
+  cur=P.findIndex(p=>p.hand.some(c=>c.s===0&&c.r===7));
+  let extra='';
+  if(n===3){
+    bottomCard=deck[51];bottomCard.pub=true;
+    P[cur].hand.push(bottomCard);bottomOwner=cur;
+    extra=`　${P[cur].name} 拿到公開的海底牌 ${SUITS[bottomCard.s]}${NAMES[bottomCard.r]}（共 18 張）`;
+  }
+  setMsg(P[cur].name+' 手上有黑桃7，由他先出！'+extra);
+  render();
+  setTimeout(turn,800);
+}
+
+function playable(c){
+  if(!started)return c.s===0&&c.r===7;
+  if(c.r===7)return true;
+  return c.r<7?board[c.s][c.r+1]:board[c.s][c.r-1];
+}
+function setMsg(t){document.getElementById('msg').textContent=t}
+function cardHTML(c,cls){return `<div class="card ${isRed(c.s)?'red':'blk'} ${cls||''}">${NAMES[c.r]}<span>${SUITS[c.s]}</span></div>`}
+
+function render(){
+  const t=document.getElementById('top');t.innerHTML='';
+  P.forEach((p,i)=>{
+    t.innerHTML+=`<div class="pl ${i===cur&&!over?'turn':''} ${p.out?'out':''}"><div class="nm">${p.human?'🙂':'🤖'} ${p.name}</div><div class="st">手牌 ${p.hand.length} 張｜蓋牌 ${p.cover.length} 張${p.out?'｜🏁已出完':''}</div></div>`;
+  });
+  const b=document.getElementById('board');b.innerHTML='';
+  for(let s=0;s<4;s++){
+    let h=`<div class="row"><div class="sl ${isRed(s)?'red':''}" style="${isRed(s)?'color:#ff8a8a':''}">${SUITS[s]}</div>`;
+    for(let r=1;r<=13;r++){
+      h+=board[s][r]?`<div class="cell on ${isRed(s)?'red':'blk'}">${NAMES[r]}<span>${SUITS[s]}</span></div>`:`<div class="cell">${NAMES[r]}</div>`;
+    }
+    b.innerHTML+=h+'</div>';
+  }
+  const bt=document.getElementById('bottom');
+  if(bottomCard){
+    const played=board[bottomCard.s][bottomCard.r];
+    bt.classList.remove('hidden');
+    bt.innerHTML=`🌊 公開海底牌：<span class="mini ${isRed(bottomCard.s)?'red':'blk'}">${SUITS[bottomCard.s]}${NAMES[bottomCard.r]}</span>（由 ${P[bottomOwner].name} 持有${played?'，已打出':''}）`;
+  }else bt.classList.add('hidden');
+  const hd=document.getElementById('hand');hd.innerHTML='';
+  const me=P[0];
+  const mine=me.hand.slice().sort((a,b)=>a.s-b.s||a.r-b.r);
+  const myTurn=!over&&!busy&&cur===0&&!me.out&&humanReady;
+  const any=me.hand.some(playable);
+  document.getElementById('coverBtn').style.display=(!hint&&myTurn)?'inline-block':'none';
+  mine.forEach(c=>{
+    const el=document.createElement('div');
+    let cls='';
+    if(hint&&myTurn)cls=playable(c)?'ok':(any?'no':'cv');
+    else if(!hint&&myTurn&&coverMode)cls='cv';
+    if(c.pub)cls+=' pub';
+    el.innerHTML=cardHTML(c,cls);
+    const d=el.firstChild;
+    d.onclick=()=>humanClick(c);
+    hd.appendChild(d);
+  });
+  if(me.out)hd.innerHTML='<div style="padding:20px">🏁 你的牌出完了！等其他人…</div>';
+}
+
+function humanClick(c){
+  if(over||busy||cur!==0||P[0].out||!humanReady)return;
+  const me=P[0];
+  if(playable(c)){doPlay(0,c)}
+  else if(!me.hand.some(playable)){
+    if(hint||coverMode)doCover(0,c);
+    else setMsg('你確定沒牌可出嗎？確定的話請先按「沒牌可出（蓋牌）」');
+  }
+  else setMsg(hint?'這張還不能出喔！請選閃亮亮的牌':'這張現在不能出喔，再想想看～');
+}
+
+function removeCard(p,c){p.hand.splice(p.hand.findIndex(x=>x.s===c.s&&x.r===c.r),1)}
+
+function doPlay(i,c){
+  const p=P[i];p.played++;removeCard(p,c);board[c.s][c.r]=true;started=true;
+  setMsg(`${p.name} 出了 ${SUITS[c.s]}${NAMES[c.r]}`);
+  afterMove(i);
+}
+function doCover(i,c){
+  const p=P[i];removeCard(p,c);p.cover.push(c);
+  setMsg(`${p.name} 沒牌可出，蓋了一張牌 🙈`);
+  afterMove(i);
+}
+function afterMove(i){
+  const p=P[i];coverMode=false;humanReady=false;
+  if(p.hand.length===0&&!p.out){p.out=true;p.order=++outCount;}
+  if(P.every(x=>x.out)){render();return finish()}
+  do{cur=(cur+1)%N}while(P[cur].out);
+  render();
+  setTimeout(turn,900);
+}
+
+function turn(){
+  if(over)return;
+  const p=P[cur];
+  if(p.human){
+    humanReady=true;render();
+    const any=p.hand.some(playable);
+    if(!started)setMsg('你有黑桃7，請點它開始遊戲！');
+    else if(hint)setMsg(any?'輪到你了！點亮亮的牌出牌':'你沒牌可出😢 請點一張最小的牌蓋起來');
+    else setMsg('輪到你了！有牌可出就點牌，沒牌可出請按「沒牌可出（蓋牌）」');
+    return;
+  }
+  busy=true;render();
+  setTimeout(()=>{busy=false;aiMove(cur)},400);
+}
+
+const AI_BASE={easy:.45,normal:.15,hard:0};
+function aiErr(){return Math.max(AI_BASE[RB.lv]!=null?AI_BASE[RB.lv]:.15,RB.err)}
+function aiMove(i){
+  const p=P[i];
+  const opts=p.hand.filter(playable);
+  if(opts.length&&RB.embed&&Math.random()<aiErr()){doPlay(i,opts[Math.floor(Math.random()*opts.length)]);return}
+  if(!opts.length&&RB.embed&&Math.random()<aiErr()){doCover(i,p.hand[Math.floor(Math.random()*p.hand.length)]);return}
+  if(opts.length){
+    // 評分：優先出能接自己手牌的、離7遠的（先把難出的丟掉）；7 留到後面
+    let best=null,bs=-99;
+    opts.forEach(c=>{
+      let sc=Math.abs(c.r-7)*1.2;
+      const next=c.r<7?c.r-1:(c.r>7?c.r+1:null);
+      if(c.r===7){
+        sc=-2;
+        // 自己同花色有兩側的牌，打 7 才有價值
+        const side=p.hand.filter(x=>x.s===c.s&&x.r!==7).length;
+        sc+=side*0.8;
+      }else if(next&&p.hand.some(x=>x.s===c.s&&x.r===next))sc+=1.5;
+      sc+=Math.random()*.5;
+      if(sc>bs){bs=sc;best=c}
+    });
+    doPlay(i,best);
+  }else{
+    // 蓋最小點數的牌
+    const s=p.hand.slice().sort((a,b)=>a.r-b.r||Math.random()-.5);
+    doCover(i,s[0]);
+  }
+}
+
+function finish(){
+  over=true;
+  const rs=P.map(p=>({p,pts:p.cover.reduce((a,c)=>a+c.r,0)}));
+  const slam=rs.filter(r=>r.p.played===0);
+  if(slam.length){rs.forEach(r=>r.slam=r.p.played===0);}
+  rs.sort((a,b)=>(b.slam?1:0)-(a.slam?1:0)||a.pts-b.pts||a.p.order-b.p.order);
+  let h='<h2>🎉 遊戲結束！</h2>';
+  if(rs[0].slam)h+=`<p style="background:#fff0b3;padding:6px;border-radius:8px">🌟 <b>${rs[0].p.name}</b> 全部的牌都蓋掉，直接獲勝！</p>`;
+  rs.forEach((r,k)=>{
+    h+=`<div class="res ${k===0?'win':''}"><b>${k===0?'🏆 ':''}${r.p.name}</b>：${r.pts} 分${r.p.order===1?'（最先出完🏁）':''}<br>蓋牌：${r.p.cover.length?r.p.cover.map(c=>`<span class="mini ${isRed(c.s)?'red':'blk'}">${SUITS[c.s]}${NAMES[c.r]}</span>`).join(''):'沒有蓋牌，太強了！'}</div>`;
+  });
+  h+=`<p>${rs[0].p.human?'你贏了！太厲害了 👏':rs[0].p.name+' 獲勝，下次加油！'}</p><div class="btns"><button onclick="start(N)">再玩一次</button><button class="g" onclick="showStart()">換人數</button></div>`;
+  if(RB.embed){const won=rs[0].p.human;h=h.replace(/<div class="btns"><button onclick="start\(N\)">.*$/,'<div class="btns"><button onclick="RB.done(\''+(won?'win':'lose')+'\')">繼續 ▶</button></div>');}
+  showModal(h);
+}
+
+if(RB.embed){hint=true;start(RB.v==='3'?3:4);}else showStart();
+</script>
+</body>
+</html>

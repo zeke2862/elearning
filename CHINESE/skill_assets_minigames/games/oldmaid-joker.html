@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>抽鬼牌</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{--cw:min(66px,9.8vw);--ow:min(48px,11vw)}
+body{margin:0;min-height:100vh;font-family:"Noto Sans TC","Microsoft JhengHei",sans-serif;color:#fff;
+ background:radial-gradient(circle at 50% 30%,#1f7a4a,#0d4a2b 70%);}
+#app{max-width:1040px;margin:0 auto;padding:10px 10px 24px}
+header{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:space-between}
+h1{font-size:22px;margin:4px 0}
+#stat{font-size:14px;opacity:.9}
+button{font-family:inherit;cursor:pointer;border:0;border-radius:10px;padding:8px 14px;font-size:15px;font-weight:700;background:#ffd34d;color:#4a3300}
+button:active{transform:scale(.96)}
+button.sub{background:rgba(255,255,255,.2);color:#fff}
+#rules{background:rgba(0,0,0,.35);border-radius:12px;padding:10px 16px;margin:8px 0;font-size:14px;line-height:1.7}
+#rules[hidden],#overlay[hidden]{display:none}
+#top{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
+.seat{flex:1 1 300px;background:rgba(0,0,0,.22);border:3px solid transparent;border-radius:14px;padding:8px 8px 12px;min-height:150px}
+.seat.active{border-color:#ffd34d;box-shadow:0 0 14px #ffd34daa}
+.seat .nm{display:flex;justify-content:space-between;font-weight:700;margin-bottom:8px;font-size:15px}
+.tag{font-size:12px;font-weight:700;border-radius:8px;padding:2px 8px;background:rgba(255,255,255,.18)}
+.tag.you{background:#ffd34d;color:#4a3300}
+.fan{display:flex;justify-content:center;flex-wrap:nowrap;min-height:20px;padding-top:10px}
+.fan .card+.card{margin-left:calc(var(--w)*-.6)}
+.opp{--w:var(--ow)}
+.mine{--w:var(--cw)}
+.mine .card+.card{margin-left:calc(var(--w)*-.5)}
+.card{width:var(--w);height:calc(var(--w)*1.42);border-radius:calc(var(--w)*.12);flex:none;position:relative;
+ box-shadow:0 2px 5px rgba(0,0,0,.45);user-select:none;transition:transform .12s}
+.card.face{background:#fff;color:#222;font-weight:800}
+.card.face.red{color:#d11a2a}
+.card.face .tl{position:absolute;left:12%;top:6%;line-height:1;font-size:calc(var(--w)*.3);text-align:center}
+.card.face .mid{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:calc(var(--w)*.55)}
+.card.joker{background:linear-gradient(135deg,#fff6c9,#ffd0f2);color:#6a1b9a}
+.card.joker .tl{font-size:calc(var(--w)*.2)}
+.card.back{background:repeating-linear-gradient(45deg,#2b5fd9 0 6px,#1d47a8 6px 12px);border:3px solid #fff}
+.card.new{outline:3px solid #ffd34d;transform:translateY(-10px)}
+.card.pick{cursor:pointer}
+.card.pick:hover{transform:translateY(-12px);outline:3px solid #ffd34d;z-index:5}
+.mine .card.face:hover{transform:translateY(-6px)}
+#center{display:flex;gap:12px;align-items:center;margin:12px 0;flex-wrap:wrap}
+#seaBox{text-align:center;font-size:12px;min-width:90px;--w:min(54px,12vw)}
+#seaBox .card{margin:0 auto 4px}
+#side{flex:1 1 260px}
+#status{font-size:18px;font-weight:800;color:#ffe48a;margin-bottom:6px;min-height:26px}
+#log{background:rgba(0,0,0,.28);border-radius:10px;padding:8px 12px;font-size:14px;line-height:1.6;min-height:70px}
+#log div:last-child{color:#fff3b0;font-weight:700}
+#me{background:rgba(0,0,0,.22);border:3px solid transparent;border-radius:14px;padding:8px 8px 14px}
+#me.active{border-color:#ffd34d;box-shadow:0 0 14px #ffd34daa}
+#me .nm{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;font-weight:700}
+#overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);display:flex;align-items:center;justify-content:center;z-index:50;padding:14px}
+#box{background:#fff;color:#333;border-radius:18px;padding:22px 26px;max-width:420px;width:100%;text-align:center}
+#box h2{margin:0 0 8px;font-size:28px}
+#box p{margin:6px 0;line-height:1.6}
+#box .rk{background:#f3f3f3;border-radius:10px;padding:8px;font-size:15px}
+
+.card.sel{opacity:.35;outline:3px dashed #4dd2ff}
+.mine.canpick .card{cursor:pointer}
+.mine.canpick .card:hover{transform:translateY(-8px)}
+.mine.canpick .card.sel:hover{transform:none}
+#decide{background:rgba(0,0,0,.4);border:2px solid #ffd34d;border-radius:12px;padding:10px 14px;margin-top:8px;display:flex;gap:14px;align-items:center;flex-wrap:wrap;--w:min(66px,16vw)}
+#decide[hidden]{display:none}
+#decide .msg{flex:1 1 180px;font-size:15px;line-height:1.6}
+#decide button.pair{background:#6be38a;color:#07381a}
+button:disabled{opacity:.4;cursor:not-allowed}
+#doneBtn{margin-top:10px;display:inline-block;visibility:hidden}
+
+#pileBox{background:rgba(0,0,0,.25);border-radius:12px;padding:6px 10px;margin:8px 0}
+#pileBox .ph{font-size:13px;opacity:.85;margin-bottom:4px}
+#pile{display:flex;flex-wrap:wrap;gap:6px;max-height:120px;overflow:auto;min-height:40px;--w:32px;padding:4px}
+.pp{display:flex}
+.pp .card+.card{margin-left:-13px}
+.pp.new{filter:drop-shadow(0 0 6px #ffd34d)}
+.pp .card{box-shadow:0 1px 3px rgba(0,0,0,.5)}
+#log{min-height:28px!important}
+</style>
+</head>
+<body>
+<div id="app">
+ <header>
+  <h1 id="title">抽鬼牌</h1>
+  <div id="stat"></div>
+  <div><button class="sub" id="rulesBtn">規則說明</button> <button id="restart">重新開始</button></div>
+ </header>
+ <div id="rules" hidden></div>
+ <section id="top">
+  <div class="seat" id="seat1"></div>
+  <div class="seat" id="seat2"></div>
+ </section>
+ <section id="center">
+  <div id="seaBox"></div>
+  <div id="side"><div id="status"></div><div id="log"></div><div id="decide" hidden></div></div>
+ </section>
+ <section id="pileBox"><div class="ph">🗑️ 丟出的牌 <span id="pileCnt"></span></div><div id="pile"></div></section>
+ <section id="me">
+  <div class="nm"><span id="meName">你（玩家）</span><span><span class="tag" id="meCount"></span> <button class="sub" id="shuf">依數字排序</button> <button class="sub" id="shuf2">隨機洗牌</button></span></div>
+  <div class="fan mine" id="hand"></div>
+  <div style="text-align:center"><button id="doneBtn">✅ 整理完成，開始遊戲</button></div>
+ </section>
+</div>
+<div id="overlay" hidden><div id="box"></div></div>
+
+<script>
+/* ===== 休息小遊戲「嵌入模式」（relax-break 協定 v1）=====
+   由 relax-break.js 以 iframe 載入，設定放在 iframe 的 name（RB:xxx）或網址 ?embed=1&v=&lv=&err=&id=。
+   embed=1：略過選單、直接開一局、結束時 postMessage({source:'relax',type:'result',result:'win|lose|draw'})
+   v=玩法代號  lv=easy|normal|hard  err=0~1（電腦隨機亂走的機率，連續平手時由外面調高）   */
+var RB=(function(){var q;try{if(location.search.indexOf('embed=1')>=0)q=new URLSearchParams(location.search);else if(String(window.name).indexOf('RB:')===0)q=new URLSearchParams(String(window.name).slice(3));}catch(e){}
+if(!q)q=new URLSearchParams('');var on=q.get('embed')==='1';if(on)document.documentElement.classList.add('rb');var sent=false;
+return{embed:on,v:q.get('v')||'',lv:q.get('lv')||'normal',err:Math.max(0,Math.min(1,parseFloat(q.get('err'))||0)),id:q.get('id')||'',
+done:function(r,info){if(!on||sent)return;sent=true;try{parent.postMessage({source:'relax',type:'result',id:q.get('id')||'',result:r,info:info||''},'*')}catch(e){}}};})();
+
+const MODE='joker';  // 'sea' = 海底牌當鬼牌；'joker' = 有鬼牌
+const NAMES=['你','電腦甲','電腦乙'];
+const SUITS=['♠','♥','♦','♣'];
+const RANKS=['','A','2','3','4','5','6','7','8','9','10','J','Q','K'];
+const $=id=>document.getElementById(id);
+let G=null;
+
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]];}return a;}
+function cardText(c){return c.joker?'鬼牌':SUITS[c.s]+RANKS[c.r];}
+function isRed(c){return c.s===1||c.s===2;}
+
+/* ---------- 規則文字 ---------- */
+function setupText(){
+ if(MODE==='sea'){
+  $('title').textContent='🃏 抽鬼牌（海底牌版）';
+  $('rules').innerHTML='<b>玩法：</b>三個人玩，用 52 張牌，沒有鬼牌。<br>'+
+   '開始前先偷偷把 <b>1 張牌蓋在桌子中間（海底牌）</b>，其餘 51 張平分，每人 17 張。<br>'+
+   '同數字的 2 張牌（例如兩張 7）可以湊成一對丟掉。<b>發完牌後，你要自己把手上成對的牌挑出來丟掉，丟到沒有成對為止才能開始。</b>因為少了一張牌，<b>有一個數字會剩下一張湊不成對，它就是「鬼牌」</b>——但一開始沒人知道是哪一張！<br>'+
+   '輪流從下一位玩家的手牌裡盲抽一張。<b>你抽到的牌會出現在手牌最右邊（黃框），有配對就點兩張丟出，沒有就按「完成」。</b>最後手上還剩一張牌的人就輸了。<br>'+
+   '抽牌順序：你抽電腦甲 → 電腦甲抽電腦乙 → 電腦乙抽你。';
+ }else{
+  $('title').textContent='🃏 抽鬼牌（鬼牌版）';
+  $('rules').innerHTML='<b>玩法：</b>三個人玩，用 52 張牌再加 <b>1 張鬼牌</b>，共 53 張。<br>'+
+   '發完牌後，<b>會有 2 個人多拿 1 張（18 張），由第一個拿到牌、多一張的人先抽牌</b>。<br>'+
+   '同數字的 2 張牌可以湊成一對丟掉；鬼牌沒有朋友，湊不成對。<b>發完牌後，你要自己把手上成對的牌挑出來丟掉，丟到沒有成對為止才能開始。</b><br>'+
+   '輪流從下一位玩家的手牌裡盲抽一張。<b>你抽到的牌會出現在手牌最右邊（黃框），有配對就點兩張丟出，沒有就按「完成」。</b>最後手上<b>剩下鬼牌</b>的人就輸了。<br>'+
+   '抽牌順序：你抽電腦甲 → 電腦甲抽電腦乙 → 電腦乙抽你。';
+ }
+}
+$('rules').innerHTML='';
+$('rulesBtn').onclick=()=>{$('rules').hidden=!$('rules').hidden;};
+
+/* ---------- 戰績 ---------- */
+function loadStat(){try{return JSON.parse(localStorage.getItem('oldmaid-'+MODE))||{w:0,l:0};}catch(e){return {w:0,l:0};}}
+function saveStat(s){try{localStorage.setItem('oldmaid-'+MODE,JSON.stringify(s));}catch(e){}}
+function showStat(){const s=loadStat();$('stat').textContent='戰績：贏 '+s.w+' 次 ／ 輸 '+s.l+' 次';}
+
+/* ---------- 工具 ---------- */
+function targetOf(seat){for(let k=1;k<=2;k++){const s=(seat+k)%3;if(G.hands[s].length)return s;}return -1;}
+function nextAlive(seat){for(let k=1;k<=3;k++){const s=(seat+k)%3;if(G.hands[s].length)return s;}return -1;}
+function log(t){const d=document.createElement('div');d.textContent=t;const L=$('log');L.appendChild(d);while(L.children.length>1)L.removeChild(L.firstChild);}
+function faceEl(c,extra){
+ const e=document.createElement('div');
+ e.className='card face'+(c.joker?' joker':'')+(isRed(c)?' red':'')+(extra?' '+extra:'');
+ if(c.joker){e.innerHTML='<span class="tl">鬼牌</span><span class="mid">🃏</span>';}
+ else{e.innerHTML='<span class="tl">'+RANKS[c.r]+'<br>'+SUITS[c.s]+'</span><span class="mid">'+SUITS[c.s]+'</span>';}
+ return e;
+}
+function backEl(){const e=document.createElement('div');e.className='card back';return e;}
+
+/* ---------- 新局 ---------- */
+function hasPair(h){const seen={};for(const c of h){if(c.joker)continue;if(seen[c.r])return true;seen[c.r]=1;}return false;}
+function newGame(){
+ let id=0;const deck=[];
+ for(let s=0;s<4;s++)for(let r=1;r<=13;r++)deck.push({id:id++,r,s});
+ if(MODE==='joker')deck.push({id:id++,r:0,s:-1,joker:true});
+ shuffle(deck);
+ let sea=null;
+ if(MODE==='sea')sea=deck.pop();
+ const hands=[[],[],[]];
+ const d=Math.random()*3|0;
+ deck.forEach((c,i)=>hands[(d+i)%3].push(c));
+ G={hands,sea,cur:d,over:false,phase:'arrange',order:[],newId:null,start:d,sel:null,drawn:null,drawTgt:null,pile:[]};
+ $('log').innerHTML='';
+ $('overlay').hidden=true;
+ if(MODE==='sea')log('每人 17 張，海底牌已蓋好');
+ else log('發牌完成');
+ for(const s of [1,2])discardPairs(s);
+ log('點兩張一樣的牌丟出');
+ render();
+ if(typeof AUTO!=='undefined'){discardPairs(0);finishArrange();}
+}
+
+function discardPairs(seat){
+ const h=G.hands[seat],by={};let n=0;
+ h.forEach(c=>{if(c.joker)return;(by[c.r]=by[c.r]||[]).push(c);});
+ const rm=new Set();
+ Object.values(by).forEach(arr=>{for(let i=0;i+1<arr.length;i+=2){rm.add(arr[i].id);rm.add(arr[i+1].id);n++;G.pile.push([arr[i],arr[i+1]]);}});
+ G.hands[seat]=h.filter(c=>!rm.has(c.id));
+ return n;
+}
+function checkOut(s){
+ if(G.hands[s].length===0&&!G.order.includes(s)&&!(s===0&&G.drawn)){
+  G.order.push(s);
+  log(s===0?'🎉 你的牌全部出完了，安全過關！':'✅ '+NAMES[s]+' 的牌出完了，安全過關！');
+ }
+}
+
+/* ---------- 玩家整理手牌 ---------- */
+function handClick(id){
+ if(G.over||(G.phase!=='arrange'&&G.phase!=='wait'&&G.phase!=='decide'))return;
+ const c=G.hands[0].find(x=>x.id===id);if(!c)return;
+ if(G.phase==='decide'&&G.newId!==null){
+  const d=G.hands[0].find(x=>x.id===G.newId);
+  if(d&&d!==c&&!d.joker&&!c.joker&&d.r===c.r){
+   G.hands[0]=G.hands[0].filter(x=>x!==d&&x!==c);G.pile.push([d,c]);
+   G.sel=null;G.newId=null;G.phase='busy';
+   checkOut(0);render();
+   setTimeout(afterMove,600,0);
+   return;
+  }
+ }
+ if(G.sel===null||G.sel===undefined){G.sel=id;}
+ else if(G.sel===id){G.sel=null;}
+ else{
+  const a=G.hands[0].find(x=>x.id===G.sel);
+  if(a&&!a.joker&&!c.joker&&a.r===c.r){
+   G.hands[0]=G.hands[0].filter(x=>x!==a&&x!==c);G.pile.push([a,c]);
+   
+   G.sel=null;G.newId=null;
+   if(G.phase==='wait'||G.phase==='decide'){
+    checkOut(0);
+    if(G.hands[0].length===0){const wasDecide=G.phase==='decide';G.phase='busy';render();setTimeout(afterMove,600,wasDecide?0:G.cur);return;}
+   }
+  }else{G.sel=id;}
+ }
+ render();
+}
+function finishArrange(){
+ if(G.phase!=='arrange'||hasPair(G.hands[0]))return;
+ G.phase='busy';G.sel=null;
+ 
+ checkOut(0);render();
+ const alive=[0,1,2].filter(s=>G.hands[s].length);
+ if(alive.length<=1){endGame(alive[0]);return;}
+ const first=G.hands[G.start].length?G.start:nextAlive(G.start);
+ G.cur=first;
+ log(NAMES[first]+' 先抽');
+ setTimeout(startTurn,900);
+}
+function endTurn(){
+ if(G.phase!=='decide')return;
+ G.phase='busy';G.sel=null;G.newId=null;
+ checkOut(0);render();
+ setTimeout(afterMove,500,0);
+}
+$('doneBtn').onclick=()=>{if(G.phase==='arrange')finishArrange();else endTurn();};
+
+/* ---------- 畫面 ---------- */
+function render(reveal){
+ for(const s of [1,2]){
+  const box=$('seat'+s);
+  const isTarget=(G.phase==='wait'&&targetOf(0)===s&&!G.over);
+  box.className='seat'+(G.cur===s&&!G.over&&G.phase!=='arrange'?' active':'');
+  let tag='';
+  if(s===1)tag='<span class="tag you">👈 你從這裡抽牌</span>';
+  if(s===2)tag='<span class="tag">🙈 他會抽你的牌</span>';
+  box.innerHTML='<div class="nm"><span>'+NAMES[s]+'　<span class="tag">'+G.hands[s].length+' 張</span></span>'+tag+'</div>';
+  const fan=document.createElement('div');fan.className='fan opp';
+  G.hands[s].forEach((c,i)=>{
+   let e;
+   if(reveal)e=faceEl(c);
+   else{e=backEl();if(isTarget){e.classList.add('pick');e.onclick=()=>humanDraw(s,i);}}
+   fan.appendChild(e);
+  });
+  box.appendChild(fan);
+ }
+ $('me').className=(G.cur===0&&!G.over&&G.phase!=='arrange'?'active':'');
+ $('meCount').textContent=G.hands[0].length+' 張';
+ const hand=$('hand');hand.innerHTML='';
+ const can=!G.over&&(G.phase==='arrange'||G.phase==='wait'||G.phase==='decide');
+ hand.className='fan mine'+(can?' canpick':'');
+ G.hands[0].forEach(c=>{
+  const e=faceEl(c,(c.id===G.newId?'new ':'')+(c.id===G.sel?'sel':''));
+  if(can)e.onclick=()=>handClick(c.id);
+  hand.appendChild(e);
+ });
+ // 整理完成按鈕
+ const db=$('doneBtn');
+ if(G.phase==='arrange'&&!G.over){
+  db.style.visibility='visible';
+  const hp=hasPair(G.hands[0]);
+  db.disabled=hp;
+  db.textContent=hp?'還有成對的牌喔':'✅ 整理完成，開始遊戲';
+  $('status').textContent=hp?'🧹 點兩張一樣的牌丟出':'👍 按「整理完成」開始';
+ }else if(G.phase==='decide'&&!G.over){
+  db.style.visibility='visible';db.disabled=false;db.textContent='✅ 完成，換下一位';
+ }else db.style.visibility='hidden';
+ // 抽到的牌
+ const dc=$('decide');
+ if(false){
+  dc.hidden=false;dc.innerHTML='';
+  dc.appendChild(faceEl(G.drawn));
+  const m=document.createElement('div');m.className='msg';
+  const mate=findMate(G.drawn);
+  m.innerHTML='抽到 <b>'+cardText(G.drawn)+'</b>'+(G.drawn.joker?' 😱':mate?'　配 <b>'+cardText(mate)+'</b>':'');
+  dc.appendChild(m);
+  const b=document.createElement('div');
+  if(mate){const p=document.createElement('button');p.className='pair';p.textContent='成對丟出';p.onclick=()=>decide(true);b.appendChild(p);b.appendChild(document.createTextNode(' '));}
+  const k=document.createElement('button');k.textContent='收下';k.onclick=()=>decide(false);b.appendChild(k);
+  dc.appendChild(b);
+ }else{dc.hidden=true;dc.innerHTML='';}
+ const pl=$('pile');pl.innerHTML='';
+ G.pile.forEach((q,i)=>{const w=document.createElement('div');w.className='pp'+(i===G.pile.length-1?' new':'');q.forEach(c=>w.appendChild(faceEl(c)));pl.appendChild(w);});
+ $('pileCnt').textContent='（'+G.pile.length+' 對）';pl.scrollTop=pl.scrollHeight;
+ const sb=$('seaBox');
+ if(MODE==='sea'){
+  sb.innerHTML='';
+  const e=reveal&&G.sea?faceEl(G.sea):backEl();sb.appendChild(e);
+  const t=document.createElement('div');t.textContent=reveal?'海底牌揭曉！':'海底牌（先不能看）';sb.appendChild(t);
+ }else{sb.innerHTML='<div style="font-size:34px">🃏</div><div>鬼牌藏在某人手上</div>';}
+}
+function findMate(c){return c.joker?null:G.hands[0].find(x=>!x.joker&&x.r===c.r);}
+
+/* ---------- 回合 ---------- */
+function startTurn(){
+ if(G.over)return;
+ const cur=G.cur,t=targetOf(cur);
+ if(t<0){endGame(cur);return;}
+ G.sel=null;
+ if(cur===0){
+  G.phase='wait';
+  $('status').textContent='👉 抽電腦甲的牌';
+  render();
+  if(typeof AUTO!=='undefined')setTimeout(()=>humanDraw(t,Math.random()*G.hands[t].length|0),0);
+ }else{
+  G.phase='busy';
+  $('status').textContent='⏳ '+NAMES[cur]+' 抽牌…';
+  render();
+  setTimeout(()=>{const idx=Math.random()*G.hands[t].length|0;doDraw(cur,t,idx);},1000);
+ }
+}
+function seatFan(x){return $('seat'+x).querySelector('.fan');}
+function fly(from,to,cb){
+ if(typeof AUTO!=='undefined'||!from||!from.getBoundingClientRect||!to){cb();return;}
+ const a=from.getBoundingClientRect(),b=to.getBoundingClientRect();
+ from.style.outline='3px solid #ffd34d';from.style.transform='translateY(-14px)';
+ setTimeout(()=>{
+  const f=backEl();
+  f.style.cssText+=';position:fixed;z-index:80;left:'+a.left+'px;top:'+a.top+'px;width:'+a.width+'px;height:'+a.height+'px;transition:all .55s ease;pointer-events:none';
+  document.body.appendChild(f);
+  from.style.visibility='hidden';
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+   f.style.left=(b.left+b.width/2-a.width/2)+'px';f.style.top=(b.top+b.height/2-a.height/2)+'px';
+  }));
+  setTimeout(()=>{f.remove();cb();},600);
+ },350);
+}
+function humanDraw(t,idx){
+ if(G.phase!=='wait'||G.over)return;
+ G.sel=null;G.phase='busy';
+ const el=seatFan(t).children[idx];
+ fly(el,$('hand'),()=>{
+  const c=G.hands[t].splice(idx,1)[0];
+  G.hands[0].push(c);G.newId=c.id;G.phase='decide';
+  $('status').textContent='🤔 抽到 '+cardText(c)+'（有配對就點兩張丟出）';
+  checkOut(t);
+  render();
+  if(typeof AUTO!=='undefined')setTimeout(()=>{if(Math.random()<.9)discardPairs(0);endTurn();},0);
+ });
+}
+function decide(pair){
+ if(G.phase!=='decide'||!G.drawn)return;
+ const c=G.drawn,mate=pair?findMate(c):null;
+ G.drawn=null;G.phase='busy';
+ if(mate){
+  G.hands[0]=G.hands[0].filter(x=>x!==mate);G.pile.push([c,mate]);
+  G.newId=null;
+ }else{
+  G.hands[0].push(c);shuffle(G.hands[0]);G.newId=c.id;
+  
+ }
+ checkOut(0);
+ render();
+ setTimeout(afterMove,mate?900:700,0);
+}
+function doDraw(cur,tgt,idx){
+ const from=(tgt===0?$('hand'):seatFan(tgt)).children[idx];
+ fly(from,seatFan(cur),()=>doDrawLogic(cur,tgt,idx));
+}
+function doDrawLogic(cur,tgt,idx){
+ const c=G.hands[tgt].splice(idx,1)[0];
+ G.hands[cur].push(c);
+ if(tgt===0)log(NAMES[cur]+' 抽走了你的 '+cardText(c));
+ else log(NAMES[cur]+' 抽了 '+NAMES[tgt]+' 的一張牌');
+ const mate=!c.joker&&G.hands[cur].find(x=>x!==c&&!x.joker&&x.r===c.r);
+ if(mate){
+  G.hands[cur]=G.hands[cur].filter(x=>x!==c&&x!==mate);G.pile.push([c,mate]);
+  
+ }
+ G.newId=null;
+ shuffle(G.hands[cur]);
+ checkOut(cur);checkOut(tgt);
+ render();
+ setTimeout(afterMove,mate?1100:800,cur);
+}
+function afterMove(cur){
+ if(G.over)return;
+ // 玩家若故意留著成對的牌、其他人都出完了，自動幫他丟掉
+ if(G.hands[0].length&&![1,2].some(s=>G.hands[s].length)){discardPairs(0);checkOut(0);}
+ const alive=[0,1,2].filter(s=>G.hands[s].length);
+ if(alive.length<=1){endGame(alive[0]);return;}
+ G.cur=nextAlive(cur);
+ G.newId=null;
+ startTurn();
+}
+
+/* ---------- 結束 ---------- */
+function endGame(loser){
+ G.over=true;G.phase='over';
+ if(loser===undefined){loser=0;}
+ const s=loadStat();
+ const win=loser!==0;
+ if(win)s.w++;else s.l++;
+ saveStat(s);showStat();
+ render(true);
+ $('status').textContent=win?'🎉 你贏了！':'😭 你拿到鬼牌了…';
+ 
+ const order=G.order.concat([loser]);
+ const rk=order.map((x,i)=>'第'+(i+1)+'名：'+NAMES[x]+(i===order.length-1?'（輸家）':'')).join('<br>');
+ let extra='';
+ if(MODE==='sea')extra='<p>海底牌是 <b>'+cardText(G.sea)+'</b>，所以數字 <b>'+RANKS[G.sea.r]+'</b> 剩下的那一張就是鬼牌。</p>';
+ setTimeout(()=>{
+  $('box').innerHTML='<h2>'+(win?'🎉 你贏了！':'😭 你輸了')+'</h2>'+
+   '<p>'+(win?NAMES[loser]+' 抱著鬼牌，下次換你加油～':'鬼牌在你手上，再來一局討回來吧！')+'</p>'+extra+
+   '<div class="rk">'+rk+'</div><p><button id="again">再玩一局</button></p>';
+  $('overlay').hidden=false;
+  if(RB.embed){$('again').textContent='繼續 ▶';$('again').onclick=()=>RB.done(win?'win':'lose');}else $('again').onclick=newGame;
+ },1500);
+}
+
+if(RB.embed)$('restart').style.display='none';
+$('restart').onclick=()=>{if(G&&!G.over&&!confirm('要放棄這局重新開始嗎？'))return;if(G)G.over=true;newGame();};
+$('shuf').onclick=()=>{if(G&&!G.over&&G.phase!=='busy'){G.hands[0].sort((a,b)=>(a.r-b.r)||(a.s-b.s));G.sel=null;render();}};
+$('shuf2').onclick=()=>{if(G&&!G.over&&G.phase!=='busy'){shuffle(G.hands[0]);G.sel=null;render();}};
+setupText();showStat();newGame();
+</script>
+</body>
+</html>

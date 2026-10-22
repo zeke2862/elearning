@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>下樓梯大對決</title>
+<style>
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{margin:0;background:#1b2238;color:#fff;font-family:"Microsoft JhengHei","PingFang TC","Noto Sans TC",sans-serif;display:flex;flex-direction:column;align-items:center;min-height:100vh;user-select:none}
+  h1{margin:10px 0 4px;font-size:24px;letter-spacing:2px}
+  #bar{display:flex;gap:10px;align-items:center;margin-bottom:8px;flex-wrap:wrap;justify-content:center;font-size:15px}
+  select,button{font:inherit;padding:6px 14px;border-radius:8px;border:0;cursor:pointer}
+  button{background:#ffb703;color:#222;font-weight:bold}
+  button:active{transform:scale(.96)}
+  #wrap{position:relative;width:min(660px,100vw)}
+  canvas{width:100%;display:block;background:#0e1325;border-radius:10px}
+  #overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(10,14,30,.72);border-radius:10px;text-align:center;padding:20px}
+  #overlay h2{font-size:34px;margin:0 0 8px}
+  #overlay p{margin:4px 0 14px;font-size:16px;line-height:1.6}
+  #pad{display:flex;gap:16px;margin:10px 0 16px;width:min(660px,100vw);justify-content:center}
+  #pad button{flex:1;max-width:200px;font-size:28px;padding:14px;background:#3a86ff;color:#fff}
+  .hint{font-size:13px;opacity:.75;margin-bottom:6px}
+html.rb h1,html.rb #bar,html.rb .hint{display:none!important}
+html.rb #pad{margin:6px 0}
+html.rb canvas{max-height:calc(100vh - 80px);width:auto;max-width:100%;margin:0 auto}
+</style>
+</head>
+<body>
+<h1>⬇ 下樓梯大對決</h1>
+<div id="bar">
+  <span>難度：</span>
+  <select id="level">
+    <option value="easy">簡單</option>
+    <option value="normal" selected>普通</option>
+    <option value="hard">困難</option>
+  </select>
+  <span>補血：</span>
+  <select id="heal">
+    <option value="off" selected>不會補血</option>
+    <option value="on">踩一般樓梯補血</option>
+  </select>
+  <button id="restart">重新開始</button>
+</div>
+<div class="hint">鍵盤：← → 或 A D 移動　｜　手機：按下方按鈕</div>
+<div id="wrap">
+  <canvas id="c" width="660" height="520"></canvas>
+  <div id="overlay">
+    <h2 id="ovTitle">準備好了嗎？</h2>
+    <p id="ovMsg">你（藍色）和電腦（紅色）從同一組樓梯往下跳。<br>誰先掉血到 0、被天花板壓死或掉出畫面，就輸了！</p>
+    <button id="startBtn">開始遊戲</button>
+  </div>
+</div>
+<div id="pad">
+  <button id="bL">◀</button>
+  <button id="bR">▶</button>
+</div>
+
+<script>
+/* ===== 休息小遊戲「嵌入模式」（relax-break 協定 v1）=====
+   由 relax-break.js 以 iframe 載入，設定放在 iframe 的 name（RB:xxx）或網址 ?embed=1&v=&lv=&err=&id=。
+   embed=1：略過選單、直接開一局、結束時 postMessage({source:'relax',type:'result',result:'win|lose|draw'})
+   v=玩法代號  lv=easy|normal|hard  err=0~1（電腦隨機亂走的機率，連續平手時由外面調高）   */
+var RB=(function(){var q;try{if(location.search.indexOf('embed=1')>=0)q=new URLSearchParams(location.search);else if(String(window.name).indexOf('RB:')===0)q=new URLSearchParams(String(window.name).slice(3));}catch(e){}
+if(!q)q=new URLSearchParams('');var on=q.get('embed')==='1';if(on)document.documentElement.classList.add('rb');var sent=false;
+return{embed:on,v:q.get('v')||'',lv:q.get('lv')||'normal',err:Math.max(0,Math.min(1,parseFloat(q.get('err'))||0)),id:q.get('id')||'',
+done:function(r,info){if(!on||sent)return;sent=true;try{parent.postMessage({source:'relax',type:'result',id:q.get('id')||'',result:r,info:info||''},'*')}catch(e){}}};})();
+(() => {
+"use strict";
+const SOLO = RB.embed && RB.v==="solo";
+const cv = document.getElementById('c'), ctx = cv.getContext('2d');
+const W = 320, H = 520, GAP = 20, PW = 84, PH = 12, ROW = 70, TOP0 = 260;
+const PLAYER_W = 18, PLAYER_H = 26, MAXLIFE = 12;
+const FONT = '"Microsoft JhengHei","PingFang TC","Noto Sans TC",sans-serif';
+
+// ---------- 隨機數（固定種子，讓雙方樓梯一模一樣） ----------
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+
+class Track {
+  constructor(seed){ this.rng = mulberry32(seed); this.list = []; this.prevCx = W/2; }
+  get(i){
+    while(this.list.length <= i){
+      const n = this.list.length;
+      let type = 'normal', cx;
+      if(n === 0){ cx = W/2; }
+      else {
+        cx = this.prevCx + (this.rng()*2-1)*130;
+        cx = Math.max(PW/2+8, Math.min(W-PW/2-8, cx));
+        if(n >= 3){
+          const r = this.rng();
+          const spike = Math.min(0.12 + n*0.002, 0.2);
+          if(r < spike) type = 'spike';
+          else if(r < spike+0.11) type = 'left';
+          else if(r < spike+0.22) type = 'right';
+          else if(r < spike+0.31) type = 'spring';
+          else if(r < spike+0.47) type = 'fake';
+        } else this.rng();
+      }
+      this.prevCx = cx;
+      this.list.push({i:n, x:cx-PW/2, y:TOP0+n*ROW, type, gone:false});
+    }
+    return this.list[i];
+  }
+  range(y0,y1){
+    const a = Math.max(0, Math.ceil((y0-TOP0)/ROW)), b = Math.floor((y1-TOP0)/ROW);
+    const out=[]; for(let i=a;i<=b;i++) out.push(this.get(i)); return out;
+  }
+}
+
+// ---------- 角色 ----------
+class Side {
+  constructor(track, color, name, ox, isAI){
+    this.track = track; this.color = color; this.name = name; this.ox = ox; this.isAI = isAI;
+    this.reset();
+  }
+  reset(){
+    this.cam = 0; this.x = W/2; this.y = TOP0; this.vy = 0; this.life = MAXLIFE;
+    this.standing = this.track.get(0); this.ft = 0; this.hurtCd = 0; this.flash = 0;
+    this.dead = false; this.maxY = TOP0; this.dir = 0; this.face = 1;
+    this.goneSet = new Set(); this.t = 0;
+  }
+  get floor(){ return Math.max(0, Math.floor((this.maxY - TOP0)/ROW) + 1); }
+  hurt(n){ if(this.hurtCd>0) return; this.life -= n; this.hurtCd = 0.8; this.flash = 0.4; }
+  update(dt, dir, level){
+    if(this.dead) return;
+    this.t += dt;
+    const speed = SOLO ? Math.min(42 + this.floor*2.5, 150) : Math.min(42 + this.floor*1.4, 115);
+    this.cam += speed*dt;
+    this.hurtCd -= dt; this.flash -= dt;
+    this.x += dir*170*dt; if(dir) this.face = dir;
+    this.x = Math.max(PLAYER_W/2, Math.min(W-PLAYER_W/2, this.x));
+    const s = this.standing;
+    if(s){
+      if(this.goneSet.has(s.i) || this.x+PLAYER_W/2-2 < s.x || this.x-PLAYER_W/2+2 > s.x+PW) this.standing = null;
+      else {
+        if(s.type==='left') this.x = Math.max(PLAYER_W/2, this.x-62*dt);
+        if(s.type==='right') this.x = Math.min(W-PLAYER_W/2, this.x+62*dt);
+        if(s.type==='fake'){ this.ft += dt; if(this.ft>0.5){ this.goneSet.add(s.i); this.standing = null; } }
+      }
+    }
+    if(!this.standing){
+      this.vy = Math.min(this.vy + 1000*dt, 460);
+      const prev = this.y; this.y += this.vy*dt;
+      if(this.vy >= 0){
+        for(const p of this.track.range(prev-4, this.y+4)){
+          if(this.goneSet.has(p.i)) continue;
+          if(prev <= p.y+1 && this.y >= p.y && this.x+PLAYER_W/2-2 > p.x && this.x-PLAYER_W/2+2 < p.x+PW){
+            this.y = p.y; this.vy = 0; this.standing = p; this.ft = 0;
+            if(p.type==='normal'||p.type==='left'||p.type==='right'){
+              if(document.getElementById('heal').value==='on') this.life = Math.min(MAXLIFE, this.life+1);
+            }
+            else if(p.type==='spike') { this.hurtCd = 0; this.hurt(4); }
+            else if(p.type==='spring'){ this.vy = -560; this.standing = null; }
+            break;
+          }
+        }
+      }
+    }
+    if(this.y > this.maxY) this.maxY = this.y;
+    if(this.y - PLAYER_H < this.cam){
+      this.y = this.cam + PLAYER_H; if(this.vy<0) this.vy = 0; this.standing = null; this.hurt(4);
+    }
+    if(this.life <= 0 || this.y - PLAYER_H > this.cam + H + 10){ this.life = Math.max(0,this.life); this.dead = true; }
+  }
+  // ---- 電腦的大腦：在腦中「預演未來約 1 秒」，挑出最安全的走法 ----
+  think(level){
+    this.planT = (this.planT||0) - 1;
+    if(this.planT > 0) return this.planDir||0;
+    this.planT = level==='hard' ? 2 : 3;
+    if(RB.err>0 && Math.random()<RB.err){ this.planDir = [-1,0,1][(Math.random()*3)|0]; return this.planDir; }               // 多久重新想一次（幀）
+    const depth = level==='easy' ? 3 : level==='normal' ? 4 : 5; // 想多遠
+    const noise = level==='easy' ? 0.12 : level==='normal' ? 0.03 : 0; // 手滑機率
+    if(Math.random() < noise){ this.planDir = [-1,0,1][(Math.random()*3)|0]; return this.planDir; }
+    const track = this.track;
+    const speed = Math.min(42 + this.floor*1.4, 115);
+    const step = (st, dir, dt) => {
+      st.cam += speed*dt; st.cd -= dt;
+      st.x = Math.max(PLAYER_W/2, Math.min(W-PLAYER_W/2, st.x + dir*170*dt));
+      const s = st.stand;
+      if(s){
+        if(this.goneSet.has(s.i) || st.gone.indexOf(s.i)>=0 || st.x+PLAYER_W/2-2 < s.x || st.x-PLAYER_W/2+2 > s.x+PW) st.stand = null;
+        else {
+          if(s.type==='left') st.x = Math.max(PLAYER_W/2, st.x-62*dt);
+          if(s.type==='right') st.x = Math.min(W-PLAYER_W/2, st.x+62*dt);
+          if(s.type==='fake'){ st.ft += dt; if(st.ft>0.5){ st.gone.push(s.i); st.stand = null; } }
+        }
+      }
+      if(!st.stand){
+        st.vy = Math.min(st.vy + 1000*dt, 460);
+        const prev = st.y; st.y += st.vy*dt;
+        if(st.vy >= 0){
+          for(const p of track.range(prev-4, st.y+4)){
+            if(this.goneSet.has(p.i) || st.gone.indexOf(p.i)>=0) continue;
+            if(prev <= p.y+1 && st.y >= p.y && st.x+PLAYER_W/2-2 > p.x && st.x-PLAYER_W/2+2 < p.x+PW){
+              st.y = p.y; st.vy = 0; st.stand = p; st.ft = 0;
+              if(p.type==='spike'){ st.life -= 4; st.cd = 0.8; st.score -= 150; }
+              else if(p.type==='spring'){ st.vy = -560; st.stand = null; st.score -= 120; }
+              else if(p.type==='fake'){ st.score -= 15; }
+              else st.score += 10;
+              break;
+            }
+          }
+        }
+      }
+      if(st.y > st.maxY){ st.score += (st.y-st.maxY)*0.3; st.maxY = st.y; }
+      if(st.y - PLAYER_H < st.cam){
+        st.y = st.cam + PLAYER_H; if(st.vy<0) st.vy = 0; st.stand = null;
+        if(st.cd<=0){ st.life -= 4; st.cd = 0.8; st.score -= 150; }
+      }
+      if(st.life <= 0 || st.y - PLAYER_H > st.cam + H + 10){ st.dead = true; st.score -= 1000; }
+    };
+    const evalState = st => {
+      const sy = st.y - st.cam;
+      let v = st.score + (st.stand ? 8 : 0);
+      if(sy < 90) v -= (90-sy)*2;
+      if(sy > H-90) v -= (sy-(H-90));
+      return v;
+    };
+    const search = (st, d) => {
+      if(st.dead || d===0) return {v: evalState(st), dir: 0};
+      let best = {v:-1e9, dir:0};
+      for(const dir of [0,-1,1]){
+        const n = Object.assign({}, st, {gone: st.gone.slice()});
+        for(let k=0;k<6;k++){ step(n, dir, 1/30); if(n.dead) break; }
+        if(dir) n.score -= 0.5;
+        const r = search(n, d-1);
+        if(r.v > best.v) best = {v: r.v, dir};
+      }
+      return best;
+    };
+    const st0 = {x:this.x, y:this.y, vy:this.vy, cam:this.cam, stand:this.standing, ft:this.ft,
+                 life:this.life, cd:this.hurtCd, maxY:this.maxY, score:0, dead:false, gone:[]};
+    this.planDir = search(st0, depth).dir;
+    return this.planDir;
+  }
+}
+
+// ---------- 繪圖 ----------
+function drawSide(s){
+  ctx.save();
+  ctx.translate(s.ox, 0);
+  ctx.beginPath(); ctx.rect(0,0,W,H); ctx.clip();
+  const g = ctx.createLinearGradient(0,0,0,H); g.addColorStop(0,'#26345e'); g.addColorStop(1,'#141b34');
+  ctx.fillStyle = g; ctx.fillRect(0,0,W,H);
+  // 牆上格線（會跟著捲動）
+  ctx.strokeStyle = 'rgba(255,255,255,.05)'; ctx.lineWidth = 1;
+  const off = s.cam % 40;
+  for(let yy=-off; yy<H; yy+=40){ ctx.beginPath(); ctx.moveTo(0,yy); ctx.lineTo(W,yy); ctx.stroke(); }
+  // 樓梯
+  for(const p of s.track.range(s.cam-30, s.cam+H+30)){
+    if(s.goneSet.has(p.i)) continue;
+    const py = p.y - s.cam; let px = p.x;
+    if(p.type==='fake' && s.standing===p) px += Math.sin(s.t*60)*1.5;
+    drawPlat(p, px, py, s.t);
+  }
+  // 角色
+  drawHero(s);
+  // 天花板尖刺
+  ctx.fillStyle = '#9aa4b8'; ctx.fillRect(0,0,W,6);
+  ctx.fillStyle = '#d7deea';
+  for(let xx=0; xx<W; xx+=16){ ctx.beginPath(); ctx.moveTo(xx,6); ctx.lineTo(xx+8,22); ctx.lineTo(xx+16,6); ctx.fill(); }
+  // 資訊列
+  ctx.fillStyle = 'rgba(0,0,0,.45)'; ctx.fillRect(0,24,W,26);
+  ctx.font = 'bold 14px '+FONT; ctx.textBaseline='middle'; ctx.textAlign='left';
+  ctx.fillStyle = s.color; ctx.fillText(s.name, 8, 37);
+  ctx.fillStyle = '#fff'; ctx.textAlign='right'; ctx.fillText('地下 '+s.floor+' 層', W-8, 37);
+  for(let i=0;i<MAXLIFE;i++){
+    ctx.fillStyle = i < s.life ? '#ff4d6d' : 'rgba(255,255,255,.18)';
+    ctx.fillRect(70+i*11, 31, 9, 12);
+  }
+  if(s.dead){ ctx.fillStyle='rgba(0,0,0,.55)'; ctx.fillRect(0,0,W,H); ctx.fillStyle='#fff'; ctx.textAlign='center'; ctx.font='bold 36px '+FONT; ctx.fillText('出局',W/2,H/2); }
+  ctx.restore();
+}
+function drawPlat(p, x, y, t){
+  const r = 4;
+  const rect = (c)=>{ ctx.fillStyle=c; ctx.beginPath(); ctx.roundRect(x,y,PW,PH,r); ctx.fill(); };
+  if(p.type==='normal'){ rect('#4ade80'); ctx.fillStyle='#22c55e'; ctx.fillRect(x+3,y+PH-4,PW-6,3); }
+  else if(p.type==='spike'){
+    rect('#94a3b8'); ctx.fillStyle='#e2e8f0';
+    for(let i=0;i<PW;i+=12){ ctx.beginPath(); ctx.moveTo(x+i,y); ctx.lineTo(x+i+6,y-11); ctx.lineTo(x+i+12,y); ctx.fill(); }
+  }
+  else if(p.type==='left'||p.type==='right'){
+    rect('#fbbf24'); ctx.fillStyle='#b45309'; const d = p.type==='left'?-1:1;
+    const sh = (t*30*d)%16;
+    ctx.save(); ctx.beginPath(); ctx.rect(x,y,PW,PH); ctx.clip();
+    for(let i=-16;i<PW+16;i+=16){
+      const ax = x+i+sh; ctx.beginPath();
+      ctx.moveTo(ax+(d>0?0:8),y+2); ctx.lineTo(ax+(d>0?8:0),y+PH/2); ctx.lineTo(ax+(d>0?0:8),y+PH-2); ctx.lineTo(ax+(d>0?3:5),y+PH/2); ctx.fill();
+    }
+    ctx.restore();
+  }
+  else if(p.type==='spring'){
+    // 上板（踩的地方）
+    rect('#f472b6');
+    // 下板
+    const by = y+PH+9;
+    ctx.fillStyle='#be185d'; ctx.beginPath(); ctx.roundRect(x+6,by,PW-12,PH-4,3); ctx.fill();
+    // 中間的彈簧圈（圓滑的線圈，不是尖刺）
+    ctx.strokeStyle='#9d174d'; ctx.lineWidth=2.5; ctx.lineCap='round';
+    const cx=x+PW/2;
+    for(let k=-1;k<=1;k+=2){
+      ctx.beginPath();
+      for(let i=0;i<=12;i++){
+        const yy = y+PH + (by-(y+PH))*i/12;
+        const xx = cx + k*20 + Math.sin(i*Math.PI/1.5)*6;
+        i===0 ? ctx.moveTo(xx,yy) : ctx.lineTo(xx,yy);
+      }
+      ctx.stroke();
+    }
+    // 上板亮邊，讓它看起來像一塊板子
+    ctx.fillStyle='#fbcfe8'; ctx.fillRect(x+4,y+2,PW-8,3);
+  }
+  else if(p.type==='fake'){
+    ctx.fillStyle='#c4b5fd'; ctx.beginPath(); ctx.roundRect(x,y,PW,PH,r); ctx.fill();
+    ctx.strokeStyle='#7c3aed'; ctx.lineWidth=1.5;
+    for(let i=10;i<PW;i+=18){ ctx.beginPath(); ctx.moveTo(x+i,y); ctx.lineTo(x+i-5,y+PH); ctx.stroke(); }
+  }
+}
+function drawHero(s){
+  const x = s.x, y = s.y - s.cam;
+  if(s.hurtCd>0 && Math.floor(s.t*20)%2===0) return;
+  ctx.save(); ctx.translate(x,y);
+  const walk = (s.standing && s.dir) ? Math.sin(s.t*20)*3 : 0;
+  ctx.fillStyle = '#222';
+  ctx.fillRect(-6,-5,5,5+walk*0.4); ctx.fillRect(1,-5,5,5-walk*0.4);
+  ctx.fillStyle = s.color; ctx.beginPath(); ctx.roundRect(-9,-19,18,15,5); ctx.fill();
+  ctx.fillStyle = '#ffdcb4'; ctx.beginPath(); ctx.arc(0,-22,8,0,7); ctx.fill();
+  ctx.fillStyle = s.color; ctx.beginPath(); ctx.arc(0,-25,8,Math.PI,0); ctx.fill();
+  ctx.fillStyle = '#111'; ctx.fillRect(-4+s.face*1.5,-23,2,3); ctx.fillRect(2+s.face*1.5,-23,2,3);
+  if(!s.standing && s.vy>0){ ctx.strokeStyle=s.color; ctx.lineWidth=3; ctx.beginPath(); ctx.moveTo(-9,-16); ctx.lineTo(-14,-24); ctx.moveTo(9,-16); ctx.lineTo(14,-24); ctx.stroke(); }
+  ctx.restore();
+}
+
+// ---------- 遊戲流程 ----------
+const keys = {L:false,R:false}, touch = {L:false,R:false};
+let me, cpu, track, state='menu', countdown=0, last=0, result='';
+const ov = document.getElementById('overlay'), ovTitle = document.getElementById('ovTitle'), ovMsg = document.getElementById('ovMsg');
+const startBtn = document.getElementById('startBtn'), levelSel = document.getElementById('level');
+
+function newGame(){
+  track = new Track((Math.random()*1e9)|0);
+  me  = new Side(track,'#3a86ff','你',SOLO?(cv.width-W)/2:0,false);
+  cpu = SOLO ? null : new Side(track,'#ff5d5d','電腦',W+GAP,true);
+  state='count'; countdown=3; ov.style.display='none';
+}
+function endGame(){
+  state='over';
+  if(SOLO){ const a=me.floor; ovTitle.textContent='挑戰結束'; ovMsg.innerHTML='你爬到了 '+'地下 '+a+' 層'+'！'; ov.style.display='none'; setTimeout(()=>RB.done('score',String(a)),1300); return; }
+  const a = me.floor, b = cpu.floor;
+  let title, msg;
+  if(me.dead && !cpu.dead){ title='😢 你輸了'; msg='電腦活到最後！'; }
+  else if(cpu.dead && !me.dead){ title='🎉 你贏了！'; msg='電腦先出局了！'; }
+  else if(a>b){ title='🎉 你贏了！'; msg='同時出局，但你比較深！'; }
+  else if(b>a){ title='😢 你輸了'; msg='同時出局，電腦比較深。'; }
+  else { title='🤝 平手'; msg='勢均力敵！'; }
+  ovTitle.textContent = title;
+  ovMsg.innerHTML = msg + '<br>你：地下 '+a+' 層　電腦：地下 '+b+' 層';
+  if(RB.embed){ ov.style.display='none'; setTimeout(()=>RB.done(title.indexOf('贏')>=0?'win':(title.indexOf('輸')>=0?'lose':'draw'),a+':'+b),1300); return; }
+  startBtn.textContent = '再玩一次'; ov.style.display='flex';
+}
+function loop(ts){
+  const dt = Math.min(0.033, (ts-last)/1000 || 0); last = ts;
+  ctx.clearRect(0,0,cv.width,cv.height);
+  if(me){
+    if(state==='play'){
+      const d = (keys.R||touch.R?1:0) - (keys.L||touch.L?1:0);
+      me.dir = d; me.update(dt, d);
+      const lv = levelSel.value;
+      if(cpu){ cpu.dir = cpu.think(lv); cpu.update(dt, cpu.dir); }
+      if(me.dead || (cpu && cpu.dead)) endGame();
+    } else if(state==='count'){
+      countdown -= dt; if(countdown<=0) state='play';
+    }
+    drawSide(me); if(cpu) drawSide(cpu);
+    if(cpu){ ctx.fillStyle='rgba(255,255,255,.15)'; ctx.fillRect(W,0,GAP,H); }
+    if(state==='count'){
+      ctx.fillStyle='#fff'; ctx.font='bold 80px '+FONT; ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillText(Math.ceil(countdown), cv.width/2, H/2);
+    }
+  }
+  requestAnimationFrame(loop);
+}
+startBtn.onclick = newGame;
+document.getElementById('restart').onclick = newGame;
+addEventListener('keydown',e=>{
+  if(e.key==='ArrowLeft'||e.key==='a'||e.key==='A'){keys.L=true;e.preventDefault();}
+  if(e.key==='ArrowRight'||e.key==='d'||e.key==='D'){keys.R=true;e.preventDefault();}
+  if(e.key==='Enter' && !RB.embed && (state==='menu'||state==='over')) newGame();
+});
+addEventListener('keyup',e=>{
+  if(e.key==='ArrowLeft'||e.key==='a'||e.key==='A') keys.L=false;
+  if(e.key==='ArrowRight'||e.key==='d'||e.key==='D') keys.R=false;
+});
+function hold(id,k){
+  const b=document.getElementById(id);
+  const on=e=>{touch[k]=true;e.preventDefault();}, off=e=>{touch[k]=false;e.preventDefault();};
+  b.addEventListener('pointerdown',on); b.addEventListener('pointerup',off);
+  b.addEventListener('pointerleave',off); b.addEventListener('pointercancel',off);
+}
+hold('bL','L'); hold('bR','R');
+// 直接按左半/右半畫面也能操控
+cv.addEventListener('pointerdown',e=>{
+  const r=cv.getBoundingClientRect(), px=(e.clientX-r.left)/r.width*cv.width;
+  if(SOLO){ if(px<cv.width/2) touch.L=true; else touch.R=true; } else if(px<W){ if(px<W/2) touch.L=true; else touch.R=true; }
+});
+const rel=()=>{touch.L=false;touch.R=false;};
+cv.addEventListener('pointerup',rel); cv.addEventListener('pointerleave',rel);
+if(RB.embed){ levelSel.value=({easy:'easy',normal:'normal',hard:'hard'})[RB.lv]||'normal'; document.getElementById('heal').value=(RB.v==='heal')?'on':'off'; newGame(); }
+requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<title>雙人打地鼠大賽</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none}
+body{margin:0;font-family:"Microsoft JhengHei","PingFang TC",sans-serif;background:linear-gradient(#8fd3ff,#b9f0a0 60%,#6bbf4a);min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:8px}
+h1{margin:4px 0;color:#7a3b00;text-shadow:2px 2px #fff}
+#top{display:flex;gap:20px;align-items:center;font-size:22px;font-weight:bold;color:#333}
+#time{font-size:40px;color:#d62828;min-width:90px;text-align:center}
+#legend{font-size:15px;background:#fffbe6cc;border-radius:12px;padding:6px 12px;margin:6px 0;text-align:center;line-height:1.7}
+#arena{display:flex;gap:24px;flex-wrap:wrap;justify-content:center;width:100%}
+.panel{background:#ffffffaa;border-radius:18px;padding:10px;width:min(46vw,430px);min-width:300px}
+.panel h2{margin:0 0 6px;text-align:center;font-size:22px}
+.p1 h2{color:#1d6fd8}.p2 h2{color:#d8431d}
+.board{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.hole{position:relative;aspect-ratio:1;background:radial-gradient(ellipse at 50% 80%,#3b2410 0 55%,#6b4423 56% 100%);border-radius:50%;overflow:hidden;cursor:pointer;border:3px solid #5a3a1a}
+.key{position:absolute;right:6px;bottom:2px;font-size:13px;color:#ffe9b0;font-weight:bold;z-index:5;opacity:.85}
+.mole{position:absolute;left:0;right:0;bottom:-100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:clamp(34px,6vw,62px);transition:bottom .12s;pointer-events:none}
+.mole.up{bottom:6%}
+.mole .hat{position:absolute;top:2%;font-size:.55em}
+.mole.t1 .face{filter:none}
+.mole.t2 .face{filter:drop-shadow(0 0 6px #4aa3ff)}
+.mole.t3 .face{filter:drop-shadow(0 0 10px gold) sepia(1) saturate(3) hue-rotate(-10deg) brightness(1.15)}
+.mole .hp{position:absolute;bottom:2px;left:4px;font-size:.3em;background:#fff;border-radius:8px;padding:0 5px;color:#c00;font-weight:bold}
+.hole.hit{animation:shake .15s}
+@keyframes shake{25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+.pop{position:absolute;left:50%;top:20%;transform:translateX(-50%);font-weight:bold;color:#fff;text-shadow:1px 1px 3px #000;font-size:22px;z-index:6;animation:fly .6s forwards;pointer-events:none}
+@keyframes fly{to{top:-10%;opacity:0}}
+.score{font-size:30px;text-align:center;font-weight:bold;margin-bottom:4px}
+#overlay{position:fixed;inset:0;background:#000a;display:flex;align-items:center;justify-content:center;z-index:50}
+#box{background:#fff;border-radius:22px;padding:24px 30px;text-align:center;max-width:92vw}
+#box h2{margin:0 0 8px;font-size:30px;color:#7a3b00}
+#box p{font-size:17px;line-height:1.7;margin:6px 0}
+button.go{font-size:24px;padding:10px 34px;border:none;border-radius:30px;background:#ff9f1c;color:#fff;font-weight:bold;cursor:pointer;margin-top:10px}
+</style>
+</head>
+<body>
+<h1>🔨 雙人打地鼠大賽 🔨</h1>
+<div id="top"><span style="color:#1d6fd8">玩家1</span><span id="time">20</span><span style="color:#d8431d">玩家2</span></div>
+<div id="legend">
+🐹 普通地鼠：打 <b>1</b> 下＝<b>10</b> 分　｜　⛑️🐹 鐵帽地鼠：打 <b>2</b> 下＝<b>30</b> 分　｜　👑🐹 黃金地鼠：打 <b>3</b> 下＝<b>60</b> 分
+</div>
+<div id="arena">
+  <div class="panel p1"><h2>🔵 玩家1</h2><div class="score" id="s0">0</div><div class="board" id="b0"></div></div>
+  <div class="panel p2"><h2>🔴 玩家2</h2><div class="score" id="s1">0</div><div class="board" id="b1"></div></div>
+</div>
+
+<div id="overlay"><div id="box">
+  <h2>🐹 打地鼠大賽 🐹</h2>
+  <p>兩邊的地鼠<b>一模一樣</b>，看誰手比較快！<br>時間 20 秒，地鼠越厲害，要打越多下。</p>
+  <p>💻 電腦鍵盤：<br>玩家1 用左邊 <b>1234 / QWER / ASDF / ZXCV</b><br>玩家2 用右邊 <b>7890 / UIOP / JKL; / M,./</b><br>📱 平板或觸控螢幕：直接用手指點自己那一邊</p>
+  <button class="go" id="start">開始比賽！</button>
+</div></div>
+
+<script>
+/* ===== 休息小遊戲「嵌入模式」（relax-break 協定 v1）=====
+   由 relax-break.js 以 iframe 載入，設定放在 iframe 的 name（RB:xxx）或網址 ?embed=1&v=&lv=&err=&id=。
+   embed=1：略過選單、直接開一局、結束時 postMessage({source:'relax',type:'result',result:'win|lose|draw'})
+   v=玩法代號  lv=easy|normal|hard  err=0~1（電腦隨機亂走的機率，連續平手時由外面調高）   */
+var RB=(function(){var q;try{if(location.search.indexOf('embed=1')>=0)q=new URLSearchParams(location.search);else if(String(window.name).indexOf('RB:')===0)q=new URLSearchParams(String(window.name).slice(3));}catch(e){}
+if(!q)q=new URLSearchParams('');var on=q.get('embed')==='1';if(on)document.documentElement.classList.add('rb');var sent=false;
+return{embed:on,v:q.get('v')||'',lv:q.get('lv')||'normal',err:Math.max(0,Math.min(1,parseFloat(q.get('err'))||0)),id:q.get('id')||'',
+done:function(r,info){if(!on||sent)return;sent=true;try{parent.postMessage({source:'relax',type:'result',id:q.get('id')||'',result:r,info:info||''},'*')}catch(e){}}};})();
+
+const KEYS=[
+ ['1','2','3','4','q','w','e','r','a','s','d','f','z','x','c','v'],
+ ['7','8','9','0','u','i','o','p','j','k','l',';','m',',','.','/']
+];
+const TYPES={
+ 1:{hp:1,pts:10,life:1500,hat:'',w:60},
+ 2:{hp:2,pts:30,life:1900,hat:'⛑️',w:28},
+ 3:{hp:3,pts:60,life:2300,hat:'👑',w:12}
+};
+const TOTAL=20;
+let scores,moles,running=false,endAt,spawnTimer,tickTimer,nextId=1;
+const holes=[[],[]];
+
+function build(){
+  for(let p=0;p<2;p++){
+    const b=document.getElementById('b'+p);b.innerHTML='';
+    for(let i=0;i<16;i++){
+      const h=document.createElement('div');h.className='hole';
+      h.innerHTML='<div class="mole"><span class="hat"></span><span class="face">🐹</span><span class="hp"></span></div><span class="key">'+KEYS[p][i].toUpperCase()+'</span>';
+      h.addEventListener('pointerdown',e=>{e.preventDefault();if(RB.embed&&p===1)return;whack(p,i)});
+      b.appendChild(h);holes[p][i]=h;
+    }
+  }
+}
+build();
+
+let ac;
+function beep(f,d,type){
+  try{ac=ac||new (window.AudioContext||window.webkitAudioContext)();
+  const o=ac.createOscillator(),g=ac.createGain();o.type=type||'square';o.frequency.value=f;
+  g.gain.value=.08;o.connect(g);g.connect(ac.destination);o.start();
+  g.gain.exponentialRampToValueAtTime(.001,ac.currentTime+d);o.stop(ac.currentTime+d);}catch(e){}
+}
+
+function pickType(){
+  let r=Math.random()*100;
+  for(const t of [1,2,3]){ if(r<TYPES[t].w) return t; r-=TYPES[t].w; }
+  return 1;
+}
+
+/* 嵌入模式：右邊由電腦打。lv 決定反應速度與漏打率；err（連續平手時升高）讓電腦更慢、更常漏打 */
+const CPU={easy:{r:[1000,1500],miss:.28,gap:420},normal:{r:[650,1050],miss:.14,gap:300},hard:{r:[420,720],miss:.06,gap:220}};
+function cpuPlan(i,id,type){
+  const c=CPU[RB.lv]||CPU.normal, err=RB.err;
+  if(Math.random()<Math.max(c.miss,err)) return;
+  const slow=1+err, need=TYPES[type].hp;
+  const t=(c.r[0]+Math.random()*(c.r[1]-c.r[0]))*slow;
+  if(t+(need-1)*c.gap*slow>TYPES[type].life-150) return;
+  for(let k=0;k<need;k++){
+    setTimeout(()=>{const m=moles[1][i];if(running&&m&&m.id===id)whack(1,i);},t+k*c.gap*slow);
+  }
+}
+function spawn(){
+  if(!running) return;
+  const free=[];
+  for(let i=0;i<16;i++) if(!moles[0][i]&&!moles[1][i]) free.push(i);
+  if(free.length){
+    const i=free[Math.floor(Math.random()*free.length)];
+    const type=pickType();
+    const until=performance.now()+TYPES[type].life;
+    const id=nextId++;
+    for(let p=0;p<2;p++) moles[p][i]={id,type,hp:TYPES[type].hp,until};
+    render(i);
+    if(RB.embed) cpuPlan(i,id,type);
+  }
+  const elapsed=TOTAL-(endAt-performance.now())/1000;
+  const delay=Math.max(330,700-elapsed*12);
+  spawnTimer=setTimeout(spawn,delay*(0.7+Math.random()*0.6));
+}
+
+function render(i){
+  for(let p=0;p<2;p++){
+    const m=moles[p][i],el=holes[p][i].querySelector('.mole');
+    if(m){
+      el.className='mole up t'+m.type;
+      el.querySelector('.hat').textContent=TYPES[m.type].hat;
+      el.querySelector('.hp').textContent=m.type>1?'❤'.repeat(m.hp):'';
+    }else el.className='mole';
+  }
+}
+
+function pop(p,i,txt){
+  const s=document.createElement('div');s.className='pop';s.textContent=txt;
+  holes[p][i].appendChild(s);setTimeout(()=>s.remove(),600);
+}
+
+function whack(p,i){
+  if(!running) return;
+  const h=holes[p][i];
+  h.classList.remove('hit');void h.offsetWidth;h.classList.add('hit');
+  const m=moles[p][i];
+  if(!m){ beep(150,.1,'sawtooth'); return; }
+  m.hp--;
+  if(m.hp<=0){
+    scores[p]+=TYPES[m.type].pts;
+    document.getElementById('s'+p).textContent=scores[p];
+    pop(p,i,'+'+TYPES[m.type].pts);
+    beep(m.type===3?900:m.type===2?700:520,.15);
+    moles[p][i]=null;
+  }else{
+    pop(p,i,'打中！');beep(380,.08);
+  }
+  render(i);
+}
+
+function tick(){
+  const now=performance.now();
+  for(let i=0;i<16;i++){
+    let changed=false;
+    for(let p=0;p<2;p++){
+      const m=moles[p][i];
+      if(m&&now>m.until){moles[p][i]=null;changed=true;}
+    }
+    if(changed) render(i);
+  }
+  const left=Math.max(0,Math.ceil((endAt-now)/1000));
+  document.getElementById('time').textContent=left;
+  if(now>=endAt) finish();
+}
+
+function startGame(){
+  scores=[0,0];moles=[Array(16).fill(null),Array(16).fill(null)];
+  for(let i=0;i<16;i++) render(i);
+  document.getElementById('s0').textContent=0;document.getElementById('s1').textContent=0;
+  document.getElementById('overlay').style.display='none';
+  running=true;endAt=performance.now()+TOTAL*1000;
+  document.getElementById('time').textContent=TOTAL;
+  tickTimer=setInterval(tick,50);spawn();
+}
+
+function finish(){
+  running=false;clearInterval(tickTimer);clearTimeout(spawnTimer);
+  for(let i=0;i<16;i++){moles[0][i]=moles[1][i]=null;render(i);}
+  const [a,b]=scores;
+  const N1=RB.embed?'你':'玩家1',N2=RB.embed?'電腦':'玩家2';
+  const res=a===b?'🤝 平手！':(a>b?(RB.embed?'🏆 你贏了！':'🏆 玩家1 獲勝！'):(RB.embed?'😅 電腦贏了':'🏆 玩家2 獲勝！'));
+  beep(660,.3);setTimeout(()=>beep(880,.4),250);
+  const box=document.getElementById('box');
+  box.innerHTML='<h2>時間到！</h2><p style="font-size:22px">🔵 '+N1+'：<b>'+a+'</b> 分<br>🔴 '+N2+'：<b>'+b+'</b> 分</p><p style="font-size:28px;font-weight:bold;color:#d62828">'+res+'</p><button class="go" id="again">再玩一次</button>';
+  if(RB.embed){const ag=document.getElementById('again');ag.textContent='繼續 ▶';ag.onclick=()=>RB.done(a===b?'draw':(a>b?'win':'lose'),String(a));}else document.getElementById('again').onclick=startGame;
+  document.getElementById('overlay').style.display='flex';
+}
+
+document.getElementById('start').onclick=startGame;
+if(RB.embed){
+  document.getElementById('overlay').style.display='none';
+  document.querySelector('#top span:first-child').textContent='你';
+  document.querySelector('#top span:last-child').textContent='電腦';
+  document.querySelector('.p1 h2').textContent='🔵 你';
+  document.querySelector('.p2 h2').textContent='🔴 電腦';
+  document.querySelectorAll('#b1 .key').forEach(k=>k.style.display='none');
+  document.getElementById('legend').insertAdjacentHTML('beforeend','<br>⌨️ 你用左邊的 1234 / QWER / ASDF / ZXCV，或直接點左邊的洞；右邊是電腦。分數比電腦高就贏！');
+  setTimeout(startGame,500);
+}
+
+document.addEventListener('keydown',e=>{
+  if(e.repeat) return;
+  const k=e.key.toLowerCase();
+  for(let p=0;p<(RB.embed?1:2);p++){
+    const i=KEYS[p].indexOf(k);
+    if(i>=0){e.preventDefault();whack(p,i);return;}
+  }
+});
+</script>
+</body>
+</html>

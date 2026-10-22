@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>撿紅點</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"Microsoft JhengHei","PingFang TC","Noto Sans TC",sans-serif;background:#0b5d3b;background:radial-gradient(ellipse at center,#14804f 0%,#0a4a30 100%);color:#fff;min-height:100vh;padding:10px}
+.top{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;max-width:1100px;margin:0 auto 8px}
+h1{font-size:22px;letter-spacing:2px}
+.ctrl{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+select,button{font:inherit;font-size:14px;padding:6px 12px;border-radius:8px;border:none;cursor:pointer}
+select{background:#fff;color:#222}
+button{background:#ffd54a;color:#4a3300;font-weight:bold}
+button:hover{filter:brightness(1.08)}
+button.sub{background:#ffffff33;color:#fff}
+button:disabled{opacity:.4;cursor:default}
+#wrap{max-width:1100px;margin:0 auto}
+.opps{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-bottom:8px}
+.seat{background:#00000040;border:2px solid transparent;border-radius:12px;padding:8px 12px;min-width:200px;flex:1;max-width:360px;transition:.2s}
+.seat.turn{border-color:#ffd54a;box-shadow:0 0 14px #ffd54a99}
+.seat .nm{font-weight:bold;font-size:15px;display:flex;justify-content:space-between;gap:6px}
+.seat .sc{color:#ffd54a}
+.backs{display:flex;margin:6px 0 2px;min-height:34px}
+.mini{width:22px;height:32px;border-radius:4px;background:repeating-linear-gradient(45deg,#2b4a9a,#2b4a9a 4px,#3a5cc0 4px,#3a5cc0 8px);border:1px solid #fff;margin-right:-8px}
+.capinfo{font-size:12px;opacity:.85}
+.center{background:#00000030;border-radius:14px;padding:10px;display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap;justify-content:center}
+.deckbox{text-align:center;font-size:13px}
+.deckbox .lab{margin-top:4px}
+#table{display:flex;flex-wrap:wrap;gap:8px;flex:1;min-width:260px;min-height:100px;align-content:flex-start}
+.card{width:62px;height:88px;background:#fff;border-radius:8px;position:relative;box-shadow:0 2px 5px #0006;user-select:none;cursor:default;transition:transform .15s,box-shadow .15s;font-weight:bold}
+.card.red{color:#d32020}.card.black{color:#1a1a1a}
+.card .rk{position:absolute;top:3px;left:5px;font-size:17px;line-height:1}
+.card .rk2{position:absolute;top:20px;left:5px;font-size:14px;line-height:1}
+.card .big{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:34px;opacity:.9;padding-top:10px}
+.card .pt{position:absolute;bottom:3px;right:4px;font-size:11px;background:#d32020;color:#fff;border-radius:8px;padding:1px 5px}
+.card .pt0{position:absolute;bottom:3px;right:4px;font-size:10px;background:#888;color:#fff;border-radius:8px;padding:1px 5px}
+.card.back{background:repeating-linear-gradient(45deg,#2b4a9a,#2b4a9a 6px,#3a5cc0 6px,#3a5cc0 12px);border:3px solid #fff}
+.card.click{cursor:pointer}
+.card.click:hover{transform:translateY(-6px)}
+.card.sel{transform:translateY(-14px);box-shadow:0 0 0 3px #ffd54a,0 6px 12px #0008}
+.card.hint{box-shadow:0 0 0 4px #4dff88,0 0 14px #4dff88;cursor:pointer;animation:pulse 1s infinite}
+.card.fresh{box-shadow:0 0 0 3px #7fd1ff}
+.card.flip{box-shadow:0 0 0 4px #ffd54a,0 0 16px #ffd54a}
+@keyframes pulse{50%{transform:scale(1.07)}}
+.msg{text-align:center;margin:10px 0;font-size:17px;min-height:26px;color:#fff6c2;font-weight:bold}
+.me{background:#00000040;border-radius:12px;padding:8px 12px;margin-top:4px}
+.me.turn{box-shadow:0 0 14px #ffd54a99;outline:2px solid #ffd54a}
+.me .nm{font-weight:bold;display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px}
+#hand{display:flex;flex-wrap:wrap;gap:8px;padding:16px 4px 6px;min-height:110px}
+.actbar{text-align:center;min-height:38px}
+.pairs{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+.pair{background:#ffffff22;border-radius:6px;padding:2px 6px;font-size:12px}
+.pair .r{color:#ff9a9a}.pair .k{color:#ddd}
+.pair b{color:#ffd54a}
+#log{max-width:1100px;margin:8px auto 0;background:#00000040;border-radius:10px;padding:8px 12px;font-size:13px;line-height:1.6;max-height:130px;overflow:auto}
+.modal{position:fixed;inset:0;background:#000a;display:none;align-items:center;justify-content:center;padding:14px;z-index:9}
+.modal.on{display:flex}
+.box{background:#fffdf3;color:#222;border-radius:14px;max-width:560px;width:100%;max-height:90vh;overflow:auto;padding:18px 22px;line-height:1.7;font-size:15px}
+.box h2{margin-bottom:6px;color:#0a4a30}
+.box h3{margin:10px 0 2px;color:#a33}
+.box table{width:100%;border-collapse:collapse;margin:8px 0}
+.box td,.box th{border-bottom:1px solid #ddd;padding:5px 6px;text-align:center}
+.win{background:#fff0b3;font-weight:bold}
+.ok{color:#0a7a3a;font-weight:bold}.bad{color:#c22;font-weight:bold}
+.box .row{text-align:center;margin-top:10px}
+@media(max-width:600px){.card{width:50px;height:72px}.card .rk{font-size:14px}.card .rk2{top:17px;font-size:12px}.card .big{font-size:26px}.card .pt{font-size:10px}h1{font-size:18px}}
+html.rb .top,html.rb #log{display:none!important}
+html.rb body{padding:6px}
+html.rb .card{width:50px;height:72px}html.rb .card .rk{font-size:14px}html.rb .card .rk2{top:17px;font-size:12px}html.rb .card .big{font-size:26px}html.rb .card .pt{font-size:10px}
+html.rb .seat{min-width:150px;padding:6px 8px}html.rb #hand{min-height:90px;padding-top:12px}
+</style>
+<style>
+#tip{max-width:1100px;margin:8px auto 0;background:#fff8d6;color:#5a3a00;border:2px solid #e0b84a;border-radius:12px;padding:8px 12px;font-size:15px;line-height:2;text-align:center}
+#tip .chip{display:inline-block;background:#fff;border:2px solid #d9a21b;border-radius:10px;padding:0 9px;margin:0 3px;font-weight:bold;color:#b23b00}
+#tip small{opacity:.85}
+html.rb #tip{font-size:13px;line-height:1.9;padding:5px 8px}
+</style>
+</head>
+<body>
+<div class="top">
+  <h1>🃏 撿紅點</h1>
+  <div class="ctrl">
+    人數：
+    <select id="np"><option value="2">2 人（你＋1 電腦）</option><option value="3">3 人（你＋2 電腦）</option><option value="4">4 人（你＋3 電腦）</option></select>
+    <button id="newBtn">開新遊戲</button>
+    <button class="sub" id="ruleBtn">規則說明</button>
+  </div>
+</div>
+<div id="wrap">
+  <div class="opps" id="opps"></div>
+  <div class="center">
+    <div class="deckbox"><div id="deck"></div><div class="lab" id="decklab"></div></div>
+    <div class="deckbox" id="flipbox" style="display:none"><div id="flipped"></div><div class="lab">翻出的牌</div></div>
+    <div id="table"></div>
+  </div>
+  <div id="tip">
+  <b>🎯 收牌口訣：兩張牌加起來要剛好等於 10！</b><br>
+  <span class="chip">2＋8</span><span class="chip">3＋7</span><span class="chip">4＋6</span><span class="chip">5＋5</span><span class="chip">A＋9</span> <small>（配對時 A 算 1 點）</small><br>
+  <span class="chip">10＋10</span><span class="chip">J＋J</span><span class="chip">Q＋Q</span><span class="chip">K＋K</span> <small>10、J、Q、K 都算 10，但要配「一模一樣」的</small>
+</div>
+  <div class="msg" id="msg"></div>
+  <div class="actbar" id="act"></div>
+  <div class="me" id="me">
+    <div class="nm"><span>🙂 你的手牌</span><span id="mescore"></span></div>
+    <div id="hand"></div>
+    <div class="capinfo" id="mecap"></div>
+    <div class="pairs" id="mepairs"></div>
+  </div>
+</div>
+<div id="log"></div>
+
+<div class="modal" id="ruleModal"><div class="box">
+<h2>🃏 撿紅點 規則</h2>
+<p>一副 52 張牌，<b>紅色（♥♦）才有分數，黑色（♠♣）沒有分</b>，所以叫「撿紅點」。</p>
+<h3>牌的分數</h3>
+<p>2～8 是牌面點數；10、J、Q、K＝10 分；9＝10 分；A＝20 分。（卡片右下角的小標籤就是這張牌的分數，紅牌才有。）</p>
+<h3>三種可以收牌的組合</h3>
+<p>① <b>單十</b>：2+8、3+7、4+6、5+5<br>
+② <b>雙十</b>：10+10、J+J、Q+Q、K+K（只能同點數配）<br>
+③ <b>A+9</b>：A 和 9 配對<br>
+配對成功就把兩張牌收走，兩張牌的紅點加起來就是你的得分。</p>
+<h3>怎麼玩</h3>
+<p>1. 每人拿牌（2 人各 12 張、3 人各 8 張、4 人各 6 張），剩下的牌蓋著當共牌，先翻 4 張到桌上。<br>
+2. 輪到你：點選手牌，桌上<span style="color:#0a7a3a;font-weight:bold">發光的綠框牌</span>就是可以配對的，點它就收牌；沒有可配對的，就按「放到桌上」。<br>
+3. 出完牌後，換你<b>自己點一下共牌堆</b>翻一張牌，這張也可以和桌上的牌配對，配不到就留在桌上。<br>
+4. 順時針輪流，直到手牌和共牌都用完，開始計分。</p>
+<h3>總分驗算</h3>
+<p>全部紅牌加起來是 <b>210 分</b>。遊戲結束後，「各家得分＋桌上沒被收走的紅點」要剛好是 210 分，就代表沒有算錯。</p>
+<div class="row"><button onclick="closeRule()">開始玩！</button></div>
+</div></div>
+
+<div class="modal" id="endModal"><div class="box" id="endBox"></div></div>
+
+<script>
+/* ===== 休息小遊戲「嵌入模式」（relax-break 協定 v1）=====
+   由 relax-break.js 以 iframe 載入，設定放在 iframe 的 name（RB:xxx）或網址 ?embed=1&v=&lv=&err=&id=。
+   embed=1：略過選單、直接開一局、結束時 postMessage({source:'relax',type:'result',result:'win|lose|draw'})
+   v=玩法代號  lv=easy|normal|hard  err=0~1（電腦隨機亂走的機率，連續平手時由外面調高）   */
+var RB=(function(){var q;try{if(location.search.indexOf('embed=1')>=0)q=new URLSearchParams(location.search);else if(String(window.name).indexOf('RB:')===0)q=new URLSearchParams(String(window.name).slice(3));}catch(e){}
+if(!q)q=new URLSearchParams('');var on=q.get('embed')==='1';if(on)document.documentElement.classList.add('rb');var sent=false;
+return{embed:on,v:q.get('v')||'',lv:q.get('lv')||'normal',err:Math.max(0,Math.min(1,parseFloat(q.get('err'))||0)),id:q.get('id')||'',
+done:function(r,info){if(!on||sent)return;sent=true;try{parent.postMessage({source:'relax',type:'result',id:q.get('id')||'',result:r,info:info||''},'*')}catch(e){}}};})();
+function effErr(){return Math.max(RB.err,RB.embed?(({easy:.35,normal:.1,hard:0})[RB.lv]||0):0);}
+const RANKS=['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
+const SUITS=[{s:'♥',red:1},{s:'♦',red:1},{s:'♠',red:0},{s:'♣',red:0}];
+const SMALL=['2','3','4','5','6','7','8'], DOUBLE=['10','J','Q','K'];
+let G=null, uid=0;
+
+function val(c){if(c.r==='A')return 20;if(['9','10','J','Q','K'].includes(c.r))return 10;return +c.r}
+function pts(c){return c.red?val(c):0}
+function match(a,b){
+  if(a.id===b.id)return false;
+  if(SMALL.includes(a.r)&&SMALL.includes(b.r))return (+a.r)+(+b.r)===10;
+  if(a.r===b.r&&DOUBLE.includes(a.r))return true;
+  return (a.r==='A'&&b.r==='9')||(a.r==='9'&&b.r==='A');
+}
+function makeDeck(){
+  const d=[];
+  for(const s of SUITS)for(const r of RANKS)d.push({id:uid++,r,s:s.s,red:s.red});
+  for(let i=d.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[d[i],d[j]]=[d[j],d[i]]}
+  return d;
+}
+function cardHTML(c,cls='',attr=''){
+  const p=c.red?`<span class="pt">${pts(c)}分</span>`:`<span class="pt0">0</span>`;
+  return `<div class="card ${c.red?'red':'black'} ${cls}" ${attr}><span class="rk">${c.r}</span><span class="rk2">${c.s}</span><span class="big">${c.s}</span>${p}</div>`;
+}
+function log(t){G.log.unshift(t);if(G.log.length>30)G.log.pop()}
+
+function newGame(){
+  const n=+document.getElementById('np').value;
+  const deck=makeDeck();
+  const per=24/n;
+  G={n,phase:'busy',cur:0,over:false,selected:null,flipped:null,fresh:null,opts:[],log:[],
+     players:[],hands:[],caps:[],table:[],deck:[],msg:''};
+  const names=['你','電腦 A','電腦 B','電腦 C'];
+  for(let i=0;i<n;i++){
+    G.players.push({name:names[i],human:i===0});
+    G.hands.push(deck.splice(0,per));
+    G.caps.push([]);
+  }
+  G.hands.forEach(h=>h.sort(sortFn));
+  G.deck=deck.splice(0,deck.length);
+  G.table=G.deck.splice(0,4);
+  G.cur=Math.floor(Math.random()*n);
+  log(`發牌完成：每人 ${per} 張，桌上翻開 4 張，共牌剩 ${G.deck.length} 張。發牌者：${G.players[G.cur].name}，先出牌。`);
+  document.getElementById('endModal').classList.remove('on');
+  render();
+  setTimeout(startTurn,700);
+}
+function sortFn(a,b){return RANKS.indexOf(a.r)-RANKS.indexOf(b.r)||a.s.localeCompare(b.s)}
+function score(p){return G.caps[p].reduce((t,[a,b])=>t+pts(a)+pts(b),0)}
+
+function startTurn(){
+  if(G.over)return;
+  G.selected=null;G.fresh=null;
+  const p=G.cur;
+  if(G.players[p].human){G.phase='hand';G.msg='輪到你了！請點選一張手牌 👇'}
+  else{G.phase='busy';G.msg=`${G.players[p].name} 思考中…`;setTimeout(aiPlay,1000)}
+  render();
+}
+function matchesFor(card){return G.table.filter(t=>match(card,t))}
+
+function aiPlay(){
+  const p=G.cur,hand=G.hands[p];
+  let best=null;
+  if(effErr()>0 && Math.random()<effErr()){ const c0=hand[Math.floor(Math.random()*hand.length)]; const m0=matchesFor(c0); doHandPlay(p,c0,m0.length?m0[Math.floor(Math.random()*m0.length)]:null); return; }
+  for(const c of hand){
+    const ms=matchesFor(c);
+    if(ms.length){
+      for(const t of ms){
+        const v=(pts(c)+pts(t))*3+0.5+Math.random()*0.3;
+        if(!best||v>best.v)best={v,c,t};
+      }
+    }else{
+      const v=-pts(c)*2+Math.random()*0.3;
+      if(!best||v>best.v)best={v,c,t:null};
+    }
+  }
+  doHandPlay(p,best.c,best.t);
+}
+function doHandPlay(p,card,target){
+  G.hands[p]=G.hands[p].filter(c=>c.id!==card.id);
+  G.selected=null;
+  if(target){capture(p,card,target,'手牌')}
+  else{G.table.push(card);G.fresh=card.id;log(`${G.players[p].name} 放下 ${card.s}${card.r} 到桌上。`)}
+  G.phase='busy';G.msg=`${G.players[p].name} 出牌完畢，翻共牌…`;
+  render();
+  setTimeout(()=>flipStep(p),900);
+}
+function capture(p,a,b,from){
+  G.table=G.table.filter(c=>c.id!==b.id);
+  G.caps[p].push([a,b]);
+  const g=pts(a)+pts(b);
+  log(`${G.players[p].name} 用${from} ${a.s}${a.r} 配 ${b.s}${b.r}，收牌 +${g} 分。`);
+}
+function flipStep(p){
+  if(G.deck.length===0){endTurn();return}
+  if(G.players[p].human){
+    G.phase='flip';G.msg='請點一下「共牌堆」，自己翻一張牌 👆';
+    render();return;
+  }
+  doFlip(p);
+}
+function onDeck(){
+  if(G.phase!=='flip')return;
+  G.phase='busy';
+  doFlip(0);
+}
+function doFlip(p){
+  const c=G.deck.shift();
+  const opts=matchesFor(c);
+  G.flipped=c;
+  if(!opts.length){
+    G.table.push(c);G.fresh=c.id;G.flipped=null;
+    log(`共牌翻出 ${c.s}${c.r}，沒有配對，留在桌上。`);
+    render();setTimeout(endTurn,900);return;
+  }
+  const human=G.players[p].human;
+  if(human){
+    G.phase='choose';G.opts=opts.map(o=>o.id);
+    G.msg=opts.length>1?`共牌翻出 ${c.s}${c.r}！桌上有好幾張可以配，請點一張發光的牌 👆`:`共牌翻出 ${c.s}${c.r}！請點發光的牌來配對收牌 👆`;
+    render();return;
+  }
+  let t;
+  if(human)t=opts[0];
+  else t=(effErr()>0&&Math.random()<effErr())?opts[Math.floor(Math.random()*opts.length)]:opts.slice().sort((x,y)=>pts(y)-pts(x))[0];
+  G.msg=`共牌翻出 ${c.s}${c.r}，配到了！`;
+  render();
+  setTimeout(()=>{resolveFlip(p,c,t)},1000);
+}
+function resolveFlip(p,c,t){
+  capture(p,c,t,'共牌');
+  G.flipped=null;G.opts=[];
+  render();setTimeout(endTurn,800);
+}
+function endTurn(){
+  if(G.hands.every(h=>h.length===0)&&G.deck.length===0){gameOver();return}
+  G.cur=(G.cur+1)%G.n;
+  startTurn();
+}
+
+/* ---------- 玩家操作 ---------- */
+function onHand(id){
+  if(G.phase!=='hand')return;
+  G.selected=(G.selected===id)?null:id;
+  const c=G.hands[0].find(x=>x.id===id);
+  if(G.selected===null)G.msg='輪到你了！請點選一張手牌 👇';
+  else{
+    const ms=matchesFor(c);
+    G.msg=ms.length?`點選發光的綠框牌來收牌（共 ${ms.length} 張可配）`:`${c.s}${c.r} 沒有可配對的牌，請按「放到桌上」`;
+  }
+  render();
+}
+function onTable(id){
+  if(G.phase==='hand'&&G.selected!==null){
+    const c=G.hands[0].find(x=>x.id===G.selected);
+    const t=G.table.find(x=>x.id===id);
+    if(t&&match(c,t))doHandPlay(0,c,t);
+  }else if(G.phase==='choose'&&G.opts.includes(id)){
+    const t=G.table.find(x=>x.id===id);
+    const c=G.flipped;
+    G.phase='busy';
+    resolveFlip(0,c,t);
+  }
+}
+function discardSel(){
+  if(G.phase!=='hand'||G.selected===null)return;
+  const c=G.hands[0].find(x=>x.id===G.selected);
+  if(matchesFor(c).length)return;
+  doHandPlay(0,c,null);
+}
+
+/* ---------- 畫面 ---------- */
+function pairsHTML(p){
+  return G.caps[p].map(([a,b])=>{
+    const f=c=>`<span class="${c.red?'r':'k'}">${c.s}${c.r}</span>`;
+    return `<span class="pair">${f(a)}+${f(b)} <b>${pts(a)+pts(b)}</b></span>`;
+  }).join('');
+}
+function render(){
+  const opps=document.getElementById('opps');
+  opps.innerHTML=G.players.map((pl,i)=>{
+    if(i===0)return '';
+    const backs='<span class="mini"></span>'.repeat(G.hands[i].length);
+    return `<div class="seat ${G.cur===i&&!G.over?'turn':''}">
+      <div class="nm"><span>🤖 ${pl.name}</span><span class="sc">${score(i)} 分</span></div>
+      <div class="backs">${backs}</div>
+      <div class="capinfo">手牌 ${G.hands[i].length} 張｜已收 ${G.caps[i].length} 組</div>
+      <div class="pairs">${pairsHTML(i)}</div></div>`;
+  }).join('');
+  document.getElementById('deck').innerHTML=G.deck.length?`<div class="card back ${G.phase==='flip'?'hint':''}" id="deckcard"></div>`:`<div class="card" style="opacity:.25"></div>`;
+  document.getElementById('decklab').textContent=`共牌剩 ${G.deck.length} 張`;
+  const fb=document.getElementById('flipbox');
+  if(G.flipped){fb.style.display='block';document.getElementById('flipped').innerHTML=cardHTML(G.flipped,'flip')}
+  else fb.style.display='none';
+
+  // table
+  const selCard=G.selected!==null?G.hands[0].find(x=>x.id===G.selected):null;
+  document.getElementById('table').innerHTML=G.table.map(c=>{
+    let cls='';
+    if(G.fresh===c.id)cls+=' fresh';
+    if(G.phase==='hand'&&selCard&&match(selCard,c))cls+=' hint';
+    if(G.phase==='choose'&&G.opts.includes(c.id))cls+=' hint';
+    return cardHTML(c,cls,`data-t="${c.id}"`);
+  }).join('')||'<span style="opacity:.6">桌上沒有牌了</span>';
+
+  // hand
+  document.getElementById('hand').innerHTML=G.hands[0].map(c=>{
+    let cls=G.phase==='hand'?'click':'';
+    if(G.selected===c.id)cls+=' sel';
+    return cardHTML(c,cls,`data-h="${c.id}"`);
+  }).join('');
+  document.getElementById('me').classList.toggle('turn',G.cur===0&&!G.over);
+  document.getElementById('mescore').textContent=`${score(0)} 分`;
+  document.getElementById('mecap').textContent=`已收 ${G.caps[0].length} 組`;
+  document.getElementById('mepairs').innerHTML=pairsHTML(0);
+  document.getElementById('msg').textContent=G.msg;
+  const act=document.getElementById('act');
+  if(G.phase==='hand'&&selCard&&!matchesFor(selCard).length)
+    act.innerHTML='<button onclick="discardSel()">放到桌上</button>';
+  else act.innerHTML='';
+  document.getElementById('log').innerHTML=G.log.map(l=>'• '+l).join('<br>');
+}
+
+function gameOver(){
+  G.over=true;G.phase='over';G.msg='遊戲結束！';render();
+  const sc=G.players.map((_,i)=>score(i));
+  const left=G.table.reduce((t,c)=>t+pts(c),0);
+  const total=sc.reduce((a,b)=>a+b,0)+left;
+  const mx=Math.max(...sc);
+  const winners=sc.map((s,i)=>s===mx?i:-1).filter(i=>i>=0);
+  const rows=G.players.map((pl,i)=>`<tr class="${sc[i]===mx?'win':''}"><td>${pl.name}${sc[i]===mx?' 🏆':''}</td><td>${G.caps[i].length}</td><td>${sc[i]}</td></tr>`).join('');
+  const leftCards=G.table.map(c=>`<span class="pair"><span class="${c.red?'r':'k'}">${c.s}${c.r}</span></span>`).join('')||'（無）';
+  document.getElementById('endBox').innerHTML=`
+    <h2>🎉 遊戲結束</h2>
+    <p>${winners.length===1?(winners[0]===0?'恭喜你獲勝！':G.players[winners[0]].name+' 獲勝！'):'平手！'}</p>
+    <table><tr><th>玩家</th><th>收牌組數</th><th>得分</th></tr>${rows}</table>
+    <p>桌上沒被收走的紅點：<b>${left}</b> 分<br><span style="font-size:13px;color:#555">剩下的牌：</span> <span style="font-size:13px">${leftCards}</span></p>
+    <p>總分驗算：${sc.join(' + ')} + ${left} = <b>${total}</b>　${total===210?'<span class="ok">✔ 等於 210，沒有算錯！</span>':'<span class="bad">✘ 不等於 210，請檢查</span>'}</p>
+    <div class="row"><button onclick="newGame()">再玩一局</button> <button class="sub" style="background:#ccc;color:#333" onclick="document.getElementById('endModal').classList.remove('on')">看牌桌</button></div>`;
+  if(RB.embed){ const top=Math.max(...sc.slice(1)); G.msg='遊戲結束！你 '+sc[0]+' 分'+(sc[0]>top?'，你贏了！':(sc[0]<top?'，這次輸了。':'，平手！')); setTimeout(()=>RB.done(sc[0]>top?'win':(sc[0]<top?'lose':'draw'),sc.join(':')),2200); }
+  else document.getElementById('endModal').classList.add('on');
+  log(`遊戲結束。各家：${G.players.map((p,i)=>p.name+' '+sc[i]).join('、')}，桌上剩 ${left} 分。`);
+  render();
+}
+
+function closeRule(){document.getElementById('ruleModal').classList.remove('on')}
+document.getElementById('ruleBtn').onclick=()=>document.getElementById('ruleModal').classList.add('on');
+document.getElementById('newBtn').onclick=newGame;
+document.getElementById('hand').addEventListener('click',e=>{const el=e.target.closest('[data-h]');if(el)onHand(+el.dataset.h)});
+document.getElementById('table').addEventListener('click',e=>{const el=e.target.closest('[data-t]');if(el)onTable(+el.dataset.t)});
+document.getElementById('deck').addEventListener('click',onDeck);
+if(RB.embed){ document.getElementById('np').value=(['2','3','4'].indexOf(RB.v)>=0)?RB.v:'2'; } else document.getElementById('ruleModal').classList.add('on');
+newGame();
+</script>
+</body>
+</html>
