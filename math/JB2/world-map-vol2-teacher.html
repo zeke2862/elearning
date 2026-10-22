@@ -1,0 +1,946 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>【教師版】數理大陸總地圖</title>
+<style>
+:root{--ink:#161a2e;--ink2:#20264a;--line:#3a4270;--bronze:#d2a24c;--paper:#f1e8d2;--red:#d24a33;--jade:#43a58f;--txt:#e9e4d4}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;background:radial-gradient(ellipse at top,#252c56,var(--ink) 65%);color:var(--txt);font-family:"Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif}
+h1,h2,h3{font-family:"Noto Serif TC","Songti TC","PMingLiU",serif;margin:0}
+button{font:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible{outline:3px solid #fff;outline-offset:2px}
+.btn{background:var(--bronze);color:#2a1d05;border:0;border-radius:10px;padding:8px 14px;font-weight:700}
+.btn:hover{filter:brightness(1.1)}
+.btn.ghost{background:#2b2a3c;color:#f0cf85;border:2px solid var(--bronze)}
+.btn[disabled]{opacity:.45;cursor:not-allowed;filter:none}
+.btn.small{padding:5px 10px;font-size:14px}
+.muted{color:#b9b6a6;font-size:14px;line-height:1.6}
+#hud{position:fixed;top:0;left:0;right:0;z-index:20;display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:8px 12px;background:linear-gradient(#161a2ee6,#161a2e00)}
+#hud .ttl{display:flex;flex-direction:column;line-height:1.2}
+#hud .ttl b{font-size:19px;color:var(--bronze);font-family:"Noto Serif TC",serif}
+#hud .ttl span{font-size:13px;color:var(--paper)}
+#prog{flex:1;min-width:120px;max-width:300px}
+#prog .bar{height:10px;border-radius:6px;background:#0007;border:1px solid var(--line);overflow:hidden}
+#prog .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--jade),var(--bronze));width:0}
+#prog small{font-size:12px;color:var(--paper)}
+.pill{background:#0009;border:1px solid var(--line);border-radius:999px;padding:5px 12px;font-weight:700;white-space:nowrap}
+#hud .sp{flex:1}
+.badge{background:var(--red);color:#fff;border-radius:6px;padding:2px 8px;font-size:12px}
+#mapwrap{position:absolute;inset:0;overflow:auto;display:flex;box-sizing:border-box;cursor:grab;touch-action:pan-x pan-y}
+#mapwrap.drag{cursor:grabbing}
+#map{display:block;flex:none;margin:auto}
+.hit{fill:#fff;fill-opacity:0;cursor:pointer}
+.hit:hover{fill-opacity:.1}
+.bld{cursor:pointer}
+.bld:hover{filter:brightness(1.2)}
+
+#card{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:25;width:min(94vw,520px);background:var(--ink2);border:2px solid var(--bronze);border-radius:16px;padding:14px 16px;box-shadow:0 8px 30px #000a;display:none}
+#card h3{color:var(--bronze);font-size:20px}
+#card .row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+#card .sub{font-size:14px;color:var(--paper);margin-top:4px;line-height:1.6}
+#card .x{position:absolute;right:10px;top:6px;background:none;border:0;color:#fff;font-size:20px}
+#toast{position:fixed;top:64px;left:50%;transform:translateX(-50%);z-index:80;background:#000d;border:1px solid var(--bronze);border-radius:12px;padding:10px 16px;max-width:92vw;display:none;font-size:15px;text-align:center}
+#err{position:fixed;inset:0;z-index:99;display:none;align-items:center;justify-content:center;background:#000d;padding:20px;text-align:center;font-size:18px}
+.ov{position:fixed;inset:0;z-index:40;background:#0a0d1ccc;display:none;align-items:center;justify-content:center;overflow:auto;padding:10px}
+.ov.on{display:flex}
+#pnlOv{z-index:60}
+.pbox{background:var(--ink2);border:2px solid var(--bronze);border-radius:16px;width:min(96vw,760px);max-height:92vh;overflow:auto;padding:16px 18px;position:relative}
+.pbox.wide{width:min(96vw,960px)}
+.pbox h2{color:var(--bronze);font-size:21px;margin-bottom:8px;padding-right:40px}
+.pbox .x{position:absolute;right:10px;top:8px;background:none;border:0;color:#fff;font-size:22px}
+.row2{display:flex;gap:10px;align-items:center;margin:8px 0;flex-wrap:wrap}
+.row2 label{width:56px;color:var(--paper)}
+input[type=text],input[type=number]{background:#0b0f22;color:var(--txt);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font:inherit;width:180px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 12px}
+.tab{background:#0b0f22;color:var(--txt);border:1px solid var(--line);border-radius:999px;padding:5px 12px;font-size:14px}
+.tab.on{background:var(--bronze);color:#2a1d05;border-color:var(--bronze);font-weight:700}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.it{background:#0b0f22;border:1px solid var(--line);border-radius:12px;padding:10px;text-align:center;display:flex;flex-direction:column;gap:6px;align-items:center}
+.it .pv{height:84px;display:flex;align-items:center;justify-content:center;font-size:52px}
+.it .pv img{max-height:84px;max-width:100%}
+.it b{font-size:15px}
+.it small{color:#b9b6a6;font-size:12px;min-height:30px}
+.mon{background:#0b0f22;border:1px solid var(--line);border-radius:10px;padding:8px;text-align:center;font-size:13px;position:relative}
+.mon .em{font-size:34px;height:48px;display:flex;align-items:center;justify-content:center}
+.mon img{max-width:48px;max-height:48px}
+.mon.lock{opacity:.45}
+.mon[data-act=monInfo]{cursor:pointer}.mon[data-act=monInfo]:hover{border-color:var(--bronze);transform:translateY(-2px)}
+.mdet{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start}.mdet .big{flex:0 0 auto;width:min(100%,260px);text-align:center;font-size:120px;line-height:1.1}.mdet .big img{width:100%;max-height:300px;object-fit:contain;filter:drop-shadow(0 6px 10px #000a)}.mdet .inf{flex:1;min-width:220px}.mdet table{border-collapse:collapse;width:100%;margin:6px 0}.mdet td{border-bottom:1px solid var(--line);padding:3px 6px}.mdet td:last-child{text-align:right;font-weight:700}
+.mon .lv{position:absolute;right:6px;top:4px;background:var(--bronze);color:#2a1d05;border-radius:6px;padding:0 6px;font-size:12px;font-weight:700}
+.mon.boss{border-color:var(--red)}
+.cat{display:flex;gap:10px;align-items:flex-start;background:#0b0f22;border:1px solid var(--line);border-radius:12px;padding:10px;margin:8px 0}
+.cat .av{font-size:38px}
+.mis{display:flex;justify-content:space-between;align-items:center;gap:8px;background:#0b0f22;border:1px solid var(--line);border-radius:10px;padding:8px 10px;margin:6px 0}
+table.w{width:100%;border-collapse:collapse;font-size:14px}
+table.w td,table.w th{border-bottom:1px solid var(--line);padding:5px 6px;text-align:left}
+#home{--u:calc(min(96vw,980px)/100)}
+.room{position:relative;width:min(96vw,980px);aspect-ratio:16/10;border-radius:18px;border:4px solid #5b3d1a;overflow:hidden;background:linear-gradient(#ecd8ae 0 62%,#8a5a2b 62% 100%);background-size:cover;background-position:center;box-shadow:0 10px 40px #000a}
+.room:not(.art):before{content:"";position:absolute;left:0;right:0;top:62%;bottom:0;background:repeating-linear-gradient(90deg,#0000 0 7%,#0003 7% 7.4%)}
+.room .ceil{position:absolute;left:0;right:0;top:0;height:7%;background:#6b4a22}
+.room.art .ceil:not(.st){display:none}
+.room .ceil.st{background:linear-gradient(#0b1030,#1b2a5e);color:#ffe9a0;font-size:calc(var(--u)*3);letter-spacing:calc(var(--u)*2);overflow:hidden;white-space:nowrap}
+.win{position:absolute;border:calc(var(--u)*.8) solid #5b3d1a;border-radius:6px;overflow:hidden}
+.win .sun{position:absolute;right:12%;top:10%;font-size:calc(var(--u)*5)}
+.win .hill{position:absolute;left:-10%;right:-10%;bottom:-20%;height:55%;border-radius:50%;background:#2f7d4a}
+.win .tm{position:absolute;left:6px;bottom:4px;font-size:calc(var(--u)*1.5);background:#0008;padding:0 6px;border-radius:6px;color:#fff}
+.win .cross{position:absolute;inset:0;background:linear-gradient(#5b3d1a,#5b3d1a) center/calc(var(--u)*.6) 100% no-repeat,linear-gradient(#5b3d1a,#5b3d1a) center/100% calc(var(--u)*.6) no-repeat}
+.fur{position:absolute;background:none;border:0;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0}
+.fur .e{font-size:calc(var(--u)*7);line-height:1;filter:drop-shadow(0 3px 3px #0008);display:flex;max-height:80%}
+.fur .e img{max-width:100%;max-height:100%}
+.fur .l{font-size:max(11px,calc(var(--u)*1.6));background:#161a2ecc;border:1px solid var(--bronze);border-radius:999px;padding:1px 8px;margin-top:2px;white-space:nowrap}
+.fur:hover .e{transform:scale(1.1)}
+.deco{position:absolute;display:flex;align-items:center;justify-content:center;pointer-events:none}
+.deco img{max-width:100%;max-height:100%}
+.rug{background:radial-gradient(ellipse,#a35bd6,#5b2d8a);border:3px solid #e2b53a;border-radius:50%}
+.fish{background:linear-gradient(#7ad3ff,#2f8fc9);border:3px solid #fff8;border-radius:10px;font-size:calc(var(--u)*4)}
+.shelfb{background:#7a4f22;border:3px solid #4b2f12;border-radius:6px;font-size:calc(var(--u)*5)}
+.deco.img{background:none;border:0}
+.heroSpot{position:absolute}
+.petSpot{position:absolute;pointer-events:none}
+.homeBar{position:absolute;right:10px;top:10px;z-index:3}
+.mis .btn{white-space:nowrap}
+@media (pointer:coarse),(max-width:600px){.btn,.btn.small,.homeBar .btn{min-height:44px;padding-top:8px;padding-bottom:8px}}
+@media (max-aspect-ratio:1/1){.room{aspect-ratio:4/5}.homeBar .btn{padding:5px 9px;font-size:13px}}
+@keyframes flowK{to{stroke-dashoffset:-88}}@keyframes arrowK{50%{transform:translateY(-26px)}}
+#map .flow{animation:flowK 1.2s linear infinite}#map .bigArrow{animation:arrowK .9s ease-in-out infinite}
+@media (prefers-reduced-motion:reduce){#map .flow,#map .bigArrow{animation:none}}
+#map{transition:opacity .4s}body.mapwait #map{opacity:0}
+</style>
+</head>
+<body>
+<header id="hud">
+  <div class="ttl"><b>數理大陸 · 數靈召喚師</b><span id="rankT"></span></div>
+  <div id="prog"><div class="bar"><i id="progI"></i></div><small id="progT"></small></div>
+  <span class="pill" id="goldP"></span>
+  <span class="sp"></span>
+  <span class="badge" id="teachB" style="display:none">教師版：全章開放</span>
+  <button class="btn ghost small" data-act="homeBtn">🏠 小屋</button>
+  <button class="btn ghost small" data-act="shopBtn">🏪 商店</button>
+  <button class="btn ghost small" data-act="teamBtn" id="teamB">🩹 隊伍</button>
+  <button class="btn ghost small" data-act="dailyBtn">📅 每日</button>
+  <button class="btn ghost small" data-act="arenaBtn">⚔️ 鬥技場</button>
+  <button class="btn ghost small" data-act="zoneBtn">🎮 遊戲區</button>
+  <button class="btn ghost small" data-act="findHero">📍 找勇者</button>
+</header>
+<main id="mapwrap"><svg id="map" xmlns="http://www.w3.org/2000/svg"></svg></main>
+<div id="card"></div>
+<div id="toast"></div>
+<div id="err">找不到設定檔 game-config.js，請確認它和這個檔案放在同一個資料夾。</div>
+<div class="ov" id="home"><div class="room" id="room"></div></div>
+<div class="ov" id="pnlOv"><div class="pbox" id="pbox"></div></div>
+
+<script src="game-config.js"></script>
+<script src="audio/bgm.js"></script>
+<script src="relax-break.bundle.js"></script>
+<script src="vol2-monsters.js"></script>
+<script src="report.js"></script>
+<script>
+(()=>{'use strict';
+const GC=window.GAME_CONFIG;
+if(!GC){document.getElementById('err').style.display='flex';return}
+const OPEN=true; /* 學生版不含任何解鎖功能；教師版請用另一個檔 world-map-vol2-teacher.html（不上傳） */
+const E=GC.economy,M=GC.map,W=M.w,HT=M.h,CH=[null].concat(GC.chapters),CUR=GC.currency.icon,CN=GC.currency.name;
+const KEY='jb2-hub-v1';
+const BOSSID={};CH.forEach(c=>c&&c.stages.forEach(s=>BOSSID[s[0]]=s[2]));
+const TOTAL_MAX=CH.reduce((a,c)=>a+(c?c.max:0),0);
+const rankOf=(r,s)=>{let t=r[0][1];for(const[a,b]of r)if(s>=a)t=b;return t};
+const STAGE_NAME={};CH.forEach(c=>c&&c.stages.forEach(s=>STAGE_NAME[s[0]]=s[1]));
+const BAD=GC.badWords||[];
+const isBad=s=>{const t=String(s).toLowerCase().replace(/\s/g,'');return BAD.some(w=>t.includes(String(w).toLowerCase()))};
+const pxX=p=>p/100*W,pxY=q=>q/100*HT;
+const POS=[[pxX(M.village.x),pxY(M.village.y)]].concat(GC.chapters.map(c=>[pxX(c.island.x),pxY(c.island.y)]));
+const NCH=GC.chapters.length;
+
+/* ===== 商品 ===== */
+const ITEMS=GC.shop.items,ITEM={};
+const priceOf=it=>(it.price!==''&&it.price!=null)?+it.price:Math.round(E.dailyBase*it.days/E.priceRound)*E.priceRound;
+ITEMS.forEach(i=>ITEM[i.id]=i);
+const SLOTS=GC.shop.tabs;
+
+/* ===== 存檔 ===== */
+const chKey=n=>'monster-ch'+n+'-progress-v1';
+let H;
+const defH=()=>({v:1,gold:0,own:{},eq:{cloak:'cloak_blue',hat:'hat_none',staff:'staff_wood',pet:'',title:''},inv:{},seen:{},stat:{earned:0,spent:0},mon:{},sk:{},ghost:{date:'',wins:0,w:0,l:0},
+ daily:{date:'',expGold:0,expDelta:0,starDelta:0,claimed:{}},buy:{date:'',n:{}},streak:{last:'',n:0},who:{cls:'',no:'',name:''},last:0,intro:false,renaming:false,boostDate:'',chal:{date:'',sid:'',n:0,claimed:0},login:{last:'',n:0}});
+function load(){
+  let o=null;try{o=JSON.parse(localStorage.getItem(KEY))}catch(e){}
+  const base=defH();H=Object.assign(base,o||{});
+  for(const k of['own','eq','inv','seen','stat','daily','buy','streak','who','mon','ghost','sk','chal','login']){H[k]=Object.assign(defH()[k],(o&&o[k])||{})}
+  ITEMS.forEach(i=>{if(!i.cons&&!priceOf(i)&&!H.own[i.id])H.own[i.id]=1}); /* 價格 0 的商品視為初始擁有 */
+  if(!H.who.name&&!H.who.no){for(let n=1;n<=NCH;n++){const w=readCh(n)._who;if(w&&(w.name||w.no||w.sid)){H.who={cls:'',no:w.no||w.sid||'',name:w.name||''};break}}}
+}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(H))}catch(e){}}
+function readCh(n){try{return JSON.parse(localStorage.getItem(chKey(n)))||{}}catch(e){return{}}}
+function writeCh(n,d){try{localStorage.setItem(chKey(n),JSON.stringify(d))}catch(e){}}
+const S=[null];
+function calcStats(){
+  for(let n=1;n<=NCH;n++){
+    const d=readCh(n);let stars=0,exp=0,got=0;const per={};
+    for(const k in d){if(k[0]==='_')continue;const s=d[k];
+      if(s&&typeof s==='object'){const st=s.stars|0;stars+=st;exp+=s.exp|0;if(st>0)got++;per[k]={stars:st,exp:s.exp|0}}}
+    S[n]={stars,exp,got,per,q:d._q||{}};
+  }
+}
+const totalStars=()=>{let t=0;for(let n=1;n<=NCH;n++)t+=S[n].stars;return t};
+const needFor=i=>Math.ceil(CH[i-1].max*E.unlockRatio);
+const locked=i=>!(OPEN||i===1||S[i-1].stars>=needFor(i));
+const lockMsg=i=>`第 ${i} 章還沒開啟：要在第 ${i-1} 章拿到 ${needFor(i)} ⭐（目前 ${S[i-1].stars} ⭐）`;
+
+/* ===== 工具 ===== */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pad=n=>String(n).padStart(2,'0');
+const ymd=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const tod=()=>{const h=new Date().getHours();return h<5?'night':h<7?'dawn':h<17?'day':h<19?'dusk':'night'};
+const fill=(s,o)=>String(s).replace(/\{(\w+)\}/g,(m,k)=>o[k]!=null?o[k]:m);
+let tt;function toast(m){const t=$('#toast');t.textContent=m;t.style.display='block';clearTimeout(tt);tt=setTimeout(()=>t.style.display='none',2800)}
+const OK={};
+/* 白底貼紙圖自動去白底（從四邊往內填滿近白色）；若瀏覽器不允許（例如直接開檔案），就維持原圖 */
+function cutout(img){
+  try{const mx=512,k=Math.min(1,mx/Math.max(img.naturalWidth,img.naturalHeight)),w=Math.round(img.naturalWidth*k),h=Math.round(img.naturalHeight*k);
+    const c=document.createElement('canvas');c.width=w;c.height=h;const x=c.getContext('2d');x.drawImage(img,0,0,w,h);
+    const d=x.getImageData(0,0,w,h),a=d.data,seen=new Uint8Array(w*h),st=[];
+    const white=i=>a[i*4]>236&&a[i*4+1]>236&&a[i*4+2]>236;
+    const push=i=>{if(!seen[i]&&white(i)){seen[i]=1;st.push(i)}};
+    for(let i=0;i<w;i++){push(i);push((h-1)*w+i)}for(let j=0;j<h;j++){push(j*w);push(j*w+w-1)}
+    while(st.length){const i=st.pop(),px=i%w,py=(i/w)|0;a[i*4+3]=0;if(px>0)push(i-1);if(px<w-1)push(i+1);if(py>0)push(i-w);if(py<h-1)push(i+w)}
+    x.putImageData(d,0,0);return c.toDataURL('image/png')}catch(e){return null}
+}
+function probe(list,done){let n=list.length;if(!n){done();return}const raw=[M.art,GC.home.wallpaper];list.forEach(p=>{const i=new Image();i.onload=()=>{OK[p]=raw.includes(p)?p:(cutout(i)||p);--n||done()};i.onerror=()=>{--n||done()};i.src=p})}
+const addGold=g=>{H.gold+=g;if(g>0)H.stat.earned+=g};
+
+/* ===== 學習獎勵 ===== */
+function sync(silent){
+  const t=ymd(new Date());
+  if(H.daily.date!==t)H.daily={date:t,expGold:0,expDelta:0,starDelta:0,claimed:{}};
+  const mult=H.boostDate===t?E.boostMult:1;
+  let sg=0,eg=0;
+  for(let n=1;n<=NCH;n++){
+    const s=S[n],sn=H.seen[n],first=!sn,b=sn||{stars:0,exp:0};
+    const ds=s.stars-b.stars,de=s.exp-b.exp;
+    if(ds<0||de<0){H.seen[n]={stars:s.stars,exp:s.exp};continue}
+    sg+=ds*E.starGold;
+    if(!first){H.daily.starDelta+=ds;H.daily.expDelta+=de}
+    const a=Math.max(0,Math.min(Math.floor(de/E.expRate)*mult,E.expCap-H.daily.expGold));
+    eg+=a;H.daily.expGold+=a;
+    H.seen[n]={stars:s.stars,exp:s.exp};
+  }
+  const g=sg+eg;
+  if(g>0){addGold(g);if(!silent)toast(`學習獎勵 +${g} ${CUR}（新星星 +${sg}、練習 +${eg}）`)}
+  save();
+}
+
+/* ===== 勇者圖 ===== */
+function heroParts(eq){
+  const c=ITEM[eq.cloak]||ITEM.cloak_blue,h=ITEM[eq.hat]||ITEM.hat_none,st=ITEM[eq.staff]||ITEM.staff_wood;
+  let s=`<line x1="52" y1="30" x2="52" y2="80" stroke="${st.shaft}" stroke-width="4" stroke-linecap="round"/><circle cx="52" cy="26" r="6" fill="${st.orb}" stroke="#fff8" stroke-width="1.5"/>`;
+  s+=`<path d="M32 36 C24 40 18 60 14 80 Q32 88 50 80 C46 60 40 40 32 36Z" fill="${c.color}" stroke="${c.dark}" stroke-width="2"/><path d="M22 62 Q32 67 42 62" stroke="${c.dark}" stroke-width="3" fill="none"/>`;
+  s+=`<circle cx="50" cy="52" r="3.5" fill="#f7d9b5"/>`;
+  s+=`<circle cx="32" cy="28" r="11" fill="#f7d9b5" stroke="#c99b6b" stroke-width="1.5"/><circle cx="28" cy="29" r="1.6" fill="#222"/><circle cx="36" cy="29" r="1.6" fill="#222"/><path d="M29 34 Q32 36.5 35 34" stroke="#a5583a" stroke-width="1.4" fill="none"/>`;
+  if(h.id==='hat_none')s+=`<path d="M21 27 Q22 14 32 14 Q42 14 43 27 Q38 20 32 20 Q26 20 21 27Z" fill="#5a3a22"/>`;
+  else if(h.id==='hat_crown')s+=`<path d="M20 20 L22 6 L27 14 L32 4 L37 14 L42 6 L44 20 Z" fill="#f2c230" stroke="#b8860b" stroke-width="1.5"/><circle cx="32" cy="12" r="2" fill="#d24a33"/>`;
+  else{s+=`<path d="M15 24 Q32 18 49 24 L38 0 Q32 -4 26 0 Z" fill="${h.color}" stroke="#0005"/><ellipse cx="32" cy="23" rx="18" ry="4" fill="${h.color}" stroke="#0005"/>`;
+    if(h.star)s+=`<polygon points="32,6 33.8,10.6 38.8,10.8 34.9,13.9 36.3,18.7 32,15.9 27.7,18.7 29.1,13.9 25.2,10.8 30.2,10.6" fill="#ffd84d"/>`}
+  return s;
+}
+const heroPath=eq=>`images/hero/${eq.cloak||'cloak_blue'}.png`;
+/* 分層換裝：身體(含服飾) + 法杖 + 帽子，疊在同一張 2:3 畫布上。三層都有圖才用分層；缺任何一層就退回整張圖／備用小人 */
+const LAYPATH={body:c=>`images/hero/body_${c}.png`,item:id=>`images/hero/${id}.png`};
+function heroLayers(eq){
+  const c=ITEM[eq.cloak]||ITEM.cloak_blue,h=ITEM[eq.hat]||ITEM.hat_none,s=eq.staff?ITEM[eq.staff]:null;
+  const b=OK[LAYPATH.body(c.id)];if(!b)return null;
+  const L=[{src:b,x:0,y:0,s:1}],add=it=>{if(!it||/_none$/.test(it.id))return true;const im=OK[LAYPATH.item(it.id)];if(!im)return false;const l=it.lay||{};L.push({src:im,x:+l.x||0,y:+l.y||0,s:l.s?+l.s:1});return true};
+  return add(s)&&add(h)?L:null;
+}
+const heroSVG=(eq,px)=>{const L=heroLayers(eq);if(L)return `<span style="position:relative;display:inline-block;width:${px}px;height:${px*1.5}px;vertical-align:bottom">${L.map(l=>`<img src="${esc(l.src)}" alt="" style="position:absolute;left:0;top:0;width:100%;height:100%;transform:translate(${l.x}%,${l.y}%) scale(${l.s})">`).join('')}</span>`;return heroSVG0(eq,px)};
+const heroSVG0=(eq,px)=>OK[heroPath(eq)]?`<img src="${esc(OK[heroPath(eq)])}" alt="" width="${px}">`:`<svg viewBox="0 -6 64 94" width="${px}" height="${px*94/64}" xmlns="http://www.w3.org/2000/svg">${heroParts(eq)}</svg>`;
+
+/* ===== 地圖 ===== */
+const mid=(a,b)=>((a[0]+b[0])/2).toFixed(1)+','+((a[1]+b[1])/2).toFixed(1);
+function crPath(p){
+  let d=`M${p[0][0]},${p[0][1]}`;
+  for(let i=0;i<p.length-1;i++){
+    const p0=p[i-1]||p[i],p1=p[i],p2=p[i+1],p3=p[i+2]||p2;
+    d+=` C${p1[0]+(p2[0]-p0[0])/6},${p1[1]+(p2[1]-p0[1])/6} ${p2[0]-(p3[0]-p1[0])/6},${p2[1]-(p3[1]-p1[1])/6} ${p2[0]},${p2[1]}`;
+  }
+  return d;
+}
+const T=(x,y,t,sz,extra='')=>`<text x="${x}" y="${y}" font-size="${sz}" text-anchor="middle" dominant-baseline="central" ${extra}>${t}</text>`;
+let ready=false,heroXY={x:0,y:0},heroNode=0,face=false,walking=false,scale=1;
+function buildStatic(){
+  const defs='<defs><filter id="blur"><feGaussianBlur stdDeviation="14"/></filter></defs>';
+  $('#map').setAttribute('viewBox',`0 0 ${W} ${HT}`);
+  $('#map').innerHTML=defs+'<g id="layer"></g><g id="heroG"><ellipse cx="0" cy="0" rx="34" ry="9" fill="#0005"/><g id="hFlip"></g><text id="petT" font-size="46" text-anchor="middle" dominant-baseline="central"></text><image id="petI" width="64" height="64" style="display:none"/></g><g id="shadeG" pointer-events="none"></g>';
+}
+function drawMap(){
+  let s='';
+  s+=OK[M.art]?`<image href="${esc(M.art)}" x="0" y="0" width="${W}" height="${HT}" preserveAspectRatio="none" style="filter:brightness(1.14) saturate(1.1)"/>`:`<rect width="${W}" height="${HT}" fill="#0f2c4d"/>`;
+  /* 道路：村莊到每座島的放射路，加上相鄰島之間的環狀路（六角形） */
+  let rd='';
+  const eds=[];for(let n=1;n<=NCH;n++){eds.push([0,n]);eds.push([n,n%NCH+1])}
+  eds.forEach(([x,y])=>{const a=Math.min(x,y),b=Math.max(x,y),pa=POS[a],pb=POS[b];let d;
+    if(a===0)d=`M${pa[0]},${pa[1]} L${pb[0]},${pb[1]}`;
+    else{const mx=(pa[0]+pb[0])/2,my=(pa[1]+pb[1])/2,vx=mx-POS[0][0],vy=my-POS[0][1],l=Math.hypot(vx,vy)||1;d=`M${pa[0]},${pa[1]} Q${mx+vx/l*70},${my+vy/l*70} ${pb[0]},${pb[1]}`}
+    rd+=`<path id="e${a}_${b}" d="${d}" stroke="#fff" stroke-opacity=".5" stroke-width="6" fill="none" stroke-linecap="round" stroke-dasharray="2 22"/>`});
+  s+=rd;
+  const V=M.village,v=POS[0];
+  if(M.iconsOnArt)M.buildings.forEach(b=>{
+    const bx=pxX(b.x),by=pxY(b.y),ly=b.labelPos==='top'?by-b.size*.9-40:by+b.size*.5;
+    s+=`<g class="bld" data-b="${esc(b.id)}">${OK[b.img]?`<image href="${esc(OK[b.img])}" x="${bx-b.size*.75}" y="${by-b.size*.9}" width="${b.size*1.5}" height="${b.size*1.5}"/>`:T(bx,by-10,b.emoji,b.size)}<rect x="${bx-60}" y="${ly}" width="120" height="34" rx="12" fill="#161a2ecc" stroke="#d2a24c" stroke-width="2"/>${T(bx,ly+17,esc(b.label),22,'fill="#f1e8d2"')}</g>`});
+  s+=`<rect x="${v[0]-105}" y="${v[1]+V.ry-37}" width="210" height="40" rx="12" fill="#161a2ecc" stroke="#d2a24c" stroke-width="2"/>${T(v[0],v[1]+V.ry-17,esc(V.name),24,'fill="#d2a24c" font-weight="700"')}`;
+  for(let n=1;n<=NCH;n++){
+    const[x,y]=POS[n],c=CH[n],I=c.island,st=S[n];
+    s+=`<circle cx="${x-I.rx+30}" cy="${y-I.ry+22}" r="30" fill="#161a2e" stroke="#d2a24c" stroke-width="4"/>${T(x-I.rx+30,y-I.ry+23,n,34,'fill="#d2a24c" font-weight="700"')}`;
+    const by=y+I.ry+24;
+    s+=`<rect x="${x-190}" y="${by}" width="380" height="92" rx="16" fill="#161a2ee6" stroke="#d2a24c" stroke-width="3"/>`
+      +T(x,by+22,`第${n}章　${esc(c.theme)}`,28,'fill="#d2a24c" font-weight="700"')
+      +T(x,by+50,esc(c.name),22,'fill="#f1e8d2"')
+      +T(x,by+75,`⭐ ${st.stars}/${c.max}　${esc(rankOf(c.ranks,st.stars))}`,20,'fill="#43a58f" font-weight="700"');
+    {const L=c.stages,k=L.length,sw=56,bw=k*sw+14,bx=x-bw/2,ty=by-74;let nxt=-1;for(let q=0;q<k;q++){const pp=st.per[L[q][0]];if(!(pp&&pp.stars>0)){nxt=q;break}}
+      s+=`<g pointer-events="none"><rect x="${bx}" y="${ty}" width="${bw}" height="68" rx="16" fill="#161a2e" opacity=".82" stroke="#d2a24c" stroke-width="2"/>`;
+      L.forEach((q,j)=>{const id=q[0],pp=st.per[id],ok=pp&&pp.stars>0,cx=bx+7+sw/2+j*sw,cy=ty+27,lk=locked(n),src=OK[`grade7-vol2-ch${n}/images/battle/${id}.png`];
+        s+=`<clipPath id="tc${n}_${j}"><circle cx="${cx}" cy="${cy}" r="20"/></clipPath><circle cx="${cx}" cy="${cy}" r="22" fill="#f1e8d2" stroke="${ok?'#43a58f':q[2]?'#d24a33':'#d2a24c'}" stroke-width="${j===nxt&&!lk?5:3}"/>`
+          +(src?`<image href="${esc(src)}" x="${cx-20}" y="${cy-20}" width="40" height="40" clip-path="url(#tc${n}_${j})" preserveAspectRatio="xMidYMid slice" opacity="${ok?1:.55}"/>`:T(cx,cy+1,q[2]?'👹':'🐾',26,`opacity="${ok?1:.5}"`))
+          +(ok?T(cx,ty+57,'★'.repeat(Math.min(pp.stars,5)>3?1:pp.stars)+(pp.stars>3?pp.stars:''),15,'fill="#ffd24a" font-weight="700"'):lk?'':T(cx,ty+57,j===nxt?'▲':'·',15,'fill="#f1e8d2"'))});
+      s+='</g>'}
+    if(locked(n))s+=`<g><ellipse cx="${x}" cy="${y}" rx="${I.rx+40}" ry="${I.ry+40}" fill="#5d6c9c" opacity=".5" filter="url(#blur)"/>${T(x,y-18,'🔒',90)}${T(x,y+50,`需 第${n-1}章 ${needFor(n)}⭐`,26,'fill="#fff" font-weight="700" stroke="#1b2147" stroke-width="5" paint-order="stroke"')}</g>`;
+    s+=`<ellipse class="hit" data-i="${n}" cx="${x}" cy="${y}" rx="${I.rx}" ry="${I.ry}"/>`;
+  }
+  $('#layer').innerHTML=s;
+  drawRoute();
+  ready=true;
+  shade();
+}
+function nextChapter(){
+  for(let n=1;n<=NCH;n++)if(!locked(n)&&S[n].got<CH[n].stages.length)return{n,more:false};
+  for(let n=NCH;n>=1;n--)if(!locked(n)&&n<NCH&&locked(n+1))return{n,more:true};
+  return null;
+}
+function drawRoute(){
+  const nx=nextChapter(),cleared=n=>S[n].got>=CH[n].stages.length;let g='';
+  for(let k=0;k<NCH;k++){const a=k,b=k+1,el=document.getElementById('e'+a+'_'+b);if(!el)continue;
+    const d=el.getAttribute('d'),done=cleared(b),isNext=nx&&nx.n===b&&!nx.more,len=el.getTotalLength();
+    g+=`<path d="${d}" fill="none" stroke="#fff" stroke-opacity="${done||isNext?.95:.55}" stroke-width="${isNext?20:14}" stroke-linecap="round"/><path d="${d}" fill="none" stroke="${done?'#43a58f':isNext?'#ffb300':'#8d8a99'}" stroke-width="${isNext?12:8}" stroke-linecap="round" ${isNext?'stroke-dasharray="26 18" class="flow"':done?'':'stroke-dasharray="14 14"'}/>`;
+    [.3,.5,.7].forEach(f=>{const q=el.getPointAtLength(len*f),q2=el.getPointAtLength(len*f+4),ang=Math.atan2(q2.y-q.y,q2.x-q.x)*180/Math.PI;
+      g+=`<polygon points="-15,-15 17,0 -15,15 -7,0" transform="translate(${q.x},${q.y}) rotate(${ang})" fill="${done?'#2f8a73':isNext?'#ff8f00':'#9a98a6'}" stroke="#fff" stroke-width="3" stroke-linejoin="round"/>`});
+  }
+  if(nx){const[x,y]=POS[nx.n],ty=y+8;
+    g+=`<g pointer-events="none"><g class="bigArrow"><polygon points="${x-20},${ty-110} ${x+20},${ty-110} ${x+20},${ty-70} ${x+46},${ty-70} ${x},${ty-6} ${x-46},${ty-70} ${x-20},${ty-70}" fill="#ffc61a" stroke="#5a3300" stroke-width="6" stroke-linejoin="round"/><text x="${x+58}" y="${ty-62}" font-size="30" font-weight="700" fill="#4a2b00" stroke="#fff" stroke-width="8" paint-order="stroke">${nx.more?'多拿些⭐解鎖下一章':'下一站！'}</text></g></g>`}
+  const o=$('#layer'),ai=g.indexOf('<g pointer-events="none"><g class="bigArrow">'),rt=ai<0?g:g.slice(0,ai),ar=ai<0?'':g.slice(ai);
+  let last=null;o.querySelectorAll('path[id^="e"]').forEach(e=>last=e);
+  const tmp=document.createElementNS('http://www.w3.org/2000/svg','g');tmp.setAttribute('pointer-events','none');tmp.innerHTML=rt;
+  if(last&&last.nextSibling)o.insertBefore(tmp,last.nextSibling);else o.appendChild(tmp);
+  o.insertAdjacentHTML('beforeend',ar);
+  const hits=[...o.querySelectorAll('.hit')];hits.forEach(h=>o.appendChild(h));
+}
+function shade(){
+  const t=tod();let s='';
+  const m={night:['#0a1032',.2],dusk:['#ff8f4a',.1],dawn:['#ff9ab0',.08],day:['#fff',0]}[t];
+  if(m[1])s+=`<rect width="${W}" height="${HT}" fill="${m[0]}" opacity="${m[1]}"/>`;
+  if(t==='night')for(let i=0;i<70;i++)s+=`<circle cx="${(i*613)%W}" cy="${(i*97)%((HT*.25)|0)+10}" r="${(i%3)+1.5}" fill="#fff" opacity=".8"/>`;
+  $('#shadeG').innerHTML=s;
+}
+function renderHero(){
+  const hp=heroPath(H.eq),L=heroLayers(H.eq);
+  $('#hFlip').innerHTML=L?L.map(l=>`<image href="${esc(l.src)}" x="0" y="-8" width="64" height="96" transform="translate(${l.x/100*64} ${l.y/100*96}) translate(32 40) scale(${l.s}) translate(-32 -40)"/>`).join(''):OK[hp]?`<image href="${esc(OK[hp])}" x="0" y="-8" width="64" height="96"/>`:heroParts(H.eq);
+  const pi=H.eq.pet&&ITEM[H.eq.pet],pim=pi&&OK[pi.img];
+  $('#petT').textContent=pi&&!pim?pi.icon:'';
+  const pe=$('#petI');if(pe){if(pim){pe.setAttribute('href',pim);pe.style.display=''}else pe.style.display='none'}
+}
+function place(ts){
+  if(!ready)return;
+  const p=heroXY,bob=Math.sin((ts||0)/(walking?70:420))*(walking?4:2),sc=M.heroScale;
+  $('#heroG').setAttribute('transform',`translate(${p.x},${p.y+bob})`);
+  $('#hFlip').setAttribute('transform',`translate(${-32*sc},${-82*sc}) scale(${sc})`+(face?` translate(64,0) scale(-1,1)`:''));
+  $('#petT').setAttribute('x',face?50:-50);$('#petT').setAttribute('y',-12+Math.sin((ts||0)/260)*5);
+  const pI=$('#petI');if(pI){pI.setAttribute('x',(face?50:-50)-32);pI.setAttribute('y',-12+Math.sin((ts||0)/260)*5-32)}
+}
+const wrap=()=>$('#mapwrap');
+function fit(){
+  const w=wrap(),hud=$('#hud').offsetHeight;w.style.paddingTop=hud+'px';
+  const cw=w.clientWidth,ch=w.clientHeight-hud;
+  scale=Math.max(M.minScale||.5,Math.max(cw/W,ch/HT)*1.18);
+  const s=$('#map');s.style.width=(W*scale)+'px';s.style.height=(HT*scale)+'px';
+}
+function centerOnHero(smooth){const w=wrap(),s=$('#map');w.scrollTo({left:heroXY.x*scale+s.offsetLeft-w.clientWidth/2,top:heroXY.y*scale+s.offsetTop-w.clientHeight/2,behavior:smooth?'smooth':'auto'})}
+/* 走路：相鄰的島直接走環狀路，其他的島先回村莊再出發 */
+const edgeEl=(a,b)=>document.getElementById('e'+Math.min(a,b)+'_'+Math.max(a,b));
+function routeOf(a,b){if(a===b)return[a];if(a===0||b===0)return[a,b];const d=Math.abs(a-b);return(d===1||d===NCH-1)?[a,b]:[a,0,b]}
+function ptAt(segs,dist){
+  for(const s of segs){if(dist<=s.len){const q=s.el.getPointAtLength(s.rev?s.len-dist:dist);return{x:q.x,y:q.y}}dist-=s.len}
+  const s=segs[segs.length-1],q=s.el.getPointAtLength(s.rev?0:s.len);return{x:q.x,y:q.y};
+}
+function walkTo(i,cb){
+  const route=routeOf(heroNode,i);if(route.length<2){cb&&cb();return}
+  const segs=[];for(let k=0;k<route.length-1;k++){const a=route[k],b=route[k+1],el=edgeEl(a,b);segs.push({el,len:el.getTotalLength(),rev:a>b})}
+  const total=segs.reduce((p,s)=>p+s.len,0);
+  walking=true;hideCard();
+  const dur=Math.max(500,total/M.walkSpeed*1000),t0=performance.now();
+  (function step(now){
+    const k=Math.min(1,(now-t0)/dur),e=k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2,prev=heroXY.x;
+    heroXY=ptAt(segs,total*e);if(Math.abs(heroXY.x-prev)>.2)face=heroXY.x<prev;
+    centerOnHero(false);
+    if(k<1)requestAnimationFrame(step);else{walking=false;heroNode=i;heroXY={x:POS[i][0],y:POS[i][1]};H.heroNode=i;save();cb&&cb()}
+  })(t0);
+}
+function loop(ts){place(ts);requestAnimationFrame(loop)}
+
+/* ===== 資訊卡 ===== */
+function hideCard(){$('#card').style.display='none'}
+function showCard(i){
+  const c=$('#card');let h='<button class="x" data-act="hideCard" aria-label="關閉">✕</button>';
+  if(i===0){
+    const g={night:'夜深了，早點休息喔～',dawn:'早安！今天也要加油！',day:'今天想挑戰哪一章呢？',dusk:'傍晚了，再練一關就回家吧！'}[tod()];
+    h+=`<h3>🏘️ ${esc(M.village.name)}</h3><div class="sub">🐱 導師智慧貓：${g}</div><div class="row"><button class="btn" data-act="home">🏠 回小屋</button><button class="btn ghost" data-act="shop">🏪 去商店</button><button class="btn ghost" data-act="arena">⚔️ 鬥技場</button></div>`;
+  }else{
+    const cc=CH[i],st=S[i];
+    h+=`<h3>第 ${i} 章　${esc(cc.theme)}</h3><div class="sub">${esc(cc.name)}<br>⭐ ${st.stars} / ${cc.max}　｜　稱號：${esc(rankOf(cc.ranks,st.stars))}<br>已收服數靈：${st.got} / ${cc.stages.length}</div><div class="row"><button class="btn" data-act="enter" data-n="${i}">⚔️ 進入第 ${i} 章</button></div>`;
+  }
+  c.innerHTML=h;c.style.display='block';
+}
+function onNode(i){
+  if(walking)return;
+  if(i>=1&&locked(i)){toast(lockMsg(i));return}
+  if(!ready)return;
+  if(heroNode===i){showCard(i);return}
+  walkTo(i,()=>showCard(i));
+}
+const goTo=u=>{window.JB2Music&&JB2Music.leave?JB2Music.leave(()=>{location.href=u}):(location.href=u)};
+function enter(n){H.last=n;H.heroNode=n;save();goTo(fill(GC.urls.chapter,{n}))}
+function openArena(){H.heroNode=0;save();goTo(GC.urls.battle)}
+
+/* ===== 面板 ===== */
+let panelRender=null;
+function openPanel(title,html,wide){
+  $('#pbox').className='pbox'+(wide?' wide':'');
+  $('#pbox').innerHTML=`<button class="x" data-act="closePanel" aria-label="關閉">✕</button><h2>${title}</h2>${html}`;
+  $('#pnlOv').classList.add('on');
+}
+function closePanel(){$('#pnlOv').classList.remove('on');panelRender=null;if($('#home').classList.contains('on'))renderHome();if(H.intro)setTimeout(()=>{try{loginGift()}catch(e){}},350)}
+function refreshHUD(){
+  const ts=totalStars();
+  $('#rankT').textContent=rankOf(GC.rankTotal,ts)+(H.eq.title&&ITEM[H.eq.title]?'｜「'+ITEM[H.eq.title].name+'」':'');
+  $('#progI').style.width=(ts/TOTAL_MAX*100)+'%';
+  $('#progT').textContent=`⭐ ${ts} / ${TOTAL_MAX}`;
+  $('#goldP').textContent=CUR+' '+H.gold;teamBadge();try{dailyBadge()}catch(e){}
+  $('#teachB').style.display=OPEN?'inline-block':'none';
+}
+
+/* ---- 怪物生命／隊伍 ---- */
+const lvOf=exp=>Math.floor((exp|0)/E.expPerLevel)+1;
+const maxHp=lv=>Math.max(1,Math.round((GC.battle.baseHp+GC.battle.growthHp*(lv-1))*GC.battle.hpRate));
+/* 只有「主力培養怪」（每章全通關後在章節圖鑑設定）會出戰，所以只有牠們有生命值 */
+function myMonsList(){
+  const out=[];
+  for(let n=1;n<=NCH;n++){const c=CH[n],d=readCh(n),id=d._main,st=c.stages.find(s=>s[0]===id);
+    if(!st||S[n].got<c.stages.length)continue;
+    const p=S[n].per[id],lv=lvOf(p?p.exp:0),mx=maxHp(lv),m=H.mon[id],hp=m&&m.hp!=null?Math.min(mx,m.hp):mx;
+    out.push({sid:id,name:st[1],em:c.em,ch:n,lv,max:mx,hp});}
+  return out;
+}
+function teamBadge(){const l=myMonsList(),down=l.filter(m=>m.hp<=0).length,hurt=l.filter(m=>m.hp>0&&m.hp<m.max).length;const b=$('#teamB');if(b)b.textContent='🩹 隊伍'+(down+hurt?` ⚠${hurt+down}`:'')}
+function teamHTML(){
+  const l=myMonsList();
+  if(!l.length)return'<p class="muted">還沒有「主力培養怪」。把某一章全部通關後，到該章圖鑑挑一隻設為主力培養怪，牠就能去鬥技場對戰。</p>';
+  let h=`<div class="muted">補血藥水：小 ${H.inv.heal_s||0}、中 ${H.inv.heal_m||0}、大 ${H.inv.heal_l||0}　復活羽毛：${H.inv.revive||0}　補魔藥水：小 ${H.inv.mp_s||0}、中 ${H.inv.mp_m||0}、大 ${H.inv.mp_l||0}（補魔只在戰鬥中使用）。道具到商店「治療用品」購買，或打贏小遊戲開寶箱。</div><div class="grid" style="margin-top:8px;grid-template-columns:repeat(auto-fill,minmax(150px,1fr))">`;
+  l.forEach(m=>{
+    const down=m.hp<=0,full=m.hp>=m.max;
+    h+=`<div class="mon${down?' lock':''}" style="padding:8px"><div class="em">${m.em}</div><b>${esc(m.name)}</b><div class="muted">Lv.${m.lv}${down?'　💀倒下':full?'　健康':''}</div><div style="height:8px;background:#000a;border-radius:5px;overflow:hidden;border:1px solid #3a4270;margin:4px 0"><i style="display:block;height:100%;width:${Math.max(0,m.hp/m.max*100)}%;background:linear-gradient(90deg,#d24a33,#e2b53a,#43a58f)"></i></div><small>${Math.round(m.hp)}/${m.max}</small><div style="display:flex;gap:4px;justify-content:center;margin-top:6px;flex-wrap:wrap">`;
+    if(down)h+=`<button class="btn small" data-act="heal" data-id="revive" data-sid="${m.sid}" ${H.inv.revive?'':'disabled'}>🪶 復活</button>`;
+    else if(!full)h+=`<button class="btn small" data-act="heal" data-id="heal_s" data-sid="${m.sid}" ${H.inv.heal_s?'':'disabled'}>🧪小</button><button class="btn small" data-act="heal" data-id="heal_m" data-sid="${m.sid}" ${H.inv.heal_m?'':'disabled'}>🥤中</button><button class="btn small" data-act="heal" data-id="heal_l" data-sid="${m.sid}" ${H.inv.heal_l?'':'disabled'}>⚗️大</button>`;
+    h+=`<button class="btn small ghost" data-act="skills" data-sid="${m.sid}">✨ 招式</button></div></div>`;
+  });
+  return h+'</div>';
+}
+/* ---- 🎮 遊戲區（小遊戲圖鑑）：同一款贏電腦 N 次解鎖，之後每天每款可玩 M 回；規則在 game-config.js 的 relax ---- */
+let relaxReady=false;
+function openZone(){
+  const R=GC.relax;if(!R||R.enabled===false||!window.RelaxBreak){toast('小遊戲還沒準備好（找不到 relax-break.bundle.js）');return}
+  hideCard();
+  if(!relaxReady){
+    const g={};(R.zoneGames||[]).forEach(id=>{g[id]=(R.limitVariants&&R.limitVariants[id])||null});
+    RelaxBreak.init({every:R.every,streak:R.streak,unlockWins:R.unlockWins,dailyLimit:R.dailyLimit,errStep:R.errStep,errMax:R.errMax,allowSkip:true,storageKey:R.storageKey,adaptive:true,level:'easy',rewardMode:'chest',games:g,rewards:{chest:()=>'',stage:()=>''}});
+    relaxReady=true;
+  }
+  RelaxBreak.openZone();
+}
+function openTeam(){hideCard();panelRender=()=>openPanel('🩹 主力培養怪（治療／復活）',teamHTML(),true);panelRender()}
+function healMon(sid,id){
+  const it=ITEM[id];if(!it||!(H.inv[id]>0))return;
+  const m=myMonsList().find(x=>x.sid===sid);if(!m)return;
+  if(it.revivePct){if(m.hp>0)return;H.mon[sid]={hp:Math.round(m.max*it.revivePct/100)}}
+  else{if(m.hp<=0||m.hp>=m.max)return;H.mon[sid]={hp:Math.min(m.max,m.hp+Math.round(m.max*it.healPct/100))}}
+  H.inv[id]--;save();toast(it.revivePct?`「${m.name}」復活了！`:`「${m.name}」恢復了生命`);teamBadge();panelRender&&panelRender();
+}
+/* ---- 商店 ---- */
+let shopTab=SLOTS[0][0];
+const owned=id=>!!H.own[id];
+function needOk(it){const n=it.need;if(!n)return true;if(n.type==='total')return totalStars()>=n.min;if(n.type==='chapter')return S[n.ch]&&S[n.ch].stars>=n.min;return true}
+function needText(it){const n=it.need;if(!n)return'';if(n.type==='total')return`總星數要 ${n.min} ⭐（現在 ${totalStars()}）`;return`第 ${n.ch} 章要 ${n.min} ⭐（現在 ${S[n.ch]?S[n.ch].stars:0}）`}
+function preview(it){
+  const fb=['cloak','hat','staff'].includes(it.slot)?heroSVG(Object.assign({},H.eq,{[it.slot]:it.id}),58):(it.icon||'🎁');
+  if(!OK[it.img]&&it.slot==='hat'&&heroLayers(Object.assign({},H.eq,{hat:it.id})))return `<span style="display:inline-block;width:58px;height:58px;overflow:hidden;position:relative"><span style="position:absolute;left:-86px;top:0;display:block">${heroSVG(Object.assign({},H.eq,{hat:it.id}),230)}</span></span>`;
+  return OK[it.img]?`<img src="${esc(OK[it.img])}" alt="" data-fb="${esc(fb)}" onerror="this.outerHTML=this.dataset.fb">`:fb;
+}
+function todayBought(id){const t=ymd(new Date());return H.buy.date===t?(H.buy.n[id]||0):0}
+function shopHTML(){
+  let h=`<div class="muted">你的${CN}：<b style="color:#ffd84d;font-size:18px">${CUR} ${H.gold}</b>　（每顆新星星 +${E.starGold}；每 ${E.expRate} 點經驗 +1，每日上限 ${E.expCap}；小屋的簽到與任務也有獎勵）</div><div class="tabs">`;
+  SLOTS.forEach(([k,n])=>h+=`<button class="tab${shopTab===k?' on':''}" data-act="tab" data-k="${k}">${esc(n)}</button>`);
+  h+='</div>';if(shopTab==='tech')return h+techHTML();h+='<div class="grid">';
+  ITEMS.filter(i=>i.slot===shopTab).forEach(it=>{
+    const pr=priceOf(it);let btn;
+    if(it.cons){
+      const have=H.inv[it.id]||0,full=it.maxOwn&&have>=it.maxOwn,lim=it.dailyLimit&&todayBought(it.id)>=it.dailyLimit;
+      btn=`<button class="btn small" data-act="buy" data-id="${it.id}" ${(H.gold<pr||full||lim||!needOk(it))?'disabled':''}>${full?'已達持有上限':lim?'今天買過了':'買 '+CUR+pr}</button><small>持有：${have} 張${it.maxOwn?'（上限 '+it.maxOwn+'）':''}</small>`;
+    }else if(owned(it.id)){
+      if(it.slot==='furn')btn='<button class="btn small" disabled>已擺放</button>';
+      else{const on=H.eq[it.slot]===it.id;btn=`<button class="btn small ${on?'':'ghost'}" data-act="equip" data-id="${it.id}" ${on?'disabled':''}>${on?'使用中':'裝備'}</button>`}
+    }else if(!needOk(it))btn=`<button class="btn small" disabled>🔒 ${CUR}${pr}</button><small>${esc(needText(it))}</small>`;
+    else btn=`<button class="btn small" data-act="buy" data-id="${it.id}" ${H.gold<pr?'disabled':''}>${H.gold<pr?CN+'不足':'買'} ${CUR}${pr}</button>`;
+    h+=`<div class="it"><div class="pv">${preview(it)}</div><b>${esc(it.name)}</b><small>${esc(it.effect||'')}</small>${btn}</div>`;
+  });
+  return h+'</div>';
+}
+function openShop(){hideCard();panelRender=()=>openPanel('🏪 數靈雜貨店',shopHTML(),true);panelRender()}
+function buy(id){
+  const it=ITEM[id];if(!it)return;const pr=priceOf(it);
+  if(!needOk(it)){toast('還沒達成購買條件：'+needText(it));return}
+  if(H.gold<pr){toast(CN+'不夠喔，再去闖幾關吧！');return}
+  if(!it.cons&&owned(id))return;
+  const t=ymd(new Date());if(H.buy.date!==t)H.buy={date:t,n:{}};
+  if(it.cons){
+    if(it.maxOwn&&(H.inv[id]||0)>=it.maxOwn){toast('持有已達上限');return}
+    if(it.dailyLimit&&(H.buy.n[id]||0)>=it.dailyLimit){toast('今天已經買過了');return}
+    H.inv[id]=(H.inv[id]||0)+1;H.buy.n[id]=(H.buy.n[id]||0)+1;
+    toast(id==='rename'?'買到改名卡了！名字很重要，要改之前請想清楚。':`買到「${it.name}」！`);
+  }else{H.own[id]=1;if(['pet','cloak','hat','staff'].includes(it.slot)){H.eq[it.slot]=id;renderHero()}else if(it.slot==='title')H.eq.title=id;toast(`買到「${it.name}」！`)}
+  H.gold-=pr;H.stat.spent+=pr;
+  save();refreshHUD();panelRender&&panelRender();
+}
+function equip(id){const it=ITEM[id];H.eq[it.slot]=id;save();renderHero();refreshHUD();panelRender&&panelRender()}
+
+/* ---- 招式系統（技能）---- */
+const GSK=GC.skills||null;
+const skD=id=>GSK&&GSK.defs[id]||null;
+const skT=id=>{const d=skD(id);return d?GSK.types[d.t]:null};
+const isTech=id=>String(id).charAt(0)==='T';
+const skLv=id=>{const k=String(id).split(':')[1];return(GSK.learnLv&&GSK.learnLv[k])||1};
+const pc=x=>Math.round(x*100)+'%';
+function typeText(ty,bonus){
+  let s='';
+  switch(ty.k){
+    case'phys':s=`物理攻擊 ×${ty.p}`;break;case'mag':s=`魔法攻擊 ×${ty.p}`;break;
+    case'vamp':s=`物理攻擊 ×${ty.p}，吸回傷害的 ${pc(ty.leech)}`;break;case'drain':s=`魔法攻擊 ×${ty.p}，吸走對手 ${pc(ty.pct)} 魔力`;break;
+    case'shield':s=`自己防禦 ×${ty.m}，${ty.t} 回合`;break;case'buff':s=`自己攻擊 ×${ty.m}，${ty.t} 回合`;break;
+    case'debuff':s=`對手防禦 ×${ty.m}，${ty.t} 回合`;break;case'heal':s=`補回 ${pc(ty.pct)} 血量`;break;
+    case'mpheal':s=`補回 ${pc(ty.pct)} 魔力`;break;case'poison':s=`每回合扣最大血量 ${pc(ty.pct)}，${ty.t} 回合`;break;
+    case'blind':s=`對手 ${pc(ty.miss)} 機率落空，${ty.t} 回合`;break;case'stun':s='對手少一次行動';break;
+    case'ult':{const b=GSK.types[bonus];s=`魔法攻擊 ×${ty.p}`+(b?`，另附「${b.n}」（強度 ${pc(ty.rate)}）`:'');break}
+  }
+  return s+`｜耗魔 ${ty.mp}`+(ty.lim?`｜每場 ${ty.lim} 次`:'');
+}
+function skCard(id,extra){
+  const d=skD(id),ty=skT(id);if(!d||!ty)return'';
+  return`<div class="cat" style="margin:6px 0"><div class="av" style="font-size:20px">${d.t==='U2'?'🌟':d.t==='U1'?'💫':'✨'}</div><div><b>${esc(d.n)}</b> <span class="badge" style="background:#3a4270">${esc(ty.n)}${d.b?'＋'+esc(GSK.types[d.b].n):''}</span>${extra||''}<br><small class="muted">${esc(typeText(ty,d.b))}</small><br><small>📖 ${esc(d.c||'')}</small></div></div>`;
+}
+const monLv=(n,id)=>{const p=S[n]&&S[n].per[id];return lvOf(p?p.exp:0)};
+function capturedMons(){
+  const out=[];
+  for(let n=1;n<=NCH;n++)CH[n].stages.forEach(s=>{const p=S[n].per[s[0]];if(p&&p.stars>0)out.push({n,id:s[0],name:s[1],em:s[2]?'👹':CH[n].em,lv:lvOf(p.exp),boss:!!s[2]})});
+  return out;
+}
+function effSlots(id,lv){
+  const r=H.sk[id],list=r&&Array.isArray(r.slots)?r.slots:((GSK.mon[id]||[]).slice(0,GSK.slots||4));
+  const out=[];for(let i=0;i<(GSK.slots||4);i++){const x=list[i];out.push(x&&skD(x)&&(isTech(x)?((r&&r.tech)||[]).includes(x):(x.split(':')[0]===id&&lv>=skLv(x)))?x:null)}
+  return out;
+}
+function ownSkills(id,lv){
+  const o=(GSK.mon[id]||[]).filter(x=>lv>=skLv(x));
+  return o.concat(((H.sk[id]&&H.sk[id].tech)||[]));
+}
+function researchPrice(id){const n=(H.sk[id]&&H.sk[id].n)||0,R=GSK.research;return Math.round((R.baseDays+R.stepDays*n)*E.dailyBase/E.priceRound)*E.priceRound}
+function monInfo(id){return capturedMons().find(m=>m.id===id)}
+function skillsHTML(id){
+  const m=monInfo(id);if(!m)return'<p class="muted">還沒收服這隻數靈。</p>';
+  const slots=effSlots(id,m.lv),own=ownSkills(id,m.lv);
+  let h=`<div><b>${esc(m.name)}</b>　Lv.${m.lv}　<span class="muted">對戰時可選：基本攻擊＋下面 ${GSK.slots} 個招式＋${esc(GSK.guard.name)}＋換人</span></div>`;
+  h+='<div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(210px,1fr));margin-top:8px">';
+  slots.forEach((sid,i)=>{
+    h+=`<div class="it" style="align-items:stretch;text-align:left"><b>招式格 ${i+1}</b><select data-slot="${i}" data-id="${esc(id)}" style="background:#0b0f22;color:var(--txt);border:1px solid var(--line);border-radius:8px;padding:6px">`+
+     `<option value="">（空）</option>`+own.map(x=>`<option value="${esc(x)}" ${x===sid?'selected':''}>${esc(skD(x).n)}〔${esc(skT(x).n)}〕</option>`).join('')+`</select><small class="muted">${sid?esc(typeText(skT(sid),skD(sid).b)):'空格：對戰時沒有這一招'}</small></div>`;
+  });
+  h+=`</div><div class="row" style="margin-top:8px"><button class="btn small ghost" data-act="slotReset" data-id="${esc(id)}">↺ 還原成預設專屬招</button><button class="btn small" data-act="techGo" data-id="${esc(id)}">🔬 研發新招</button></div>`;
+  h+='<h3 style="margin:12px 0 2px;font-size:16px">這隻怪的所有招式</h3>';
+  (GSK.mon[id]||[]).forEach(x=>{const ok=m.lv>=skLv(x);h+=skCard(x,ok?'':` <span class="badge" style="background:#7a4f22">🔒 Lv.${skLv(x)} 學會</span>`)});
+  ((H.sk[id]&&H.sk[id].tech)||[]).forEach(x=>h+=skCard(x,' <span class="badge" style="background:#2f6bd6">研發</span>'));
+  return h;
+}
+function openSkills(id){hideCard();panelRender=()=>openPanel('✨ 招式管理',skillsHTML(id),true);panelRender()}
+function setSlot(id,i,val){
+  const m=monInfo(id);if(!m)return;
+  const arr=effSlots(id,m.lv);
+  if(val){const j=arr.indexOf(val);if(j>=0&&j!==i)arr[j]=null}
+  arr[i]=val||null;
+  const r=H.sk[id]||(H.sk[id]={slots:null,tech:[],n:0});r.slots=arr;save();panelRender&&panelRender();
+}
+function slotReset(id){const r=H.sk[id];if(r){r.slots=null;save()}toast('已還原成預設的專屬招');panelRender&&panelRender()}
+let techMon=null;
+function techHTML(){
+  if(!GSK)return'<p class="muted">找不到招式資料。</p>';
+  const R=GSK.research;
+  let h=`<div class="cat"><div class="av">🔬</div><div>在研發所，花 ${CN} 替<b>一隻怪物</b>研發通用新招。<b>這隻怪被研發過的次數越多，下次越貴</b>（每次多 ${R.stepDays} 天的基準收入）；沒研發過的怪最便宜。學會後可裝在牠的招式格裡。</div></div>`;
+  if(!techMon||!monInfo(techMon)){
+    const l=capturedMons();
+    if(!l.length)return h+'<p class="muted">還沒有收服任何數靈。先去闖關吧！</p>';
+    h+='<h3 style="margin:10px 0 4px;font-size:16px">① 先選要研發的怪物</h3><div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(140px,1fr))">';
+    l.forEach(m=>{const n=(H.sk[m.id]&&H.sk[m.id].n)||0;h+=`<div class="mon${m.boss?' boss':''}" data-act="techPick" data-id="${esc(m.id)}" style="cursor:pointer"><div class="em">${m.em}</div><b>${esc(m.name)}</b><div class="muted">Lv.${m.lv}　已研發 ${n} 次</div><div style="color:#ffd84d">下次 ${CUR}${researchPrice(m.id)}</div></div>`});
+    return h+'</div>';
+  }
+  const m=monInfo(techMon),n=(H.sk[m.id]&&H.sk[m.id].n)||0,pr=researchPrice(m.id),learned=(H.sk[m.id]&&H.sk[m.id].tech)||[];
+  h+=`<div class="row" style="margin:8px 0"><button class="btn small ghost" data-act="techBack">← 換一隻怪物</button><button class="btn small ghost" data-act="skills" data-sid="${esc(m.id)}">✨ 管理招式</button></div>`;
+  h+=`<div><b>${m.em} ${esc(m.name)}</b>　Lv.${m.lv}　已研發 ${n} 次　<b style="color:#ffd84d">下次研發 ${CUR}${pr}</b>（你有 ${CUR}${H.gold}）</div><h3 style="margin:10px 0 4px;font-size:16px">② 選要研發的招式（每章通關後開放）</h3>`;
+  for(let c=1;c<=NCH;c++){
+    const open=S[c].got===CH[c].stages.length;
+    h+=`<div class="muted" style="margin-top:6px">第 ${c} 章　${esc(CH[c].theme)}${open?'':'　🔒 全通關後開放'}</div>`;
+    if(!open)continue;
+    (GSK.techList[c]||[]).forEach(id=>{const has=learned.includes(id);
+      h+=skCard(id,'')+`<div style="text-align:right"><button class="btn small" data-act="buyTech" data-id="${esc(id)}" data-sid="${esc(m.id)}" ${(has||H.gold<pr)?'disabled':''}>${has?'已學會':H.gold<pr?CN+'不足':'研發 '+CUR+pr}</button></div>`});
+  }
+  return h;
+}
+function buyTech(tid,mid){
+  const m=monInfo(mid),d=skD(tid);if(!m||!d)return;
+  const r=H.sk[mid]||(H.sk[mid]={slots:null,tech:[],n:0});
+  if(r.tech.includes(tid))return;const pr=researchPrice(mid);
+  if(H.gold<pr){toast(CN+'不夠喔！');return}
+  H.gold-=pr;H.stat.spent+=pr;r.tech.push(tid);r.n=(r.n|0)+1;
+  const arr=effSlots(mid,m.lv),i=arr.indexOf(null);
+  let msg=`「${m.name}」研發了「${d.n}」！`;
+  if(i>=0){arr[i]=tid;r.slots=arr;msg+=`已裝在招式格 ${i+1}`}else msg+='招式格已滿，到「管理招式」替換上去吧';
+  save();refreshHUD();toast(msg);panelRender&&panelRender();
+}
+
+/* ---- 小屋 ---- */
+function openHome(){hideCard();renderHome();$('#home').classList.add('on')}
+function closeHome(){$('#home').classList.remove('on')}
+const imgOr=(src,fb)=>OK[src]?`<img src="${esc(OK[src])}" alt="">`:fb;
+function renderHome(){
+  const HM=GC.home,t=tod(),sky={day:['#7ec8ff','#cfeeff','☀️'],dawn:['#ffb88c','#ffe0b0','🌅'],dusk:['#ff8f6b','#6a4c93','🌇'],night:['#0b1030','#1b2a5e','🌙']}[t];
+  const now=new Date(),nm={day:'白天',dawn:'清晨',dusk:'傍晚',night:'夜晚'}[t],art=!!OK[HM.wallpaper];
+  const room=$('#room');room.className='room'+(art?' art':'');room.style.backgroundImage=art?`url("${HM.wallpaper}")`:'';
+  const ceilStars=owned('furn_stars');
+  let h=`<div class="ceil${ceilStars?' st':''}">${ceilStars?'✨ ⭐ ✨ ⭐ ✨ ⭐ ✨ ⭐ ✨ ⭐ ✨ ⭐ ✨ ⭐ ✨ ⭐ ✨':''}</div>`;
+  const w=HM.window;
+  h+=`<div class="win" style="left:${w.x}%;top:${w.y}%;width:${w.w}%;height:${w.h}%;background:linear-gradient(${sky[0]},${sky[1]})"><span class="sun">${sky[2]}</span>${t==='night'?'<span class="sun" style="left:14%;right:auto;top:30%;font-size:calc(var(--u)*2)">✨</span><span class="sun" style="left:48%;right:auto;top:14%;font-size:calc(var(--u)*1.6)">⭐</span>':''}<div class="hill"></div><div class="cross"></div><span class="tm">${pad(now.getHours())}:${pad(now.getMinutes())}</span></div>`;
+  HM.furniture.forEach(f=>{if(!owned(f.id))return;const im=OK[f.img];h+=`<div class="deco ${im?'img':f.cls}" style="left:${f.x}%;top:${f.y}%;width:${f.w}%;height:${f.h}%;transform:rotate(${f.rot||0}deg);z-index:${f.z||1}">${im?`<img src="${esc(im)}" alt="">`:esc(f.emoji)}</div>`});
+  HM.items.forEach(f=>{h+=`<button class="fur" aria-label="${esc(f.label)}" data-act="${esc(f.act)}" style="left:${f.x}%;top:${f.y}%;width:${f.w}%;height:${f.h}%;transform:rotate(${f.rot||0}deg);z-index:${f.z||3}"><span class="e">${imgOr(f.img,esc(f.emoji))}</span></button>`});
+  h+=`<div class="heroSpot" style="left:${HM.hero.x}%;top:${HM.hero.y}%;width:${HM.hero.w}%;transform:rotate(${HM.hero.rot||0}deg);z-index:${HM.hero.z||4}">${heroSVG(H.eq,200).replace('width="200"','width="100%"').replace(/height="[\d.]+"/,'')}</div>`;
+  if(H.eq.pet&&ITEM[H.eq.pet]){const P=HM.pet,pw=P.w||P.size||6,pi=ITEM[H.eq.pet],pim=OK[pi.img];h+=`<div class="petSpot" style="left:${P.x}%;top:${P.y}%;width:${pw}%;${P.h?`height:${P.h}%;`:''}font-size:calc(var(--u)*${pw*.85});transform:rotate(${P.rot||0}deg);z-index:${P.z||5};display:flex;align-items:center;justify-content:center;line-height:1">${pim?`<img src="${esc(pim)}" alt="" style="max-width:100%;max-height:100%">`:pi.icon}</div>`;}
+  h+=`<div class="homeBar"><button class="btn" data-act="exitHome">🚪 出門</button></div>`;
+  room.innerHTML=h;refreshHUD();
+}
+function bedHTML(){
+  const t=ymd(new Date()),done=H.streak.last===t,d=H.daily,C=E.checkin;
+  let h=`<div class="cat"><div class="av">🐱</div><div>導師智慧貓：睡一覺、領一份每日獎勵吧！連續簽到天數越多，獎勵越多（最多 ${C.limit} ${CUR}）。<br><span class="muted">連續簽到：${H.streak.n} 天</span></div></div>`;
+  h+=`<button class="btn" data-act="checkin" ${done?'disabled':''}>${done?'今天已經簽到了 ✔':'🛌 睡一覺・簽到'}</button><h3 style="margin:14px 0 4px">📜 今日任務</h3>`;
+  E.missions.forEach(m=>{
+    const cur=Math.min(m.n,m.type==='exp'?d.expDelta:d.starDelta),ok=cur>=m.n,cl=d.claimed[m.id];
+    h+=`<div class="mis"><div><b>${esc(m.name)}</b><br><span class="muted">${esc(fill(m.desc,{n:m.n}))}（${cur}/${m.n}）</span></div><button class="btn small" data-act="claim" data-k="${m.id}" data-g="${m.gold}" ${(!ok||cl)?'disabled':''}>${cl?'已領取':ok?'領 '+CUR+m.gold:'未達成'}</button></div>`});
+  const have=H.inv.boost||0,using=H.boostDate===t;
+  if(ITEM.boost)h+=`<div class="mis"><div><b>🎟️ 雙倍券</b><br><span class="muted">持有 ${have} 張。使用後，今天的練習經驗換幣變 ${E.boostMult} 倍（要在出門練習<b>之前</b>使用）</span></div><button class="btn small" data-act="useBoost" ${(using||!have)?'disabled':''}>${using?'今天使用中':'使用'}</button></div>`;
+  return h+`<p class="muted">任務每天重新計算。學習獎勵：新星星每顆 +${E.starGold} ${CUR}，經驗每 ${E.expRate} 點 +1 ${CUR}（每日上限 ${E.expCap}）。今天已領練習獎勵 ${d.expGold}/${E.expCap}。</p>`;
+}
+function checkin(){
+  const now=new Date(),t=ymd(now);if(H.streak.last===t)return;
+  const y=ymd(new Date(now.getTime()-864e5));
+  H.streak.n=H.streak.last===y?H.streak.n+1:1;H.streak.last=t;
+  const g=Math.min(E.checkin.limit,E.checkin.base+(H.streak.n-1)*E.checkin.step);addGold(g);save();refreshHUD();toast(`簽到成功！連續 ${H.streak.n} 天，+${g} ${CUR}`);panelRender&&panelRender();
+}
+function claim(k,g){
+  if(H.daily.claimed[k])return;H.daily.claimed[k]=1;addGold(g);save();refreshHUD();toast(`任務完成！+${g} ${CUR}`);panelRender&&panelRender();
+}
+function useBoost(){
+  const t=ymd(new Date());if(!H.inv.boost||H.boostDate===t)return;
+  H.inv.boost--;H.boostDate=t;save();toast(`雙倍券啟用！今天的練習經驗換幣 ×${E.boostMult}`);panelRender&&panelRender();
+}
+function deskHTML(){
+  const locked_=H.who.name&&!H.renaming;
+  let h=`<p class="muted">只需要「學號」和「勇者名」，請不要填真名、電話或住址。班級由老師的對照表帶入。</p>
+  <div class="row2"><label>學號</label><input type="text" id="fNo" maxlength="12" value="${esc(H.who.no)}"></div>
+  <div class="row2"><label>勇者名</label><input type="text" id="fName" maxlength="8" value="${esc(H.who.name)}" ${locked_?'disabled':''}></div>`;
+  if(locked_)h+=`<p class="muted">勇者名取好之後，不能自己修改。想改名需要「改名卡」（商店有賣，你目前有 ${H.inv.rename||0} 張）。</p><button class="btn ghost" data-act="useRename" ${H.inv.rename?'':'disabled'}>使用改名卡</button> `;
+  else h+=`<p class="muted">${H.renaming?'改名中：存檔之後這張改名卡就用掉了。':'第一次取名免費，但取好之後就<b>無法自己修改</b>，要改只能買改名卡，請想清楚喔！'}</p>`;
+  return h+`<button class="btn" data-act="saveWho">💾 儲存</button>`;
+}
+function saveWho(){
+  const no=$('#fNo').value.trim(),nm=$('#fName').disabled?H.who.name:$('#fName').value.trim();
+  if(!no){toast('請填學號（老師才知道是你）');return}
+  if(!nm){toast('請先幫自己取個勇者名');return}
+  if(isBad(nm)){toast('這個名字不適合，請換一個');return}
+  H.who={cls:'',no,name:nm};H.renaming=false;
+  for(let n=1;n<=NCH;n++){const d=readCh(n);d._who={cls:'',no,sid:no,name:nm};writeCh(n,d)}
+  save();toast('資料已儲存並同步到各章');panelRender&&panelRender();reportNow(true);
+}
+function closetHTML(){
+  let h=`<div style="text-align:center">${heroSVG(H.eq,110)}</div>`;
+  [['cloak','服飾'],['hat','帽子'],['staff','法杖'],['pet','寵物'],['title','稱號']].forEach(([k,n])=>{
+    h+=`<h3 style="margin:10px 0 4px;font-size:16px">${n}</h3><div class="tabs">`;
+    if(k==='pet'||k==='title')h+=`<button class="tab${!H.eq[k]?' on':''}" data-act="unequip" data-k="${k}">無</button>`;
+    ITEMS.filter(i=>i.slot===k&&owned(i.id)).forEach(i=>h+=`<button class="tab${H.eq[k]===i.id?' on':''}" data-act="equip" data-id="${i.id}">${i.icon&&k==='pet'?i.icon+' ':''}${esc(i.name)}</button>`);
+    h+='</div>';
+  });
+  return h+'<p class="muted">還想要更多？去村莊的商店逛逛吧！</p>';
+}
+function monStatRows(lv){
+  const B=GC.battle||{},sb=B.statBase||{},sg=B.statGrowth||{},r=B.monOtherRate||2;
+  const rows=[['❤️ 生命',Math.max(1,Math.round(((B.baseHp||0)+(B.growthHp||0)*(lv-1))*(B.hpRate||1)))]];
+  [['mp','🔷 魔力'],['atk','⚔️ 普攻'],['matk','✨ 魔攻'],['def','🛡️ 物防'],['mdef','🔮 魔防'],['spd','🏃 速度']].forEach(([k,n])=>{if(sb[k]!=null)rows.push([n,Math.max(1,Math.round((sb[k]+(sg[k]||0)*(lv-1))*r))])});
+  return rows;
+}
+function monDetailHTML(n,id){
+  const s=CH[n].stages.find(x=>x[0]===id),p=S[n].per[id];if(!s||!p||!(p.stars>0))return'<p>還沒收服這隻數靈。</p>';
+  const lv=Math.floor(p.exp/E.expPerLevel)+1,cur=p.exp%E.expPerLevel,fb=s[2]?'👹':CH[n].em;
+  let desc='';try{VOL2.forEach(c=>c.mons.forEach(m=>{if(m.id===id)desc=m.desc||''}))}catch(e){}
+  const isMain=readCh(n)._main===id;
+  return`<button class="btn ghost small" data-act="trophy">← 回圖鑑</button>
+  <div class="mdet" style="margin-top:10px"><div class="big"><img alt="" src="${esc(fill(GC.urls.cardImg,{n,id}))}" data-fb="${esc(fb)}" onerror="this.outerHTML=this.dataset.fb"></div>
+  <div class="inf"><h3 style="margin:0">${esc(s[1])}${s[2]?' <span class="badge">Boss</span>':''}${isMain?' <span class="badge" style="background:#43a58f">主力培養怪</span>':''}</h3>
+  <div class="muted">第 ${n} 章 ${esc(CH[n].theme)}　｜　關卡 ${esc(id)}</div>
+  <p style="margin:8px 0"><b>Lv.${lv}</b>　⭐ ${p.stars}　<span class="muted">經驗 ${cur} / ${E.expPerLevel}（累計 ${p.exp}）</span></p>
+  <div style="height:10px;background:#000a;border-radius:6px;overflow:hidden;border:1px solid var(--line)"><i style="display:block;height:100%;width:${cur/E.expPerLevel*100}%;background:linear-gradient(90deg,var(--jade),var(--bronze))"></i></div>
+  ${desc?`<p style="margin:10px 0">${esc(desc)}</p>`:''}
+  <h4 style="margin:10px 0 2px">📊 目前能力（Lv.${lv}）</h4><table>${monStatRows(lv).map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td></tr>`).join('')}</table>
+  <h4 style="margin:10px 0 2px">✨ 專屬技能</h4>${(GSK&&GSK.mon[id]||[]).map(x=>skCard(x,lv>=skLv(x)?'':` <span class="badge" style="background:#7a4f22">🔒 Lv.${skLv(x)} 學會</span>`)).join('')}<button class="btn small" data-act="skills" data-sid="${esc(id)}" style="margin-top:6px">✨ 管理招式</button></div></div>`;
+}
+function trophyHTML(){
+  let h=`<p class="muted">通關的數靈會被收進圖鑑，等級＝經驗 ÷ ${E.expPerLevel} ＋ 1。點一下怪物的圖片，可以看大圖和詳細資料。</p><div class="tabs">`;
+  for(let n=1;n<=NCH;n++){const full=S[n].got===CH[n].stages.length,gold=S[n].stars>=CH[n].max;
+    h+=`<span class="pill" style="${gold?'border-color:#ffd84d;color:#ffd84d':full?'border-color:#43a58f':'opacity:.55'}">${CH[n].em} 第${n}章 ${S[n].got}/${CH[n].stages.length}${gold?' 👑':full?' ✔':''}</span>`}
+  h+='</div>';
+  for(let n=1;n<=NCH;n++){
+    h+=`<h3 style="margin:12px 0 6px;font-size:16px;color:#d2a24c">第${n}章　${esc(CH[n].theme)}</h3><div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(112px,1fr))">`;
+    CH[n].stages.forEach(s=>{
+      const p=S[n].per[s[0]],got=p&&p.stars>0,fb=s[2]?'👹':CH[n].em;
+      h+=`<div class="mon${got?'':' lock'}${s[2]?' boss':''}"${got?` data-act="monInfo" data-n="${n}" data-id="${esc(s[0])}" title="點一下看詳細資料"`:''}><div class="em">${got?`<img alt="" src="${esc(fill(GC.urls.cardImg,{n,id:s[0]}))}" data-fb="${esc(fb)}" onerror="this.outerHTML=this.dataset.fb">`:'❓'}</div>${got?`<span class="lv">Lv.${Math.floor(p.exp/E.expPerLevel)+1}</span>`:''}<b>${got?esc(s[1]):'？？？'}</b><div class="muted">${got?'⭐'+p.stars:'通關解鎖'}</div></div>`});
+    h+='</div>';
+  }
+  return h;
+}
+function weakRows(){
+  const rows=[];
+  for(let n=1;n<=NCH;n++)for(const k in S[n].q){const v=S[n].q[k];if(v&&v.n>=3)rows.push({k,n:v.n,ok:v.ok|0,r:(v.ok|0)/v.n})}
+  rows.sort((a,b)=>a.r-b.r||b.n-a.n);return rows;
+}
+function catHTML(){
+  const rows=weakRows();
+  if(!rows.length)return`<div class="cat"><div class="av">🐱</div><div>喵～我還沒有足夠的資料。先去各章多做幾題（同一題型至少 3 題），我就能幫你找出最需要加強的地方！</div></div>`;
+  const w=rows[0],sid=w.k.split(':')[0];
+  let h=`<div class="cat"><div class="av">🐱</div><div>喵！我觀察到你最需要加強的是「<b>${esc(STAGE_NAME[sid]||sid)}</b>」那關的題型 <b>${esc(w.k.split(':')[1]||'')}</b>，答對率只有 ${Math.round(w.r*100)}%。回到那一章用「重練錯題」多練幾次，一定會進步！</div></div>`;
+  h+='<table class="w"><tr><th>關卡</th><th>題型</th><th>答對率</th><th>作答</th></tr>';
+  rows.slice(0,8).forEach(r=>{const[a,b]=r.k.split(':');h+=`<tr><td>${esc(a)} ${esc(STAGE_NAME[a]||'')}</td><td>${esc(b||'')}</td><td>${Math.round(r.r*100)}%</td><td>${r.ok}/${r.n}</td></tr>`});
+  return h+'</table>';
+}
+function safeHTML(){
+  const empty=totalStars()===0&&location.protocol==='file:';
+  return `<p class="muted">進度只存在這台電腦的這個瀏覽器裡。換電腦或清除瀏覽資料之前，請先產生存檔碼或匯出備份。</p>
+  <div class="row2"><button class="btn" data-act="exportAll">📤 匯出全部進度</button><button class="btn ghost" data-act="importAll">📥 匯入進度檔</button></div>
+  <input type="file" id="impF" accept=".json,application/json" style="display:none">
+  <div class="row2"><button class="btn small" data-act="mkCode">🔑 產生存檔碼</button><button class="btn small ghost" data-act="useCode">用存檔碼還原</button></div>
+  <textarea id="codeBox" rows="3" style="width:100%;background:#0b0f22;color:#e9e4d4;border:1px solid #3a4270;border-radius:8px;padding:6px;font:12px monospace" placeholder="存檔碼會出現在這裡；要還原就把存檔碼整段貼在這裡"></textarea>
+  ${empty?'<p class="muted" style="color:#ffb38a">⚠️ 目前是直接用電腦開啟檔案（file://），部分瀏覽器不同網頁之間不共用存檔，所以星星可能顯示 0。請放到網站空間，或用本機伺服器開啟。</p>':''}`;
+}
+function snapshot(){const o={v:1,hub:H,ch:{},at:new Date().toISOString()};for(let n=1;n<=NCH;n++)o.ch[n]=readCh(n);return o}
+function exportAll(){
+  const w=H.who,b=new Blob([JSON.stringify(snapshot())],{type:'application/json'}),a=document.createElement('a');
+  a.href=URL.createObjectURL(b);a.download=`jb2-all-progress-${w.no||'x'}-${w.name||'x'}.json`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+}
+function applyData(o){
+  if(!o||o.v!==1||!o.ch)throw 0;
+  if(!confirm('還原會覆蓋目前這台電腦上的進度，確定嗎？'))return;
+  for(let n=1;n<=NCH;n++)if(o.ch[n])writeCh(n,o.ch[n]);
+  if(o.hub)try{localStorage.setItem(KEY,JSON.stringify(o.hub))}catch(e){}
+  location.reload();
+}
+function importAll(f){const r=new FileReader();r.onload=()=>{try{applyData(JSON.parse(r.result))}catch(e){toast('這個檔案不是正確的進度檔')}};r.readAsText(f)}
+function mkCode(){try{$('#codeBox').value='JB2-'+btoa(unescape(encodeURIComponent(JSON.stringify(snapshot()))));toast('存檔碼已產生，請整段複製存起來')}catch(e){toast('產生失敗，請改用匯出檔案')}}
+function useCode(){try{const s=$('#codeBox').value.trim();if(s.indexOf('JB2-')!==0)throw 0;applyData(JSON.parse(decodeURIComponent(escape(atob(s.slice(4))))))}catch(e){toast('存檔碼不正確，請確認有整段貼上')}}
+
+/* ===== 學習回報（學號必填才回報；不含真名） ===== */
+function reportPayload(){
+  const ch={},stages={};
+  for(let n=1;n<=NCH;n++){ch[n]={stars:S[n].stars,exp:S[n].exp};for(const k in S[n].per)stages[k]=S[n].per[k]}
+  const rows=weakRows().slice(0,5).map(r=>({k:r.k,n:r.n,ok:r.ok}));
+  return{v:1,no:H.who.no,hero:H.who.name,at:new Date().toISOString(),stars:totalStars(),ch,stages,weak:rows,gold:H.gold,earned:H.stat.earned,spent:H.stat.spent,streak:H.streak.n};
+}
+function reportNow(force){
+  try{if(window.Report&&GC.report&&GC.report.enabled&&H.who.no)window.Report.send(GC.report,reportPayload(),!!force)}catch(e){}
+}
+
+/* ===== 事件 ===== */
+let wrapDragged=false;
+document.addEventListener('change',e=>{const s=e.target.closest&&e.target.closest('select[data-slot]');if(s)setSlot(s.dataset.id,+s.dataset.slot,s.value)});
+document.addEventListener('click',e=>{
+  const hit=e.target.closest('.hit');if(hit){if(wrapDragged)return;onNode(+hit.dataset.i);return}
+  const bl=e.target.closest('.bld');
+  if(bl){if(wrapDragged||walking)return;const b=bl.dataset.b;const go=()=>b==='home'?openHome():b==='arena'?openArena():openShop();
+    if(heroNode===0)go();else walkTo(0,go);return}
+  const el=e.target.closest('[data-act]');if(!el)return;
+  const a=el.dataset.act;
+  switch(a){
+    case'hideCard':hideCard();break;
+    case'enter':enter(+el.dataset.n);break;
+    case'home':case'homeBtn':openHome();break;
+    case'shop':case'shopBtn':openShop();break;
+    case'arena':case'arenaBtn':openArena();break;
+    case'dailyBtn':openDaily();break;
+    case'takeGift':case'takeGift2':takeGift();panelRender&&panelRender();break;
+    case'claimChal':claimChal();break;
+    case'goChal':chalEnsure();goPractice('daily',H.chal.n,H.chal.sid,'');break;
+    case'goWeak':goPractice('weak',stageCh(el.dataset.sid),el.dataset.sid,el.dataset.types);break;
+    case'teamBtn':openTeam();break;
+    case'zoneBtn':openZone();break;
+    case'heal':healMon(el.dataset.sid,el.dataset.id);break;
+    case'findHero':centerOnHero(true);break;
+    case'closePanel':closePanel();break;
+    case'skills':openSkills(el.dataset.sid||el.dataset.id);break;
+    case'techPick':techMon=el.dataset.id;panelRender&&panelRender();break;
+    case'techBack':techMon=null;panelRender&&panelRender();break;
+    case'techGo':techMon=el.dataset.id;shopTab='tech';openShop();break;
+    case'buyTech':buyTech(el.dataset.id,el.dataset.sid);break;
+    case'slotReset':slotReset(el.dataset.id);break;
+    case'monInfo':{const n=+el.dataset.n,id=el.dataset.id;panelRender=()=>openPanel('🃏 數靈詳細資料',monDetailHTML(n,id),true);panelRender();break}
+    case'exitHome':closeHome();break;
+    case'tab':shopTab=el.dataset.k;panelRender&&panelRender();break;
+    case'buy':buy(el.dataset.id);break;
+    case'equip':equip(el.dataset.id);if(!panelRender)openPanel('👕 衣櫃',closetHTML());panelRender&&panelRender();break;
+    case'unequip':H.eq[el.dataset.k]='';save();renderHero();refreshHUD();panelRender&&panelRender();break;
+    case'bed':panelRender=()=>openPanel('🛏️ 簽到・每日任務',bedHTML());panelRender();break;
+    case'checkin':checkin();break;
+    case'claim':claim(el.dataset.k,+el.dataset.g);break;
+    case'useBoost':useBoost();break;
+    case'desk':panelRender=()=>openPanel('🖥️ 我的資料',deskHTML());panelRender();break;
+    case'saveWho':saveWho();break;
+    case'useRename':if(confirm('要使用 1 張改名卡嗎？用掉就不能退囉。')){H.inv.rename--;H.renaming=true;save();panelRender&&panelRender()}break;
+    case'closet':panelRender=()=>openPanel('🧥 衣櫃',closetHTML());panelRender();break;
+    case'trophy':panelRender=()=>openPanel('🏆 怪物圖鑑牆',trophyHTML(),true);panelRender();break;
+    case'catnest':panelRender=()=>openPanel('🐱 智慧貓的弱點診斷',catHTML());panelRender();break;
+    case'safe':panelRender=()=>openPanel('📦 備份・存檔碼',safeHTML());panelRender();$('#impF').onchange=ev=>ev.target.files[0]&&importAll(ev.target.files[0]);break;
+    case'exportAll':exportAll();break;
+    case'importAll':$('#impF').click();break;
+    case'mkCode':mkCode();break;
+    case'useCode':useCode();break;
+  }
+});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){if($('#pnlOv').classList.contains('on'))closePanel();else if($('#home').classList.contains('on'))closeHome();else hideCard()}});
+(()=>{let down=false,sx=0,sl=0,sy=0,st=0;const w=wrap();
+  w.addEventListener('pointerdown',e=>{if(e.pointerType!=='mouse'||walking)return;down=true;wrapDragged=false;sx=e.clientX;sl=w.scrollLeft;sy=e.clientY;st=w.scrollTop});
+  window.addEventListener('pointermove',e=>{if(!down)return;const dx=e.clientX-sx,dy=e.clientY-sy;if(Math.abs(dx)>6||Math.abs(dy)>6){wrapDragged=true;w.classList.add('drag')}if(wrapDragged){w.scrollLeft=sl-dx;w.scrollTop=st-dy}});
+  window.addEventListener('pointerup',()=>{down=false;w.classList.remove('drag');setTimeout(()=>wrapDragged=false,30)});
+})();
+
+/* ===== 登入小禮／每日挑戰／錯題練習 ===== */
+const LG=(E.loginGift&&E.loginGift.days&&E.loginGift.days.length)?E.loginGift.days:[{gold:20},{gold:30},{gold:40},{gold:50},{gold:60},{gold:80},{gold:120,item:'boost'}];
+const DC=Object.assign({gold:60,partial:20,pass:4,total:5},E.daily||{});
+const todayS=()=>ymd(new Date());
+function giftInfo(){
+  const now=new Date(),t=ymd(now),y=ymd(new Date(now.getTime()-864e5));
+  const n=H.login.last===t?H.login.n:(H.login.last===y?H.login.n+1:1);
+  return{t,n,day:(n-1)%LG.length,done:H.login.last===t};
+}
+function giftDue(){return H.login.last!==todayS()}
+function loginGift(){
+  if(!giftDue()||$('#pnlOv').classList.contains('on')||$('#home').classList.contains('on'))return;
+  const g=giftInfo();
+  let h=`<div class="cat"><div class="av">🐱</div><div>歡迎回來！今天是你連續登入的第 <b>${g.n}</b> 天，收下今天的小禮物吧！<br><span class="muted">每天都來，第 ${LG.length} 天有大獎；中斷一天就重新算喔。</span></div></div><div class="tabs" style="justify-content:center;margin:10px 0">`;
+  LG.forEach((d,i)=>{const cur=i===g.day;h+=`<span class="pill" style="min-width:64px;text-align:center;${cur?'border-color:#ffd84d;color:#ffd84d;font-weight:800':i<g.day?'opacity:.5':''}">第${i+1}天<br>${CUR}${d.gold}${d.item&&ITEM[d.item]?'<br>🎟️':''}</span>`});
+  h+=`</div><button class="btn" data-act="takeGift">🎁 領取今天的禮物</button>`;
+  openPanel('🎁 登入小禮',h);
+}
+function takeGift(){
+  if(!giftDue())return;const g=giftInfo(),d=LG[g.day];
+  H.login={last:g.t,n:g.n};addGold(d.gold);
+  let extra='';if(d.item&&ITEM[d.item]){H.inv[d.item]=(H.inv[d.item]||0)+1;extra='＋'+ITEM[d.item].name+' 1 張'}
+  save();refreshHUD();closePanel();toast(`登入小禮：+${d.gold} ${CUR}${extra}（連續 ${g.n} 天）`);
+}
+function clearedList(){const r=[];for(let n=1;n<=NCH;n++)CH[n].stages.forEach(s=>{const p=S[n].per[s[0]];if(p&&p.stars>0)r.push({n,id:s[0],name:s[1],stars:p.stars})});return r}
+function chalEnsure(){
+  const t=todayS(),L=clearedList();
+  if(H.chal.date===t&&(H.chal.sid?L.some(x=>x.id===H.chal.sid):!L.length))return;
+  if(!L.length){H.chal={date:t,sid:'',n:0,claimed:0};save();return}
+  let seed=0;const str=t+(H.who.no||'')+(H.who.name||'');for(let i=0;i<str.length;i++)seed=(seed*31+str.charCodeAt(i))>>>0;
+  const pick=L[seed%L.length];H.chal={date:t,sid:pick.id,n:pick.n,claimed:0};save();
+}
+function pracData(){try{return JSON.parse(localStorage.getItem('jb2-practice-v1'))||{}}catch(e){return{}}}
+function chalResult(){const p=pracData().daily;return(p&&p.date===todayS()&&p.sid===H.chal.sid)?p:null}
+function chalClaimable(){return!!(H.chal.date===todayS()&&H.chal.sid&&chalResult()&&!H.chal.claimed)}
+function goPractice(kind,n,sid,types){
+  H.last=n;H.heroNode=n;save();const u=fill(GC.urls.chapter,{n});
+  goTo(u+(u.includes('?')?'&':'?')+'practice='+kind+'&sid='+encodeURIComponent(sid)+(types?'&types='+encodeURIComponent(types):''));
+}
+function weakGroups(){
+  const m={};
+  weakRows().forEach(r=>{if(r.r>=0.9)return;const[sid,ty]=r.k.split(':');const o=m[sid]||(m[sid]={sid,n:0,ok:0,types:[]});o.n+=r.n;o.ok+=r.ok;if(ty)o.types.push(ty)});
+  return Object.values(m).map(o=>Object.assign(o,{r:o.ok/o.n})).sort((a,b)=>a.r-b.r).slice(0,5);
+}
+const stageCh=sid=>{for(let n=1;n<=NCH;n++)if(CH[n].stages.some(s=>s[0]===sid))return n;return 0};
+function dailyHTML(){
+  chalEnsure();const t=todayS(),g=giftInfo(),res=chalResult(),pr=pracData();
+  let h=`<h3 style="margin:4px 0">🎯 今日挑戰</h3>`;
+  if(!H.chal.sid)h+=`<div class="cat"><div class="av">🐱</div><div>你還沒有通關任何關卡。先去地圖闖一關，明天開始就有「每日挑戰」囉！<br><span class="muted">每日挑戰只會從你<b>已經通關</b>的關卡出題，不會考你還沒學過的。</span></div></div>`;
+  else{
+    const nm=STAGE_NAME[H.chal.sid]||H.chal.sid;
+    h+=`<div class="mis"><div><b>${esc(nm)}</b>（第 ${H.chal.n} 章 ${esc(H.chal.sid)}）<br><span class="muted">${DC.total} 題，答對 ${DC.pass} 題以上拿 ${CUR}${DC.gold}；沒達到也有 ${CUR}${DC.partial}。每天一個新關卡，只會從你通關過的關卡挑。</span>${res?`<br>今天成績：<b>${res.right}/${res.total}</b>`:''}</div>`;
+    if(H.chal.claimed)h+=`<button class="btn small" disabled>已領取 ✔</button></div>`;
+    else if(res)h+=`<button class="btn small" data-act="claimChal">領 ${CUR}${res.right>=DC.pass?DC.gold:DC.partial}</button></div><div style="margin:6px 0"><button class="btn ghost small" data-act="goChal">🔁 再挑戰一次（成績取最好的）</button></div>`;
+    else h+=`<button class="btn small" data-act="goChal">⚔️ 開始</button></div>`;
+  }
+  h+=`<h3 style="margin:14px 0 4px">🧩 錯題練習</h3>`;
+  const wg=weakGroups();
+  if(!wg.length)h+=`<p class="muted">目前沒有需要加強的題型（同一題型至少做 3 題才會統計）。繼續闖關，系統會自動幫你記下容易錯的地方！</p>`;
+  else{
+    h+=`<p class="muted">這些是你最容易錯的關卡。練習是「有小老師帶著做」的，答得越多弱點越少。</p>`;
+    wg.forEach(o=>{h+=`<div class="mis"><div><b>${esc(STAGE_NAME[o.sid]||o.sid)}</b>（${esc(o.sid)}）<br><span class="muted">答對率 ${Math.round(o.r*100)}%（${o.ok}/${o.n}）</span></div><button class="btn small" data-act="goWeak" data-sid="${esc(o.sid)}" data-types="${esc(o.types.join(','))}">練習 6 題</button></div>`});
+  }
+  const wp=pr.weak&&pr.weak.date===t?pr.weak:null;
+  if(wp)h+=`<p class="muted">今天已完成錯題練習：${wp.total} 題（答對 ${wp.right}）👍</p>`;
+  h+=`<h3 style="margin:14px 0 4px">🎁 登入小禮</h3><p class="muted">${g.done?`今天已領取，連續登入 ${H.login.n} 天。`:`今天還沒領！`}</p>${g.done?'':`<button class="btn small" data-act="takeGift2">領取</button>`}`;
+  return h;
+}
+function openDaily(){hideCard();panelRender=()=>openPanel('📅 每日挑戰・錯題練習',dailyHTML(),true);panelRender()}
+function claimChal(){
+  const res=chalResult();if(!res||H.chal.claimed)return;
+  const g=res.right>=DC.pass?DC.gold:DC.partial;H.chal.claimed=1;addGold(g);save();refreshHUD();toast(`每日挑戰獎勵 +${g} ${CUR}`);panelRender&&panelRender();
+}
+function dailyBadge(){
+  const b=document.querySelector('[data-act="dailyBtn"]');if(!b)return;
+  const hot=giftDue()||chalClaimable()||(H.chal.date!==todayS()&&clearedList().length>0)||(H.chal.sid&&!chalResult()&&!H.chal.claimed);
+  b.textContent='📅 每日'+(hot?' 🔴':'');
+}
+
+/* ===== 啟動 ===== */
+function refreshAll(silent){calcStats();sync(silent);drawMap();renderHero();refreshHUD();if($('#home').classList.contains('on'))renderHome();reportNow(false)}
+function intro(){
+  openPanel('🌍 歡迎來到數理大陸',`<div class="cat"><div class="av">🐱</div><div>我是導師智慧貓！古老的數理大陸被混沌黑霧籠罩，六大元素水晶失衡，各地的守護數靈因為「數學觀念混亂」而暴走了。<br><br>召喚師，請你帶著法杖，依序走訪六座島嶼，答對題目、封印數靈、收進圖鑑。<br><br>👉 點島嶼，勇者會走過去；點村莊的 🏠 回小屋休息、點 🏪 買裝備、點 🏟️ 去鬥技場。<br>👉 通關拿星星、練習拿經驗，都能換成 ${CUR} ${CN}喔！</div></div><button class="btn" data-act="closePanel">開始冒險！</button>`);
+  H.intro=true;save();
+}
+function init(){
+  document.body.classList.add('mapwait');setTimeout(()=>document.body.classList.remove('mapwait'),5000);
+  load();buildStatic();calcStats();fit();drawMap();
+  heroNode=Math.min(NCH,Math.max(0,H.heroNode!=null?H.heroNode:H.last||0));heroXY={x:POS[heroNode][0],y:POS[heroNode][1]};
+  sync(false);drawMap();renderHero();refreshHUD();centerOnHero(false);
+  requestAnimationFrame(loop);
+  if(!H.intro)setTimeout(intro,400);else setTimeout(()=>{try{loginGift()}catch(e){}},900);
+  const list=[...CH.slice(1).flatMap((c,i)=>c.stages.map(q=>`grade7-vol2-ch${i+1}/images/battle/${q[0]}.png`)),M.art,GC.home.wallpaper].concat(M.buildings.map(b=>b.img),GC.home.items.map(i=>i.img),GC.home.furniture.map(i=>i.img),ITEMS.map(i=>i.img),ITEMS.filter(i=>i.slot==='cloak').map(i=>heroPath({cloak:i.id})),ITEMS.filter(i=>i.slot==='cloak').map(i=>LAYPATH.body(i.id)),ITEMS.filter(i=>(i.slot==='hat'||i.slot==='staff')&&!/_none$/.test(i.id)).map(i=>LAYPATH.item(i.id))).filter(Boolean);
+  probe(list,()=>{drawMap();renderHero();place(0);if($('#home').classList.contains('on'))renderHome();document.body.classList.remove('mapwait')});
+  reportNow(false);
+}
+window.addEventListener('resize',()=>{fit();centerOnHero(false)});
+window.addEventListener('pageshow',ev=>{if(ev.persisted){load();refreshAll(false);centerOnHero(false)}});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&ready){load();calcStats();sync(false);drawMap();refreshHUD();reportNow(false)}});
+init();
+})();
+</script>
+</body>
+</html>

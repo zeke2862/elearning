@@ -1,0 +1,23 @@
+<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>教師學習報表（不要上傳）</title>
+<style>body{font-family:"Noto Sans TC","Microsoft JhengHei",sans-serif;background:#f4f1e8;color:#222;margin:0;padding:16px}h1{font-size:22px}input,select,button,textarea{font:inherit;padding:6px 10px;margin:3px}button{background:#b8862b;color:#fff;border:0;border-radius:8px;cursor:pointer}table{border-collapse:collapse;width:100%;background:#fff;margin-top:10px}td,th{border:1px solid #ccc;padding:5px 8px;font-size:14px;text-align:left}th{background:#eadfc0;cursor:pointer}.warn{color:#a33}.box{background:#fff;border:1px solid #ccc;border-radius:10px;padding:10px;margin:8px 0}</style></head><body>
+<h1>📊 教師學習報表 <small style="font-weight:400">（此檔只給老師，不要上傳到學生網站；待實測）</small></h1>
+<div class="box">網址與 token 只在這個畫面輸入，不會存進檔案。<br>
+<input id="u" size="50" placeholder="Apps Script 網頁應用程式網址"><input id="t" type="password" placeholder="TOKEN"><button onclick="load()">讀取</button></div>
+<div class="box">學號↔班級對照（CSV，兩欄：學號,班級；只留在這台電腦的記憶體，不上傳）：<br><input type="file" id="m" accept=".csv"> <select id="cls"><option value="">全部班級</option></select> <button onclick="csv()">匯出 CSV</button></div>
+<div id="info" class="warn"></div><table id="tb"></table>
+<script>
+var rows=[],map={};
+document.getElementById('m').onchange=function(e){var f=e.target.files[0];if(!f)return;var r=new FileReader();r.onload=function(){map={};r.result.split(/\r?\n/).forEach(function(l){var a=l.split(',');if(a[0]&&a[1])map[a[0].trim()]=a[1].trim()});fillCls();render()};r.readAsText(f)};
+function fillCls(){var s=document.getElementById('cls'),c={};Object.keys(map).forEach(function(k){c[map[k]]=1});s.innerHTML='<option value="">全部班級</option>'+Object.keys(c).sort().map(function(x){return '<option>'+x+'</option>'}).join('');s.onchange=render}
+function load(){var u=document.getElementById('u').value.trim(),t=document.getElementById('t').value.trim();
+ fetch(u+'?token='+encodeURIComponent(t)).then(function(r){return r.json()}).then(function(j){if(j.error){info('token 不對或沒有權限');return}rows=j.rows;info('');render()}).catch(function(){info('讀取失敗：請確認網址、已部署為所有人可存取')})}
+function info(m){document.getElementById('info').textContent=m}
+function esc(s){return String(s==null?'':s).replace(/[&<>]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;'}[c]})}
+function cur(){var c=document.getElementById('cls').value;return rows.filter(function(r){return !c||map[String(r['學號'])]===c})}
+function render(){var h='<tr><th>學號</th><th>班級</th><th>勇者名</th><th>總星數</th><th>累計賺</th><th>累計花</th><th>連續簽到</th><th>弱點</th><th>更新</th></tr>';
+ cur().sort(function(a,b){return b['總星數']-a['總星數']}).forEach(function(r){var w='';try{w=JSON.parse(r['弱點(前5)']).map(function(x){return x.k+' '+x.ok+'/'+x.n}).join('；')}catch(e){}
+  h+='<tr><td>'+esc(r['學號'])+'</td><td>'+esc(map[String(r['學號'])]||'')+'</td><td>'+esc(r['勇者名'])+'</td><td>'+esc(r['總星數'])+'</td><td>'+esc(r['累計賺'])+'</td><td>'+esc(r['累計花'])+'</td><td>'+esc(r['連續簽到'])+'</td><td>'+esc(w)+'</td><td>'+esc(String(r['更新時間']).slice(0,16))+'</td></tr>'});
+ document.getElementById('tb').innerHTML=h}
+function csv(){var o=['學號,班級,勇者名,總星數,累計賺,累計花,連續簽到,更新'];cur().forEach(function(r){o.push([r['學號'],map[String(r['學號'])]||'',r['勇者名'],r['總星數'],r['累計賺'],r['累計花'],r['連續簽到'],r['更新時間']].join(','))});
+ var a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['﻿'+o.join('\n')],{type:'text/csv'}));a.download='jb2-report.csv';a.click()}
+</script></body></html>

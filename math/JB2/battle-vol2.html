@@ -1,0 +1,1055 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>數靈怪物團體戰｜國一下・數靈召喚師</title>
+<style>
+:root{--ink:#161a2e;--ink2:#20264a;--line:#3a4270;--bronze:#d2a24c;--paper:#f1e8d2;--red:#d24a33;--jade:#43a58f;--txt:#e9e4d4}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(ellipse at top,#252c56,var(--ink) 65%);color:var(--txt);font-family:"Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif;min-height:100vh}
+h1,h2,h3,.serif{font-family:"Noto Serif TC","Songti TC","PMingLiU",serif}
+main{max-width:860px;margin:0 auto;padding:16px 16px 60px}
+button{font:inherit;cursor:pointer;color:inherit}
+.btn{background:var(--bronze);color:#2a1d05;border:0;border-radius:10px;padding:8px 14px;font-weight:700}
+button:focus-visible{outline:3px solid var(--bronze);outline-offset:2px}
+.hide{display:none!important}
+.card{background:var(--ink2);border:2px solid var(--line);border-radius:14px;padding:16px}
+.head{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.rank{font-size:2rem;color:var(--bronze);margin:0}
+.grow{flex:1;min-width:200px}
+.pbar{height:12px;background:var(--ink);border-radius:8px;overflow:hidden;margin:6px 0}
+#rbar{height:100%;background:linear-gradient(90deg,var(--bronze),#f0cf85);width:0;transition:width .6s}
+.ch{margin-top:16px}
+.who{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.who input{background:var(--ink);border:2px solid var(--line);border-radius:8px;padding:8px 10px;color:var(--txt);font:inherit;width:9.5em}
+.who button{background:var(--ink);border:2px solid var(--bronze);border-radius:8px;padding:8px 12px}
+.ch h2{margin:0;font-size:1.25rem;color:var(--bronze)}
+.ch small{opacity:.75}
+.nodes{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:10px}
+.node{background:var(--ink);border:2px solid var(--line);border-radius:12px;padding:10px 6px;min-height:104px;text-align:center;display:flex;flex-direction:column;justify-content:center;gap:4px}
+.node b{font-size:1.15rem}
+.node span{font-size:.85rem;line-height:1.3}
+.node:hover:not(.locked){border-color:var(--bronze);background:#2b2a3c}
+.node.boss{border-color:#8a3a2c}
+.node.locked{opacity:.45}
+.node.done{border-color:var(--jade)}
+.node.soon{border-style:dashed}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px;margin-top:10px}
+.cd{background:var(--paper);color:#2b2416;border-radius:10px;padding:10px;font-size:.85rem;line-height:1.5;min-height:130px}
+.cd b{font-size:1.1rem;display:block;font-family:"Noto Serif TC","Songti TC",serif}
+.cd.lock{background:var(--ink);color:#8a8fb0;border:2px dashed var(--line)}
+#ov{position:fixed;inset:0;background:var(--ink);z-index:50}
+#fr{width:100%;height:100%;border:0}
+#x{position:absolute;top:8px;right:10px;z-index:60;background:#0008;border:2px solid var(--line);border-radius:8px;padding:2px 10px}
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--bronze);color:#2a1d05;padding:12px 20px;border-radius:10px;font-weight:700;z-index:100;text-align:center;max-width:90vw;line-height:1.6}
+.enode{min-height:84px}
+.enode.done{border-color:#c9a13b}
+.rule{margin-top:12px;line-height:1.8;font-size:.92rem}
+.tiny{margin-top:24px;text-align:center}
+.tiny button{background:none;border:1px solid var(--line);border-radius:8px;padding:6px 14px;opacity:.7}
+/* ===== 角色戰力／裝備（新增） ===== */
+.hero-row{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.avatar{background:var(--ink);border:2px solid var(--bronze);border-radius:14px}
+#ebar{height:100%;background:linear-gradient(90deg,var(--jade),#7be0c9);width:0;transition:width .6s}
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(105px,1fr));gap:8px;margin-top:12px}
+.sbox{background:var(--ink);border:2px solid var(--line);border-radius:10px;padding:8px 6px;text-align:center}
+.sbox b{font-size:1.1rem;display:block}
+.sbox span{font-size:.75rem;opacity:.8}
+.icon-wrap{display:inline-flex;align-items:center;justify-content:center;vertical-align:middle}
+.icon-wrap img{display:block;object-fit:contain;border-radius:6px}
+.icon-wrap .emoji-fb{display:none;line-height:1}
+.ic-eq{width:30px;height:30px}
+.ic-eq img,.ic-eq .emoji-fb{width:30px;height:30px;font-size:26px}
+.avatar{width:78px;height:78px;padding:0;display:flex;align-items:center;justify-content:center}
+.ic-av{width:100%;height:100%}
+.ic-av img,.ic-av .emoji-fb{width:100%;height:100%;font-size:2.6rem}
+.cd .es{margin:6px 0;font-weight:700}
+.cd .hint{font-size:.76rem;opacity:.8;margin-bottom:4px}
+.cd .desc{font-size:.76rem;opacity:.85;line-height:1.5}
+.q-normal{color:#5a5245}
+.q-fine{color:#2f7d4f}
+.q-legend{color:#2b4fc4}
+.q-myth{color:#b8542c}
+.avatar{cursor:pointer}
+.fighter{background:var(--ink);border:2px solid var(--line);border-radius:12px;padding:10px 12px;margin:8px 0}
+.fighter b{font-size:1.05rem}
+.fbar{height:10px;background:#2a2f52;border-radius:6px;overflow:hidden;margin:4px 0}
+.fbar>i{display:block;height:100%;transition:width .3s}
+.fbar.hp>i{background:linear-gradient(90deg,#43a58f,#7be0c9)}
+.fbar.mp>i{background:linear-gradient(90deg,#3a6fd2,#7fb0f2)}
+.turn-tag{display:inline-block;background:var(--bronze);color:#2a1d05;padding:2px 10px;border-radius:8px;font-weight:700;font-size:.85rem;margin-bottom:6px}
+.amenu{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.amenu button{background:var(--ink);border:2px solid var(--bronze);border-radius:8px;padding:8px 12px;font-size:.88rem}
+.amenu button:disabled{opacity:.35;cursor:not-allowed}
+.blog{margin-top:10px;font-size:.82rem;opacity:.85;line-height:1.6;max-height:120px;overflow-y:auto}
+@media (max-width:560px){.nodes{grid-template-columns:repeat(2,1fr)}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+/* ===== 🎬 對戰舞台（全螢幕）：對手在上、我方在下 ===== */
+.bt-stage{position:fixed;inset:0;z-index:90;display:flex;flex-direction:column;color:#fff;overflow:hidden;background:radial-gradient(ellipse at 50% 0%,#2b3a7a 0%,#141a3a 55%,#0b0e22 100%)}
+.bt-arena{flex:1;min-height:0;position:relative;display:flex;flex-direction:column;justify-content:space-between;padding:10px 14px}
+.bt-arena::before{content:'';position:absolute;left:6%;right:6%;top:50%;height:1px;background:linear-gradient(90deg,transparent,#c9a24a88,transparent)}
+.bt-row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.bt-card{background:#0e1230d9;border:2px solid var(--line);border-radius:12px;padding:8px 12px;flex:0 1 250px;min-width:140px;max-width:56vw}
+.bt-card b{font-size:1rem}
+.bt-card small{font-size:.75rem;opacity:.85}
+.bt-stage{--sp:clamp(84px,22vh,150px)}
+.bt-sprites{position:relative;flex:none;width:var(--sp);height:var(--sp)}
+.bt-sprites.has-clone{width:calc(var(--sp)*1.5)}
+.bt-sprite{position:absolute;top:0;width:var(--sp);height:var(--sp)}
+.bt-bot .bt-sprite{left:0}.bt-bot .bt-clone{left:auto;right:0}
+.bt-top .bt-sprite{right:0}.bt-top .bt-clone{right:auto;left:0}
+.bt-eq{display:flex;flex-wrap:wrap;gap:6px 5px;margin-top:8px}
+.bt-eqi{position:relative;width:28px;height:28px;border-radius:6px;background:#0009;border:2px solid var(--qc,#b9b3a5);display:inline-flex;align-items:center;justify-content:center}
+.bt-eqi .icon-wrap{width:100%;height:100%}
+.bt-eqi img,.bt-eqi .emoji-fb{width:100%;height:100%;object-fit:contain;border-radius:3px;font-size:16px;align-items:center;justify-content:center}
+.bt-eqi i{position:absolute;right:-5px;bottom:-7px;font-style:normal;font-size:.55rem;line-height:1.3;font-weight:900;padding:0 3px;border-radius:5px;background:var(--qc,#b9b3a5);color:#111}
+.bq-normal{--qc:#b9b3a5}.bq-fine{--qc:#4cc98a}.bq-legend{--qc:#6aa0ff}.bq-myth{--qc:#ff9a52}
+.bt-sprite::after{content:'';position:absolute;left:12%;right:12%;bottom:-6px;height:12px;background:radial-gradient(ellipse,#000a,transparent 70%);z-index:0}
+.bt-img{position:relative;z-index:1;width:100%;height:100%;display:flex;align-items:center;justify-content:center;filter:drop-shadow(0 8px 6px #0009)}
+.bt-img .icon-wrap{width:100%;height:100%}
+.bt-img .ic-bt img,.bt-img .ic-bt .emoji-fb{width:100%;height:100%;object-fit:contain;border-radius:0}
+.bt-img .ic-bt .emoji-fb{font-size:clamp(60px,15vh,112px);align-items:center;justify-content:center}
+.bt-caption{align-self:center;text-align:center;font-size:.95rem;line-height:1.5;min-height:2.6em;max-width:94%;padding:6px 14px;background:#00000066;border-radius:10px;position:relative;z-index:2}
+.bt-caption.pop{animation:btCap .35s}
+.bt-panel{background:#0b0e22;border-top:2px solid var(--bronze);padding:10px 14px 14px;max-height:46vh;overflow-y:auto}
+.bt-panel .blog{max-height:84px}
+.bt-stage .fbar>i{transition:width .5s .25s}
+.bt-img.hurt{animation:btHurt .55s,btFlash .55s}
+.bt-sprite.cast .bt-img{animation:btCast .7s}
+.bt-sprite.defending{filter:drop-shadow(0 0 12px #5ab0ff)}
+.bt-sprite.defending::before{content:'🛡️';position:absolute;right:-8px;top:-8px;font-size:2rem;z-index:3;animation:btPulse 1.2s infinite}
+.bt-sprite.charging{animation:btCharge .9s infinite alternate}
+.bt-sprite.ko .bt-img{transform:rotate(78deg) translateY(18px);filter:grayscale(1) brightness(.6);opacity:.7;transition:all .8s}
+.bt-sprite.win .bt-img{animation:btWin .7s infinite alternate}
+.bt-float{position:absolute;left:50%;top:8%;transform:translateX(-50%);font-weight:900;font-size:1.8rem;pointer-events:none;text-shadow:0 2px 4px #000,0 0 8px #000;z-index:4;animation:btFloat 1s forwards}
+.bt-burst{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:3.4rem;pointer-events:none;z-index:4;animation:btBurst .55s forwards}
+.bt-proj{position:absolute;font-size:2.4rem;z-index:5;pointer-events:none;filter:drop-shadow(0 0 10px #9ad0ff)}
+@keyframes btHurt{0%,100%{transform:translateX(0)}12%{transform:translateX(-16px) rotate(-6deg)}28%{transform:translateX(14px) rotate(5deg)}44%{transform:translateX(-10px)}60%{transform:translateX(8px)}80%{transform:translateX(-4px)}}
+@keyframes btFlash{0%,100%{filter:drop-shadow(0 8px 6px #0009)}30%{filter:brightness(2.3) saturate(0) drop-shadow(0 0 14px #ff3b3b)}}
+@keyframes btCast{0%,100%{transform:scale(1);filter:drop-shadow(0 8px 6px #0009)}40%{transform:scale(1.18);filter:drop-shadow(0 0 22px #b48cff) brightness(1.4)}}
+@keyframes btPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
+@keyframes btCharge{from{filter:drop-shadow(0 0 4px #b48cff)}to{filter:drop-shadow(0 0 22px #ffd45a) brightness(1.25)}}
+@keyframes btWin{from{transform:translateY(0)}to{transform:translateY(-12px)}}
+@keyframes btFloat{0%{opacity:0;transform:translate(-50%,10px) scale(.7)}15%{opacity:1;transform:translate(-50%,0) scale(1.2)}100%{opacity:0;transform:translate(-50%,-64px) scale(1)}}
+@keyframes btBurst{0%{opacity:1;transform:scale(.3)}60%{opacity:1;transform:scale(1.4)}100%{opacity:0;transform:scale(1.8)}}
+@keyframes btCap{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@media (max-height:560px){.bt-stage{--sp:88px}.bt-eqi{width:22px;height:22px}.bt-panel{max-height:52vh}}
+
+.ic-mon{width:46px;height:46px}
+.ic-mon img,.ic-mon .emoji-fb{width:46px;height:46px;font-size:34px}
+.ic-st{width:26px;height:26px}
+.ic-st img,.ic-st .emoji-fb{width:26px;height:26px;font-size:19px}
+#team-panel{background:var(--ink);border:2px solid var(--line);border-radius:12px;padding:12px;margin-bottom:12px}
+.tmlist{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.tmrow{display:flex;align-items:center;gap:8px;background:var(--ink2);border:2px solid var(--line);border-radius:10px;padding:6px 8px}
+.tmno{width:22px;height:22px;border-radius:50%;background:var(--bronze);color:#2a1d05;font-weight:900;font-size:.8rem;display:inline-flex;align-items:center;justify-content:center;flex:none}
+.tmtxt{flex:1;min-width:0;line-height:1.4}
+.tmbtn{display:flex;gap:4px;flex:none}
+.tmbtn button{background:var(--ink);border:2px solid var(--bronze);border-radius:8px;padding:4px 9px;font-size:.85rem}
+.tmbtn button:disabled{opacity:.3;cursor:not-allowed}
+.tmempty{margin:8px 0 0;line-height:1.7;opacity:.9}
+.tmunset{margin-top:8px;opacity:.85;line-height:1.6}
+.strip{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+.strip .tm{position:relative;display:inline-flex;border:2px solid var(--line);border-radius:7px;background:#0009;padding:1px}
+.strip .tm.on{border-color:var(--bronze);box-shadow:0 0 6px #d2a24caa}
+.strip .tm.dead{opacity:.35;filter:grayscale(1)}
+.strip .tm.dead::after{content:'✕';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#ff6b6b;font-weight:900;font-size:1rem}
+.bt-card .owner{opacity:.75}
+.bt-card .stt{font-size:.75rem;min-height:1.1em;color:#9ad0ff}
+.bt-sprite.enter .bt-img{animation:btEnter .6s}
+@keyframes btEnter{0%{opacity:0;transform:scale(.4) translateY(20px)}100%{opacity:1;transform:none}}
+.backlink{display:inline-block;margin-bottom:10px;background:var(--bronze);color:#2a1d05!important;text-decoration:none;font-weight:700;border-radius:10px;padding:8px 14px;box-shadow:0 2px 8px #0008}.backlink:hover{background:#f0cf85}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="vol2-monsters.js"></script>
+<script src="game-config.js"></script><!-- 選用：有的話會共用生命值、幽靈與獎勵設定 -->
+</head>
+<body>
+<main>
+  <a class="backlink" href="world-map-vol2-all.html">← 回到數理大陸總覽</a>
+  <h1 class="serif" style="margin:0 0 4px">⚔️ 數靈怪物團體戰</h1>
+  <p style="margin:0 0 14px;opacity:.8">六個章節的「主力培養怪」組成隊伍，跟同學的隊伍一決勝負！</p>
+
+  <section class="card who" id="who">
+    <b>👤 我的資料</b>
+    <input id="w-sid" placeholder="我的學號（對戰要用）" maxlength="20" aria-label="我的學號">
+    <input id="w-name" placeholder="姓名或暱稱" maxlength="30" aria-label="姓名或暱稱">
+    <button id="w-save">儲存</button>
+    <button id="w-rec">🏆 我的戰績</button>
+  </section>
+
+  <section class="card" id="arena" style="margin-top:14px">
+    <h2 class="serif" style="margin:0 0 6px">⚔️ 學號對戰</h2>
+    <div id="arena-setup">
+      <div id="team-panel"></div>
+      <small>手機、平板、家裡電腦都可以玩，只要有網路就好！排好出戰順序後，輸入對方學號、選好模式、按下對戰。</small>
+      <div class="who" style="margin-top:10px">
+        <label style="display:inline-flex;align-items:center;gap:4px"><input type="radio" name="duel-mode" value="sync" checked>⚡即時對戰（雙方都要在線）</label>
+        <label style="display:inline-flex;align-items:center;gap:4px"><input type="radio" name="duel-mode" value="async">👻單挑同學的雲端幽靈（對方不用在線）</label>
+        <label style="display:inline-flex;align-items:center;gap:4px"><input type="radio" name="duel-mode" value="ghost">🤖AI幽靈（找不到同學時，跟系統幽靈對戰）</label>
+      </div>
+      <div class="who" style="margin-top:8px">
+        <input id="op-sid" placeholder="對方學號">
+        <button id="op-fight">⚔️ 輸入學號，對戰！</button>
+        <button id="op-ghost">🤖 找不到人？跟 AI 幽靈對戰</button>
+      </div>
+      <div id="arena-pending" class="hide" style="margin-top:10px"></div>
+    </div>
+    <div id="arena-battle" class="hide"></div>
+  </section>
+  <p class="tiny" style="opacity:.7">每一章全部通關後，到該章圖鑑挑一隻「主力培養怪」；牠的等級越高，在這裡就越強。</p>
+</main>
+<div id="toast" class="hide"></div>
+<script>
+const CH_KEYS=VOL2.map(c=>c.key), BATTLE_KEY='monster-vol2-battle-v1';
+const GCB=(window.GAME_CONFIG&&window.GAME_CONFIG.battle)||null;          // 來自 game-config.js（沒有也能玩）
+const CUR_ICON=(window.GAME_CONFIG&&window.GAME_CONFIG.currency&&window.GAME_CONFIG.currency.icon)||'💰';
+const $=s=>document.querySelector(s);
+let tt=0;
+function toast(h){const t=$('#toast');t.innerHTML=h;t.classList.remove('hide');clearTimeout(tt);tt=setTimeout(()=>t.classList.add('hide'),3800);}
+// ---- 數值基準（跟 JB1 角色同一組，怪物再依規則調整：血量一半、其他 2 倍）----
+const STATKEYS=['hp','mp','atk','matk','def','mdef','spd'];
+const BASE=Object.assign({hp:1000,mp:300,atk:50,matk:50,spd:100,def:20,mdef:20},(GCB&&GCB.statBase)||{},{hp:(GCB&&GCB.baseHp)||1000});
+const GROWTH=Object.assign({hp:100,mp:30,atk:5,matk:5,def:3,mdef:3,spd:1},(GCB&&GCB.statGrowth)||{},{hp:(GCB&&GCB.growthHp)||100});
+function iconHTML(src,emoji,cls){
+  return `<span class="icon-wrap ${cls}"><img src="${src}" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex'"><span class="emoji-fb">${emoji}</span></span>`;
+}
+// ---- 我的資料：學號／姓名跟六個章節共用（存在各章進度的 _who 裡）；出戰順序另外存 ----
+let P={};
+function readCh(i){try{return JSON.parse(localStorage.getItem(CH_KEYS[i]))||{}}catch(e){return {}}}
+function load(){
+  P={_who:{},_order:[]};
+  for(let i=0;i<CH_KEYS.length;i++){const w=readCh(i)._who;if(w&&(w.sid||w.no||w.name)){P._who={...P._who,...w};if(w.sid||w.no)break;}}
+  try{const b=JSON.parse(localStorage.getItem(BATTLE_KEY))||{};P._order=b.order||[];}catch(e){}
+}
+function save(){try{localStorage.setItem(BATTLE_KEY,JSON.stringify({order:P._order||[]}));}catch(e){}}
+function saveWho(){
+  const sid=$('#w-sid').value.trim(),name=$('#w-name').value.trim();
+  P._who={...P._who,sid,name};
+  CH_KEYS.forEach((k,i)=>{const o=readCh(i);o._who={...(o._who||{}),sid,no:sid,name};try{localStorage.setItem(k,JSON.stringify(o));}catch(e){}});
+}
+function fillWho(){$('#w-sid').value=(P._who&&(P._who.sid||P._who.no))||'';$('#w-name').value=(P._who&&P._who.name)||'';}
+
+// ===== 雲端（Supabase）：跟 JB1 學號對戰用同一個專案、同一批資料表，不用另外建表 =====
+// 為了不跟 JB1 的資料互相覆蓋，這裡所有學號前面都自動加上「v2_」（同學輸入對方學號時照常輸入就好）。
+const SUPABASE_URL = "https://qkejjznejmxcfiyxviid.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFrZWpqem5lam14Y2ZpeXh2aWlkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA1MjYyODQsImV4cCI6MjEwNjEwMjI4NH0.TBzTQ98emolzRoPaBDDGRpTW8ZkDCGoOstUTfmcrWco";
+let sb=null;
+try{if(SUPABASE_URL&&SUPABASE_ANON_KEY&&typeof supabase!=='undefined')sb=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);}catch(e){console.warn('Supabase 初始化失敗，對戰功能停用',e);}
+function sbReady(){return !!sb;}
+const ID_PREFIX='v2_';
+function rawSid(){const w=P._who||{};const s=w.sid||w.no;return s?String(s).trim():'';}
+function mySid(){const r=rawSid();return r?ID_PREFIX+r:null;}
+// ===== 🐾 國一下・數靈怪物對戰 =====
+// 出戰的是「國一下（JB2）六個章節各自的主力培養怪」。數值規則（跟上面 JB1 角色共用 BASE／GROWTH 再調整）：
+//   血量 = JB1 的一半；其他基本數值（魔力、普攻、魔攻、物防、魔防、速度）= JB1 的 2 倍。
+// 想調整平衡，改 MON_HP_RATE / MON_OTHER_RATE 就好。
+const V2_BASE='';                        // 本檔就放在 JB2 資料夾，圖片直接從 grade7-vol2-chN/images/ 讀
+const MON_HP_RATE=(GCB&&GCB.hpRate)||0.5, MON_OTHER_RATE=(GCB&&GCB.monOtherRate)||2;
+const V2_EXP_STEP=50;                    // 要跟 JB2 章節地圖的 LEVEL_STEP 一致
+const GCS=(window.GAME_CONFIG&&window.GAME_CONFIG.skills)||null;       // 招式系統（game-config.js 的 skills）
+const GUARD=(GCS&&GCS.guard)||{name:'防禦',t:3,defMul:2,outMul:0.8}; // 解題守勢：接下來 t 回合防禦×defMul、攻擊×outMul
+const TIME_UNIT=100;                     // 速度排程：怪物行動間隔 = 100 ÷ 速度（例：速度100每1單位行動一次、速度50每2單位一次）
+function monStatsAt(lv){
+  const o={};
+  STATKEYS.forEach(k=>{const v=BASE[k]+GROWTH[k]*(lv-1);o[k]=Math.max(1,Math.round(v*(k==='hp'?MON_HP_RATE:MON_OTHER_RATE)));});
+  return o;
+}
+const MON_BY_ID={};
+VOL2.forEach((c,ci)=>c.mons.forEach(m=>{MON_BY_ID[m.id]={...m,ci};}));
+function monImg(id,kind){const i=MON_BY_ID[id];return i?`${V2_BASE}grade7-vol2-ch${i.ci+1}/images/${kind||'battle'}/${id}.png`:'';}
+
+// ---- 讀取 JB2 各章進度（跟 JB2 章節地圖用同一個瀏覽器儲存空間；JB1、JB2 要放在同一個網站底下）----
+function readV2(ci){try{return JSON.parse(localStorage.getItem(VOL2[ci].key))||{}}catch(e){return {}}}
+// 回傳這一章目前有效的主力培養怪 {id,level,exp}；章節沒全通關或沒設定 → null
+function v2Main(ci){
+  const Pc=readV2(ci),c=VOL2[ci],m=Pc._main;
+  if(!m||!c.mons.some(x=>x.id===m.toString()))return null;
+  if(!c.mons.every(x=>Pc[x.id]&&Pc[x.id].stars>0))return null;
+  const exp=(Pc[m]&&Pc[m].exp)||0;
+  return {id:m,exp:exp,level:Math.floor(exp/V2_EXP_STEP)+1};
+}
+// 我的出戰名單（已依「出戰順序」排好）：[{id,level}, ...]
+function mySpec(){
+  const mains=[];VOL2.forEach((c,ci)=>{const m=v2Main(ci);if(m)mains.push({id:m.id,level:m.level,sk:slotsOf(m.id,m.level)});});
+  const out=[];
+  (P._order||[]).forEach(id=>{const i=mains.findIndex(x=>x.id===id);if(i>=0)out.push(mains.splice(i,1)[0]);});
+  return out.concat(mains);
+}
+function makeMon(spec){
+  const info=MON_BY_ID[spec.id];if(!info)return null;
+  const lv=Math.max(1,(spec.level|0)||1),s=monStatsAt(lv);
+  return {id:spec.id,name:info.name,emoji:info.emoji,level:lv,hp:s.hp,hpMax:s.hp,mp:s.mp,mpMax:s.mp,
+    atk:s.atk,matk:s.matk,def:s.def,mdef:s.mdef,spd:s.spd,t:TIME_UNIT/s.spd,
+    sk:filterSk(Array.isArray(spec.sk)?spec.sk:(GCS&&GCS.mon[spec.id])||[],lv,spec.id),buf:[],used:{},dot:0,dotT:0,blind:0,blindP:0};
+}
+function makeSide(sid,name,specs){
+  return {studentId:sid,name:name||sid,team:(specs||[]).map(makeMon).filter(Boolean),active:0};
+}
+// ---- 跟總地圖共用的存檔（怪物受傷、獎勵）：jb2-hub-v1 ----
+const HUB_KEY='jb2-hub-v1';
+const DOWN_MSG='💀 你的主力培養怪都倒下了！回數理大陸地圖，點「🩹 隊伍」用商店買的治療藥水或復活羽毛救活牠們。';
+function hubRead(){try{return JSON.parse(localStorage.getItem(HUB_KEY))||{}}catch(e){return {}}}
+// ---- 🎒 戰場道具：補血／補魔／復活（商店買或打贏小遊戲開寶箱；背包在 jb2-hub-v1 的 inv）----
+const ITEM_CFG={};((window.GAME_CONFIG&&window.GAME_CONFIG.shop&&window.GAME_CONFIG.shop.items)||[]).forEach(i=>{ITEM_CFG[i.id]=i;});
+const BATTLE_ITEMS=Object.keys(ITEM_CFG).map(k=>ITEM_CFG[k]).filter(i=>i.healPct||i.mpPct||i.revivePct);
+const ITEM_LIMIT=(GCB&&GCB.itemPerBattle)||3;
+function invCount(id){return ((hubRead().inv)||{})[id]|0;}
+function useInv(id){hubWrite(h=>{h.inv=h.inv||{};if((h.inv[id]|0)>0)h.inv[id]--;});}
+function itemTargetOk(it,m){return it.revivePct?m.hp<=0:(m.hp>0&&(it.healPct?m.hp<m.hpMax:m.mp<m.mpMax));}
+function hubWrite(fn){const h=hubRead();h.mon=h.mon||{};fn(h);try{localStorage.setItem(HUB_KEY,JSON.stringify(h));}catch(e){}}
+function storedHp(id,max){const m=(hubRead().mon||{})[id];return m&&m.hp!=null?Math.min(max,m.hp):max;}
+// 戰鬥中的損傷帶回地圖：每次畫面更新時，把我方每隻怪的目前血量存起來
+function saveMyHp(room,mineSide){
+  const s=room&&room[mineSide];if(!s||!s.team)return;
+  hubWrite(h=>{s.team.forEach(m=>{if(MON_BY_ID[m.id])h.mon[m.id]={hp:Math.max(0,Math.round(m.hp))};});});
+}
+// 我方出戰：用「目前剩下的血量」開打，已倒下的怪物不能出戰
+function mySide(){
+  const side=makeSide(mySid(),(P._who&&P._who.name)||rawSid(),mySpec());
+  side.team.forEach(m=>{m.hp=storedHp(m.id,m.hpMax);});
+  side.team=side.team.filter(m=>m.hp>0);
+  return side;
+}
+// ---- 👻 AI 幽靈：找不到同學時的系統對手（不用網路、不計入戰績排行）----
+const GHOST_NAMES=(GCB&&GCB.ghostNames)||['幽靈小方','迷霧討論家','夜航的幽靈','算式幽魂'];
+const rint=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+function ghostSide(){
+  const sp=mySpec(),avg=Math.max(1,Math.round(sp.reduce((a,x)=>a+x.level,0)/Math.max(1,sp.length)+((GCB&&GCB.ghostLevelOffset)||0)));
+  const size=Math.max(1,Math.min((GCB&&GCB.ghostTeamSize)||3,sp.length||1));
+  const ids=Object.keys(MON_BY_ID).sort(()=>Math.random()-.5).slice(0,size);
+  return makeSide('ghost_ai',GHOST_NAMES[rint(0,GHOST_NAMES.length-1)],ids.map(id=>({id,level:Math.max(1,avg+rint(-1,1))})));
+}
+function challengeGhost(reason){
+  if(!mySpec().length)return toast(NO_TEAM_MSG);if(!mySide().team.length)return toast(DOWN_MSG);
+  if(!mySide().team.length)return toast(DOWN_MSG);
+  const a=mySide(),b=ghostSide();
+  const room={a,b,turn:null,over:false,winner:null,log:[`👻 ${reason||'找不到對手'}，幽靈「${b.name}」出現了！`]};
+  room.turn=nextTurn(room);
+  duelState={mode:'async',aId:mySid()||'local',bId:'ghost_ai',room,ghost:true};
+  duelSub=null;
+  $('#arena-setup').classList.add('hide');$('#arena-battle').classList.remove('hide');
+  renderAsyncBattle();
+  if(room.turn==='b')setTimeout(aiTakeTurn,800);
+}
+function offerGhost(msg){
+  if(confirm(msg+'\n\n要改跟「AI 幽靈」對戰嗎？（不用網路，怪物受的傷會帶回地圖）'))challengeGhost(msg);
+}
+function ghostReward(winnerSide){
+  const g=GCB;if(!g)return;
+  const t=new Date(),day=t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0');
+  let gold=0;
+  hubWrite(h=>{
+    h.ghost=h.ghost||{date:'',wins:0,w:0,l:0};h.stat=h.stat||{earned:0,spent:0};h.gold=h.gold||0;
+    if(h.ghost.date!==day)h.ghost.wins=0,h.ghost.date=day;
+    if(winnerSide==='a'){h.ghost.w=(h.ghost.w|0)+1;if(h.ghost.wins<(g.winRewardsPerDay||0))gold=g.winGold||0;h.ghost.wins++;}
+    else if(winnerSide==='b'){h.ghost.l=(h.ghost.l|0)+1;gold=g.loseGold||0;}
+    if(gold>0){h.gold+=gold;h.stat.earned=(h.stat.earned|0)+gold;}
+  });
+  toast(winnerSide==='a'?`🎉 打贏幽靈！${gold?`獲得 ${CUR_ICON} ${gold}`:'（今天的勝利獎勵已領完）'}`:winnerSide==='b'?`💫 輸給幽靈了${gold?`，安慰獎 ${CUR_ICON} ${gold}`:''}`:'🤝 平手');
+}
+
+// ---- 每次畫面更新時，把自己目前的出戰名單寫到雲端 duel_users（不用改資料表，塞在 stats 的 team 欄位）----
+function syncMyUser(){
+  if(!sbReady())return;
+  const sid=mySid();if(!sid)return;
+  const lv=Math.max(1,...mySpec().map(x=>x.level));
+  sb.from('duel_users').upsert({student_number:sid,name:(P._who&&P._who.name)||sid,level:lv,stats:{team:mySpec()},updated_at:new Date().toISOString()})
+    .then(r=>{if(r&&r.error)console.warn('duel_users 上傳失敗',r.error)}).catch(e=>console.warn('duel_users 上傳失敗',e));
+}
+function bumpDuelRecord(sid,field){
+  if(!sbReady()||!sid)return;
+  const fn=field=='wins'?'bump_duel_win':field=='losses'?'bump_duel_loss':'bump_duel_draw';
+  sb.rpc(fn,{p_sid:sid}).then(()=>{}).catch(()=>{});
+}
+
+// ---- ⚔️ 戰鬥引擎（即時對戰、幽靈 AI、系統代打全部共用）----
+// ---- 招式系統：基本攻擊＋最多 4 個招式（專屬招／研發招）＋解題守勢＋換人 ----
+// 所有數字來自 game-config.js 的 skills（用 config-editor.html 修改）。
+function skDef(id){return GCS&&GCS.defs?GCS.defs[id]||null:null;}
+function skType(id){const d=skDef(id);return d?GCS.types[d.t]||null:null;}
+function skUnlockLv(id){const k=String(id).split(':')[1];return (GCS&&GCS.learnLv&&GCS.learnLv[k])||1;}
+function skBasicName(monId){const i=MON_BY_ID[monId];return (GCS&&GCS.basicNames&&GCS.basicNames[i?i.ci:0])||'基本攻擊';}
+// 這隻怪「目前裝在招式欄」的招（依 jb2-hub-v1 的設定；沒設定過＝預設 4 個專屬招），再依等級過濾
+function slotsOf(monId,level){
+  if(!GCS)return [];
+  const rec=((hubRead().sk)||{})[monId];
+  const list=rec&&Array.isArray(rec.slots)?rec.slots:(GCS.mon[monId]||[]);
+  return filterSk(list,level,monId);
+}
+function filterSk(list,level,monId){
+  if(!GCS||!Array.isArray(list))return [];
+  const out=[];
+  list.forEach(id=>{if(id&&skDef(id)&&!out.includes(id)&&level>=skUnlockLv(id)&&(!String(id).includes(':')||String(id).split(':')[0]===monId))out.push(id);});
+  return out.slice(0,GCS.slots||4);
+}
+function bufMul(m,key){let r=1;(m.buf||[]).forEach(b=>{if(b.k===key)r*=b.m;});return r;}
+function addBuf(m,key,mul,turns,self){m.buf=(m.buf||[]).filter(b=>b.k!==key||(b.m>1)!==(mul>1));m.buf.push({k:key,m:mul,t:turns,fresh:!!self});}
+function statusText(m){
+  const s=[];
+  if(bufMul(m,'def')>1)s.push('🛡️防禦↑');if(bufMul(m,'def')<1)s.push('💔破防');
+  if(bufMul(m,'out')>1)s.push('⚔️攻擊↑');if(bufMul(m,'out')<1)s.push('⚔️攻擊↓');
+  if(m.dotT>0)s.push(`☠️中毒${m.dotT}`);if(m.blind>0)s.push(`🌑失明${m.blind}`);
+  return s.join('　');
+}
+function skCanUse(m,id){
+  const ty=skType(id);if(!ty)return false;
+  if(m.mp<ty.mp)return false;
+  if(ty.lim&&((m.used||{})[id]||0)>=ty.lim)return false;
+  return true;
+}
+function skLeft(m,id){const ty=skType(id);return ty&&ty.lim?Math.max(0,ty.lim-((m.used||{})[id]||0)):null;}
+const actorOf=s=>s.team[s.active];
+const aliveIdx=s=>s.team.map((m,i)=>m.hp>0?i:-1).filter(i=>i>=0);
+const teamHp=s=>s.team.reduce((a,m)=>a+Math.max(0,m.hp),0);
+// 誰下一個行動：比「下次行動時間 t」，t 小的先；一樣時速度快的先。
+// 例：A速度100、B速度50 → A 行動兩次之後才輪到 B。
+function nextTurn(room){
+  const A=actorOf(room.a),B=actorOf(room.b);
+  if(Math.abs(A.t-B.t)>1e-6)return A.t<B.t?'a':'b';
+  if(A.spd!==B.spd)return A.spd>B.spd?'a':'b';
+  return 'a';
+}
+function enterMon(s,idx,now){ // 換上場的怪物：從「現在」起算一個行動間隔後才會行動
+  s.active=idx;const m=s.team[idx];m.t=now+TIME_UNIT/m.spd;m.buf=[];
+}
+function calcDmg(att,def,base,isMagic){
+  const a=base*bufMul(att,'out');
+  const raw=a*(0.8+Math.random()*0.3);
+  const dfv=(isMagic?def.mdef:def.def)*bufMul(def,'def');
+  return Math.max(1,Math.round(raw-dfv));
+}
+// 附加／主要效果：rate＝強度（一般招 1；絕招附加效果用 types.U1/U2.rate）
+function applyEffect(att,def,ty,rate,lines,dmgDone){
+  switch(ty.k){
+    case'vamp':{const h=Math.round(dmgDone*(ty.leech||0)*rate);if(h>0){att.hp=Math.min(att.hpMax,att.hp+h);lines.push(`🩸 ${att.name} 吸回 ${h} 點血`);}break;}
+    case'drain':{const st=Math.min(def.mp,Math.round(def.mpMax*(ty.pct||0)*rate));if(st>0){def.mp-=st;att.mp=Math.min(att.mpMax,att.mp+st);lines.push(`🔷 ${att.name} 吸走 ${def.name} ${st} 點魔力`);}break;}
+    case'shield':addBuf(att,'def',1+(ty.m-1)*rate,ty.t,true);lines.push(`🛡️ ${att.name} 防禦力提高！`);break;
+    case'buff':addBuf(att,'out',1+(ty.m-1)*rate,ty.t,true);lines.push(`⚔️ ${att.name} 攻擊力提高！`);break;
+    case'debuff':addBuf(def,'def',1-(1-ty.m)*rate,ty.t,false);lines.push(`💔 ${def.name} 的防禦被削弱了！`);break;
+    case'heal':{const h=Math.round(att.hpMax*ty.pct*rate);att.hp=Math.min(att.hpMax,att.hp+h);lines.push(`💚 ${att.name} 回復 ${h} 點血`);break;}
+    case'mpheal':{const h=Math.round(att.mpMax*ty.pct*rate);att.mp=Math.min(att.mpMax,att.mp+h);lines.push(`🔷 ${att.name} 回復 ${h} 點魔力`);break;}
+    case'poison':def.dot=Math.round(def.hpMax*ty.pct*rate);def.dotT=ty.t;lines.push(`☠️ ${def.name} 中毒了（${ty.t} 回合）`);break;
+    case'blind':def.blind=ty.t;def.blindP=Math.min(0.95,ty.miss*rate);lines.push(`🌑 ${def.name} 失明了，攻擊可能落空（${ty.t} 回合）`);break;
+    case'stun':if(Math.random()<rate){def.t+=TIME_UNIT/def.spd;lines.push(`😵 ${def.name} 被定身，少一次行動！`);}else lines.push(`${def.name} 掙脫了定身`);break;
+  }
+}
+const ATTACK_KINDS=['phys','mag','vamp','drain','ult'];
+// 執行一次行動；直接修改 room.a / room.b，回傳 {ok,lines,over,winnerSide}（winnerSide：'a'／'b'／'draw'）
+// kind：basic(基本攻擊) skill(招式,arg=招式代號) defend(解題守勢) swap(換人,arg=第幾隻) item(道具,arg='道具代號|第幾隻')
+function doAction(room,side,kind,arg){
+  const me=room[side],foeSide=side==='a'?'b':'a',foe=room[foeSide];
+  const att=actorOf(me),def=actorOf(foe),now=att.t,lines=[];
+  let swapped=false;
+  const missed=()=>att.blind>0&&Math.random()<att.blindP;
+  if(kind==='defend'){
+    addBuf(att,'def',GUARD.defMul,GUARD.t,true);addBuf(att,'out',GUARD.outMul,GUARD.t,true);
+    lines.push(`${att.name} 使用「${GUARD.name}」！接下來 ${GUARD.t} 回合防禦力 ×${GUARD.defMul}、攻擊力 ×${GUARD.outMul}`);
+  }else if(kind==='swap'){
+    const idx=arg|0,to=me.team[idx];
+    if(!to||to.hp<=0||idx===me.active)return {ok:false,msg:'這隻不能換上場喔'};
+    lines.push(`🔄 ${att.name} 退下，換 ${to.name} 上場！`);
+    enterMon(me,idx,now);swapped=true;
+  }else if(kind==='basic'){
+    const nm=skBasicName(att.id);
+    if(missed())lines.push(`${att.name} 使用「${nm}」，但是失明，攻擊落空了！`);
+    else{const dmg=calcDmg(att,def,att.atk*((GCS&&GCS.basicP)||1),false);def.hp-=dmg;lines.push(`${att.name} 使用「${nm}」，對 ${def.name} 造成 ${dmg} 點傷害！`);}
+  }else if(kind==='item'){
+    const parts=String(arg||'').split('|'),iid=parts[0],tgt=me.team[parts[1]|0],it=ITEM_CFG[iid];
+    if(!it||!(it.healPct||it.mpPct||it.revivePct))return {ok:false,msg:'不能用這個道具'};
+    if((me.itemUsed||0)>=ITEM_LIMIT)return {ok:false,msg:`這場戰鬥道具最多用 ${ITEM_LIMIT} 次`};
+    if(invCount(iid)<1)return {ok:false,msg:'背包裡沒有這個道具了'};
+    if(!tgt)return {ok:false,msg:'選不到這隻怪物'};
+    if(!itemTargetOk(it,tgt))return {ok:false,msg:it.revivePct?'這隻還沒倒下喔':(tgt.hp<=0?'倒下的怪物要用復活羽毛':'已經是滿的了')};
+    if(it.revivePct){
+      tgt.hp=Math.max(1,Math.round(tgt.hpMax*it.revivePct/100));tgt.buf=[];tgt.dot=0;tgt.dotT=0;tgt.blind=0;
+      lines.push(`🎒 ${att.name} 使用「${it.name}」，${tgt.name} 復活了！（HP ${tgt.hp}/${tgt.hpMax}）`);
+    }else if(it.healPct){
+      const add=Math.min(tgt.hpMax-tgt.hp,Math.round(tgt.hpMax*it.healPct/100));tgt.hp+=add;
+      lines.push(`🎒 ${att.name} 使用「${it.name}」，${tgt.name} 回復了 ${add} 點生命！`);
+    }else{
+      const add=Math.min(tgt.mpMax-tgt.mp,Math.round(tgt.mpMax*it.mpPct/100));tgt.mp+=add;
+      lines.push(`🎒 ${att.name} 使用「${it.name}」，${tgt.name} 回復了 ${add} 點魔力！`);
+    }
+    me.itemUsed=(me.itemUsed||0)+1;
+  }else if(kind==='skill'){
+    const d=skDef(arg),ty=skType(arg);
+    if(!d||!ty||!(att.sk||[]).includes(arg))return {ok:false,msg:'沒有這個招式'};
+    if(att.mp<ty.mp)return {ok:false,msg:'魔力不夠喔'};
+    if(ty.lim&&((att.used||{})[arg]||0)>=ty.lim)return {ok:false,msg:'這一招這場用完了'};
+    att.mp-=ty.mp;att.used=att.used||{};att.used[arg]=(att.used[arg]||0)+1;
+    lines.push(`${att.name} 使用「${d.n}」！`);
+    if(ATTACK_KINDS.includes(ty.k)&&missed())lines.push('但是失明，攻擊落空了！');
+    else{
+      let dmg=0;
+      if(ty.k==='phys'||ty.k==='vamp'){dmg=calcDmg(att,def,att.atk*ty.p,false);def.hp-=dmg;lines.push(`對 ${def.name} 造成 ${dmg} 點傷害！`);}
+      else if(ty.k==='mag'||ty.k==='drain'||ty.k==='ult'){dmg=calcDmg(att,def,att.matk*ty.p,true);def.hp-=dmg;lines.push(`對 ${def.name} 造成 ${dmg} 點傷害！`);}
+      if(ty.k==='ult'){const bt=GCS.types[d.b];if(bt)applyEffect(att,def,bt,ty.rate||1,lines,dmg);}
+      else applyEffect(att,def,ty,1,lines,dmg);
+    }
+    if(d.c)lines.push(`📖 課本觀念：${d.c}`);
+  }else return {ok:false,msg:'不能這樣做'};
+  if(!swapped){ // 這次是「自己」行動：狀態倒數（剛施放的自我強化不算這一次）、中毒扣血，排下一次行動時間
+    att.buf=(att.buf||[]).filter(b=>{if(b.fresh){b.fresh=false;return true;}b.t--;return b.t>0;});
+    if(att.dotT>0){att.hp-=att.dot;att.dotT--;lines.push(`☠️ ${att.name} 受到毒傷 ${att.dot} 點`);}
+    if(att.blind>0)att.blind--;
+    att.t=now+TIME_UNIT/att.spd;
+  }
+  // 倒下的怪物：照出戰順序派出下一隻；全部倒下就輸了
+  const wipe={};
+  [side,foeSide].forEach(k=>{
+    const s=room[k],m=actorOf(s);
+    if(m.hp>0)return;
+    lines.push(`💀 ${m.name} 倒下了！`);
+    const nx=aliveIdx(s)[0];
+    if(nx===undefined)wipe[k]=true;
+    else{enterMon(s,nx,now);lines.push(`📣 ${s.name} 派出 ${s.team[nx].name}！`);}
+  });
+  let over=false,winnerSide=null;
+  if(wipe.a||wipe.b){over=true;winnerSide=(wipe.a&&wipe.b)?'draw':(wipe.a?'b':'a');}
+  return {ok:true,lines:lines,over:over,winnerSide:winnerSide};
+}
+// 簡單 AI（幽靈對手／系統代打共用）：血量很低時有機會換人；依招式類型加權挑招；沒招或魔力不夠就用基本攻擊
+const AI_W={H:3,B:3,V:3,S:1.5,P:2,K:2,R:3,M:1.5,D:2,X:3,L:2,Z:2,U1:4,U2:5};
+function aiPick(room,side){
+  const me=room[side],foe=room[side==='a'?'b':'a'],att=actorOf(me),def=actorOf(foe);
+  const bench=aliveIdx(me).filter(i=>i!==me.active);
+  if(bench.length&&att.hp<att.hpMax*0.25&&Math.random()<0.3){
+    bench.sort((x,y)=>me.team[y].hp-me.team[x].hp);return {kind:'swap',arg:bench[0]};
+  }
+  const opts=[['basic',null,2]];
+  (att.sk||[]).forEach(id=>{
+    if(!skCanUse(att,id))return;const d=skDef(id),ty=skType(id),k=ty.k;
+    if(k==='heal'&&att.hp>att.hpMax*0.55)return;
+    if(k==='mpheal'&&att.mp>att.mpMax*0.5)return;
+    if(k==='buff'&&bufMul(att,'out')>1)return;if(k==='shield'&&bufMul(att,'def')>1)return;
+    if(k==='debuff'&&bufMul(def,'def')<1)return;if(k==='poison'&&def.dotT>0)return;
+    if(k==='blind'&&def.blind>0)return;
+    opts.push(['skill',id,AI_W[d.t]||2]);
+  });
+  if(bufMul(att,'def')<=1)opts.push(['defend',null,1]);
+  let r=Math.random()*opts.reduce((s,o)=>s+o[2],0);
+  for(const o of opts){r-=o[2];if(r<=0)return {kind:o[0],arg:o[1]};}
+  return {kind:'basic'};
+}
+function aiAct(room,side){
+  const pick=aiPick(room,side);
+  let r=doAction(room,side,pick.kind,pick.arg);
+  if(!r.ok)r=doAction(room,side,'basic');
+  return r;
+}
+const cloneSide=s=>JSON.parse(JSON.stringify(s));
+function winnerName(work,r){return r.winnerSide==='draw'?'draw':work[r.winnerSide].name;}
+
+let duelState=null,duelSub=null,battleChannel=null,pendingChannel=null;
+
+// ---- 有人挑戰我時的通知（即時對戰模式用）----
+function startPendingListen(){
+  if(!sbReady())return;
+  const sid=mySid();if(!sid)return;
+  if(pendingChannel){sb.removeChannel(pendingChannel);pendingChannel=null;}
+  checkPendingNow(sid);
+  pendingChannel=sb.channel('pending-'+sid)
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'duel_pending',filter:'target_id=eq.'+sid},payload=>{
+      if(duelState)return;
+      showPendingInvite(payload.new.battle_id);
+    })
+    .on('postgres_changes',{event:'DELETE',schema:'public',table:'duel_pending',filter:'target_id=eq.'+sid},()=>{
+      const box=$('#arena-pending');if(box){box.classList.add('hide');box.innerHTML='';}
+    })
+    .subscribe();
+}
+async function checkPendingNow(sid){
+  if(await checkResumeBattle(sid))return;
+  const {data}=await sb.from('duel_pending').select('battle_id').eq('target_id',sid).maybeSingle();
+  if(data&&!duelState)showPendingInvite(data.battle_id);
+}
+async function showPendingInvite(battleId){
+  const {data:battle}=await sb.from('duel_battles').select('a').eq('id',battleId).maybeSingle();
+  const box=$('#arena-pending');if(!box||!battle)return;
+  const name=(battle.a&&battle.a.name)||'同學';
+  box.classList.remove('hide');
+  box.innerHTML=`<div class="fighter"><b>⚔️ ${name} 想要挑戰你！</b><br><small>接受前，可以先在上面調整「出戰順序」。</small><div class="amenu"><button id="ap-accept">接受挑戰</button></div></div>`;
+  $('#ap-accept').onclick=()=>acceptSyncChallenge(battleId);
+}
+
+// ---- 模式一：即時對戰（雙方都要在線）----
+async function challengeSync(osid){
+  const sid=mySid();
+  const specs=mySpec();if(!specs.length)return toast(NO_TEAM_MSG);if(!mySide().team.length)return toast(DOWN_MSG);
+  const {data:opUser,error:opErr}=await sb.from('duel_users').select('*').eq('student_number',osid).maybeSingle();
+  if(opErr){console.warn('查詢對手失敗',opErr);return offerGhost('連線雲端失敗');}
+  if(!opUser)return offerGhost('找不到這位同學的資料');
+  const a=mySide();
+  const {data:battle,error}=await sb.from('duel_battles').insert({
+    mode:'sync',a_id:sid,b_id:osid,a:a,b:null,turn:null,over:false,winner:null,
+    log:[`⚔️ ${a.name} 發起了挑戰，等待 ${opUser.name||osid} 加入！`]
+  }).select().single();
+  if(error||!battle)return toast('❗ 建立對戰失敗，請再試一次');
+  await sb.from('duel_pending').upsert({target_id:osid,battle_id:battle.id});
+  enterSyncBattle(battle.id);
+}
+async function acceptSyncChallenge(battleId){
+  const sid=mySid();
+  if(!mySpec().length)return toast(NO_TEAM_MSG);if(!mySide().team.length)return toast(DOWN_MSG);
+  const {data:room}=await sb.from('duel_battles').select('*').eq('id',battleId).maybeSingle();
+  if(!room||room.b)return toast('這場對戰已經結束或已經開始了');
+  if(!room.a||!room.a.team)return toast('對方用的是舊版對戰，請他重新發起挑戰');
+  const b=mySide();
+  const turn=nextTurn({a:room.a,b:b});
+  const newLog=[...(room.log||[]),`${b.name} 加入戰場！⚔️ 對戰開始！`];
+  await sb.from('duel_battles').update({b:b,turn,log:newLog,updated_at:new Date().toISOString()}).eq('id',battleId);
+  await sb.from('duel_pending').delete().eq('target_id',sid);
+  enterSyncBattle(battleId);
+}
+function enterSyncBattle(battleId){
+  if(pendingChannel){sb.removeChannel(pendingChannel);pendingChannel=null;}
+  duelState={mode:'sync',battleId,room:null};duelSub=null;
+  $('#arena-setup').classList.add('hide');$('#arena-battle').classList.remove('hide');
+  $('#arena-battle').innerHTML='<p>⏳ 連線中...</p>';
+  loadBattleNow(battleId);
+  if(battleChannel){sb.removeChannel(battleChannel);battleChannel=null;}
+  oppAbsentSince=null;proxyBusy=false;
+  battleChannel=sb.channel('battle-'+battleId,{config:{presence:{key:mySid()}}})
+    .on('postgres_changes',{event:'UPDATE',schema:'public',table:'duel_battles',filter:'id=eq.'+battleId},payload=>{
+      if(!duelState||duelState.battleId!==battleId)return;
+      duelState.room=payload.new;renderSyncBattle();
+    })
+    .on('presence',{event:'sync'},()=>{watchTick();})
+    .subscribe(status=>{
+      if(status==='SUBSCRIBED'){
+        battleChannel.track({sid:mySid(),t:Date.now()});
+        loadBattleNow(battleId);
+      }
+    });
+  startWatchdog();
+}
+async function loadBattleNow(battleId){
+  const {data:room}=await sb.from('duel_battles').select('*').eq('id',battleId).maybeSingle();
+  if(!duelState||duelState.battleId!==battleId)return;
+  if(!room){removeStage();$('#arena-battle').classList.remove('hide');$('#arena-battle').innerHTML='<p>⚠️ 對戰資料不見了。</p><button class="btn" id="b-close">返回</button>';$('#b-close').onclick=exitBattle;return;}
+  duelState.room=room;renderSyncBattle();
+}
+function mySideOf(room){const sid=mySid();return room.a_id===sid?'a':(room.b_id===sid?'b':null);}
+async function sendSyncAction(kind,arg){
+  const room=duelState.room,mine=mySideOf(room),other=mine=='a'?'b':'a';
+  if(!room||room.turn!==mine||room.over)return;
+  const work={a:cloneSide(room.a),b:cloneSide(room.b)};
+  const r=doAction(work,mine,kind,arg);
+  duelSub=null;
+  if(!r.ok){toast(r.msg);renderSyncBattle();return;}
+  const log=[...(room.log||[]).slice(-40),...r.lines];
+  const patch={a:work.a,b:work.b,turn:r.over?room.turn:nextTurn(work),log,over:r.over,winner:r.over?winnerName(work,r):null,updated_at:new Date().toISOString()};
+  const {data:upd,error:upErr}=await sb.from('duel_battles').update(patch).eq('id',duelState.battleId).eq('turn',mine).eq('over',false).select('id');
+  if(upErr||!upd||!upd.length){
+    toast('⚠️ 戰況已經更新（可能剛剛被系統代打），正在同步最新畫面…');
+    if(duelState)loadBattleNow(duelState.battleId);
+    return;
+  }
+  if(kind==='item')useInv(String(arg).split('|')[0]);
+  if(r.over){
+    const myId=mine=='a'?room.a_id:room.b_id,opId=mine=='a'?room.b_id:room.a_id;
+    if(r.winnerSide==='draw'){bumpDuelRecord(myId,'draws');bumpDuelRecord(opId,'draws');}
+    else if(r.winnerSide===mine){bumpDuelRecord(myId,'wins');bumpDuelRecord(opId,'losses');}
+    else{bumpDuelRecord(myId,'losses');bumpDuelRecord(opId,'wins');}
+  }
+  duelState.room={...room,...patch};
+  renderSyncBattle();
+}
+
+// ---- 模式二：單挑雲端幽靈（對方不用在線，抓他存在雲端的出戰名單，由簡單 AI 操作）----
+async function challengeAsync(osid){
+  const sid=mySid();
+  if(!mySpec().length)return toast(NO_TEAM_MSG);if(!mySide().team.length)return toast(DOWN_MSG);
+  const {data:opUser,error:opErr}=await sb.from('duel_users').select('*').eq('student_number',osid).maybeSingle();
+  if(opErr){console.warn('查詢對手失敗',opErr);return offerGhost('連線雲端失敗');}
+  if(!opUser)return offerGhost('找不到這位同學的資料');
+  const opTeam=(opUser.stats&&opUser.stats.team)||[];
+  const b=makeSide(osid,opUser.name||osid,opTeam);
+  if(!b.team.length)return offerGhost('這位同學還沒有設定主力培養怪');
+  const a=mySide();
+  const room={a,b,turn:null,over:false,winner:null,log:[`⚔️ ${a.name} 挑戰了 ${b.name} 的雲端幽靈！`]};
+  room.turn=nextTurn(room);
+  duelState={mode:'async',aId:sid,bId:osid,room};
+  duelSub=null;
+  $('#arena-setup').classList.add('hide');$('#arena-battle').classList.remove('hide');
+  renderAsyncBattle();
+  if(room.turn==='b')setTimeout(aiTakeTurn,800);
+}
+function finishAsync(r){
+  const room=duelState.room;
+  room.log=[...(room.log||[]).slice(-40),...r.lines];
+  if(r.over){
+    room.over=true;room.winnerSide=r.winnerSide;room.winner=winnerName(room,r);
+    const myId=duelState.aId,opId=duelState.bId;
+    if(duelState.ghost)ghostReward(r.winnerSide);
+    else if(r.winnerSide==='draw'){bumpDuelRecord(myId,'draws');bumpDuelRecord(opId,'draws');}
+    else if(r.winnerSide==='a'){bumpDuelRecord(myId,'wins');bumpDuelRecord(opId,'losses');}
+    else{bumpDuelRecord(myId,'losses');bumpDuelRecord(opId,'wins');}
+  }else room.turn=nextTurn(room);
+  renderAsyncBattle();
+  if(!room.over&&room.turn==='b')setTimeout(aiTakeTurn,850);
+}
+function sendAsyncAction(kind,arg){
+  const room=duelState.room;if(room.turn!=='a'||room.over)return;
+  const r=doAction(room,'a',kind,arg);
+  duelSub=null;
+  if(!r.ok){toast(r.msg);renderAsyncBattle();return;}
+  if(kind==='item')useInv(String(arg).split('|')[0]);
+  finishAsync(r);
+}
+function aiTakeTurn(){
+  if(!duelState||duelState.mode!=='async')return;
+  const room=duelState.room;if(!room||room.over||room.turn!=='b')return;
+  finishAsync(aiAct(room,'b'));
+}
+
+// ---- 🔌 斷線處理：對手離線時「系統代打」，離線太久就判定認輸 ----
+const PROXY_GRACE_MS=8000;    // 對方離線超過幾秒，就開始由系統代打
+const FORFEIT_MS=90000;       // 對方離線超過幾秒還沒回來，就判定他認輸
+const RESUME_WINDOW_MS=300000;// 重新開啟遊戲時，只會回到 5 分鐘內還沒結束的對戰
+let oppAbsentSince=null,proxyBusy=false,watchdog=null,bannerWasProxy=false;
+function startWatchdog(){stopWatchdog();watchdog=setInterval(watchTick,1000);}
+function stopWatchdog(){if(watchdog){clearInterval(watchdog);watchdog=null;}oppAbsentSince=null;bannerWasProxy=false;}
+function opponentInfo(room){
+  const mine=mySideOf(room);if(!mine)return null;
+  const other=mine=='a'?'b':'a';
+  return {mine,other,opId:other=='a'?room.a_id:room.b_id};
+}
+function watchTick(){
+  if(!duelState||duelState.mode!=='sync'||!battleChannel)return;
+  const room=duelState.room;if(!room||!room.b||room.over)return;
+  const info=opponentInfo(room);if(!info)return;
+  const stt=battleChannel.presenceState()||{};
+  if(!stt[mySid()]){oppAbsentSince=null;updateOppBanner();return;}
+  if(stt[info.opId]){
+    if(oppAbsentSince!==null&&(Date.now()-oppAbsentSince)>=PROXY_GRACE_MS){toast('✅ 對方回來了，改回手動操作！');}
+    oppAbsentSince=null;updateOppBanner();return;
+  }
+  if(oppAbsentSince===null)oppAbsentSince=Date.now();
+  const gone=Date.now()-oppAbsentSince;
+  updateOppBanner();
+  if(gone>=FORFEIT_MS){claimForfeit();return;}
+  if(gone>=PROXY_GRACE_MS&&room.turn===info.other){proxyAct();}
+}
+function updateOppBanner(){
+  const el=$('#opp-banner');if(!el)return;
+  if(oppAbsentSince===null||!duelState||duelState.mode!=='sync'){el.classList.add('hide');return;}
+  const gone=Date.now()-oppAbsentSince;
+  if(gone<3000){el.classList.add('hide');return;}
+  const sec=Math.floor(gone/1000),left=Math.max(0,Math.ceil((FORFEIT_MS-gone)/1000));
+  el.classList.remove('hide');
+  el.innerHTML=gone>=PROXY_GRACE_MS
+    ?`🤖 對方已離線 ${sec} 秒，<b>系統代打中</b>。他回來就會改回手動；${left} 秒內沒回來將判定認輸。`
+    :`📡 對方連線中斷…（${sec} 秒）再等一下看看`;
+}
+async function proxyAct(){
+  if(proxyBusy)return;proxyBusy=true;
+  try{
+    await new Promise(r=>setTimeout(r,900));
+    if(!duelState||duelState.mode!=='sync')return;
+    const room=duelState.room;if(!room||!room.b||room.over)return;
+    const info=opponentInfo(room);if(!info||room.turn!==info.other)return;
+    if(oppAbsentSince===null)return;
+    const {mine,other}=info;
+    const work={a:cloneSide(room.a),b:cloneSide(room.b)};
+    const r=aiAct(work,other);
+    r.lines[0]='🤖 系統代打｜'+r.lines[0];
+    const patch={a:work.a,b:work.b,turn:r.over?room.turn:nextTurn(work),log:[...(room.log||[]).slice(-40),...r.lines],over:r.over,winner:r.over?winnerName(work,r):null,updated_at:new Date().toISOString()};
+    const {data:upd,error}=await sb.from('duel_battles').update(patch).eq('id',duelState.battleId).eq('turn',other).eq('over',false).select('id');
+    if(error||!upd||!upd.length){loadBattleNow(duelState.battleId);return;}
+    if(r.over){
+      if(r.winnerSide==='draw'){bumpDuelRecord(mySid(),'draws');bumpDuelRecord(info.opId,'draws');}
+      else if(r.winnerSide===mine){bumpDuelRecord(mySid(),'wins');bumpDuelRecord(info.opId,'losses');}
+      else{bumpDuelRecord(mySid(),'losses');bumpDuelRecord(info.opId,'wins');}
+    }
+    duelState.room={...room,...patch};renderSyncBattle();
+  }catch(e){console.warn('系統代打失敗',e);}
+  finally{proxyBusy=false;}
+}
+async function claimForfeit(){
+  if(proxyBusy)return;proxyBusy=true;
+  try{
+    const room=duelState&&duelState.room;if(!room||!room.b||room.over)return;
+    const info=opponentInfo(room);if(!info)return;
+    const {mine,other}=info;
+    const patch={over:true,winner:room[mine].name,
+      log:[...(room.log||[]).slice(-40),`🏳️ ${room[other].name} 離線超過 ${Math.round(FORFEIT_MS/1000)} 秒，判定認輸！`],
+      updated_at:new Date().toISOString()};
+    const {data:upd,error}=await sb.from('duel_battles').update(patch).eq('id',duelState.battleId).eq('over',false).select('id');
+    if(error||!upd||!upd.length){loadBattleNow(duelState.battleId);return;}
+    bumpDuelRecord(mySid(),'wins');bumpDuelRecord(info.opId,'losses');
+    duelState.room={...room,...patch};renderSyncBattle();
+  }catch(e){console.warn('認輸判定失敗',e);}
+  finally{proxyBusy=false;}
+}
+async function checkResumeBattle(sid){
+  if(duelState)return false;
+  try{
+    const since=new Date(Date.now()-RESUME_WINDOW_MS).toISOString();
+    const {data,error}=await sb.from('duel_battles').select('id,b')
+      .eq('mode','sync').eq('over',false).or('a_id.eq.'+sid+',b_id.eq.'+sid).gte('updated_at',since)
+      .order('updated_at',{ascending:false}).limit(1);
+    if(error||!data||!data.length||!data[0].b)return false;
+    toast('⚔️ 偵測到還沒打完的對戰，已帶你回到戰場！');
+    enterSyncBattle(data[0].id);
+    return true;
+  }catch(e){console.warn('回到對戰失敗',e);return false;}
+}
+
+// ---- 戰鬥選單（兩種模式共用）----
+function renderMenu(meSide,myTurn){
+  if(!myTurn)return '';
+  const m=actorOf(meSide);
+  const bench=aliveIdx(meSide).filter(i=>i!==meSide.active);
+  if(!duelSub)return `<div class="amenu"><button data-bs="1">⚔️ ${skBasicName(m.id)}</button><button data-m="k" ${(m.sk&&m.sk.length)?'':'disabled'}>✨ 招式（${(m.sk||[]).length}）</button><button data-m="d">🛡️ ${GUARD.name}</button><button data-m="s" ${bench.length?'':'disabled'}>🔄 換人</button><button data-m="i" ${(BATTLE_ITEMS.some(i=>invCount(i.id)>0)&&(meSide.itemUsed||0)<ITEM_LIMIT)?'':'disabled'}>🎒 道具（還能用 ${Math.max(0,ITEM_LIMIT-(meSide.itemUsed||0))} 次）</button></div>`;
+  if(duelSub=='k')return `<div class="amenu">`+(m.sk||[]).map(id=>{
+    const d=skDef(id),ty=skType(id),left=skLeft(m,id);
+    return `<button data-sk="${id}" ${skCanUse(m,id)?'':'disabled'} title="${(d.c||'').replace(/"/g,'')}">${d.n}<br><small>${ty.n}${d.b?'＋'+GCS.types[d.b].n:''}｜耗魔${ty.mp}${left!=null?`｜剩${left}次`:''}</small></button>`;
+  }).join('')+`<button data-back="1">返回</button></div>`;
+  if(duelSub=='s')return `<small>換人會用掉這次行動，換上來的怪物要等一個行動間隔才會出手。</small><div class="amenu">`+
+    bench.map(i=>{const x=meSide.team[i];return `<button data-sw="${i}">${x.emoji} ${x.name} Lv.${x.level}（HP ${x.hp}/${x.hpMax}）</button>`;}).join('')+`<button data-back="1">返回</button></div>`;
+  if(duelSub=='i')return `<small>用道具會用掉這次行動。補血、補魔藥水可以用在場上或後備的怪物；復活羽毛可以救這場戰鬥中倒下的怪物。</small><div class="amenu">`+
+    BATTLE_ITEMS.filter(i=>invCount(i.id)>0).map(i=>`<button data-it="${i.id}">${i.icon} ${i.name} ×${invCount(i.id)}</button>`).join('')+`<button data-back="1">返回</button></div>`;
+  if(typeof duelSub=='string'&&duelSub.indexOf('i:')==0){
+    const it=ITEM_CFG[duelSub.slice(2)];if(!it)return '';
+    const rows=meSide.team.map((x,i)=>itemTargetOk(it,x)?`<button data-itg="${it.id}|${i}">${x.emoji} ${x.name} Lv.${x.level}（HP ${x.hp}/${x.hpMax}｜MP ${x.mp}/${x.mpMax}）</button>`:'').join('');
+    return `<small>${it.icon} ${it.name}：要用在哪一隻？</small><div class="amenu">`+(rows||'<small>目前沒有需要的對象</small>')+`<button data-backi="1">返回</button></div>`;
+  }
+  return '';
+}
+function bindMenuEvents(box,myTurn,sendFn){
+  if(!myTurn)return;
+  box.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{const k=b.dataset.m;if(k=='d'){sendFn('defend');}else{duelSub=k;renderBattleAgain();}});
+  box.querySelectorAll('[data-back]').forEach(b=>b.onclick=()=>{duelSub=null;renderBattleAgain();});
+  box.querySelectorAll('[data-bs]').forEach(b=>b.onclick=()=>sendFn('basic'));
+  box.querySelectorAll('[data-sk]').forEach(b=>b.onclick=()=>sendFn('skill',b.dataset.sk));
+  box.querySelectorAll('[data-sw]').forEach(b=>b.onclick=()=>sendFn('swap',+b.dataset.sw));
+  box.querySelectorAll('[data-it]').forEach(b=>b.onclick=()=>{duelSub='i:'+b.dataset.it;renderBattleAgain();});
+  box.querySelectorAll('[data-backi]').forEach(b=>b.onclick=()=>{duelSub='i';renderBattleAgain();});
+  box.querySelectorAll('[data-itg]').forEach(b=>b.onclick=()=>sendFn('item',b.dataset.itg));
+}
+function renderBattleAgain(){if(!duelState)return;duelState.mode=='sync'?renderSyncBattle():renderAsyncBattle();}
+function resultPanelHTML(room,mineSide){
+  const won=room.winner!=='draw'&&room[mineSide]&&room.winner===room[mineSide].name;
+  const t=room.winner=='draw'?'🤝 平手！':(won?`🏆 ${room.winner} 獲勝！`:`💔 ${room.winner} 獲勝……`);
+  return `<div class="turn-tag">${t}</div><p>想變更強嗎？回去國一下章節多答題，主力培養怪就會升級；還沒設定主力的章節，通關後也記得挑一隻喔！</p><button class="btn" id="b-close">結束對戰</button>`;
+}
+function logHTML(room){return `<div class="blog">${(room.log||[]).slice(-6).map(x=>'· '+x).join('<br>')}</div>`;}
+function oldFormat(room){return !room.a||!room.a.team||(room.b&&!room.b.team);}
+function renderSyncBattle(){
+  const room=duelState.room,box=$('#arena-battle');
+  if(!room.b){box.innerHTML='<p>⏳ 等待對方加入戰場...</p>';return;}
+  if(oldFormat(room)){box.innerHTML='<p>⚠️ 這是舊版對戰紀錄，請結束後重新發起。</p><button class="btn" id="b-close">結束</button>';$('#b-close').onclick=exitBattle;return;}
+  const mine=mySideOf(room)||'a',myTurn=room.turn===mine;
+  const panel=room.over?resultPanelHTML(room,mine):
+    `<div id="opp-banner" class="hide" style="margin:6px 0;padding:6px 10px;border-radius:8px;background:#5a3a12;font-size:.85rem"></div>`+
+    `<div class="turn-tag">${myTurn?'👉 輪到你了！':'⏳ 等待對方出招...'}</div>`+renderMenu(room[mine],myTurn)+logHTML(room);
+  renderScene(room,mine,panel,pn=>{if(room.over){$('#b-close').onclick=exitBattle;}else bindMenuEvents(pn,myTurn,sendSyncAction);});
+  updateOppBanner();
+}
+function renderAsyncBattle(){
+  const room=duelState.room,myTurn=room.turn=='a';
+  const panel=room.over?resultPanelHTML(room,'a'):
+    `<div class="turn-tag">${myTurn?'👉 輪到你了！':'⏳ 幽靈思考中...'}</div>`+renderMenu(room.a,myTurn)+logHTML(room);
+  renderScene(room,'a',panel,pn=>{if(room.over){$('#b-close').onclick=exitBattle;}else bindMenuEvents(pn,myTurn,sendAsyncAction);});
+}
+
+// ---- 🎬 對戰舞台：對手在上、我方在下，出招／受傷各有動畫 ----
+let stageFor=null,stageSnap=null,stageMine='a';
+function btImg(m){return iconHTML(monImg(m.id,'battle'),m.emoji||'👾','ic-bt');}
+function stripHTML(s){
+  return s.team.map((x,i)=>`<span class="tm ${x.hp<=0?'dead':''} ${i===s.active?'on':''}" title="${x.name} Lv.${x.level}　HP ${Math.max(0,x.hp)}/${x.hpMax}">${iconHTML(monImg(x.id,'cards'),x.emoji||'👾','ic-st')}</span>`).join('');
+}
+function btSpritesHTML(role){return `<div class="bt-sprites"><div class="bt-sprite" id="bt-sp-${role}"><div class="bt-img"></div></div></div>`;}
+function btCardHTML(){return `<small class="owner"></small><br><b class="nm"></b><div class="fbar hp"><i style="width:100%"></i></div><small class="hpt"></small><div class="fbar mp"><i style="width:100%"></i></div><small class="mpt"></small><div class="stt"></div><div class="strip"></div>`;}
+function ensureStage(room,mineSide){
+  let el=$('#bt-stage');
+  if(el&&stageFor===duelState)return el;
+  if(el)el.remove();
+  stageFor=duelState;stageSnap=null;stageMine=mineSide;
+  el=document.createElement('div');el.id='bt-stage';el.className='bt-stage';
+  el.innerHTML=`<div class="bt-arena">
+    <div class="bt-row bt-top"><div class="bt-card" id="bt-card-top">${btCardHTML()}</div>${btSpritesHTML('top')}</div>
+    <div class="bt-caption" id="bt-cap"></div>
+    <div class="bt-row bt-bot">${btSpritesHTML('bot')}<div class="bt-card" id="bt-card-bot">${btCardHTML()}</div></div>
+  </div><div class="bt-panel" id="bt-panel"></div>`;
+  document.body.appendChild(el);
+  document.body.style.overflow='hidden';
+  const box=$('#arena-battle');box.innerHTML='';box.classList.add('hide');
+  return el;
+}
+function removeStage(){
+  const el=$('#bt-stage');if(el)el.remove();
+  stageFor=null;stageSnap=null;document.body.style.overflow='';
+}
+function fillCard(card,s){
+  if(!card||!s)return;
+  const m=actorOf(s),alive=aliveIdx(s).length;
+  card.querySelector('.owner').textContent=`${s.name}（剩 ${alive}/${s.team.length} 隻）`;
+  card.querySelector('.nm').textContent=`${m.name}　Lv.${m.level}`;
+  card.querySelector('.fbar.hp>i').style.width=(Math.max(0,m.hp)/m.hpMax*100)+'%';
+  card.querySelector('.fbar.mp>i').style.width=(Math.max(0,m.mp)/m.mpMax*100)+'%';
+  card.querySelector('.hpt').textContent=`HP ${Math.max(0,m.hp)}/${m.hpMax}　⚡速度 ${m.spd}`;
+  card.querySelector('.mpt').textContent=`MP ${Math.max(0,m.mp)}/${m.mpMax}`;
+  card.querySelector('.stt').textContent=statusText(m)||'\u00a0';
+  card.querySelector('.strip').innerHTML=stripHTML(s);
+}
+function setSprite(sp,m){
+  if(!sp||!m)return;
+  const key=m.id+'#'+m.level;if(sp.dataset.k===key)return;
+  const first=!sp.dataset.k;sp.dataset.k=key;
+  sp.querySelector('.bt-img').innerHTML=btImg(m);
+  if(!first)btAnim(sp,'enter',600);
+}
+function stageKey(room){
+  const a=room.a,b=room.b,A=actorOf(a),B=actorOf(b);
+  return [room.turn,room.over,a.active,b.active,teamHp(a),teamHp(b),A.mp,B.mp,statusText(A),statusText(B),(room.log||[]).slice(-1)[0]].join('|');
+}
+function btAnim(el,cls,ms){if(!el)return;el.classList.remove(cls);void el.offsetWidth;el.classList.add(cls);setTimeout(()=>el.classList.remove(cls),ms);}
+function btFloat(sp,text,color){const d=document.createElement('div');d.className='bt-float';d.style.color=color;d.textContent=text;sp.appendChild(d);setTimeout(()=>d.remove(),1000);}
+function btBurst(sp,icon){const d=document.createElement('div');d.className='bt-burst';d.textContent=icon;sp.appendChild(d);setTimeout(()=>d.remove(),560);}
+function btFly(fromEl,toEl,icon,cb){
+  const stg=$('#bt-stage');if(!stg||!fromEl.animate){setTimeout(cb,300);return;}
+  const sr=stg.getBoundingClientRect(),a=fromEl.getBoundingClientRect(),b=toEl.getBoundingClientRect();
+  const ax=a.left+a.width/2-sr.left,ay=a.top+a.height/2-sr.top,bx=b.left+b.width/2-sr.left,by=b.top+b.height/2-sr.top;
+  const p=document.createElement('div');p.className='bt-proj';p.textContent=icon;p.style.left=ax+'px';p.style.top=ay+'px';stg.appendChild(p);
+  const an=p.animate([{transform:'translate(-50%,-50%) scale(.6)'},{transform:`translate(calc(-50% + ${bx-ax}px),calc(-50% + ${by-ay}px)) scale(1.6)`}],{duration:480,easing:'ease-in'});
+  an.onfinish=()=>{p.remove();cb&&cb();};
+}
+function btLunge(fromEl,toEl){
+  if(!fromEl.animate)return;
+  const a=fromEl.getBoundingClientRect(),b=toEl.getBoundingClientRect();
+  const dx=(b.left+b.width/2-a.left-a.width/2)*0.55,dy=(b.top+b.height/2-a.top-a.height/2)*0.55;
+  fromEl.animate([{transform:'translate(0,0)'},{transform:`translate(${dx}px,${dy}px) scale(1.15)`,offset:.4},{transform:`translate(${dx}px,${dy}px) scale(1.15)`,offset:.55},{transform:'translate(0,0)'}],{duration:700,easing:'ease-in-out'});
+}
+// 這一次行動的紀錄（一次行動會寫進好幾行：主要動作 ＋ 倒下 ＋ 派出下一隻）
+function lastActionLines(room){
+  const lg=room.log||[];let i=lg.length-1;
+  while(i>0&&/^(💀|📣)/.test(lg[i]))i--;
+  return {primary:lg[i]||'',lines:lg.slice(Math.max(0,i))};
+}
+// 比對「上一個畫面」和「現在」，看是誰出了什麼招，播放對應動畫
+function playBattleEvent(snap,room){
+  const atkSide=snap.turn;if(atkSide!=='a'&&atkSide!=='b')return;
+  const defSide=atkSide=='a'?'b':'a';
+  const spOf=side=>$('#bt-sp-'+(side===stageMine?'bot':'top'));
+  const atkSp=spOf(atkSide),defSp=spOf(defSide);if(!atkSp||!defSp)return;
+  const line=lastActionLines(room).primary;
+  const dDef=snap[defSide+'hp']-teamHp(room[defSide]),dAtk=snap[atkSide+'hp']-teamHp(room[atkSide]);
+  if(/^🎒/.test(line)){btBurst(atkSp,'🎒');return;}
+  if(/退下/.test(line)){btBurst(atkSp,'🔄');return;}
+  if(/防禦姿勢/.test(line)){btBurst(atkSp,'🛡️');return;}
+  if(/詠唱/.test(line)){btAnim(atkSp,'cast',700);btBurst(atkSp,'🔮');return;}
+  if(dDef<=0&&dAtk<=0)return;
+  const magic=/魔法/.test(line);
+  const icon=magic?(/大魔法/.test(line)?'☄️':/中魔法/.test(line)?'🔥':'✨'):(/「拳」/.test(line)?'👊':/「腳」/.test(line)?'🦶':/衝撞/.test(line)?'💥':'🗡️');
+  const hit=()=>{
+    if(dDef>0){btAnim(defSp.querySelector('.bt-img'),'hurt',600);btFloat(defSp,'-'+dDef,magic?'#9ad0ff':'#ff6b6b');btBurst(defSp,icon);}
+    if(dAtk>0){btAnim(atkSp.querySelector('.bt-img'),'hurt',600);btFloat(atkSp,'-'+dAtk,'#ffb35a');}
+  };
+  if(magic){btAnim(atkSp,'cast',700);btFly(atkSp,defSp,icon,hit);}
+  else{btLunge(atkSp,defSp);setTimeout(hit,280);}
+}
+function renderScene(room,mineSide,panelHTML,bindFn){
+  if(duelState){if(!room.over)duelState.sawLive=true;if(!room.over||duelState.sawLive)saveMyHp(room,mineSide);}
+  const stage=ensureStage(room,mineSide);
+  const top=mineSide=='a'?'b':'a';
+  const key=stageKey(room);
+  const acted=stageSnap&&stageSnap.key!==key;
+  if(acted)playBattleEvent(stageSnap,room);
+  fillCard($('#bt-card-top'),room[top]);fillCard($('#bt-card-bot'),room[mineSide]);
+  const spTop=$('#bt-sp-top'),spBot=$('#bt-sp-bot');
+  [[spTop,room[top]],[spBot,room[mineSide]]].forEach(([sp,s])=>{
+    const m=actorOf(s),other=room[s===room.a?'b':'a'];
+    setTimeout(()=>{
+      setSprite(sp,m);
+      const wiped=aliveIdx(s).length===0;
+      const won=room.over&&room.winner!=='draw'&&!wiped&&(aliveIdx(other).length===0||room.winner===s.name);
+      sp.classList.toggle('defending',bufMul(m,'def')>1&&!room.over);
+      sp.classList.toggle('charging',false);
+      sp.classList.toggle('ko',wiped);sp.classList.toggle('win',!!won);
+    },acted?650:0);
+  });
+  const cap=$('#bt-cap'),ln=lastActionLines(room).lines.join('　')||'';
+  if(cap.textContent!==ln){cap.textContent=ln;btAnim(cap,'pop',400);}
+  const panel=$('#bt-panel');panel.innerHTML=panelHTML;bindFn&&bindFn(panel);
+  stageSnap={key,turn:room.turn,ahp:teamHp(room.a),bhp:teamHp(room.b)};
+}
+function exitBattle(){
+  stopWatchdog();removeStage();
+  if(battleChannel){sb.removeChannel(battleChannel);battleChannel=null;}
+  duelState=null;duelSub=null;
+  $('#arena-battle').classList.add('hide');$('#arena-battle').innerHTML='';
+  $('#arena-setup').classList.remove('hide');
+  startPendingListen();render();
+}
+
+// ---- 🐾 出戰編隊面板（六章主力培養怪、出戰順序）----
+const NO_TEAM_MSG='❗ 你還沒有主力培養怪！先把國一下某一章「全部通關」，再到該章圖鑑挑一隻設為主力培養怪。';
+function moveOrder(id,dir){
+  const cur=mySpec().map(x=>x.id),i=cur.indexOf(id),j=i+dir;
+  if(i<0||j<0||j>=cur.length)return;
+  [cur[i],cur[j]]=[cur[j],cur[i]];P._order=cur;save();renderTeamPanel();syncMyUser();
+}
+function randomOrder(){
+  const cur=mySpec().map(x=>x.id);
+  for(let i=cur.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[cur[i],cur[j]]=[cur[j],cur[i]];}
+  P._order=cur;save();renderTeamPanel();syncMyUser();toast('🎲 已隨機排好出戰順序！');
+}
+function renderTeamPanel(){
+  const box=$('#team-panel');if(!box)return;
+  const specs=mySpec(),set=new Set(specs.map(x=>x.id));
+  let h=`<h3 class="serif" style="margin:0 0 4px">🐾 我的出戰怪物</h3><small>代表國一下六個章節的「主力培養怪」。血量只有一般角色的一半，其他數值是 2 倍；速度快的會連續行動（速度 100 對 50，快的出手兩次，慢的才輪到一次）。</small>`;
+  if(!specs.length){
+    h+=`<p class="tmempty">還沒有主力培養怪。把國一下任何一章全部通關，再到該章圖鑑挑一隻「設為主力培養怪」就會出現在這裡。</p>`;
+  }else{
+    h+=`<div class="tmlist">`+specs.map((sp,i)=>{
+      const info=MON_BY_ID[sp.id],s=monStatsAt(sp.level);
+      return `<div class="tmrow"><span class="tmno">${i+1}</span>${iconHTML(monImg(sp.id,'cards'),info.emoji,'ic-mon')}
+        <div class="tmtxt"><b>${info.name}</b> <small>Lv.${sp.level}・${VOL2[info.ci].title.replace(/^第.篇章｜/,'第'+(info.ci+1)+'章 ')}</small><br>
+        <small>❤️${storedHp(sp.id,s.hp)}/${s.hp}${storedHp(sp.id,s.hp)<=0?' 💀倒下（回地圖復活）':''} ⚔️${s.atk} ✨${s.matk} 🛡️${s.def} 🔮${s.mdef} 🏃${s.spd}</small></div>
+        <div class="tmbtn"><button data-mv="-1" data-id="${sp.id}" ${i==0?'disabled':''} aria-label="往前">▲</button><button data-mv="1" data-id="${sp.id}" ${i==specs.length-1?'disabled':''} aria-label="往後">▼</button></div></div>`;
+    }).join('')+`</div><div class="amenu"><button id="tm-rand">🎲 隨機排序</button><small style="align-self:center;opacity:.8">第 1 隻先出場，倒下後依序派下一隻。</small></div>`;
+  }
+  const unset=VOL2.filter((c,ci)=>!set.has((v2Main(ci)||{}).id));
+  if(unset.length){
+    h+=`<div class="tmunset"><small>尚未設定：`+unset.map(c=>`第${c.ch}章`).join('、')+`（該章全部通關後，到章節圖鑑挑一隻）</small></div>`;
+  }
+  box.innerHTML=h;
+  box.querySelectorAll('[data-mv]').forEach(b=>b.onclick=()=>moveOrder(b.dataset.id,+b.dataset.mv));
+  const r=$('#tm-rand');if(r)r.onclick=randomOrder;
+}
+
+function render(){renderTeamPanel();syncMyUser();}
+$('#w-save').onclick=()=>{saveWho();render();toast('✅ 已儲存你的資料');startPendingListen();};
+$('#w-rec').onclick=async()=>{
+  const sid=mySid();if(!sid)return toast('請先填好「我的學號」並按儲存');
+  if(!sbReady())return toast('對戰功能還沒設定好，請聯絡老師');
+  const {data}=await sb.from('duel_records').select('*').eq('student_number',sid).maybeSingle();
+  const rec=data||{wins:0,losses:0,draws:0};
+  toast(`🏆 我的怪物團戰戰績<br>勝 ${rec.wins||0} 場／敗 ${rec.losses||0} 場／平手 ${rec.draws||0} 場`);
+};
+$('#op-ghost').onclick=()=>challengeGhost('沒有找到對手');
+$('#op-fight').onclick=async()=>{
+  if((($('input[name="duel-mode"]:checked')||{}).value)==='ghost')return challengeGhost('沒有找到對手');
+  if(!sbReady())return offerGhost('同學對戰的連線功能還沒設定好');
+  const sid=mySid();if(!sid)return toast('請先在上面「我的資料」存好「我的學號」');
+  const raw=$('#op-sid').value.trim();if(!raw)return toast('請輸入對方學號');
+  const osid=ID_PREFIX+raw;
+  if(osid===sid)return toast('不能跟自己對戰喔！');
+  const mode=($('input[name="duel-mode"]:checked')||{value:'sync'}).value;
+  try{ if(mode=='async') await challengeAsync(osid); else await challengeSync(osid); }
+  catch(e){ toast('❗ 連線失敗，請確認網路連線後再試一次'); }
+};
+load();fillWho();render();startPendingListen();
+// 從章節頁面回來、或在別的分頁改了主力怪，出戰名單要跟著更新
+addEventListener('storage',()=>{if(!duelState){load();render();}});
+addEventListener('pageshow',()=>{if(!duelState){load();render();}});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&!duelState){load();render();}});
+</script>
+<script src="audio/bgm.js"></script>
+</body>
+</html>

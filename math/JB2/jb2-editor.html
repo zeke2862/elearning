@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>數靈召喚師 修改器（教師用）</title>
+<style>
+:root{--ink:#161a2e;--ink2:#20264a;--line:#3a4270;--bronze:#d2a24c;--paper:#f1e8d2;--red:#d24a33;--jade:#43a58f;--txt:#e9e4d4}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(ellipse at top,#252c56,var(--ink) 65%);color:var(--txt);font-family:"Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif;padding:16px}
+.wrap{max-width:980px;margin:0 auto}
+h1{font-family:"Noto Serif TC",serif;color:var(--bronze);margin:0 0 4px;font-size:26px}
+h2{font-family:"Noto Serif TC",serif;color:var(--bronze);margin:0 0 8px;font-size:19px}
+section{background:var(--ink2);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin:14px 0}
+.muted{color:#b9b6a6;font-size:14px;line-height:1.6}
+button{font:inherit;cursor:pointer}
+.btn{background:var(--bronze);color:#2a1d05;border:0;border-radius:10px;padding:8px 14px;font-weight:700;margin:3px 4px 3px 0}
+.btn.ghost{background:transparent;color:var(--bronze);border:2px solid var(--bronze)}
+.btn.red{background:var(--red);color:#fff}
+.btn.s{padding:4px 9px;font-size:13px}
+input[type=text],input[type=number],select{background:#0b0f22;color:var(--txt);border:1px solid var(--line);border-radius:8px;padding:6px 8px;font:inherit;width:110px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:6px 0}
+.row label{color:var(--paper)}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{border-bottom:1px solid var(--line);padding:4px 6px;text-align:left}
+td input,td select{width:84px}
+.chh td{background:#0b0f22;color:var(--bronze);font-weight:700}
+#msg{position:fixed;top:12px;left:50%;transform:translateX(-50%);background:#000e;border:1px solid var(--bronze);border-radius:10px;padding:8px 16px;display:none;z-index:9}
+.ok{color:var(--jade)}
+.warn{color:#ffb38a}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>🛠️ 數靈召喚師 修改器（教師用）</h1>
+<p class="muted">直接修改這台電腦瀏覽器裡的遊戲存檔。<b>必須和遊戲放在同一個網址／同一個資料夾，用同一個瀏覽器開啟</b>，才讀得到存檔。修改完回遊戲頁按重新整理即可。請不要把這個檔案放到學生能存取的地方。</p>
+<div id="status" class="muted"></div>
+
+<section>
+<h2>⚡ 一鍵操作（破解）</h2>
+<div class="row">
+<button class="btn" data-a="all5">全部關卡 5 ⭐（全章全關卡解鎖）</button>
+<button class="btn ghost" data-a="all3">全部關卡 3 ⭐</button>
+<button class="btn ghost" data-a="all0">全部關卡 0 ⭐</button>
+</div>
+<div class="row">
+<label><input type="checkbox" id="rebase" checked> 修改後不要發學習獎勵（把總地圖的獎勵基準一起更新）</label>
+</div>
+<p class="muted">章節地圖和關卡的解鎖都是看星數，所以把星數全設成 5，六章與所有關卡（含 Boss、實戰、修羅、無極限）就全部開放。單獨開關卡頁（網址不帶 ?stars=）本來就是全部解鎖。</p>
+</section>
+
+<section>
+<h2>🗺️ 總地圖設定</h2>
+<div class="row"><label><input type="checkbox" id="cOpen"> 教師模式：六章全開放（不用星數）</label></div>
+<div class="row"><label>章節解鎖比例</label><input type="number" id="cRatio" step="0.05" min="0" max="1"><span class="muted">（前一章拿到滿星的幾成才開下一章，預設 0.5）</span></div>
+<div class="row"><label>每顆新星獎勵</label><input type="number" id="cStar" min="0"><label>每幾點經驗換 1 幣</label><input type="number" id="cRate" min="1"><label>每日練習獎勵上限</label><input type="number" id="cCap" min="0"></div>
+<button class="btn" data-a="saveCfg">💾 儲存設定</button><button class="btn ghost" data-a="resetCfg">恢復預設</button>
+</section>
+
+<section>
+<h2>💰 數靈幣與商品</h2>
+<div class="row"><label>目前</label><b id="goldNow">0</b><input type="number" id="goldIn" min="0"><button class="btn s" data-a="setGold">設定為</button><button class="btn s ghost" data-a="addGold">增加</button></div>
+<div class="row"><button class="btn s" data-a="ownAll">所有商品全部給他</button><button class="btn s ghost" data-a="ownReset">商品恢復預設（只留初始）</button><button class="btn s ghost" data-a="resetDaily">重設今日簽到與任務</button></div>
+<details><summary class="muted" style="cursor:pointer">調整商品價格</summary><table id="priceT"></table><button class="btn s" data-a="savePrice">💾 儲存價格</button></details>
+</section>
+
+<section>
+<h2>👤 學生資料（同步寫入六章）</h2>
+<div class="row"><label>班級</label><input type="text" id="wCls"><label>座號</label><input type="text" id="wNo"><label>姓名</label><input type="text" id="wName"><button class="btn s" data-a="saveWho">儲存</button></div>
+</section>
+
+<section>
+<h2>📋 關卡資料（星數／經驗／最高分／無極限題數）</h2>
+<p class="muted">經驗：每 50 點升一級。星數 0 代表尚未通關（圖鑑會顯示？？？）。</p>
+<table id="stT"></table>
+<button class="btn" data-a="saveStages">💾 儲存關卡資料</button>
+</section>
+
+<section>
+<h2>⚠️ 危險區</h2>
+<button class="btn red" data-a="wipe">清空全部進度與商店資料</button>
+<p class="muted">會刪除六章存檔與總地圖存檔（設定保留）。建議先到總地圖小屋的「備份・匯入」匯出備份。</p>
+</section>
+</div>
+<div id="msg"></div>
+
+<script>
+(()=>{'use strict';
+const PIN=''; /* 想擋住學生可在這裡設密碼，例如 const PIN='8888'; */
+if(PIN&&prompt('請輸入教師密碼')!==PIN){document.body.innerHTML='<p style="padding:30px">密碼不正確。</p>';return}
+const BOSS=new Set(['1-3-1','2-2-3','3-2-3','4-2-3','5-1-3','6-1-3']);
+const mk=s=>s.split(',').map(x=>{const[i,...r]=x.trim().split(' ');return{id:i,name:r.join(' ')}});
+const CH=[null,
+{name:'二元一次聯立方程式',max:35,st:mk('1-1-1 雙變數蜥蜴,1-1-2 方程符文犬,1-1-3 組合袋鼠,1-2-1 雙生雙頭狼,1-2-2 替換影法師,1-2-3 抵銷天平獸,1-3-1 商業金幣怪')},
+{name:'平面直角坐標系',max:30,st:mk('2-1-1 軸線雷鷹,2-1-2 四象限守護獸,2-1-3 距離星靈,2-2-1 直線軌跡蛇,2-2-2 水平鉛垂巨像,2-2-3 交點幾何獸')},
+{name:'比與比例（正比、反比）',max:30,st:mk('3-1-1 比值化簡狐,3-1-2 內外項天秤龍,3-1-3 縮放地圖鹿,3-2-1 正比加速馬,3-2-2 反比平衡水怪,3-2-3 雙向變率獸')},
+{name:'一元一次不等式',max:30,st:mk('4-1-1 門檻天平獸,4-1-2 範圍判定蠍,4-1-3 數線圓圈光巨龍,4-2-1 變號變向變色龍,4-2-2 移項解鎖獸,4-2-3 限額購物怪')},
+{name:'統計圖表與資料分析',max:15,st:mk('5-1-1 統計長條怪,5-1-2 平均權衡獸,5-1-3 中位眾數三頭犬')},
+{name:'生活中的幾何圖形',max:15,st:mk('6-1-1 垂直線段精靈,6-1-2 鏡像對稱蝶,6-1-3 空間三視幻影怪')}];
+const ITEMS=[['cloak_blue','初心藍袍',0],['cloak_red','烈焰紅袍',200],['cloak_green','翡翠綠袍',200],['cloak_purple','暮光紫袍',300],['cloak_gold','黃金披風',800],
+['hat_none','不戴帽子',0],['hat_apprentice','學徒尖帽',150],['hat_star','星辰法帽',400],['hat_crown','數學王冠',1200],
+['staff_wood','橡木杖',0],['staff_crystal','水晶杖',300],['staff_rainbow','彩虹杖',900],
+['pet_slime','史萊姆',300],['pet_fox','比例小狐',400],['pet_cat','智慧貓寶寶',500],['pet_dragon','迷你小龍',800],
+['furn_rug','魔法地毯',100],['furn_shelf','魔法書櫃',250],['furn_fish','水族箱',400],['furn_stars','星空天花板',600],
+['title_1','方程小學徒',100],['title_2','坐標探險家',200],['title_3','不等式裁決者',300],['title_4','數理大陸傳奇',1500],['rename','改名卡',2000]];
+const FREE=['cloak_blue','hat_none','staff_wood'];
+const KH='jb2-hub-v1',KC='jb2-hub-config-v1';
+const ck=n=>'monster-ch'+n+'-progress-v1';
+const rd=k=>{try{return JSON.parse(localStorage.getItem(k))||{}}catch(e){return{}}};
+const wr=(k,o)=>{try{localStorage.setItem(k,JSON.stringify(o));return true}catch(e){msg('寫入失敗：瀏覽器不允許存檔（可能是 file:// 或無痕模式）');return false}};
+const $=s=>document.querySelector(s);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let mt;function msg(m){const e=$('#msg');e.textContent=m;e.style.display='block';clearTimeout(mt);mt=setTimeout(()=>e.style.display='none',2600)}
+
+function hub(){const h=rd(KH);return h}
+function rebase(){
+  if(!$('#rebase').checked)return;
+  const h=hub();h.seen=h.seen||{};
+  for(let n=1;n<=6;n++){const d=rd(ck(n));let s=0,e=0;for(const k in d){if(k[0]==='_')continue;const v=d[k];if(v&&typeof v==='object'){s+=v.stars|0;e+=v.exp|0}}h.seen[n]={stars:s,exp:e}}
+  wr(KH,h);
+}
+function setStars(chap,v){
+  for(let n=1;n<=6;n++){if(chap&&chap!==n)continue;const d=rd(ck(n));
+    CH[n].st.forEach(s=>{const o=d[s.id]||{};o.stars=v;d[s.id]=o});
+    wr(ck(n),d)}
+}
+
+function render(){
+  let tot=0,exp=0;
+  for(let n=1;n<=6;n++){const d=rd(ck(n));for(const k in d){if(k[0]==='_')continue;const v=d[k];if(v&&typeof v==='object'){tot+=v.stars|0;exp+=v.exp|0}}}
+  const h=hub(),c=rd(KC);
+  $('#status').innerHTML=`目前讀到：總星數 <b class="ok">${tot} / 155</b>、總經驗 ${exp}、數靈幣 ${h.gold|0}。${(tot===0&&location.protocol==='file:')?'<br><span class="warn">⚠️ 目前是 file:// 開啟，若遊戲存檔讀不到，請改用網站空間或本機伺服器。</span>':''}`;
+  $('#goldNow').textContent=h.gold|0;
+  $('#cOpen').checked=!!c.open;$('#cRatio').value=c.UNLOCK_RATIO!=null?c.UNLOCK_RATIO:.5;
+  $('#cStar').value=c.STAR_GOLD!=null?c.STAR_GOLD:40;$('#cRate').value=c.EXP_RATE||2;$('#cCap').value=c.EXP_CAP!=null?c.EXP_CAP:300;
+  const w=h.who||{};$('#wCls').value=w.cls||'';$('#wNo').value=w.no||'';$('#wName').value=w.name||'';
+  const P=c.PRICE||{};
+  $('#priceT').innerHTML='<tr><th>商品</th><th>價格</th></tr>'+ITEMS.map(i=>`<tr><td>${esc(i[1])}</td><td><input type="number" min="0" data-pid="${i[0]}" value="${P[i[0]]!=null?P[i[0]]:i[2]}"></td></tr>`).join('');
+  let t='<tr><th>關卡</th><th>星數</th><th>經驗</th><th>最高分</th><th>無極限題數</th></tr>';
+  for(let n=1;n<=6;n++){
+    const d=rd(ck(n));
+    t+=`<tr class="chh"><td colspan="5">第 ${n} 章　${esc(CH[n].name)}　<button class="btn s ghost" data-a="chap5" data-n="${n}">本章全 5⭐</button><button class="btn s ghost" data-a="chap0" data-n="${n}">本章歸零</button></td></tr>`;
+    CH[n].st.forEach(s=>{const o=d[s.id]||{};
+      t+=`<tr><td>${s.id} ${BOSS.has(s.id)?'👹':''}${esc(s.name)}</td><td><select data-f="stars" data-id="${s.id}" data-n="${n}">${[0,1,2,3,4,5].map(x=>`<option${(o.stars|0)===x?' selected':''}>${x}</option>`).join('')}</select></td>`
+        +`<td><input type="number" min="0" data-f="exp" data-id="${s.id}" data-n="${n}" value="${o.exp|0}"></td><td><input type="number" min="0" data-f="best" data-id="${s.id}" data-n="${n}" value="${o.best|0}"></td><td><input type="number" min="0" data-f="eb" data-id="${s.id}" data-n="${n}" value="${o.eb|0}"></td></tr>`});
+  }
+  $('#stT').innerHTML=t;
+}
+function saveStages(){
+  for(let n=1;n<=6;n++){
+    const d=rd(ck(n));
+    CH[n].st.forEach(s=>{
+      const o=d[s.id]||{};
+      document.querySelectorAll(`[data-id="${s.id}"]`).forEach(el=>{o[el.dataset.f]=Math.max(0,parseInt(el.value,10)||0)});
+      d[s.id]=o;
+    });
+    wr(ck(n),d);
+  }
+  rebase();msg('關卡資料已儲存');render();
+}
+document.addEventListener('click',e=>{
+  const el=e.target.closest('[data-a]');if(!el)return;
+  const a=el.dataset.a,h=hub(),c=rd(KC);
+  switch(a){
+    case'all5':setStars(0,5);rebase();msg('全部關卡已設為 5⭐');render();break;
+    case'all3':setStars(0,3);rebase();msg('全部關卡已設為 3⭐');render();break;
+    case'all0':if(confirm('全部關卡星數歸零？經驗不會動。')){setStars(0,0);rebase();msg('全部關卡已歸零');render()}break;
+    case'chap5':setStars(+el.dataset.n,5);rebase();render();break;
+    case'chap0':setStars(+el.dataset.n,0);rebase();render();break;
+    case'saveStages':saveStages();break;
+    case'saveCfg':{const o={open:$('#cOpen').checked,UNLOCK_RATIO:+$('#cRatio').value||.5,STAR_GOLD:Math.max(0,+$('#cStar').value||0),EXP_RATE:Math.max(1,+$('#cRate').value||2),EXP_CAP:Math.max(0,+$('#cCap').value||0)};if(c.PRICE)o.PRICE=c.PRICE;wr(KC,o);msg('設定已儲存，重新整理總地圖後生效');break}
+    case'resetCfg':{const o={};if(c.PRICE)o.PRICE=c.PRICE;wr(KC,o);msg('設定已恢復預設');render();break}
+    case'setGold':h.gold=Math.max(0,parseInt($('#goldIn').value,10)||0);wr(KH,h);msg('數靈幣已設定');render();break;
+    case'addGold':h.gold=Math.max(0,(h.gold|0)+(parseInt($('#goldIn').value,10)||0));wr(KH,h);msg('數靈幣已增加');render();break;
+    case'ownAll':h.own=h.own||{};ITEMS.forEach(i=>{if(i[0]!=='rename')h.own[i[0]]=1});wr(KH,h);msg('所有商品已給他（改名卡是消耗品，沒有發）');break;
+    case'ownReset':h.own={};FREE.forEach(i=>h.own[i]=1);h.eq={cloak:'cloak_blue',hat:'hat_none',staff:'staff_wood',pet:'',title:''};wr(KH,h);msg('商品已恢復預設');break;
+    case'resetDaily':h.streak={last:'',n:0};h.daily={date:'',expGold:0,expDelta:0,starDelta:0,claimed:{}};wr(KH,h);msg('今日簽到與任務已重設');break;
+    case'savePrice':{const P={};document.querySelectorAll('[data-pid]').forEach(i=>{const d=ITEMS.find(x=>x[0]===i.dataset.pid);const v=Math.max(0,parseInt(i.value,10)||0);if(d&&v!==d[2])P[i.dataset.pid]=v});c.PRICE=P;wr(KC,c);msg('價格已儲存，重新整理總地圖後生效');break}
+    case'saveWho':{const w={cls:$('#wCls').value.trim(),no:$('#wNo').value.trim(),name:$('#wName').value.trim()};h.who=w;h.renaming=false;wr(KH,h);for(let n=1;n<=6;n++){const d=rd(ck(n));d._who=w;wr(ck(n),d)}msg('學生資料已同步到六章');break}
+    case'wipe':if(confirm('確定要清空全部進度與商店資料嗎？這個動作無法復原。')&&confirm('再確認一次：真的要全部清空？')){for(let n=1;n<=6;n++)localStorage.removeItem(ck(n));localStorage.removeItem(KH);msg('已清空');render()}break;
+  }
+});
+render();
+})();
+</script>
+</body>
+</html>

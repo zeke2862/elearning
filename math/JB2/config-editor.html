@@ -1,0 +1,264 @@
+<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>設定編輯器（教師用，不要上傳）</title>
+<style>
+body{font-family:"Noto Sans TC","Microsoft JhengHei",sans-serif;background:#f4f1e8;color:#222;margin:0;padding:14px;line-height:1.5}
+h1{font-size:22px;margin:0 0 6px}h2{font-size:18px;margin:0}
+.bar{position:sticky;top:0;background:#f4f1e8;padding:8px 0;z-index:5;border-bottom:2px solid #c9b57a}
+button{font:inherit;background:#b8862b;color:#fff;border:0;border-radius:8px;padding:6px 12px;cursor:pointer;margin:2px}
+button.g{background:#fff;color:#b8862b;border:2px solid #b8862b}button.r{background:#a33}
+details{background:#fff;border:1px solid #d6c9a0;border-radius:10px;margin:6px 0;padding:6px 10px}
+summary{cursor:pointer;font-weight:700}
+.f{display:flex;gap:8px;align-items:center;margin:4px 0;flex-wrap:wrap}.f label{min-width:200px;color:#444}
+input[type=text],input[type=number]{font:inherit;padding:4px 8px;border:1px solid #bbb;border-radius:6px;min-width:90px}
+input.w{width:320px;max-width:90vw}
+.arr{border-left:4px solid #e3d6a8;padding-left:10px;margin:4px 0}
+.pill{background:#eadfc0;border-radius:999px;padding:2px 10px;font-size:13px}
+.note{color:#666;font-size:13px}.warn{color:#a33}
+table{border-collapse:collapse;background:#fff}td,th{border:1px solid #ccc;padding:3px 8px;font-size:14px}
+#msg{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);background:#222;color:#fff;border-radius:10px;padding:8px 14px;display:none;z-index:9}
+#hstage{position:relative;width:min(100%,900px);aspect-ratio:16/10;background:#e8d6a8 center/cover;border:3px solid #5b3d1a;border-radius:10px;overflow:hidden;user-select:none;touch-action:none}
+#hstage.phone{width:min(100%,420px);aspect-ratio:4/5}
+.he{position:absolute;display:flex;align-items:center;justify-content:center;cursor:move;font-size:34px;line-height:1}
+.he img{max-width:100%;max-height:100%;pointer-events:none}
+.he .tag{position:absolute;left:0;bottom:-2px;background:#000a;color:#fff;font-size:11px;padding:0 4px;border-radius:4px;pointer-events:none;white-space:nowrap}
+.he.sel{outline:2px dashed #e0262a;outline-offset:1px}
+.he .rz,.he .rt{display:none;position:absolute;width:16px;height:16px;border-radius:50%;background:#e0262a;border:2px solid #fff}
+.he.sel .rz,.he.sel .rt{display:block}
+.he .rz{right:-9px;bottom:-9px;cursor:nwse-resize}.he .rt{left:calc(50% - 8px);top:-26px;cursor:grab;background:#2f6bd6}
+.hwin{background:linear-gradient(#7ec8ff,#cfeeff);border:3px solid #5b3d1a;border-radius:6px}
+.hrow{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin:6px 0}.hrow input[type=number]{width:78px}
+.cmn{position:absolute;transform:translate(-50%,-50%);aspect-ratio:1;border-radius:50%;border:3px solid #d2a24c;background:#f1e8d2;display:flex;align-items:center;justify-content:center;cursor:move;box-shadow:0 2px 8px #0008;z-index:3}
+.cmn.boss{border-color:#c0472f}.cmn.sel{outline:3px dashed #e0262a;outline-offset:3px}
+.cmn img{width:86%;height:86%;border-radius:50%;object-fit:cover;pointer-events:none}
+.cmn .cid{position:absolute;left:50%;top:-9px;transform:translateX(-50%);background:#161a2e;color:#fff;font-size:11px;padding:0 6px;border-radius:8px;white-space:nowrap;pointer-events:none}
+.cmn .cem{font-size:24px;pointer-events:none}
+.cmfr{position:absolute;border:2px dashed #fff;box-shadow:0 0 0 1px #000a;pointer-events:none;z-index:2}.cmfr b{position:absolute;left:4px;top:2px;background:#000a;color:#fff;font-size:11px;padding:0 4px;border-radius:4px;font-weight:400}
+#cmstage{position:relative;width:min(100%,900px);aspect-ratio:16/9;background:#9fcbe3 center/cover no-repeat;border:3px solid #5b3d1a;border-radius:10px;overflow:hidden;user-select:none;touch-action:none}
+#cmstage.phone{width:min(100%,380px);aspect-ratio:9/16}
+#cmstage svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:1}
+</style></head><body>
+<h1>⚙️ 遊戲設定編輯器 <span class="pill" id="ver"></span></h1>
+<div class="note">這是唯一的數字來源編輯器：改完按「💾 直接存進遊戲資料夾」（第一次選遊戲資料夾即可，之後會自動讀回確認）。不支援時才用「匯出」並覆蓋舊檔（遊戲本體不用動）。此檔只給老師，不要上傳到學生網站。</div>
+<div class="bar"><button id="sav">💾 直接存進遊戲資料夾（推薦）</button><button class="g" id="exp">📤 匯出 game-config.js（版本自動 +0.1）</button><button class="g" id="imp">📥 匯入 game-config.js／json</button><button class="g" id="rst">還原成載入時的內容</button>
+<input type="file" id="impF" accept=".js,.json" style="display:none"> <span class="note" id="dirty"></span></div>
+<div id="root"></div>
+<h2 style="margin-top:20px">🏠 小屋編排器（拖曳、縮放、旋轉）</h2>
+<div class="note">用滑鼠拖曳物件移動；右下紅點＝縮放；上方藍點＝旋轉；也可以選取後用方向鍵微調（Shift＝移動較多）。改完記得按上方「💾 直接存進遊戲資料夾」。背景用 images/home/wallpaper.jpg（沒有就是米色底）。</div>
+<div class="hrow"><label><input type="radio" name="hv" value="pc" checked> 電腦畫面（16:10）</label><label><input type="radio" name="hv" value="phone"> 手機直向（4:5）</label>
+<label><input type="checkbox" id="hsnap" checked> 對齊 0.5%</label><button class="g" id="hreset">全部還原成載入時的位置</button></div>
+<div id="hstage" tabindex="0"></div>
+<div class="hrow" id="hpanel"><span class="note">點一個物件開始編輯</span></div>
+<h2 style="margin-top:20px">🗺️ 章節地圖編排器（拖曳各章怪物關卡的位置）</h2>
+<div class="note">選章節與版面（電腦橫式／手機直式各自獨立），用滑鼠拖曳關卡圓圈；也可選取後用方向鍵微調（Shift＝移動較多），或直接輸入 x、y（%）。背景就是遊戲裡用的 images/map/chN-bg.jpg（直式用 chN-bg-tall.jpg），所以換了新圖也能直接對位。白色虛線框＝其他比例的螢幕實際會看到的範圍（螢幕比圖窄／寬時邊緣會被裁掉，重要關卡請放在框內）。改完記得按上方「💾 直接存進遊戲資料夾」，再重新整理章節地圖就會套用。</div>
+<div class="hrow"><label>章節 <select id="cmch"></select></label><label><input type="radio" name="cmv" value="L" checked> 電腦橫式（16:9）</label><label><input type="radio" name="cmv" value="T"> 手機直式（9:16）</label>
+<label><input type="checkbox" id="cmsn" checked> 對齊 0.5%</label><label><input type="checkbox" id="cmfr" checked> 顯示其他螢幕的範圍</label><button class="g" id="cmreset">這一章這個版面：還原成預設路線</button></div>
+<div id="cmstage" tabindex="0"></div>
+<div class="hrow" id="cmpanel"><span class="note">點一個關卡開始編輯</span></div>
+<h2 style="margin-top:20px">🧰 存檔工具（改的是「這個瀏覽器」裡的學生進度，只在和遊戲同網址／同資料夾來源時有效）</h2>
+<div id="tools"></div>
+<div id="msg"></div>
+<script src="game-config.js"></script>
+<script>
+(function(){
+var $=function(s){return document.querySelector(s)};
+if(!window.GAME_CONFIG){document.body.innerHTML='<h1>找不到 game-config.js</h1><p>請把本檔放在和 game-config.js 同一個資料夾。</p>';return}
+var orig=JSON.stringify(window.GAME_CONFIG),C=JSON.parse(orig),dirty=false;
+var L=C.labels||{};
+function msg(m){var e=$('#msg');e.textContent=m;e.style.display='block';setTimeout(function(){e.style.display='none'},7000)}
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+function lab(k){return L[k]||k}
+function mark(){dirty=true;$('#dirty').textContent='● 有未匯出的修改'}
+function title(v,k){if(v&&typeof v==='object'){var n=v.name||v.label||v.id||v.theme||(typeof v.n==='string'&&v.t!==undefined?v.n:'');if(n)return n+(v.id&&v.name?'（'+v.id+'）':'')}return ''}
+var BIG={chapters:1,shop:1,home:1,map:1,economy:1};
+function build(v,path,key,depth){
+  var d=document.createElement('div');
+  if(v!==null&&typeof v==='object'){
+    var isA=Array.isArray(v),prim=isA&&v.every(function(x){return x===null||typeof x!=='object'});
+    var simpleRows=isA&&v.length&&v.every(function(x){return Array.isArray(x)&&x.every(function(y){return typeof y!=='object'})});
+    if(prim){var f=document.createElement('div');f.className='f';f.innerHTML='<label>'+esc(lab(key))+'</label>';var i=document.createElement('input');i.type='text';i.className='w';i.value=v.join(', ');
+      i.onchange=function(){var a=i.value.split(',').map(function(s){s=s.trim();return s!==''&&!isNaN(+s)?+s:s}).filter(function(s){return s!==''});v.length=0;a.forEach(function(x){v.push(x)});mark()};f.appendChild(i);return f}
+    var det=document.createElement('details');if(depth<1)det.open=false;
+    var sm=document.createElement('summary');sm.textContent=(isA&&typeof key==='number'?'#'+(key+1)+' ':'')+(typeof key==='number'?'':lab(key))+(title(v,key)?' '+title(v,key):'')+(isA?'（'+v.length+' 筆）':'');det.appendChild(sm);
+    var box=document.createElement('div');box.className=isA?'arr':'';
+    if(simpleRows){v.forEach(function(r,ri){var f=document.createElement('div');f.className='f';
+      r.forEach(function(x,ci){var i=document.createElement('input');i.type=typeof x==='number'?'number':'text';i.value=x;i.step='any';i.style.width=typeof x==='number'?'90px':'200px';i.onchange=function(){r[ci]=typeof x==='number'?(+i.value):i.value;mark()};f.appendChild(i)});
+      var b=document.createElement('button');b.className='r';b.textContent='刪';b.onclick=function(){v.splice(ri,1);mark();rerender()};f.appendChild(b);box.appendChild(f)});
+      var ab=document.createElement('button');ab.className='g';ab.textContent='＋新增一列';ab.onclick=function(){v.push(v[v.length-1].map(function(x){return x}));mark();rerender()};box.appendChild(ab)}
+    else{
+      Object.keys(v).forEach(function(k){
+        var kk=isA?+k:k,child=v[k];
+        if(!isA&&(k==='labels'))return;
+        var el=build(child,path.concat([kk]),kk,depth+1);
+        if(isA){var w=document.createElement('div');w.appendChild(el);
+          if(child&&typeof child==='object'&&!Array.isArray(child)){var bb=document.createElement('button');bb.className='r';bb.textContent='刪除這筆';bb.onclick=function(){if(confirm('確定刪除？')){v.splice(+k,1);mark();rerender()}};el.querySelector('details>div').appendChild(bb)}
+          box.appendChild(w)}
+        else box.appendChild(el);
+      });
+      if(isA&&v.length&&typeof v[0]==='object'&&!Array.isArray(v[0])){var ab2=document.createElement('button');ab2.className='g';ab2.textContent='＋複製最後一筆來新增';ab2.onclick=function(){v.push(JSON.parse(JSON.stringify(v[v.length-1])));mark();rerender()};box.appendChild(ab2)}
+    }
+    det.appendChild(box);return det}
+  var f2=document.createElement('div');f2.className='f';var l=document.createElement('label');l.textContent=lab(key);f2.appendChild(l);
+  var i2=document.createElement('input');var isN=typeof v==='number';i2.type=isN?'number':'text';i2.step='any';i2.value=v==null?'':v;if(!isN)i2.className='w';
+  i2.onchange=function(){var val=isN?(i2.value===''?0:+i2.value):i2.value;setPath(path,val);mark();if(key==='days'||key==='price'||key==='dailyBase'||key==='priceRound')rerender(true)};f2.appendChild(i2);
+  if(key==='days'){var o=document.createElement('span');o.className='note';var it=getPath(path.slice(0,-1));o.textContent='→ 價格 '+priceOf(it);f2.appendChild(o)}
+  if(key==='price'){var o2=document.createElement('span');o2.className='note';o2.textContent='（空白＝自動：每日基準收入×天數係數）';f2.appendChild(o2)}
+  return f2}
+function getPath(p){var o=C;p.forEach(function(k){o=o[k]});return o}
+function setPath(p,val){var o=C;for(var i=0;i<p.length-1;i++)o=o[p[i]];o[p[p.length-1]]=val}
+function priceOf(it){return (it.price!==''&&it.price!=null)?+it.price:Math.round(C.economy.dailyBase*it.days/C.economy.priceRound)*C.economy.priceRound}
+function summary(){
+  var tot=0,t='<table><tr><th>商品</th><th>天數係數</th><th>價格</th><th>條件</th></tr>';
+  C.shop.items.forEach(function(i){var p=priceOf(i);tot+=i.cons?0:p;t+='<tr><td>'+esc(i.name)+'</td><td>'+i.days+'</td><td>'+p+'</td><td>'+(i.need?(i.need.type==='total'?'總星 '+i.need.min:'第'+i.need.ch+'章 '+i.need.min+'⭐'):'')+'</td></tr>'});
+  return '<details open><summary>📋 價格總覽（每日基準收入 '+C.economy.dailyBase+'）</summary>'+t+'</table><div class="note">非消耗品全買約 '+tot+' 幣 ≈ '+(tot/C.economy.dailyBase).toFixed(1)+' 個基準日</div></details>'}
+function rerender(keep){
+  var r=$('#root'),open=[];r.querySelectorAll('details').forEach(function(d,i){if(d.open)open.push(i)});
+  r.innerHTML='';r.insertAdjacentHTML('beforeend',summary());
+  Object.keys(C).forEach(function(k){if(k==='labels'||k==='version'||k==='updated'||k==='chapterMaps')return;r.appendChild(build(C[k],[k],k,0))});
+  r.querySelectorAll('details').forEach(function(d,i){if(open.indexOf(i)>=0)d.open=true});
+  $('#ver').textContent='目前版本 '+C.version+'（'+C.updated+'）'}
+function makeTxt(){
+  var v=(+C.version+0.1).toFixed(1);C.version=v;var d=new Date();C.updated=d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);
+  return '/* 遊戲設定檔 — 請用 config-editor.html 修改，不要手改 */\nwindow.GAME_CONFIG = '+JSON.stringify(C,null,1)+';\n'}
+var dirH=null;
+$('#sav').onclick=async function(){
+  if(!window.showDirectoryPicker){msg('這個瀏覽器不支援直接存檔，請改用 Chrome／Edge，或用旁邊的「匯出」');return}
+  try{
+    if(!dirH)dirH=await window.showDirectoryPicker({mode:'readwrite'});
+    var old='';try{var fh0=await dirH.getFileHandle('game-config.js');old=await (await fh0.getFile()).text()}catch(e){}
+    if(!old&&!confirm('你選的資料夾裡沒有 game-config.js，確定是遊戲資料夾嗎？（確定＝在這裡新建）')){dirH=null;return}
+    var txt=makeTxt(),fh=await dirH.getFileHandle('game-config.js',{create:true}),w=await fh.createWritable();await w.write(txt);await w.close();
+    var back=await (await fh.getFile()).text();
+    if(back!==txt)throw new Error('寫入後讀回不一致');
+    dirty=false;$('#dirty').textContent='✅ 已存入 v'+C.version;rerender();
+    msg('✅ 已直接寫進遊戲資料夾的 game-config.js（v'+C.version+'，已讀回確認）。若學生用的是網站，記得把這個檔上傳覆蓋。')
+  }catch(e){if(e&&e.name==='AbortError')return;dirH=null;msg('存檔失敗：'+(e.message||e)+'。可改用「匯出」。')}};
+$('#exp').onclick=function(){
+  var txt=makeTxt();var v=C.version;
+  var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([txt],{type:'text/javascript'}));a.download='game-config.js';a.click();
+  dirty=false;$('#dirty').textContent='已匯出 v'+v;rerender();msg('已匯出 game-config.js v'+v+'。⚠️ 若檔名變成 game-config (1).js，要改回 game-config.js 再覆蓋舊檔')};
+$('#imp').onclick=function(){$('#impF').click()};
+$('#impF').onchange=function(e){var f=e.target.files[0];if(!f)return;var r=new FileReader();r.onload=function(){try{var t=r.result,i=t.indexOf('{'),j=t.lastIndexOf('}');C=JSON.parse(t.slice(i,j+1));L=C.labels||L;rerender();msg('匯入完成')}catch(x){msg('讀不懂這個檔案')}};r.readAsText(f)};
+$('#rst').onclick=function(){if(confirm('放棄目前修改？')){C=JSON.parse(orig);rerender();$('#dirty').textContent=''}};
+window.addEventListener('beforeunload',function(e){if(dirty){e.preventDefault();e.returnValue=''}});
+rerender();
+
+/* ===== 小屋編排器 ===== */
+(function(){
+  var stage=$('#hstage'),sel=null,origHome=JSON.stringify(C.home);
+  function ents(){var H=C.home,a=[];
+    a.push({k:'window',label:'窗戶',o:H.window,kind:'win'});
+    H.items.forEach(function(o){a.push({k:o.id,label:o.label,o:o,emoji:o.emoji,img:o.img})});
+    H.furniture.forEach(function(o){a.push({k:o.id,label:'家具',o:o,emoji:o.emoji||'🧶',img:o.img})});
+    a.push({k:'hero',label:'勇者',o:H.hero,emoji:'🧙',img:'images/hero/cloak_blue.png',noH:true});
+    a.push({k:'pet',label:'寵物',o:H.pet,emoji:'🐱'});
+    return a}
+  function draw(){
+    stage.style.backgroundImage="url('images/home/wallpaper.jpg')";stage.innerHTML='';
+    var list=ents();
+    list.forEach(function(e){var o=e.o,d=document.createElement('div');d.className='he'+(e.kind==='win'?' hwin':'')+(sel===e.k?' sel':'');d.dataset.k=e.k;
+      d.style.left=o.x+'%';d.style.top=o.y+'%';d.style.width=(o.w||6)+'%';
+      if(e.noH){d.style.height='auto';d.style.aspectRatio='64/94'}else d.style.height=(o.h||9)+'%';
+      d.style.transform='rotate('+(o.rot||0)+'deg)';d.style.zIndex=(o.z!=null?o.z:(e.kind==='win'?0:3));
+      if(e.kind!=='win'){var im=document.createElement('img');im.src=e.img||'';im.onerror=function(){im.remove();var s=document.createElement('span');s.textContent=e.emoji;s.style.fontSize=Math.max(18,(o.w||6)*stage.clientWidth/100*.6)+'px';d.insertBefore(s,d.firstChild)};if(e.img)d.appendChild(im);else im.onerror()}
+      var tg=document.createElement('span');tg.className='tag';tg.textContent=e.label;d.appendChild(tg);
+      var rz=document.createElement('i');rz.className='rz';d.appendChild(rz);var rt=document.createElement('i');rt.className='rt';d.appendChild(rt);
+      stage.appendChild(d)});
+    panel()}
+  function entOf(k){return ents().filter(function(e){return e.k===k})[0]}
+  var drag=null;
+  stage.addEventListener('pointerdown',function(ev){
+    var el=ev.target.closest('.he');if(!el){sel=null;draw();return}
+    var e=entOf(el.dataset.k);sel=e.k;var r=stage.getBoundingClientRect(),o=e.o;
+    drag={e:e,mode:ev.target.classList.contains('rz')?'rz':ev.target.classList.contains('rt')?'rt':'mv',sx:ev.clientX,sy:ev.clientY,ox:o.x,oy:o.y,ow:o.w,oh:o.h,W:r.width,H:r.height,r:r};
+    stage.setPointerCapture(ev.pointerId);draw();stage.focus();ev.preventDefault()});
+  stage.addEventListener('pointermove',function(ev){
+    if(!drag)return;var o=drag.e.o,dx=(ev.clientX-drag.sx)/drag.W*100,dy=(ev.clientY-drag.sy)/drag.H*100,sn=$('#hsnap').checked?function(v){return Math.round(v*2)/2}:function(v){return Math.round(v*10)/10};
+    if(drag.mode==='mv'){o.x=sn(drag.ox+dx);o.y=sn(drag.oy+dy)}
+    else if(drag.mode==='rz'){o.w=Math.max(1,sn(drag.ow+dx));if(!drag.e.noH)o.h=Math.max(1,sn(drag.oh+dy))}
+    else{var cx=drag.r.left+(o.x+o.w/2)/100*drag.W,cy=drag.r.top+(o.y+((drag.e.noH?o.w*94/64*drag.W/drag.H:o.h)/2))/100*drag.H;
+      var a=Math.atan2(ev.clientY-cy,ev.clientX-cx)*180/Math.PI+90;a=Math.round(a);if(a>180)a-=360;o.rot=a}
+    mark();draw()});
+  stage.addEventListener('pointerup',function(){if(drag){drag=null;rerender()}});
+  stage.addEventListener('keydown',function(ev){
+    if(!sel)return;var o=entOf(sel).o,s=ev.shiftKey?2:0.5,m={ArrowLeft:['x',-s],ArrowRight:['x',s],ArrowUp:['y',-s],ArrowDown:['y',s]}[ev.key];
+    if(!m)return;o[m[0]]=Math.round((o[m[0]]+m[1])*10)/10;mark();draw();ev.preventDefault()});
+  function panel(){
+    var p=$('#hpanel');if(!sel){p.innerHTML='<span class="note">點一個物件開始編輯</span>';return}
+    var e=entOf(sel),o=e.o,f=[['x','左(%)'],['y','上(%)'],['w','寬(%)']];if(!e.noH)f.push(['h','高(%)']);if(e.kind!=='win')f.push(['rot','角度'],['z','層']);
+    p.innerHTML='<b>'+esc(e.label)+'（'+esc(e.k)+'）</b> '+f.map(function(q){return '<label>'+q[1]+' <input type="number" step="0.5" data-f="'+q[0]+'" value="'+(o[q[0]]!=null?o[q[0]]:0)+'"></label>'}).join('')+' <button class="g" id="hc">水平置中</button> <button class="g" id="hr1">還原這一個</button>';
+    p.querySelectorAll('input').forEach(function(i){i.onchange=function(){o[i.dataset.f]=+i.value;mark();draw();rerender()}});
+    $('#hc').onclick=function(){o.x=Math.round((100-(o.w||6))/2*10)/10;mark();draw();rerender()};
+    $('#hr1').onclick=function(){var oh=JSON.parse(origHome),src=null;[].concat(oh.items,oh.furniture,[oh.window,oh.hero,oh.pet]).forEach(function(q){if(q&&((q.id&&q.id===e.k)||(!q.id&&((e.k==='window'&&q.w===oh.window.w&&q===oh.window)||(e.k==='hero'&&q===oh.hero)||(e.k==='pet'&&q===oh.pet)))))src=q});
+      if(src){Object.keys(src).forEach(function(k){o[k]=src[k]});mark();draw();rerender()}}}
+  document.querySelectorAll('input[name=hv]').forEach(function(r){r.onchange=function(){stage.classList.toggle('phone',r.value==='phone'&&r.checked);draw()}});
+  $('#hreset').onclick=function(){if(confirm('把小屋全部還原成載入時的位置？')){C.home=JSON.parse(origHome);mark();draw();rerender()}};
+  window.addEventListener('resize',draw);draw();
+})();
+
+/* ===== 章節地圖編排器 ===== */
+(function(){
+  var stage=$('#cmstage'),sel=null,chs=$('#cmch');
+  C.chapters.forEach(function(c){var o=document.createElement('option');o.value=c.n;o.textContent='第'+c.n+'章 '+c.name+'（'+c.stages.length+' 關）';chs.appendChild(o)});
+  function isT(){return document.querySelector('input[name=cmv]:checked').value==='T'}
+  function stages(){var n=+chs.value;return C.chapters.filter(function(c){return c.n===n})[0].stages}
+  function dflt(n,T){var P=[];for(var i=0;i<n;i++){var t=n>1?i/(n-1):.5,last=i===n-1,zig=last?0:(i%2?-1:1);
+    P.push(T?[(last&&n>1)?50:(i%2?66:34),Math.round((84-68*t)*10)/10]:[Math.round((28+44*t)*10)/10,Math.round((66-31*t+zig*8)*10)/10])}return P}
+  function arr(write){var n=chs.value,k=isT()?'T':'L',len=stages().length,m=C.chapterMaps&&C.chapterMaps[n],a=m&&m[k];
+    if(a&&a.length===len)return a;var d=dflt(len,isT());
+    if(write){C.chapterMaps=C.chapterMaps||{};C.chapterMaps[n]=C.chapterMaps[n]||{};C.chapterMaps[n][k]=d}return d}
+  function path(P,T){var d='M'+P[0][0]+' '+P[0][1];for(var i=1;i<P.length;i++){var a=P[i-1],b=P[i];
+    if(T){var my=(a[1]+b[1])/2;d+=' C'+a[0]+' '+my+','+b[0]+' '+my+','+b[0]+' '+b[1]}else{var mx=(a[0]+b[0])/2;d+=' C'+mx+' '+a[1]+','+mx+' '+b[1]+','+b[0]+' '+b[1]}}return d}
+  function frame(r,label,T){ // 以 cover 方式看到的範圍（r＝螢幕寬／高）
+    var ir=T?9/16:16/9,w=100,h=100;if(r<ir)w=r/ir*100;else h=ir/r*100;
+    var d=document.createElement('div');d.className='cmfr';d.style.cssText='left:'+(50-w/2)+'%;top:'+(50-h/2)+'%;width:'+w+'%;height:'+h+'%';d.innerHTML='<b>'+label+'</b>';return d}
+  function draw(){
+    var n=+chs.value,T=isT(),P=arr(false),st=stages();
+    stage.classList.toggle('phone',T);
+    stage.style.backgroundImage="url('images/map/ch"+n+(T?'-bg-tall':'-bg')+".jpg')";stage.innerHTML='';
+    stage.insertAdjacentHTML('beforeend','<svg viewBox="0 0 100 100" preserveAspectRatio="none"><path d="'+path(P,T)+'" fill="none" stroke="#fff" stroke-width="5" stroke-dasharray="1 10" stroke-linecap="round" vector-effect="non-scaling-stroke" opacity=".9"/></svg>');
+    if($('#cmfr').checked){if(!T){stage.appendChild(frame(4/3,'4:3 平板',T));stage.appendChild(frame(21/9,'21:9 寬螢幕',T))}else{stage.appendChild(frame(3/4,'3:4 平板直立',T));stage.appendChild(frame(9/20,'9:20 長手機',T))}}
+    st.forEach(function(s,i){var boss=/Boss/.test(s[1]),d=document.createElement('div');d.className='cmn'+(boss?' boss':'')+(sel===i?' sel':'');d.dataset.i=i;
+      d.style.left=P[i][0]+'%';d.style.top=P[i][1]+'%';d.style.width=(T?(boss?20:15):(boss?10:7.6))+'%';
+      var im=document.createElement('img');im.src='grade7-vol2-ch'+n+'/images/battle/'+s[0]+'.png';im.onerror=function(){im.remove();var e=document.createElement('span');e.className='cem';e.textContent=boss?'👹':'⚔️';d.insertBefore(e,d.firstChild)};d.appendChild(im);
+      var t=document.createElement('span');t.className='cid';t.textContent=s[0];d.appendChild(t);stage.appendChild(d)});
+    panel()}
+  var drag=null;
+  stage.addEventListener('pointerdown',function(ev){var el=ev.target.closest('.cmn');if(!el){sel=null;draw();return}
+    sel=+el.dataset.i;var a=arr(true),r=stage.getBoundingClientRect();drag={i:sel,sx:ev.clientX,sy:ev.clientY,ox:a[sel][0],oy:a[sel][1],W:r.width,H:r.height};
+    stage.setPointerCapture(ev.pointerId);draw();stage.focus();ev.preventDefault()});
+  stage.addEventListener('pointermove',function(ev){if(!drag)return;var a=arr(true),sn=$('#cmsn').checked?function(v){return Math.round(v*2)/2}:function(v){return Math.round(v*10)/10},
+    clamp=function(v){return Math.max(0,Math.min(100,v))};
+    a[drag.i]=[clamp(sn(drag.ox+(ev.clientX-drag.sx)/drag.W*100)),clamp(sn(drag.oy+(ev.clientY-drag.sy)/drag.H*100))];mark();draw()});
+  stage.addEventListener('pointerup',function(){if(drag){drag=null;rerender()}});
+  stage.addEventListener('keydown',function(ev){if(sel==null)return;var s=ev.shiftKey?2:.5,m={ArrowLeft:[0,-s],ArrowRight:[0,s],ArrowUp:[1,-s],ArrowDown:[1,s]}[ev.key];if(!m)return;
+    var a=arr(true);a[sel][m[0]]=Math.max(0,Math.min(100,Math.round((a[sel][m[0]]+m[1])*10)/10));mark();draw();ev.preventDefault()});
+  function panel(){var p=$('#cmpanel');if(sel==null){p.innerHTML='<span class="note">點一個關卡開始編輯（'+(isT()?'手機直式':'電腦橫式')+'）</span>';return}
+    var P=arr(false),s=stages()[sel];
+    p.innerHTML='<b>'+esc(s[0])+' '+esc(s[1])+'</b> <label>左右 x(%) <input type="number" step="0.5" min="0" max="100" id="cmx" value="'+P[sel][0]+'"></label><label>上下 y(%) <input type="number" step="0.5" min="0" max="100" id="cmy" value="'+P[sel][1]+'"></label>';
+    ['x','y'].forEach(function(q,qi){$('#cm'+q).onchange=function(){var a=arr(true);a[sel][qi]=Math.max(0,Math.min(100,+this.value||0));mark();draw();rerender()}})}
+  chs.onchange=function(){sel=null;draw()};
+  document.querySelectorAll('input[name=cmv]').forEach(function(r){r.onchange=function(){sel=null;draw()}});
+  $('#cmfr').onchange=draw;
+  $('#cmreset').onclick=function(){var n=chs.value,k=isT()?'T':'L';if(!confirm('把第'+n+'章「'+(isT()?'手機直式':'電腦橫式')+'」還原成預設路線？'))return;
+    if(C.chapterMaps&&C.chapterMaps[n]){delete C.chapterMaps[n][k];if(!Object.keys(C.chapterMaps[n]).length)delete C.chapterMaps[n]}mark();sel=null;draw();rerender()};
+  draw();
+})();
+/* ===== 存檔工具 ===== */
+function rd(k){try{return JSON.parse(localStorage.getItem(k))||{}}catch(e){return{}}}
+function tools(){
+  var H=rd('jb2-hub-v1'),t='<div class="note">目前這個瀏覽器的學生：'+esc((H.who&&H.who.no)||'(未填學號)')+' '+esc((H.who&&H.who.name)||'')+'｜持有 '+(H.gold||0)+' '+esc(C.currency.name)+'</div>';
+  t+='<div class="f"><label>設定持有'+esc(C.currency.name)+'</label><input type="number" id="tg" min="0" value="'+(H.gold||0)+'"><button id="tgb">設定</button></div>';
+  t+='<div class="f"><label>給商品</label><select id="ti">'+C.shop.items.map(function(i){return '<option value="'+i.id+'">'+esc(i.name)+'</option>'}).join('')+'</select><button id="tib">給一個</button></div>';
+  t+='<div class="f"><label>某章全部設為 N 星（每關）</label><select id="tc">'+C.chapters.map(function(c){return '<option value="'+c.n+'">第'+c.n+'章</option>'}).join('')+'</select><input type="number" id="ts" min="0" max="5" value="3" style="min-width:60px"><button id="tcb">套用</button></div>';
+  t+='<label class="note"><input type="checkbox" id="rb" checked> 修改後不要發學習獎勵（重設獎勵基準）</label>';
+  $('#tools').innerHTML=t;
+  function rebase(H2){H2.seen={}}
+  $('#tgb').onclick=function(){var h=rd('jb2-hub-v1');h.gold=Math.max(0,+$('#tg').value||0);localStorage.setItem('jb2-hub-v1',JSON.stringify(h));msg('已設定');tools()};
+  $('#tib').onclick=function(){var h=rd('jb2-hub-v1'),id=$('#ti').value,it=C.shop.items.filter(function(x){return x.id===id})[0];h.own=h.own||{};h.inv=h.inv||{};if(it.cons)h.inv[id]=(h.inv[id]||0)+1;else h.own[id]=1;localStorage.setItem('jb2-hub-v1',JSON.stringify(h));msg('已給 '+it.name)};
+  $('#tcb').onclick=function(){var n=+$('#tc').value,s=Math.max(0,Math.min(5,+$('#ts').value||0)),ch=C.chapters.filter(function(c){return c.n===n})[0],k='monster-ch'+n+'-progress-v1',d=rd(k);
+    ch.stages.forEach(function(st){var o=d[st[0]]||{};o.stars=s;o.best=o.best||0;o.exp=o.exp||0;d[st[0]]=o});localStorage.setItem(k,JSON.stringify(d));
+    if($('#rb').checked){var h=rd('jb2-hub-v1');h.seen={};for(var i=1;i<=C.chapters.length;i++){var dd=rd('monster-ch'+i+'-progress-v1'),st=0,ex=0;for(var q in dd){if(q[0]==='_')continue;st+=dd[q].stars|0;ex+=dd[q].exp|0}h.seen[i]={stars:st,exp:ex}}localStorage.setItem('jb2-hub-v1',JSON.stringify(h))}
+    msg('第'+n+'章已全部設為 '+s+' 星')};
+}
+tools();
+})();
+</script></body></html>
