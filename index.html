@@ -242,6 +242,10 @@ input#codeInput:focus{outline:none;border-color:var(--accent);}
     <div class="subject-group">
       <div class="subject-title"><span class="subject-ic">🉐</span>國文科</div>
       <div class="hub-links">
+        <a class="hub-link" id="linkEPINYIN" href="./CHINESE/pinyin/index.html">
+          <div class="ic">⚔️</div>
+          <div><div class="lbl">跟上進熊一起聽說讀</div><div class="desc">口語練習</div></div>
+        </a>
         <a class="hub-link" id="linkESHENGZI" href="./CHINESE/ESHENGZI/index.html">
           <div class="ic">⚔️</div>
           <div><div class="lbl">泰北版華文生字練習</div><div class="desc">認國字、認拼音</div></div>
@@ -338,7 +342,8 @@ const ACTIVE_STUDENT_KEY = "keyagent_active_student";
 const ESHENGZI_URL = "./CHINESE/ESHENGZI/index.html";
 const ESHENGCI_URL = "./CHINESE/ESHENGCI/index.html";
 const EKEWEN_URL = "./CHINESE/EKEWEN/index.html";  
-function fetchWithTimeout(url, opts, ms) {
+const EPINYIN_URL = "./CHINESE/pinyin/index.html";
+  function fetchWithTimeout(url, opts, ms) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), ms);
   return fetch(url, { ...opts, signal: controller.signal }).finally(() => clearTimeout(timer));
