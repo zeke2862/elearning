@@ -15,7 +15,7 @@ button{font:inherit;cursor:pointer;color:inherit}
 button:focus-visible{outline:3px solid var(--bronze);outline-offset:2px}
 .card{background:var(--ink2);border:2px solid var(--line);border-radius:14px;padding:18px}
 .btn{background:var(--bronze);color:#2a1d05;border:0;border-radius:10px;padding:12px 22px;font-weight:700;font-size:1.05rem}
-.btn.ghost{background:transparent;color:var(--bronze);border:2px solid var(--bronze)}
+.btn.ghost{background:#2b2a3c;color:#f0cf85;border:2px solid var(--bronze)}
 .modes{display:grid;gap:10px;margin:16px 0}
 .mode{text-align:left;background:var(--ink);border:2px solid var(--line);border-radius:12px;padding:12px 14px}
 .mode.on{border-color:var(--bronze);background:#2b2a3c}
@@ -115,7 +115,7 @@ button:focus-visible{outline:3px solid var(--bronze);outline-offset:2px}
 </section>
 
 </main>
-<script src="lessons2.js"></script>
+<script src="lessons3.js"></script>
 <script src="mode-system.js"></script>
 <script>
 const $=s=>document.querySelector(s);
@@ -125,6 +125,13 @@ const sh=a=>a.map(v=>[Math.random(),v]).sort((x,y)=>x[0]-y[0]).map(x=>x[1]);
 function ensure4(ans,cands){
   const s=new Set([ans]);
   for(const c of cands){const cs=String(c);if(s.size<4&&cs!==ans&&cs.trim()!=='')s.add(cs);}
+  /* 誘答選項不夠時：答案不是純數字就「改動答案裡的一個數字」補齊（例如 (5, 5)→(5, 4)），不再塞無關的 -5、6 */
+  if(s.size<4&&!/^-?\d+(\.\d+)?$/.test(String(ans))){
+    const str=String(ans),vars=[],re=/\d+(?:\.\d+)?/g;let mm;
+    while((mm=re.exec(str))!==null){for(const d of [1,-1,2,-2,3,-3]){const nv=Number(mm[0])+d;if(nv<0)continue;const dec=(mm[0].split('.')[1]||'').length;vars.push(str.slice(0,mm.index)+(dec?nv.toFixed(dec):nv)+str.slice(mm.index+mm[0].length));}}
+    for(let i=vars.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[vars[i],vars[j]]=[vars[j],vars[i]];}
+    for(const v of vars){if(s.size>=4)break;if(!s.has(v))s.add(v);}
+  }
   let g=1;
   while(s.size<4){const v=(Number(ans)||0)+(g%2===0?g/2+5:-(Math.ceil(g/2)+4));const vs=String(v);if(!s.has(vs))s.add(vs);g++;}
   return sh([...s]);
@@ -194,13 +201,14 @@ function fmtNum(n){
   if(Number.isInteger(n))return String(n);
   return String(Math.round(n*100)/100);
 }
-const MODES={easy:{t:0,max:4},real:{t:15,max:6},hard:{t:10,max:8}};
+const MODES={easy:{t:0,max:6},real:{t:15,max:6},hard:{t:10,max:8}};
 const PLAN=['findK','findY','findX','identify','findK','findY','identify','findX','findY','identify'];
 
+const CTX2=['反比平衡水怪控制排水量 x（每秒立方公尺）與所需時間 y（秒）成反比。','工人人數 x 與完成工作所需天數 y 成反比。','行駛速度 x 與所需時間 y 成反比。','每人分到的糖果數 x 與分到的人數 y 成反比。','水管數量 x 與灌滿水池的時間 y 成反比。'];
 function genFindK(M){
   const x0=R(2,M.max),y0=R(2,M.max);
   const k=x0*y0;
-  const text=`反比平衡水怪控制排水量 x（每秒立方公尺）與所需時間 y（秒）成反比。已知當 x=${x0} 時，y=${y0}，求關係式（用 xy=k 表示）。`;
+  const text=`${pick(CTX2)}已知當 x=${x0} 時，y=${y0}，求關係式（用 xy=k 表示）。`;
   const ans=`xy = ${k}`;
   const wrong1=`y = ${x0}x`,wrong2=`xy = ${x0+y0}`,wrong3=`xy = ${k+Math.max(x0,y0)}`;
   return {text,ans,options:ensure4(ans,[wrong1,wrong2,wrong3]),
@@ -214,7 +222,7 @@ function genFindY(M){
   while(k%x2!==0&&tries<20){x2=R(2,M.max);tries++;}
   if(k%x2!==0)x2=x;
   const yAns=k/x2;
-  const text=`已知 x 與 y 成反比，關係式為 xy = ${k}，當 x = ${x2} 時，y 是多少？`;
+  const text=`${pick(CTX2)}已知 x 與 y 成反比，關係式為 xy = ${k}，當 x = ${x2} 時，y 是多少？`;
   const ans=String(yAns);
   return {text,ans,options:ensure4(ans,[String(yAns+1),String(yAns-1>0?yAns-1:yAns+2),String(k*x2)]),
     hint:'反比關係中，y = k ÷ x，把 k 除以已知的 x。',
@@ -227,7 +235,7 @@ function genFindX(M){
   while(k%y2!==0&&tries<20){y2=R(2,M.max);tries++;}
   if(k%y2!==0)y2=y;
   const xAns=k/y2;
-  const text=`已知 x 與 y 成反比，關係式為 xy = ${k}，當 y = ${y2} 時，x 是多少？`;
+  const text=`${pick(CTX2)}已知 x 與 y 成反比，關係式為 xy = ${k}，當 y = ${y2} 時，x 是多少？`;
   const ans=String(xAns);
   return {text,ans,options:ensure4(ans,[String(xAns+1),String(xAns-1>0?xAns-1:xAns+2),String(k*y2)]),
     hint:'反比關係中，x = k ÷ y，把 k 除以已知的 y。',
@@ -356,9 +364,9 @@ function finish(){
     $('#e-stars').textContent='';
     $('#e-info').textContent=`成功答對 ${right}/${total} 題。`+(right==total?'全部融會貫通！':'再接再厲！');
   }else{
-    $('#e-title').textContent=fail?'💔 收服失敗':'🎉 收服成功';
+    $('#e-title').textContent=fail?'🏃 怪物逃跑了！':'🎉 收服成功';
     $('#e-stars').textContent=fail?'':'⭐'.repeat(stars)+'☆'.repeat(3-stars);
-    const rankName=fail?'':['','見習召喚師','中階召喚師','菁英召喚師'][stars];
+    const rankName=fail?'再挑戰一次，就能收服牠！':['','見習召喚師','中階召喚師','菁英召喚師'][stars];
     $('#e-info').textContent=(rankName?rankName+'　':'')+`靈力 ${score}　答對 ${right}/${total}　剩餘生命 ${hearts} 顆心`;
   }
   const j=$('#e-jail');j.innerHTML='';

@@ -15,7 +15,7 @@ button{font:inherit;cursor:pointer;color:inherit}
 button:focus-visible{outline:3px solid var(--bronze);outline-offset:2px}
 .card{background:var(--ink2);border:2px solid var(--line);border-radius:14px;padding:18px}
 .btn{background:var(--bronze);color:#2a1d05;border:0;border-radius:10px;padding:12px 22px;font-weight:700;font-size:1.05rem}
-.btn.ghost{background:transparent;color:var(--bronze);border:2px solid var(--bronze)}
+.btn.ghost{background:#2b2a3c;color:#f0cf85;border:2px solid var(--bronze)}
 .modes{display:grid;gap:10px;margin:16px 0}
 .mode{text-align:left;background:var(--ink);border:2px solid var(--line);border-radius:12px;padding:12px 14px}
 .mode.on{border-color:var(--bronze);background:#2b2a3c}
@@ -115,7 +115,7 @@ button:focus-visible{outline:3px solid var(--bronze);outline-offset:2px}
 </section>
 
 </main>
-<script src="lessons2.js"></script>
+<script src="lessons3.js"></script>
 <script src="mode-system.js"></script>
 <script>
 const $=s=>document.querySelector(s);
@@ -125,6 +125,13 @@ const sh=a=>a.map(v=>[Math.random(),v]).sort((x,y)=>x[0]-y[0]).map(x=>x[1]);
 function ensure4(ans,cands){
   const s=new Set([ans]);
   for(const c of cands){const cs=String(c);if(s.size<4&&cs!==ans&&cs.trim()!=='')s.add(cs);}
+  /* 誘答選項不夠時：答案不是純數字就「改動答案裡的一個數字」補齊（例如 (5, 5)→(5, 4)），不再塞無關的 -5、6 */
+  if(s.size<4&&!/^-?\d+(\.\d+)?$/.test(String(ans))){
+    const str=String(ans),vars=[],re=/\d+(?:\.\d+)?/g;let mm;
+    while((mm=re.exec(str))!==null){for(const d of [1,-1,2,-2,3,-3]){const nv=Number(mm[0])+d;if(nv<0)continue;const dec=(mm[0].split('.')[1]||'').length;vars.push(str.slice(0,mm.index)+(dec?nv.toFixed(dec):nv)+str.slice(mm.index+mm[0].length));}}
+    for(let i=vars.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[vars[i],vars[j]]=[vars[j],vars[i]];}
+    for(const v of vars){if(s.size>=4)break;if(!s.has(v))s.add(v);}
+  }
   let g=1;
   while(s.size<4){const v=(Number(ans)||0)+(g%2===0?g/2+5:-(Math.ceil(g/2)+4));const vs=String(v);if(!s.has(vs))s.add(vs);g++;}
   return sh([...s]);
@@ -199,13 +206,16 @@ const PLAN=['solve','check','cross','word','solve','word','check','solve','cross
 const PROP_CONTEXTS=[['做蛋糕','人份','公克麵粉'],['煮飯','人份','公克白米'],['泡茶','人份','公克茶葉'],['調果汁','杯','毫升糖漿']];
 
 function genSolve(M){
-  const m=R(0,4)*(Math.random()<0.6?1:-1);
-  const d=R(2,M.max),b=R(2,M.max);
-  let c,tries=0;
-  do{c=R(1,M.max*2);tries++;}while((b*c)%d!==0&&tries<50);
-  if((b*c)%d!==0)c=d;
-  const rhs=(b*c)/d;
-  const x=rhs-m;
+  let m,d,b,c,rhs,x,outer=0;
+  do{/* 不出 x=0 的題目，也不出前後項一樣大(例如 x : 3 = 8 : 3)那種一眼看穿的題目 */
+    m=R(0,4)*(Math.random()<0.6?1:-1);
+    d=R(2,M.max);b=R(2,M.max);
+    let tries=0;
+    do{c=R(1,M.max*2);tries++;}while((b*c)%d!==0&&tries<50);
+    if((b*c)%d!==0)c=d;
+    rhs=(b*c)/d;
+    x=rhs-m;outer++;
+  }while((x===0||b===d)&&outer<40);
   const leftExpr=m===0?'x':(m>0?`(x + ${m})`:`(x - ${Math.abs(m)})`);
   const text=`內外項天秤龍噴出比例式：${leftExpr} : ${b} = ${c} : ${d}，求 x。`;
   const ans=String(x);
@@ -215,7 +225,7 @@ function genSolve(M){
 }
 function genCheck(M){
   const p=coprimePair(M.max);
-  const k1=R(2,M.max),k2=R(2,M.max);
+  const k1=R(2,M.max);let k2;do{k2=R(2,M.max);}while(k2===k1);
   const a=p[0]*k1,b=p[1]*k1;
   let c=p[0]*k2,d=p[1]*k2;
   if(Math.random()<0.5){c+=R(1,2);}
@@ -228,19 +238,19 @@ function genCheck(M){
 }
 function genCrossProduct(M){
   const p=coprimePair(M.max);
-  const k1=R(2,M.max),k2=R(2,M.max);
+  const k1=R(2,M.max);let k2;do{k2=R(2,M.max);}while(k2===k1);
   const a=p[0]*k1,b=p[1]*k1,c=p[0]*k2,d=p[1]*k2;
-  const val=a*d;
-  const text=`已知比例式 ${a} : ${b} = ${c} : ${d} 成立，求外項乘積（${a} × ${d}）的值。`;
+  const val=b*c;
+  const text=`已知比例式 ${a} : ${b} = ${c} : ${d} 成立，求內項乘積（${b} × ${c}）的值。`;
   const ans=String(val);
-  return {text,ans,options:ensure4(ans,[String(b*c-1),String(a*c),String(b*d)]),
-    hint:'比例式成立時，外項乘積一定等於內項乘積：a×d = b×c。',
-    explain:`外項乘積 ${a}×${d} = ${val}，剛好也等於內項乘積 ${b}×${c} = ${b*c}，驗證比例式成立。`};
+  return {text,ans,options:ensure4(ans,[String(a*c),String(b*d),String(a*b)]),
+    hint:'比例式成立時，外項乘積和內項乘積一樣大。內項就是中間那兩個數。',
+    explain:`內項乘積 ${b}×${c} = ${val}，剛好也等於外項乘積 ${a}×${d} = ${a*d}，驗證比例式成立。`};
 }
 function genWordSetup(M){
   const [act,unit1,unit2]=pick(PROP_CONTEXTS);
   const p=coprimePair(M.max);
-  const k1=R(2,M.max),k2=R(2,M.max);
+  const k1=R(2,M.max);let k2;do{k2=R(2,M.max);}while(k2===k1);
   const base1=p[0]*k1,baseAmt=p[1]*k1;
   const target1=p[0]*k2,ansAmt=p[1]*k2;
   const text=`天秤龍出題：${act} ${base1} ${unit1}需要 ${baseAmt} ${unit2}，用同樣的比例，${act} ${target1} ${unit1}需要多少 ${unit2}？`;
@@ -354,9 +364,9 @@ function finish(){
     $('#e-stars').textContent='';
     $('#e-info').textContent=`成功答對 ${right}/${total} 題。`+(right==total?'全部融會貫通！':'再接再厲！');
   }else{
-    $('#e-title').textContent=fail?'💔 收服失敗':'🎉 收服成功';
+    $('#e-title').textContent=fail?'🏃 怪物逃跑了！':'🎉 收服成功';
     $('#e-stars').textContent=fail?'':'⭐'.repeat(stars)+'☆'.repeat(3-stars);
-    const rankName=fail?'':['','見習召喚師','中階召喚師','菁英召喚師'][stars];
+    const rankName=fail?'再挑戰一次，就能收服牠！':['','見習召喚師','中階召喚師','菁英召喚師'][stars];
     $('#e-info').textContent=(rankName?rankName+'　':'')+`靈力 ${score}　答對 ${right}/${total}　剩餘生命 ${hearts} 顆心`;
   }
   const j=$('#e-jail');j.innerHTML='';

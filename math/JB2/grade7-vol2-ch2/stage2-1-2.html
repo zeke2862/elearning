@@ -15,7 +15,7 @@ button{font:inherit;cursor:pointer;color:inherit}
 button:focus-visible{outline:3px solid var(--bronze);outline-offset:2px}
 .card{background:var(--ink2);border:2px solid var(--line);border-radius:14px;padding:18px}
 .btn{background:var(--bronze);color:#2a1d05;border:0;border-radius:10px;padding:12px 22px;font-weight:700;font-size:1.05rem}
-.btn.ghost{background:transparent;color:var(--bronze);border:2px solid var(--bronze)}
+.btn.ghost{background:#2b2a3c;color:#f0cf85;border:2px solid var(--bronze)}
 .modes{display:grid;gap:10px;margin:16px 0}
 .mode{text-align:left;background:var(--ink);border:2px solid var(--line);border-radius:12px;padding:12px 14px}
 .mode.on{border-color:var(--bronze);background:#2b2a3c}
@@ -125,6 +125,13 @@ const sh=a=>a.map(v=>[Math.random(),v]).sort((x,y)=>x[0]-y[0]).map(x=>x[1]);
 function ensure4(ans,cands){
   const s=new Set([ans]);
   for(const c of cands){const cs=String(c);if(s.size<4&&cs!==ans&&cs.trim()!=='')s.add(cs);}
+  /* 誘答選項不夠時：答案不是純數字就「改動答案裡的一個數字」補齊（例如 (5, 5)→(5, 4)），不再塞無關的 -5、6 */
+  if(s.size<4&&!/^-?\d+(\.\d+)?$/.test(String(ans))){
+    const str=String(ans),vars=[],re=/\d+(?:\.\d+)?/g;let mm;
+    while((mm=re.exec(str))!==null){for(const d of [1,-1,2,-2,3,-3]){const nv=Number(mm[0])+d;if(nv<0)continue;const dec=(mm[0].split('.')[1]||'').length;vars.push(str.slice(0,mm.index)+(dec?nv.toFixed(dec):nv)+str.slice(mm.index+mm[0].length));}}
+    for(let i=vars.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[vars[i],vars[j]]=[vars[j],vars[i]];}
+    for(const v of vars){if(s.size>=4)break;if(!s.has(v))s.add(v);}
+  }
   let g=1;
   while(s.size<4){const v=(Number(ans)||0)+(g%2===0?g/2+5:-(Math.ceil(g/2)+4));const vs=String(v);if(!s.has(vs))s.add(vs);g++;}
   return sh([...s]);
@@ -200,7 +207,7 @@ function genQuadrant(M){
     hint:'x 是正的往右、負的往左；y 是正的往上、負的往下；只要有一個坐標是 0，就不在任何象限裡。',
     explain:`x=${a}${a===0?'（在 y 軸上）':a>0?'（正）':'（負）'}，y=${b}${b===0?'（在 x 軸上）':b>0?'（正）':'（負）'}，所以 P 在${ans}。`};
 }
-function genSign(M){
+function genSign0(M){
   const qd=pick(QUADS);
   const text=`如果點 (x, y) 在${qd}，那麼 x 與 y 的正負關係應該是？`;
   const ans=SIGNS[qd];
@@ -208,6 +215,64 @@ function genSign(M){
   return {text,ans,options:ensure4(ans,wrongs),
     hint:'背口訣：一正正、二負正、三負負、四正負（x 在前、y 在後）。',
     explain:`${qd}的判斷方式是「${ans}」，這就是象限口訣的內容。`};
+}
+const TS=(say,hint,ok,wrong,line)=>({say,hint,ok,wrong:wrong||[],line:line||''});
+
+const QKEY={'第一象限':[1,1],'第二象限':[-1,1],'第三象限':[-1,-1],'第四象限':[1,-1]};
+const qOfS=(sx,sy)=>sx>0?(sy>0?'第一象限':'第四象限'):(sy>0?'第二象限':'第三象限');
+const posNeg=v=>v>0?'正數':'負數';
+function genSign(M){
+  const r=Math.random();
+  if(r<0.25)return genSign0(M);
+  if(r<0.45){ // 由 x、y 的正負判斷象限（小老師已有對應步驟）
+    const sx=Math.random()<0.5?1:-1,sy=Math.random()<0.5?1:-1,ans=qOfS(sx,sy);
+    return {text:`x 坐標是${posNeg(sx)}、y 坐標是${posNeg(sy)}，這個點會在第幾象限？`,ans,options:QUADS.slice(),
+      hint:'背口訣：一正正、二負正、三負負、四正負（x 在前、y 在後）。',
+      explain:`x ${sx>0?'>':'<'} 0、y ${sy>0?'>':'<'} 0，對照口訣就是${ans}。`};
+  }
+  // 用字母 a、b 推理：P(a,b) 在某象限，Q 是由 a、b 組成的新點，Q 在第幾象限？
+  const qd=pick(QUADS),[sa,sb]=QKEY[qd];
+  const terms=[['a',sa],['b',sb],['−a',-sa],['−b',-sb]];
+  let t1,t2;do{t1=pick(terms);t2=pick(terms);}while(t1[0]==='a'&&t2[0]==='b');
+  const ans=qOfS(t1[1],t2[1]);
+  const combo=(u,v)=>`x ${u>0?'正':'負'}、y ${v>0?'正':'負'}`;
+  const tutor=[
+    TS(`P (a, b) 在${qd}，所以 <b>a</b> 是正數還是負數？`,'一正正、二負正、三負負、四正負：第一個字是 x（也就是 a）。',posNeg(sa),[[posNeg(-sa),`${qd}的 x 坐標是${posNeg(sa)}喔。`]],`a ${sa>0?'> 0':'< 0'}`),
+    TS(`那 <b>b</b> 是正數還是負數？`,'第二個字是 y（也就是 b）。',posNeg(sb),[[posNeg(-sb),`${qd}的 y 坐標是${posNeg(sb)}喔。`]],`b ${sb>0?'> 0':'< 0'}`),
+    TS(`新點 Q (${t1[0]}, ${t2[0]})：它的 x 坐標 <b>${t1[0]}</b> 和 y 坐標 <b>${t2[0]}</b>，正負是？`,'前面有「−」的，正負會反過來。',combo(t1[1],t2[1]),[[combo(-t1[1],t2[1]),'x 的正負判斷反了，注意有沒有「−」。'],[combo(t1[1],-t2[1]),'y 的正負判斷反了，注意有沒有「−」。'],[combo(-t1[1],-t2[1]),'兩個都反了，再算一次。']],combo(t1[1],t2[1]))
+  ];
+  const why={};QUADS.forEach(q=>{if(q!==ans){const k=QKEY[q];why[q]=`${q}要 ${combo(k[0],k[1])}，但 Q 是 ${combo(t1[1],t2[1])}。`}});
+  return {text:`已知點 P (a, b) 在${qd}，那麼點 Q (${t1[0]}, ${t2[0]}) 在第幾象限？`,ans,options:QUADS.slice(),tutor,why,
+    hint:'先判斷 a、b 各是正還是負，再看 Q 的兩個坐標。',
+    explain:`P 在${qd}：a ${sa>0?'>':'<'} 0、b ${sb>0?'>':'<'} 0。Q 的 x 坐標 ${t1[0]} ${t1[1]>0?'>':'<'} 0、y 坐標 ${t2[0]} ${t2[1]>0?'>':'<'} 0，所以 Q 在${ans}。`};
+}
+function genVisual(M){
+  const r=Math.random();
+  if(r<0.34)return genVisual0(M);
+  const rs=()=>Math.random()<0.5?1:-1;
+  if(r<0.67){ // 讀坐標
+    const a=R(1,M.max)*rs(),b=R(1,M.max)*rs(),L=pick(['P','Q','A','B','C','M']);
+    const svg=svgGrid({points:[{x:a,y:b,label:L,color:'#8a3ad2'}]});
+    const ans=`(${a}, ${b})`;
+    const tutor=[
+      TS(`先看 ${L} 點在<b>左右</b>的位置：從 y 軸（直的那條）往右或往左數，x 坐標是多少？`,'往右是正、往左是負。',String(a),[[String(-a),'方向弄反了：右邊是正、左邊是負。'],[String(b),'那是上下的位置（y 坐標）。']],`x = ${a}`),
+      TS(`再看<b>上下</b>的位置：從 x 軸（橫的那條）往上或往下數，y 坐標是多少？`,'往上是正、往下是負。',String(b),[[String(-b),'方向弄反了：上面是正、下面是負。'],[String(a),'那是左右的位置（x 坐標）。']],`y = ${b}`)
+    ];
+    return {text:`圖中的 ${L} 點，坐標是多少？（${L} 點在${qOfS(a,b)}）`,svg,ans,options:ensure4(ans,[`(${b}, ${a})`,`(${-a}, ${b})`,`(${a}, ${-b})`]),tutor,
+      hint:'先看左右（x）、再看上下（y），寫成 (x, y)。',explain:`${L} 點 x 方向是 ${a}、y 方向是 ${b}，坐標是 (${a}, ${b})。`};
+  }
+  // 兩點比較：哪一個點在某象限
+  let a1=R(1,M.max)*rs(),b1=R(1,M.max)*rs(),a2,b2,g=0;
+  do{a2=R(1,M.max)*rs();b2=R(1,M.max)*rs();g++}while(qOfS(a1,b1)===qOfS(a2,b2)&&g<30);
+  if(qOfS(a1,b1)===qOfS(a2,b2)){a2=-a1;b2=b1}
+  const askA=Math.random()<0.5,target=askA?qOfS(a1,b1):qOfS(a2,b2),ans=askA?'A 點':'B 點';
+  const svg=svgGrid({points:[{x:a1,y:b1,label:'A',color:'#d24a33'},{x:a2,y:b2,label:'B',color:'#2f6fb5'}]});
+  const tutor=[
+    TS('先看 A 點：它在 y 軸的左邊還是右邊、x 軸的上面還是下面？所以在第幾象限？','右上＝一、左上＝二、左下＝三、右下＝四。',qOfS(a1,b1),QUADS.filter(q=>q!==qOfS(a1,b1)).slice(0,2).map(q=>[q,'再看一次 A 點的位置。']),`A 在${qOfS(a1,b1)}`),
+    TS('再看 B 點：它在第幾象限？','同樣方法看左右、上下。',qOfS(a2,b2),QUADS.filter(q=>q!==qOfS(a2,b2)).slice(0,2).map(q=>[q,'再看一次 B 點的位置。']),`B 在${qOfS(a2,b2)}`)
+  ];
+  return {text:`圖中有 A、B 兩點，哪一個點在${target}？`,svg,ans,options:['A 點','B 點','兩個點都是','兩個點都不是'],tutor,
+    hint:'分別判斷 A、B 在哪個象限，再找出符合題目的那一個。',explain:`A 在${qOfS(a1,b1)}，B 在${qOfS(a2,b2)}，所以${target}的是 ${ans}。`};
 }
 function genAxis(M){
   const onAxis=Math.random()<0.6;
@@ -224,7 +289,7 @@ function genAxis(M){
     hint:'y 坐標是 0 代表在 x 軸上；x 坐標是 0 代表在 y 軸上；兩個都是 0 就是原點。',
     explain:`(${a}, ${b})：${ans==='原點'?'x、y 都是 0，是原點':ans==='x 軸上'?'y 坐標是 0，所以在 x 軸上':ans==='y 軸上'?'x 坐標是 0，所以在 y 軸上':'x、y 都不是 0，所以落在某個象限裡'}。`};
 }
-function genVisual(M){
+function genVisual0(M){
   let a=R(1,M.max)*(Math.random()<0.5?1:-1),b=R(1,M.max)*(Math.random()<0.5?1:-1);
   const svg=svgGrid({points:[{x:a,y:b,label:'P',color:'#8a3ad2'}]});
   const text='圖中的 P 點位在第幾象限？';
@@ -241,6 +306,20 @@ function gen(t){
   if(t==='axis')return genAxis(M);
   return genVisual(M);
 }
+/* ===== 題庫擴充：同一題型多幾種問法，避免一直遇到同一題 ===== */
+(function(){
+  const _g=gen;
+  const mk=(text,ans,wrongs,hint,explain)=>({text,ans,options:ensure4(ans,wrongs),hint,explain});
+  const BANK={};
+  BANK['sign2']={p:1,make:()=>{
+    const sx=Math.random()<0.5?1:-1,sy=Math.random()<0.5?1:-1,nx=R(1,MODES[mode].max),ny=R(1,MODES[mode].max);
+    const text=`如果一個點的 x 坐標${sx>0?'是正數':'是負數'}、y 坐標${sy>0?'是正數':'是負數'}，這個點會在第幾象限？`;
+    const ans=quadName(sx*nx,sy*ny);
+    return {text,ans,options:sh(QUADS.slice()),hint:'背口訣：一正正、二負正、三負負、四正負（x 在前、y 在後）。',explain:`x ${sx>0?'為正':'為負'}、y ${sy>0?'為正':'為負'}，所以在${ans}。`};}};
+  BANK['sign']={p:.5,make:()=>BANK['sign2'].make()};
+
+  gen=function(t){const B=BANK[t];if(B&&Math.random()<B.p){return B.make();}return _g.apply(this,arguments);};
+})();
 const EMB=window.parent!==window,SID='2-1-2';
 function log(ok){if(EMB&&!rescue)parent.postMessage({type:'wave-log',id:SID,qtype:q.type,ok:ok},'*')}
 let mode='easy',qs=[],idx=0,q=null,hearts=5,combo=0,score=0,right=0,wrongs=[],lock=true,left=0,tm=0,frozenUntil=0,rescue=false,used={},showRing=false,sealsLit=0;
@@ -339,9 +418,9 @@ function finish(){
     $('#e-stars').textContent='';
     $('#e-info').textContent=`成功答對 ${right}/${total} 題。`+(right==total?'全部融會貫通！':'再接再厲！');
   }else{
-    $('#e-title').textContent=fail?'💔 收服失敗':'🎉 收服成功';
+    $('#e-title').textContent=fail?'🏃 怪物逃跑了！':'🎉 收服成功';
     $('#e-stars').textContent=fail?'':'⭐'.repeat(stars)+'☆'.repeat(3-stars);
-    const rankName=fail?'':['','見習召喚師','中階召喚師','菁英召喚師'][stars];
+    const rankName=fail?'再挑戰一次，就能收服牠！':['','見習召喚師','中階召喚師','菁英召喚師'][stars];
     $('#e-info').textContent=(rankName?rankName+'　':'')+`靈力 ${score}　答對 ${right}/${total}　剩餘生命 ${hearts} 顆心`;
   }
   const j=$('#e-jail');j.innerHTML='';

@@ -15,7 +15,7 @@ button{font:inherit;cursor:pointer;color:inherit}
 button:focus-visible{outline:3px solid var(--bronze);outline-offset:2px}
 .card{background:var(--ink2);border:2px solid var(--line);border-radius:14px;padding:18px}
 .btn{background:var(--bronze);color:#2a1d05;border:0;border-radius:10px;padding:12px 22px;font-weight:700;font-size:1.05rem}
-.btn.ghost{background:transparent;color:var(--bronze);border:2px solid var(--bronze)}
+.btn.ghost{background:#2b2a3c;color:#f0cf85;border:2px solid var(--bronze)}
 .modes{display:grid;gap:10px;margin:16px 0}
 .mode{text-align:left;background:var(--ink);border:2px solid var(--line);border-radius:12px;padding:12px 14px}
 .mode.on{border-color:var(--bronze);background:#2b2a3c}
@@ -115,7 +115,7 @@ button:focus-visible{outline:3px solid var(--bronze);outline-offset:2px}
 </section>
 
 </main>
-<script src="lessons2.js"></script>
+<script src="lessons3.js"></script>
 <script src="mode-system.js"></script>
 <script>
 const $=s=>document.querySelector(s);
@@ -125,6 +125,13 @@ const sh=a=>a.map(v=>[Math.random(),v]).sort((x,y)=>x[0]-y[0]).map(x=>x[1]);
 function ensure4(ans,cands){
   const s=new Set([ans]);
   for(const c of cands){const cs=String(c);if(s.size<4&&cs!==ans&&cs.trim()!=='')s.add(cs);}
+  /* 誘答選項不夠時：答案不是純數字就「改動答案裡的一個數字」補齊（例如 (5, 5)→(5, 4)），不再塞無關的 -5、6 */
+  if(s.size<4&&!/^-?\d+(\.\d+)?$/.test(String(ans))){
+    const str=String(ans),vars=[],re=/\d+(?:\.\d+)?/g;let mm;
+    while((mm=re.exec(str))!==null){for(const d of [1,-1,2,-2,3,-3]){const nv=Number(mm[0])+d;if(nv<0)continue;const dec=(mm[0].split('.')[1]||'').length;vars.push(str.slice(0,mm.index)+(dec?nv.toFixed(dec):nv)+str.slice(mm.index+mm[0].length));}}
+    for(let i=vars.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[vars[i],vars[j]]=[vars[j],vars[i]];}
+    for(const v of vars){if(s.size>=4)break;if(!s.has(v))s.add(v);}
+  }
   let g=1;
   while(s.size<4){const v=(Number(ans)||0)+(g%2===0?g/2+5:-(Math.ceil(g/2)+4));const vs=String(v);if(!s.has(vs))s.add(vs);g++;}
   return sh([...s]);
@@ -194,21 +201,25 @@ function fmtNum(n){
   if(Number.isInteger(n))return String(n);
   return String(Math.round(n*100)/100);
 }
-const MODES={easy:{t:0,max:4},real:{t:15,max:6},hard:{t:10,max:8}};
+const MODES={easy:{t:0,max:6},real:{t:15,max:6},hard:{t:10,max:8}};
 const PLAN=['classifyEq','classifyTable','apply','classifyEq','apply','classifyTable','classifyEq','apply','classifyTable','apply'];
 
 function genClassifyEq(M){
-  const type=pick(['prop','inv','none1','none2']);
-  const k=R(2,M.max);
+  const type=pick(['prop','prop2','inv','inv2','none1','none2','none3','none4']);
+  const k=R(2,M.max+3);
   let eqStr,ans;
   if(type==='prop'){eqStr=`y = ${k}x`;ans='正比';}
+  else if(type==='prop2'){eqStr=`y = -${k}x`;ans='正比';}
   else if(type==='inv'){eqStr=`xy = ${k}`;ans='反比';}
+  else if(type==='inv2'){eqStr=`y = ${k}/x`;ans='反比';}
   else if(type==='none1'){const c=R(1,M.max);eqStr=`x + y = ${k+c}`;ans='兩者皆非';}
-  else{const c=R(1,M.max);eqStr=`y = x + ${c}`;ans='兩者皆非';}
-  const text=`變率獸發射光束，方程式為 ${eqStr}，請問 y 與 x 成正比、成反比，還是兩者皆非？`;
+  else if(type==='none2'){const c=R(1,M.max);eqStr=`y = x + ${c}`;ans='兩者皆非';}
+  else if(type==='none3'){const c=R(1,M.max);eqStr=`y = ${k}x + ${c}`;ans='兩者皆非';}
+  else{eqStr=`y = x - ${k}`;ans='兩者皆非';}
+  const text=`${pick(['變率獸','比例精靈','關係魔像'])}發射光束，方程式為 ${eqStr}，請問 y 與 x 成正比、成反比，還是兩者皆非？`;
   return {text,ans,options:['正比','反比','兩者皆非','無法判斷'],
-    hint:'y=kx 形式是正比；xy=k（或 y=k/x）形式是反比；其他形式（例如相加、相減等於定值）通常兩者皆非。',
-    explain:`${eqStr} ${ans==='正比'?'是 y=kx 的形式，所以是正比':ans==='反比'?'是 xy=k 的形式，所以是反比':'既不是 y=kx，也不是 xy=k 的形式，所以兩者皆非'}。`};
+    hint:'y=kx 形式是正比；xy=k（或 y=k/x）形式是反比；其他形式（例如相加、相減、加常數）通常兩者皆非。',
+    explain:`${eqStr} ${ans==='正比'?'是 y=kx 的形式，所以是正比':ans==='反比'?'是 xy=k（y=k/x）的形式，所以是反比':'既不是 y=kx，也不是 xy=k 的形式，所以兩者皆非'}。`};
 }
 function genClassifyTable(M){
   const type=pick(['prop','inv','none']);
@@ -239,11 +250,9 @@ function genApply(M){
       hint:'先求出 k = y÷x，再用 y = kx 算出答案。',
       explain:`k = ${y1}÷${x1} = ${k}，所以 y = ${k}×${x2} = ${y2}。`};
   }else{
-    const x1=R(2,M.max),y1=R(2,M.max);
-    const k=x1*y1;
-    let x2=R(2,M.max+2),tries=0;
-    while(k%x2!==0&&tries<20){x2=R(2,M.max+2);tries++;}
-    if(k%x2!==0)x2=x1;
+    let x1,y1,k,cand;
+    do{x1=R(2,M.max);y1=R(2,M.max);k=x1*y1;cand=[];for(let dd=2;dd<=M.max+2;dd++)if(k%dd===0&&dd!==x1)cand.push(dd);}while(!cand.length);/* 要問的 x 不能和已知的 x 一樣 */
+    const x2=pick(cand);
     const y2=k/x2;
     const text=`變率獸出題：y 與 x 成反比，已知 x=${x1} 時 y=${y1}，求 x=${x2} 時 y 是多少？`;
     const ans=String(y2);
@@ -356,9 +365,9 @@ function finish(){
     $('#e-stars').textContent='';
     $('#e-info').textContent=`成功答對 ${right}/${total} 題。`+(right==total?'全部融會貫通！':'再接再厲！');
   }else{
-    $('#e-title').textContent=fail?'💔 收服失敗':'🎉 收服成功';
+    $('#e-title').textContent=fail?'🏃 怪物逃跑了！':'🎉 收服成功';
     $('#e-stars').textContent=fail?'':'⭐'.repeat(stars)+'☆'.repeat(3-stars);
-    const rankName=fail?'':['','見習召喚師','中階召喚師','菁英召喚師'][stars];
+    const rankName=fail?'再挑戰一次，就能收服牠！':['','見習召喚師','中階召喚師','菁英召喚師'][stars];
     $('#e-info').textContent=(rankName?rankName+'　':'')+`靈力 ${score}　答對 ${right}/${total}　剩餘生命 ${hearts} 顆心`;
   }
   const j=$('#e-jail');j.innerHTML='';

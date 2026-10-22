@@ -15,7 +15,7 @@ button{font:inherit;cursor:pointer;color:inherit}
 button:focus-visible{outline:3px solid var(--bronze);outline-offset:2px}
 .card{background:var(--ink2);border:2px solid var(--line);border-radius:14px;padding:18px}
 .btn{background:var(--bronze);color:#2a1d05;border:0;border-radius:10px;padding:12px 22px;font-weight:700;font-size:1.05rem}
-.btn.ghost{background:transparent;color:var(--bronze);border:2px solid var(--bronze)}
+.btn.ghost{background:#2b2a3c;color:#f0cf85;border:2px solid var(--bronze)}
 .modes{display:grid;gap:10px;margin:16px 0}
 .mode{text-align:left;background:var(--ink);border:2px solid var(--line);border-radius:12px;padding:12px 14px}
 .mode.on{border-color:var(--bronze);background:#2b2a3c}
@@ -67,7 +67,7 @@ button:focus-visible{outline:3px solid var(--bronze);outline-offset:2px}
 <section id="s-start" class="card">
 <h1 class="serif" style="margin:0">數靈召喚師：一元一次不等式</h1>
 <h2 class="serif" style="margin:6px 0 0;color:var(--bronze)">4-1 觀念一：不等號與列一元一次不等式</h2>
-<p style="line-height:1.7">【門檻天平獸】守著各種告示牌：「不低於」「不超過」「至少」「至多」……每個生活用語都對應一個不等號！聽懂天平獸的暗號，正確列出不等式，才能通過門檻！</p>
+<p style="line-height:1.7">【門檻天平獸】守著各種告示牌：「不低於」「不超過」「至少」「至多」「最少」「最多」「以上」「以下」……每個生活用語都對應一個不等號！聽懂天平獸的暗號，正確列出不等式，才能通過門檻！</p>
 <div class="modes" id="modes">
 <button class="mode on" data-m="easy"><b>練兵模式</b><small>不限時，數字較小</small></button>
 <button class="mode" data-m="real"><b>實戰模式</b><small>每題 15 秒，數字稍微變大</small></button>
@@ -115,7 +115,7 @@ button:focus-visible{outline:3px solid var(--bronze);outline-offset:2px}
 </section>
 
 </main>
-<script src="lessons2.js"></script>
+<script src="lessons4.js"></script>
 <script src="mode-system.js"></script>
 <script>
 const $=s=>document.querySelector(s);
@@ -125,6 +125,13 @@ const sh=a=>a.map(v=>[Math.random(),v]).sort((x,y)=>x[0]-y[0]).map(x=>x[1]);
 function ensure4(ans,cands){
   const s=new Set([ans]);
   for(const c of cands){const cs=String(c);if(s.size<4&&cs!==ans&&cs.trim()!=='')s.add(cs);}
+  /* 誘答選項不夠時：答案不是純數字就「改動答案裡的一個數字」補齊（例如 (5, 5)→(5, 4)），不再塞無關的 -5、6 */
+  if(s.size<4&&!/^-?\d+(\.\d+)?$/.test(String(ans))){
+    const str=String(ans),vars=[],re=/\d+(?:\.\d+)?/g;let mm;
+    while((mm=re.exec(str))!==null){for(const d of [1,-1,2,-2,3,-3]){const nv=Number(mm[0])+d;if(nv<0)continue;const dec=(mm[0].split('.')[1]||'').length;vars.push(str.slice(0,mm.index)+(dec?nv.toFixed(dec):nv)+str.slice(mm.index+mm[0].length));}}
+    for(let i=vars.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[vars[i],vars[j]]=[vars[j],vars[i]];}
+    for(const v of vars){if(s.size>=4)break;if(!s.has(v))s.add(v);}
+  }
   let g=1;
   while(s.size<4){const v=(Number(ans)||0)+(g%2===0?g/2+5:-(Math.ceil(g/2)+4));const vs=String(v);if(!s.has(vs))s.add(vs);g++;}
   return sh([...s]);
@@ -225,20 +232,24 @@ function svgNumberLine(boundary,op,range){
 }
 const MODES={easy:{t:0,max:10},real:{t:15,max:15},hard:{t:10,max:20}};
 const PLAN=['translate','reverse','symbol','setupWord','translate','symbol','reverse','setupWord','translate','symbol'];
-const PHRASES=[['不小於','≥'],['不低於','≥'],['至少','≥'],['不大於','≤'],['不超過','≤'],['至多','≤'],['超過','>'],['多於','>'],['未滿','<'],['少於','<']];
-const CTXS=[['身高','x','公分'],['體重','x','公斤'],['票價','y','元'],['年齡','x','歲'],['重量','x','公克']];
-const SCENES=[['遊樂園入場','身高','公分','x'],['社團招生','年齡','歲','x'],['特價活動','消費金額','元','y'],['體適能測驗','仰臥起坐次數','下','x']];
+const PHRASES=[['不小於','≥'],['不低於','≥'],['至少','≥'],['最少','≥'],['最低','≥'],['以上','≥'],['不大於','≤'],['不超過','≤'],['至多','≤'],['最多','≤'],['最高','≤'],['以下','≤'],['超過','>'],['多於','>'],['未滿','<'],['少於','<']];
+const POST={'以上':1,'以下':1}; /* 以上、以下要把數字放在前面：18 歲以上 */
+const cond=(label,v,unit,ph,val)=>POST[ph]?`${label} ${v} 是 ${val}${unit}${ph}`:`${label} ${v} ${unit}${ph} ${val}`;
+const rv=(v,ph,val)=>POST[ph]?`${v} 是 ${val} ${ph}`:`${v} ${ph} ${val}`;
+const CTXS=[['身高','x','公分','雲霄飛車入口的牌子寫著：'],['體重','x','公斤','門檻天平獸的告示牌寫著：'],['票價','y','元','售票亭貼出公告：'],['年齡','x','歲','社團招生海報寫著：'],['重量','x','公克','快遞站的規定寫著：'],['載重','x','公斤','電梯裡貼著提醒：'],['點數','x','點','遊戲公會的公告寫著：'],['成績','x','分','老師在黑板上寫著：']];
+const LEADS=1;
+const SCENES=[['遊樂園入場','身高','公分','x'],['社團招生','年齡','歲','x'],['特價活動','消費金額','元','y'],['體適能測驗','仰臥起坐次數','下','x'],['電梯搭乘','載重','公斤','x'],['遊戲公會入會','點數','點','x'],['營隊報名','年齡','歲','x']];
 
 function genTranslate(M){
   const [phrase,sym]=pick(PHRASES);
   const val=R(5,M.max)*10;
-  const [label,varname,unit]=pick(CTXS);
-  const text=`門檻天平獸的告示牌寫著：『${label} ${varname} ${unit}${phrase} ${val}』，請列出正確的不等式。`;
+  const [label,varname,unit,lead]=pick(CTXS);
+  const text=`${lead}『${cond(label,varname,unit,phrase,val)}』，請列出正確的不等式。`;
   const ans=`${varname} ${sym} ${val}`;
   const otherSyms=OPS.filter(s=>s!==sym);
   const wrongs=otherSyms.map(s=>`${varname} ${s} ${val}`);
   return {text,ans,options:ensure4(ans,wrongs),
-    hint:'「不小於／不低於／至少」是≥；「不大於／不超過／至多」是≤；「超過／多於」是＞；「未滿／少於」是＜。',
+    hint:'「不小於／不低於／至少／最少／最低／以上」是≥；「不大於／不超過／至多／最多／最高／以下」是≤；「超過／多於」是＞；「未滿／少於」是＜。',
     explain:`「${phrase}」對應的符號是「${sym}」，所以不等式為 ${varname} ${sym} ${val}。`};
 }
 function genReverse(M){
@@ -246,9 +257,9 @@ function genReverse(M){
   const val=R(5,M.max)*10;
   const varname=pick(['x','y']);
   const text=`不等式 ${varname} ${sym} ${val} 用生活用語來說，最適合的說法是？`;
-  const ans=`${varname} ${phrase} ${val}`;
+  const ans=rv(varname,phrase,val);
   const others=PHRASES.filter(p=>p[1]!==sym);
-  const wrongPhrases=sh(others).slice(0,3).map(p=>`${varname} ${p[0]} ${val}`);
+  const wrongPhrases=sh(others).slice(0,3).map(p=>rv(varname,p[0],val));
   return {text,ans,options:ensure4(ans,wrongPhrases),
     hint:'先看不等號是 >、<、≥ 還是 ≤，再對照生活用語。',
     explain:`符號 ${sym} 對應的生活用語就是「${phrase}」，所以是 ${varname} ${phrase} ${val}。`};
@@ -257,17 +268,29 @@ function genChooseSymbol(M){
   const [phrase,sym]=pick(PHRASES);
   const text=`生活用語「${phrase}」應該對應下列哪一個不等號？`;
   return {text,ans:sym,options:OPS.slice(),
-    hint:'「不小於/至少/不低於」→≥；「不大於/至多/不超過」→≤；「超過/多於」→>；「未滿/少於」→<。',
+    hint:'「不小於/至少/不低於/最少/最低/以上」→≥；「不大於/至多/不超過/最多/最高/以下」→≤；「超過/多於」→>；「未滿/少於」→<。',
     explain:`「${phrase}」代表的不等號是「${sym}」。`};
 }
 function genSetupWord(M){
   const [scene,label,unit,varname]=pick(SCENES);
   const [phrase1,sym1]=pick(PHRASES);
   const val1=R(5,M.max)*10;
-  let phrase2=pick(PHRASES),tries=0;
-  while(phrase2[1]===sym1&&tries<10){phrase2=pick(PHRASES);tries++;}
-  const val2=R(5,M.max)*10;
-  const text=`門檻天平獸守護${scene}，告示牌寫著：『${label} ${varname} ${unit}${phrase1} ${val1}，且另一項條件${phrase2[0]} ${val2}』。請寫出「${label}${phrase1} ${val1}」這個條件的不等式。`;
+  /* 兩個條件要「同時成立得了」：上限（≤、<）和下限（≥、>）並存時，下限的數字一定要比上限小，否則會出現「至多 80 又不小於 90」這種不可能的告示牌 */
+  const isUp=s=>s==='≤'||s==='<';
+  const isLow=s=>s==='≥'||s==='>';
+  const okPair=(p2,v2)=>{
+    if(p2[1]===sym1)return false;
+    if(isUp(sym1)&&isLow(p2[1]))return v2<val1;
+    if(isLow(sym1)&&isUp(p2[1]))return v2>val1;
+    return true;
+  };
+  let phrase2=pick(PHRASES),val2=R(5,M.max)*10,tries=0;
+  while(!okPair(phrase2,val2)&&tries<60){phrase2=pick(PHRASES);val2=R(5,M.max)*10;tries++;}
+  if(!okPair(phrase2,val2)){ /* 保底：選同方向（都是上限或都是下限）的另一個說法 */
+    const same=PHRASES.filter(p=>p[1]!==sym1&&((isUp(sym1)&&isUp(p[1]))||(isLow(sym1)&&isLow(p[1]))));
+    phrase2=same.length?pick(same):phrase2;val2=R(5,M.max)*10;
+  }
+  const text=`門檻天平獸守護${scene}，告示牌寫著：『${cond(label,varname,unit,phrase1,val1)}，且另一項條件${POST[phrase2[0]]?'是 '+val2+' '+phrase2[0]:phrase2[0]+' '+val2}』。請寫出「${POST[phrase1]?label+' '+val1+' '+unit+phrase1:label+phrase1+' '+val1}」這個條件的不等式。`;
   const ans=`${varname} ${sym1} ${val1}`;
   const otherSyms=OPS.filter(s=>s!==sym1);
   const wrongs=otherSyms.map(s=>`${varname} ${s} ${val1}`);
@@ -380,9 +403,9 @@ function finish(){
     $('#e-stars').textContent='';
     $('#e-info').textContent=`成功答對 ${right}/${total} 題。`+(right==total?'全部融會貫通！':'再接再厲！');
   }else{
-    $('#e-title').textContent=fail?'💔 收服失敗':'🎉 收服成功';
+    $('#e-title').textContent=fail?'🏃 怪物逃跑了！':'🎉 收服成功';
     $('#e-stars').textContent=fail?'':'⭐'.repeat(stars)+'☆'.repeat(3-stars);
-    const rankName=fail?'':['','見習召喚師','中階召喚師','菁英召喚師'][stars];
+    const rankName=fail?'再挑戰一次，就能收服牠！':['','見習召喚師','中階召喚師','菁英召喚師'][stars];
     $('#e-info').textContent=(rankName?rankName+'　':'')+`靈力 ${score}　答對 ${right}/${total}　剩餘生命 ${hearts} 顆心`;
   }
   const j=$('#e-jail');j.innerHTML='';

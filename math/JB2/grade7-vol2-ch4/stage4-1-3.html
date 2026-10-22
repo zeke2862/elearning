@@ -15,7 +15,7 @@ button{font:inherit;cursor:pointer;color:inherit}
 button:focus-visible{outline:3px solid var(--bronze);outline-offset:2px}
 .card{background:var(--ink2);border:2px solid var(--line);border-radius:14px;padding:18px}
 .btn{background:var(--bronze);color:#2a1d05;border:0;border-radius:10px;padding:12px 22px;font-weight:700;font-size:1.05rem}
-.btn.ghost{background:transparent;color:var(--bronze);border:2px solid var(--bronze)}
+.btn.ghost{background:#2b2a3c;color:#f0cf85;border:2px solid var(--bronze)}
 .modes{display:grid;gap:10px;margin:16px 0}
 .mode{text-align:left;background:var(--ink);border:2px solid var(--line);border-radius:12px;padding:12px 14px}
 .mode.on{border-color:var(--bronze);background:#2b2a3c}
@@ -115,7 +115,7 @@ button:focus-visible{outline:3px solid var(--bronze);outline-offset:2px}
 </section>
 
 </main>
-<script src="lessons2.js"></script>
+<script src="lessons4.js"></script>
 <script src="mode-system.js"></script>
 <script>
 const $=s=>document.querySelector(s);
@@ -125,6 +125,13 @@ const sh=a=>a.map(v=>[Math.random(),v]).sort((x,y)=>x[0]-y[0]).map(x=>x[1]);
 function ensure4(ans,cands){
   const s=new Set([ans]);
   for(const c of cands){const cs=String(c);if(s.size<4&&cs!==ans&&cs.trim()!=='')s.add(cs);}
+  /* 誘答選項不夠時：答案不是純數字就「改動答案裡的一個數字」補齊（例如 (5, 5)→(5, 4)），不再塞無關的 -5、6 */
+  if(s.size<4&&!/^-?\d+(\.\d+)?$/.test(String(ans))){
+    const str=String(ans),vars=[],re=/\d+(?:\.\d+)?/g;let mm;
+    while((mm=re.exec(str))!==null){for(const d of [1,-1,2,-2,3,-3]){const nv=Number(mm[0])+d;if(nv<0)continue;const dec=(mm[0].split('.')[1]||'').length;vars.push(str.slice(0,mm.index)+(dec?nv.toFixed(dec):nv)+str.slice(mm.index+mm[0].length));}}
+    for(let i=vars.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[vars[i],vars[j]]=[vars[j],vars[i]];}
+    for(const v of vars){if(s.size>=4)break;if(!s.has(v))s.add(v);}
+  }
   let g=1;
   while(s.size<4){const v=(Number(ans)||0)+(g%2===0?g/2+5:-(Math.ceil(g/2)+4));const vs=String(v);if(!s.has(vs))s.add(vs);g++;}
   return sh([...s]);
@@ -268,7 +275,7 @@ function genDirection(M){
   const ans=dirRight?'右方（數字較大的方向）':'左方（數字較小的方向）';
   return {text,ans,options:['右方（數字較大的方向）','左方（數字較小的方向）','同時指向左右兩方','不需要畫射線'],
     hint:'> 或 ≥（比較大）指向右方；< 或 ≤（比較小）指向左方。',
-    explain:`x ${op} k 表示 x ${dirRight?'比 k 大（或等於）':'比 k 小（或等於）'}，所以射線指向${dirRight?'右方':'左方'}。`};
+    explain:`x ${op} k 表示 x ${dirRight?'比 k 大':'比 k 小'}${(op==='≥'||op==='≤')?'（或等於）':''}，所以射線指向${dirRight?'右方':'左方'}。`};
 }
 function gen(t){
   const M=MODES[mode];
@@ -277,6 +284,20 @@ function gen(t){
   if(t==='circleType')return genCircleType(M);
   return genDirection(M);
 }
+/* ===== 題庫擴充：同一題型多幾種問法，避免一直遇到同一題 ===== */
+(function(){
+  const _g=gen;
+  const mk=(text,ans,wrongs,hint,explain)=>({text,ans,options:ensure4(ans,wrongs),hint,explain});
+  const BANK={};
+  BANK['circleType']={p:.75,make:()=>{const op=pick(['>','≥','<','≤']),k=R(-9,9),filled=(op==='≥'||op==='≤');
+    return {text:`不等式 x ${op} ${k} 的解畫在數線上，在 ${k} 這個點要畫實心圓點還是空心圓圈？`,ans:filled?'實心圓點（包含 '+k+'）':'空心圓圈（不包含 '+k+'）',
+      options:sh(['實心圓點（包含 '+k+'）','空心圓圈（不包含 '+k+'）','不用畫任何符號','畫正方形']),hint:'有等號（≥、≤）用實心圓點；沒有等號（>、<）用空心圓圈。',explain:`${op} ${filled?'含有等號，所以畫實心圓點':'不含等號，所以畫空心圓圈'}。`};}};
+  BANK['direction']={p:.75,make:()=>{const op=pick(['>','≥','<','≤']),k=R(-9,9),r=(op==='>'||op==='≥');
+    return {text:`不等式 x ${op} ${k} 的解畫在數線上，射線（箭頭）要指向哪個方向？`,ans:r?'右方（數字較大的方向）':'左方（數字較小的方向）',
+      options:sh(['右方（數字較大的方向）','左方（數字較小的方向）','同時指向左右兩方','不需要畫射線']),hint:'> 或 ≥ 指向右方；< 或 ≤ 指向左方。',explain:`x ${op} ${k} 表示 x 比 ${k} ${r?'大':'小'}${(op==='≥'||op==='≤')?'（或等於）':''}，所以射線指向${r?'右方':'左方'}。`};}};
+
+  gen=function(t){const B=BANK[t];if(B&&Math.random()<B.p){return B.make();}return _g.apply(this,arguments);};
+})();
 const EMB=window.parent!==window,SID='4-1-3';
 function log(ok){if(EMB&&!rescue)parent.postMessage({type:'wave-log',id:SID,qtype:q.type,ok:ok},'*')}
 let mode='easy',qs=[],idx=0,q=null,hearts=5,combo=0,score=0,right=0,wrongs=[],lock=true,left=0,tm=0,frozenUntil=0,rescue=false,used={},showRing=false,sealsLit=0;
@@ -375,9 +396,9 @@ function finish(){
     $('#e-stars').textContent='';
     $('#e-info').textContent=`成功答對 ${right}/${total} 題。`+(right==total?'全部融會貫通！':'再接再厲！');
   }else{
-    $('#e-title').textContent=fail?'💔 收服失敗':'🎉 收服成功';
+    $('#e-title').textContent=fail?'🏃 怪物逃跑了！':'🎉 收服成功';
     $('#e-stars').textContent=fail?'':'⭐'.repeat(stars)+'☆'.repeat(3-stars);
-    const rankName=fail?'':['','見習召喚師','中階召喚師','菁英召喚師'][stars];
+    const rankName=fail?'再挑戰一次，就能收服牠！':['','見習召喚師','中階召喚師','菁英召喚師'][stars];
     $('#e-info').textContent=(rankName?rankName+'　':'')+`靈力 ${score}　答對 ${right}/${total}　剩餘生命 ${hearts} 顆心`;
   }
   const j=$('#e-jail');j.innerHTML='';

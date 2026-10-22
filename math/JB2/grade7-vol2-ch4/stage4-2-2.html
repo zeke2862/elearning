@@ -15,7 +15,7 @@ button{font:inherit;cursor:pointer;color:inherit}
 button:focus-visible{outline:3px solid var(--bronze);outline-offset:2px}
 .card{background:var(--ink2);border:2px solid var(--line);border-radius:14px;padding:18px}
 .btn{background:var(--bronze);color:#2a1d05;border:0;border-radius:10px;padding:12px 22px;font-weight:700;font-size:1.05rem}
-.btn.ghost{background:transparent;color:var(--bronze);border:2px solid var(--bronze)}
+.btn.ghost{background:#2b2a3c;color:#f0cf85;border:2px solid var(--bronze)}
 .modes{display:grid;gap:10px;margin:16px 0}
 .mode{text-align:left;background:var(--ink);border:2px solid var(--line);border-radius:12px;padding:12px 14px}
 .mode.on{border-color:var(--bronze);background:#2b2a3c}
@@ -115,7 +115,7 @@ button:focus-visible{outline:3px solid var(--bronze);outline-offset:2px}
 </section>
 
 </main>
-<script src="lessons2.js"></script>
+<script src="lessons4.js"></script>
 <script src="mode-system.js"></script>
 <script>
 const $=s=>document.querySelector(s);
@@ -125,6 +125,13 @@ const sh=a=>a.map(v=>[Math.random(),v]).sort((x,y)=>x[0]-y[0]).map(x=>x[1]);
 function ensure4(ans,cands){
   const s=new Set([ans]);
   for(const c of cands){const cs=String(c);if(s.size<4&&cs!==ans&&cs.trim()!=='')s.add(cs);}
+  /* 誘答選項不夠時：答案不是純數字就「改動答案裡的一個數字」補齊（例如 (5, 5)→(5, 4)），不再塞無關的 -5、6 */
+  if(s.size<4&&!/^-?\d+(\.\d+)?$/.test(String(ans))){
+    const str=String(ans),vars=[],re=/\d+(?:\.\d+)?/g;let mm;
+    while((mm=re.exec(str))!==null){for(const d of [1,-1,2,-2,3,-3]){const nv=Number(mm[0])+d;if(nv<0)continue;const dec=(mm[0].split('.')[1]||'').length;vars.push(str.slice(0,mm.index)+(dec?nv.toFixed(dec):nv)+str.slice(mm.index+mm[0].length));}}
+    for(let i=vars.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[vars[i],vars[j]]=[vars[j],vars[i]];}
+    for(const v of vars){if(s.size>=4)break;if(!s.has(v))s.add(v);}
+  }
   let g=1;
   while(s.size<4){const v=(Number(ans)||0)+(g%2===0?g/2+5:-(Math.ceil(g/2)+4));const vs=String(v);if(!s.has(vs))s.add(vs);g++;}
   return sh([...s]);
@@ -226,10 +233,12 @@ function svgNumberLine(boundary,op,range){
 const MODES={easy:{t:0,max:4},real:{t:15,max:6},hard:{t:10,max:8}};
 const PLAN=['oneStep','twoSided','distribute','oneStep','twoSided','distribute','twoSided','oneStep','distribute','twoSided'];
 
+const nz=(lo,hi)=>{let v;do{v=R(lo,hi);}while(v===0);return v;};
+const cx=n=>n===1?'x':n===-1?'-x':n+'x';
 function genOneStep(M){
   const a=R(2,M.max);
   const x0=R(-M.max,M.max);
-  const b=R(-M.max,M.max);
+  const b=nz(-M.max,M.max);
   const op=pick(OPS);
   const c=a*x0+b;
   const text=`移項解鎖獸的第一道鎖鏈是：${a}x ${b>=0?'+ '+b:'- '+Math.abs(b)} ${op} ${c}，解出 x 的範圍。`;
@@ -245,9 +254,9 @@ function genTwoSided(M){
   const a=R(1,M.max);
   let d=R(1,M.max);
   while(d===a)d=R(1,M.max);
-  const b=R(-M.max,M.max);
+  let b,e;
+  do{b=R(-M.max,M.max);e=a*x0+b-d*x0;}while(b===0||e===0);
   const op=pick(OPS);
-  const e=a*x0+b-d*x0;
   const netCoef=a-d;
   const finalOp=netCoef<0?flipOp(op):op;
   const text=`移項解鎖獸噴出鎖鏈：${a===1?'':a}x ${b>=0?'+ '+b:'- '+Math.abs(b)} ${op} ${d===1?'':d}x ${e>=0?'+ '+e:'- '+Math.abs(e)}，解出 x 的範圍。`;
@@ -256,12 +265,12 @@ function genTwoSided(M){
   const wrongs=otherOps.map(o=>`x ${o} ${x0}`);
   return {text,ans,options:ensure4(ans,wrongs),
     hint:'先把含 x 的項移到同一邊、常數移到另一邊；如果最後 x 的係數是負數，記得要翻轉不等號方向。',
-    explain:`移項合併同類項後得 ${netCoef}x ${op} ${e-b}，${netCoef<0?'兩邊除以負數，不等號方向要翻轉，':'兩邊除以正數，方向不變，'}解得 x ${finalOp} ${x0}。`};
+    explain:`移項合併同類項後得 ${cx(netCoef)} ${op} ${e-b}，${netCoef<0?'兩邊除以負數，不等號方向要翻轉，':'兩邊除以正數，方向不變，'}解得 x ${finalOp} ${x0}。`};
 }
 function genDistribute(M){
   let a=R(2,M.max);
   if(mode==='hard'&&Math.random()<0.5)a=-a;
-  const b=R(-M.max,M.max);
+  const b=nz(-M.max,M.max);
   const x0=R(-M.max,M.max);
   const op=pick(OPS);
   const c=a*x0+a*b;
@@ -379,9 +388,9 @@ function finish(){
     $('#e-stars').textContent='';
     $('#e-info').textContent=`成功答對 ${right}/${total} 題。`+(right==total?'全部融會貫通！':'再接再厲！');
   }else{
-    $('#e-title').textContent=fail?'💔 收服失敗':'🎉 收服成功';
+    $('#e-title').textContent=fail?'🏃 怪物逃跑了！':'🎉 收服成功';
     $('#e-stars').textContent=fail?'':'⭐'.repeat(stars)+'☆'.repeat(3-stars);
-    const rankName=fail?'':['','見習召喚師','中階召喚師','菁英召喚師'][stars];
+    const rankName=fail?'再挑戰一次，就能收服牠！':['','見習召喚師','中階召喚師','菁英召喚師'][stars];
     $('#e-info').textContent=(rankName?rankName+'　':'')+`靈力 ${score}　答對 ${right}/${total}　剩餘生命 ${hearts} 顆心`;
   }
   const j=$('#e-jail');j.innerHTML='';

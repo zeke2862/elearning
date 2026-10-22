@@ -15,7 +15,7 @@ button{font:inherit;cursor:pointer;color:inherit}
 button:focus-visible{outline:3px solid var(--bronze);outline-offset:2px}
 .card{background:var(--ink2);border:2px solid var(--line);border-radius:14px;padding:18px}
 .btn{background:var(--bronze);color:#2a1d05;border:0;border-radius:10px;padding:12px 22px;font-weight:700;font-size:1.05rem}
-.btn.ghost{background:transparent;color:var(--bronze);border:2px solid var(--bronze)}
+.btn.ghost{background:#2b2a3c;color:#f0cf85;border:2px solid var(--bronze)}
 .modes{display:grid;gap:10px;margin:16px 0}
 .mode{text-align:left;background:var(--ink);border:2px solid var(--line);border-radius:12px;padding:12px 14px}
 .mode.on{border-color:var(--bronze);background:#2b2a3c}
@@ -71,7 +71,7 @@ button:focus-visible{outline:3px solid var(--bronze);outline-offset:2px}
 <div class="modes" id="modes">
 <button class="mode on" data-m="easy"><b>練兵模式</b><small>不限時，係數都是 1（如 x+y=c）</small></button>
 <button class="mode" data-m="real"><b>實戰模式</b><small>每題 15 秒，出現 2、3 倍的係數</small></button>
-<button class="mode" data-m="hard"><b>修羅模式</b><small>每題 10 秒，截距數字更大更多樣</small></button>
+<button class="mode" data-m="hard"><b>修羅模式</b><small>截距數字更大更多樣，開始出現負的截距（四象限都可能出現）</small></button>
 </div>
 <button class="btn" id="go">迎戰直線軌跡蛇！</button>
 </section>
@@ -125,6 +125,13 @@ const sh=a=>a.map(v=>[Math.random(),v]).sort((x,y)=>x[0]-y[0]).map(x=>x[1]);
 function ensure4(ans,cands){
   const s=new Set([ans]);
   for(const c of cands){const cs=String(c);if(s.size<4&&cs!==ans&&cs.trim()!=='')s.add(cs);}
+  /* 誘答選項不夠時：答案不是純數字就「改動答案裡的一個數字」補齊（例如 (5, 5)→(5, 4)），不再塞無關的 -5、6 */
+  if(s.size<4&&!/^-?\d+(\.\d+)?$/.test(String(ans))){
+    const str=String(ans),vars=[],re=/\d+(?:\.\d+)?/g;let mm;
+    while((mm=re.exec(str))!==null){for(const d of [1,-1,2,-2,3,-3]){const nv=Number(mm[0])+d;if(nv<0)continue;const dec=(mm[0].split('.')[1]||'').length;vars.push(str.slice(0,mm.index)+(dec?nv.toFixed(dec):nv)+str.slice(mm.index+mm[0].length));}}
+    for(let i=vars.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[vars[i],vars[j]]=[vars[j],vars[i]];}
+    for(const v of vars){if(s.size>=4)break;if(!s.has(v))s.add(v);}
+  }
   let g=1;
   while(s.size<4){const v=(Number(ans)||0)+(g%2===0?g/2+5:-(Math.ceil(g/2)+4));const vs=String(v);if(!s.has(vs))s.add(vs);g++;}
   return sh([...s]);
@@ -189,16 +196,31 @@ const MODES={easy:{t:0,max:4},real:{t:15,max:5},hard:{t:10,max:6}};
 const PLAN=['xIntercept','yIntercept','onLine','findPoint','xIntercept','findPoint','onLine','yIntercept','findPoint','onLine'];
 
 function genLineEq(M){
-  const x0=R(1,M.max),y0=R(1,M.max);
-  const L=lcm(x0,y0);
-  const a=L/x0,b=L/y0,c=L;
+  // 練兵／實戰模式：先只練 x0、y0 都是正的（截距在第一象限），數字比較好想像。
+  // 修羅模式：x0、y0 各有一半機率變成負的，這樣直線就會出現在不同象限，四個象限都練得到。
+  let x0=R(1,M.max),y0=R(1,M.max);
+  if(mode==='hard'){
+    if(Math.random()<0.5)x0=-x0;
+    if(Math.random()<0.5)y0=-y0;
+  }
+  const L=lcm(Math.abs(x0),Math.abs(y0));
+  const kk=pick(mode==='easy'?[1,2]:[1,2,3]);   // 把整條方程式同乘 kk，直線不變、看起來不同
+  const a=L/x0*kk,b=L/y0*kk,c=L*kk;   // 用 x/x0 + y/y0 = 1 的關係推出來，x0、y0 是正是負都成立
   return {a,b,c,x0,y0};
 }
+// 在 [lo,hi] 之間找一個整數 x，讓 (c-a*x) 可以被 b 整除（也就是能找到整數的 y）
+function findIntOn(lo,hi,solve){
+  const xs=[];for(let x=lo;x<=hi;x++)xs.push(x);
+  sh(xs);
+  for(const x of xs){const y=solve(x);if(y!==null)return {x,y};}
+  return null;
+}
+const MONS=['直線軌跡蛇','光束彗星','閃電鰻','雷射飛魚','影子獵豹'];
 function genXIntercept(M){
   const {a,b,c,x0,y0}=genLineEq(M);
-  const eqText=fmtEq(a,b,c);
+  const eqText=fmtEqGen(a,b,c);
   const svg=svgGrid({lines:[{a,b,c,color:'#d24a33'}],points:[{x:x0,y:0,label:'',color:'#d24a33'}]});
-  const text=`直線軌跡蛇的方程式是 ${eqText}，牠與 x 軸的交點坐標是？（提示：交點在 x 軸上，y = 0）`;
+  const text=`${pick(MONS)}的方程式是 ${eqText}，牠與 x 軸的交點坐標是？（提示：交點在 x 軸上，y = 0）`;
   const ans=`(${x0}, 0)`;
   const wrong1=`(0, ${x0})`,wrong2=`(${y0}, 0)`,wrong3=`(${x0}, ${y0})`;
   return {text,svg,ans,options:ensure4(ans,[wrong1,wrong2,wrong3]),
@@ -207,9 +229,9 @@ function genXIntercept(M){
 }
 function genYIntercept(M){
   const {a,b,c,x0,y0}=genLineEq(M);
-  const eqText=fmtEq(a,b,c);
+  const eqText=fmtEqGen(a,b,c);
   const svg=svgGrid({lines:[{a,b,c,color:'#d24a33'}],points:[{x:0,y:y0,label:'',color:'#d24a33'}]});
-  const text=`直線軌跡蛇的方程式是 ${eqText}，牠與 y 軸的交點坐標是？（提示：交點在 y 軸上，x = 0）`;
+  const text=`${pick(MONS)}的方程式是 ${eqText}，牠與 y 軸的交點坐標是？（提示：交點在 y 軸上，x = 0）`;
   const ans=`(0, ${y0})`;
   const wrong1=`(${y0}, 0)`,wrong2=`(0, ${x0})`,wrong3=`(${x0}, ${y0})`;
   return {text,svg,ans,options:ensure4(ans,[wrong1,wrong2,wrong3]),
@@ -218,18 +240,16 @@ function genYIntercept(M){
 }
 function genOnLine(M){
   const {a,b,c,x0,y0}=genLineEq(M);
-  const eqText=fmtEq(a,b,c);
+  const eqText=fmtEqGen(a,b,c);
   const onLineFlag=Math.random()<0.5;
+  const loX=Math.min(0,x0)-2,hiX=Math.max(0,x0)+2;
+  const loY=Math.min(0,y0)-2,hiY=Math.max(0,y0)+2;
   let px,py;
   if(onLineFlag){
-    let found=false;
-    for(let tries=0;tries<20&&!found;tries++){
-      const x=R(0,x0+2);const rem=c-a*x;
-      if(rem>=0&&rem%b===0){px=x;py=rem/b;found=true;}
-    }
-    if(!found){px=x0;py=0;}
+    const hit=findIntOn(loX,hiX,x=>{const rem=c-a*x;return Number.isInteger(rem/b)?rem/b:null;});
+    if(hit){px=hit.x;py=hit.y;}else{px=x0;py=0;}
   }else{
-    px=R(0,x0+3);py=R(0,y0+3);
+    px=R(loX,hiX);py=R(loY,hiY);
     if(a*px+b*py===c)py+=1;
   }
   const check=a*px+b*py;
@@ -241,25 +261,25 @@ function genOnLine(M){
     explain:`代入得 ${a===1?'':a}×${px} + ${b===1?'':b}×${py} = ${check}，${check===c?`剛好等於 ${c}，所以在直線上`:`不等於 ${c}，所以不在直線上`}。`};
 }
 function genFindPoint(M){
-  const {a,b,c}=genLineEq(M);
-  const eqText=fmtEq(a,b,c);
+  const {a,b,c,x0,y0}=genLineEq(M);
+  const eqText=fmtEqGen(a,b,c);
   const giveX=Math.random()<0.5;
+  const loX=Math.min(0,x0)-4,hiX=Math.max(0,x0)+4;
+  const loY=Math.min(0,y0)-4,hiY=Math.max(0,y0)+4;
   if(giveX){
-    let x,y,found=false;
-    for(let tries=0;tries<20&&!found;tries++){x=R(0,8);const rem=c-a*x;if(rem>=0&&rem%b===0){y=rem/b;found=true;}}
-    if(!found){x=0;y=c/b;}
+    const hit=findIntOn(loX,hiX,x=>{const rem=c-a*x;return Number.isInteger(rem/b)?rem/b:null;});
+    const x=hit?hit.x:0,y=hit?hit.y:c/b;
     const text=`直線 ${eqText} 上有一點，x 坐標是 ${x}，求這一點的 y 坐標。`;
     const ans=String(y);
-    return {text,ans,options:ensure4(ans,[String(y+1),String(Math.max(y-1,0)),String(y+2)]),
-      hint:'把已知的 x 值代入方程式，解出 y。',explain:`代入 x=${x}：${a===1?'':a}×${x} + ${b===1?'':b}y = ${c}，解得 y = ${y}。`};
+    return {text,ans,options:ensure4(ans,[String(y+1),String(y-1),String(y+2)]),
+      hint:'把已知的 x 值代入方程式，解出 y。',explain:`代入 x=${x}：${a===1?'':a===-1?'-':a}×${x} + ${b===1?'':b===-1?'-':b}y = ${c}，解得 y = ${y}。`};
   }else{
-    let x,y,found=false;
-    for(let tries=0;tries<20&&!found;tries++){y=R(0,8);const rem=c-b*y;if(rem>=0&&rem%a===0){x=rem/a;found=true;}}
-    if(!found){y=0;x=c/a;}
+    const hit=findIntOn(loY,hiY,y=>{const rem=c-b*y;return Number.isInteger(rem/a)?rem/a:null;});
+    const y=hit?hit.x:0,x=hit?hit.y:c/a;
     const text=`直線 ${eqText} 上有一點，y 坐標是 ${y}，求這一點的 x 坐標。`;
     const ans=String(x);
-    return {text,ans,options:ensure4(ans,[String(x+1),String(Math.max(x-1,0)),String(x+2)]),
-      hint:'把已知的 y 值代入方程式，解出 x。',explain:`代入 y=${y}：${a===1?'':a}x + ${b===1?'':b}×${y} = ${c}，解得 x = ${x}。`};
+    return {text,ans,options:ensure4(ans,[String(x+1),String(x-1),String(x+2)]),
+      hint:'把已知的 y 值代入方程式，解出 x。',explain:`代入 y=${y}：${a===1?'':a===-1?'-':a}x + ${b===1?'':b===-1?'-':b}×${y} = ${c}，解得 x = ${x}。`};
   }
 }
 function gen(t){
@@ -367,9 +387,9 @@ function finish(){
     $('#e-stars').textContent='';
     $('#e-info').textContent=`成功答對 ${right}/${total} 題。`+(right==total?'全部融會貫通！':'再接再厲！');
   }else{
-    $('#e-title').textContent=fail?'💔 收服失敗':'🎉 收服成功';
+    $('#e-title').textContent=fail?'🏃 怪物逃跑了！':'🎉 收服成功';
     $('#e-stars').textContent=fail?'':'⭐'.repeat(stars)+'☆'.repeat(3-stars);
-    const rankName=fail?'':['','見習召喚師','中階召喚師','菁英召喚師'][stars];
+    const rankName=fail?'再挑戰一次，就能收服牠！':['','見習召喚師','中階召喚師','菁英召喚師'][stars];
     $('#e-info').textContent=(rankName?rankName+'　':'')+`靈力 ${score}　答對 ${right}/${total}　剩餘生命 ${hearts} 顆心`;
   }
   const j=$('#e-jail');j.innerHTML='';

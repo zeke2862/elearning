@@ -15,7 +15,7 @@ button{font:inherit;cursor:pointer;color:inherit}
 button:focus-visible{outline:3px solid var(--bronze);outline-offset:2px}
 .card{background:var(--ink2);border:2px solid var(--line);border-radius:14px;padding:18px}
 .btn{background:var(--bronze);color:#2a1d05;border:0;border-radius:10px;padding:12px 22px;font-weight:700;font-size:1.05rem}
-.btn.ghost{background:transparent;color:var(--bronze);border:2px solid var(--bronze)}
+.btn.ghost{background:#2b2a3c;color:#f0cf85;border:2px solid var(--bronze)}
 .modes{display:grid;gap:10px;margin:16px 0}
 .mode{text-align:left;background:var(--ink);border:2px solid var(--line);border-radius:12px;padding:12px 14px}
 .mode.on{border-color:var(--bronze);background:#2b2a3c}
@@ -115,7 +115,7 @@ button:focus-visible{outline:3px solid var(--bronze);outline-offset:2px}
 </section>
 
 </main>
-<script src="lessons2.js"></script>
+<script src="lessons4.js"></script>
 <script src="mode-system.js"></script>
 <script>
 const $=s=>document.querySelector(s);
@@ -125,6 +125,13 @@ const sh=a=>a.map(v=>[Math.random(),v]).sort((x,y)=>x[0]-y[0]).map(x=>x[1]);
 function ensure4(ans,cands){
   const s=new Set([ans]);
   for(const c of cands){const cs=String(c);if(s.size<4&&cs!==ans&&cs.trim()!=='')s.add(cs);}
+  /* 誘答選項不夠時：答案不是純數字就「改動答案裡的一個數字」補齊（例如 (5, 5)→(5, 4)），不再塞無關的 -5、6 */
+  if(s.size<4&&!/^-?\d+(\.\d+)?$/.test(String(ans))){
+    const str=String(ans),vars=[],re=/\d+(?:\.\d+)?/g;let mm;
+    while((mm=re.exec(str))!==null){for(const d of [1,-1,2,-2,3,-3]){const nv=Number(mm[0])+d;if(nv<0)continue;const dec=(mm[0].split('.')[1]||'').length;vars.push(str.slice(0,mm.index)+(dec?nv.toFixed(dec):nv)+str.slice(mm.index+mm[0].length));}}
+    for(let i=vars.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[vars[i],vars[j]]=[vars[j],vars[i]];}
+    for(const v of vars){if(s.size>=4)break;if(!s.has(v))s.add(v);}
+  }
   let g=1;
   while(s.size<4){const v=(Number(ans)||0)+(g%2===0?g/2+5:-(Math.ceil(g/2)+4));const vs=String(v);if(!s.has(vs))s.add(vs);g++;}
   return sh([...s]);
@@ -228,42 +235,83 @@ const PLAN=['budgetMax','minCount','setupApp','budgetMax','setupApp','minCount',
 const ITEMS=[['礦泉水','瓶',15],['麵包','個',25],['貼紙','張',10],['文具','個',20],['餅乾','包',18]];
 const FIXED=[['便當',60],['入場費',50],['運費',30],['基本費',40]];
 
+/* 用語庫：[詞, 符號, 數字放後面?]。以上／以下要把數字放在前面（240 元以下） */
+const WMAX=[['不超過','≤'],['至多','≤'],['最多','≤'],['不大於','≤'],['以下','≤',1]];
+const WMIN=[['不低於','≥'],['至少','≥'],['最少','≥'],['最低','≥'],['不小於','≥'],['以上','≥',1]];
+const WSTR_MAX=['未滿','<'], WSTR_MIN=['超過','>'];   /* 嚴格（不含等於）：只在列式題，或確定不會整除時才用 */
+const rd=(total,w,B,cu)=>w[2]?`${total}是 ${B} ${cu}${w[0]}`:`${total}${w[0]} ${B} ${cu}`;
+/* 情境庫：每個情境都是「p·x + f 對 B」的不等式，只是故事不同。meta 給小老師用 */
+function sceneMax(){
+  const k=pick(['shop','shop','lift','taxi','phone','park']);
+  if(k==='lift'){const p=pick([4,5,6,8,10]),f=pick([40,45,50,55]);return {k,p,f,unit:'箱',cu:'公斤',total:'總重量',per:'每箱',ask:'最多可以搬幾箱書？',story:(B,W)=>`電梯載重上限是 ${B} 公斤，小明自己重 ${f} 公斤，他要搬 x 箱書上樓，每箱重 ${p} 公斤，${W}。`};}
+  if(k==='taxi'){const p=pick([5,6,8,10,12]),f=pick([50,70,85]);return {k,p,f,unit:'公里',cu:'元',total:'總車資',per:'每公里',ask:'最多可以搭幾公里？（只算整公里）',story:(B,W)=>`搭計程車要先付起跳價 ${f} 元，之後每搭 1 公里再付 ${p} 元。小華搭 x 公里，${W}。`};}
+  if(k==='phone'){const p=pick([2,3,4,5]),f=pick([199,299,399]);return {k,p,f,unit:'分鐘',cu:'元',total:'總月費',per:'每分鐘',ask:'最多可以多通話幾分鐘？',story:(B,W)=>`手機方案月租 ${f} 元，每通話 1 分鐘另收 ${p} 元。小美這個月通話 x 分鐘，${W}。`};}
+  if(k==='park'){const p=pick([20,30,40,50]),f=pick([100,150,200]);return {k,p,f,unit:'項',cu:'元',total:'總花費',per:'每項',ask:'最多可以玩幾項設施？',story:(B,W)=>`遊樂園入場費 ${f} 元，每玩 1 項設施要再付 ${p} 元。小傑玩 x 項設施，${W}。`};}
+  const [item,unit,p]=pick(ITEMS);const [fname,f]=pick(FIXED);
+  return {k:'shop',p,f,unit,cu:'元',total:'總花費',per:'每'+unit,ask:`最多可以買幾${unit}${item}？`,story:(B,W)=>`到超商買 x ${unit}${item}，每${unit} ${p} 元，另外還要付${fname} ${f} 元，${W}。`};
+}
+function sceneMin(){
+  const k=pick(['profit','saving','water']);
+  if(k==='saving'){const p=pick([30,40,50,60]),f=pick([100,150,200,250]);return {k,p,f,unit:'週',cu:'元',total:'存款',per:'每週',ask:'至少要存幾週？',story:(B,W)=>`小明想買一台 ${B} 元的耳機。他現在已有 ${f} 元，之後每週再存 ${p} 元。存 x 週後，${W}才買得起。`};}
+  if(k==='water'){const p=pick([3,4,5,6]),f=pick([20,30,40]);return {k,p,f,unit:'分鐘',cu:'公升',total:'水量',per:'每分鐘',ask:'至少要注水幾分鐘？',story:(B,W)=>`水池裡原本有 ${f} 公升的水，水龍頭每分鐘再注入 ${p} 公升。注水 x 分鐘後，${W}才夠用。`};}
+  return {k:'profit',p:0,f:0,unit:'件',cu:'元',total:'利潤',per:'每件',ask:'至少要賣出幾件商品？'};
+}
+function metaOf(sc,kind,p,f,B,w){return {k:sc.k,kind,p,f,B,unit:sc.unit,cu:sc.cu,total:sc.total,per:sc.per,ask:sc.ask,word:w[0],sym:w[1],post:!!w[2]};}
 function genBudgetMax(M){
-  const [item,unit,p]=pick(ITEMS);
-  const [fname,f]=pick(FIXED);
+  const sc=sceneMax(),p=sc.p,f=sc.f;
   const xTarget=R(1,M.max);
-  const extra=R(0,p-1);
+  let extra=R(0,p-1);
+  let w=pick(WMAX);
+  if(extra>=1&&Math.random()<0.15)w=WSTR_MAX;   /* 不整除時，「未滿」和「不超過」的最大整數解相同 */
   const B=p*xTarget+f+extra;
   const maxX=Math.floor((B-f)/p);
-  const text=`限額購物怪出題：到超商買 x ${unit} ${p} 元的${item}與 1 個 ${f} 元的${fname}，總花費不超過 ${B} 元。問最多可以買幾 ${unit} ${item}？`;
+  const text=`限額購物怪出題：${sc.story(B,rd(sc.total,w,B,sc.cu))}${sc.ask}`;
   const ans=String(maxX);
   return {text,ans,options:ensure4(ans,[String(maxX+1),String(maxX-1>=0?maxX-1:maxX+2),String(Math.floor(B/p))]),
-    hint:`先列出不等式：${p}x + ${f} ≤ ${B}，解出 x 的範圍後，因為是「數量」必須是整數，取最大整數解。`,
-    explain:`列出 ${p}x + ${f} ≤ ${B}，解得 x ≤ ${fmtNum((B-f)/p)}，因為 x 必須是整數，所以最多可以買 ${maxX} ${unit}。`};
+    meta:metaOf(sc,'max',p,f,B,w),
+    hint:`先列出不等式：${p}x + ${f} ${w[1]} ${B}（「${w[0]}」是 ${w[1]}），解出 x 的範圍後，因為「${sc.unit}」是整數單位，取最大整數解。`,
+    explain:`列出 ${p}x + ${f} ${w[1]} ${B}，解得 x ${w[1]} ${fmtNum((B-f)/p)}，因為 x 必須是整數，所以最多是 ${maxX} ${sc.unit}。`};
 }
 function genMinCount(M){
-  const profit=R(2,M.max);
-  const xMin=R(1,M.max);
-  const r=R(0,profit-1);
-  const target=profit*xMin-r;
-  const text=`限額購物怪出題：賣一件商品可以賺 ${profit} 元，如果目標利潤要達到不低於 ${target} 元，至少要賣出幾件商品？`;
+  const sc=sceneMin();
+  const profit=R(2,M.max), xMin=R(2,M.max), r=R(0,profit-1);
+  let w=pick(WMIN);
+  const mk=(p,f,B,sc2)=>{
+    if(r>=1&&Math.random()<0.15)w=WSTR_MIN;
+    return w;};
+  if(sc.k==='profit'){
+    const target=profit*xMin-r; mk();
+    const text=`限額購物怪出題：賣一件商品可以賺 ${profit} 元，如果${rd('利潤',w,target,'元')}，${sc.ask}`;
+    const ans=String(xMin);
+    return {text,ans,options:ensure4(ans,[String(xMin+1),String(xMin-1>=0?xMin-1:xMin+2),String(target)]),
+      meta:metaOf({k:'profit',unit:'件',cu:'元',total:'利潤',per:'每件',ask:sc.ask},'min',profit,0,target,w),
+      hint:`先列出不等式：${profit}x ${w[1]} ${target}（「${w[0]}」是 ${w[1]}），解出 x 的範圍後，因為件數必須是整數，取最小整數解。`,
+      explain:`列出 ${profit}x ${w[1]} ${target}，解得 x ${w[1]} ${fmtNum(target/profit)}，因為 x 必須是整數，所以至少要賣 ${xMin} 件。`};
+  }
+  const p=sc.p,f=sc.f,r2=R(0,p-1),B=f+p*xMin-r2;
+  w=pick(WMIN); if(r2>=1&&Math.random()<0.15)w=WSTR_MIN;
+  const text=`限額購物怪出題：${sc.story(B,rd(sc.total,w,B,sc.cu))}${sc.ask}`;
   const ans=String(xMin);
-  return {text,ans,options:ensure4(ans,[String(xMin+1),String(xMin-1>=0?xMin-1:xMin+2),String(target)]),
-    hint:`先列出不等式：${profit}x ≥ ${target}，解出 x 的範圍後，因為件數必須是整數，取最小整數解。`,
-    explain:`列出 ${profit}x ≥ ${target}，解得 x ≥ ${fmtNum(target/profit)}，因為 x 必須是整數，所以至少要賣 ${xMin} 件。`};
+  return {text,ans,options:ensure4(ans,[String(xMin+1),String(xMin-1>=0?xMin-1:xMin+2),String(Math.floor((B-f)/p))]),
+    meta:metaOf(sc,'min',p,f,B,w),
+    hint:`先列出不等式：${p}x + ${f} ${w[1]} ${B}（「${w[0]}」是 ${w[1]}），解出 x 的範圍後，因為「${sc.unit}」要用整數，取最小整數解。`,
+    explain:`列出 ${p}x + ${f} ${w[1]} ${B}，解得 x ${w[1]} ${fmtNum((B-f)/p)}，因為 x 必須是整數，所以至少要 ${xMin} ${sc.unit}。`};
 }
 function genSetupApp(M){
-  const [item,unit,p]=pick(ITEMS);
-  const [fname,f]=pick(FIXED);
-  const B=R(5,M.max)*20+f;
-  const text=`限額購物怪出題：到超商買 x ${unit} ${p} 元的${item}與 1 個 ${f} 元的${fname}，總花費不超過 ${B} 元。請列出正確的不等式（不用求解）。`;
-  const ans=`${p}x + ${f} ≤ ${B}`;
-  const wrong1=`${p}x + ${f} ≥ ${B}`;
-  const wrong2=`${p}x + ${f} < ${B}`;
-  const wrong3=`${p}x − ${f} ≤ ${B}`;
-  return {text,ans,options:ensure4(ans,[wrong1,wrong2,wrong3]),
-    hint:'「不超過」代表小於或等於（≤）；總花費 = 單價×數量 + 固定費用。',
-    explain:`總花費為 ${p}x + ${f}，「不超過 ${B} 元」代表 ≤ ${B}，所以不等式為 ${p}x + ${f} ≤ ${B}。`};
+  const kind=pick(['max','max','min']);
+  let sc,B,w;
+  if(kind==='max'){sc=sceneMax();B=R(5,M.max)*20+sc.f;w=pick(WMAX.concat([WSTR_MAX]));}
+  else{sc=sceneMin();
+    if(sc.k==='profit'){sc={k:'saving',p:50,f:100,unit:'週',cu:'元',total:'存款',per:'每週',ask:'',story:(B,W)=>`小明想買一台 ${B} 元的耳機。他現在已有 100 元，之後每週再存 50 元。存 x 週後，${W}才買得起。`};}
+    B=R(5,M.max)*20+sc.f;w=pick(WMIN.concat([WSTR_MIN]));}
+  const text=`限額購物怪出題：${sc.story(B,rd(sc.total,w,B,sc.cu))}請列出正確的不等式（不用求解）。`;
+  const p=sc.p,f=sc.f,sym=w[1];
+  const ans=`${p}x + ${f} ${sym} ${B}`;
+  const flip={'≤':'≥','≥':'≤','<':'>','>':'<'}[sym], alt={'≤':'<','≥':'>','<':'≤','>':'≥'}[sym];
+  return {text,ans,options:ensure4(ans,[`${p}x + ${f} ${flip} ${B}`,`${p}x + ${f} ${alt} ${B}`,`${p}x − ${f} ${sym} ${B}`]),
+    meta:Object.assign(metaOf(sc,kind,p,f,B,w),{}),
+    hint:`「${w[0]}」代表${{'≤':'小於或等於（≤）','≥':'大於或等於（≥）','<':'小於（＜，不含等於）','>':'大於（＞，不含等於）'}[sym]}；${sc.total} = 每份的量×份數 + 原本就有（或固定）的量。`,
+    explain:`${sc.total}為 ${p}x + ${f}，「${w[0]}」代表 ${sym}，所以不等式為 ${p}x + ${f} ${sym} ${B}。`};
 }
 function gen(t){
   const M=MODES[mode];
@@ -369,9 +417,9 @@ function finish(){
     $('#e-stars').textContent='';
     $('#e-info').textContent=`成功答對 ${right}/${total} 題。`+(right==total?'全部融會貫通！':'再接再厲！');
   }else{
-    $('#e-title').textContent=fail?'💔 收服失敗':'🎉 收服成功';
+    $('#e-title').textContent=fail?'🏃 怪物逃跑了！':'🎉 收服成功';
     $('#e-stars').textContent=fail?'':'⭐'.repeat(stars)+'☆'.repeat(3-stars);
-    const rankName=fail?'':['','見習召喚師','中階召喚師','菁英召喚師'][stars];
+    const rankName=fail?'再挑戰一次，就能收服牠！':['','見習召喚師','中階召喚師','菁英召喚師'][stars];
     $('#e-info').textContent=(rankName?rankName+'　':'')+`靈力 ${score}　答對 ${right}/${total}　剩餘生命 ${hearts} 顆心`;
   }
   const j=$('#e-jail');j.innerHTML='';

@@ -15,7 +15,7 @@ button{font:inherit;cursor:pointer;color:inherit}
 button:focus-visible{outline:3px solid var(--bronze);outline-offset:2px}
 .card{background:var(--ink2);border:2px solid var(--line);border-radius:14px;padding:18px}
 .btn{background:var(--bronze);color:#2a1d05;border:0;border-radius:10px;padding:12px 22px;font-weight:700;font-size:1.05rem}
-.btn.ghost{background:transparent;color:var(--bronze);border:2px solid var(--bronze)}
+.btn.ghost{background:#2b2a3c;color:#f0cf85;border:2px solid var(--bronze)}
 .modes{display:grid;gap:10px;margin:16px 0}
 .mode{text-align:left;background:var(--ink);border:2px solid var(--line);border-radius:12px;padding:12px 14px}
 .mode.on{border-color:var(--bronze);background:#2b2a3c}
@@ -125,6 +125,13 @@ const sh=a=>a.map(v=>[Math.random(),v]).sort((x,y)=>x[0]-y[0]).map(x=>x[1]);
 function ensure4(ans,cands){
   const s=new Set([ans]);
   for(const c of cands){const cs=String(c);if(s.size<4&&cs!==ans&&cs.trim()!=='')s.add(cs);}
+  /* 誘答選項不夠時：答案不是純數字就「改動答案裡的一個數字」補齊（例如 (5, 5)→(5, 4)），不再塞無關的 -5、6 */
+  if(s.size<4&&!/^-?\d+(\.\d+)?$/.test(String(ans))){
+    const str=String(ans),vars=[],re=/\d+(?:\.\d+)?/g;let mm;
+    while((mm=re.exec(str))!==null){for(const d of [1,-1,2,-2,3,-3]){const nv=Number(mm[0])+d;if(nv<0)continue;const dec=(mm[0].split('.')[1]||'').length;vars.push(str.slice(0,mm.index)+(dec?nv.toFixed(dec):nv)+str.slice(mm.index+mm[0].length));}}
+    for(let i=vars.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[vars[i],vars[j]]=[vars[j],vars[i]];}
+    for(const v of vars){if(s.size>=4)break;if(!s.has(v))s.add(v);}
+  }
   let g=1;
   while(s.size<4){const v=(Number(ans)||0)+(g%2===0?g/2+5:-(Math.ceil(g/2)+4));const vs=String(v);if(!s.has(vs))s.add(vs);g++;}
   return sh([...s]);
@@ -192,7 +199,7 @@ function signK(M){
   if(mode==='easy')return R(1,M.max);
   return R(1,M.max)*(Math.random()<0.5?1:-1);
 }
-function genIdentifyType(M){
+function genIdentifyType0(M){
   const isY=Math.random()<0.5;
   const k=signK(M);
   const eq=isY?`y = ${k}`:`x = ${k}`;
@@ -203,20 +210,78 @@ function genIdentifyType(M){
     hint:'y = 數字 是「橫著走」的水平線；x = 數字 是「豎著站」的鉛垂線。',
     explain:`${eq} 中${isY?'每一點的 y 坐標都固定是 '+k:'每一點的 x 坐標都固定是 '+k}，所以是${ans}，通過${isY?`(0, ${k})`:`(${k}, 0)`}。`};
 }
+function randNe(max,...forbid){
+  let v;do{v=R(1,max)*(Math.random()<0.5?1:-1);}while(forbid.includes(v));
+  return v;
+}
+const TS=(say,hint,ok,wrong,line)=>({say,hint,ok,wrong:wrong||[],line:line||''});
+
+function genIdentifyType(M){
+  const r=Math.random();
+  if(r<0.3)return genIdentifyType0(M);
+  const isY=Math.random()<0.5,k=signK(M),v=isY?'y':'x',other=isY?'x':'y';
+  const svg=isY?svgGrid({lines:[{a:0,b:1,c:k,color:'#d24a33'}]}):svgGrid({lines:[{a:1,b:0,c:k,color:'#2f6fb5'}]});
+  const ans=isY?'水平線（平行 x 軸）':'鉛垂線（平行 y 軸）';
+  let eq,step1;
+  if(r<0.65){ // 係數在前：m y = m k
+    const m=pick([2,3,4]);eq=`${m}${v} = ${m*k}`;
+    step1=TS(`<b>${eq}</b> 兩邊同除以 ${m}，會變成？`,`兩邊都除以 ${m}。`,`${v} = ${k}`,[[`${v} = ${m*k}`,'兩邊都要除，右邊也要變。'],[`${v} = ${m*k*m}`,'是「除以」，不是乘。']],`${v} = ${k}`);
+  }else{ // 移項型：v − k = 0 / v + k = 0
+    eq=k>0?`${v} − ${k} = 0`:`${v} + ${-k} = 0`;
+    step1=TS(`<b>${eq}</b> 移項之後，會變成？`,'把常數移到等號右邊，要變號。',`${v} = ${k}`,[[`${v} = ${-k}`,'移項要變號，正負弄反了。'],[`${v} = 0`,'常數也要算進去喔。']],`${v} = ${k}`);
+  }
+  const tutor=[step1,TS(`${v} = ${k} 表示所有點的哪一個坐標都固定是 ${k}？`,'看等號左邊的字母。',`${v} 坐標`,[[`${other} 坐標`,`式子裡寫的是 ${v}。`]],`${v} 固定`),
+    TS(`${v} 固定、${other} 自由變，這些點連起來是什麼線？`,isY?'y 固定：高度一樣，橫著走。':'x 固定：左右位置一樣，直直站。',isY?'水平線':'鉛垂線',[[isY?'鉛垂線':'水平線','換個方向想：固定的是哪一個坐標？']],isY?'水平線':'鉛垂線')];
+  const why={'水平線（平行 x 軸）':'y 固定時才是水平線。','鉛垂線（平行 y 軸）':'x 固定時才是鉛垂線。','通過原點的斜線':'這種式子只有一個字母，不是斜線。','無法判斷':'化簡之後就能判斷。'};
+  return {text:`巨像的盾牌方程式是 ${eq}，牠的圖形是水平線還是鉛垂線（垂直線）？`,svg,ans,options:['水平線（平行 x 軸）','鉛垂線（平行 y 軸）','通過原點的斜線','無法判斷'],tutor,why,
+    hint:'先把式子化成「y = 數字」或「x = 數字」，再判斷。',explain:`${eq} 化簡後是 ${v} = ${k}，${v} 坐標固定，所以是${ans}。`};
+}
+function genAxisEq(M){
+  const r=Math.random();
+  if(r<0.2)return genAxisEq0(M);
+  if(r<0.4){ // 方程式 x=0／y=0 的圖形（小老師已有對應步驟）
+    const isX=Math.random()<0.5,v=isX?'x':'y',ans=isX?'y 軸':'x 軸';
+    return {text:`方程式 ${v} = 0 的圖形是哪一條線？`,ans,options:['x 軸','y 軸','原點','通過原點的斜線'],
+      hint:`${v} = 0 表示所有點的 ${v} 坐標都是 0。`,explain:`${v} 坐標都是 0 的點連起來就是${ans}。`};
+  }
+  if(r<0.7){ // 水平線／鉛垂線 和坐標軸的關係
+    const isY=Math.random()<0.5,k=R(-M.max,M.max),axis=isY?'x 軸':'y 軸',v=isY?'y':'x';
+    const side=isY?(k>0?'上方':'下方'):(k>0?'右邊':'左邊');
+    const ans=k===0?`剛好就是 ${axis}（重合）`:`平行 ${axis}，在 ${axis}的${side} ${Math.abs(k)} 格`;
+    const tutor=[TS(`${v} = ${k} 的意思是：所有點的 ${v} 坐標都是 ${k}。這個 ${k} 離 0 有幾格？`,'看數字離 0 多遠。',String(Math.abs(k)),[[String(Math.abs(k)+1),'再數一次。']],`${v} = ${k}`),
+      TS(k===0?`${v} 坐標是 0，在哪裡？`:`${k>0?'正數':'負數'}要往哪一邊走？`,isY?'y：正在上、負在下。':'x：正在右、負在左。',k===0?`就在 ${axis} 上`:side,k===0?[['在 '+axis+' 旁邊','0 就是軸本身。']]:[[isY?(k>0?'下方':'上方'):(k>0?'左邊':'右邊'),'正負方向弄反了。']],'')];
+    const wrongs=[`平行 ${axis}，在 ${axis}的${isY?'下方':'左邊'} ${Math.abs(k)||1} 格`,`平行 ${axis}，在 ${axis}的${isY?'上方':'右邊'} ${Math.abs(k)||1} 格`,`垂直於 ${axis}`,`剛好就是 ${axis}（重合）`].filter(o=>o!==ans);
+    return {text:`方程式 ${v} = ${k} 的圖形和${axis}的關係是？`,ans,options:ensure4(ans,wrongs),tutor,
+      hint:`${v} = 常數 的圖形是${isY?'水平線':'鉛垂線'}，它和另一條軸垂直、和${axis}平行。`,explain:`${v} = ${k}：${k===0?`就是${axis}本身`:`是${isY?'水平線':'鉛垂線'}，平行${axis}，在${side}${Math.abs(k)}格`}。`};
+  }
+  // 與軸的交點
+  const isY=Math.random()<0.5,k=randNe(M.max),eq=isY?`y = ${k}`:`x = ${k}`;
+  const ans=isY?`(0, ${k})`:`(${k}, 0)`,axis=isY?'y 軸':'x 軸';
+  const tutor=[TS(`${axis}上的點，哪一個坐標一定是 0？`,isY?'y 軸是直的，在它上面 x 坐標是 0。':'x 軸是橫的，在它上面 y 坐標是 0。',isY?'x 坐標':'y 坐標',[[isY?'y 坐標':'x 坐標','看看軸的位置：在軸上的那個方向坐標是 0。']],isY?'x = 0':'y = 0'),
+    TS(`直線 ${eq} 規定另一個坐標是 ${k}，所以交點是？`,'x 在前、y 在後。',ans,[[isY?`(${k}, 0)`:`(0, ${k})`,'x、y 放反位置了。']],ans)];
+  return {text:`${isY?'水平線':'鉛垂線'} ${eq} 和 ${axis} 相交，交點坐標是？`,ans,options:ensure4(ans,[isY?`(${k}, 0)`:`(0, ${k})`,`(${k}, ${k})`,`(0, 0)`]),tutor,
+    hint:`交點同時在${axis}上，也在 ${eq} 上。`,explain:`在${axis}上 ${isY?'x':'y'} 坐標是 0，又 ${eq}，所以交點是 ${ans}。`};
+}
 function genThroughPoint(M){
+  // 這一題要小心：y=k（水平線）上，x 可以是「任何數」；x=k（鉛垂線）上，y 可以是「任何數」。
+  // 所以錯誤選項一定要讓「固定的那個坐標」錯掉，不能只是把另一個坐標改掉，否則那個點其實也在直線上！
+  // 三個干擾數字都特別避開跟 k 相同、避開彼此相同，確保四個選項不會重複、也不會意外剛好也在直線上。
   const isY=Math.random()<0.5;
   const k=signK(M);
   const eq=isY?`y = ${k}`:`x = ${k}`;
-  const other=R(1,M.max)*(Math.random()<0.5?1:-1);
+  const other=randNe(M.max,k);
+  const other2=randNe(M.max,k);
+  let other3=randNe(M.max,k);
+  while(other3===other2)other3=randNe(M.max,k);
   const svg=isY?svgGrid({lines:[{a:0,b:1,c:k,color:'#d24a33'}]}):svgGrid({lines:[{a:1,b:0,c:k,color:'#2f6fb5'}]});
   const ans=isY?`(${other}, ${k})`:`(${k}, ${other})`;
-  const wrong1=isY?`(${k}, ${other})`:`(${other}, ${k})`;
-  const wrong2=isY?`(${other}, ${-k})`:`(${-k}, ${other})`;
-  const wrong3=isY?`(${-other}, ${k})`:`(${k}, ${-other})`;
+  const wrong1=isY?`(${k}, ${other})`:`(${other}, ${k})`;         // 常見迷思：把 x、y 該固定的坐標搞反
+  const wrong2=isY?`(${other2}, ${-k})`:`(${-k}, ${other2})`;      // 固定坐標的正負號搞反
+  const wrong3=isY?`(${other3}, ${-k})`:`(${-k}, ${other3})`;      // 固定坐標的正負號搞反（換一組數字）
   const text=`下列哪一個點會落在直線 ${eq} 上？`;
-  return {text,svg,ans,options:ensure4(ans,[wrong1,wrong2,wrong3]),
+  return {text,svg,ans,options:sh([ans,wrong1,wrong2,wrong3]),
     hint:isY?'y = 常數的直線上，所有點的 y 坐標都要等於那個常數，x 可以是任何數。':'x = 常數的直線上，所有點的 x 坐標都要等於那個常數，y 可以是任何數。',
-    explain:`${eq} 上的點，${isY?'y':'x'} 坐標都固定是 ${k}，所以 ${ans} 符合。`};
+    explain:`${eq} 上的點，${isY?'y':'x'} 坐標都固定是 ${k}，${isY?'x':'y'} 坐標可以是任何數，所以 ${ans} 符合。`};
 }
 function genWriteEq(M){
   const isY=Math.random()<0.5;
@@ -231,7 +296,7 @@ function genWriteEq(M){
     hint:'水平線上所有點的 y 坐標都相同；鉛垂線上所有點的 x 坐標都相同。',
     explain:`${isY?'水平線方程式是「y = 該點的 y 坐標」':'鉛垂線方程式是「x = 該點的 x 坐標」'}，所以是 ${ans}。`};
 }
-function genAxisEq(M){
+function genAxisEq0(M){
   const askX=Math.random()<0.5;
   const text=askX?'x 軸本身其實也可以用一個方程式表示，請問是什麼？':'y 軸本身其實也可以用一個方程式表示，請問是什麼？';
   const ans=askX?'y = 0':'x = 0';
@@ -246,6 +311,20 @@ function gen(t){
   if(t==='writeEq')return genWriteEq(M);
   return genAxisEq(M);
 }
+/* ===== 題庫擴充：同一題型多幾種問法，避免一直遇到同一題 ===== */
+(function(){
+  const _g=gen;
+  const mk=(text,ans,wrongs,hint,explain)=>({text,ans,options:ensure4(ans,wrongs),hint,explain});
+  const BANK={};
+  {const L=[
+    ['x 軸本身其實也可以用一個方程式表示，請問是什麼？','y = 0',['x = 0','x = y','xy = 0'],'x 軸上每一點的 y 坐標都是 0。','x 軸就是 y 恆等於 0 的水平線，方程式為 y = 0。'],
+    ['y 軸本身其實也可以用一個方程式表示，請問是什麼？','x = 0',['y = 0','x = y','xy = 0'],'y 軸上每一點的 x 坐標都是 0。','y 軸就是 x 恆等於 0 的鉛垂線，方程式為 x = 0。'],
+    ['方程式 y = 0 的圖形是哪一條線？','x 軸',['y 軸','通過原點的斜線','不存在'],'y 恆等於 0 的點，都落在 x 軸上。','y = 0 的圖形就是 x 軸。'],
+    ['方程式 x = 0 的圖形是哪一條線？','y 軸',['x 軸','通過原點的斜線','不存在'],'x 恆等於 0 的點，都落在 y 軸上。','x = 0 的圖形就是 y 軸。'],
+    ['x 軸與 y 軸相交在哪一點？','原點 (0, 0)',['(1, 1)','(0, 1)','(1, 0)'],'兩條軸的交點就是原點。','x 軸與 y 軸交於原點 (0, 0)。']];BANK['axisEq']={p:.3,make:()=>{const e=pick(L);return mk(e[0],e[1],e[2],e[3],e[4]);}};}
+
+  gen=function(t){const B=BANK[t];if(B&&Math.random()<B.p){return B.make();}return _g.apply(this,arguments);};
+})();
 const EMB=window.parent!==window,SID='2-2-2';
 function log(ok){if(EMB&&!rescue)parent.postMessage({type:'wave-log',id:SID,qtype:q.type,ok:ok},'*')}
 let mode='easy',qs=[],idx=0,q=null,hearts=5,combo=0,score=0,right=0,wrongs=[],lock=true,left=0,tm=0,frozenUntil=0,rescue=false,used={},showRing=false,sealsLit=0;
@@ -344,9 +423,9 @@ function finish(){
     $('#e-stars').textContent='';
     $('#e-info').textContent=`成功答對 ${right}/${total} 題。`+(right==total?'全部融會貫通！':'再接再厲！');
   }else{
-    $('#e-title').textContent=fail?'💔 收服失敗':'🎉 收服成功';
+    $('#e-title').textContent=fail?'🏃 怪物逃跑了！':'🎉 收服成功';
     $('#e-stars').textContent=fail?'':'⭐'.repeat(stars)+'☆'.repeat(3-stars);
-    const rankName=fail?'':['','見習召喚師','中階召喚師','菁英召喚師'][stars];
+    const rankName=fail?'再挑戰一次，就能收服牠！':['','見習召喚師','中階召喚師','菁英召喚師'][stars];
     $('#e-info').textContent=(rankName?rankName+'　':'')+`靈力 ${score}　答對 ${right}/${total}　剩餘生命 ${hearts} 顆心`;
   }
   const j=$('#e-jail');j.innerHTML='';

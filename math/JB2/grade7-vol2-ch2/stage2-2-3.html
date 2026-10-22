@@ -15,7 +15,7 @@ button{font:inherit;cursor:pointer;color:inherit}
 button:focus-visible{outline:3px solid var(--bronze);outline-offset:2px}
 .card{background:var(--ink2);border:2px solid var(--line);border-radius:14px;padding:18px}
 .btn{background:var(--bronze);color:#2a1d05;border:0;border-radius:10px;padding:12px 22px;font-weight:700;font-size:1.05rem}
-.btn.ghost{background:transparent;color:var(--bronze);border:2px solid var(--bronze)}
+.btn.ghost{background:#2b2a3c;color:#f0cf85;border:2px solid var(--bronze)}
 .modes{display:grid;gap:10px;margin:16px 0}
 .mode{text-align:left;background:var(--ink);border:2px solid var(--line);border-radius:12px;padding:12px 14px}
 .mode.on{border-color:var(--bronze);background:#2b2a3c}
@@ -125,6 +125,13 @@ const sh=a=>a.map(v=>[Math.random(),v]).sort((x,y)=>x[0]-y[0]).map(x=>x[1]);
 function ensure4(ans,cands){
   const s=new Set([ans]);
   for(const c of cands){const cs=String(c);if(s.size<4&&cs!==ans&&cs.trim()!=='')s.add(cs);}
+  /* 誘答選項不夠時：答案不是純數字就「改動答案裡的一個數字」補齊（例如 (5, 5)→(5, 4)），不再塞無關的 -5、6 */
+  if(s.size<4&&!/^-?\d+(\.\d+)?$/.test(String(ans))){
+    const str=String(ans),vars=[],re=/\d+(?:\.\d+)?/g;let mm;
+    while((mm=re.exec(str))!==null){for(const d of [1,-1,2,-2,3,-3]){const nv=Number(mm[0])+d;if(nv<0)continue;const dec=(mm[0].split('.')[1]||'').length;vars.push(str.slice(0,mm.index)+(dec?nv.toFixed(dec):nv)+str.slice(mm.index+mm[0].length));}}
+    for(let i=vars.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[vars[i],vars[j]]=[vars[j],vars[i]];}
+    for(const v of vars){if(s.size>=4)break;if(!s.has(v))s.add(v);}
+  }
   let g=1;
   while(s.size<4){const v=(Number(ans)||0)+(g%2===0?g/2+5:-(Math.ceil(g/2)+4));const vs=String(v);if(!s.has(vs))s.add(vs);g++;}
   return sh([...s]);
@@ -212,7 +219,7 @@ function genIntersect(M){
     hint:'兩條直線的交點，就是同時滿足①式與②式的聯立方程式解，用代入法或加減法解解看！',
     explain:`解聯立方程式①②，可以求得交點為 (${x0}, ${y0})，這一點同時在兩條直線上，所以能一擊必殺！`};
 }
-function genInterpret(){
+function genInterpret0(){
   const variants=[
     {text:'兩條直線的交點坐標，和這兩條直線所組成的二元一次聯立方程式，有什麼關係？',
      ans:'交點坐標就是聯立方程式的解',
@@ -226,10 +233,29 @@ function genInterpret(){
     hint:'聯立方程式的解，要同時滿足兩個方程式，所以在圖形上就是兩條直線「都會經過」的那一點。',
     explain:'二元一次聯立方程式的解 (x, y)，在幾何上就是這兩條直線圖形的交點坐標。'};
 }
+
+function genInterpret(){
+  const r=Math.random();
+  if(r<0.15)return genInterpret0();
+  let v;
+  if(r<0.45){const p=R(1,9),q=R(1,9);
+    v={text:`如果一個二元一次聯立方程式的解是 (${p}, ${q})，這在圖形上代表什麼意思？`,ans:`兩條直線都會通過 (${p}, ${q})，並在該點相交`,
+      opts:[`兩條直線都會通過 (${p}, ${q})，並在該點相交`,`只有一條直線會通過 (${p}, ${q})`,`(${p}, ${q}) 是原點的另一個名稱`,`兩條直線在 (${p}, ${q}) 處互相平行，不會相交`]};}
+  else if(r<0.62)v={text:'兩條直線完全重合時，它們所組成的聯立方程式有幾組解？',ans:'無限多組解',opts:['無限多組解','剛好 1 組解','沒有解','剛好 2 組解']};
+  else if(r<0.78)v={text:'兩條不平行的直線，它們的交點會有幾個？',ans:'剛好 1 個',opts:['剛好 1 個','沒有交點','2 個','無限多個']};
+  else if(r<0.9)v={text:'兩條平行（但不重合）的直線所組成的聯立方程式，解是什麼情況？',ans:'沒有解',opts:['沒有解','剛好 1 組解','無限多組解','剛好 2 組解']};
+  else{const a=R(-5,9),b=R(-5,9);
+    v={text:`兩條直線的交點坐標是 (${a}, ${b})，那麼這兩條直線所組成的聯立方程式，x、y 的解分別是多少？`,ans:`x = ${a}，y = ${b}`,opts:[`x = ${a}，y = ${b}`,`x = ${b}，y = ${a}`,`x = ${-a}，y = ${b}`,`x = ${a}，y = ${-b}`]};}
+  const seen={},opts=v.opts.filter(o=>!seen[o]&&(seen[o]=1));
+  while(opts.length<4)opts.push('以上皆非'+opts.length);
+  return {text:v.text,ans:v.ans,options:sh(opts),
+    hint:'聯立方程式的解，要同時滿足兩個方程式，所以在圖形上就是兩條直線「都會經過」的那一點。',
+    explain:'二元一次聯立方程式的解 (x, y)，在幾何上就是這兩條直線圖形的交點坐標；平行無交點＝無解，重合＝無限多組解。'};
+}
 function genLineEqPositive(M){
   const x0=R(2,M.max+2),y0=R(2,M.max+2);
-  const L=lcm(x0,y0);
-  const a=L/x0,b=L/y0,c=L;
+  const L=lcm(x0,y0),kk=pick([1,2]);
+  const a=L/x0*kk,b=L/y0*kk,c=L*kk;
   return {a,b,c,x0,y0};
 }
 function genArea(M){
@@ -250,6 +276,19 @@ function gen(t){
   if(t==='area')return genArea(M);
   return genInterpret();
 }
+/* ===== 題庫擴充：同一題型多幾種問法，避免一直遇到同一題 ===== */
+(function(){
+  const _g=gen;
+  const mk=(text,ans,wrongs,hint,explain)=>({text,ans,options:ensure4(ans,wrongs),hint,explain});
+  const BANK={};
+  {const L=[
+    ['兩條直線的交點坐標，和這兩條直線所組成的二元一次聯立方程式，有什麼關係？','交點坐標就是聯立方程式的解',['交點與聯立方程式沒有關係','交點只能用來畫圖，不能拿來求解','交點坐標一定是 (0, 0)'],'聯立方程式的解要同時滿足兩個方程式。','交點同時在兩條直線上，所以是聯立方程式的解。'],
+    ['如果兩條直線互相平行（而且不重合），它們所組成的聯立方程式會是什麼情況？','沒有解',['恰有一組解','恰有兩組解','有無限多組解'],'平行線不會相交。','平行不重合的兩條直線沒有交點，所以聯立方程式無解。'],
+    ['如果兩條直線完全重合，它們所組成的聯立方程式會是什麼情況？','有無限多組解',['恰有一組解','沒有解','恰有兩組解'],'重合的直線每一點都是共同點。','兩直線重合時，每一個點都同時滿足兩個方程式，所以有無限多組解。'],
+    ['兩條不平行的直線，交點有幾個？','恰好 1 個',['0 個','2 個','無限多個'],'不平行的兩條直線一定會相交在一點。','兩條不平行的直線恰交於一點。']];BANK['interpret']={p:.3,make:()=>{const e=pick(L);return mk(e[0],e[1],e[2],e[3],e[4]);}};}
+
+  gen=function(t){const B=BANK[t];if(B&&Math.random()<B.p){return B.make();}return _g.apply(this,arguments);};
+})();
 const EMB=window.parent!==window,SID='2-2-3';
 function log(ok){if(EMB&&!rescue)parent.postMessage({type:'wave-log',id:SID,qtype:q.type,ok:ok},'*')}
 let mode='easy',qs=[],idx=0,q=null,hearts=5,combo=0,score=0,right=0,wrongs=[],lock=true,left=0,tm=0,frozenUntil=0,rescue=false,used={},showRing=false,sealsLit=0;
@@ -348,9 +387,9 @@ function finish(){
     $('#e-stars').textContent='';
     $('#e-info').textContent=`成功答對 ${right}/${total} 題。`+(right==total?'全部融會貫通！':'再接再厲！');
   }else{
-    $('#e-title').textContent=fail?'💔 收服失敗':'🎉 收服成功';
+    $('#e-title').textContent=fail?'🏃 怪物逃跑了！':'🎉 收服成功';
     $('#e-stars').textContent=fail?'':'⭐'.repeat(stars)+'☆'.repeat(3-stars);
-    const rankName=fail?'':['','見習召喚師','中階召喚師','菁英召喚師'][stars];
+    const rankName=fail?'再挑戰一次，就能收服牠！':['','見習召喚師','中階召喚師','菁英召喚師'][stars];
     $('#e-info').textContent=(rankName?rankName+'　':'')+`靈力 ${score}　答對 ${right}/${total}　剩餘生命 ${hearts} 顆心`;
   }
   const j=$('#e-jail');j.innerHTML='';
