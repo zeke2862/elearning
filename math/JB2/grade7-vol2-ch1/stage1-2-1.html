@@ -15,7 +15,7 @@ button{font:inherit;cursor:pointer;color:inherit}
 button:focus-visible{outline:3px solid var(--bronze);outline-offset:2px}
 .card{background:var(--ink2);border:2px solid var(--line);border-radius:14px;padding:18px}
 .btn{background:var(--bronze);color:#2a1d05;border:0;border-radius:10px;padding:12px 22px;font-weight:700;font-size:1.05rem}
-.btn.ghost{background:transparent;color:var(--bronze);border:2px solid var(--bronze)}
+.btn.ghost{background:#2b2a3c;color:#f0cf85;border:2px solid var(--bronze)}
 .modes{display:grid;gap:10px;margin:16px 0}
 .mode{text-align:left;background:var(--ink);border:2px solid var(--line);border-radius:12px;padding:12px 14px}
 .mode.on{border-color:var(--bronze);background:#2b2a3c}
@@ -151,7 +151,11 @@ function gen(t){
   const text=`①${eq1}　②${eq2}　下列哪一組數對「同時」滿足①和②？`;
   const ans=`(${x0}, ${y0})`;
   const opts=sh([ans,`(${p2.x}, ${p2.y})`,`(${p3.x}, ${p3.y})`,`(${p4.x}, ${p4.y})`]);
-  return {text,ans,options:opts,hint:'把每一組數對分別代入①和②，兩個都要成立才行。',explain:`代入 x=${x0}, y=${y0}：①得 ${c1}=${c1}，②得 ${c2}=${c2}，兩式都成立，所以是聯立方程式的解；其他選項至少有一式不成立。`};
+  const t1a=a1*x0,t1b=b1*y0,t2a=a2*x0,t2b=b2*y0;
+  const line1=`①：${a1}×(${x0}) ${b1<0?'－':'＋'} ${Math.abs(b1)}×(${y0}) = ${t1a} ${t1b<0?'－':'＋'} ${Math.abs(t1b)} = ${c1}　✅`;
+  const line2=`②：${a2}×(${x0}) ${b2<0?'－':'＋'} ${Math.abs(b2)}×(${y0}) = ${t2a} ${t2b<0?'－':'＋'} ${Math.abs(t2b)} = ${c2}　✅`;
+  const explain=`代入 x=${x0}, y=${y0}：<br>${line1}<br>${line2}<br>兩式都成立，所以是聯立方程式的解；其他選項至少有一式不成立。`;
+  return {text,ans,options:opts,hint:'把每一組數對分別代入①和②，兩個都要成立才行。',explain};
 }
 
 const EMB=window.parent!==window,SID='1-2-1';
@@ -252,9 +256,9 @@ function finish(){
     $('#e-stars').textContent='';
     $('#e-info').textContent=`成功答對 ${right}/${total} 題。`+(right==total?'全部融會貫通！':'再接再厲！');
   }else{
-    $('#e-title').textContent=fail?'💔 收服失敗':'🎉 收服成功';
+    $('#e-title').textContent=fail?'🏃 怪物逃跑了！':'🎉 收服成功';
     $('#e-stars').textContent=fail?'':'⭐'.repeat(stars)+'☆'.repeat(3-stars);
-    const rankName=fail?'':['','見習召喚師','中階召喚師','菁英召喚師'][stars];
+    const rankName=fail?'再挑戰一次，就能收服牠！':['','見習召喚師','中階召喚師','菁英召喚師'][stars];
     $('#e-info').textContent=(rankName?rankName+'　':'')+`靈力 ${score}　答對 ${right}/${total}　剩餘生命 ${hearts} 顆心`;
   }
   const j=$('#e-jail');j.innerHTML='';

@@ -15,7 +15,7 @@ button{font:inherit;cursor:pointer;color:inherit}
 button:focus-visible{outline:3px solid var(--bronze);outline-offset:2px}
 .card{background:var(--ink2);border:2px solid var(--line);border-radius:14px;padding:18px}
 .btn{background:var(--bronze);color:#2a1d05;border:0;border-radius:10px;padding:12px 22px;font-weight:700;font-size:1.05rem}
-.btn.ghost{background:transparent;color:var(--bronze);border:2px solid var(--bronze)}
+.btn.ghost{background:#2b2a3c;color:#f0cf85;border:2px solid var(--bronze)}
 .modes{display:grid;gap:10px;margin:16px 0}
 .mode{text-align:left;background:var(--ink);border:2px solid var(--line);border-radius:12px;padding:12px 14px}
 .mode.on{border-color:var(--bronze);background:#2b2a3c}
@@ -124,7 +124,7 @@ const pick=a=>a[R(0,a.length-1)];
 const sh=a=>a.map(v=>[Math.random(),v]).sort((x,y)=>x[0]-y[0]).map(x=>x[1]);
 const MODES={easy:{t:0,max:6},real:{t:15,max:9},hard:{t:10,max:12}};
 const PLAN=['identify','combine','fracCombine','dist','bracket','decCombine','combine','identify','expr','exprDiff'];
-const ITEMS=[['紅茶','綠茶'],['原子筆','鉛筆'],['麵包','蛋糕'],['門票','套票']];
+const ITEMS=[['紅茶','綠茶','杯'],['原子筆','鉛筆','支'],['麵包','蛋糕','個'],['門票','套票','張']];
 
 function fmt(n,v){ // n*v項字串，n可能為負/0/1/-1
   if(n===0)return '';
@@ -149,6 +149,13 @@ function sumVar(terms,v){return terms.filter(t=>t.v===v).reduce((s,t)=>s+t.c,0);
 function ensure4(ans,cands){
   const s=new Set([ans]);
   for(const c of cands){const cs=String(c);if(s.size<4&&cs!==ans&&cs.trim()!=='')s.add(cs);}
+  /* 誘答選項不夠時：答案不是純數字就「改動答案裡的一個數字」補齊（例如 (5, 5)→(5, 4)），不再塞無關的 -5、6 */
+  if(s.size<4&&!/^-?\d+(\.\d+)?$/.test(String(ans))){
+    const str=String(ans),vars=[],re=/\d+(?:\.\d+)?/g;let mm;
+    while((mm=re.exec(str))!==null){for(const d of [1,-1,2,-2,3,-3]){const nv=Number(mm[0])+d;if(nv<0)continue;const dec=(mm[0].split('.')[1]||'').length;vars.push(str.slice(0,mm.index)+(dec?nv.toFixed(dec):nv)+str.slice(mm.index+mm[0].length));}}
+    for(let i=vars.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[vars[i],vars[j]]=[vars[j],vars[i]];}
+    for(const v of vars){if(s.size>=4)break;if(!s.has(v))s.add(v);}
+  }
   let g=1;
   while(s.size<4){const v=(Number(ans)||0)+(g%2===0?g/2+5:-(Math.ceil(g/2)+4));const vs=String(v);if(!s.has(vs))s.add(vs);g++;}
   return sh([...s]);
@@ -175,48 +182,58 @@ function genIdentify(M){
   const sub=pick(subPool);
   if(sub==='count'){
     const n=order.length;
-    return {text:`代數式　${text}　中，一共有幾「項」？（項的意思：用加號、減號隔開的每一小段）`,ans:String(n),
+    return {text:`代數式　${text}　中，一共有幾「項」？`,ans:String(n),
       options:ensure4(String(n),[n-1,n+1,n-2>0?n-2:n+2]),
       hint:'把式子用加、減號切開，數一數切成幾段。',explain:`${text} 共可切成 ${n} 段，所以有 ${n} 項。`};
   }
   if(sub==='const'){
-    return {text:`代數式　${text}　中，「常數項」是多少？（常數項：不含 x、也不含 y 的那一項）`,ans:String(k),
+    return {text:`代數式　${text}　中，「常數項」是多少？`,ans:String(k),
       options:ensure4(String(k),[p1,p2,q1,q2].filter(v=>v!==null)),
-      hint:'找出那一項──它沒有 x、也沒有 y，只是一個單獨的數字。',explain:`常數項就是 ${k}。`};
+      hint:'找出那一項──它沒有 x、也沒有 y，只是一個單獨的數字。',explain:`常數項是沒有字母的那一項，要連同前面的正負號一起看，所以是 ${k}。`};
   }
   if(sub==='coef'){
     const varTerms=order.filter(it=>it.v);
     const target=pick(varTerms);
     const shown=target.v==='x'?(firstFmt(target.c,'x')||fmt(target.c,'x').trim()):(firstFmt(target.c,'y')||fmt(target.c,'y').trim());
     const showSigned=shown.startsWith('-')?shown:('+'+shown);
-    return {text:`代數式　${text}　中，「${showSigned}」這一項的「係數」是多少？（係數：字母前面帶正負號的數字）`,ans:String(target.c),
+    return {text:`代數式　${text}　中，「${showSigned}」這一項的「係數」是多少？`,ans:String(target.c),
       options:ensure4(String(target.c),[-target.c,Math.abs(target.c),target.c*2]),
       hint:'係數就是那個字母前面、連同正負號一起看的數字。',explain:`「${showSigned}」的係數是 ${target.c}。`};
   }
   const sum=p1+p2;
-  return {text:`代數式　${text}　中，把兩個「x」項合併成同類項後，係數是多少？（同類項：字母部分完全相同的項，才能合併）`,ans:String(sum),
+  return {text:`代數式　${text}　中，把兩個「x」項合併成同類項後，係數是多少？`,ans:String(sum),
     options:ensure4(String(sum),[p1-p2,p2-p1,sum+2]),
-    hint:'兩個 x 項才是同類項，可以直接把係數相加；y 項不能跟 x 項合併。',explain:`${p1} + (${p2}) = ${sum}，所以合併後係數是 ${sum}。`};
+    hint:'兩個 x 項才是同類項，可以直接把係數相加；y 項不能跟 x 項合併。',explain:`x 項的係數相加：${p1<0?'('+p1+')':p1} + ${p2<0?'('+p2+')':p2} = ${sum}，所以合併後係數是 ${sum}。`};
 }
 
 /* ---------- 整數版合併同類項（高誘答力選項） ---------- */
+// 項的排列：x、y 要交錯，不能 x 全部擠在一邊、y 全部擠在一邊；項數 4～5 項
+function termVars(){
+  const nx=pick([2,2,3]),ny=pick([2,2,3]);
+  let vs,g=0;
+  do{vs=sh([...Array(nx).fill('x'),...Array(ny).fill('y')]);g++;}while(g<50&&/^x+y+$|^y+x+$/.test(vs.join('')));
+  return vs;
+}
+function termText(terms,first,fmtc){return terms.map((tm,i)=>i===0?first(tm.c,tm.v):fmtc(tm.c,tm.v)).join('');}
 function genCombine(M){
-  const p1=randCoef(M),p2=randCoef(M),q1=randCoef(M),q2=randCoef(M);
-  const terms=sh([{c:p1,v:'x'},{c:p2,v:'x'},{c:q1,v:'y'},{c:q2,v:'y'}]);
-  const X=sumVar(terms,'x'),Y=sumVar(terms,'y');
-  let text='化簡：';
-  terms.forEach((tm,i)=>{text+=i===0?firstFmt(tm.c,tm.v):fmt(tm.c,tm.v);});
+  let terms,X,Y,tries=0;
+  do{
+    terms=termVars().map(v=>({c:randCoef(M),v}));
+    X=sumVar(terms,'x');Y=sumVar(terms,'y');tries++;
+  }while(tries<300&&!(X!==0&&Y!==0&&Math.abs(X)>=2&&Math.abs(Y)>=2&&terms.filter(t=>Math.abs(t.c)===1).length<=1));
+  const text='化簡：'+termText(terms,firstFmt,fmt);
   const ans=combineExpr(X,Y);
   const swap=combineExpr(Y,X); // 誘答：x、y 係數看反
-  const flipIdx=R(0,3);
+  const flipIdx=R(0,terms.length-1);
   const flipped=terms.map((t,i)=>i===flipIdx?{...t,c:-t.c}:t);
   const signErr=combineExpr(sumVar(flipped,'x'),sumVar(flipped,'y')); // 誘答：漏看一項的正負號
-  const dropIdx=R(0,3);
+  const dropIdx=R(0,terms.length-1);
   const dropped=terms.filter((_,i)=>i!==dropIdx);
   const dropErr=combineExpr(sumVar(dropped,'x'),sumVar(dropped,'y')); // 誘答：漏加一項
+  const lst=v=>terms.filter(t=>t.v===v).map(t=>t.c<0?`(${t.c})`:`${t.c}`).join(' + ');
   return {text,ans,options:ensure4(ans,[swap,signErr,dropErr]),
     hint:'把所有 x 項加起來、所有 y 項加起來，注意每一項前面自己帶的正負號，不要漏看、也不要跟 y 項混在一起。',
-    explain:`x 項：(${p1}) + (${p2}) = ${X}；y 項：(${q1}) + (${q2}) = ${Y}，所以化簡結果是 ${ans}。`};
+    explain:`x 項：${lst('x')} = ${X}；y 項：${lst('y')} = ${Y}，所以化簡結果是 ${ans}。`};
 }
 
 /* ---------- 分數版合併同類項 ---------- */
@@ -224,50 +241,53 @@ function gcdInt(a,b){a=Math.abs(a);b=Math.abs(b);return b?gcdInt(b,a%b):a}
 function mkFrac(n,d){if(d<0){n=-n;d=-d;}const g=gcdInt(n,d)||1;return {n:n/g,d:d/g};}
 function fracAdd(a,b){return mkFrac(a.n*b.d+b.n*a.d,a.d*b.d);}
 function fracStr(f){return f.d===1?String(f.n):`${f.n}/${f.d}`;}
-function fracFirstFmt(f,v){if(f.n===0)return '';const sign=f.n<0?'-':'';const av={n:Math.abs(f.n),d:f.d};const coef=av.d===1?(av.n===1?'':String(av.n)):fracStr(av);return sign+coef+v;}
-function fracFmt(f,v){if(f.n===0)return '';const sign=f.n<0?' - ':' + ';const av={n:Math.abs(f.n),d:f.d};const coef=av.d===1?(av.n===1?'':String(av.n)):fracStr(av);return sign+coef+v;}
+function fracTerm(av,v){return av.d===1?(av.n===1?'':String(av.n))+v:(av.n===1?'':String(av.n))+v+'/'+av.d;}
+function fracFirstFmt(f,v){if(f.n===0)return '';const sign=f.n<0?'-':'';return sign+fracTerm({n:Math.abs(f.n),d:f.d},v);}
+function fracFmt(f,v){if(f.n===0)return '';const sign=f.n<0?' - ':' + ';return sign+fracTerm({n:Math.abs(f.n),d:f.d},v);}
 function combineFracExpr(X,Y){if(X.n===0&&Y.n===0)return '0';if(X.n===0)return fracFirstFmt(Y,'y');if(Y.n===0)return fracFirstFmt(X,'x');return fracFirstFmt(X,'x')+fracFmt(Y,'y');}
 function sumFracVar(terms,v){return terms.filter(t=>t.v===v).reduce((s,t)=>fracAdd(s,t.c),{n:0,d:1});}
 function genFracCombine(){
-  const d=pick([2,3,4,5]);
-  const mkT=()=>{let n=R(1,d-1);if(Math.random()<0.5)n=-n;return mkFrac(n,d);};
-  const p1=mkT(),p2=mkT(),q1=mkT(),q2=mkT();
-  const terms=sh([{c:p1,v:'x'},{c:p2,v:'x'},{c:q1,v:'y'},{c:q2,v:'y'}]);
-  const X=sumFracVar(terms,'x'),Y=sumFracVar(terms,'y');
-  let text='化簡（分數係數）：';
-  terms.forEach((tm,i)=>{text+=i===0?fracFirstFmt(tm.c,tm.v):fracFmt(tm.c,tm.v);});
+  const pairs=[[2,2],[3,3],[4,4],[5,5],[6,6],[2,4],[3,6],[4,2],[6,3],[2,6],[4,8],[3,9]];
+  let terms,X,Y,tries=0;
+  do{
+    const [d1,d2]=pick(pairs);
+    terms=termVars().map(v=>{const d=Math.random()<0.5?d1:d2;let n=R(1,d*2-1);if(n%d===0)n+=1;if(Math.random()<0.5)n=-n;return {c:mkFrac(n,d),v};});
+    X=sumFracVar(terms,'x');Y=sumFracVar(terms,'y');tries++;
+    var ones=terms.filter(t=>Math.abs(t.c.n)===t.c.d).length;
+    var okAbs=f=>f.n!==0&&Math.abs(f.n)!==f.d;
+  }while(tries<300&&!(okAbs(X)&&okAbs(Y)&&ones===0));
+  let text='化簡（分數係數）：'+termText(terms,fracFirstFmt,fracFmt);
   const ans=combineFracExpr(X,Y);
   const swap=combineFracExpr(Y,X);
-  const flipIdx=R(0,3);
+  const flipIdx=R(0,terms.length-1);
   const flipped=terms.map((t,i)=>i===flipIdx?{...t,c:mkFrac(-t.c.n,t.c.d)}:t);
   const signErr=combineFracExpr(sumFracVar(flipped,'x'),sumFracVar(flipped,'y'));
-  const dropIdx=R(0,3);
+  const dropIdx=R(0,terms.length-1);
   const dropped=terms.filter((_,i)=>i!==dropIdx);
   const dropErr=combineFracExpr(sumFracVar(dropped,'x'),sumFracVar(dropped,'y'));
   return {text,ans,options:ensure4(ans,[swap,signErr,dropErr]),
-    hint:'分母相同時，分子直接相加減就好，x 項跟 x 項合併、y 項跟 y 項合併。',
+    hint:'分母不同的要先通分，分母相同時分子直接相加減。x 項跟 x 項合併、y 項跟 y 項合併。',
     explain:`x 項相加得 ${fracStr(X)}；y 項相加得 ${fracStr(Y)}，所以化簡結果是 ${ans}。`};
 }
-
-/* ---------- 小數版合併同類項 ---------- */
 function decNum(t){const tt=Math.abs(t);const ip=Math.floor(tt/10),dp=tt%10;return ip+'.'+dp;}
-function decValStr(t){return (t<0?'-':'')+decNum(t);}
+function decValStr(t){return (t<0?'-':'')+decNum(t).replace(/\.0$/,'');}
 function decFirstFmt(t,v){if(t===0)return '';return (t<0?'-':'')+decNum(t)+v;}
 function decFmt(t,v){if(t===0)return '';return (t<0?' - ':' + ')+decNum(t)+v;}
 function combineDecExpr(X,Y){if(X===0&&Y===0)return '0';if(X===0)return decFirstFmt(Y,'y');if(Y===0)return decFirstFmt(X,'x');return decFirstFmt(X,'x')+decFmt(Y,'y');}
 function randDecT(){let t;do{t=R(1,30);}while(t%10===0);return Math.random()<0.5?-t:t;}
 function genDecCombine(){
-  const p1=randDecT(),p2=randDecT(),q1=randDecT(),q2=randDecT();
-  const terms=sh([{c:p1,v:'x'},{c:p2,v:'x'},{c:q1,v:'y'},{c:q2,v:'y'}]);
-  const X=sumVar(terms,'x'),Y=sumVar(terms,'y');
-  let text='化簡（小數係數）：';
-  terms.forEach((tm,i)=>{text+=i===0?decFirstFmt(tm.c,tm.v):decFmt(tm.c,tm.v);});
+  let terms,X,Y,tries=0;
+  do{
+    terms=termVars().map(v=>({c:randDecT(),v}));
+    X=sumVar(terms,'x');Y=sumVar(terms,'y');tries++;
+  }while(tries<300&&!(X!==0&&Y!==0&&Math.abs(X)!==10&&Math.abs(Y)!==10));
+  const text='化簡（小數係數）：'+termText(terms,decFirstFmt,decFmt);
   const ans=combineDecExpr(X,Y);
   const swap=combineDecExpr(Y,X);
-  const flipIdx=R(0,3);
+  const flipIdx=R(0,terms.length-1);
   const flipped=terms.map((t,i)=>i===flipIdx?{...t,c:-t.c}:t);
   const signErr=combineDecExpr(sumVar(flipped,'x'),sumVar(flipped,'y'));
-  const dropIdx=R(0,3);
+  const dropIdx=R(0,terms.length-1);
   const dropped=terms.filter((_,i)=>i!==dropIdx);
   const dropErr=combineDecExpr(sumVar(dropped,'x'),sumVar(dropped,'y'));
   return {text,ans,options:ensure4(ans,[swap,signErr,dropErr]),
@@ -293,23 +313,37 @@ function genBracket(M){
     explain:`由內而外展開：先拆 ( )，再拆 { }，最後拆 [ ] 並乘上 ${k3}，合併後 x 項為 ${X}、y 項為 ${Y}，答案是 ${ans}。`};
 }
 
+// 情境庫：買賣（買 x／y 個東西，求總價）、也支援不同角色與動詞，讓每次看到的故事不一樣，不是只有數字在變
+const EXPR_SCENES=[
+  (A,B,m,n,u)=>`買 x ${u}${A}（每${u} ${m} 元）與 y ${u}${B}（每${u} ${n} 元），總價要怎麼列式？`,
+  (A,B,m,n,u)=>`園遊會擺攤賣 x ${u}${A}（每${u} ${m} 元）與 y ${u}${B}（每${u} ${n} 元），這攤的收入要怎麼列式？`,
+  (A,B,m,n,u)=>`班費採購了 x ${u}${A}（每${u} ${m} 元）與 y ${u}${B}（每${u} ${n} 元），總花費要怎麼列式？`,
+  (A,B,m,n,u)=>`文具店裡，x ${u}${A}（每${u} ${m} 元）加上 y ${u}${B}（每${u} ${n} 元），總共要付多少錢？請列式。`,
+];
 function genExpr(M){
-  const [A,B]=pick(ITEMS);
+  const [A,B,u]=pick(ITEMS);
   let m=R(1,M.max)*5,n=R(1,M.max)*5;
   while(m===n)n=R(1,M.max)*5;
-  const text=`買 x 杯${A}（每杯 ${m} 元）與 y 杯${B}（每杯 ${n} 元），總價要怎麼列式？`;
+  const text=pick(EXPR_SCENES)(A,B,m,n,u);
   const ans=`${m}x + ${n}y`;
   const opts=ensure4(ans,[`${n}x + ${m}y`,`${m}x - ${n}y`,`(${m}+${n})(x+y)`]);
-  return {text,ans,options:opts,hint:'單價 × 杯數，再把兩種飲料的花費加起來。',explain:`${A}花費 ${m}x 元，${B}花費 ${n}y 元，總價為 ${ans} 元。`};
+  return {text,ans,options:opts,hint:'單價 × 數量，再把兩種東西的花費加起來。（代數裡 30x 就是 30 × x，乘號省略不寫。）',explain:`${A}共 ${m}x 元，${B}共 ${n}y 元，合起來是 ${ans} 元。`};
 }
+// 情境庫：比較兩人（或兩班）花費／收入的差，角色配對隨機挑選，句型也有兩種
+const DIFF_ROLES=[['哥哥','弟弟'],['姊姊','妹妹'],['一班','二班'],['隊長','隊員']];
+const EXPR_DIFF_SCENES=[
+  (P,Q,A,B,m,n,u)=>`${P}買 x ${u}${A}（每${u} ${m} 元），${Q}買 y ${u}${B}（每${u} ${n} 元）。${P}比${Q}多花多少錢？請列式。`,
+  (P,Q,A,B,m,n,u)=>`${P}訂了 x ${u}${A}（每${u} ${m} 元），${Q}訂了 y ${u}${B}（每${u} ${n} 元）。${P}比${Q}多花多少錢？請列式。`,
+];
 function genExprDiff(M){
-  const [A,B]=pick(ITEMS);
+  const [A,B,u]=pick(ITEMS);
+  const [P,Q]=pick(DIFF_ROLES);
   let m=R(1,M.max)*5,n=R(1,M.max)*5;
   while(m===n)n=R(1,M.max)*5;
-  const text=`哥哥買 x 張${A}（每張 ${m} 元），弟弟買 y 張${B}（每張 ${n} 元）。哥哥比弟弟多花多少錢？請列式。`;
+  const text=pick(EXPR_DIFF_SCENES)(P,Q,A,B,m,n,u);
   const ans=`${m}x - ${n}y`;
   const opts=ensure4(ans,[`${n}y - ${m}x`,`${m}x + ${n}y`,`${m}y - ${n}x`]);
-  return {text,ans,options:opts,hint:'「多花多少」就是兩者花費相減：哥哥的花費 － 弟弟的花費。',explain:`哥哥花費 ${m}x 元，弟弟花費 ${n}y 元，多花的錢是 ${m}x - ${n}y 元。`};
+  return {text,ans,options:opts,hint:`「多花多少」就是兩者花費相減：${P}的花費 － ${Q}的花費。`,explain:`${P}花費 ${m}x 元，${Q}花費 ${n}y 元，多花的錢是 ${m}x - ${n}y 元。`};
 }
 function gen(t){
   const M=MODES[mode];
@@ -335,7 +369,7 @@ function genDist(M){
   const wrongForget1=combineExpr(a+t2x,b+t2y); // 誘答：第一個括號忘記乘k1
   return {text,ans,options:ensure4(ans,[wrongForget,wrongOp,wrongForget1]),
     hint:'先用乘法把每個括號展開（分配律：括號裡每一項都要乘到外面的數字），再合併 x 項與 y 項。',
-    explain:`第一個括號展開：${k1}×(${firstFmt(a,'')||a}) → ${t1x}x，${k1}×(${b}) → ${t1y}y。第二個括號展開後（含 ${op}）：${t2x}x、${t2y}y。合併得 x 項 ${X}、y 項 ${Y}，答案是 ${ans}。`};
+    explain:`第一個括號展開：x 項 ${k1}×${a<0?'('+a+')':a} = ${t1x}，y 項 ${k1}×${b<0?'('+b+')':b} = ${t1y}。第二個括號展開後（${op==='+'?'加上':'減去'}這個括號）：x 項 ${t2x}、y 項 ${t2y}。合併得 x 項 ${X}、y 項 ${Y}，答案是 ${ans}。`};
 }
 
 const EMB=window.parent!==window,SID='1-1-1';
@@ -436,9 +470,9 @@ function finish(){
     $('#e-stars').textContent='';
     $('#e-info').textContent=`成功答對 ${right}/${total} 題。`+(right==total?'全部融會貫通！':'再接再厲！');
   }else{
-    $('#e-title').textContent=fail?'💔 收服失敗':'🎉 收服成功';
+    $('#e-title').textContent=fail?'🏃 怪物逃跑了！':'🎉 收服成功';
     $('#e-stars').textContent=fail?'':'⭐'.repeat(stars)+'☆'.repeat(3-stars);
-    const rankName=fail?'':['','見習召喚師','中階召喚師','菁英召喚師'][stars];
+    const rankName=fail?'再挑戰一次，就能收服牠！':['','見習召喚師','中階召喚師','菁英召喚師'][stars];
     $('#e-info').textContent=(rankName?rankName+'　':'')+`靈力 ${score}　答對 ${right}/${total}　剩餘生命 ${hearts} 顆心`;
   }
   const j=$('#e-jail');j.innerHTML='';

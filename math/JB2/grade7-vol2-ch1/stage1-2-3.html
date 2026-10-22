@@ -15,7 +15,7 @@ button{font:inherit;cursor:pointer;color:inherit}
 button:focus-visible{outline:3px solid var(--bronze);outline-offset:2px}
 .card{background:var(--ink2);border:2px solid var(--line);border-radius:14px;padding:18px}
 .btn{background:var(--bronze);color:#2a1d05;border:0;border-radius:10px;padding:12px 22px;font-weight:700;font-size:1.05rem}
-.btn.ghost{background:transparent;color:var(--bronze);border:2px solid var(--bronze)}
+.btn.ghost{background:#2b2a3c;color:#f0cf85;border:2px solid var(--bronze)}
 .modes{display:grid;gap:10px;margin:16px 0}
 .mode{text-align:left;background:var(--ink);border:2px solid var(--line);border-radius:12px;padding:12px 14px}
 .mode.on{border-color:var(--bronze);background:#2b2a3c}
@@ -133,6 +133,13 @@ function axby(a,b){
 function ensure4(ans,cands){
   const s=new Set([ans]);
   for(const c of cands){const cs=String(c);if(s.size<4&&cs!==ans&&cs.trim()!=='')s.add(cs);}
+  /* 誘答選項不夠時：答案不是純數字就「改動答案裡的一個數字」補齊（例如 (5, 5)→(5, 4)），不再塞無關的 -5、6 */
+  if(s.size<4&&!/^-?\d+(\.\d+)?$/.test(String(ans))){
+    const str=String(ans),vars=[],re=/\d+(?:\.\d+)?/g;let mm;
+    while((mm=re.exec(str))!==null){for(const d of [1,-1,2,-2,3,-3]){const nv=Number(mm[0])+d;if(nv<0)continue;const dec=(mm[0].split('.')[1]||'').length;vars.push(str.slice(0,mm.index)+(dec?nv.toFixed(dec):nv)+str.slice(mm.index+mm[0].length));}}
+    for(let i=vars.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[vars[i],vars[j]]=[vars[j],vars[i]];}
+    for(const v of vars){if(s.size>=4)break;if(!s.has(v))s.add(v);}
+  }
   let g=1;
   while(s.size<4){const v=(Number(ans)||0)+(g%2===0?g/2+5:-(Math.ceil(g/2)+4));const vs=String(v);if(!s.has(vs))s.add(vs);g++;}
   return sh([...s]);
@@ -142,8 +149,9 @@ function mkFrac(n,d){if(d<0){n=-n;d=-d;}const g=gcdInt(n,d)||1;return {n:n/g,d:d
 function fracStr(f){return f.d===1?String(f.n):`${f.n}/${f.d}`;}
 function fracAdd(a,b){return mkFrac(a.n*b.d+b.n*a.d,a.d*b.d);}
 function fracMulInt(f,k){return mkFrac(f.n*k,f.d);}
-function fracFirstFmt(f,v){if(f.n===0)return '';const sign=f.n<0?'-':'';const av={n:Math.abs(f.n),d:f.d};const coef=av.d===1?(av.n===1?'':String(av.n)):fracStr(av);return sign+coef+v;}
-function fracFmt(f,v){if(f.n===0)return '';const sign=f.n<0?' - ':' + ';const av={n:Math.abs(f.n),d:f.d};const coef=av.d===1?(av.n===1?'':String(av.n)):fracStr(av);return sign+coef+v;}
+function fracTerm(av,v){return av.d===1?(av.n===1?'':String(av.n))+v:(av.n===1?'':String(av.n))+v+'/'+av.d;}
+function fracFirstFmt(f,v){if(f.n===0)return '';const sign=f.n<0?'-':'';return sign+fracTerm({n:Math.abs(f.n),d:f.d},v);}
+function fracFmt(f,v){if(f.n===0)return '';const sign=f.n<0?' - ':' + ';return sign+fracTerm({n:Math.abs(f.n),d:f.d},v);}
 function decNum(t){const tt=Math.abs(t);const ip=Math.floor(tt/10),dp=tt%10;return ip+'.'+dp;}
 function decValStr(t){return (t<0?'-':'')+decNum(t);}
 function decFirstFmt(t,v){if(t===0)return '';return (t<0?'-':'')+decNum(t)+v;}
@@ -177,8 +185,21 @@ function genElim(M){
   const cands=[String(other),String(correct+pick([-2,-1,1,2])),String(-correct),String(correct+pick([-3,3]))];
   const hint=same?(opp?`①、②的 y 係數一正一負，兩式直接相加就能消去 y。`:`①、②的 y 係數都是 ${b1}，兩式直接相減就能消去 y。`)
     :'先把①、②其中一式乘上適當倍數，讓其中一個未知數的係數相等（或相反），再相加或相減消去它。';
-  const explain=same?`①${opp?'+':'－'}②消去 y：(${a1}${opp?'+':'－'}${a2})x = ${c1}${opp?'+':'－'}${c2}，解得 x = ${x0}，再代回①得 y = ${y0}。`
-    :`利用倍數讓 x 或 y 係數對齊後消去，解得 x = ${x0}, y = ${y0}（可代回①②驗算：${eq1}；${eq2}）。`;
+  const coefX=opp?a1+a2:a1-a2,rhs=opp?c1+c2:c1-c2;
+  const aY=c1-a1*x0; // 代回①求 y 用的中間值
+  const explain=same?
+    (`①${opp?'＋':'－'}②消去 y：<br>`
+    +`(${a1}${opp?'＋':'－'}${a2})x = ${c1} ${opp?'＋':'－'} (${c2})<br>`
+    +`${coefX}x = ${rhs}<br>`
+    +`x = ${rhs} ÷ ${coefX} = ${x0}<br>`
+    +`代回①：${b1}y = ${c1} － ${a1}×(${x0}) = ${aY}<br>`
+    +`y = ${aY} ÷ ${b1} = ${y0}`)
+    :(()=>{
+      const t1a=a1*x0,t1b=b1*y0,t2a=a2*x0,t2b=b2*y0;
+      return `先把①或②乘上適當倍數，讓 x（或 y）的係數對齊，相加或相減消去它，解得 x = ${x0}, y = ${y0}，代回驗算：<br>`
+        +`①：${a1}×(${x0}) ${b1<0?'－':'＋'} ${Math.abs(b1)}×(${y0}) = ${t1a} ${t1b<0?'－':'＋'} ${Math.abs(t1b)} = ${c1}　✅<br>`
+        +`②：${a2}×(${x0}) ${b2<0?'－':'＋'} ${Math.abs(b2)}×(${y0}) = ${t2a} ${t2b<0?'－':'＋'} ${Math.abs(t2b)} = ${c2}　✅`;
+    })();
   return {text,ans,options:ensure4(ans,cands),hint,explain};
 }
 function genElimMix(M){
@@ -190,27 +211,38 @@ function genElimMix(M){
   let eq2,hint,explain;
   if(numType==='int'){
     let a2,b2;
-    do{a2=R(1,M.max);b2=pick(M.neg?[-3,-2,-1,1,2,3]:[1,2,3]);}while(a2===a1&&b2===b1);
+    do{a2=R(1,M.max);b2=pick(M.neg?[-3,-2,-1,1,2,3]:[1,2,3]);}while((a2===a1&&b2===b1)||a1*b2===a2*b1);
     const c2=a2*x0+b2*y0;
     eq2=`${axby(a2,b2)} = ${c2}`;
     hint='先把①、②其中一式乘上適當倍數，讓其中一個未知數的係數相等（或相反），再相加或相減消去它。';
-    explain=`解聯立方程式得 x = ${x0}, y = ${y0}（代回①②可驗算：${eq1}；${eq2}）。`;
+    const t1a=a1*x0,t1b=b1*y0,t2a=a2*x0,t2b=b2*y0;
+    explain=`解聯立方程式可得 x = ${x0}, y = ${y0}，代回驗算：<br>`
+      +`①：${a1}×(${x0}) ${b1<0?'－':'＋'} ${Math.abs(b1)}×(${y0}) = ${t1a} ${t1b<0?'－':'＋'} ${Math.abs(t1b)} = ${c1}　✅<br>`
+      +`②：${a2}×(${x0}) ${b2<0?'－':'＋'} ${Math.abs(b2)}×(${y0}) = ${t2a} ${t2b<0?'－':'＋'} ${Math.abs(t2b)} = ${c2}　✅`;
   }else if(numType==='frac'){
     const d=pick([2,3,4]);
-    let p=R(1,d*2);if(Math.random()<0.5)p=-p;
-    let r=R(1,d*2);if(Math.random()<0.5)r=-r;
+    let p,r;
+    do{p=R(1,d*2);if(Math.random()<0.5)p=-p;r=R(1,d*2);if(Math.random()<0.5)r=-r;}while(a1*r===p*b1);
     const pf=mkFrac(p,d),rf=mkFrac(r,d);
     const c2=fracAdd(fracMulInt(pf,x0),fracMulInt(rf,y0));
     eq2=`${fracFirstFmt(pf,'x')}${fracFmt(rf,'y')} = ${fracStr(c2)}`;
     hint='②式有分數係數，先把②式兩邊同乘以分母的公倍數，變成整數係數，再用加減消去法解。';
-    explain=`②式先通分、乘開變成整數係數的方程式，再跟①式消去，解得 x = ${x0}, y = ${y0}。`;
+    const t1a=a1*x0,t1b=b1*y0,t2a=fracMulInt(pf,x0),t2b=fracMulInt(rf,y0);
+    explain=`②式先通分、乘開變成整數係數的方程式，再跟①式消去，解得 x = ${x0}, y = ${y0}，代回驗算：<br>`
+      +`①：${a1}×(${x0}) ${b1<0?'－':'＋'} ${Math.abs(b1)}×(${y0}) = ${t1a} ${t1b<0?'－':'＋'} ${Math.abs(t1b)} = ${c1}　✅<br>`
+      +`②：${fracStr(pf)}×(${x0}) ${rf.n<0?'－':'＋'} ${fracStr(mkFrac(Math.abs(rf.n),rf.d))}×(${y0}) = ${fracStr(t2a)} ${t2b.n<0?'－':'＋'} ${fracStr(mkFrac(Math.abs(t2b.n),t2b.d))} = ${fracStr(c2)}　✅`;
   }else{
     const mkT=()=>{let t;do{t=R(1,20);}while(t%10===0);return Math.random()<0.5?-t:t;};
-    const pt=mkT(),rt=mkT();
+    let pt,rt;
+    do{pt=mkT();rt=mkT();}while(a1*rt===pt*b1);
     const c2t=pt*x0+rt*y0;
     eq2=`${decFirstFmt(pt,'x')}${decFmt(rt,'y')} = ${decValStr(c2t)}`;
     hint='②式有小數係數，先把②式兩邊同乘以 10（或適當的 10 的倍數），變成整數係數，再用加減消去法解。';
-    explain=`②式先乘 10 變成整數係數的方程式，再跟①式消去，解得 x = ${x0}, y = ${y0}。`;
+    const dec1=t=>(t/10).toFixed(1);
+    const t1a=a1*x0,t1b=b1*y0,t2a=pt*x0,t2b=rt*y0;
+    explain=`②式先乘 10 變成整數係數的方程式，再跟①式消去，解得 x = ${x0}, y = ${y0}，代回驗算：<br>`
+      +`①：${a1}×(${x0}) ${b1<0?'－':'＋'} ${Math.abs(b1)}×(${y0}) = ${t1a} ${t1b<0?'－':'＋'} ${Math.abs(t1b)} = ${c1}　✅<br>`
+      +`②：${decValStr(pt)}×(${x0}) ${rt<0?'－':'＋'} ${decNum(rt)}×(${y0}) = ${dec1(t2a)} ${t2b<0?'－':'＋'} ${dec1(Math.abs(t2b))} = ${decValStr(c2t)}　✅`;
   }
   const askX=Math.random()<0.5;
   const text=`①${eq1}　②${eq2}　解聯立方程式，求出 ${askX?'x':'y'} 的值。`;
@@ -322,9 +354,9 @@ function finish(){
     $('#e-stars').textContent='';
     $('#e-info').textContent=`成功答對 ${right}/${total} 題。`+(right==total?'全部融會貫通！':'再接再厲！');
   }else{
-    $('#e-title').textContent=fail?'💔 收服失敗':'🎉 收服成功';
+    $('#e-title').textContent=fail?'🏃 怪物逃跑了！':'🎉 收服成功';
     $('#e-stars').textContent=fail?'':'⭐'.repeat(stars)+'☆'.repeat(3-stars);
-    const rankName=fail?'':['','見習召喚師','中階召喚師','菁英召喚師'][stars];
+    const rankName=fail?'再挑戰一次，就能收服牠！':['','見習召喚師','中階召喚師','菁英召喚師'][stars];
     $('#e-info').textContent=(rankName?rankName+'　':'')+`靈力 ${score}　答對 ${right}/${total}　剩餘生命 ${hearts} 顆心`;
   }
   const j=$('#e-jail');j.innerHTML='';

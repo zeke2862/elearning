@@ -15,7 +15,7 @@ button{font:inherit;cursor:pointer;color:inherit}
 button:focus-visible{outline:3px solid var(--bronze);outline-offset:2px}
 .card{background:var(--ink2);border:2px solid var(--line);border-radius:14px;padding:18px}
 .btn{background:var(--bronze);color:#2a1d05;border:0;border-radius:10px;padding:12px 22px;font-weight:700;font-size:1.05rem}
-.btn.ghost{background:transparent;color:var(--bronze);border:2px solid var(--bronze)}
+.btn.ghost{background:#2b2a3c;color:#f0cf85;border:2px solid var(--bronze)}
 .modes{display:grid;gap:10px;margin:16px 0}
 .mode{text-align:left;background:var(--ink);border:2px solid var(--line);border-radius:12px;padding:12px 14px}
 .mode.on{border-color:var(--bronze);background:#2b2a3c}
@@ -129,11 +129,24 @@ const PAIRS=[[2,3],[2,5],[3,4],[3,5],[2,7],[4,5],[3,7],[5,6]];
 function ensure4(ans,cands){
   const s=new Set([ans]);
   for(const c of cands){const cs=String(c);if(s.size<4&&cs!==ans&&cs.trim()!=='')s.add(cs);}
+  /* 誘答選項不夠時：答案不是純數字就「改動答案裡的一個數字」補齊（例如 (5, 5)→(5, 4)），不再塞無關的 -5、6 */
+  if(s.size<4&&!/^-?\d+(\.\d+)?$/.test(String(ans))){
+    const str=String(ans),vars=[],re=/\d+(?:\.\d+)?/g;let mm;
+    while((mm=re.exec(str))!==null){for(const d of [1,-1,2,-2,3,-3]){const nv=Number(mm[0])+d;if(nv<0)continue;const dec=(mm[0].split('.')[1]||'').length;vars.push(str.slice(0,mm.index)+(dec?nv.toFixed(dec):nv)+str.slice(mm.index+mm[0].length));}}
+    for(let i=vars.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[vars[i],vars[j]]=[vars[j],vars[i]];}
+    for(const v of vars){if(s.size>=4)break;if(!s.has(v))s.add(v);}
+  }
   let g=1;
   while(s.size<4){const v=(Number(ans)||0)+(g%2===0?g/2+5:-(Math.ceil(g/2)+4));const vs=String(v);if(!s.has(vs))s.add(vs);g++;}
   return sh([...s]);
 }
 
+// 情境庫：兩種面額／單價找非負整數解，涵蓋郵票、硬幣、票券等不同故事
+const COUNTSOL_SCENES=[
+  (a,b)=>`兩種郵票，面額分別是 ${a} 元與 ${b} 元。`,
+  (a,b)=>`撲滿裡只有 ${a} 元與 ${b} 元兩種硬幣。`,
+  (a,b)=>`園遊會有兩種代幣券，面額分別是 ${a} 元與 ${b} 元。`,
+];
 function genCountsol(M){
   let [a,b]=pick(PAIRS);
   if(Math.random()<0.5)[a,b]=[b,a];
@@ -141,7 +154,8 @@ function genCountsol(M){
   const r=R(0,b-1);
   const X0=(N-1)*b+r;
   const c=a*X0;
-  const text=`兩種郵票，面額分別是 ${a} 元與 ${b} 元。若貼了 x 張 ${a} 元郵票、y 張 ${b} 元郵票，總郵資恰好是 ${c} 元（即 ${a}x + ${b}y = ${c}），且 x、y 都是非負整數，請問共有幾種貼法？`;
+  const scene=pick(COUNTSOL_SCENES)(a,b);
+  const text=`${scene}若用了 x 個 ${a} 元的、y 個 ${b} 元的，總金額恰好是 ${c} 元（即 ${a}x + ${b}y = ${c}），且 x、y 都是非負整數，請問共有幾種組合方式？`;
   const ans=String(N);
   const opts=ensure4(ans,[N-1,N+1,N+2,N-2].filter(v=>v>=1));
   let list='';
@@ -157,7 +171,12 @@ function genFind(M){
   const known=askX?y0:x0,correct=askX?x0:y0;
   const knownName=askX?'y':'x',findName=askX?'x':'y';
   const coefKnown=askX?b:a,coefFind=askX?a:b;
-  const text=`小發文具社賣兩種筆記本，甲款每本 ${a} 元、乙款每本 ${b} 元。小美買了 ${knownName}=${known} 本${askX?'乙':'甲'}款，兩款合計花費 ${c} 元（即 ${a}x + ${b}y = ${c}），求她買了幾本${askX?'甲':'乙'}款（${findName} 的值）？`;
+  const SCENES=[
+    ()=>`小發文具社賣兩種筆記本，甲款每本 ${a} 元、乙款每本 ${b} 元。小美買了 ${knownName}=${known} 本${askX?'乙':'甲'}款，兩款合計花費 ${c} 元（即 ${a}x + ${b}y = ${c}），求她買了幾本${askX?'甲':'乙'}款（${findName} 的值）？`,
+    ()=>`飲料店賣兩種杯型，大杯 ${a} 元、小杯 ${b} 元。這一天賣出 ${knownName}=${known} 杯${askX?'小':'大'}杯，兩種合計收入 ${c} 元（即 ${a}x + ${b}y = ${c}），求賣出了幾杯${askX?'大':'小'}杯（${findName} 的值）？`,
+    ()=>`書店裡漫畫每本 ${a} 元、小說每本 ${b} 元。小華買了 ${knownName}=${known} 本${askX?'小說':'漫畫'}，兩種合計花費 ${c} 元（即 ${a}x + ${b}y = ${c}），求他買了幾本${askX?'漫畫':'小說'}（${findName} 的值）？`,
+  ];
+  const text=pick(SCENES)();
   const ans=String(correct);
   const forgetDivide=c-coefKnown*known; // 誘答：忘記除以係數
   const cands=[String(known),String(forgetDivide),String(correct+pick([-2,-1,1,2])),String(correct+pick([-3,3]))];
@@ -267,9 +286,9 @@ function finish(){
     $('#e-stars').textContent='';
     $('#e-info').textContent=`成功答對 ${right}/${total} 題。`+(right==total?'全部融會貫通！':'再接再厲！');
   }else{
-    $('#e-title').textContent=fail?'💔 收服失敗':'🎉 收服成功';
+    $('#e-title').textContent=fail?'🏃 怪物逃跑了！':'🎉 收服成功';
     $('#e-stars').textContent=fail?'':'⭐'.repeat(stars)+'☆'.repeat(3-stars);
-    const rankName=fail?'':['','見習召喚師','中階召喚師','菁英召喚師'][stars];
+    const rankName=fail?'再挑戰一次，就能收服牠！':['','見習召喚師','中階召喚師','菁英召喚師'][stars];
     $('#e-info').textContent=(rankName?rankName+'　':'')+`靈力 ${score}　答對 ${right}/${total}　剩餘生命 ${hearts} 顆心`;
   }
   const j=$('#e-jail');j.innerHTML='';

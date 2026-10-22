@@ -15,7 +15,7 @@ button{font:inherit;cursor:pointer;color:inherit}
 button:focus-visible{outline:3px solid var(--bronze);outline-offset:2px}
 .card{background:var(--ink2);border:2px solid var(--line);border-radius:14px;padding:18px}
 .btn{background:var(--bronze);color:#2a1d05;border:0;border-radius:10px;padding:12px 22px;font-weight:700;font-size:1.05rem}
-.btn.ghost{background:transparent;color:var(--bronze);border:2px solid var(--bronze)}
+.btn.ghost{background:#2b2a3c;color:#f0cf85;border:2px solid var(--bronze)}
 .modes{display:grid;gap:10px;margin:16px 0}
 .mode{text-align:left;background:var(--ink);border:2px solid var(--line);border-radius:12px;padding:12px 14px}
 .mode.on{border-color:var(--bronze);background:#2b2a3c}
@@ -123,48 +123,73 @@ const R=(a,b)=>Math.floor(Math.random()*(b-a+1))+a;
 const pick=a=>a[R(0,a.length-1)];
 const sh=a=>a.map(v=>[Math.random(),v]).sort((x,y)=>x[0]-y[0]).map(x=>x[1]);
 const MODES={easy:{t:0,max:6},real:{t:25,max:9},hard:{t:18,max:12}};
-const PLAN=['puzzle','ticket','fruit','age','puzzle','ticket','age','fruit','puzzle','age'];
+const PLAN=['sumdiff','price','sumdiff','price','sumdiff','price','sumdiff','price','sumdiff','price'];
 
-function genAge(M){
+/* ---------- 結構一：和差問題（兩個量的「和」與「差」都給你，設 x、y 用加減消去法）---------- */
+// 每個情境給 na（x 代表誰／什麼）、nb（y 代表誰／什麼）、unit（單位）跟一句題目敘述，
+// 這樣同樣是「和差題」，玩家每次看到的故事、單位都不一樣，不是只有數字在變。
+const SUMDIFF=[
+  (S,D,askA)=>({na:'姊姊',nb:'妹妹',unit:'歲',
+    text:`姊姊和妹妹的年齡和是 ${S} 歲，姊姊比妹妹大 ${D} 歲。求${askA?'姊姊':'妹妹'}幾歲？`}),
+  (S,D,askA)=>({na:'哥哥',nb:'弟弟',unit:'元',
+    text:`哥哥和弟弟這個月的零用錢合計 ${S} 元，哥哥比弟弟多 ${D} 元。求${askA?'哥哥':'弟弟'}這個月領了多少零用錢？`}),
+  (S,D,askA)=>({na:'一班',nb:'二班',unit:'人',
+    text:`園遊會擺攤，一班和二班參加擺攤的人數共 ${S} 人，一班比二班多 ${D} 人。求${askA?'一班':'二班'}有幾人參加擺攤？`}),
+  (S,D,askA)=>({na:'男生',nb:'女生',unit:'人',
+    text:`班際籃球賽報名表上，男生比女生多報名 ${D} 人，男生、女生合計報名了 ${S} 人。求報名的${askA?'男生':'女生'}有幾人？`}),
+  (S,D,askA)=>({na:'第一天',nb:'第二天',unit:'人',
+    text:`校外教學分兩天出遊，兩天參加的總人數是 ${S} 人，第一天比第二天多 ${D} 人。求${askA?'第一天':'第二天'}參加了幾人？`}),
+];
+function genSumdiff(M){
   const y0=R(5,M.max*2+4),D=R(1,M.max);
   const x0=y0+D,S=x0+y0;
-  const askOlder=Math.random()<0.5;
-  const text=`小明和弟弟的年齡和是 ${S} 歲，小明比弟弟大 ${D} 歲。求${askOlder?'小明':'弟弟'}幾歲？`;
-  const correct=askOlder?x0:y0,other=askOlder?y0:x0;
-  return mkResult(text,correct,other,S,`設小明 x 歲、弟弟 y 歲，列出①x+y=${S}　②x－y=${D}，兩式相加可消去 y，直接求出 x。`,
+  const askA=Math.random()<0.5;
+  const sc=pick(SUMDIFF)(S,D,askA);
+  const correct=askA?x0:y0,other=askA?y0:x0;
+  return mkResult(sc.text,correct,other,S,
+    `設${sc.na} x（${sc.unit}）、${sc.nb} y（${sc.unit}），列出①x+y=${S}　②x－y=${D}，兩式相加可消去 y，直接求出 x。`,
     `①＋②消去 y：2x = ${S+D}，解得 x = ${x0}；代回①得 y = ${y0}。`);
 }
-function genPuzzle(M){
-  const x0=R(3,M.max),y0=R(1,Math.max(3,Math.floor(M.max/2)));
-  let N1,N2;do{N1=R(3,M.max);N2=R(3,M.max);}while(N1===N2);
-  const L1=x0+(N1-1)*y0,L2=x0+(N2-1)*y0;
-  const askX=Math.random()<0.5;
-  const text=`玩具工廠將拼圖緊密排列：${N1} 片排列後總長 ${L1} 公分，${N2} 片排列後總長 ${L2} 公分。設每片拼圖本體長 x 公分、凸起接頭長 y 公分（緊密排列時：總長 = x + (片數－1)×y），求 ${askX?'每片本體長 x':'凸起接頭長 y'}（公分）。`;
-  const correct=askX?x0:y0,other=askX?y0:x0;
-  return mkResult(text,correct,other,L1,`設本體長 x、凸起長 y，列出①x+${N1-1}y=${L1}　②x+${N2-1}y=${L2}，兩式相減可消去 x（或 y）求解。`,
-    `①－②消去 x：${(N1-N2)}y = ${L1-L2}，解得 y = ${y0}；代回①得 x = ${x0}。`);
-}
-function genTicket(M){
+
+/* ---------- 結構二：總量＋總價問題（兩種東西各買多少、單價多少，給總數量與總花費）---------- */
+// 每個情境給 n1／n2（兩種東西的名字）、unit（單位）、scene（場景），以及怎麼問「買了幾個」的說法，
+// 涵蓋買東西、餐盤（自助餐）計價、活動人數計費等不同故事，數學架構相同但敘述方式不一樣。
+const PRICE=[
+  (p1,p2,N,T,askX,unit)=>({n1:'大人票',n2:'小孩票',
+    text:`園遊會門票：大人票每張 ${p1} 元、小孩票每張 ${p2} 元。某班師生共買了 ${N} 張門票，總共花費 ${T} 元。求買了 ${askX?'大人票':'小孩票'} 幾張？`}),
+  (p1,p2,N,T,askX)=>({n1:'全票',n2:'學生票',
+    text:`電影院：全票每張 ${p1} 元、學生票每張 ${p2} 元。這場電影共賣出 ${N} 張票，票房收入 ${T} 元。求賣出了${askX?'全票':'學生票'}幾張？`}),
+  (p1,p2,N,T,askX)=>({n1:'蘋果',n2:'橘子',
+    text:`水果攤：蘋果每公斤 ${p1} 元、橘子每公斤 ${p2} 元。小華共買了 ${N} 公斤水果，總共花費 ${T} 元。求買了${askX?'蘋果':'橘子'}幾公斤？`}),
+  (p1,p2,N,T,askX)=>({n1:'原子筆',n2:'鉛筆',
+    text:`文具店：原子筆一支 ${p1} 元、鉛筆一支 ${p2} 元。老師一共買了 ${N} 支文具當獎品，總共花費 ${T} 元。求買了${askX?'原子筆':'鉛筆'}幾支？`}),
+  (p1,p2,N,T,askX)=>({n1:'排骨飯',n2:'素食飯',
+    text:`自助餐店：排骨飯一份 ${p1} 元、素食飯一份 ${p2} 元。全班訂了 ${N} 份餐盒當班遊午餐，總共花費 ${T} 元。求訂了${askX?'排骨飯':'素食飯'}幾份？`}),
+  (p1,p2,N,T,askX)=>({n1:'大杯珍奶',n2:'小杯珍奶',
+    text:`飲料店：大杯珍奶一杯 ${p1} 元、小杯珍奶一杯 ${p2} 元。班費採購了 ${N} 杯飲料當獎勵，總共花費 ${T} 元。求買了${askX?'大杯':'小杯'}珍奶幾杯？`}),
+  (p1,p2,N,T,askX)=>({n1:'第一梯次',n2:'第二梯次',
+    text:`校外教學分梯次報名：第一梯次每人 ${p1} 元、第二梯次每人 ${p2} 元。全年級共 ${N} 人報名，總收費 ${T} 元。求報名${askX?'第一':'第二'}梯次的有幾人？`}),
+];
+function genPrice(M){
   const p2=R(1,M.max)*5,dp=R(1,3)*5,p1=p2+dp;
   const x0=R(1,M.max),y0=R(1,M.max),N=x0+y0,T=p1*x0+p2*y0;
   const askX=Math.random()<0.5;
-  const text=`園遊會門票：大人票每張 ${p1} 元、小孩票每張 ${p2} 元。某班師生共買了 ${N} 張門票，總共花費 ${T} 元。求買了 ${askX?'大人票':'小孩票'} 幾張？`;
+  const sc=pick(PRICE)(p1,p2,N,T,askX);
   const correct=askX?x0:y0,other=askX?y0:x0;
-  return mkResult(text,correct,other,N,`設大人票 x 張、小孩票 y 張，列出①x+y=${N}　②${p1}x+${p2}y=${T}，用代入或加減消去法求解。`,
+  return mkResult(sc.text,correct,other,N,
+    `設${sc.n1} x、${sc.n2} y，列出①x+y=${N}　②${p1}x+${p2}y=${T}，用代入或加減消去法求解。`,
     `由①得 y=${N}－x，代入②：${p1}x + ${p2}(${N}－x) = ${T}，解得 x = ${x0}，y = ${y0}。`);
-}
-function genFruit(M){
-  const pb=R(1,M.max)*5,dp=R(1,3)*5,pa=pb+dp;
-  const x0=R(1,M.max),y0=R(1,M.max),W=x0+y0,T=pa*x0+pb*y0;
-  const askX=Math.random()<0.5;
-  const text=`水果攤：蘋果每公斤 ${pa} 元、橘子每公斤 ${pb} 元。小華共買了 ${W} 公斤水果，總共花費 ${T} 元。求買了${askX?'蘋果':'橘子'}幾公斤？`;
-  const correct=askX?x0:y0,other=askX?y0:x0;
-  return mkResult(text,correct,other,W,`設蘋果 x 公斤、橘子 y 公斤，列出①x+y=${W}　②${pa}x+${pb}y=${T}，用代入或加減消去法求解。`,
-    `由①得 y=${W}－x，代入②：${pa}x + ${pb}(${W}－x) = ${T}，解得 x = ${x0}，y = ${y0}。`);
 }
 function ensure4(ans,cands){
   const s=new Set([ans]);
   for(const c of cands){const cs=String(c);if(s.size<4&&cs!==ans&&cs.trim()!=='')s.add(cs);}
+  /* 誘答選項不夠時：答案不是純數字就「改動答案裡的一個數字」補齊（例如 (5, 5)→(5, 4)），不再塞無關的 -5、6 */
+  if(s.size<4&&!/^-?\d+(\.\d+)?$/.test(String(ans))){
+    const str=String(ans),vars=[],re=/\d+(?:\.\d+)?/g;let mm;
+    while((mm=re.exec(str))!==null){for(const d of [1,-1,2,-2,3,-3]){const nv=Number(mm[0])+d;if(nv<0)continue;const dec=(mm[0].split('.')[1]||'').length;vars.push(str.slice(0,mm.index)+(dec?nv.toFixed(dec):nv)+str.slice(mm.index+mm[0].length));}}
+    for(let i=vars.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[vars[i],vars[j]]=[vars[j],vars[i]];}
+    for(const v of vars){if(s.size>=4)break;if(!s.has(v))s.add(v);}
+  }
   let g=1;
   while(s.size<4){const v=(Number(ans)||0)+(g%2===0?g/2+3:-(Math.ceil(g/2)+2));const vs=String(v);if(!s.has(vs)&&Number(vs)>=0)s.add(vs);g++;}
   return sh([...s]);
@@ -176,10 +201,8 @@ function mkResult(text,correct,other,total,hint,explain){
 }
 function gen(t){
   const M=MODES[mode];
-  if(t==='puzzle')return genPuzzle(M);
-  if(t==='ticket')return genTicket(M);
-  if(t==='age')return genAge(M);
-  return genFruit(M);
+  if(t==='sumdiff')return genSumdiff(M);
+  return genPrice(M);
 }
 
 const EMB=window.parent!==window,SID='1-3-1';
@@ -280,9 +303,9 @@ function finish(){
     $('#e-stars').textContent='';
     $('#e-info').textContent=`成功答對 ${right}/${total} 題。`+(right==total?'全部融會貫通！':'再接再厲！');
   }else{
-    $('#e-title').textContent=fail?'💔 收服失敗':'🎉 收服成功';
+    $('#e-title').textContent=fail?'🏃 怪物逃跑了！':'🎉 收服成功';
     $('#e-stars').textContent=fail?'':'⭐'.repeat(stars)+'☆'.repeat(3-stars);
-    const rankName=fail?'':['','見習召喚師','中階召喚師','傳說金幣獵人'][stars];
+    const rankName=fail?'再挑戰一次，就能收服牠！':['','見習召喚師','中階召喚師','傳說金幣獵人'][stars];
     $('#e-info').textContent=(rankName?rankName+'　':'')+`靈力 ${score}　答對 ${right}/${total}　剩餘生命 ${hearts} 顆心`;
   }
   const j=$('#e-jail');j.innerHTML='';
