@@ -1,7 +1,104 @@
-/* game-config.js ── 全遊戲數值設定檔（由數值修改器產生於 2026/10/18 下午2:03:44）
+/* game-config.js ── 全遊戲數值設定檔（由數值修改器產生於 2026/10/18 上午11:49:48）
    用法：覆蓋遊戲資料夾裡的 game-config.js，學生重新整理即可套用。 */
 window.GAME_CONFIG_DEFAULT = {
+ "relax": {
+  "enabled": 1,
+  "every": 5,
+  "streak": 5,
+  "level": "easy",
+  "dailyRewardLimit": 6,
+  "excludeGames": "",
+  "rewardItems": {
+   "heal_s": 30,
+   "heal_m": 20,
+   "heal_l": 5,
+   "shield_s": 15,
+   "shield_m": 6,
+   "shield_l": 2,
+   "speed_s": 10,
+   "revive_m": 12,
+   "mb_s": 8
+  }
+ },
  "gifts": [],
+ "poses": {
+  "0": {
+   "idle": "images/pose/rank0-idle.png",
+   "attack": "images/pose/rank0-attack.png",
+   "hit": "images/pose/rank0-hit.png",
+   "win": "images/pose/rank0-win.png"
+  },
+  "1": {
+   "idle": "",
+   "attack": "",
+   "hit": "",
+   "win": ""
+  },
+  "2": {
+   "idle": "",
+   "attack": "",
+   "hit": "",
+   "win": ""
+  },
+  "3": {
+   "idle": "",
+   "attack": "",
+   "hit": "",
+   "win": ""
+  },
+  "4": {
+   "idle": "",
+   "attack": "",
+   "hit": "",
+   "win": ""
+  },
+  "5": {
+   "idle": "",
+   "attack": "",
+   "hit": "",
+   "win": ""
+  },
+  "6": {
+   "idle": "",
+   "attack": "",
+   "hit": "",
+   "win": ""
+  }
+ },
+ "rig": {
+  "height": 72, "shoulderX": 0.6945, "shoulderY": 0.4,
+  "pivotX": 0.165, "pivotY": 0.482, "armScale": 1.86,
+  "restAngle": 0, "raiseAngle": -72, "slashAngle": 58,
+  "raiseMs": 260, "slashMs": 130, "backMs": 300,
+  "tipX": 545, "tipY": 167, "guardX": 332, "guardY": 372, "trail": 1
+ },
+  "skillLab": {
+  "tiers": [
+   { "name": "粗胚", "uses": 40, "dmg": 0.5, "stat": 0.1,  "heal": 0.1,  "poison": 0.02, "blind": 0.15, "prob": 40 },
+   { "name": "普通", "uses": 20, "dmg": 0.9, "stat": 0.18, "heal": 0.18, "poison": 0.03, "blind": 0.22, "prob": 28 },
+   { "name": "精良", "uses": 15, "dmg": 1.3, "stat": 0.28, "heal": 0.28, "poison": 0.04, "blind": 0.3,  "prob": 18 },
+   { "name": "強力", "uses": 10, "dmg": 1.8, "stat": 0.42, "heal": 0.42, "poison": 0.06, "blind": 0.38, "prob": 10 },
+   { "name": "傳說", "uses": 5,  "dmg": 2.6, "stat": 0.6,  "heal": 0.6,  "poison": 0.08, "blind": 0.45, "prob": 4 }
+  ],
+  "upCap": 1,
+  "dnCap": 0.5,
+  "layerCap": 3,
+  "healCapHp": 0.6,
+  "healCapMp": 0.6,
+  "poisonLayerCap": 3,
+  "poisonTurns": 3,
+  "blindTurns": 2,
+  "mpPerTier": 15,
+  "bagMax": 12,
+  "baseCost": 500,
+  "costStep": 500,
+  "aiSkillProb": 0.5,
+  "effWeight": {
+   "dmg": 22, "up_atk": 8, "up_def": 7, "up_matk": 8, "up_mdef": 7, "up_spd": 8,
+   "dn_atk": 6, "dn_def": 5, "dn_matk": 6, "dn_mdef": 5, "dn_spd": 6,
+   "heal_hp": 8, "heal_mp": 6, "poison": 8, "blind": 6
+  }
+ },
  "stars": {
   "easy": [
    {
@@ -748,7 +845,7 @@ window.GAME_CONFIG_DEFAULT = {
     "emoji": "🐱",
     "pet": true
    },
-   "file": "pet16"
+   "file": "pet-cat"
   },
   {
    "id": "acc_5",
@@ -762,7 +859,7 @@ window.GAME_CONFIG_DEFAULT = {
     "emoji": "🦉",
     "pet": true
    },
-   "file": "pet13"
+   "file": "pet-owl"
   },
   {
    "id": "acc_8",
@@ -776,189 +873,7 @@ window.GAME_CONFIG_DEFAULT = {
     "emoji": "🐉",
     "pet": true
    },
-   "file": "pet5"
-  },
-  {
-   "id": "acc_9",
-   "cat": "acc",
-   "icon": "🐉",
-   "name": "鼠",
-   "price": 9000,
-   "desc": "夥伴：站在勇者旁邊的鼠",
-   "cos": {
-    "slot": "acc",
-    "emoji": "🐉",
-    "pet": true
-   },
-   "file": "pet1"
-  },
-  {
-   "id": "acc_10",
-   "cat": "acc",
-   "icon": "🐉",
-   "name": "牛",
-   "price": 9000,
-   "desc": "夥伴：站在勇者旁邊的牛",
-   "cos": {
-    "slot": "acc",
-    "emoji": "🐉",
-    "pet": true
-   },
-   "file": "pet2"
-  },
-  {
-   "id": "acc_11",
-   "cat": "acc",
-   "icon": "🐉",
-   "name": "虎",
-   "price": 9000,
-   "desc": "夥伴：站在勇者旁邊的虎",
-   "cos": {
-    "slot": "acc",
-    "emoji": "🐉",
-    "pet": true
-   },
-   "file": "pet3"
-  },
-  {
-   "id": "acc_12",
-   "cat": "acc",
-   "icon": "🐉",
-   "name": "兔",
-   "price": 9000,
-   "desc": "夥伴：站在勇者旁邊的兔",
-   "cos": {
-    "slot": "acc",
-    "emoji": "🐉",
-    "pet": true
-   },
-   "file": "pet4"
-  },
-  {
-   "id": "acc_13",
-   "cat": "acc",
-   "icon": "🐉",
-   "name": "蛇",
-   "price": 9000,
-   "desc": "夥伴：站在勇者旁邊的蛇",
-   "cos": {
-    "slot": "acc",
-    "emoji": "🐉",
-    "pet": true
-   },
-   "file": "pet6"
-  },
-  {
-   "id": "acc_14",
-   "cat": "acc",
-   "icon": "🐉",
-   "name": "馬",
-   "price": 9000,
-   "desc": "夥伴：站在勇者旁邊的馬",
-   "cos": {
-    "slot": "acc",
-    "emoji": "🐉",
-    "pet": true
-   },
-   "file": "pet7"
-  },
-  {
-   "id": "acc_15",
-   "cat": "acc",
-   "icon": "🐉",
-   "name": "羊",
-   "price": 9000,
-   "desc": "夥伴：站在勇者旁邊的羊",
-   "cos": {
-    "slot": "acc",
-    "emoji": "🐉",
-    "pet": true
-   },
-   "file": "pet8"
-  },
-  {
-   "id": "acc_16",
-   "cat": "acc",
-   "icon": "🐉",
-   "name": "猴",
-   "price": 9000,
-   "desc": "夥伴：站在勇者旁邊的猴",
-   "cos": {
-    "slot": "acc",
-    "emoji": "🐉",
-    "pet": true
-   },
-   "file": "pet9"
-  },
-  {
-   "id": "acc_17",
-   "cat": "acc",
-   "icon": "🐉",
-   "name": "雞",
-   "price": 9000,
-   "desc": "夥伴：站在勇者旁邊的雞",
-   "cos": {
-    "slot": "acc",
-    "emoji": "🐉",
-    "pet": true
-   },
-   "file": "pet10"
-  },
-  {
-   "id": "acc_18",
-   "cat": "acc",
-   "icon": "🐉",
-   "name": "狗",
-   "price": 9000,
-   "desc": "夥伴：站在勇者旁邊的狗",
-   "cos": {
-    "slot": "acc",
-    "emoji": "🐉",
-    "pet": true
-   },
-   "file": "pet11"
-  },
-  {
-   "id": "acc_19",
-   "cat": "acc",
-   "icon": "🐉",
-   "name": "豬",
-   "price": 9000,
-   "desc": "夥伴：站在勇者旁邊的豬",
-   "cos": {
-    "slot": "acc",
-    "emoji": "🐉",
-    "pet": true
-   },
-   "file": "pet12"
-  },
-  {
-   "id": "acc_20",
-   "cat": "acc",
-   "icon": "🐉",
-   "name": "貓熊",
-   "price": 9000,
-   "desc": "夥伴：站在勇者旁邊的貓熊",
-   "cos": {
-    "slot": "acc",
-    "emoji": "🐉",
-    "pet": true
-   },
-   "file": "pet14"
-  },
-  {
-   "id": "acc_21",
-   "cat": "acc",
-   "icon": "🐉",
-   "name": "小象",
-   "price": 9000,
-   "desc": "夥伴：站在勇者旁邊的小象",
-   "cos": {
-    "slot": "acc",
-    "emoji": "🐉",
-    "pet": true
-   },
-   "file": "pet15"
+   "file": "pet-dragon"
   },
   {
    "id": "rename",
@@ -1247,7 +1162,7 @@ window.GAME_CONFIG_DEFAULT = {
    "name": "光之翅膀",
    "price": 6000,
    "desc": "背後特效：在勇者背後展開光之翅膀（放在人物後面，不會蓋住人物）",
-   "file": "wings-light2",
+   "file": "wings-light",
    "cos": {
     "slot": "back",
     "kind": "wings",
@@ -1262,7 +1177,7 @@ window.GAME_CONFIG_DEFAULT = {
    "name": "暗影之翼",
    "price": 9000,
    "desc": "背後特效：在勇者背後展開暗影之翼",
-   "file": "wings-shadow2",
+   "file": "wings-shadow",
    "cos": {
     "slot": "back",
     "kind": "wings",
@@ -1281,66 +1196,6 @@ window.GAME_CONFIG_DEFAULT = {
    "cos": {
     "slot": "back",
     "kind": "halo",
-    "c1": "#ffd86b",
-    "c2": "#fff3c0"
-   }
-  },
-  {
-   "id": "bk_4",
-   "cat": "back",
-   "icon": "😇",
-   "name": "天使翅膀",
-   "price": 4000,
-   "desc": "背後特效：勇者身後長出天使翅膀",
-   "file": "wings-light1",
-   "cos": {
-    "slot": "back",
-    "kind": "wings",
-    "c1": "#ffd86b",
-    "c2": "#fff3c0"
-   }
-  },
-  {
-   "id": "bk_5",
-   "cat": "back",
-   "icon": "😇",
-   "name": "惡魔翅膀",
-   "price": 4000,
-   "desc": "背後特效：勇者身後長出惡魔翅膀",
-   "file": "wings-shadow1",
-   "cos": {
-    "slot": "back",
-    "kind": "wings",
-    "c1": "#ffd86b",
-    "c2": "#fff3c0"
-   }
-  },
-  {
-   "id": "bk_6",
-   "cat": "back",
-   "icon": "😇",
-   "name": "??翅膀",
-   "price": 400,
-   "desc": "背後特效：勇者身後長出??翅膀",
-   "file": "wings-shadow",
-   "cos": {
-    "slot": "back",
-    "kind": "wings",
-    "c1": "#ffd86b",
-    "c2": "#fff3c0"
-   }
-  },
-  {
-   "id": "bk_7",
-   "cat": "back",
-   "icon": "😇",
-   "name": "??翅膀",
-   "price": 400,
-   "desc": "背後特效：勇者身後長出??翅膀",
-   "file": "wings-light",
-   "cos": {
-    "slot": "back",
-    "kind": "wings",
     "c1": "#ffd86b",
     "c2": "#fff3c0"
    }
@@ -1454,7 +1309,102 @@ window.GAME_CONFIG_DEFAULT = {
  }
 };
 window.GAME_CONFIG_LABELS = {
+ "relax": "🎮 休息小遊戲（答題中場）",
+ "relax.enabled": "休息小遊戲開關（1＝開、0＝關）",
+ "relax.every": "每答幾題就跳出一款小遊戲",
+ "relax.streak": "連續答對幾題也會跳出（0＝不使用）；和上一項先到先觸發",
+ "relax.level": "電腦強度起點（easy 簡單／normal 中等／hard 困難）；之後會依該款的勝場自動調整",
+ "relax.dailyRewardLimit": "每人每天最多領幾次小遊戲道具（領滿後當天不再跳小遊戲；0＝不限）",
+ "relax.excludeGames": "不要出現的小遊戲代號，用逗號分開（例：xiangqi,go9,checkers）。可用代號：go9 gomoku9 reversi hexxagon snake catmouse minesweeper checkers memory banqi xiangqi pickupred upstairs downstairs whack oldmaid sevens",
+ "relax.rewardItems": "贏了送的商店道具與抽中權重（數字越大越容易抽到；0＝不送）",
+ "relax.rewardItems.heal_s": "小補血瓶 權重",
+ "relax.rewardItems.heal_m": "中補血瓶 權重",
+ "relax.rewardItems.heal_l": "大補血瓶 權重",
+ "relax.rewardItems.shield_s": "小護盾 權重",
+ "relax.rewardItems.shield_m": "中護盾 權重",
+ "relax.rewardItems.shield_l": "城牆護盾 權重",
+ "relax.rewardItems.speed_s": "疾風藥水 權重",
+ "relax.rewardItems.revive_m": "戰場復活藥 權重",
+ "relax.rewardItems.mb_s": "戰功加成券 權重",
  "gifts": "🎁 獎勵發放（戰功／道具／經驗值／寶箱，學生進遊戲自動收到）",
+ "skillLab": "🔮 招式工坊（學生自己研發、替換對戰八格的招式）",
+ "poses": "🎭 對戰姿勢圖（依軍階：待機／出招／受擊／勝利；空白＝沿用原頭像）",
+ "poses.0": "軍階 0 的四姿勢圖",
+ "poses.0.idle": "待機姿勢圖檔",
+ "poses.0.attack": "出招姿勢圖檔",
+ "poses.0.hit": "受擊姿勢圖檔",
+ "poses.0.win": "勝利姿勢圖檔",
+ "poses.1": "軍階 1 的四姿勢圖",
+ "poses.1.idle": "待機姿勢圖檔",
+ "poses.1.attack": "出招姿勢圖檔",
+ "poses.1.hit": "受擊姿勢圖檔",
+ "poses.1.win": "勝利姿勢圖檔",
+ "poses.2": "軍階 2 的四姿勢圖",
+ "poses.2.idle": "待機姿勢圖檔",
+ "poses.2.attack": "出招姿勢圖檔",
+ "poses.2.hit": "受擊姿勢圖檔",
+ "poses.2.win": "勝利姿勢圖檔",
+ "poses.3": "軍階 3 的四姿勢圖",
+ "poses.3.idle": "待機姿勢圖檔",
+ "poses.3.attack": "出招姿勢圖檔",
+ "poses.3.hit": "受擊姿勢圖檔",
+ "poses.3.win": "勝利姿勢圖檔",
+ "poses.4": "軍階 4 的四姿勢圖",
+ "poses.4.idle": "待機姿勢圖檔",
+ "poses.4.attack": "出招姿勢圖檔",
+ "poses.4.hit": "受擊姿勢圖檔",
+ "poses.4.win": "勝利姿勢圖檔",
+ "poses.5": "軍階 5 的四姿勢圖",
+ "poses.5.idle": "待機姿勢圖檔",
+ "poses.5.attack": "出招姿勢圖檔",
+ "poses.5.hit": "受擊姿勢圖檔",
+ "poses.5.win": "勝利姿勢圖檔",
+ "poses.6": "軍階 6 的四姿勢圖",
+ "poses.6.idle": "待機姿勢圖檔",
+ "poses.6.attack": "出招姿勢圖檔",
+ "poses.6.hit": "受擊姿勢圖檔",
+ "poses.6.win": "勝利姿勢圖檔",
+ "rig": "🗡️ 揮劍校準（角色揮劍動畫：轉軸、位置、大小、速度）",
+ "rig.height": "身體高度（佔舞台寬度的 %）",
+ "rig.shoulderX": "身體圓心 X（斷臂圓形的圓心，佔身體圖寬度比例）",
+ "rig.shoulderY": "身體圓心 Y（佔身體圖高度比例）",
+ "rig.pivotX": "手臂轉軸 X（手臂肩甲圓心，佔手臂圖寬度比例）",
+ "rig.pivotY": "手臂轉軸 Y（佔手臂圖高度比例）",
+ "rig.armScale": "手臂大小（手臂圖寬 ÷ 身體圖寬）",
+ "rig.restAngle": "待機角度（度）",
+ "rig.raiseAngle": "舉劍角度（度，負＝往上）",
+ "rig.slashAngle": "下劈角度（度，正＝往下）",
+ "rig.raiseMs": "舉劍時間（毫秒）",
+ "rig.slashMs": "下劈時間（毫秒）",
+ "rig.backMs": "收招時間（毫秒）",
+ "rig.tipX": "劍尖位置 X（手臂圖像素，算劍光用）",
+ "rig.tipY": "劍尖位置 Y",
+ "rig.guardX": "護手位置 X",
+ "rig.guardY": "護手位置 Y",
+ "rig.trail": "劍光（1＝開，0＝關）",
+ "skillLab.tiers": "五個階級（越強每場能用的次數越少）",
+ "skillLab.tiers[].name": "階級名稱",
+ "skillLab.tiers[].uses": "每場對戰可用次數",
+ "skillLab.tiers[].dmg": "傷害招式：攻擊力的幾倍",
+ "skillLab.tiers[].stat": "強化／削弱：原數值的幾成（0.1＝一成）",
+ "skillLab.tiers[].heal": "補血／補魔：上限的幾成",
+ "skillLab.tiers[].poison": "中毒：每回合扣血量占血量上限的幾成",
+ "skillLab.tiers[].blind": "失明：對方攻擊落空的機率",
+ "skillLab.tiers[].prob": "研發時抽到這一階的權重（數字越大越容易抽到）",
+ "skillLab.upCap": "同一種強化最多加到原數值的幾倍（1＝最多再加一倍）",
+ "skillLab.dnCap": "同一種削弱最多扣掉原數值的幾成（0.5＝最多扣一半）",
+ "skillLab.layerCap": "同一種強化／削弱最多疊幾層",
+ "skillLab.healCapHp": "每場對戰補血總量上限（占血量上限的幾成）",
+ "skillLab.healCapMp": "每場對戰補魔總量上限（占魔力上限的幾成）",
+ "skillLab.poisonLayerCap": "中毒最多疊幾層",
+ "skillLab.poisonTurns": "中毒持續幾回合（再中毒會重新計時）",
+ "skillLab.blindTurns": "失明持續幾回合",
+ "skillLab.mpPerTier": "法術招式每一階要耗多少魔力（1 階＝1 倍、5 階＝5 倍）",
+ "skillLab.bagMax": "招式庫最多存幾個招式",
+ "skillLab.baseCost": "第一次研發招式要幾戰功",
+ "skillLab.costStep": "每研發一次，費用增加多少戰功",
+ "skillLab.aiSkillProb": "幽靈 AI 優先使用招式的傾向（0～1）",
+ "skillLab.effWeight": "各種效果被抽到的權重（數字越大越容易抽到）",
  "stars": "⭐ 星數標準",
  "stars.easy": "練兵模式：正確率達標 → 星數（取達標中最高的）",
  "stars.real": "實戰模式：正確率達標 → 星數",
@@ -1518,7 +1468,7 @@ window.GAME_CONFIG_LABELS = {
  "battle.magicMoves[].name": "名稱",
  "battle.magicMoves[].mp": "消耗魔力",
  "battle.magicMoves[].mult": "魔攻倍率",
- "skill": "🔮 研發招式",
+ "skill": "🗄️ 舊版招式（已停用，只留著給改版退費用，請改用上面的「招式工坊」）",
  "skill.baseCost": "第一次研發招式的戰功費用",
  "skill.costStep": "每研發一次，費用增加多少戰功",
  "skill.uses": "每場對戰各稀有度招式的使用次數",

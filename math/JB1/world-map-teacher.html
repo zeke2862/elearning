@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=LXGW+WenKai+TC:wght@300;400;700&family=Fredoka:wght@500;600;700&display=swap">
 <title>【教師版】國一數學戰略地圖｜韓信點兵 × 代數異世界</title>
 <style>
 :root{--ink:#161a2e;--ink2:#20264a;--line:#3a4270;--bronze:#d2a24c;--paper:#f1e8d2;--red:#d24a33;--jade:#43a58f;--txt:#e9e4d4}
@@ -99,17 +100,20 @@ button:focus-visible{outline:3px solid var(--bronze);outline-offset:2px}
 /* 人物圖完整顯示（不裁切、不變形） */
 .lb-hero{display:flex;align-items:flex-end;justify-content:center}
 .lb-hero>img{position:relative;z-index:1;height:100%;width:auto;max-width:none;object-fit:contain;display:block;animation:lbBreath 3.2s ease-in-out infinite;transform-origin:50% 100%}
-.lb-back{position:absolute;left:50%;bottom:16%;height:82%;aspect-ratio:2/1;transform:translateX(-50%);z-index:0;pointer-events:none;animation:wingFlap 3.6s ease-in-out infinite;transform-origin:50% 70%}
-.lb-back.halo{height:100%;bottom:2%;aspect-ratio:1}
-.lb-back.halo{bottom:auto;height:auto;width:50%;aspect-ratio:2/1;z-index:2;transform:none;margin-left:-25%;margin-top:-8.5%;animation:haloFloat 3.2s ease-in-out infinite}
-.lb-back.halo .fx-img{filter:drop-shadow(0 0 10px #ffe9a0)}
-.lb-back.halo .fx-halo{inset:8% 19% 26% 19%;background:none;border:.8cqw solid var(--c1);box-shadow:0 0 1.8cqw var(--c2),inset 0 0 1.2cqw var(--c2);animation:none}
+/* 背後特效：外層 .lb-bkpos 只負責「貼在肩膀／頭頂」，內層 .lb-back 只負責動畫，
+   兩層分開才不會互相蓋掉位置（圖片規格見 images/lobby/README.txt） */
+.lb-bkpos{position:absolute;pointer-events:none;aspect-ratio:2/1;z-index:0}
+.lb-bkpos.halo{z-index:2}
+.lb-back{width:100%;height:100%;transform-origin:50% 50%;animation:wingFlap 3.6s ease-in-out infinite}
+.lb-back.halo{animation:haloFloat 3.2s ease-in-out infinite}
+.lb-bkpos.halo .fx-img{filter:drop-shadow(0 0 10px #ffe9a0)}
+.lb-bkpos.halo .fx-halo{position:absolute;inset:8% 19% 26% 19%;border-radius:50%;background:none;border:.8cqw solid var(--c1);box-shadow:0 0 1.8cqw var(--c2),inset 0 0 1.2cqw var(--c2);opacity:.9}
 @keyframes haloFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
 .lb-orbit.b{z-index:0;clip-path:inset(-60% -60% 54% -60%)}
 .lb-orbit.f{z-index:2;clip-path:inset(46% -60% -60% -60%)}
 .lb-back .fx-svg,.lb-back .fx-img{width:100%;height:100%;display:block;object-fit:contain;filter:drop-shadow(0 3px 5px #0007)}
 .fx-halo{position:absolute;inset:6% 6% 30% 6%;border-radius:50%;background:radial-gradient(circle,#0000 0 38%,var(--c1) 46%,var(--c2) 52%,#0000 72%);opacity:.8;animation:haloPulse 3s ease-in-out infinite}
-@keyframes wingFlap{50%{transform:translateX(-50%) scale(1.04,.97)}}
+@keyframes wingFlap{0%,100%{transform:scale(1,1)}50%{transform:scale(.955,1.035)}}
 @keyframes haloPulse{50%{opacity:.5;transform:scale(1.06)}}
 .lb-feet{position:absolute;left:50%;bottom:-7%;width:140%;aspect-ratio:3.2;transform:translateX(-50%);z-index:0;pointer-events:none}
 .lb-feet .fx-svg,.lb-feet .fx-img{width:100%;height:100%;display:block;object-fit:contain}
@@ -129,13 +133,13 @@ button:focus-visible{outline:3px solid var(--bronze);outline-offset:2px}
 .lb-wear{position:absolute;left:calc(30% + 12cqw);bottom:58%;font-size:6cqw;line-height:1;background:#fff8e6e0;border:2px solid #b9792f;border-radius:50%;width:9cqw;height:9cqw;display:flex;align-items:center;justify-content:center;z-index:4;box-shadow:0 2px 6px #0006}
 .lb-plate{position:absolute;left:2.5%;top:3%;max-width:62%;background:#1c1208c8;border:2px solid #e3b866;border-radius:12px;padding:6px 12px;font-size:clamp(12px,2.2cqw,16px);line-height:1.5;z-index:5;color:#fff6df}
 .lb-plate .ttl{color:#ffd86b}
-.lb-merit{position:absolute;right:2.5%;top:3%;background:#1c1208c8;border:2px solid #e3b866;border-radius:20px;padding:4px 12px;font-size:clamp(12px,2.2cqw,16px);z-index:5;color:#fff6df}
-.lb-gift{position:absolute;right:2.5%;top:calc(3% + 42px);background:#d24a33;border:2px solid #ffd7c8;border-radius:14px;padding:3px 12px;font-size:clamp(11px,2cqw,14px);z-index:5;color:#fff;animation:lbPulse 1.6s infinite}
+.lb-merit{position:absolute;right:calc(1.5% + clamp(72px,10cqw,100px) + 8px);top:3%;background:#1c1208c8;border:2px solid #e3b866;border-radius:20px;padding:4px 12px;font-size:clamp(12px,2.2cqw,16px);z-index:5;color:#fff6df}
+.lb-gift{position:absolute;right:calc(1.5% + clamp(72px,10cqw,100px) + 8px);top:calc(3% + 42px);background:#d24a33;border:2px solid #ffd7c8;border-radius:14px;padding:3px 12px;font-size:clamp(11px,2cqw,14px);z-index:5;color:#fff;animation:lbPulse 1.6s infinite}
 @keyframes lbPulse{50%{transform:scale(1.05)}}
 .lb-say{position:absolute;left:30%;bottom:64%;transform:translateX(-50%);background:#fffaf0;color:#4a2a0c;border:3px solid #b9792f;border-radius:14px;padding:6px 12px;font-weight:700;font-size:clamp(12px,2.4cqw,16px);z-index:6;white-space:nowrap;display:none}
 .lb-say.on{display:block;animation:lbPop .25s}
 @keyframes lbPop{from{transform:translateX(-50%) scale(.6);opacity:0}}
-.lb-dock{position:absolute;right:1.5%;top:11%;display:flex;flex-direction:column;align-items:center;gap:4px;z-index:7}
+.lb-dock{position:absolute;right:1.5%;top:3%;display:flex;flex-direction:column;align-items:center;gap:4px;z-index:7}
 .lb-menu{display:none;flex-direction:column;align-items:center;gap:clamp(3px,.5cqw,5px)}
 .lb-dock.open .lb-menu{display:flex;animation:lbMenu .22s ease-out}
 @keyframes lbMenu{from{opacity:0;transform:translateY(-8px)}}
@@ -146,6 +150,22 @@ button:focus-visible{outline:3px solid var(--bronze);outline-offset:2px}
 .lb-c{position:relative;width:clamp(34px,4.6cqw,48px);height:clamp(34px,4.6cqw,48px);border-radius:50%;border:2px solid #fff3d6;background:radial-gradient(circle at 50% 30%,#fffaf0,#f4d79b);box-shadow:0 0 0 2px #b9792f,0 3px 7px #0007;color:#4a2a0c;font-weight:700;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:clamp(8px,1.45cqw,11px);line-height:1.05;padding:0;cursor:pointer}
 .lb-c.big{width:clamp(40px,5.3cqw,54px);height:clamp(40px,5.3cqw,54px);font-size:clamp(9px,1.6cqw,12px)}
 .lb-c:hover{transform:translateX(-3px);border-color:#ffd86b}
+/* ⭐ 冒險鈕：放大、發光、輕輕跳動，是小屋裡最顯眼的按鈕 */
+.lb-c.big{width:clamp(72px,10cqw,100px);height:clamp(72px,10cqw,100px);font-size:clamp(15px,2.5cqw,20px);font-weight:800;border-width:3px;margin:clamp(1px,.3cqw,3px) 0;box-shadow:0 0 0 3px #b9792f,0 0 16px 5px #ffd86bcc,0 5px 12px #0008;animation:lbAdv 1.5s ease-in-out infinite}
+.lb-c.big:hover{animation:none;transform:scale(1.08) translateX(-3px)}
+.lb-c .big-ic .ic-ui{width:clamp(36px,6cqw,60px);height:clamp(36px,6cqw,60px)}
+@keyframes lbAdv{50%{transform:scale(1.08);box-shadow:0 0 0 3px #b9792f,0 0 24px 9px #ffd86b,0 5px 12px #0008}}
+/* 👇 下一關大箭頭（地圖上、關卡視窗裡） */
+.nx-arrow{position:absolute;transform:translate(-50%,-100%);z-index:6;pointer-events:none;display:flex;flex-direction:column;align-items:center;animation:nxBob .75s ease-in-out infinite alternate;filter:drop-shadow(0 4px 5px #000c)}
+.nx-arrow b{background:#ffd86b;color:#3a2200;border:3px solid #fff;border-radius:999px;padding:4px 16px;font-size:1.35rem;white-space:nowrap;box-shadow:0 0 0 3px #d24a33}
+.nx-arrow svg{width:96px;height:96px;display:block;margin-top:-4px}
+.nx-arrow.dn{transform:translate(-50%,0);flex-direction:column-reverse;animation-name:nxBobDn}
+.nx-arrow.dn svg{transform:rotate(180deg);margin:0 0 -4px}
+@keyframes nxBob{to{transform:translate(-50%,calc(-100% + 22px))}}
+@keyframes nxBobDn{to{transform:translate(-50%,-22px)}}
+.gprow.nextrow{position:relative;border:3px solid #ffd86b;border-radius:12px;padding:6px;background:#ffd86b1f;animation:nxGlow 1.2s ease-in-out infinite}
+.gprow.nextrow .nxtag{display:inline-block;background:#d24a33;color:#fff;border-radius:999px;padding:2px 12px;font-size:1.05rem;font-weight:800;margin-right:6px;animation:nxTag .7s ease-in-out infinite alternate}
+@keyframes nxGlow{50%{box-shadow:0 0 18px 4px #ffd86b99}}@keyframes nxTag{to{transform:translateX(8px)}}
 .lb-c .ic-ui{width:clamp(16px,2.8cqw,26px);height:clamp(16px,2.8cqw,26px)}
 .lb-c .big-ic .ic-ui{width:clamp(20px,3.4cqw,32px);height:clamp(20px,3.4cqw,32px)}
 .ic-ui img,.ic-ui .emoji-fb{width:100%;height:100%;object-fit:contain;border-radius:0}
@@ -247,6 +267,13 @@ button:focus-visible{outline:3px solid var(--bronze);outline-offset:2px}
 .bt-sprite.charging{animation:btCharge .9s infinite alternate}
 .bt-sprite.ko .bt-img{transform:rotate(78deg) translateY(18px);filter:grayscale(1) brightness(.6);opacity:.7;transition:all .8s}
 .bt-sprite.win .bt-img{animation:btWin .7s infinite alternate}
+.bt-pose{position:relative;display:block;width:100%;height:100%}
+.bt-pose img{position:absolute;left:50%;bottom:-7%;height:147%;width:auto;max-width:none;transform:translateX(-50%);pointer-events:none;user-select:none}
+.bt-top .bt-pose img{transform:translateX(-50%) scaleX(-1)}
+.bt-ghost{position:absolute;z-index:3;pointer-events:none;opacity:0}
+.bt-ghost .bt-img{filter:brightness(1.8) saturate(.4) !important;animation:none !important}
+.bt-slash{position:absolute;z-index:5;width:clamp(120px,34vh,260px);aspect-ratio:1;pointer-events:none}
+.bt-slash svg{width:100%;height:100%;display:block;overflow:visible}
 .bt-float{position:absolute;left:50%;top:8%;transform:translateX(-50%);font-weight:900;font-size:1.8rem;pointer-events:none;text-shadow:0 2px 4px #000,0 0 8px #000;z-index:4;animation:btFloat 1s forwards}
 .bt-burst{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:3.4rem;pointer-events:none;z-index:4;animation:btBurst .55s forwards}
 .bt-proj{position:absolute;font-size:2.4rem;z-index:5;pointer-events:none;filter:drop-shadow(0 0 10px #9ad0ff)}
@@ -282,6 +309,17 @@ button:focus-visible{outline:3px solid var(--bronze);outline-offset:2px}
 #mhero.l img{transform:scaleX(-1)}#mhero.walk img{animation:bob .25s infinite alternate}
 #gp{position:fixed;inset:0;z-index:110;background:#0b0e22d9;display:flex;align-items:center;justify-content:center;padding:14px}
 #gp .card{max-width:520px;width:100%;max-height:86vh;overflow:auto}.gprow{display:flex;gap:6px;margin:6px 0}
+.rt{position:absolute;left:0;top:0;pointer-events:none;z-index:2;overflow:visible}
+.rt .base{fill:none;stroke:#2a1d05;stroke-width:11;stroke-linecap:round;opacity:.45}
+.rt .ln{fill:none;stroke-linecap:round;stroke-width:6}
+.rt .ln.done{stroke:#ffd86b}
+.rt .ln.cur{stroke:#ff7a45;stroke-dasharray:4 14;animation:rtflow 1s linear infinite}
+.rt .ln.fut{stroke:#fff;stroke-dasharray:2 14;opacity:.55}
+.rt .ar{stroke:#2a1d05;stroke-width:2;stroke-linejoin:round}
+.rt .ar.done{fill:#ffd86b}.rt .ar.cur{fill:#ff7a45}.rt .ar.fut{fill:#fff;opacity:.6}
+.mn-no{position:absolute;transform:translate(-50%,0);margin-top:30px;z-index:3;font-size:.72rem;font-weight:700;color:#fff;background:#000a;border-radius:8px;padding:0 6px;white-space:nowrap;pointer-events:none}
+.rt-lg{display:inline-flex;gap:10px;align-items:center;font-size:.78rem;opacity:.9}.rt-lg i{display:inline-block;width:22px;border-top:4px solid;vertical-align:middle;margin-right:3px}
+@keyframes rtflow{to{stroke-dashoffset:-18}}
 .fog{position:absolute;left:0;top:0;pointer-events:none;z-index:2}
 .gr2{align-items:center;flex-wrap:wrap}.ginfo{flex:1;min-width:170px;text-align:left}.mbtns{display:flex;gap:6px}
 .mbtn{background:var(--ink2);border:2px solid var(--line);border-radius:10px;padding:6px 8px;min-width:62px;line-height:1.3;font-size:.9rem}
@@ -296,13 +334,169 @@ button:focus-visible{outline:3px solid var(--bronze);outline-offset:2px}
 .fg-name{opacity:0;animation:rv2 .5s 1.7s forwards;font-size:1.2rem;line-height:1.7}@keyframes rv2{to{opacity:1}}@keyframes shk{25%{transform:rotate(-12deg)}75%{transform:rotate(12deg)}}
 .btn{background:var(--ink2);color:var(--txt);border:2px solid var(--bronze);border-radius:10px;padding:8px 14px;font:inherit;cursor:pointer}
 .btn:hover:not(:disabled){background:#2c3566}.btn:disabled{opacity:.45;cursor:not-allowed}
+.labgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px}
+.labslot{background:var(--ink2);color:var(--txt);border:2px dashed var(--line);border-radius:12px;padding:10px;font:inherit;text-align:left;cursor:pointer;line-height:1.5}
+.labslot.on{border-style:solid;border-color:var(--bronze)}
+.labslot:hover{background:#2c3566}
+.labslot small{opacity:.8;font-size:.78rem}
+.bt-card .stwrap{margin-top:2px}
+.stbar{display:flex;gap:4px;flex-wrap:wrap;margin-top:5px}
+.stbar .st{font-size:.76rem;border-radius:999px;padding:1px 7px;border:1px solid #fff3;white-space:nowrap}
+.stbar .st.up{background:#2f7a5b33;border-color:#43a58f;color:#aef0dc}
+.stbar .st.dn{background:#8a6d1c33;border-color:#d2a24c;color:#ffe6ae}
+.stbar .st.bad{background:#d24a3333;border-color:#d24a33;color:#ffc9bf}
+.amenu button small{font-weight:400;opacity:.85;font-size:.74rem;line-height:1.3;display:block}
+
+/* ===== 🎨 對戰舞台新外觀（v2）：字體、配色、名牌、血條殘影、指令鈕、VS 登場 ===== */
+.bt-stage{--ink:#121630;--ink2:#1b2143;--line:#3b4477;--gold:#e8b65c;--gold-dim:#8a6a2d;--jade:#4cc49c;--crimson:#e05a3e;--dim:#9aa2c8;
+  --kai:"LXGW WenKai TC","Noto Serif TC","Songti TC",serif;--num:"Fredoka","LXGW WenKai TC",system-ui,sans-serif;
+  background:radial-gradient(70% 45% at 50% 88%,#3a2c5e 0%,transparent 70%),radial-gradient(55% 40% at 50% 8%,#27305f 0%,transparent 70%),linear-gradient(180deg,#171c3c,#0f1330)}
+.bt-stage .ico{width:1.15em;height:1.15em;vertical-align:-.2em;flex:none}
+.bt-stage .bt-arena::before{background:linear-gradient(90deg,transparent,#e8b65c55,transparent)}
+.bt-stage .bt-card{background:#120d06d9;border:1.5px solid var(--gold-dim);border-radius:12px;padding:7px 10px;backdrop-filter:blur(3px)}
+.bt-stage .bt-card b.nm{display:flex;align-items:baseline;gap:6px;font-family:var(--kai);font-weight:700;font-size:1rem}
+.bt-stage .bt-card b.nm i{font-style:normal;color:var(--dim);font-size:.78em;font-weight:400}
+.bt-stage .bt-card small{font-family:var(--num);font-size:.76rem;opacity:1;color:#cfd4ee;display:block}
+.bt-stage .fbar{position:relative;height:9px;border-radius:99px;background:#07091c;border:1px solid #2b3157;margin:4px 0 1px}
+.bt-stage .fbar>i{position:absolute;left:0;top:0;bottom:0;height:auto}
+.bt-stage .fbar>i.lag{background:#ffffff66;transition:width .75s .18s ease-out}
+.bt-stage .fbar>i.fill{transition:width .3s ease-out}
+.bt-stage .fbar.hp>i.fill{background:linear-gradient(90deg,#2f7a5b,#5fd0a8)}
+.bt-stage .fbar.mp>i.fill{background:linear-gradient(90deg,#2a5a8f,#6fb6f0)}
+.bt-stage .stbar .st{font-family:var(--num);font-size:.72rem;display:inline-flex;align-items:center;gap:3px}
+.bt-stage .bt-eq{margin-top:6px}
+.bt-stage .bt-eqi{background:#0b0e22;border-radius:8px}
+.bt-stage .bt-caption{font-family:var(--kai);background:#120d06cc;border:1px solid var(--gold-dim);border-left:3px solid var(--gold);border-radius:0 12px 12px 0}
+.bt-stage .bt-caption .dmg,.bt-stage .bt-caption b{font-family:var(--kai)}
+.bt-stage .bt-float{font-family:var(--num);font-weight:700}
+.bt-panel{background:linear-gradient(180deg,#151a3a,#0e1230);border-top:2px solid var(--gold);font-family:"Noto Sans TC",system-ui,sans-serif}
+.bt-panel .turn-tag{font-family:var(--kai);background:#120d06d9;color:#ffe3a6;border:1.5px solid var(--gold);border-radius:999px;padding:3px 16px;font-size:.95rem;display:inline-flex;align-items:center;gap:6px}
+.bt-panel .amenu{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.bt-panel .amenu button{background:linear-gradient(180deg,#232a55,#1b2143);border:1.5px solid var(--line);border-radius:14px;padding:9px 11px;text-align:left;
+  color:#efe8d8;font-family:var(--kai);font-size:.97rem;box-shadow:0 3px 0 #141936;min-width:0;display:block;line-height:1.4}
+.bt-panel .amenu button:active:not(:disabled){transform:translateY(2px);box-shadow:0 1px 0 #141936}
+.bt-panel .amenu button[data-sk]{border-color:var(--gold-dim);background:linear-gradient(180deg,#2b2412,#1f2244)}
+.bt-panel .amenu button:disabled{opacity:1;filter:grayscale(.75) brightness(.7)}
+.bt-panel .amenu button small{font-family:"Noto Sans TC",system-ui,sans-serif;color:var(--dim);font-size:.74rem;opacity:1}
+.bt-panel .amenu #b-pass,.bt-panel #b-close{background:linear-gradient(180deg,#f3cd7e,#d79f43);color:#2a1c05;border:0;box-shadow:0 4px 0 #8a6a2d;text-align:center}
+.bt-panel .blog{background:#10142fcc;border-left:3px solid var(--gold);border-radius:0 12px 12px 0;padding:7px 11px;opacity:1;color:#d8dcf2}
+.bt-panel #b-close{font-family:var(--kai);border-radius:14px;padding:11px 18px;font-size:1rem}
+.bt-ring{position:absolute;left:50%;top:50%;width:76%;aspect-ratio:3.2;transform:translate(-50%,-50%);border-radius:50%;border:2px solid #e8b65c26;background:radial-gradient(ellipse,#e8b65c14,transparent 70%);pointer-events:none}
+/* VS 登場 */
+.bt-vs{position:absolute;left:0;right:0;top:0;bottom:var(--vsb,0);z-index:60;pointer-events:none;overflow:hidden;animation:btVsOut .5s 2.15s forwards;
+  background:radial-gradient(60% 60% at 50% 50%,#2a3166,#0c1030)}
+.bt-vs .side{position:absolute;bottom:12%;width:47%;text-align:center}
+.bt-vs .side.l{left:2%;animation:btInL .7s cubic-bezier(.2,.9,.3,1.2) both}
+.bt-vs .side.r{right:2%;animation:btInR .7s cubic-bezier(.2,.9,.3,1.2) .12s both}
+.bt-vs .pic{position:relative;width:min(var(--vz),100%);aspect-ratio:1;margin:0 auto;filter:drop-shadow(0 8px 10px #0008)}
+.bt-vs .pic .icon-wrap{width:100%;height:100%;display:block}
+.bt-vs .pic img{width:100%;height:100%;object-fit:contain}
+.bt-vs .pic .bt-pose img{width:auto;height:147%;object-fit:initial}
+.bt-vs{--vz:clamp(130px,34vh,250px)}
+.bt-vs .nm{font-family:var(--kai);font-size:1.02rem;background:#120d06cc;border:1.5px solid var(--gold-dim);border-radius:999px;padding:2px 12px;display:inline-block;margin-top:6px;color:#efe8d8}
+.bt-vs .nm i{font-style:normal;color:var(--dim);font-size:.8em}
+.bt-vs .bolt{position:absolute;inset:0;display:grid;place-items:center;font-family:var(--num);font-weight:700;font-size:clamp(3rem,16vw,5rem);color:#fff;text-shadow:0 0 18px #e8b65c,0 0 40px #e05a3e;animation:btBolt .9s .45s both}
+@keyframes btInL{from{transform:translateX(-120%) rotate(-8deg);opacity:0}}
+@keyframes btInR{from{transform:translateX(120%) rotate(8deg);opacity:0}}
+@keyframes btBolt{0%{transform:scale(2.6);opacity:0}45%{transform:scale(1);opacity:1}100%{transform:scale(1);opacity:1}}
+@keyframes btVsOut{to{opacity:0;visibility:hidden}}
+@media (prefers-reduced-motion:reduce){.bt-vs,.bt-vs *{animation-duration:.001s!important}.bt-vs{animation-delay:1.4s!important}}
 </style>
-<script src="game-config.js?v=20261018g"></script>
+<script src="game-config.js?v=20261023a"></script>
 <script src="math_hero_engine.js"></script>
 <script src="bgm.js"></script>
+<script src="sfx.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 </head>
 <body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <linearGradient id="g-gold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe9b8"/><stop offset=".5" stop-color="#e8b65c"/><stop offset="1" stop-color="#a5762c"/></linearGradient>
+    <linearGradient id="g-steel" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f2f6ff"/><stop offset=".45" stop-color="#b9c4de"/><stop offset="1" stop-color="#6c7798"/></linearGradient>
+    <linearGradient id="g-red" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff9d87"/><stop offset=".45" stop-color="#e05a3e"/><stop offset="1" stop-color="#8e2a1a"/></linearGradient>
+    <linearGradient id="g-blue" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#bfe4ff"/><stop offset=".5" stop-color="#5aa8f0"/><stop offset="1" stop-color="#2a5a8f"/></linearGradient>
+    <linearGradient id="g-violet" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e3d6ff"/><stop offset=".5" stop-color="#9b7bff"/><stop offset="1" stop-color="#5b3fd0"/></linearGradient>
+    <linearGradient id="g-jade" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c9ffe9"/><stop offset=".5" stop-color="#4cc49c"/><stop offset="1" stop-color="#1e6f55"/></linearGradient>
+
+    <!-- ❤️ 血量 -->
+    <symbol id="i-hp" viewBox="0 0 32 32">
+      <path d="M16 28C9 23 3 18.6 3 12.4 3 8 6.3 5 10.2 5c2.4 0 4.6 1.2 5.8 3.2C17.2 6.2 19.4 5 21.8 5 25.7 5 29 8 29 12.4 29 18.6 23 23 16 28Z" fill="url(#g-red)" stroke="#5d1a0f" stroke-width="1.6" stroke-linejoin="round"/>
+      <path d="M9.5 10.5c1.6-1.6 3.6-1.3 4.6.2" stroke="#ffd4c6" stroke-width="2" stroke-linecap="round" fill="none" opacity=".85"/>
+    </symbol>
+    <!-- 🔹 魔力 -->
+    <symbol id="i-mp" viewBox="0 0 32 32">
+      <path d="M16 3c5 6.6 9 11.2 9 15.6A9 9 0 0 1 7 18.6C7 14.2 11 9.6 16 3Z" fill="url(#g-blue)" stroke="#143a63" stroke-width="1.6" stroke-linejoin="round"/>
+      <ellipse cx="12.6" cy="16.5" rx="2" ry="3.1" fill="#eaf6ff" opacity=".75" transform="rotate(-18 12.6 16.5)"/>
+    </symbol>
+    <!-- ⚔️ 普攻 -->
+    <symbol id="i-atk" viewBox="0 0 32 32">
+      <path d="M23.2 3.2 28.8 8.8 15.4 22.2l-5.6-5.6L23.2 3.2Z" fill="url(#g-steel)" stroke="#39405c" stroke-width="1.8" stroke-linejoin="round"/>
+      <path d="M20.6 5.8 26.2 11.4" stroke="#ffffffb0" stroke-width="2" stroke-linecap="round"/>
+      <path d="m8.6 15.4 8 8-3 3-8-8 3-3Z" fill="url(#g-gold)" stroke="#6b4a16" stroke-width="1.6" stroke-linejoin="round"/>
+      <path d="M6.4 23.2 3 29l5.8-3.4-2.4-2.4Z" fill="#3a2a12" stroke="#6b4a16" stroke-width="1.5" stroke-linejoin="round"/>
+    </symbol>
+    <!-- 🛡️ 物防 -->
+    <symbol id="i-def" viewBox="0 0 32 32">
+      <path d="M16 3.5 27 7v9.5C27 23 21.8 27.4 16 29 10.2 27.4 5 23 5 16.5V7l11-3.5Z" fill="url(#g-steel)" stroke="#39405c" stroke-width="1.6" stroke-linejoin="round"/>
+      <path d="M16 7.5 23 10v6.2c0 4.4-3.3 7.4-7 8.6-3.7-1.2-7-4.2-7-8.6V10l7-2.5Z" fill="#8fa0c4" opacity=".55"/>
+      <path d="m12.5 16 2.6 2.8L20 12.6" stroke="url(#g-gold)" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+    <!-- ✨ 魔攻 -->
+    <symbol id="i-matk" viewBox="0 0 32 32">
+      <path d="M16 2.5c1.1 6.2 3.3 8.4 9.5 9.5-6.2 1.1-8.4 3.3-9.5 9.5-1.1-6.2-3.3-8.4-9.5-9.5 6.2-1.1 8.4-3.3 9.5-9.5Z" fill="url(#g-violet)" stroke="#3f2b8c" stroke-width="1.4" stroke-linejoin="round"/>
+      <path d="M24.5 19c.6 3 1.6 4 4.5 4.5-2.9.6-3.9 1.6-4.5 4.5-.6-2.9-1.6-3.9-4.5-4.5 2.9-.5 3.9-1.5 4.5-4.5Z" fill="url(#g-gold)" stroke="#6b4a16" stroke-width="1.2" stroke-linejoin="round"/>
+    </symbol>
+    <!-- 🔮 魔防 -->
+    <symbol id="i-mdef" viewBox="0 0 32 32">
+      <circle cx="16" cy="16" r="11.5" fill="none" stroke="url(#g-violet)" stroke-width="2.4"/>
+      <circle cx="16" cy="16" r="7" fill="#9b7bff22" stroke="#cbb8ff" stroke-width="1.3" stroke-dasharray="3 3"/>
+      <path d="M16 6.2 25.8 22H6.2L16 6.2Z" fill="none" stroke="url(#g-gold)" stroke-width="1.7" stroke-linejoin="round"/>
+    </symbol>
+    <!-- 🏃 速度 -->
+    <symbol id="i-spd" viewBox="0 0 32 32">
+      <path d="M11 7.5c3.5-.5 6 1 7.5 3.6 1.1 2 3 2.6 5.5 2.4 1.6-.1 2.6 1 2.3 2.4-.5 2.3-2.6 4-5.6 4.4l-10.4 1.4c-2.6.4-4.3-.8-4.3-2.8 0-3.9 1.7-10.6 5-11.4Z" fill="url(#g-jade)" stroke="#145140" stroke-width="1.5" stroke-linejoin="round"/>
+      <path d="M4 10.5h6M2.5 15h5M4 19.5h4" stroke="#bff2e0" stroke-width="2" stroke-linecap="round"/>
+      <path d="M10 22.5h11" stroke="#145140" stroke-width="2.2" stroke-linecap="round"/>
+    </symbol>
+    <!-- ☠️ 中毒 -->
+    <symbol id="i-poison" viewBox="0 0 32 32">
+      <path d="M16 4c5.5 0 9.5 3.7 9.5 8.6 0 3-1.4 4.8-2.8 6-.7.6-1 1.1-1 2V22c0 1.4-1.1 2.4-2.5 2.4h-6.4C11.4 24.4 10.3 23.4 10.3 22v-1.4c0-.9-.3-1.4-1-2-1.4-1.2-2.8-3-2.8-6C6.5 7.7 10.5 4 16 4Z" fill="url(#g-jade)" stroke="#12503e" stroke-width="1.5" stroke-linejoin="round"/>
+      <circle cx="12.4" cy="13.6" r="2.4" fill="#0d2b23"/><circle cx="19.6" cy="13.6" r="2.4" fill="#0d2b23"/>
+      <path d="M14 19.4h4M13.2 26.6h1.6M17.2 26.6h1.6" stroke="#12503e" stroke-width="1.8" stroke-linecap="round"/>
+    </symbol>
+    <!-- 👁️ 失明 -->
+    <symbol id="i-blind" viewBox="0 0 32 32">
+      <path d="M3 16s5-7.5 13-7.5S29 16 29 16s-5 7.5-13 7.5S3 16 3 16Z" fill="#1a1f42" stroke="url(#g-steel)" stroke-width="1.7" stroke-linejoin="round"/>
+      <circle cx="16" cy="16" r="4.4" fill="url(#g-violet)" stroke="#2a1f5c" stroke-width="1.3"/>
+      <path d="M6 25 26 7" stroke="#e05a3e" stroke-width="2.6" stroke-linecap="round"/>
+    </symbol>
+    <!-- 🧪 道具 -->
+    <symbol id="i-potion" viewBox="0 0 32 32">
+      <path d="M13 4h6v5.4l4.8 9.1A6 6 0 0 1 18.5 27h-5A6 6 0 0 1 8.2 18.5L13 9.4V4Z" fill="#20264f" stroke="url(#g-steel)" stroke-width="1.6" stroke-linejoin="round"/>
+      <path d="M9.6 18h12.8A6 6 0 0 1 18.5 27h-5a6 6 0 0 1-3.9-9Z" fill="url(#g-red)"/>
+      <rect x="11.4" y="2.5" width="9.2" height="3.4" rx="1.4" fill="url(#g-gold)" stroke="#6b4a16" stroke-width="1.2"/>
+      <circle cx="14.5" cy="22" r="1.3" fill="#ffd4c6" opacity=".9"/>
+    </symbol>
+    <!-- 🎖️ 戰功 -->
+    <symbol id="i-medal" viewBox="0 0 32 32">
+      <path d="m10 3 3.6 8.4h4.8L22 3h5l-4.6 10.2H9.6L5 3h5Z" fill="url(#g-red)" stroke="#5d1a0f" stroke-width="1.3" stroke-linejoin="round"/>
+      <circle cx="16" cy="21" r="7.6" fill="url(#g-gold)" stroke="#6b4a16" stroke-width="1.5"/>
+      <path d="m16 16.8 1.5 3 3.3.5-2.4 2.3.6 3.3-3-1.6-3 1.6.6-3.3-2.4-2.3 3.3-.5 1.5-3Z" fill="#fff6dc" stroke="#8a6a2d" stroke-width=".8" stroke-linejoin="round"/>
+    </symbol>
+    <!-- ⚔️ 對戰 -->
+    <symbol id="i-duel" viewBox="0 0 32 32">
+      <path d="M5 5h4l14 14-2.6 2.6L5 7.6V5Z" fill="url(#g-steel)" stroke="#39405c" stroke-width="1.4" stroke-linejoin="round"/>
+      <path d="M27 5h-4L9 19l2.6 2.6L27 7.6V5Z" fill="url(#g-steel)" stroke="#39405c" stroke-width="1.4" stroke-linejoin="round"/>
+      <path d="M19.4 22.4 24 27M12.6 22.4 8 27" stroke="url(#g-gold)" stroke-width="2.6" stroke-linecap="round"/>
+    </symbol>
+    <!-- 🛡️ 護盾層數 -->
+    <symbol id="i-guard" viewBox="0 0 32 32">
+      <path d="M16 3.5 27 7v9.5C27 23 21.8 27.4 16 29 10.2 27.4 5 23 5 16.5V7l11-3.5Z" fill="url(#g-blue)" stroke="#143a63" stroke-width="1.6" stroke-linejoin="round"/>
+      <path d="M16 9v14" stroke="#eaf6ff" stroke-width="1.6" opacity=".6"/>
+    </symbol>
+  </defs>
+</svg>
+
 <main>
   <div id="nav" class="hide"><button id="back">⬅ 回首頁</button></div>
   <h1 class="serif" style="margin:0 0 4px">國一數學戰略地圖 <span style="font-size:.6em;background:#d24a33;color:#fff;border-radius:8px;padding:2px 8px;vertical-align:middle">教師版・全解鎖</span></h1>
@@ -364,6 +558,7 @@ button:focus-visible{outline:3px solid var(--bronze);outline-offset:2px}
 
   <section class="card" id="shop" data-v="shop"></section>
   <section class="card" id="bag" data-v="bag"></section>
+  <section class="card" id="lab" data-v="lab"></section>
   <section class="card" id="rank" data-v="arena"></section>
   <section class="card" id="wrong" data-v="wrong"></section>
   <p class="tiny" data-v="hero"><button id="reset">重置我的進度</button></p>
@@ -531,7 +726,7 @@ function chestOpen(all){
   o.innerHTML=`<div class="fg-box"><div class="fg-anvil" style="animation:shk .3s 4">📦</div><div class="fg-name" style="animation:rv2 .4s .9s forwards;max-height:60vh;overflow:auto">${rs.map(line).join('<br>')}</div></div>`;
   document.body.appendChild(o);o.onclick=()=>o.remove();setTimeout(()=>o.remove(),all?6000:3400);
   rs.filter(r=>r.synth).forEach((r,k)=>setTimeout(()=>forgeAnim({icon:ITEMS[r.synth.i].icon,name:ITEMS[r.synth.i].name,q:QLABEL[r.synth.q],up:r.synth.up}),(all?6200:3500)+k*3500));
-  window.BGM&&BGM.clang();render();
+  snd('chest');render();
 }
 function ensureRoll(i){
   P._eq=P._eq||{};
@@ -592,7 +787,15 @@ const $=s=>document.querySelector(s);
 let cur='',tt=0;
 function load(){try{P=JSON.parse(localStorage.getItem(KEY))||{}}catch(e){P={}}}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(P))}catch(e){}}
-function toast(h){const t=$('#toast');t.innerHTML=h;t.classList.remove('hide');clearTimeout(tt);tt=setTimeout(()=>t.classList.add('hide'),3800)}
+function snd(n){try{window.SND&&SND.play(n)}catch(e){}}
+function bgmView(v){try{if(!window.BGM)return;if(v==='arena')BGM.play('arena');else if(v==='home')BGM.play('lobby','map');else BGM.play('map')}catch(e){}}
+function sfxToast(h){const s=String(h).replace(/<[^>]+>/g,'');   // 依通知內容自動配音效（第一個符合的為準）
+  if(/升官/.test(s))return snd('rankup');if(/升級了/.test(s))return snd('levelup');
+  if(/🔒|不夠|已達|放不下|沒有.*可以|還沒|請輸入|不能|不適合|一樣喔|找不到|上限/.test(s))return snd('error');
+  if(/解鎖/.test(s))return snd('unlock');if(/小遊戲獎勵|領取成功|老師送來|首次通關|滿星|新紀錄/.test(s))return snd('reward');
+  if(/買到了|兌換了|購買/.test(s))return snd('buy');if(/獲得寶箱/.test(s))return snd('chest');
+  if(/戰功|金幣/.test(s))return snd('coin');snd('toast')}
+function toast(h){sfxToast(h);const t=$('#toast');t.innerHTML=h;t.classList.remove('hide');clearTimeout(tt);tt=setTimeout(()=>t.classList.add('hide'),3800)}
 function groupHTML(GROUPS,lockFn,chapterTag){
   return GROUPS.map((c,ci)=>`<section class="ch card"><h2 class="serif">${c.n}</h2><small>${c.sub}</small><div class="nodes">`+
     c.st.map((s,k)=>{
@@ -670,7 +873,7 @@ function render(){
   $('#rank').textContent=rk[1];$('#tot').textContent=`${t} / ${MAXSTAR} ⭐`;$('#rbar').style.width=(t/MAXSTAR*100)+'%';
   $('#nxt').textContent=nx?`再 ${nx[0]-t} 顆星，升為「${nx[1]}」`:'你已經是最高階了！';
   $('#home').innerHTML=homeHTML();
-  if(VIEW==='ch')mapBuild();if(VIEW==='shop')shopBuild();if(VIEW==='bag')bagBuild();
+  if(VIEW==='ch')mapBuild();if(VIEW==='shop')shopBuild();if(VIEW==='bag')bagBuild();if(VIEW==='lab')labBuild();
   $('#hx').innerHTML=heroCardHTML();
   $('#wrong').innerHTML=wrongHTML();
   renderHero();
@@ -691,7 +894,7 @@ $('#map').onclick=e=>{
   if(!s[2])return toast('🔨 這一關還在建造中，敬請期待！');
   cur=s[0];$('#fr').src=stageURL(s[2],s[0],false);(window.BGM&&BGM.stop(),$('#ov').classList.remove('hide'));
 };
-function closeStage(){$('#ov').classList.add('hide');$('#fr').src='about:blank';render();window.BGM&&BGM.play(VIEW==='arena'?'arena':'map')}
+function closeStage(){$('#ov').classList.add('hide');$('#fr').src='about:blank';render();bgmView(VIEW)}
 $('#x').onclick=closeStage;
 addEventListener('message',e=>{
   if(e.source!==$('#fr').contentWindow)return;
@@ -733,6 +936,11 @@ addEventListener('message',e=>{
     const old=P[d.id]||{stars:0,best:0},o=old.eb||0;
     if(d.count>o){P[d.id]={...old,eb:d.count};save();toast('🏆 '+d.id+' 無極限新紀錄：'+d.count+' 題！')}
   }
+  if(d.type=='relax-reward'&&typeof d.id=='string'&&SHOPMAP[d.id]&&!SHOPMAP[d.id].cos&&!SHOPMAP[d.id].fx?.rename){
+    const it=SHOPMAP[d.id];
+    if(bagN(d.id)>=SR.bagCap)toast(`🎮 小遊戲贏了！但背包裡的「${it.name}」已經有 ${SR.bagCap} 個，放不下了，先用掉一些吧！`);
+    else{bagAdd(d.id,1);toast(`🎮 小遊戲獎勵：${it.icon||'🎁'} ${it.name} ×1 已放進背包！`)}
+  }
   if(d.type=='stage-exit')closeStage();
 });
 $('#reset').onclick=()=>{if(confirm('確定要清除所有星星與收藏卡嗎？這個動作無法復原。')){P={};save();render()}};
@@ -766,6 +974,7 @@ const NMOVES=GC.battle.normalMoves.map(m=>[m.id,m.name,m.mult]);
 const MMOVES=GC.battle.magicMoves.map(m=>[m.id,m.name,m.mp,m.mult]);
 function hurt(def,dmg){if((def.shield|0)>0){def.shield--;def.shieldHit=true;return 0}def.hp-=dmg;return dmg}
 function dealDamageLocal(att,def,base,isMagic){
+  if(att.bld&&att.bld.t>0&&Math.random()<att.bld.p){att.missed=true;return 0}   // 👁️ 失明：攻擊落空
   if((def.shield|0)>0){def.shield--;def.shieldHit=true;return 0}
   const raw=base*(GC.battle.damageMin+Math.random()*(GC.battle.damageMax-GC.battle.damageMin));
   const dfv=(isMagic?def.mdef:def.def)*(def.defending?GC.battle.defendMul:1);
@@ -781,6 +990,7 @@ function applyAction0(att,def,kind,move){
   if(kind=='normal'){
     const mv=NMOVES.find(m=>m[0]==move); if(!mv) return null;
     const dmg=dealDamageLocal(att,def,att.atk*mv[2],false);
+    if(att.missed){att.missed=false;return `${att.name} 使用「${mv[1]}」，但眼前一片模糊，攻擊落空了！`;}
     let extra=''; if(move=='charge'){const sh=Math.round(dmg*GC.battle.chargeRecoil);att.hp-=sh;extra=`，自己也反噬 ${sh} 點血`;}
     return `${att.name} 使用「${mv[1]}」，對 ${def.name} 造成 ${dmg} 點傷害${extra}！`;
   }
@@ -790,6 +1000,7 @@ function applyAction0(att,def,kind,move){
     att.mp-=mv[2];
     if(move=='l'){ att.charging=true; return `${att.name} 開始詠唱「大魔法」，這回合先暫停攻擊！`; }
     const dmg=dealDamageLocal(att,def,att.matk*mv[3],true);
+    if(att.missed){att.missed=false;return `${att.name} 的「${mv[1]}魔法」失了準頭，攻擊落空了！`;}
     return `${att.name} 使用「${mv[1]}魔法」，對 ${def.name} 造成 ${dmg} 點傷害！`;
   }
   if(kind=='release'){
@@ -817,9 +1028,9 @@ const QCODE={normal:'n',fine:'f',legend:'l',myth:'m'}, QDECODE={n:'normal',f:'fi
 const CLONE_IDX=ITEMS.findIndex(it=>it.special);
 function myEquipCode(){ return ITEMS.map((it,i)=>{const q=qualityOf(i);return q?QCODE[q]:'-';}).join(''); }
 function myCloneStars(){ const ids=EQUIP_GROUPS[CLONE_IDX]; return (ids&&groupDone(ids))?Math.min(5,groupSum(ids)):0; }
-function statsWithRank(){ return {...totalStats(), rank:myRankIdx(), eq:myEquipCode(), clone:myCloneStars(), sk:packSkills()}; }
+function statsWithRank(){ return {...totalStats(), rank:myRankIdx(), eq:myEquipCode(), clone:myCloneStars(), sk:packSkills(), sl:packSlots()}; }
 function mkFighterObj(sid,name,level,stats){
-  return {studentId:sid,name:name||sid,level:level||1,rank:(stats&&stats.rank)|0,eq:(stats&&stats.eq)||null,clone:(stats&&stats.clone)|0,hp:stats.hp,hpMax:stats.hp,mp:stats.mp,mpMax:stats.mp,
+  return {studentId:sid,name:name||sid,level:level||1,rank:(stats&&stats.rank)|0,eq:(stats&&stats.eq)||null,clone:(stats&&stats.clone)|0,slots:(stats&&stats.sl)||null,hp:stats.hp,hpMax:stats.hp,mp:stats.mp,mpMax:stats.mp,
     atk:stats.atk,matk:stats.matk,def:stats.def,mdef:stats.mdef,spd:stats.spd,defending:false,charging:false,skills:(stats&&stats.sk)||[],su:{}};
 }
 // 每次畫面更新時，把自己目前的戰力寫到雲端 duel_users，讓別人挑戰我時查得到最新數值
@@ -925,7 +1136,7 @@ async function sendSyncAction(kind,move){
   if(kind=='item'&&!consumeItem(move)){toast('沒有這個道具了');duelSub=null;renderSyncBattle();return;}
   const logLine=applyAction(att,def,kind,move);
   duelSub=null;
-  if(logLine===null){ toast('魔力不夠喔'); renderSyncBattle(); return; }
+  if(logLine===null){ toast(SKERR||'魔力不夠喔'); renderSyncBattle(); return; }
   const log=[...(room.log||[]).slice(-40),logLine];
   const over=att.hp<=0||def.hp<=0;
   const winner=over?((att.hp<=0&&def.hp<=0)?'draw':(att.hp<=0?def.name:att.name)):null;
@@ -979,7 +1190,7 @@ function sendAsyncAction(kind,move){
   if(kind=='item'&&!consumeItem(move)){toast('沒有這個道具了');duelSub=null;renderAsyncBattle();return;}
   const logLine=applyAction(room.a,room.b,kind,move);
   duelSub=null;
-  if(logLine===null){ toast('魔力不夠喔'); renderAsyncBattle(); return; }
+  if(logLine===null){ toast(SKERR||'魔力不夠喔'); renderAsyncBattle(); return; }
   room.log=[...(room.log||[]).slice(-40),logLine];
   checkAsyncOver();
   if(!room.over){ room.turn=nextSide(room.a,room.b); renderAsyncBattle(); if(room.turn=='b')setTimeout(aiTakeTurn,700); }
@@ -987,22 +1198,26 @@ function sendAsyncAction(kind,move){
 }
 // 幽靈 AI：血量偏低時比較不會用會自傷的「衝撞」，魔力夠時有機會放魔法，其餘時候普通攻擊
 function aiPickAction(att){
-  let kind,move;
-  const ready=(att.skills||[]).filter(x=>skillLeft(att,x)>0);
-  if(!att.charging&&ready.length&&Math.random()<GC.skill.aiSkillProb)return {kind:'skill',move:ready[Math.floor(Math.random()*ready.length)].c};
-  if(att.charging){ kind='release'; }
-  else{
-    const roll=Math.random();
-    if(att.mp>=30 && roll<0.35){ kind='magic'; move= att.mp>=90&&roll<0.1 ? 'l' : (att.mp>=45&&roll<0.22 ? 'm' : 's'); }
-    else if(roll<0.15){ kind='defend'; }
-    else{
-      kind='normal';
-      const safe=att.hp>att.hpMax*0.3;
-      const pool= safe? ['fist','kick','charge','slash','slash'] : ['fist','kick','slash','slash'];
-      move=pool[Math.floor(Math.random()*pool.length)];
+  if(att.charging) return {kind:'release'};
+  if(Math.random()<0.12) return {kind:'defend'};
+  const safe=att.hp>att.hpMax*0.3, opts=[];
+  ['n','m'].forEach(row=>slotsOf(att,row).forEach(sl=>{
+    if(!sl)return;
+    if(sl.s){
+      if(row==='n'){ if(sl.s==='charge'&&!safe)return; opts.push({kind:'normal',move:sl.s,w:3}); }
+      else{ const mv=MMOVES.find(m=>m[0]===sl.s); if(mv&&att.mp>=mv[2])opts.push({kind:'magic',move:mv[0],w:3}); }
+      return;
     }
-  }
-  return {kind,move};
+    const x=(att.skills||[]).find(y=>y.id===sl.k);
+    if(!x||skLeft(att,x)<=0||(att.mp|0)<skMp(x))return;
+    // 血量低的時候特別想補血，其餘招式維持一般權重
+    const heal=skE(x).c==='heal'&&skE(x).s==='hp';
+    opts.push({kind:'skill',move:x.id,w:(heal&&!safe)?12:(SL.aiSkillProb*10)});
+  }));
+  if(!opts.length) return {kind:'normal',move:(NMOVES[NMOVES.length-1]||['slash'])[0]};
+  let r=Math.random()*opts.reduce((a,o)=>a+o.w,0);
+  for(const o of opts){ r-=o.w; if(r<=0) return {kind:o.kind,move:o.move}; }
+  return {kind:opts[0].kind,move:opts[0].move};
 }
 function aiTakeTurn(){
   const room=duelState.room; if(!room||room.over||room.turn!='b')return;
@@ -1123,20 +1338,58 @@ async function checkResumeBattle(sid){
   }catch(e){ console.warn('回到對戰失敗',e); return false; }
 }
 
+// ---- 🎨 SVG 圖示（取代 emoji；圖示庫放在頁面最上方）----
+const bic=(id,cls)=>`<svg class="ico ${cls||''}"><use href="#${id}"></use></svg>`;
+const STICO={atk:'i-atk',def:'i-def',matk:'i-matk',mdef:'i-mdef',spd:'i-spd'};
+function skSvg(x){                      // 招式按鈕上的圖示：依效果決定
+  const e=x.e, g=x.g;
+  if(e==='dmg') return bic(g==='mag'?'i-matk':'i-atk');
+  if(e.indexOf('up_')===0||e.indexOf('dn_')===0) return bic(STICO[e.slice(3)]||'i-atk');
+  if(e==='heal_hp') return bic('i-hp'); if(e==='heal_mp') return bic('i-mp');
+  if(e==='poison') return bic('i-poison'); if(e==='blind') return bic('i-blind');
+  return bic('i-atk');
+}
 // ---- 共用的戰鬥畫面（兩種模式共用同一套排版）----
+function statusHTML(f){
+  const out=[];
+  ['atk','def','matk','mdef','spd'].forEach(k=>{
+    const b=f.bf||{},u=((b['u_'+k]||{p:0}).p)|0,d=((b['d_'+k]||{p:0}).p)|0;
+    if(u)out.push(`<span class="st up">${bic(STICO[k])} +${u}</span>`);
+    if(d)out.push(`<span class="st dn">${bic(STICO[k])} −${d}</span>`);
+  });
+  if(f.psn&&f.psn.t>0)out.push(`<span class="st bad">${bic('i-poison')} 中毒 ×${f.psn.l}（${f.psn.t} 回合）</span>`);
+  if(f.bld&&f.bld.t>0)out.push(`<span class="st bad">${bic('i-blind')} 失明（${f.bld.t} 回合）</span>`);
+  if((f.shield|0)>0)out.push(`<span class="st up">${bic('i-guard')} 護盾 ×${f.shield}</span>`);
+  return out.length?`<div class="stbar">${out.join('')}</div>`:'';
+}
 function renderFighterBar(f){
   return `<div class="fighter"><b>${f.name}　Lv.${f.level}</b>
     <div class="fbar hp"><i style="width:${Math.max(0,f.hp)/f.hpMax*100}%"></i></div><small>HP ${Math.max(0,f.hp)}/${f.hpMax}</small>
-    <div class="fbar mp"><i style="width:${Math.max(0,f.mp)/f.mpMax*100}%"></i></div><small>MP ${Math.max(0,f.mp)}/${f.mpMax}</small>${(f.shield|0)>0?`　<small>🛡️ 護盾 ×${f.shield}</small>`:''}</div>`;
+    <div class="fbar mp"><i style="width:${Math.max(0,f.mp)/f.mpMax*100}%"></i></div><small>MP ${Math.max(0,f.mp)}/${f.mpMax}</small>${statusHTML(f)}</div>`;
 }
 function renderMenu(meFighter,myTurn){
   if(!myTurn) return '';
   if(meFighter.charging) return `<p>⏳ 你正在蓄力中，這回合會自動發動大魔法！</p><div class="amenu"><button id="b-pass">確定</button></div>`;
-  if(!duelSub) return `<div class="amenu"><button data-m="n">⚔️ 普通攻擊</button><button data-m="m">✨ 魔法攻擊</button><button data-m="d">🛡️ 防禦</button><button data-m="i">🎒 道具</button>${(meFighter.skills||[]).length?'<button data-m="k">🔮 招式</button>':''}</div>`;
-  if(duelSub=='n') return `<div class="amenu">`+NMOVES.map(m=>`<button data-n="${m[0]}">${m[1]}（×${m[2]}）</button>`).join('')+`<button data-back="1">返回</button></div>`;
-  if(duelSub=='k') return `<div class="amenu">`+(meFighter.skills||[]).map(x=>`<button data-sk="${x.c}" ${skillLeft(meFighter,x)<=0?'disabled':''}>${CATL[x.c]}・${x.n}（${x.r}・剩 ${Math.max(0,skillLeft(meFighter,x))} 次）</button>`).join('')+`<button data-back="1">返回</button></div>`;
+  if(!duelSub) return `<div class="amenu"><button data-m="n">${bic('i-atk')} 普通攻擊</button><button data-m="m">${bic('i-matk')} 魔法攻擊</button><button data-m="d">${bic('i-def')} 防禦</button><button data-m="i">${bic('i-potion')} 道具</button></div>`;
+  if(duelSub=='n') return `<div class="amenu">`+slotRowHTML(meFighter,'n')+`<button data-back="1">返回</button></div>`;
   if(duelSub=='i') return `<div class="amenu">`+SHOP.filter(x=>x.battle).map(x=>`<button data-it="${x.id}" ${(bagN(x.id)<1||(x.battle.spd&&meFighter.fast)||(x.battle.heal&&(meFighter.healN|0)>=SR.maxHealPerDuel))?'disabled':''}>${x.icon} ${x.name} ×${bagN(x.id)}</button>`).join('')+`<button data-back="1">返回</button></div>`;
-  if(duelSub=='m') return `<div class="amenu">`+MMOVES.map(m=>`<button data-mg="${m[0]}" ${meFighter.mp<m[2]?'disabled':''}>${m[1]}（耗魔${m[2]}／×${m[3]}）</button>`).join('')+`<button data-back="1">返回</button></div>`;
+  if(duelSub=='m') return `<div class="amenu">`+slotRowHTML(meFighter,'m')+`<button data-back="1">返回</button></div>`;
+}
+// 一排四格：原廠招式照舊，學生自己研發的招式顯示效果與剩餘次數
+function slotRowHTML(f,row){
+  return slotsOf(f,row).map(sl=>{
+    if(!sl) return `<button disabled>（空格）<br><small>到招式工坊裝一個</small></button>`;
+    if(sl.s){
+      const mv=(row==='n'?NMOVES:MMOVES).find(m=>m[0]===sl.s);
+      if(!mv) return `<button disabled>（空格）</button>`;
+      return row==='n' ? `<button data-n="${mv[0]}">${bic('i-atk')} ${mv[1]}（×${mv[2]}）</button>`
+                       : `<button data-mg="${mv[0]}" ${f.mp<mv[2]?'disabled':''}>${bic('i-matk')} ${mv[1]}（耗魔${mv[2]}／×${mv[3]}）</button>`;
+    }
+    const x=(f.skills||[]).find(y=>y.id===sl.k);
+    if(!x) return `<button disabled>（空格）</button>`;
+    const left=Math.max(0,skLeft(f,x)), mp=skMp(x), off=left<=0||(f.mp|0)<mp;
+    return `<button data-sk="${x.id}" ${off?'disabled':''}>${skSvg(x)} ${x.n}<br><small>${skWhat(x)}｜剩 ${left} 次${mp?`／耗魔 ${mp}`:''}</small></button>`;
+  }).join('');
 }
 function bindMenuEvents(box,myTurn,sendFn){
   if(!myTurn)return;
@@ -1172,7 +1425,25 @@ function renderAsyncBattle(){
 
 // ---- 🎬 對戰舞台：對手在上、我方在下，出招／受傷各有動畫 ----
 let stageFor=null, stageSnap=null, stageMine='a';
-function btImg(f){ const r=Math.min(6,Math.max(0,(f&&f.rank)|0)); return iconHTML(AVIMG[r],AV[r]||'🧙','ic-bt'); }
+// ---- 🎭 四姿勢圖：依軍階在 game-config.js 的 poses 設定（有填檔名才啟用，沒填就用原頭像）----
+function poseSet(f){
+  const r=Math.min(6,Math.max(0,(f&&f.rank)|0)), ps=(GC.poses||{})[r];
+  return ps&&ps.idle?ps:null;
+}
+const _poseLoaded={};
+function posePreload(ps){ if(!ps||_poseLoaded[ps.idle])return; _poseLoaded[ps.idle]=1; ['idle','attack','hit','win'].forEach(k=>{ if(ps[k]){ const i=new Image(); i.src=ps[k]; } }); }
+function btPose(sp,which,ms){            // 換姿勢；ms>0 表示過一下自動回到待機
+  if(!sp)return; const img=sp.querySelector('.bt-pose img'); if(!img)return;
+  const ps=poseSet(sp._f); if(!ps)return;
+  const src=ps[which]||ps.idle; if(img.getAttribute('src')!==src) img.src=src;
+  sp.dataset.pose=which; clearTimeout(sp._pt);
+  if(ms) sp._pt=setTimeout(()=>{ if(!sp.classList.contains('ko')&&!sp.classList.contains('win')) btPose(sp,'idle'); },ms);
+}
+function btImg(f,role){
+  const r=Math.min(6,Math.max(0,(f&&f.rank)|0)), ps=poseSet(f);
+  if(ps){ posePreload(ps); return `<span class="bt-pose"><img src="${ps.idle}" alt=""></span>`; }
+  return iconHTML(AVIMG[r],AV[r]||'🧙','ic-bt');
+}
 const QSHORT={normal:'普',fine:'精',legend:'傳',myth:'神'};
 function btEquipHTML(f){
   if(!f||!f.eq) return '';
@@ -1187,11 +1458,11 @@ function btEquipHTML(f){
 function btSpritesHTML(f,role){
   const cs=Math.min(5,Math.max(0,(f&&f.clone)|0));
   return `<div class="bt-sprites ${cs?'has-clone':''}">`+
-    (cs?`<div class="bt-sprite bt-clone" id="bt-cl-${role}" style="opacity:${(cs*0.2).toFixed(2)}" title="分身 ${cs}★"><div class="bt-img">${btImg(f)}</div></div>`:'')+
-    `<div class="bt-sprite" id="bt-sp-${role}"><div class="bt-img">${btImg(f)}</div></div></div>`;
+    (cs?`<div class="bt-sprite bt-clone" id="bt-cl-${role}" style="opacity:${(cs*0.2).toFixed(2)}" title="分身 ${cs}★"><div class="bt-img">${btImg(f,role)}</div></div>`:'')+
+    `<div class="bt-sprite" id="bt-sp-${role}"><div class="bt-img">${btImg(f,role)}</div></div></div>`;
 }
 function btCardHTML(f){
-  return `<b class="nm"></b><div class="fbar hp"><i style="width:100%"></i></div><small class="hpt"></small><div class="fbar mp"><i style="width:100%"></i></div><small class="mpt"></small>${btEquipHTML(f)}`;
+  return `<b class="nm"></b><div class="fbar hp"><i class="lag" style="width:100%"></i><i class="fill" style="width:100%"></i></div><small class="hpt"></small><div class="fbar mp"><i class="lag" style="width:100%"></i><i class="fill" style="width:100%"></i></div><small class="mpt"></small><div class="stwrap"></div>${btEquipHTML(f)}`;
 }
 function ensureStage(room,mineSide){
   let el=$('#bt-stage');
@@ -1207,8 +1478,22 @@ function ensureStage(room,mineSide){
   </div><div class="bt-panel" id="bt-panel"></div>`;
   document.body.appendChild(el);
   document.body.style.overflow='hidden';
+  { const ar=el.querySelector('.bt-arena'); if(ar){ const rg=document.createElement('div'); rg.className='bt-ring'; ar.insertBefore(rg,ar.firstChild); } }
+  if(room.a&&room.b) setTimeout(()=>btVS(room[mineSide],room[top]),30);
   const box=$('#arena-battle'); box.innerHTML=''; box.classList.add('hide');
   return el;
+}
+// ---- ⚔️ VS 登場畫面：雙方從兩側衝進來，約 2.3 秒後淡出，露出戰場 ----
+function btVS(me,foe){
+  const stg=$('#bt-stage'); if(!stg)return;
+  snd('vs');
+  const rn=f=>(RK[Math.min(6,Math.max(0,f.rank|0))]||[0,''])[1];
+  const esc2=t=>String(t).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+  const side=(f,cls)=>`<div class="side ${cls}"><div class="pic ${cls==='r'?'bt-top':''}">${btImg(f,cls==='r'?'top':'bot')}</div><div class="nm">${esc2(f.name)} <i>Lv.${f.level}${rn(f)?'・'+rn(f):''}</i></div></div>`;
+  const v=document.createElement('div'); v.className='bt-vs';
+  const pn=$('#bt-panel'); if(pn) v.style.setProperty('--vsb',pn.offsetHeight+'px');
+  v.innerHTML=side(me,'l')+side(foe,'r')+'<div class="bolt">VS</div>';
+  stg.appendChild(v); setTimeout(()=>v.remove(),2800);
 }
 function removeStage(){
   const el=$('#bt-stage'); if(el) el.remove();
@@ -1217,15 +1502,19 @@ function removeStage(){
 function fillCard(card,f,rk){
   if(!card||!f) return;
   const rn=(RK[Math.min(6,Math.max(0,f.rank|0))]||[0,''])[1];
-  card.querySelector('.nm').textContent=`${f.name}　Lv.${f.level}${rn?'・'+rn:''}`;
-  card.querySelector('.fbar.hp>i').style.width=(Math.max(0,f.hp)/f.hpMax*100)+'%';
-  card.querySelector('.fbar.mp>i').style.width=(Math.max(0,f.mp)/f.mpMax*100)+'%';
-  card.querySelector('.hpt').textContent=`HP ${Math.max(0,f.hp)}/${f.hpMax}`;
-  card.querySelector('.mpt').textContent=`MP ${Math.max(0,f.mp)}/${f.mpMax}`;
+  const nm=card.querySelector('.nm'); nm.textContent=f.name+' ';
+  const ni=document.createElement('i'); ni.textContent=`Lv.${f.level}${rn?'・'+rn:''}`; nm.appendChild(ni);
+  const hpp=(Math.max(0,f.hp)/f.hpMax*100)+'%', mpp=(Math.max(0,f.mp)/f.mpMax*100)+'%';
+  card.querySelectorAll('.fbar.hp>i').forEach(e=>e.style.width=hpp);
+  card.querySelectorAll('.fbar.mp>i').forEach(e=>e.style.width=mpp);
+  card.querySelector('.hpt').innerHTML=`${bic('i-hp')} ${Math.max(0,f.hp)} / ${f.hpMax}`;
+  card.querySelector('.mpt').innerHTML=`${bic('i-mp')} ${Math.max(0,f.mp)} / ${f.mpMax}`;
+  const sw=card.querySelector('.stwrap'); if(sw)sw.innerHTML=statusHTML(f);
 }
 function stageKey(room){
   const a=room.a,b=room.b;
-  return [room.turn,room.over,a.hp,b.hp,a.mp,b.mp,!!a.defending,!!b.defending,!!a.charging,!!b.charging,(room.log||[]).slice(-1)[0]].join('|');
+  const stt=f=>JSON.stringify([f.bf||0,f.psn||0,f.bld||0,f.shield|0]);
+  return [room.turn,room.over,a.hp,b.hp,a.mp,b.mp,!!a.defending,!!b.defending,!!a.charging,!!b.charging,stt(a),stt(b),(room.log||[]).slice(-1)[0]].join('|');
 }
 function btAnim(el,cls,ms){ if(!el)return; el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); setTimeout(()=>el.classList.remove(cls),ms); }
 function btFloat(sp,text,color){ const d=document.createElement('div'); d.className='bt-float'; d.style.color=color; d.textContent=text; sp.appendChild(d); setTimeout(()=>d.remove(),1000); }
@@ -1244,6 +1533,31 @@ function btLunge(fromEl,toEl){
   const dx=(b.left+b.width/2-a.left-a.width/2)*0.55, dy=(b.top+b.height/2-a.top-a.height/2)*0.55;
   fromEl.animate([{transform:'translate(0,0)'},{transform:`translate(${dx}px,${dy}px) scale(1.15)`,offset:.4},{transform:`translate(${dx}px,${dy}px) scale(1.15)`,offset:.55},{transform:'translate(0,0)'}],{duration:700,easing:'ease-in-out'});
 }
+// 殘影：衝向對手時，身後留下三道淡淡的影子（所有角色都有）
+function btGhost(fromEl,toEl){
+  const stg=$('#bt-stage'),img=fromEl&&fromEl.querySelector('.bt-img'); if(!stg||!img||!img.animate)return;
+  const sr=stg.getBoundingClientRect(), a=fromEl.getBoundingClientRect(), b=toEl.getBoundingClientRect();
+  const dx=(b.left+b.width/2-a.left-a.width/2)*0.55, dy=(b.top+b.height/2-a.top-a.height/2)*0.55;
+  for(let i=0;i<3;i++) setTimeout(()=>{
+    const g=document.createElement('div'); g.className='bt-ghost';
+    g.style.cssText=`left:${a.left-sr.left}px;top:${a.top-sr.top}px;width:${a.width}px;height:${a.height}px`;
+    g.appendChild(img.cloneNode(true)); stg.appendChild(g);
+    const an=g.animate([{opacity:.5,transform:'translate(0,0)'},{opacity:.35,transform:`translate(${dx*0.8}px,${dy*0.8}px) scale(1.1)`,offset:.5},{opacity:0,transform:`translate(${dx}px,${dy}px) scale(1.15)`}],{duration:520,easing:'ease-out'});
+    an.onfinish=()=>g.remove();
+  },i*80);
+}
+// 弧形劍光：落在對手身上，方向跟著「攻擊者→對手」的方向轉
+function btSlash(fromEl,toEl){
+  const stg=$('#bt-stage'); if(!stg||!toEl.animate)return;
+  const sr=stg.getBoundingClientRect(), a=fromEl.getBoundingClientRect(), b=toEl.getBoundingClientRect();
+  const cx=b.left+b.width/2-sr.left, cy=b.top+b.height/2-sr.top;
+  const ang=Math.atan2((b.top+b.height/2)-(a.top+a.height/2),(b.left+b.width/2)-(a.left+a.width/2))*180/Math.PI;
+  const d=document.createElement('div'); d.className='bt-slash'; d.style.left=cx+'px'; d.style.top=cy+'px';
+  d.innerHTML='<svg viewBox="0 0 100 100"><defs><linearGradient id="btsg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".45" stop-color="#fff6d8"/><stop offset="1" stop-color="#ffb37a" stop-opacity=".2"/></linearGradient></defs><path d="M10 80C24 28 60 8 94 12 66 26 42 48 26 88Z" fill="url(#btsg)"/><path d="M16 76C30 34 60 18 88 18" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round" opacity=".9"/></svg>';
+  d.style.transform=`translate(-50%,-50%) rotate(${ang-50}deg)`; stg.appendChild(d);
+  const an=d.animate([{opacity:0,transform:`translate(-50%,-50%) rotate(${ang-95}deg) scale(.5)`},{opacity:1,transform:`translate(-50%,-50%) rotate(${ang-45}deg) scale(1.05)`,offset:.4},{opacity:0,transform:`translate(-50%,-50%) rotate(${ang-10}deg) scale(1.25)`}],{duration:380,easing:'ease-out'});
+  an.onfinish=()=>d.remove();
+}
 // 比對「上一個畫面」和「現在」，看是誰出了什麼招，播放對應動畫
 function playBattleEvent(snap,room){
   const atkSide=snap.turn; if(atkSide!=='a'&&atkSide!=='b') return;
@@ -1254,23 +1568,28 @@ function playBattleEvent(snap,room){
   const atkCl=clOf(atkSide), defCl=clOf(defSide);
   const line=(room.log||[]).slice(-1)[0]||'';
   const dDef=snap[defSide+'hp']-room[defSide].hp, dAtk=snap[atkSide+'hp']-room[atkSide].hp;
-  if(/防禦姿勢/.test(line)){ btBurst(atkSp,'🛡️'); return; }
-  if(/張開了護盾/.test(line)){ btBurst(atkSp,'🛡️'); btFloat(atkSp,'護盾展開！','#8fd6ff'); return; }
+  if(/防禦姿勢/.test(line)){ snd('guard'); btBurst(atkSp,'🛡️'); return; }
+  if(/張開了護盾/.test(line)){ snd('shield'); btBurst(atkSp,'🛡️'); btFloat(atkSp,'護盾展開！','#8fd6ff'); return; }
   if(/護盾擋下了攻擊/.test(line)&&dDef<=0){
-    btLunge(atkSp,defSp); if(atkCl) btLunge(atkCl,defSp);
-    setTimeout(()=>{ btAnim(defSp,'blocked',520); btFloat(defSp,'擋下！','#8fd6ff'); btBurst(defSp,'🛡️'); const bx=$('#arena-battle'); if(bx) btAnim(bx,'shake',360); },280);
+    snd('swing'); btLunge(atkSp,defSp); if(atkCl) btLunge(atkCl,defSp); btGhost(atkSp,defSp); btPose(atkSp,'attack',720);
+    setTimeout(()=>{ snd('block'); btAnim(defSp,'blocked',520); btFloat(defSp,'擋下！','#8fd6ff'); btBurst(defSp,'🛡️'); const bx=$('#arena-battle'); if(bx) btAnim(bx,'shake',360); },280);
     return; }
-  if(/詠唱/.test(line)){ btAnim(atkSp,'cast',700); if(atkCl) btAnim(atkCl,'cast',700); btBurst(atkSp,'🔮'); return; }
-  if(dDef<=0&&dAtk<=0) return;                      // 認輸、加入戰場等沒有出招的訊息，不播動畫
+  if(/詠唱/.test(line)){ snd('cast'); btAnim(atkSp,'cast',700); if(atkCl) btAnim(atkCl,'cast',700); btBurst(atkSp,'🔮'); return; }
+  if(dAtk<0&&dDef<=0&&/恢復了|回復了/.test(line)){ snd('heal'); btBurst(atkSp,'💚'); return; }       // 補血道具／招式
+  if(dDef<=0&&dAtk<=0){                              // 沒有傷害的招式：強化、削弱、中毒、失明、加速
+    if(/中毒了/.test(line)) snd('poison'); else if(/失明了/.test(line)) snd('blind');
+    else if(/速度提升|自己的.*\+\d/.test(line)) snd('buff'); else if(/−\d/.test(line)) snd('debuff');
+    return; }                                        // 認輸、加入戰場等沒有出招的訊息，不播動畫
   const magic=/魔法/.test(line);
   const icon = magic ? (/大魔法/.test(line)?'☄️':/中魔法/.test(line)?'🔥':'✨')
              : (/「拳」/.test(line)?'👊':/「腳」/.test(line)?'🦶':/衝撞/.test(line)?'💥':'🗡️');
+  btPose(atkSp,'attack',720);
   const hit=()=>{
-    if(dDef>0){ btAnim(defSp.querySelector('.bt-img'),'hurt',600); if(defCl) btAnim(defCl.querySelector('.bt-img'),'hurt',600); btFloat(defSp,'-'+dDef,magic?'#9ad0ff':'#ff6b6b'); btBurst(defSp,icon); }
-    if(dAtk>0){ btAnim(atkSp.querySelector('.bt-img'),'hurt',600); if(atkCl) btAnim(atkCl.querySelector('.bt-img'),'hurt',600); btFloat(atkSp,'-'+dAtk,'#ffb35a'); }
+    if(dDef>0){ snd(magic?'magichit':(dDef>=(room[defSide].hpMax||999)*0.35?'crit':'hit')); if(/中毒|毒傷/.test(line)) setTimeout(()=>snd('poison'),450); btPose(defSp,'hit',620); if(!magic) btSlash(atkSp,defSp); btAnim(defSp.querySelector('.bt-img'),'hurt',600); if(defCl) btAnim(defCl.querySelector('.bt-img'),'hurt',600); btFloat(defSp,'-'+dDef,magic?'#9ad0ff':'#ff6b6b'); btBurst(defSp,icon); }
+    if(dAtk>0){ btPose(atkSp,'hit',620); btAnim(atkSp.querySelector('.bt-img'),'hurt',600); if(atkCl) btAnim(atkCl.querySelector('.bt-img'),'hurt',600); btFloat(atkSp,'-'+dAtk,'#ffb35a'); }
   };
-  if(magic){ btAnim(atkSp,'cast',700); if(atkCl) btAnim(atkCl,'cast',700); btFly(atkSp,defSp,icon,hit); }
-  else{ btLunge(atkSp,defSp); if(atkCl) btLunge(atkCl,defSp); setTimeout(hit,280); }
+  if(magic){ snd('cast'); btAnim(atkSp,'cast',700); if(atkCl) btAnim(atkCl,'cast',700); btFly(atkSp,defSp,icon,hit); }
+  else{ snd('swing'); btLunge(atkSp,defSp); if(atkCl) btLunge(atkCl,defSp); btGhost(atkSp,defSp); setTimeout(hit,280); }
 }
 function renderScene(room,mineSide,panelHTML,bindFn){
   const stage=ensureStage(room,mineSide);
@@ -1283,16 +1602,17 @@ function renderScene(room,mineSide,panelHTML,bindFn){
   const spTop=$('#bt-sp-top'), spBot=$('#bt-sp-bot');
   [[spTop,room[top],top,$('#bt-cl-top')],[spBot,room[mineSide],mineSide,$('#bt-cl-bot')]].forEach(([sp,f,side,cl])=>{
     const els=cl?[sp,cl]:[sp];
+    sp._f=f;
     els.forEach(e=>{ e.classList.toggle('defending',!!f.defending&&!room.over); e.classList.toggle('charging',!!f.charging&&!room.over); });
     let sh=sp.querySelector('.bt-shield');if(!sh){sh=document.createElement('div');sh.className='bt-shield';sp.appendChild(sh)}
     const sn=f.shield|0;sh.classList.toggle('on',sn>0&&!room.over);sh.innerHTML=sn>0?`<i>×${sn}</i>`:'';
     const dead=f.hp<=0, other=room[side=='a'?'b':'a'];
     const won=room.over&&room.winner!=='draw'&&!dead&&(other.hp<=0||room.winner===f.name);
-    setTimeout(()=>{ els.forEach(e=>{ e.classList.toggle('ko',dead); e.classList.toggle('win',!!won); }); }, acted?650:0);
+    setTimeout(()=>{ els.forEach(e=>{ e.classList.toggle('ko',dead); e.classList.toggle('win',!!won); }); if(dead){btPose(sp,'hit'); if(acted&&!sp._koSnd){sp._koSnd=1;snd('ko')}} else if(won){btPose(sp,'win'); if(acted&&!sp._wnSnd&&side===mineSide){sp._wnSnd=1;snd('victory')}} }, acted?650:0);
   });
   // 中間的大字幕：顯示最新一行戰況
   const cap=$('#bt-cap'), line=(room.log||[]).slice(-1)[0]||'';
-  if(cap.textContent!==line){ cap.textContent=line; btAnim(cap,'pop',400); }
+  if(cap.dataset.line!==line){ cap.dataset.line=line; cap.innerHTML=line; btAnim(cap,'pop',400); }
   const panel=$('#bt-panel'); panel.innerHTML=panelHTML; bindFn&&bindFn(panel);
   stageSnap={key,turn:room.turn,ahp:room.a.hp,bhp:room.b.hp};
 }
@@ -1328,7 +1648,7 @@ const CHS=[['🗝️ 第一章：整數王國',CH1,lockCh1,'1'],['📜 第二章
 const SMAP={};CHS.forEach(c=>c[1].forEach(g=>g.st.forEach(x=>SMAP[x[0]]=x)));
 function show(v,ci){VIEW=v;if(ci!=null)CHI=ci;if(v==='ch'){MINIT=false;MFOC=null}
   document.querySelectorAll('[data-v]').forEach(e=>e.classList.toggle('hide',!e.dataset.v.split(' ').includes(v)));
-  $('#nav').classList.toggle('hide',v==='home');if(v==='arena')rankBuild();window.BGM&&BGM.play(v==='arena'?'arena':'map');render();scrollTo(0,0)}
+  $('#nav').classList.toggle('hide',v==='home');if(v==='arena')rankBuild();bgmView(v);render();scrollTo(0,0)}
 function chProg(ci){const ids=CHS[ci][1].flatMap((c,i)=>idsOf(CHS[ci][1],i));return [ids.reduce((a,id)=>a+st(id),0),ids.length*PERSTAGE]}
 function advHTML(){
   const fl=CHS.map((c,i)=>{const [a,b]=chProg(i);return `<button class="fnode" data-go="ch" data-ci="${i}"><b>${c[0]}</b>${c[1].length} 大關｜⭐ ${a}/${b}<div class="pbar"><div style="height:100%;width:${a/b*100}%;background:var(--bronze)"></div></div></button>`}).join('<span class="arr">➜</span>');
@@ -1336,17 +1656,27 @@ function advHTML(){
 function dqClaimable(){const q=dqState();return dqToday().filter(t=>!q.c[t.id]&&(q.p[t.k]||0)>=t.n).length}
 const THEME0={wall:'#d9e6bd',wall2:'#bcd29a',floor:'#ecb866',floor2:'#c98a3e',rail:'#8a5a2b'};
 const LB_SAY=['今天也一起加油！','答對一題，戰功就多一點！','商店有新的小屋飾品喔～','挑戰一下更高的星星吧！','休息夠了，出發冒險！','錯題練習可以補強弱點喔！'];
-const UIF={"hero": "hero", "arena": "duel", "wrong": "wrong-practice", "adv": "adventure", "daily": "daily-quest", "shop": "shop", "bag": "bag"};
+const UIF={"hero": "hero", "arena": "duel", "lab": "skill-lab", "wrong": "wrong-practice", "adv": "adventure", "daily": "daily-quest", "shop": "shop", "bag": "bag"};
 /* ===== ✨ 勇者特效圖層（都不會和人物衝突）：背後翅膀／光輪、腳下魔法陣、環繞精靈 =====
    有放圖片就用圖片（images/lobby/檔名.png），沒有就用程式畫的簡易版 */
 function fxImg(it,fb){return `<img class="fx-img" src="${lobbyImg(it)}" alt="" style="display:none" onload="this.style.display='block';this.nextElementSibling.style.display='none'" onerror="if(imgNext(this))return;this.remove()">${fb}`}
 function wingsSVG(c1,c2,id){const w='M104 80 C 84 82, 52 72, 6 26 C 22 22, 40 24, 52 30 C 36 31, 22 35, 12 42 C 32 45, 52 53, 70 59 C 52 57, 40 61, 30 68 C 52 74, 78 78, 104 76 Z';
   return `<svg class="fx-svg" viewBox="0 0 220 110"><defs><linearGradient id="wg-${id}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${c1}"/><stop offset="1" stop-color="${c2}"/></linearGradient></defs><g fill="url(#wg-${id})" stroke="#ffffffcc" stroke-width="1.6" stroke-linejoin="round"><path d="${w}"/><path transform="translate(220,0) scale(-1,1)" d="${w}"/></g></svg>`}
-/* 各勇者圖頭頂位置（左右中心、頭頂高度，皆為占圖寬／高的比例），光輪靠它放在頭上 */
+/* ===== 🧍 勇者圖的錨點表（新增勇者圖時，照樣在這裡加一行就好） =====
+   HEAD     ：頭頂位置（左右中心、頭頂高度），光輪靠它飄在頭上
+   SHOULDER ：兩片肩胛骨中間的位置，背後的翅膀靠它長在背上
+   兩個都是「占整張勇者圖寬／高的比例」，0＝最左／最上，1＝最右／最下。
+   WINGW    ：翅膀圖要畫多寬（＝勇者圖寬度的幾倍），覺得太大就把這個數字調小。 */
 const HEAD=[[.55,.033],[.61,.053],[.56,.033],[.45,0],[.59,.053],[.47,.003],[.49,0]];
-function fxBack(it,ri){const c=it.cos,[hx,ht]=HEAD[ri]||[.5,0];
-  if(c.kind==='halo')return `<div class="lb-back halo" style="left:${hx*100}%;top:${(ht-.05)*100}%">${fxImg(it,`<div class="fx-halo" style="--c1:${c.c1};--c2:${c.c2}"></div>`)}</div>`;
-  return `<div class="lb-back">${fxImg(it,wingsSVG(c.c1,c.c2,it.id))}</div>`}
+const SHOULDER=[[.55,.375],[.61,.385],[.56,.365],[.45,.345],[.59,.385],[.47,.355],[.49,.352]];
+const WINGW=1.6;
+function fxBack(it,ri){
+  const c=it.cos,[hx,ht]=HEAD[ri]||HEAD[0],[sx,sy]=SHOULDER[ri]||SHOULDER[0];
+  if(c.kind==='halo')  // 光輪：飄在頭頂正上方
+    return `<div class="lb-bkpos halo" style="left:${hx*100}%;top:${(ht-.05)*100}%;width:50%;margin-left:-25%;margin-top:-8.5%"><div class="lb-back halo">${fxImg(it,`<div class="fx-halo" style="--c1:${c.c1};--c2:${c.c2}"></div>`)}</div></div>`;
+  // 翅膀：圖片中心對準兩片肩胛骨之間（寬度＝勇者圖寬的 WINGW 倍）
+  const k=WINGW;
+  return `<div class="lb-bkpos" style="left:${sx*100}%;top:${sy*100}%;width:${k*100}%;margin-left:${-k*50}%;margin-top:${-k*25}%"><div class="lb-back">${fxImg(it,wingsSVG(c.c1,c.c2,it.id))}</div></div>`}
 function fxFeet(it){const c=it.cos.color;
   return `<div class="lb-feet">${fxImg(it,`<svg class="fx-svg" viewBox="0 0 320 100" style="filter:drop-shadow(0 0 7px ${c})"><ellipse cx="160" cy="50" rx="150" ry="42" fill="${c}22" stroke="${c}" stroke-width="3"/><ellipse cx="160" cy="50" rx="118" ry="32" fill="none" stroke="${c}" stroke-width="2.5" stroke-dasharray="14 9" class="fx-dash"/><ellipse cx="160" cy="50" rx="82" ry="22" fill="none" stroke="${c}" stroke-width="2" opacity=".8"/><path d="M160 12 L168 50 L160 88 L152 50 Z M44 50 L160 42 L276 50 L160 58 Z" fill="${c}44" stroke="${c}" stroke-width="1.5"/></svg>`)}</div>`}
 function fxOrbit(it,layer){const n=it.cos.n||1;
@@ -1359,7 +1689,7 @@ function lobbyHTML(){
   const glow=fr?`filter:drop-shadow(0 0 ${Math.round(fr.cos.glow/2)}px ${fr.cos.color}) drop-shadow(0 0 ${fr.cos.glow}px ${fr.cos.color})`:'';
   const pet=ac&&ac.cos.pet?ac:null,bk=cosOn('back'),ft=cosOn('feet'),ob=cosOn('orbit');
   const nm=(P._hero&&P._hero.name)||'勇者';
-  const dk=[['hero','🧙','角色'],['arena','⚔️','對戰'],['wrong','📝','錯題'],['adv','🗺️','冒險'],['daily','📅','每日'],['shop','🛒','商店'],['bag','🎒','背包']];
+  const dk=[['hero','🧙','角色'],['arena','⚔️','對戰'],['lab','🔮','工坊'],['wrong','📝','錯題'],['adv','🗺️','冒險'],['daily','📅','每日'],['shop','🛒','商店'],['bag','🎒','背包']];
   const bd={arena:INV?'新':'',daily:dqClaimable()||'',bag:(P._chests||[]).length||''};
   return `<div class="lobby" style="--w1:${T.wall};--w2:${T.wall2};--f1:${T.floor};--f2:${T.floor2};--rail:${T.rail}">
     <div class="lb-wall"></div><div class="lb-rail"></div><div class="lb-floor"></div>
@@ -1380,21 +1710,21 @@ function homeHTML(){
   return lobbyHTML()}
 function chHTML(ci){const c=CHS[ci];ONLY=ci;
   return `<h2 class="serif" style="margin:6px 0 0;color:var(--bronze)">${c[0]}</h2>`+groupHTML(c[1],c[2],c[3])+endlessHTML()}
-const SKICON={physical:'⚔️',magic:'✨',speed:'💨'};
-const SKCOL={'普通':'#9fb3c8','強力':'#b07cff','傳說':'#ffb23d'};
 function heroCardHTML(){const h=P._hero;
   if(!h)return '<p>🧙 尚未建立角色</p>';
-  if(h){const m={};(h.skills||[]).forEach(x=>m[x.category]=x);h.skills=Object.values(m)}
-  const slots=['physical','magic','speed'].map(c=>{const x=(h.skills||[]).find(y=>y.category===c);
-    return x?`<button class="slot on" data-skinfo="${c}" style="border-color:${SKCOL[x.rarity]||'var(--bronze)'}" title="${CATL[c]}招式">${SKICON[c]}<i>${(x.rarity||'')[0]||''}</i></button>`
-            :`<button class="slot" data-skinfo="${c}" title="${CATL[c]}招式（空）" style="opacity:.5">${SKICON[c]}</button>`}).join('');
-  const sk=`<div class="icrow"><span class="lab">🔮</span>${slots}<button id="draw" class="slot on" title="研發招式" style="border-color:var(--jade)">🎲<i>${skillCost(h)}</i></button>${P._pendSkill?`<button id="pend" class="slot on" style="border-color:var(--red)" title="有新招式等你決定">⚠️</button>`:''}</div>`;
+  const sk=`<div class="icrow"><span class="lab">🔮</span><button class="btn" data-golab="1">招式工坊（對戰八格已裝 ${equippedCount()} 個自己的招式）</button><small style="opacity:.8">招式庫 ${mySkills().length}/${SL.bagMax}</small></div>`;
   const ch=`<div class="icrow"><span class="lab">🗺️</span><div class="chips" style="flex:1">`+CHS.map((c,i)=>{const [a,b]=chProg(i);return `<div class="chip" data-chinfo="${i}" title="${c[0]}"><span class="e">${c[0].split(' ')[0]}</span>⭐ ${a}/${b}<div class="pbar"><div style="height:100%;width:${a/b*100}%;background:var(--jade)"></div></div></div>`}).join('')+`</div></div>`;
   return `${sk}${ch}${badgeHTML()}`}
 function wrongHTML(){const q=P._q||{};
   const L=Object.entries(q).filter(([k,r])=>r.n>=3&&r.ok/r.n<0.8).sort((a,b)=>a[1].ok/a[1].n-b[1].ok/b[1].n).slice(0,8);
   return `<h2 class="serif" style="margin:0 0 6px">📝 錯題練習</h2><small>依你的作答紀錄，找出正確率偏低的題型，點「去練習」直接進入該關。</small>`+
   (L.length?L.map(([k,r])=>{const id=k.split(':')[0],s=SMAP[id];return `<div class="fighter"><b>${SLAB[id]||id} ${s?s[1]:''}</b>｜題型 ${k.split(':')[1]}｜正確率 ${Math.round(r.ok/r.n*100)}%（${r.ok}/${r.n}）${s&&s[2]?` <button class="node" style="display:inline;min-height:0;padding:4px 10px" data-wr="${id}">去練習</button>`:''}</div>`}).join(''):'<p>🎉 目前沒有正確率偏低的題型，繼續闖關累積更多作答紀錄吧！</p>')}
+document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('button,.node,.mn');if(!b||b.disabled||b.closest('#toast'))return;
+  if(b.matches('.mn'))return snd('node');
+  if(b.matches('.lb-c')||b.matches('.lb-tg'))return snd(b.dataset.go==='adv'?'start':'menu');
+  if(b.matches('.mbtn'))return snd('start');
+  if(b.matches('#x,#back,#gp-x,#b-close,.back'))return snd('back');
+  snd('click')},true);
 $('#home').onclick=e=>{const tg=e.target.closest('[data-tg]');if(tg){LBMENU=!LBMENU;tg.closest('.lb-dock').classList.toggle('open',LBMENU);return}
   const lb=e.target.closest('[data-lb]');if(lb){const sy=$('#lb-say');if(sy){sy.textContent=LB_SAY[Math.floor(Math.random()*LB_SAY.length)];sy.classList.remove('on');void sy.offsetWidth;sy.classList.add('on');clearTimeout(window._lbt);window._lbt=setTimeout(()=>sy.classList.remove('on'),2200)}return}
   const dc=e.target.closest('[data-dq]');if(dc)return claimDq(dc.dataset.dq);const b=e.target.closest('[data-go]');if(!b)return;const g=b.dataset.go;if(g==='adv'){MSEL=true;show('ch')}else if(g==='ch')show('ch',+b.dataset.ci);else{if(g==='arena')INV=false;show(g)}};
@@ -1403,21 +1733,161 @@ $('#cards').onclick=e=>{const b=e.target.closest('[data-eq]');if(b)popup(eqCardH
 $('#stats').onclick=e=>{const b=e.target.closest('[data-stat]');if(!b)return;const k=b.dataset.stat;popup(`<div class="popbig">${STATICON[k]}</div><h3 class="serif" style="text-align:center;margin:0">${STATLABEL[k].replace(/^[^\u4e00-\u9fa5A-Za-z]+/,'')}　${totalStats()[k]}</h3><p style="text-align:center">${STATDESC[k]}</p><small>對戰基本值 ＝ 職業比例 ×（六項數值 × 等級 ＋ 裝備效果）</small>`)};
 $('#headc').onclick=()=>{const t=total(),nx=RK.find(r=>r[0]>t);popup(`<div class="popbig">🎖️</div><h3 class="serif" style="text-align:center;margin:0">${rankOf(t)[1]}</h3><p style="text-align:center">⭐ ${t} / ${MAXSTAR}<br>${nx?`再 ${nx[0]-t} 顆星，升為「${nx[1]}」`:'你已經是最高階了！'}</p>`)};
 $('#hx').addEventListener('click',e=>{
-  const sk=e.target.closest('[data-skinfo]');if(sk){const c=sk.dataset.skinfo,x=((P._hero&&P._hero.skills)||[]).find(y=>y.category===c);return popup(`<div class="popbig">${SKICON[c]}</div><h3 class="serif" style="text-align:center;margin:0">${CATL[c]}招式</h3><p style="text-align:center">${x?skillText(x)+`<br><small>每場對戰可用 ${RUSES[x.rarity]||2} 次</small>`:'（還沒有招式，按 🎲 研發）'}</p><small>每種類型只能裝備 1 個招式，抽到同類型時可選擇是否交換。</small>`)}
-  if(e.target.closest('#draw'))return popup(`<div class="popbig">🎲</div><h3 class="serif" style="text-align:center;margin:0">研發招式</h3><p style="text-align:center">🏅 戰功 <b>${P._merit||0}</b>　需要 <b>${skillCost(P._hero)}</b></p><div style="text-align:center"><button class="btn" id="draw2">🎲 研發</button></div>`);
+  if(e.target.closest('[data-golab]'))return show('lab');
   const ci=e.target.closest('[data-chinfo]');if(ci){const i=+ci.dataset.chinfo,[a,b]=chProg(i);return popup(`<div class="popbig">${CHS[i][0].split(' ')[0]}</div><h3 class="serif" style="text-align:center;margin:0">${CHS[i][0].replace(/^\S+\s/,'')}</h3><p style="text-align:center">⭐ ${a} / ${b}</p>`)}
   const bd=e.target.closest('[data-bdg]');if(bd)return popup(`<div class="popbig">${SPB[bd.dataset.bdg][0]}</div><h3 class="serif" style="text-align:center;margin:0">${SPB[bd.dataset.bdg][1]}</h3>`)
 },true);
-$('#gp').addEventListener('click',e=>{if(e.target.id==='draw2'){$('#gp').classList.add('hide');drawSkill()}});
-$('#hx').onclick=e=>{if(!P._hero)return;
-  if(e.target.closest('#pend')&&P._pendSkill)return offerSkill(P._pendSkill);
-  };
+/* 彈出視窗裡的招式操作：放進格子、確定名字 */
+$('#gp').addEventListener('click',e=>{
+  const pt=e.target.closest('[data-put]');
+  if(pt){
+    const [row,idx,kind,id]=pt.dataset.put.split(':');
+    putInSlot(row,+idx,kind,id); $('#gp').classList.add('hide'); return;
+  }
+  const nm=e.target.closest('[data-skname]');
+  if(nm){
+    const v=(document.getElementById('sk-nm')||{}).value;
+    const r=renameSkill(nm.dataset.skname,v);
+    if(r!==true){const m=document.getElementById('sk-nmsg');if(m)m.textContent='❗ '+r;return}
+    $('#gp').classList.add('hide'); toast('🔮 招式名稱已確定'); render(); if(VIEW==='lab')labBuild();
+  }
+});
+/* ===== 🔮 招式工坊：研發、命名、裝進八格 ===== */
+const SKROWL={n:'⚔️ 普通攻擊那排（體術）',m:'✨ 魔法攻擊那排（法術）'};
+const equippedCount=()=>{const sl=mySlots();return ['n','m'].reduce((a,r)=>a+(sl[r]||[]).filter(x=>x&&x.k).length,0)};
+const skCost=()=>(SL.baseCost|0)+((P._skN|0)*(SL.costStep|0));
+function findSlot(id){const sl=mySlots();for(const r of ['n','m'])for(let i=0;i<(sl[r]||[]).length;i++){const x=sl[r][i];if(x&&x.k===id)return [r,i]}return null}
+const NAMEA={dmg:['橫掃','裂地','崩天','破軍','斬龍','焚風'],
+             up_atk:['龍威','武神','鬥氣','虎嘯'], up_def:['鐵壁','金剛','磐石','龜甲'],
+             up_matk:['賢者','星輝','奧義','靈犀'], up_mdef:['聖光','結界','護心','淨化'],
+             up_spd:['颶風','疾風','流光','雷步'],
+             dn_atk:['折刃','斷腕','挫鋒','卸力'], dn_def:['噬甲','碎盾','裂鎧','穿骨'],
+             dn_matk:['破魔','封靈','斷咒','抑法'], dn_mdef:['蝕魂','破障','穿靈','散結'],
+             dn_spd:['縛足','凝滯','沼困','鎖步'],
+             heal_hp:['回春','甘霖','生命','聖療'], heal_mp:['湧泉','聚靈','納氣','還魔'],
+             poison:['劇毒','蛇牙','腐蝕','瘴氣'], blind:['幻霧','蒙眼','暗幕','迷光']};
+const NAMEB=['擊','斬','訣','術','陣','咒','刃','式'];
+const pickOne=a=>a[Math.floor(Math.random()*a.length)];
+function genName(e,t){return (t>=4?'真・':t>=3?'大':'')+pickOne(NAMEA[e.k]||NAMEA[e.c]||NAMEA.dmg)+pickOne(NAMEB)}
+function pickTier(){const w=SLT.map(t=>Math.max(0,t.prob|0));let r=Math.random()*w.reduce((a,b)=>a+b,0);for(let i=0;i<w.length;i++){r-=w[i];if(r<=0)return i}return 0}
+function pickEff(){const W=SL.effWeight||{},ks=Object.keys(W).filter(k=>EFFM[k]);
+  let r=Math.random()*ks.reduce((a,k)=>a+Math.max(0,W[k]),0);
+  for(const k of ks){r-=Math.max(0,W[k]);if(r<=0)return EFFM[k]}return EFFM.dmg}
 function drawSkill(){
   if(!P._hero)return;
-  if(P._pendSkill)return toast('請先決定上一個新招式要不要換上');
-  const h=P._hero,prev=h.skills.slice(),r=MathHeroEngine.learnSkill(h,{gold:P._merit||0,rules:SKILL_RULES});
-  if(!r.success)return toast('🏅 戰功不足，需要 '+r.cost+' 戰功，繼續闖關累積吧！');
-  h.skills=prev;P._merit=r.goldRemaining;P._pendSkill=r.skill;save();offerSkill(r.skill)}
+  const c=skCost();
+  if((P._merit||0)<c)return toast('🏅 戰功不夠，研發一次要 '+c+' 戰功，繼續闖關累積吧！');
+  if(mySkills().length>=(SL.bagMax|0))return toast('📚 招式庫滿了（'+SL.bagMax+' 個），請先丟棄一個再研發');
+  P._merit-=c; P._skN=(P._skN|0)+1;
+  const t=pickTier(), e=pickEff();
+  const x={id:'k'+Date.now().toString(36)+Math.floor(Math.random()*900+100), n:genName(e,t),
+           g:(Math.random()<0.5?'phy':'mag'), e:e.k, t:t};
+  P._sk=mySkills().concat([x]); save();
+  window.BGM&&BGM.clang&&BGM.clang();
+  render(); if(VIEW==='lab')labBuild();
+  skNamePopup(x,true);
+}
+function skNamePopup(x,isNew){
+  popup(`<div class="popbig">${skE(x).ic}</div>
+  <h3 class="serif" style="text-align:center;margin:0;color:var(--bronze)">${isNew?'🎉 研發成功！':'✏️ 幫招式改名'}</h3>
+  <p style="text-align:center">${skillText(x)}</p>
+  <div style="text-align:center"><small>${isNew?'名字我先幫你取好了，想自己取就改這裡：':'想叫什麼名字呢？'}</small><br>
+  <input id="sk-nm" maxlength="${SR.nameMaxLen}" value="${String(x.n).replace(/"/g,'&quot;')}" style="margin:6px 0;max-width:220px">
+  <div id="sk-nmsg" style="color:#ff9a8a;font-size:.85rem"></div>
+  <button class="btn" data-skname="${x.id}">✅ 就叫這個名字</button></div>
+  <small>提示：${x.g==='mag'?'這是法術，要裝在魔法攻擊那排，使用時會耗魔力。':'這是體術，要裝在普通攻擊那排，不用耗魔力。'}</small>`);
+}
+function renameSkill(id,v){
+  const x=mySkills().find(y=>y.id===id); if(!x)return '找不到這個招式';
+  v=String(v||'').trim();
+  if(!v)return '名字不能空白';
+  if([...v].length>(SR.nameMaxLen|0))return '名字最多 '+SR.nameMaxLen+' 個字';
+  if((SR.badWords||[]).some(w=>v.includes(w)))return '這個名字不太好喔，換一個吧';
+  x.n=v; save(); return true;
+}
+function putInSlot(row,i,kind,id){
+  const sl=mySlots();
+  if(kind==='k'){
+    const x=mySkills().find(y=>y.id===id); if(!x)return;
+    if((row==='n'&&x.g!=='phy')||(row==='m'&&x.g!=='mag'))return toast(x.g==='mag'?'法術只能放魔法攻擊那排':'體術只能放普通攻擊那排');
+    const w=findSlot(id); if(w)sl[w[0]][w[1]]=null;     // 同一個招式不能同時裝兩格
+    sl[row][i]={k:id}; toast('🔮 已裝上「'+x.n+'」');
+  }else if(kind==='s'){ sl[row][i]={s:id}; }
+  else { sl[row][i]=null; }
+  save(); render(); labBuild();
+}
+function slotPick(row,i){
+  const stock=(row==='n'?NMOVES:MMOVES), want=row==='n'?'phy':'mag';
+  const mine=mySkills().filter(x=>x.g===want);
+  const btn=(d,t)=>`<button class="btn" data-put="${d}" style="text-align:left">${t}</button>`;
+  const list=[btn(`${row}:${i}:none:0`,'⬜ 清空這一格')]
+    .concat(stock.map(m=>btn(`${row}:${i}:s:${m[0]}`,`🔸 ${m[1]}（原廠招式${row==='n'?'・×'+m[2]:'・耗魔 '+m[2]}）`)))
+    .concat(mine.length?mine.map(x=>btn(`${row}:${i}:k:${x.id}`,`${skE(x).ic} ${x.n}（${skT(x).name}・${skWhat(x)}・每場 ${skUses(x)} 次）`))
+                       :[`<small style="opacity:.8">你還沒有${want==='phy'?'體術':'法術'}招式，先去研發吧！</small>`]);
+  popup(`<h3 class="serif" style="margin:0;color:var(--bronze)">第 ${i+1} 格要放什麼？</h3><small>${SKROWL[row]}</small>
+   <div style="display:flex;flex-direction:column;gap:6px;margin-top:8px;max-height:52vh;overflow:auto">${list.join('')}</div>`);
+}
+function slotLabel(row,sl){
+  if(!sl)return '<b>（空格）</b><br><small>點一下放入招式</small>';
+  if(sl.s){const mv=(row==='n'?NMOVES:MMOVES).find(m=>m[0]===sl.s);
+    return mv?`<b>🔸 ${mv[1]}</b><br><small>原廠招式｜${row==='n'?'威力 ×'+mv[2]:'耗魔 '+mv[2]+'／威力 ×'+mv[3]}</small>`:'<b>（空格）</b>'}
+  const x=mySkills().find(y=>y.id===sl.k);
+  return x?`<b>${skE(x).ic} ${x.n}</b><br><small>${skT(x).name}｜${skWhat(x)}｜每場 ${skUses(x)} 次${skMp(x)?'／耗魔 '+skMp(x):''}</small>`:'<b>（空格）</b><br><small>原本的招式不見了</small>';
+}
+function labHTML(){
+  const sl=mySlots();
+  const rows=['n','m'].map(r=>`<h3 class="serif" style="margin:12px 0 4px">${SKROWL[r]}</h3><div class="labgrid">`+
+    (sl[r]||[]).map((x,i)=>`<button class="labslot ${x&&x.k?'on':''}" data-slot="${r}:${i}">${slotLabel(r,x)}</button>`).join('')+'</div>').join('');
+  const lib=mySkills().length?mySkills().map(x=>{
+      const w=findSlot(x.id), pts=skPoints(x);
+      return `<div class="fighter" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <div style="flex:1;min-width:210px">${skillText(x)}<br>
+        <small style="opacity:.78">${w?`✅ 已裝在${w[0]==='n'?'普攻':'魔法'}第 ${w[1]+1} 格`:'⬜ 尚未裝備'}${pts?`　以目前數值估算約 ${pts} 點`:''}</small></div>
+        <button class="btn" data-skren="${x.id}">✏️ 改名</button>
+        <button class="btn" data-skdel="${x.id}">🗑 丟棄</button></div>`}).join('')
+    :'<p>還沒有自己的招式，按上面的「🎲 研發招式」試試看！</p>';
+  return `<h2 class="serif" style="margin:0 0 4px">🔮 招式工坊</h2>
+  <small>研發出來的招式可以放進對戰的八個格子。<b>體術</b>放普通攻擊那排、<b>法術</b>放魔法攻擊那排（會耗魔力）。
+  階級越高威力越強，但每場能用的次數越少：${SLT.map(t=>t.name+' '+t.uses+' 次').join('、')}。</small>
+  <div style="margin:10px 0;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+    <button class="btn" id="sk-draw">🎲 研發招式（🏅 ${skCost()}）</button>
+    <button class="btn" id="sk-reset">♻️ 恢復原廠招式</button>
+    <small>🏅 戰功 <b>${P._merit||0}</b>　📚 招式庫 ${mySkills().length}/${SL.bagMax}</small>
+  </div>${rows}
+  <h3 class="serif" style="margin:16px 0 4px">📚 招式庫</h3>${lib}`;
+}
+function labBuild(){ const el=$('#lab'); if(el)el.innerHTML=labHTML(); }
+$('#lab').onclick=e=>{
+  const sp=e.target.closest('[data-slot]'); if(sp){const [r,i]=sp.dataset.slot.split(':');return slotPick(r,+i)}
+  const rn=e.target.closest('[data-skren]'); if(rn){const x=mySkills().find(y=>y.id===rn.dataset.skren);return x&&skNamePopup(x,false)}
+  const dl=e.target.closest('[data-skdel]');
+  if(dl){const x=mySkills().find(y=>y.id===dl.dataset.skdel); if(!x)return;
+    if(!confirm(`確定要丟掉「${x.n}」嗎？丟掉之後就沒有了。`))return;
+    const w=findSlot(x.id); if(w)mySlots()[w[0]][w[1]]=null;
+    P._sk=mySkills().filter(y=>y.id!==x.id); save(); render(); labBuild(); toast('🗑 已丟棄「'+x.n+'」'); return}
+  if(e.target.closest('#sk-draw'))return drawSkill();
+  if(e.target.closest('#sk-reset')){
+    if(!confirm('八個格子都換回原廠招式（拳、腳、衝撞、劍砍、小中大魔法）？你研發的招式不會不見，還留在招式庫。'))return;
+    P._slot=JSON.parse(JSON.stringify(DEFSLOT)); save(); render(); labBuild(); toast('♻️ 已恢復原廠招式');
+  }
+};
+/* 舊招式系統退場：收回舊招式、把花掉的戰功退還給學生 */
+function skMigrate(){
+  if(P._skMig)return; P._skMig=1;
+  const n=Math.max(((P._hero&&P._hero.skills)||[]).length,(P._hero&&P._hero.skillsCreated)|0);
+  if(n>0){
+    const b=(GC.skill&&GC.skill.baseCost)||500, st=(GC.skill&&GC.skill.costStep)||500;
+    let back=0; for(let i=0;i<n;i++)back+=b+i*st;
+    P._merit=(P._merit||0)+back; P._skBack=back;
+  }
+  if(P._hero){P._hero.skills=[];P._hero.skillsCreated=0;}
+  P._pendSkill=null; mySlots(); save();
+}
+function skHello(){
+  if(!P._skBack)return;
+  const n=P._skBack; P._skBack=0; save();
+  toast('🔮 招式系統改版囉！舊招式已收回，退還 🏅 戰功 '+n+'，請到「招式工坊」重新研發自己的招式。');
+}
 $('#wrong').onclick=e=>{const b=e.target.closest('[data-wr]');if(!b)return;const s=SMAP[b.dataset.wr];cur=s[0];$('#fr').src=stageURL(s[2],s[0],false);(window.BGM&&BGM.stop(),$('#ov').classList.remove('hide'))};
 
 /* ===== 🗺️ 冒險地圖：可拖曳的完整地圖、勇者跑動、頂端選模式 ===== */
@@ -1443,11 +1913,21 @@ function mapBuild(){
   if(HN==null)HN=(P._hn!=null&&MNODES[P._hn]&&nUn(MNODES[P._hn]))?P._hn:mapFr();
   const fr=mapFr(),hp=MPOS[HN],all=MNODES.every(nDone);
   const fog=all?'':`<svg class="fog" viewBox="0 0 1536 1024" width="1536" height="1024"><defs><filter id="fb" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="45"/></filter><mask id="fm"><rect width="1536" height="1024" fill="#fff"/>${MNODES.map((n,i)=>nUn(n)?`<circle cx="${MPOS[i][0]}" cy="${MPOS[i][1]}" r="170" fill="#000" filter="url(#fb)"/>`:'').join('')}</mask></defs><rect width="1536" height="1024" fill="#000" opacity="1" mask="url(#fm)"/></svg>`;
-  const nodes=MNODES.map((n,i)=>{const [x,y]=MPOS[i],un=nUn(n),dn=nDone(n);
-    return `<button class="mn ${un?'':'lk'} ${dn?'done':''} ${un&&!dn&&i===fr?'pulse':''}" style="left:${x}px;top:${y}px" data-n="${i}" title="${n.g.n}">${un?(dn?'★':i+1):'🔒'}</button>`}).join('');
+  const route=(()=>{let base='',lns='',ars='';
+    for(let i=0;i<MPOS.length-1;i++){const a=MPOS[i],b=MPOS[i+1],dx=b[0]-a[0],dy=b[1]-a[1],L=Math.hypot(dx,dy)||1,k=.14*L*(i%2?-1:1),cx=(a[0]+b[0])/2-dy/L*k,cy=(a[1]+b[1])/2+dx/L*k,
+      cls=nDone(MNODES[i])?'done':(!all&&i===fr?'cur':'fut'),d=`M${a[0]} ${a[1]}Q${cx} ${cy} ${b[0]} ${b[1]}`;
+      base+=`<path class="base" d="${d}"/>`;lns+=`<path class="ln ${cls}" d="${d}"/>`;
+      const mx=.25*a[0]+.5*cx+.25*b[0],my=.25*a[1]+.5*cy+.25*b[1],ang=Math.atan2(b[1]-a[1],b[0]-a[0])*180/Math.PI;
+      ars+=`<polygon class="ar ${cls}" points="-11,-9 11,0 -11,9" transform="translate(${mx} ${my}) rotate(${ang})"/>`}
+    return `<svg class="rt" viewBox="0 0 1536 1024" width="1536" height="1024" aria-hidden="true">${base}${lns}${ars}</svg>`})();
+  const nextOK=!all&&nUn(MNODES[fr])&&!nDone(MNODES[fr]);
+  const arrow=nextOK?(()=>{const [ax,ay]=MPOS[fr],dn=ay<260,svg=`<svg viewBox="0 0 96 96" aria-hidden="true"><path d="M30 4h36v44h22L48 92 8 48h22z" fill="#ffd86b" stroke="#d24a33" stroke-width="7" stroke-linejoin="round"/></svg>`;
+    return `<div class="nx-arrow${dn?' dn':''}" style="left:${ax}px;top:${dn?ay+34:ay-72}px"><b>下一關</b>${svg}</div>`})():'';
+  const nodes=arrow+MNODES.map((n,i)=>{const [x,y]=MPOS[i],un=nUn(n),dn=nDone(n);
+    return `<button class="mn ${un?'':'lk'} ${dn?'done':''} ${un&&!dn&&i===fr?'pulse':''}" style="left:${x}px;top:${y}px" data-n="${i}" title="${n.g.n}">${un?(dn?'★':i+1):'🔒'}</button>`+`<span class="mn-no" style="left:${x}px;top:${y}px">${MAPN[i][0]}</span>`}).join('');
   const chsel=MSEL?`<div id="chsel">${CHS.map((c,i)=>{const [a,b]=chProg(i),fi=MNODES.findIndex(n=>n.gi===i),lk=!nUn(MNODES[fi]);return `<button class="chbtn ${lk?'lk':''}" data-chsel="${i}"><span class="no">${lk?'🔒':i+1}</span><span class="em">${c[0].split(' ')[0]}</span><b>${c[0].replace(/^\S+\s第.章：?/,'')}</b><span>⭐ ${a}/${b}</span><div class="pbar" style="width:80%"><div style="height:100%;width:${a/b*100}%;background:var(--jade)"></div></div></button>`}).join('')}</div>`:'';
-  $('#map').innerHTML=`<div class="mp-bar"><button data-here="1">📍 回到勇者位置</button>${CHS.map((c,i)=>`<button data-chsel="${i}" title="${c[0]}">${c[0].split(' ')[0]} ${i+1}</button>`).join('')}${all?'<small>🎉</small>':''}</div>
-  <div style="position:relative"><div id="mapvp" class="${MSEL?'mapblur':''}"><div id="mapin"><img src="${MAPIMG}" draggable="false" alt="數學世界探險圖">${fog}${nodes}<div id="mhero" style="left:${hp[0]}px;top:${hp[1]+8}px">${heroImg()}</div></div></div>${chsel}</div>`;
+  $('#map').innerHTML=`<div class="mp-bar"><button data-here="1">📍 回到勇者位置</button>${nextOK?'<button data-next="1" style="border-color:#ffd86b;font-weight:700">👇 下一關在這裡</button>':''}${CHS.map((c,i)=>`<button data-chsel="${i}" title="${c[0]}">${c[0].split(' ')[0]} ${i+1}</button>`).join('')}${all?'<small>🎉</small>':''}<span class="rt-lg"><span><i style="border-color:#ffd86b"></i>已走過</span><span><i style="border-color:#ff7a45;border-top-style:dashed"></i>現在要走</span><span><i style="border-color:#fff;border-top-style:dotted"></i>之後的路</span></span></div>
+  <div style="position:relative"><div id="mapvp" class="${MSEL?'mapblur':''}"><div id="mapin"><img src="${MAPIMG}" draggable="false" alt="數學世界探險圖">${fog}${route}${nodes}<div id="mhero" style="left:${hp[0]}px;top:${hp[1]+8}px">${heroImg()}</div></div></div>${chsel}</div>`;
   const vp=$('#mapvp');
   vp.onscroll=()=>{MSX=vp.scrollLeft;MSY=vp.scrollTop};
   const ctr=i=>{vp.scrollLeft=MPOS[i][0]-vp.clientWidth/2;vp.scrollTop=MPOS[i][1]-vp.clientHeight/2};
@@ -1465,6 +1945,7 @@ function pickChapter(gi){
   HN=t;P._hn=t;save();MSEL=false;MFOC=t;mapBuild()}
 function mapClick(e){
   const cs=e.target.closest('[data-chsel]');if(cs)return pickChapter(+cs.dataset.chsel);
+  if(e.target.closest('[data-next]')){const vp=$('#mapvp'),f=mapFr();vp.scrollTo({left:MPOS[f][0]-vp.clientWidth/2,top:MPOS[f][1]-vp.clientHeight/2,behavior:'smooth'});return}
   if(e.target.closest('[data-here]')){const vp=$('#mapvp');vp.scrollTo({left:MPOS[HN][0]-vp.clientWidth/2,top:MPOS[HN][1]-vp.clientHeight/2,behavior:'smooth'});return}
   const n=e.target.closest('.mn');if(n)onMapNode(+n.dataset.n);
 }
@@ -1479,10 +1960,11 @@ function onMapNode(i){
 }
 function showGroup(i){
   const n=MNODES[i],labs=MAPN[i][1],ic={easy:'🎯',real:'⚔️',hard:'🔥'};
+  const nxK=(i===mapFr())?n.g.st.findIndex((s,k)=>s[2]&&!(n.lock(n.ci,k)||preMsg(i))&&!st(s[0])):-1;
   const rows=n.g.st.map((s,k)=>{const r=n.lock(n.ci,k)||preMsg(i),v=st(s[0]),boss=/Boss/.test(s[1]),ms=(P[s[0]]&&P[s[0]].ms)||{},off=r||!s[2];
-    const info=`<div class="ginfo"><b>${r?'🔒':boss?'👹':'⚔️'} ${labs[k]}</b>　${s[1]}<br><small>${!s[2]?'建造中':r?cm(r):(v?'⭐'.repeat(v)+'☆'.repeat(5-v):'尚未通關')}</small></div>`;
+    const info=`<div class="ginfo">${k===nxK?'<span class="nxtag">👉 下一關</span>':''}<b>${r?'🔒':boss?'👹':'⚔️'} ${labs[k]}</b>　${s[1]}<br><small>${!s[2]?'建造中':r?cm(r):(v?'⭐'.repeat(v)+'☆'.repeat(5-v):'尚未通關')}</small></div>`;
     const btns=['easy','real','hard'].map(m=>`<button class="mbtn ${m}" data-gm="${i}:${k}:${m}" ${off?'disabled':''}>${ic[m]} ${MODEL[m]}${ms[m]?'<br>⭐'+ms[m]:''}</button>`).join('')+((TEACHER||v>=ENDLESS_NEED)&&!off?`<button class="mbtn" data-gm="${i}:${k}:endless" title="無極限挑戰">♾️</button>`:'');
-    return `<div class="gprow gr2">${info}<div class="mbtns">${btns}</div></div>`}).join('');
+    return `<div class="gprow gr2${k===nxK?' nextrow':''}">${info}<div class="mbtns">${btns}</div></div>`}).join('');
   $('#gp').innerHTML=`<div class="card"><h2 class="serif" style="margin:0;color:var(--bronze)">${MAPN[i][0]}</h2><small>${n.g.sub||''}</small>${rows}<div style="text-align:center;margin-top:8px"><button id="gp-x" class="btn">關閉</button></div></div>`;
   $('#gp').classList.remove('hide');
 }
@@ -1522,7 +2004,6 @@ async function rankBuild(){
 
 /* ===== 🛒 商店與🎒背包（道具資料集中在 SHOP，之後補細項只要改這張表） =====
    cat：分類；battle：對戰中使用的效果；passive：進入對戰時自動裝備；fx：背包使用的效果 */
-const CATL={physical:'物理',magic:'魔法',speed:'速度'};
 /* ===== 📅 每日任務（每天 3 個，依日期固定抽出；獎勵：經驗值／戰功／道具／特殊徽章） ===== */
 const bkkDay=()=>new Date(Date.now()+7*36e5).toISOString().slice(0,10);
 const DQPOOL=GC.daily.pool;
@@ -1555,8 +2036,6 @@ function dqHTML(){
     return `<div class="fighter" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><div style="flex:1;min-width:190px"><b>${t.t}</b>　<small>${v}/${t.n}</small><div class="pbar"><div style="height:100%;width:${v/t.n*100}%;background:var(--jade)"></div></div><small>獎勵：${rewardText(t.r)}</small></div>${got?'<small>✅ 已領取</small>':`<button class="btn" data-dq="${t.id}" ${ok?'':'disabled'}>領取</button>`}</div>`}).join('')+`</div>`;
 }
 function badgeHTML(){const b=P._badges||{},ks=Object.keys(b);return `<div class="icrow"><span class="lab">🏵️</span>`+(ks.length?ks.map(k=>`<span class="bdg" data-bdg="${k}" title="${SPB[k][1]}">${SPB[k][0]}</span>`).join(''):'<span style="opacity:.5">—</span>')+`</div>`}
-const SKILL_RULES={skillBaseCost:GC.skill.baseCost,skillCostIncrease:GC.skill.costStep};
-const skillCost=h=>SKILL_RULES.skillBaseCost+(h.skillsCreated|0)*SKILL_RULES.skillCostIncrease;
 function meritInit(){if(P._merit==null){P._merit=flatAll.reduce((a,id)=>a+((P[id]&&P[id].best)|0),0);save()}}
 const SHOPTABS=[['use','🧪 道具',['heal','shield','revive','speed','points','exp']],['grow','⚒️ 成長',['forge','body','equip']],['look','🎨 外觀',['title','frame','rename']],['fx','✨ 特效',['acc','back','feet','orbit']],['room','🏡 小屋',['theme','decor']]];
 let SHOPTAB='use';
@@ -1577,29 +2056,150 @@ function applyAction(att,def,kind,move){
     if(it.battle.spd){if(att.fast)return null;att.spd=Math.round(att.spd*(1+it.battle.spd));att.fast=true;return `${att.name} 使用「${it.name}」，速度提升 ${Math.round(it.battle.spd*100)}%！`}
     return null}
   let line;
+  SKERR='';
   if(kind=='skill')line=useSkill(att,def,move);
   else if(att.triple&&kind=='normal'){att.triple=false;const ls=Array.from({length:GC.skill.tripleHits},()=>applyAction0(att,def,kind,move));line=ls.includes(null)?null:`⚡ ${att.name} 神速連擊（${GC.skill.tripleHits} 連）！<br>`+ls.join('<br>')}
   else line=applyAction0(att,def,kind,move);
   if(line!==null&&def.shieldHit){def.shieldHit=false;line+=`<br>🛡️ ${def.name} 的護盾擋下了攻擊！${def.shield>0?'（還剩 '+def.shield+' 次）':'（護盾用完了）'}`}
+  if(line!==null){
+    // ☠️ 中毒：輪到自己出手時扣血；👁️ 失明：出手後倒數一回合
+    const ps=poisonTick(att); if(ps)line+='<br>'+ps;
+    if(att.bld&&att.bld.t>0){att.bld.t--;if(att.bld.t<=0){att.bld=null;line+=`<br>👁️ ${att.name} 的視線恢復了！`}}
+  }
   if(line!==null)[def,att].forEach(f=>{if(f.hp<=0&&f.revive){f.revive=false;f.hp=Math.round(f.hpMax*GC.battle.revivePct/100);line+=`<br>🪶 ${f.name} 的復活羽毛發動，以 ${GC.battle.revivePct}% 生命重新站起來！`}});
   return line}
-/* ===== 🔮 研發的招式在對戰中的效果 =====
-   速度數值：引擎的 1 點 ≈ 對戰速度的 3%；每場使用次數：普通 3、強力 2、傳說 1 */
-const RUSES=GC.skill.uses,SPP=GC.skill.speedPctPerPoint/100;
-const skillLeft=(f,x)=>(RUSES[x.r]||2)-((f.su||{})[x.c]||0);
-function packSkills(){return ((P._hero&&P._hero.skills)||[]).map(x=>({n:x.name,r:x.rarity,c:x.category,m:x.multiplier||0,t:x.type,s:x.selfSpeedPenalty||0,tp:x.targetSpeedPenalty||0,sm:x.speedMultiplier||0,sb:x.selfSpeedBonus||0}))}
-function useSkill(att,def,cat){
-  const x=(att.skills||[]).find(y=>y.c===cat);if(!x||skillLeft(att,x)<=0)return null;
-  att.su=att.su||{};att.su[cat]=(att.su[cat]||0)+1;
-  let dmg=0,extra='';
-  if(x.t==='damage')dmg=dealDamageLocal(att,def,(cat==='magic'?att.matk:att.atk)*x.m,cat==='magic');
-  else if(x.t==='speedAttack'){dmg=hurt(def,Math.max(1,Math.round(att.atk+att.spd*GC.skill.speedAttackSpdRatio)))}
-  else if(x.t==='speedDamage'){dmg=hurt(def,Math.max(1,Math.round(att.spd*x.sm*GC.skill.speedDamageRatio)))}
-  else if(x.t==='speedBuff'){att.spd=Math.round(att.spd*(1+x.sb*SPP));att.triple=true;return `${att.name} 使用${x.r}招式「${x.n}」，速度提升 ${Math.round(x.sb*SPP*100)}%，下一次普通攻擊會連擊 ${GC.skill.tripleHits} 次！`}
-  else return null;
-  if(x.s){att.spd=Math.round(att.spd*(1-x.s*SPP));extra+=`，自己速度下降 ${Math.round(x.s*SPP*100)}%`}
-  if(x.tp){def.spd=Math.round(def.spd*(1-x.tp*SPP));extra+=`，${def.name} 速度下降 ${Math.round(x.tp*SPP*100)}%`}
-  return `${att.name} 使用${x.r}招式「${x.n}」${x.t.startsWith('speed')?'（無視防禦）':''}，對 ${def.name} 造成 ${dmg} 點傷害${extra}！`}
+/* ===== 🔮 招式系統 =====
+   一個招式只影響「一種」數值；階級越高每場能用的次數越少（見 game-config.js 的 skillLab）。
+   招式物件：{id:唯一代號, n:名稱, g:'phy' 體術／'mag' 法術, e:效果代號, t:階級 0～4}
+   數值類效果是依「自己的原始數值」換算成點數，所以低等級、高等級都不會失衡。
+   不同效果可以同時掛在身上（疊加）；同一種最多疊 layerCap 層，並有 upCap／dnCap 上限。 */
+const SL=GC.skillLab, SLT=SL.tiers;
+const SKSTAT={atk:'普攻',def:'物防',matk:'魔攻',mdef:'魔防',spd:'速度'};
+const EFFS=[
+  {k:'dmg',     ic:'💥', n:'傷害',     c:'dmg'},
+  {k:'up_atk',  ic:'⚔️', n:'普攻提升', c:'up', s:'atk'},
+  {k:'up_def',  ic:'🛡️', n:'物防提升', c:'up', s:'def'},
+  {k:'up_matk', ic:'✨', n:'魔攻提升', c:'up', s:'matk'},
+  {k:'up_mdef', ic:'🔮', n:'魔防提升', c:'up', s:'mdef'},
+  {k:'up_spd',  ic:'🏃', n:'速度提升', c:'up', s:'spd'},
+  {k:'dn_atk',  ic:'⚔️', n:'削弱普攻', c:'dn', s:'atk'},
+  {k:'dn_def',  ic:'🛡️', n:'削弱物防', c:'dn', s:'def'},
+  {k:'dn_matk', ic:'✨', n:'削弱魔攻', c:'dn', s:'matk'},
+  {k:'dn_mdef', ic:'🔮', n:'削弱魔防', c:'dn', s:'mdef'},
+  {k:'dn_spd',  ic:'🏃', n:'削弱速度', c:'dn', s:'spd'},
+  {k:'heal_hp', ic:'❤️', n:'補血',     c:'heal', s:'hp'},
+  {k:'heal_mp', ic:'🔹', n:'補魔',     c:'heal', s:'mp'},
+  {k:'poison',  ic:'☠️', n:'中毒',     c:'poison'},
+  {k:'blind',   ic:'👁️', n:'失明',     c:'blind'}
+];
+const EFFM={};EFFS.forEach(e=>EFFM[e.k]=e);
+const skT=x=>SLT[Math.max(0,Math.min(SLT.length-1,x.t|0))];
+const skE=x=>EFFM[x.e]||EFFM.dmg;
+const skUses=x=>skT(x).uses|0;
+const skLeft=(f,x)=>skUses(x)-(((f.su||{})[x.id])|0);
+const skMp=x=>x.g==='mag'?((x.t|0)+1)*(SL.mpPerTier|0):0;
+const pc=v=>Math.round(v*100)+'%';
+// 一句話說明這個招式會做什麼（工坊與對戰按鈕都用這一段）
+function skWhat(x){
+  const T=skT(x),e=skE(x);
+  if(e.c==='dmg')   return (x.g==='mag'?'魔法傷害':'物理傷害')+' ×'+T.dmg;
+  if(e.c==='up')    return '自己的'+SKSTAT[e.s]+' +'+pc(T.stat);
+  if(e.c==='dn')    return '對手的'+SKSTAT[e.s]+' −'+pc(T.stat);
+  if(e.c==='heal')  return (e.s==='hp'?'回復血量 ':'回復魔力 ')+pc(T.heal);
+  if(e.c==='poison')return '讓對手中毒，每回合扣血 '+pc(T.poison);
+  return '讓對手失明，攻擊有 '+pc(T.blind)+' 機率落空';
+}
+// 用「目前自己的數值」估算實際會加減幾點，讓學生看得到具體數字
+function skPoints(x){
+  const T=skT(x),e=skE(x),st=totalStats();
+  if(e.c==='up'||e.c==='dn') return Math.max(1,Math.round((st[e.s]||0)*T.stat));
+  if(e.c==='heal')           return Math.max(1,Math.round((st[e.s]||0)*T.heal));
+  if(e.c==='poison')         return Math.max(1,Math.round((st.hp||0)*T.poison));
+  return 0;
+}
+function skillText(x){ return `<b>${skE(x).ic} ${x.n}</b>・${skT(x).name}（${x.g==='mag'?'法術':'體術'}）<br><small>${skWhat(x)}｜每場 ${skUses(x)} 次${skMp(x)?`｜耗魔 ${skMp(x)}`:''}</small>`; }
+
+/* 招式庫與八格裝備（存在 P._sk／P._slot） */
+const DEFSLOT={n:NMOVES.slice(0,4).map(m=>({s:m[0]})), m:MMOVES.slice(0,4).map(m=>({s:m[0]}))};
+while(DEFSLOT.n.length<4)DEFSLOT.n.push(null);
+while(DEFSLOT.m.length<4)DEFSLOT.m.push(null);
+const mySkills=()=>(P._sk||(P._sk=[]));
+function mySlots(){ if(!P._slot){P._slot=JSON.parse(JSON.stringify(DEFSLOT));save();} return P._slot; }
+const slotsOf=(f,row)=>((f.slots&&f.slots[row])||DEFSLOT[row]);
+function packSkills(){ // 只上傳「有裝在八格裡」的招式
+  const ids=[];const sl=mySlots();['n','m'].forEach(r=>(sl[r]||[]).forEach(x=>{if(x&&x.k)ids.push(x.k)}));
+  return mySkills().filter(x=>ids.includes(x.id)).map(x=>({id:x.id,n:x.n,g:x.g,e:x.e,t:x.t|0}));
+}
+const packSlots=()=>JSON.parse(JSON.stringify(mySlots()));
+
+/* ── 戰鬥中的狀態運算：強化／削弱／恢復／中毒／失明 ── */
+let SKERR='';   // 招式沒辦法生效時要顯示給玩家看的原因
+function ensureBase(f){ if(!f.bs)f.bs={atk:f.atk|0,def:f.def|0,matk:f.matk|0,mdef:f.mdef|0,spd:f.spd|0}; }
+function statRecalc(f,k){ const b=f.bf||{};f[k]=Math.max(1,(f.bs[k]|0)+((b['u_'+k]||{p:0}).p|0)-((b['d_'+k]||{p:0}).p|0)); }
+function statMod(f,k,pct,dir){ // 回傳實際加減了幾點；0＝已達上限
+  ensureBase(f); f.bf=f.bf||{};
+  const key=(dir>0?'u_':'d_')+k, st=f.bf[key]||{p:0,l:0};
+  if(st.l>=(SL.layerCap|0))return 0;
+  const cap=Math.round((f.bs[k]|0)*(dir>0?SL.upCap:SL.dnCap));
+  let pts=Math.min(Math.max(1,Math.round((f.bs[k]|0)*pct)),cap-st.p);
+  if(pts<=0)return 0;
+  st.p+=pts;st.l++;f.bf[key]=st;statRecalc(f,k);return pts;
+}
+function healF(f,which,pct){ // 回血／回魔，有每場總量上限
+  const maxK=which==='hp'?'hpMax':'mpMax', uk=which==='hp'?'hlH':'hlM';
+  const budget=Math.round((f[maxK]|0)*(which==='hp'?SL.healCapHp:SL.healCapMp));
+  const amt=Math.min(Math.round((f[maxK]|0)*pct), budget-(f[uk]|0), (f[maxK]|0)-(f[which]|0));
+  if(amt<=0)return 0;
+  f[uk]=(f[uk]|0)+amt; f[which]=(f[which]|0)+amt; return amt;
+}
+function poisonF(f,pct){ const ps=f.psn||{l:0,p:0,t:0};
+  if(ps.l<(SL.poisonLayerCap|0)){ps.l++;ps.p=Math.round((ps.p+pct)*1e4)/1e4;}
+  ps.t=SL.poisonTurns|0; f.psn=ps; return ps; }
+function blindF(f,prob){ const b=f.bld||{p:0,t:0}; b.p=Math.max(b.p,prob); b.t=SL.blindTurns|0; f.bld=b; return b; }
+// 中毒每回合結算（在自己出手時扣血）
+function poisonTick(f){
+  if(!f.psn||f.psn.t<=0)return '';
+  const d=Math.max(1,Math.round((f.hpMax|0)*f.psn.p));
+  f.hp-=d; f.psn.t--;
+  const end=f.psn.t<=0; if(end)f.psn=null;
+  return `☠️ ${f.name} 毒性發作，扣了 ${d} 點血${end?'（毒性解除）':''}`;
+}
+
+function useSkill(att,def,id){
+  const x=(att.skills||[]).find(y=>y.id===id);
+  if(!x){SKERR='找不到這個招式';return null;}
+  if(skLeft(att,x)<=0){SKERR='這個招式這場已經用完了';return null;}
+  const mp=skMp(x); if((att.mp|0)<mp){SKERR='魔力不夠喔';return null;}
+  const T=skT(x), e=skE(x);
+  let line=null;
+  if(e.c==='dmg'){
+    const isM=x.g==='mag';
+    const dmg=dealDamageLocal(att,def,(isM?att.matk:att.atk)*T.dmg,isM);
+    line=att.missed?(att.missed=false,`${att.name} 使用「${x.n}」，但眼前一片模糊，攻擊落空了！`)
+                   :`${att.name} 使用「${x.n}」，對 ${def.name} 造成 ${dmg} 點傷害！`;
+  }else if(e.c==='up'){
+    const pts=statMod(att,e.s,T.stat,1);
+    if(!pts){SKERR=`${SKSTAT[e.s]}的強化已經到上限了`;return null;}
+    line=`${att.name} 使用「${x.n}」，自己的${SKSTAT[e.s]} +${pts}！`;
+  }else if(e.c==='dn'){
+    const pts=statMod(def,e.s,T.stat,-1);
+    if(!pts){SKERR=`對手的${SKSTAT[e.s]}已經壓到最低了`;return null;}
+    line=`${att.name} 使用「${x.n}」，${def.name} 的${SKSTAT[e.s]} −${pts}！`;
+  }else if(e.c==='heal'){
+    const amt=healF(att,e.s,T.heal);
+    if(!amt){SKERR=e.s==='hp'?'血量已滿或已達本場補血上限':'魔力已滿或已達本場補魔上限';return null;}
+    line=`${att.name} 使用「${x.n}」，回復了 ${amt} 點${e.s==='hp'?'血量':'魔力'}！`;
+  }else if(e.c==='poison'){
+    const ps=poisonF(def,T.poison);
+    line=`${att.name} 使用「${x.n}」，${def.name} 中毒了（${ps.l} 層，持續 ${ps.t} 回合）！`;
+  }else{
+    const b=blindF(def,T.blind);
+    line=`${att.name} 使用「${x.n}」，${def.name} 失明了（攻擊有 ${pc(b.p)} 機率落空，持續 ${b.t} 回合）！`;
+  }
+  att.su=att.su||{}; att.su[x.id]=((att.su[x.id])|0)+1;
+  if(mp)att.mp-=mp;
+  return line;
+}
 const DEV=/[?&]dev=1/.test(location.search);
 const fileBase=x=>String(x.file||x.id).trim().replace(/\.(png|jpe?g|webp|gif)$/i,'');
 const shopImg=x=>'images/shop/'+encodeURI(fileBase(x))+'.png',lobbyImg=x=>'images/lobby/'+encodeURI(fileBase(x))+'.png';
@@ -1708,17 +2308,6 @@ function renameDialog(x){
     try{fillWho()}catch(e){}
     $('#gp').classList.add('hide');toast(`🪪 改名成功！新名字：<b>${v}</b>`);try{syncMyUser()}catch(e){}render();bagBuild()};
 }
-/* ===== 🔮 招式研發：抽到後與「同類型」現有招式交換 ===== */
-function skillText(x){return `<b>${x.name}</b>・${x.rarity}　威力 ×${x.multiplier}${x.selfSpeedPenalty?`　自身速度 −${x.selfSpeedPenalty}`:''}${x.targetSpeedPenalty?`　對方速度 −${x.targetSpeedPenalty}`:''}`}
-function offerSkill(sk){
-  const h=P._hero,cur=(h.skills||[]).find(x=>x.category===sk.category),box=$('#gp');
-  const done=(swap)=>{if(swap){h.skills=(h.skills||[]).filter(x=>x.category!==sk.category).concat(sk);toast(`🔮 已換上「${sk.name}」`)}else toast('🔮 保留原本的招式');P._pendSkill=null;save();box.classList.add('hide');render()};
-  if(!cur)return done(true);
-  box.innerHTML=`<div class="card"><h2 class="serif" style="margin:0 0 6px;color:var(--bronze)">🔮 研發出新的${CATL[sk.category]}招式！</h2><small>${CATL[sk.category]}招式只能和${CATL[sk.category]}招式交換。</small>
-  <div class="fighter" style="margin:8px 0"><b>目前：</b>${skillText(cur)}</div><div class="fighter" style="margin:8px 0"><b>新的：</b>${skillText(sk)}</div>
-  <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap"><button class="btn" id="sk-swap">換上新招式</button><button class="btn" id="sk-keep">保留現在的</button></div></div>`;
-  box.classList.remove('hide');$('#sk-swap').onclick=()=>done(true);$('#sk-keep').onclick=()=>done(false);
-}
 /* ===== 🎲 第一次登入：建立角色（依 math_hero_engine） ===== */
 function maybeCreate(){if(P._hero)return;const box=$('#create');box.classList.remove('hide');
   box.innerHTML=`<div class="card"><h2 class="serif" style="margin:0;color:var(--bronze)">🧙 建立你的勇者</h2>
@@ -1779,7 +2368,7 @@ function checkGifts(){
   window.BGM&&BGM.clang&&BGM.clang();
   render();
 }
-load();meritInit();fragInit();fillWho();show('home');startPendingListen();maybeCreate();checkGifts();
+load();meritInit();fragInit();skMigrate();fillWho();show('home');startPendingListen();maybeCreate();checkGifts();skHello();
 
 /* ===== 🛠️ 教師工具（只存在於 world-map-teacher.html） ===== */
 (()=>{
@@ -1815,6 +2404,9 @@ load();meritInit();fragInit();fillWho();show('home');startPendingListen();maybeC
     <h3>📦 寶箱／⚔️ 裝備</h3>
     <div class="r">寶箱 +<input type="number" id="t-c" value="10" min="1"> 星數 <select id="t-cs">${starOpts(3).replace('<option value="0">0 ⭐</option>','')}</select><button data-a="chest">發放寶箱</button></div>
     <div class="r">全部裝備直接設為 <select id="t-q"><option value="normal">普通</option><option value="fine">精良</option><option value="legend">傳說</option><option value="myth" selected>神話</option></select><button data-a="eq">套用</button> <small>（「分身」依 7-3 星數，請先把星數設滿）</small></div>
+    <h3>🔮 招式工坊</h3>
+    <div class="r">免費研發 <input type="number" id="t-sk" value="6" min="1" max="12"><button data-a="sk">隨機研發（不扣戰功）</button><button data-a="skfill">自動裝滿八格</button></div>
+    <div class="r"><button data-a="skall">每種效果各發一個（5 階）</button><button data-a="skclr">清空招式庫</button></div>
     <h3>🎁 測試「獎勵發放」</h3>
     <ul style="margin:4px 0;padding-left:1.2em">${gifts}</ul>
     <div class="r"><button data-a="gnow">立刻檢查並領取禮物</button><button data-a="gclr">清除禮物領取紀錄（可重測）</button></div>
@@ -1836,6 +2428,14 @@ load();meritInit();fragInit();fillWho();show('home');startPendingListen();maybeC
     'allcos':()=>{const it={};GC.shop.filter(x=>x.cos).forEach(x=>it[x.id]=1);giftApply({items:it})},
     'chest':()=>{giftApply({chests:num('#t-c')||1,chestStars:+val('#t-cs')||MAXS})},
     'eq':()=>{P._eqQ=P._eqQ||{};ITEMS.forEach((it,i)=>{if(!it.special)P._eqQ[i]=val('#t-q')})},
+    'sk':()=>{const n=Math.max(1,Math.min(SL.bagMax|0,num('#t-sk')||6));
+      for(let i=0;i<n&&mySkills().length<(SL.bagMax|0);i++){const t=pickTier(),e=pickEff();
+        P._sk=mySkills().concat([{id:'k'+Date.now().toString(36)+i+Math.floor(Math.random()*900+100),n:genName(e,t),g:(Math.random()<0.5?'phy':'mag'),e:e.k,t:t}])}},
+    'skall':()=>{const t=SLT.length-1;P._sk=EFFS.map((e,i)=>({id:'ka'+i,n:genName(e,t),g:e.c==='dmg'?'phy':(i%2?'mag':'phy'),e:e.k,t:t}));},
+    'skfill':()=>{const sl=mySlots();['n','m'].forEach(r=>{const want=r==='n'?'phy':'mag';
+      const pool=mySkills().filter(x=>x.g===want);
+      for(let i=0;i<4;i++){const x=pool[i];if(x)sl[r][i]={k:x.id}}})},
+    'skclr':()=>{P._sk=[];P._slot=JSON.parse(JSON.stringify(DEFSLOT))},
     'gnow':()=>{pan.style.display='none';checkGifts();return 'skip'},
     'gclr':()=>{P._giftsGot={}},
     'reset':()=>{if(!confirm('確定清除教師版的所有存檔？'))return 'skip';P={};}
@@ -1845,7 +2445,7 @@ load();meritInit();fragInit();fillWho();show('home');startPendingListen();maybeC
     const a=e.target.dataset.a;if(!a||!A[a])return;
     const r=A[a]();if(r==='skip')return;
     save();if(a==='reset'){location.reload();return}
-    render();draw();toast('✅ 已套用');
+    render();if(VIEW==='lab')labBuild();draw();toast('✅ 已套用');
   };
   btn.onclick=()=>{if(!P._hero){toast('請先建立勇者角色，再開啟教師工具');return}draw();pan.style.display='block'};
 })();

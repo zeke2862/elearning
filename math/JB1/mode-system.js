@@ -17,7 +17,10 @@
    ===================================================================== */
 (function () {
   'use strict';
-  (function(){ var sc = document.createElement('script'); sc.src = 'bgm.js'; sc.onload = function(){ if (window.BGM) BGM.play('battle'); }; document.head.appendChild(sc); })();
+  function stageBgm() { try { if (window.BGM) BGM.play('stage-' + (S.sid || 'x'), 'battle'); } catch (e) {} }   // 有 audio/bgm/stage-關卡代號.mp3 就播它，沒有用內建音樂
+  (function(){ var sc = document.createElement('script'); sc.src = 'bgm.js'; sc.onload = function(){ stageBgm(); }; document.head.appendChild(sc);
+    var s2 = document.createElement('script'); s2.src = 'sfx.js'; document.head.appendChild(s2); })();
+  function snd(n) { try { if (window.SND) { SND.play(n); return true; } } catch (e) {} return false; }
   var GC = window.GAME_CONFIG || {}, GS = GC.stars || {}, GT = GC.stage || {};   // 所有數值來自 game-config.js
   var CFG = { REAL_NEED: 0, HARD_NEED: 0, ENDLESS_NEED: GS.endlessNeed || 3, MAXSTAR: GS.maxStar || 5, RAMP: GT.endlessRamp || 30, SWITCH: GT.endlessSwitch || 15 };
   var TIERS = {
@@ -180,6 +183,110 @@
     } catch (e) {}
     return h;
   }
+
+  /* =====================================================================
+     🎮 休息小遊戲（Eric 10-23）：每答 5 題、或連續答對 5 題，隨機跳出一款小遊戲
+     （暗棋、象棋、五子棋、黑白棋、跳棋、圍棋、排七接龍…），單一局決勝負、平手才重玩，
+     贏了送「商店道具 ×1」（放進大廳背包）。所有數字都在 game-config.js 的 relax 區（修改器可調）。
+     只掛在 mode-system.js：20 幾個關卡檔都不用改。
+     ===================================================================== */
+  var RX = { on: false, held: null, t: 0 };
+  var RX_DEF_ITEMS = { heal_s: 30, heal_m: 20, heal_l: 5, shield_s: 15, shield_m: 6, shield_l: 2, speed_s: 10, revive_m: 12, mb_s: 8 };
+  function rcfg() {
+    var r = GC.relax || {};
+    return {
+      enabled: r.enabled == null ? 1 : +r.enabled,
+      every: Math.max(1, +r.every || 5),
+      streak: r.streak == null ? 5 : Math.max(0, +r.streak),
+      level: r.level || 'easy',
+      limit: r.dailyRewardLimit == null ? 6 : Math.max(0, +r.dailyRewardLimit),
+      exclude: String(r.excludeGames || '').split(/[,\s，、]+/).filter(Boolean),
+      items: r.rewardItems || RX_DEF_ITEMS
+    };
+  }
+  function rxDay() { return new Date(Date.now() + 7 * 36e5).toISOString().slice(0, 10); }   // 泰國時間
+  function rxUsed() { try { var o = JSON.parse(localStorage.getItem('jb-relax-reward') || 'null'); return o && o.d === rxDay() ? (+o.n || 0) : 0; } catch (e) { return 0; } }
+  function rxMark() { try { localStorage.setItem('jb-relax-reward', JSON.stringify({ d: rxDay(), n: rxUsed() + 1 })); } catch (e) {} }
+  function rxLeft(c) { return c.limit > 0 ? Math.max(0, c.limit - rxUsed()) : 999; }   // dailyRewardLimit=0 → 不限
+  function rxPickItem(c) {
+    var shop = {}; (GC.shop || []).forEach(function (x) { shop[x.id] = x; });
+    var list = Object.keys(c.items).filter(function (id) { return (+c.items[id] || 0) > 0 && (!GC.shop || shop[id]); });
+    if (!list.length) return null;
+    var tot = list.reduce(function (a, id) { return a + (+c.items[id]); }, 0), r = Math.random() * tot, pick = list[0];
+    for (var i = 0; i < list.length; i++) { r -= (+c.items[list[i]]); if (r <= 0) { pick = list[i]; break; } }
+    return { id: pick, it: shop[pick] || {} };
+  }
+  function rxIsRescue() { try { return typeof rescue !== 'undefined' && !!rescue; } catch (e) { return false; } }
+  function rxDue() {            // 在「下一題之前」彈出（最後一題之後也彈）；只有已經沒血（直接看戰報）才不彈
+    try {
+      if (typeof hearts !== 'undefined' && hearts <= 0) return false;
+      if (S.active && S.ended) return false;
+      return true;                // 最後一題答完也要跳（Eric 10-23）：小遊戲玩完才看結算
+    } catch (e) { return true; }
+  }
+  function setupRelax() {
+    var c = rcfg();
+    if (!c.enabled || RX.hooked) return;
+    if (typeof window.next !== 'function' || typeof window.log !== 'function') return;
+    RX.hooked = true;
+    var oLog = window.log, oNext = window.next;
+    window.log = function (ok) {          // 每答一題，關卡都會呼叫 log(對錯)
+      var r = oLog.apply(this, arguments);
+      try { if (RX.on && !rxIsRescue() && window.RelaxBreak) window.RelaxBreak.answered(ok === true); } catch (e) {}
+      return r;
+    };
+    window.next = function () {           // 出下一題之前，看看要不要先玩小遊戲
+      var self = this, args = arguments;
+      try {
+        if (RX.on && window.RelaxBreak && rxDue()) {
+          RX.held = function () { return oNext.apply(self, args); };
+          if (window.RelaxBreak.poll()) return;
+          RX.held = null;
+        }
+      } catch (e) { RX.held = null; }
+      return oNext.apply(self, args);
+    };
+    var sc = document.createElement('script');
+    sc.src = 'relax-break.bundle.js';
+    sc.onload = function () {
+      var RB = window.RelaxBreak; if (!RB) return;
+      var games = {};
+      RB.REGISTRY.forEach(function (r) {
+        if (c.exclude.indexOf(r.id) >= 0) return;
+        var vs = r.variants.filter(function (v) { return !v.solo; }).map(function (v) { return v.id; });
+        if (r.id === 'hexxagon') vs = vs.filter(function (v) { return v !== 'open61'; });   // 最大的盤面太久，不放
+        if (vs.length) games[r.id] = vs;
+      });
+      function give() {
+        var cc = rcfg(), p = rxPickItem(cc);
+        if (!p) return '（目前沒有設定獎勵道具）';
+        rxMark();
+        var emb = window.parent !== window;
+        if (emb) post({ type: 'relax-reward', id: p.id, n: 1 });
+        var left = rxLeft(cc);
+        return (p.it.icon || '🎁') + ' <b>' + (p.it.name || p.id) + '</b> ×1' + (emb ? '<br>已經放進你的背包囉！' : '<br>（單獨開啟測試：不會進背包）') +
+          (cc.limit > 0 ? '<br><small>今天還能領 ' + left + ' 次小遊戲道具</small>' : '');
+      }
+      RB.init({
+        every: c.every, streak: c.streak, level: c.level, deferred: true,
+        unlockWins: 0, dailyLimit: 2, storageKey: 'hy_relax_v1',
+        rewardMode: 'chest', rewardLabels: { chest: '商店道具 ×1', stage: '商店道具 ×1' },
+        games: games, allowSkip: true,
+        canTrigger: function () { return rxLeft(rcfg()) > 0; },   // 今天的道具領滿，就不再跳小遊戲
+        rewards: { chest: give, stage: give },
+        onStart: function () { RX.t = Date.now(); snd('minigame-start'); try { if (window.BGM) BGM.stop(); } catch (e) {} },
+        onEnd: function (info) {
+          if (S.t0) S.t0 += Date.now() - RX.t;                      // 休息時間不算進「平均每題秒數」
+          if (info && info.result === 'win') snd('reward');
+          stageBgm();
+          var f = RX.held; RX.held = null; if (f) f();
+        }
+      });
+      RX.on = true;
+    };
+    document.head.appendChild(sc);
+  }
+
   var MS = {
     cfg: CFG,
     stage: function (k, d) { return GT[k] != null ? GT[k] : d; },
@@ -221,12 +328,14 @@
       }
       setupRevive();
       var pm = qp.get('mode');
+      setupRelax();
       if (pm && !S.flag && !lockMsg(pm)) { var pb = $('#modes .mode[data-m="' + pm + '"]'); if (pb) { pb.click(); S.pre = pm; var bx = $('#modes'); if (bx) bx.style.display = 'none'; } }
       refresh();
     },
     // start() 裡呼叫：回傳 true 代表這一局是無極限（題目改成一題一題現場出）
     begin: function (rescue) {
       S.ended = false; S.lastType = null; S.t0 = Date.now();
+      try { if (window.RelaxBreak && RX.on) window.RelaxBreak.reset(); } catch (e) {}
       S.active = S.flag && !rescue && S.stars >= CFG.ENDLESS_NEED;
       if (!S.active) restore();
       return S.active;
@@ -254,7 +363,7 @@
     // finish() 最後呼叫：依模式結算星數、畫結算畫面、通知地圖
     result: function (o) {
       if (o.rescue) return;
-      tone(o.fail ? SFX.lose : SFX.win); if (window.BGM) BGM.stop();
+      if (!snd(o.fail ? 'defeat' : 'victory')) tone(o.fail ? SFX.lose : SFX.win); if (window.BGM) BGM.stop();
       var $t = $('#e-title'), $s = $('#e-stars'), $i = $('#e-info');
 
       /* ---- 無極限 ---- */
@@ -330,6 +439,18 @@
     b.style.cssText = 'position:fixed;right:8px;bottom:8px;z-index:50;border:1px solid #888;border-radius:50%;width:36px;height:36px;background:#0008;color:#fff;font-size:18px;cursor:pointer';
     b.onclick = function () { mute = !mute; b.textContent = mute ? '🔇' : '🔊'; try { localStorage.setItem('ms-mute', mute ? '1' : '0'); } catch (e) {} };
     document.body.appendChild(b);
+    // 所有按鈕的點擊音（作答選項 .opt 不在這裡，答對／答錯有自己的音效）
+    document.addEventListener('click', function (e) {
+      var t = e.target && e.target.closest && e.target.closest('button');
+      if (!t || t === b || t.disabled || t.classList.contains('opt') || t.closest('.rb-ov')) return;
+      var id = t.id || '', n = 'click';
+      if (id === 't-hint') n = 'hint'; else if (id === 't-cut') n = 'cut'; else if (id === 't-freeze') n = 'freeze';
+      else if (id === 'go' || id === 'again' || id === 'rescue') n = 'start';
+      else if (t.classList.contains('mode')) n = 'select';
+      else if (id === 'ms-ready') n = 'confirm';
+      else if (id === 'back') n = 'back';
+      snd(n);
+    }, true);
     new MutationObserver(function (list) {
       var bad = 0, ok = 0;
       list.forEach(function (r) {
@@ -338,7 +459,15 @@
         if (c.contains('bad') && !/\bbad\b/.test(old)) bad = 1;
         if (c.contains('ok') && !/\bok\b/.test(old)) ok = 1;
       });
-      if (bad) tone(SFX.bad); else if (ok) tone(SFX.ok);
+      if (bad) { if (!snd('wrong')) tone(SFX.bad); setTimeout(function () { snd('wallhit'); }, 150); }
+      else if (ok) {
+        var say = document.getElementById('say'), timeUp = say && /時間到/.test(say.textContent || '');
+        if (timeUp) { if (!snd('timeup')) tone(SFX.bad); setTimeout(function () { snd('wallhit'); }, 650); }
+        else {
+          if (!snd('correct')) tone(SFX.ok);
+          setTimeout(function () { var s2 = document.getElementById('say'); if (s2 && /連擊/.test(s2.textContent || '')) snd('combo'); }, 120);
+        }
+      }
     }).observe(document.body, { attributes: true, attributeFilter: ['class'], subtree: true, attributeOldValue: true });
   }
   if (document.body) initSfx(); else document.addEventListener('DOMContentLoaded', initSfx);

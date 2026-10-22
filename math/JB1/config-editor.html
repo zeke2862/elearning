@@ -58,6 +58,16 @@ input[type=checkbox]{width:22px;height:22px}
 .gc textarea{flex:1;min-width:240px;min-height:44px}
 .gc .lbl{min-width:84px;color:var(--bronze)}
 .gc .sum{font-size:.85rem;opacity:.85;margin-top:6px}
+.rg{display:grid;grid-template-columns:minmax(260px,380px) 1fr;gap:14px;align-items:start}
+@media (max-width:760px){.rg{grid-template-columns:1fr}}
+.rstage{position:relative;aspect-ratio:1/1;border-radius:14px;border:2px solid var(--line);overflow:hidden;container-type:inline-size;
+  background:radial-gradient(70% 45% at 50% 86%,#3a2c5e,transparent 70%),linear-gradient(180deg,#171c3c,#0f1330);position:sticky;top:96px}
+.rstage .rdot{position:absolute;width:18px;height:18px;margin:-9px 0 0 -9px;border-radius:50%;border:2px solid #4cf0c0;pointer-events:none;z-index:7;display:none}
+.rstage .rdot::before,.rstage .rdot::after{content:"";position:absolute;background:#4cf0c0}
+.rstage .rdot::before{left:50%;top:-7px;bottom:-7px;width:1px}.rstage .rdot::after{top:50%;left:-7px;right:-7px;height:1px}
+.rctl label{display:flex;align-items:center;gap:8px;margin:4px 0;font-size:.9rem}
+.rctl label span:first-child{min-width:104px;color:var(--bronze)}
+.rctl input[type=range]{flex:1}.rctl output{min-width:58px;text-align:right}
 </style>
 </head>
 <body>
@@ -85,7 +95,8 @@ input[type=checkbox]{width:22px;height:22px}
   </div>
   <div id="root"></div>
 </main>
-<script src="game-config.js?v=20261018g"></script>
+<script src="game-config.js?v=20261023a"></script>
+<script src="rig.js"></script>
 <script>
 const LABELS=window.GAME_CONFIG_LABELS||{};
 let cfg=JSON.parse(JSON.stringify(window.GAME_CONFIG)),orig=JSON.parse(JSON.stringify(window.GAME_CONFIG_DEFAULT));
@@ -285,6 +296,34 @@ function buildGifts(d){
   add.onclick=()=>{cfg.gifts.push({id:gNewId(),on:true,title:'老師的禮物',msg:'',to:{mode:'all',list:[]},merit:100,items:{}});render();setTimeout(()=>{const o=document.querySelector('details[data-g]');if(o)o.open=true},0)};
   box.appendChild(add);d.appendChild(box);
 }
+function buildRig(d){
+  if(!cfg.rig||typeof cfg.rig!=='object')cfg.rig={};
+  const KEYS=[['shoulderX',.5,.9,.001],['shoulderY',.25,.55,.001],['pivotX',.05,.35,.001],['pivotY',.3,.65,.001],['armScale',1.2,2.4,.01],['height',20,90,1],
+    ['restAngle',-30,40,1],['raiseAngle',-120,-30,1],['slashAngle',20,100,1],['raiseMs',100,600,10],['slashMs',60,400,10],['backMs',100,600,10]];
+  const box=document.createElement('div');
+  box.innerHTML=`<div class="note"><b>怎麼調？</b>① 按「顯示轉軸十字」，十字會停在手臂轉動的中心。② 用「身體圓心」把十字移到身體肩甲圓形的正中央，再用「手臂轉軸」讓手臂的肩甲蓋在同一點。③ 按「揮一刀」看動作，覺得角度、速度不順就調。④ 調好後，按最上面的「💾 儲存到本機」或「⬇️ 下載 game-config.js」。<br><small>劍光會自動沿劍尖走過的弧線畫出來。目前對戰預覽頁（Artifact）和之後移植到遊戲，都讀這一區的數值。</small></div>
+   <div class="rg"><div class="rstage" id="rstage"><i class="rdot"></i></div><div><div class="rctl"></div>
+   <div class="row" data-l="揮劍 校準 rig 轉軸"><button class="go" data-a="swing">⚔️ 揮一刀</button><button data-a="dot">🎯 顯示轉軸十字</button><button data-a="trail">✨ 劍光開關</button><button data-a="reset">↩️ 還原預設</button></div></div></div>`;
+  d.appendChild(box);
+  const st=box.querySelector('#rstage'),dot=box.querySelector('.rdot'),ctl=box.querySelector('.rctl');
+  const r=JBRig.create(st,{body:'images/rig/body.png',arm:'images/rig/arm.png',params:cfg.rig,breathe:false});
+  const sync=()=>{const a=r.anchor();dot.style.left=a.x+'px';dot.style.top=a.y+'px'};
+  const outs={};
+  KEYS.forEach(([k,mn,mx,sp])=>{
+    const v=cfg.rig[k]??JBRig.DEFAULT[k],l=document.createElement('label'),o0=orig.rig&&orig.rig[k];
+    l.dataset.l=lab('rig.'+k);
+    l.innerHTML=`<span>${lab('rig.'+k).split('（')[0]}</span><input type="range" min="${mn}" max="${mx}" step="${sp}" value="${v}"><output>${v}</output>`;
+    const inp=l.querySelector('input'),o=l.querySelector('output');l.title=lab('rig.'+k);outs[k]=[inp,o];
+    inp.oninput=()=>{const n=+inp.value;cfg.rig[k]=n;o.textContent=n;o.style.color=(o0!==n)?'var(--bronze)':'';r.set({[k]:n});
+      if(['restAngle','raiseAngle','slashAngle'].includes(k))r.setAngle(n);sync()};
+    ctl.appendChild(l)});
+  r.setAngle(cfg.rig.restAngle??0);setTimeout(sync,0);d.addEventListener('toggle',()=>setTimeout(sync,0));window.addEventListener('resize',sync);
+  box.addEventListener('click',e=>{const a=e.target.dataset.a;if(!a)return;
+    if(a==='swing')r.swing();
+    if(a==='dot'){dot.style.display=dot.style.display==='block'?'none':'block';sync()}
+    if(a==='trail'){cfg.rig.trail=cfg.rig.trail?0:1;r.set({trail:cfg.rig.trail})}
+    if(a==='reset'){Object.assign(cfg.rig,JBRig.DEFAULT);render();}});
+}
 function render(){
   const root=$('#root');root.innerHTML='';
   if(!Array.isArray(cfg.gifts))cfg.gifts=[];
@@ -294,6 +333,7 @@ function render(){
     d.innerHTML=`<summary>${lab(k)}</summary>`;
     const v=cfg[k];
     if(k==='shop'){buildShop(d)}else
+    if(k==='rig'){d.open=true;buildRig(d)}else
     if(v&&typeof v==='object'&&!Array.isArray(v)){for(const kk in v)build(v[kk],[k,kk],d)}else build(v,[k],d);
     root.appendChild(d)}
   filter()}
