@@ -15,7 +15,7 @@ button{font:inherit;cursor:pointer;color:inherit}
 button:focus-visible{outline:3px solid var(--bronze);outline-offset:2px}
 .card{background:var(--ink2);border:2px solid var(--line);border-radius:14px;padding:18px}
 .btn{background:var(--bronze);color:#2a1d05;border:0;border-radius:10px;padding:12px 22px;font-weight:700;font-size:1.05rem}
-.btn.ghost{background:transparent;color:var(--bronze);border:2px solid var(--bronze)}
+.btn.ghost{background:#2b2a3c;color:#f0cf85;border:2px solid var(--bronze)}
 .modes{display:grid;gap:10px;margin:16px 0}
 .mode{text-align:left;background:var(--ink);border:2px solid var(--line);border-radius:12px;padding:12px 14px}
 .mode.on{border-color:var(--bronze);background:#2b2a3c}
@@ -45,6 +45,10 @@ button:focus-visible{outline:3px solid var(--bronze);outline-offset:2px}
 .q .hint{margin-top:8px;font-size:.95rem;color:#7a4a12}
 .qsvg{margin:10px auto 0}
 .opts{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.opts.pics .opt{background:#fffdf5;color:#2b2416;padding:10px 6px 8px;position:relative;display:flex;align-items:flex-end;justify-content:center;min-height:96px}
+.opts.pics .opt .lab{position:absolute;left:8px;top:4px;font-size:1.05rem;color:#7a4a12}
+.opts.pics .opt:hover:not(:disabled){background:#fff6d8}
+.opts.pics .opt.ok{background:var(--jade)}.opts.pics .opt.bad{background:var(--red)}
 .opt{background:var(--ink2);border:2px solid var(--bronze);border-radius:12px;padding:14px 6px;font-size:1.05rem;font-weight:700}
 .opt:hover:not(:disabled){background:#33396b}
 .opt.ok{background:var(--jade);border-color:var(--jade);color:#06231c}
@@ -67,7 +71,7 @@ button:focus-visible{outline:3px solid var(--bronze);outline-offset:2px}
 <section id="s-start" class="card">
 <h1 class="serif" style="margin:0">數靈召喚師：生活中的幾何圖形</h1>
 <h2 class="serif" style="margin:6px 0 0;color:var(--bronze)">6-1 觀念三：立體圖形的三視圖（第二冊最終 Boss）</h2>
-<p style="line-height:1.7">【空間三視幻影怪】由許多正方體堆疊而成！鳥瞰圖上的數字代表堆疊的高度：前視圖看「每一直行的最高高度」、側視圖看「每一排的最高高度」、上視圖看「哪些位置有方塊」。發動空間透視眼，徹底淨化幻影怪，通關整本數學第二冊！</p>
+<p style="line-height:1.7">【空間三視幻影怪】由許多積木堆疊而成！看清楚立體圖，每一疊都是從地面往上疊：前視圖是站在正前方看，同一直行裡矮的會被擋住，只看最高的；右視圖是站在右邊看；上視圖是從正上方往下看，只看有沒有積木。選項也是圖，挑出正確的那一張！發動空間透視眼，徹底淨化幻影怪，通關整本數學第二冊！</p>
 <div class="modes" id="modes">
 <button class="mode on" data-m="easy"><b>練兵模式</b><small>不限時，堆疊高度較低</small></button>
 <button class="mode" data-m="real"><b>實戰模式</b><small>每題 15 秒，堆疊高度變高</small></button>
@@ -115,7 +119,7 @@ button:focus-visible{outline:3px solid var(--bronze);outline-offset:2px}
 </section>
 
 </main>
-<script src="lessons2.js"></script>
+<script src="lessons6.js"></script>
 <script src="mode-system.js"></script>
 <script>
 const $=s=>document.querySelector(s);
@@ -125,6 +129,13 @@ const sh=a=>a.map(v=>[Math.random(),v]).sort((x,y)=>x[0]-y[0]).map(x=>x[1]);
 function ensure4(ans,cands){
   const s=new Set([ans]);
   for(const c of cands){const cs=String(c);if(s.size<4&&cs!==ans&&cs.trim()!=='')s.add(cs);}
+  /* 誘答選項不夠時：答案不是純數字就「改動答案裡的一個數字」補齊（例如 (5, 5)→(5, 4)），不再塞無關的 -5、6 */
+  if(s.size<4&&!/^-?\d+(\.\d+)?$/.test(String(ans))){
+    const str=String(ans),vars=[],re=/\d+(?:\.\d+)?/g;let mm;
+    while((mm=re.exec(str))!==null){for(const d of [1,-1,2,-2,3,-3]){const nv=Number(mm[0])+d;if(nv<0)continue;const dec=(mm[0].split('.')[1]||'').length;vars.push(str.slice(0,mm.index)+(dec?nv.toFixed(dec):nv)+str.slice(mm.index+mm[0].length));}}
+    for(let i=vars.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[vars[i],vars[j]]=[vars[j],vars[i]];}
+    for(const v of vars){if(s.size>=4)break;if(!s.has(v))s.add(v);}
+  }
   let g=1;
   while(s.size<4){const v=(Number(ans)||0)+(g%2===0?g/2+5:-(Math.ceil(g/2)+4));const vs=String(v);if(!s.has(vs))s.add(vs);g++;}
   return sh([...s]);
@@ -189,91 +200,154 @@ function fmtNum(n){
   if(Number.isInteger(n))return String(n);
   return String(Math.round(n*100)/100);
 }
-function cubeGrid(grid){
-  let html='<div class="qsvg"><table style="margin:8px auto;border-collapse:collapse;font-family:monospace;font-size:1.15rem">';
-  html+='<caption style="caption-side:top;font-size:.78rem;color:#555;margin-bottom:4px">（鳥瞰圖／數字＝該位置堆疊的正方體個數・上排＝後排，下排＝前排）</caption>';
-  for(let r=0;r<grid.length;r++){
-    html+='<tr>';
-    for(let c=0;c<grid[r].length;c++){
-      html+=`<td style="border:2px solid #333;width:38px;height:38px;text-align:center;background:#fff;color:#2b2416">${grid[r][c]}</td>`;
-    }
-    html+='</tr>';
-  }
-  html+='</table></div>';
-  return html;
+/* ===== 積木圖：立體樂高（題目）＋ 平面視圖（選項）===== */
+const LEGO_PAL=['#e3342f','#2f6fe0','#f2c230','#2fa84f','#f08a24','#8a4fd1'];
+function shadeHex(h,f){const n=parseInt(h.slice(1),16);let r=n>>16,g=(n>>8)&255,b=n&255;const m=f<1?0:255,t=f<1?1-f:f-1;r=Math.round(r+(m-r)*t);g=Math.round(g+(m-g)*t);b=Math.round(b+(m-b)*t);return `rgb(${r},${g},${b})`}
+function legoIso(grid){
+  const rows=grid.length,cols=grid[0].length,U=36,K=.866;
+  const P=(x,y,z)=>[(x+y)*K*U,((x-y)*.5-z)*U];
+  const cubes=[];
+  for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){const y=rows-1-r,h=grid[r][c];for(let z=0;z<h;z++)cubes.push({x:c,y,z,top:z===h-1,col:LEGO_PAL[(c*2+y)%LEGO_PAL.length]})}
+  cubes.sort((p,q)=>((q.y-q.x)-(p.y-p.x))||(p.z-q.z));
+  let minx=1e9,maxx=-1e9,miny=1e9,maxy=-1e9;
+  const grow=([x,y])=>{minx=Math.min(minx,x);maxx=Math.max(maxx,x);miny=Math.min(miny,y);maxy=Math.max(maxy,y)};
+  for(let x=0;x<=cols;x++)for(let y=0;y<=rows;y++){grow(P(x,y,0));grow(P(x,y,Math.max(...grid.flat(),1)+.4))}
+  const pad=26;let g='';
+  const poly=(pts,fill)=>`<polygon points="${pts.map(q=>q[0].toFixed(1)+','+q[1].toFixed(1)).join(' ')}" fill="${fill}" stroke="#2b2416" stroke-width="1.3" stroke-linejoin="round"/>`;
+  /* 地板格線 */
+  g+=poly([P(0,0,0),P(cols,0,0),P(cols,rows,0),P(0,rows,0)],'#e9e2cf');
+  cubes.forEach(k=>{
+    const {x,y,z}=k;
+    g+=poly([P(x,y,z),P(x+1,y,z),P(x+1,y,z+1),P(x,y,z+1)],k.col);                       /* 前面 */
+    g+=poly([P(x+1,y,z),P(x+1,y+1,z),P(x+1,y+1,z+1),P(x+1,y,z+1)],shadeHex(k.col,.72));  /* 右面 */
+    g+=poly([P(x,y,z+1),P(x+1,y,z+1),P(x+1,y+1,z+1),P(x,y+1,z+1)],shadeHex(k.col,1.28)); /* 上面 */
+    if(k.top){const [cx,cy]=P(x+.5,y+.5,z+1),rx=.3*U,ry=.18*U,hh=.13*U;
+      g+=`<ellipse cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" rx="${rx}" ry="${ry}" fill="${shadeHex(k.col,.8)}"/><rect x="${(cx-rx).toFixed(1)}" y="${(cy-hh).toFixed(1)}" width="${2*rx}" height="${hh}" fill="${shadeHex(k.col,.9)}"/><ellipse cx="${cx.toFixed(1)}" cy="${(cy-hh).toFixed(1)}" rx="${rx}" ry="${ry}" fill="${shadeHex(k.col,1.15)}" stroke="#2b2416" stroke-width=".8"/>`}
+  });
+  /* 方向提示：正面（靠近你的長邊）、右側 */
+  const fl=P(cols/2,0,0),rl=P(cols,rows/2,0);
+  g+=`<text x="${(fl[0]-6).toFixed(1)}" y="${(fl[1]+40).toFixed(1)}" font-size="15" font-weight="700" fill="#7a4a12" text-anchor="middle">▲ 正面（前）</text>`;
+  g+=`<text x="${(rl[0]+8).toFixed(1)}" y="${(rl[1]+34).toFixed(1)}" font-size="15" font-weight="700" fill="#7a4a12" text-anchor="start">右側 ▶</text>`;
+  const bl=P(0,rows/2,0);
+  const vx=minx-pad,vy=miny-pad,vw=maxx-minx+pad*2+70,vh=maxy-miny+pad*2+46;
+  return `<div class="qsvg"><svg viewBox="${vx.toFixed(1)} ${vy.toFixed(1)} ${vw.toFixed(1)} ${vh.toFixed(1)}" style="width:100%;max-width:330px;background:#fffdf5;border-radius:10px;border:1px solid #d9cfb4" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="積木立體圖">${g}</svg></div>`;
+}
+/* 平面視圖（選項圖片）：heights＝由左到右每一疊的高度 */
+function legoCols(heights){
+  const n=heights.length,mx=Math.max(...heights,1),S=30,pad=8,W=n*S+pad*2,H=mx*S+pad*2+8;let g='';
+  g+=`<line x1="${pad-4}" y1="${H-pad}" x2="${W-pad+4}" y2="${H-pad}" stroke="#2b2416" stroke-width="2"/>`;
+  heights.forEach((h,i)=>{const col=LEGO_PAL[i%LEGO_PAL.length];
+    for(let j=0;j<h;j++){const x=pad+i*S,y=H-pad-(j+1)*S;g+=`<rect x="${x}" y="${y}" width="${S}" height="${S}" fill="${col}" stroke="#2b2416" stroke-width="1.4"/>`}
+    if(h>0){const x=pad+i*S+S/2,y=H-pad-h*S;g+=`<rect x="${x-7}" y="${y-5}" width="14" height="5" rx="1.5" fill="${shadeHex(col,1.15)}" stroke="#2b2416" stroke-width="1"/>`}});
+  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;max-width:150px;height:auto" xmlns="http://www.w3.org/2000/svg">${g}</svg>`;
+}
+/* 上視圖（選項圖片）：str＝「■■□／■□□」，上排＝後排 */
+function legoTop(str){
+  const rows=str.split('／'),S=30,pad=8,W=rows[0].length*S+pad*2,H=rows.length*S+pad*2;let g='';
+  rows.forEach((r,ri)=>[...r].forEach((ch,ci)=>{const x=pad+ci*S,y=pad+ri*S;
+    if(ch==='■')g+=`<rect x="${x}" y="${y}" width="${S}" height="${S}" fill="#e3342f" stroke="#2b2416" stroke-width="1.4"/><circle cx="${x+S/2}" cy="${y+S/2}" r="8" fill="#f06a60" stroke="#2b2416" stroke-width="1"/>`;
+    else g+=`<rect x="${x}" y="${y}" width="${S}" height="${S}" fill="#f4efe0" stroke="#9a8f70" stroke-width="1.2" stroke-dasharray="4 3"/>`}));
+  g+=`<text x="${W-pad}" y="${pad+11}" font-size="11" fill="#7a4a12" text-anchor="end" opacity=".0">後</text>`;
+  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;max-width:130px;height:auto" xmlns="http://www.w3.org/2000/svg">${g}</svg>`;
+}
+function optPic(type,v){
+  if(type==='cols')return legoCols(String(v).split(/\s*,\s*/).map(Number));
+  if(type==='top')return legoTop(String(v));
+  return null;
 }
 const MODES={easy:{t:0,max:2},real:{t:15,max:3},hard:{t:10,max:4}};
-const PLAN=['frontView','sideView','topCount','totalCubes','frontView','topCount','sideView','totalCubes','frontView','sideView'];
+const PLAN=['frontView','sideView','topView','totalCubes','frontView','topView','sideView','totalCubes','frontView','sideView'];
 
+let LASTGRID=null;
 function genGrid(M){
   const cols=pick([2,3]);
   const rows=2;
-  const grid=[];
-  for(let r=0;r<rows;r++){
-    const row=[];
-    for(let c=0;c<cols;c++)row.push(R(0,M.max));
-    grid.push(row);
+  let grid;
+  /* 立體圖從「前右上方」看：前排某疊會擋住它「左後方」那疊的下半部。要求 後排[x-1] ≥ 前排[x]，這樣每一疊的頂端都看得到，不會有看不見的方塊 */
+  for(let tries=0;tries<400;tries++){
+    grid=[];
+    for(let r=0;r<rows;r++){const row=[];for(let c=0;c<cols;c++)row.push(R(0,M.max));grid.push(row)}
+    if(grid.flat().every(v=>v===0))continue;
+    let ok=true;for(let x=1;x<cols;x++)if(grid[0][x-1]<grid[1][x])ok=false;
+    if(ok)break;
   }
-  if(grid.flat().every(v=>v===0))grid[0][0]=R(1,M.max);
+  if(grid.flat().every(v=>v===0))grid[0][0]=Math.max(1,M.max);
+  LASTGRID=grid;
   return {grid,rows,cols};
 }
 function genFrontView(M){
   const {grid,cols}=genGrid(M);
   const frontHeights=[];
   for(let c=0;c<cols;c++)frontHeights.push(Math.max(grid[0][c],grid[1][c]));
-  const svg=cubeGrid(grid);
-  const text='空間三視幻影怪由多個正方體堆疊而成（如圖，鳥瞰圖上排是後排、下排是前排）。從正前方看過去（前視圖），由左到右各柱子的高度依序是多少？';
+  const svg=legoIso(grid);
+  const text='空間三視幻影怪是用積木疊成的（如圖，從「正面」看過去最靠近你的是前排，每一疊都是從地面往上疊）。請問從正前方看過去（前視圖），哪一張圖才是對的？（由左到右）';
   const ans=frontHeights.join(', ');
   const rev=[...frontHeights].reverse().join(', ');
   const plusOne=frontHeights.map(h=>h+1).join(', ');
   const backOnly=grid[1].join(', ');
-  return {text,svg,ans,options:ensure4(ans,[rev,plusOne,backOnly]),
-    hint:'前視圖看的是「由前往後看，每一直行柱子的最高高度」：同一直行中，前排跟後排取比較高的那個。',
-    explain:`每一直行取前排、後排中比較高的數字：${grid[0].map((v,c)=>`第${c+1}行 max(${grid[0][c]},${grid[1][c]})=${frontHeights[c]}`).join('；')}，所以前視圖高度依序為 ${ans}。`};
+  return {text,svg,ans,pic:'cols',options:ensure4(ans,[rev,plusOne,backOnly]),
+    hint:'前視圖是「站在正前方看」：同一直行裡，前排和後排疊在一起，矮的會被擋住，只看得到比較高的那一疊。',
+    explain:`數圖中每一疊的積木數（後排 ${grid[0].join('、')}；前排 ${grid[1].join('、')}），每一直行取前排、後排中比較高的：${grid[0].map((v,c)=>`第${c+1}行 max(${grid[0][c]},${grid[1][c]})=${frontHeights[c]}`).join('；')}，所以前視圖高度依序為 ${ans}。`};
 }
 function genSideView(M){
   const {grid,rows}=genGrid(M);
   const heights=[];
   for(let r=0;r<rows;r++)heights.push(Math.max(...grid[r]));
   const sideOrder=[heights[1],heights[0]];
-  const svg=cubeGrid(grid);
-  const text='從右側看過去（側視圖／右視圖），由前排到後排，柱子的高度依序是多少？';
+  const svg=legoIso(grid);
+  const text='幻影怪由積木疊成（如圖）。從右側看過去（右視圖），哪一張圖才是對的？（圖中左邊是前排、右邊是後排）';
   const ans=sideOrder.join(', ');
   const rev=[...sideOrder].reverse().join(', ');
   const plusOne=sideOrder.map(h=>h+1).join(', ');
   const wrong3=[heights[0],heights[1]].join(', ');
-  return {text,svg,ans,options:ensure4(ans,[rev,plusOne,wrong3]),
+  return {text,svg,ans,pic:'cols',options:ensure4(ans,[rev,plusOne,wrong3]),
     hint:'側視圖看的是「每一排（前排、後排）裡最高的那一疊」，前排看前排最高的，後排看後排最高的。',
     explain:`前排最高為 ${heights[1]}，後排最高為 ${heights[0]}，所以側視圖由前到後依序為 ${ans}。`};
 }
 function genTopCount(M){
   const {grid,rows,cols}=genGrid(M);
   const count=grid.flat().filter(v=>v>0).length;
-  const svg=cubeGrid(grid);
+  const svg=legoIso(grid);
   const text='從正上方往下看（上視圖），總共有幾個位置擺放了正方體（高度為 0 的空格不算）？';
   const ans=String(count);
   const total=rows*cols;
   return {text,svg,ans,options:ensure4(ans,[String(total),String(Math.max(count-1,0)),String(count+1)]),
-    hint:'上視圖看的是「鳥瞰時，哪些位置有方塊」，只要那個位置的數字不是 0，就算有方塊。',
-    explain:`鳥瞰圖中總共 ${total} 個位置，其中高度不是 0 的有 ${count} 個，所以上視圖有 ${count} 個位置擺放了正方體。`};
+    hint:'上視圖看的是「從上面往下看，哪些位置有積木」，只要有疊積木，不管疊幾塊，都算一個位置。',
+    explain:`從上面看總共 ${total} 個位置，其中有積木的有 ${count} 個，所以上視圖有 ${count} 個位置擺放了正方體。`};
 }
 function genTotalCubes(M){
   const {grid}=genGrid(M);
   const total=grid.flat().reduce((a,b)=>a+b,0);
-  const svg=cubeGrid(grid);
-  const text='幻影怪由這個正方體堆疊組合而成，總共用了幾個正方體堆疊而成？';
+  const svg=legoIso(grid);
+  const text='幻影怪是用積木疊成的（如圖，每一疊都是從地面往上疊，沒有懸空）。總共用了幾塊積木？';
   const ans=String(total);
   return {text,svg,ans,options:ensure4(ans,[String(total+1),String(Math.max(total-1,0)),String(total+2)]),
-    hint:'把鳥瞰圖中每個位置的數字（高度）全部加起來，就是總共用了幾個正方體。',
+    hint:'一疊一疊數：每一疊有幾塊積木，全部加起來，就是總共用了幾塊積木。',
     explain:`把每個位置的高度加起來：${grid.flat().join(' + ')} = ${total}，所以總共用了 ${total} 個正方體。`};
+}
+function genTopView(M){
+  const {grid,rows,cols}=genGrid(M);
+  const svg=legoIso(grid);
+  const rowStr=r=>grid[r].map(v=>v>0?'■':'□').join('');
+  const ans=[rowStr(0),rowStr(1)].join('／');
+  const cands=[[rowStr(1),rowStr(0)].join('／'),[[...rowStr(0)].reverse().join(''),[...rowStr(1)].reverse().join('')].join('／')];
+  const flip=(str,i)=>{const a=[...str];let k=0;return a.map(ch=>ch==='／'?ch:(k++===i?(ch==='■'?'□':'■'):ch)).join('')};
+  for(let i=0;i<rows*cols;i++)cands.push(flip(ans,i));
+  const set=new Set([ans]);for(const c of sh(cands.slice(0,2)).concat(sh(cands.slice(2))))if(set.size<4&&c!==ans)set.add(c);
+  const text='幻影怪由積木疊成（如圖）。從正上方往下看（上視圖），哪一張圖才是對的？（圖中上排是後排、下排是前排；紅色有圓點＝有積木，虛線空格＝沒有）';
+  return {text,svg,ans,pic:'top',options:[...set],
+    hint:'上視圖只看「有沒有積木」，不管疊幾塊：有疊的位置畫紅色，沒有的位置空白。注意上排是後排、下排是前排。',
+    explain:`從上面往下看，每個位置只要有積木就畫實心。後排：${grid[0].map(v=>v>0?'有':'沒有').join('、')}；前排：${grid[1].map(v=>v>0?'有':'沒有').join('、')}。`};
 }
 function gen(t){
   const M=MODES[mode];
   if(t==='frontView')return genFrontView(M);
   if(t==='sideView')return genSideView(M);
   if(t==='topCount')return genTopCount(M);
+  if(t==='topView')return genTopView(M);
   return genTotalCubes(M);
 }
+const _gen=gen;gen=function(t){const r=_gen(t);r.grid=LASTGRID.map(x=>x.slice());return r};
 const EMB=window.parent!==window,SID='6-1-3';
 function log(ok){if(EMB&&!rescue)parent.postMessage({type:'wave-log',id:SID,qtype:q.type,ok:ok},'*')}
 let mode='easy',qs=[],idx=0,q=null,hearts=5,combo=0,score=0,right=0,wrongs=[],lock=true,left=0,tm=0,frozenUntil=0,rescue=false,used={},showRing=false,sealsLit=0;
@@ -323,7 +397,8 @@ function next(){
   $('#hintbox').classList.add('hide');
   say('');$('#say').classList.add('hide');
   const o=$('#opts');o.innerHTML='';
-  q.options.forEach(v=>{const b=document.createElement('button');b.className='opt';b.textContent=v;b.dataset.v=v;b.onclick=()=>answer(v,b);o.appendChild(b)});
+  o.classList.toggle('pics',!!q.pic);
+  q.options.forEach((v,i)=>{const b=document.createElement('button');b.className='opt';b.dataset.v=v;if(q.pic){b.innerHTML='<span class="lab">'+'①②③④'[i]+'</span>'+optPic(q.pic,v);b.setAttribute('aria-label',String(v))}else b.textContent=v;b.onclick=()=>answer(v,b);o.appendChild(b)});
   $('#t-hint').disabled=!!used.hint;$('#t-cut').disabled=!!used.cut;
   $('#t-freeze').disabled=!!used.freeze||!MODES[mode].t;
   startTimer();paint();
@@ -372,9 +447,9 @@ function finish(){
     $('#e-stars').textContent='';
     $('#e-info').textContent=`成功答對 ${right}/${total} 題。`+(right==total?'全部融會貫通！':'再接再厲！');
   }else{
-    $('#e-title').textContent=fail?'💔 收服失敗':'🎉 收服成功';
+    $('#e-title').textContent=fail?'🏃 怪物逃跑了！':'🎉 收服成功';
     $('#e-stars').textContent=fail?'':'⭐'.repeat(stars)+'☆'.repeat(3-stars);
-    const rankName=fail?'':['','見習召喚師','中階召喚師','菁英召喚師'][stars];
+    const rankName=fail?'再挑戰一次，就能收服牠！':['','見習召喚師','中階召喚師','菁英召喚師'][stars];
     $('#e-info').textContent=(rankName?rankName+'　':'')+`靈力 ${score}　答對 ${right}/${total}　剩餘生命 ${hearts} 顆心`;
   }
   const j=$('#e-jail');j.innerHTML='';

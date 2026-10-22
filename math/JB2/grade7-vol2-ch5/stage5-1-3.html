@@ -15,7 +15,7 @@ button{font:inherit;cursor:pointer;color:inherit}
 button:focus-visible{outline:3px solid var(--bronze);outline-offset:2px}
 .card{background:var(--ink2);border:2px solid var(--line);border-radius:14px;padding:18px}
 .btn{background:var(--bronze);color:#2a1d05;border:0;border-radius:10px;padding:12px 22px;font-weight:700;font-size:1.05rem}
-.btn.ghost{background:transparent;color:var(--bronze);border:2px solid var(--bronze)}
+.btn.ghost{background:#2b2a3c;color:#f0cf85;border:2px solid var(--bronze)}
 .modes{display:grid;gap:10px;margin:16px 0}
 .mode{text-align:left;background:var(--ink);border:2px solid var(--line);border-radius:12px;padding:12px 14px}
 .mode.on{border-color:var(--bronze);background:#2b2a3c}
@@ -115,7 +115,7 @@ button:focus-visible{outline:3px solid var(--bronze);outline-offset:2px}
 </section>
 
 </main>
-<script src="lessons2.js"></script>
+<script src="lessons5.js"></script>
 <script src="mode-system.js"></script>
 <script>
 const $=s=>document.querySelector(s);
@@ -125,6 +125,13 @@ const sh=a=>a.map(v=>[Math.random(),v]).sort((x,y)=>x[0]-y[0]).map(x=>x[1]);
 function ensure4(ans,cands){
   const s=new Set([ans]);
   for(const c of cands){const cs=String(c);if(s.size<4&&cs!==ans&&cs.trim()!=='')s.add(cs);}
+  /* 誘答選項不夠時：答案不是純數字就「改動答案裡的一個數字」補齊（例如 (5, 5)→(5, 4)），不再塞無關的 -5、6 */
+  if(s.size<4&&!/^-?\d+(\.\d+)?$/.test(String(ans))){
+    const str=String(ans),vars=[],re=/\d+(?:\.\d+)?/g;let mm;
+    while((mm=re.exec(str))!==null){for(const d of [1,-1,2,-2,3,-3]){const nv=Number(mm[0])+d;if(nv<0)continue;const dec=(mm[0].split('.')[1]||'').length;vars.push(str.slice(0,mm.index)+(dec?nv.toFixed(dec):nv)+str.slice(mm.index+mm[0].length));}}
+    for(let i=vars.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[vars[i],vars[j]]=[vars[j],vars[i]];}
+    for(const v of vars){if(s.size>=4)break;if(!s.has(v))s.add(v);}
+  }
   let g=1;
   while(s.size<4){const v=(Number(ans)||0)+(g%2===0?g/2+5:-(Math.ceil(g/2)+4));const vs=String(v);if(!s.has(vs))s.add(vs);g++;}
   return sh([...s]);
@@ -243,12 +250,13 @@ function genCombined(M){
   const modeVal=R(1,M.max);
   let arr=[modeVal,modeVal,modeVal];
   let guard=0;
-  while(arr.length<n&&guard<100){
+  while(arr.length<n&&guard<500){
     guard++;
     const v=R(1,M.max);
-    if(v!==modeVal||arr.filter(x=>x===v).length<3)arr.push(v);
+    if(v!==modeVal&&arr.filter(x=>x===v).length<2)arr.push(v);
   }
-  while(arr.length<n)arr.push(R(1,M.max));
+  let extraV=M.max+1;
+  while(arr.length<n)arr.push(extraV++);
   arr=sh(arr);
   const sorted=[...arr].sort((a,b)=>a-b);
   const median=(sorted[n/2-1]+sorted[n/2])/2;
@@ -282,6 +290,21 @@ function gen(t){
   if(t==='combined')return genCombined(M);
   return genCompareConcept(M);
 }
+/* ===== 題庫擴充：同一題型多幾種問法，避免一直遇到同一題 ===== */
+(function(){
+  const _g=gen;
+  const mk=(text,ans,wrongs,hint,explain)=>({text,ans,options:ensure4(ans,wrongs),hint,explain});
+  const BANK={};
+  CONCEPTS.push(
+    ['一組資料中，可能有不只一個眾數嗎？','可能，當有兩個以上的數出現次數同樣最多時',['可能，當有兩個以上的數出現次數同樣最多時','不可能，眾數只會有一個','不可能，眾數一定是最大的數','只有資料個數是偶數才可能']],
+    ['如果把一組資料中最大的那個數變得更大，中位數通常會怎樣？','通常不會改變',['通常不會改變','一定變大','一定變小','變成眾數']],
+    ['要找出資料中「出現次數最多」的數，應該看哪一個統計量？','眾數',['眾數','中位數','平均數','全距']],
+    ['資料有 7 個數字（奇數個），排序後中位數是第幾個？','第 4 個',['第 4 個','第 3 個','第 7 個','第 3 個和第 4 個的平均']],
+    ['資料有 6 個數字（偶數個），排序後中位數是？','第 3、第 4 個數的平均',['第 3、第 4 個數的平均','第 3 個數','第 4 個數','第 6 個數']],
+    ['要求中位數之前，第一步要做什麼？','先把資料由小到大（或由大到小）排序',['先把資料由小到大（或由大到小）排序','先把所有資料加起來','先找出出現最多次的數','先把最大的數去掉']]);
+
+  gen=function(t){const B=BANK[t];if(B&&Math.random()<B.p){return B.make();}return _g.apply(this,arguments);};
+})();
 const EMB=window.parent!==window,SID='5-1-3';
 function log(ok){if(EMB&&!rescue)parent.postMessage({type:'wave-log',id:SID,qtype:q.type,ok:ok},'*')}
 let mode='easy',qs=[],idx=0,q=null,hearts=5,combo=0,score=0,right=0,wrongs=[],lock=true,left=0,tm=0,frozenUntil=0,rescue=false,used={},showRing=false,sealsLit=0;
@@ -380,9 +403,9 @@ function finish(){
     $('#e-stars').textContent='';
     $('#e-info').textContent=`成功答對 ${right}/${total} 題。`+(right==total?'全部融會貫通！':'再接再厲！');
   }else{
-    $('#e-title').textContent=fail?'💔 收服失敗':'🎉 收服成功';
+    $('#e-title').textContent=fail?'🏃 怪物逃跑了！':'🎉 收服成功';
     $('#e-stars').textContent=fail?'':'⭐'.repeat(stars)+'☆'.repeat(3-stars);
-    const rankName=fail?'':['','見習召喚師','中階召喚師','菁英召喚師'][stars];
+    const rankName=fail?'再挑戰一次，就能收服牠！':['','見習召喚師','中階召喚師','菁英召喚師'][stars];
     $('#e-info').textContent=(rankName?rankName+'　':'')+`靈力 ${score}　答對 ${right}/${total}　剩餘生命 ${hearts} 顆心`;
   }
   const j=$('#e-jail');j.innerHTML='';

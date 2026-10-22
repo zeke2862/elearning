@@ -5,44 +5,115 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>國一下數學戰略地圖｜數靈召喚師：生活中的幾何圖形</title>
 <style>
-:root{--ink:#161a2e;--ink2:#20264a;--line:#3a4270;--bronze:#d2a24c;--paper:#f1e8d2;--red:#d24a33;--jade:#43a58f;--txt:#e9e4d4}
+:root{--ink:#161a2e;--ink2:#20264a;--line:#3a4270;--bronze:#d2a24c;--paper:#f1e8d2;--red:#d24a33;--jade:#43a58f;--txt:#e9e4d4;--bar:58px}
 *{box-sizing:border-box}
-body{margin:0;background:radial-gradient(ellipse at top,#252c56,var(--ink) 65%);color:var(--txt);font-family:"Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif;min-height:100vh}
+html,body{height:100%}
+body{margin:0;background:radial-gradient(ellipse at top,#252c56,var(--ink) 65%);color:var(--txt);font-family:"Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif;overflow:hidden}
 h1,h2,h3,.serif{font-family:"Noto Serif TC","Songti TC","PMingLiU",serif}
-main{max-width:860px;margin:0 auto;padding:16px 16px 60px}
 button{font:inherit;cursor:pointer;color:inherit}
 button:focus-visible{outline:3px solid var(--bronze);outline-offset:2px}
 .hide{display:none!important}
-.card{background:var(--ink2);border:2px solid var(--line);border-radius:14px;padding:16px}
-.head{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
-.rank{font-size:2rem;color:var(--bronze);margin:0}
-.grow{flex:1;min-width:200px}
-.pbar{height:12px;background:var(--ink);border-radius:8px;overflow:hidden;margin:6px 0}
+
+/* ===== 上方列 ===== */
+.top{position:fixed;left:0;right:0;top:0;height:var(--bar);display:flex;align-items:center;gap:10px;padding:0 12px;background:#10142aee;border-bottom:2px solid var(--line);z-index:20}
+.backlink{display:inline-block;background:var(--bronze);color:#2a1d05!important;text-decoration:none;font-weight:700;border-radius:10px;padding:7px 12px;box-shadow:0 2px 8px #0008;white-space:nowrap;font-size:.9rem}.backlink:hover{background:#f0cf85}
+.ttl{flex:1;min-width:0}
+.ttl h1{margin:0;font-size:1.05rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ttl small{opacity:.7;font-size:.75rem;white-space:nowrap}
+.rk{display:flex;flex-direction:column;gap:3px;min-width:130px}
+.rk b{font-size:.85rem;color:var(--bronze);white-space:nowrap}
+.pbar{height:8px;background:var(--ink);border-radius:8px;overflow:hidden;border:1px solid var(--line)}
 #rbar{height:100%;background:linear-gradient(90deg,var(--bronze),#f0cf85);width:0;transition:width .6s}
-.ch{margin-top:16px}
-.who{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-.who input{background:var(--ink);border:2px solid var(--line);border-radius:8px;padding:8px 10px;color:var(--txt);font:inherit;width:9.5em}
-.who button{background:var(--ink);border:2px solid var(--bronze);border-radius:8px;padding:8px 12px}
-.ch h2{margin:0;font-size:1.25rem;color:var(--bronze)}
-.ch small{opacity:.75}
-.nodes{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:10px}
-.node{background:var(--ink);border:2px solid var(--line);border-radius:12px;padding:10px 6px;min-height:104px;text-align:center;display:flex;flex-direction:column;justify-content:center;gap:4px}
-.node b{font-size:1.15rem}
-.node span{font-size:.85rem;line-height:1.3}
-.node:hover:not(.locked){border-color:var(--bronze);background:#2b2a3c}
-.node.boss{border-color:#8a3a2c}
-.node.locked{opacity:.45}
+.sbtn{background:var(--ink2);border:2px solid var(--bronze);border-radius:10px;padding:7px 12px;font-weight:700;white-space:nowrap;font-size:.9rem}
+.sbtn:hover{background:#2b2a3c}
+
+/* ===== 地圖 ===== */
+.stagearea{position:fixed;left:0;right:0;top:var(--bar);bottom:0;overflow:hidden;background:#9fcbe3}
+.mapwrap{position:absolute;inset:0;background:#9fcbe3 url(../images/map/ch6-bg.jpg) center/cover no-repeat}
+.mapwrap::before{content:"";position:absolute;inset:0;background:#fff;opacity:.16;mix-blend-mode:soft-light;pointer-events:none;z-index:1}
+.mapwrap::after{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at center,transparent 75%,#0a1a2e1f 100%);pointer-events:none;z-index:1}
+.trail{position:absolute;left:0;top:0;width:100%;height:100%;z-index:2;pointer-events:none}
+.trail path{fill:none;stroke-linecap:round;vector-effect:non-scaling-stroke}
+.trail .t0{stroke:#fff8;stroke-width:6;stroke-dasharray:1 12}
+.trail .t1{stroke:var(--bronze);stroke-width:7;stroke-dasharray:1 11;filter:drop-shadow(0 0 3px #fff)}
+.zone{position:absolute;z-index:3;transform:translate(-50%,-50%);background:#161a2ecc;border:2px solid var(--bronze);color:#fff;border-radius:10px;padding:4px 10px;font-size:clamp(.62rem,1.25vw,.9rem);text-align:center;line-height:1.35;pointer-events:none;font-family:"Noto Serif TC",serif;font-weight:700;box-shadow:0 2px 8px #0008}
+.zone small{display:block;font-weight:400;font-family:"Noto Sans TC",sans-serif;opacity:.85;font-size:.85em}
+.node{--ns:64px;position:absolute;z-index:4;transform:translate(-50%,-50%);width:var(--ns);height:var(--ns);padding:0;border-radius:50%;border:4px solid var(--bronze);background:var(--paper);box-shadow:0 4px 12px #000a;display:flex;align-items:center;justify-content:center;transition:transform .15s}
+.node.boss{width:calc(var(--ns)*1.35);height:calc(var(--ns)*1.35);border-color:#c0472f}
+.node:hover:not(.locked){transform:translate(-50%,-50%) scale(1.1)}
 .node.done{border-color:var(--jade)}
-.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-top:10px}
-.cd{background:var(--paper);color:#2b2416;border-radius:10px;padding:10px;font-size:.85rem;line-height:1.5;min-height:110px;cursor:pointer;position:relative;transition:transform .15s}
+.node.locked{border-color:#55597a;background:#3b4060;cursor:pointer}
+.node .face{width:86%;height:86%;border-radius:50%;object-fit:cover;object-position:center 30%;display:block}
+.node .emo{font-size:calc(var(--ns)*.5);line-height:1}
+.node.locked .face,.node.locked .emo{filter:grayscale(1) brightness(.5)}
+.node .lk{position:absolute;font-size:calc(var(--ns)*.38);text-shadow:0 2px 4px #000}
+.node .id{position:absolute;left:50%;top:-9px;transform:translateX(-50%);background:var(--ink);border:2px solid var(--line);color:#fff;font-size:.7rem;font-weight:700;padding:1px 7px;border-radius:9px;white-space:nowrap}
+.node .stars{position:absolute;left:50%;bottom:-13px;transform:translateX(-50%);background:var(--ink);border-radius:9px;padding:1px 6px;font-size:.68rem;white-space:nowrap;letter-spacing:-1px;border:1px solid var(--line)}
+.node.here::after{content:"";position:absolute;inset:-9px;border-radius:50%;border:3px solid #fff;animation:pulse 1.4s infinite}
+@keyframes pulse{0%{transform:scale(.92);opacity:1}100%{transform:scale(1.25);opacity:0}}
+.pin{--ns:64px;position:absolute;z-index:5;transform:translate(-50%,-100%);font-size:clamp(1.3rem,2.6vw,2rem);pointer-events:none;animation:bob 1s ease-in-out infinite;filter:drop-shadow(0 3px 3px #000a)}
+@keyframes bob{50%{transform:translate(-50%,-115%)}}
+.pin.big{display:flex;flex-direction:column;align-items:center;font-size:1rem;animation:bob .9s ease-in-out infinite;filter:drop-shadow(2px 0 0 #5a3300) drop-shadow(-2px 0 0 #5a3300) drop-shadow(0 2px 0 #5a3300) drop-shadow(0 -2px 0 #5a3300) drop-shadow(0 4px 6px #0009)}
+.pin.big b{background:#ffd24a;color:#4a2b00;font-size:.85rem;border-radius:999px;padding:1px 10px;margin-bottom:3px;white-space:nowrap}
+.pin.big i{display:block;width:clamp(44px,5.5vw,72px);height:clamp(58px,7.5vw,96px);background:linear-gradient(#fff3b0,#ffc61a);clip-path:polygon(32% 0,68% 0,68% 46%,100% 46%,50% 100%,0 46%,32% 46%)}
+
+/* ===== 關卡小卡 ===== */
+#peek{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:30;width:min(440px,calc(100vw - 24px));background:var(--ink2);border:2px solid var(--bronze);border-radius:16px;padding:14px;box-shadow:0 10px 40px #000c;display:flex;gap:12px;align-items:center}
+#peek img{width:84px;height:84px;border-radius:12px;object-fit:cover;background:var(--paper);flex:none}
+#peek .pe{width:84px;height:84px;border-radius:12px;background:var(--paper);display:flex;align-items:center;justify-content:center;font-size:2.8rem;flex:none}
+#peek .pt{flex:1;min-width:0}
+#peek h3{margin:0 0 2px;font-size:1.1rem}
+#peek p{margin:0 0 8px;font-size:.82rem;opacity:.85;line-height:1.5}
+#peek .btns{display:flex;gap:8px;flex-wrap:wrap}
+#peek .pd{font-size:.8rem;opacity:.95;max-height:5.6em;overflow:auto}
+#peek .mb{position:relative;background:var(--ink);border:2px solid var(--bronze);color:inherit;border-radius:10px;padding:6px 9px;font-weight:700;font-size:.85rem}
+#peek .mb:hover{background:var(--bronze);color:#2a1d05}
+#peek .mb.dis{opacity:.5;border-color:var(--line)}
+#peek .mb::after{content:attr(data-tip);position:absolute;left:50%;bottom:calc(100% + 8px);transform:translateX(-50%);width:max-content;max-width:210px;background:#000e;color:#fff;font-weight:400;font-size:.75rem;line-height:1.4;padding:6px 8px;border-radius:8px;opacity:0;pointer-events:none;transition:opacity .15s;z-index:5}
+#peek .mb:hover::after,#peek .mb:focus-visible::after{opacity:1}
+#peek.atop .mb::after{bottom:auto;top:calc(100% + 8px)}
+#peek .go{background:var(--bronze);color:#2a1d05;font-weight:700;border:0;border-radius:10px;padding:8px 14px}
+#peek .go:hover{background:#f0cf85}
+#peek .en{background:var(--ink);border:2px solid var(--line);border-radius:10px;padding:6px 12px}
+#peek .en:disabled{opacity:.5;cursor:not-allowed}
+#peek.atop{bottom:auto;top:calc(var(--bar) + 12px)}
+#peek .px{position:absolute;top:4px;right:8px;background:none;border:0;font-size:1.1rem;opacity:.7}
+
+/* ===== 側邊欄 ===== */
+#side{position:fixed;top:var(--bar);right:0;bottom:0;width:min(400px,100vw);background:#13183a;border-left:2px solid var(--line);z-index:40;transform:translateX(102%);transition:transform .25s;display:flex;flex-direction:column}
+#side.open{transform:none;box-shadow:-10px 0 30px #000a}
+.tabs{display:flex;border-bottom:2px solid var(--line)}
+.tabs button{flex:1;background:none;border:0;padding:12px 6px;font-weight:700;opacity:.65;border-bottom:3px solid transparent}
+.tabs button.on{opacity:1;border-bottom-color:var(--bronze);color:var(--bronze)}
+.tabs .cl{flex:none;width:48px;font-size:1.1rem}
+.pane{flex:1;overflow-y:auto;padding:14px}
+.pane h2{margin:0 0 4px;color:var(--bronze);font-size:1.1rem}
+.pane small{opacity:.75;line-height:1.6;display:block}
+.nodes{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:10px}
+.enode{background:var(--ink);border:2px solid var(--line);border-radius:12px;padding:10px 6px;min-height:92px;text-align:center;display:flex;flex-direction:column;justify-content:center;gap:4px}
+.enode b{font-size:1.05rem}
+.enode span{font-size:.8rem;line-height:1.3}
+.enode:hover:not(.locked){border-color:var(--bronze);background:#2b2a3c}
+.enode.locked{opacity:.45}
+.enode.done{border-color:var(--jade)}
+.cards{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:10px}
+.cd{background:var(--paper);color:#2b2416;border-radius:10px;padding:10px;font-size:.8rem;line-height:1.5;min-height:110px;cursor:pointer;position:relative;transition:transform .15s}
 .cd:hover{transform:translateY(-2px)}
 .cd img{width:64px;height:64px;object-fit:contain;display:block;margin:0 auto 4px}
 .cd .cd-emoji{display:none;font-size:2.4rem;text-align:center;margin-bottom:4px}
 .cd .lv{position:absolute;top:6px;right:8px;background:var(--ink);color:var(--bronze);font-size:.75rem;font-weight:700;padding:2px 7px;border-radius:8px}
-.cd.lock{cursor:default}
+.cd.lock{cursor:default;background:var(--ink);color:#8a8fb0;border:2px dashed var(--line)}
 .cd.lock:hover{transform:none}
+.cd b{font-size:1.1rem;display:block;font-family:"Noto Serif TC","Songti TC",serif}
+.mainline{margin:10px 0 0;padding:10px 12px;border:2px dashed var(--line);border-radius:10px;line-height:1.7;font-size:.85rem}
+.mainline.on{border-color:var(--bronze);border-style:solid;background:rgba(210,162,76,.1)}
+.mainbadge{position:absolute;top:6px;left:8px;background:var(--bronze);color:#2a1d05;font-size:.72rem;font-weight:700;padding:2px 7px;border-radius:8px}
+.cd.ismain{outline:3px solid var(--bronze)}
+.tiny{margin-top:22px;text-align:center}
+.tiny button{background:none;border:1px solid var(--line);border-radius:8px;padding:6px 14px;opacity:.6;font-size:.8rem}
+
 #card-modal{position:fixed;inset:0;background:#000c;z-index:80;display:flex;align-items:center;justify-content:center;padding:20px}
-#card-modal.hide{display:none}
+.cm-stats{margin:8px 0;font-size:.9rem;text-align:left}.cm-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:4px 10px;margin:4px 0}.cm-sk{opacity:.7;margin-top:4px}
 .cm-box{background:var(--paper);color:#2b2416;border-radius:16px;max-width:360px;width:100%;padding:20px;text-align:center;position:relative;max-height:90vh;overflow-y:auto}
 .cm-box img{width:180px;height:180px;object-fit:contain;display:block;margin:0 auto 10px}
 .cm-box .cm-emoji{display:none;font-size:5rem;margin-bottom:10px}
@@ -53,55 +124,56 @@ button:focus-visible{outline:3px solid var(--bronze);outline-offset:2px}
 .cm-exp{font-size:.8rem;opacity:.75;margin-bottom:10px}
 .cm-desc{text-align:left;line-height:1.7;font-size:.9rem;border-top:1px solid #0002;padding-top:10px;margin-top:6px}
 .cm-close{position:absolute;top:8px;right:10px;background:none;border:0;font-size:1.3rem;color:#2b2416}
-.cd b{font-size:1.2rem;display:block;font-family:"Noto Serif TC","Songti TC",serif}
-.cd.lock{background:var(--ink);color:#8a8fb0;border:2px dashed var(--line)}
+.cm-main{margin:10px 0 0;width:100%;background:var(--ink);color:var(--bronze);border:2px solid var(--bronze);border-radius:10px;padding:9px 12px;font-weight:700}
+.cm-main.on{background:var(--bronze);color:#2a1d05}
+.cm-main:disabled{opacity:.5;cursor:not-allowed;background:transparent;color:#5a5245;border-color:#0004;font-weight:400;font-size:.85rem}
+
 #ov{position:fixed;inset:0;background:var(--ink);z-index:50}
 #fr{width:100%;height:100%;border:0}
 #x{position:absolute;top:8px;right:10px;z-index:60;background:#0008;border:2px solid var(--line);border-radius:8px;padding:2px 10px}
 #toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--bronze);color:#2a1d05;padding:12px 20px;border-radius:10px;font-weight:700;z-index:100;text-align:center;max-width:90vw;line-height:1.6}
-.rule{margin-top:12px;line-height:1.8;font-size:.92rem}
-.tiny{margin-top:24px;text-align:center}
-.tiny button{background:none;border:1px solid var(--line);border-radius:8px;padding:6px 14px;opacity:.7}
-@media (max-width:560px){.nodes{grid-template-columns:repeat(2,1fr)}}
-@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+/* 手機直式：地圖改成直的，路線由下往上 */
+@media (max-aspect-ratio:1/1){
+  .mapwrap{background-image:url(../images/map/ch6-bg-tall.jpg)}
+  .rk{display:none}
+  .ttl small{display:none}
+  .zone{font-size:.7rem}
+}
+@media (max-width:520px){.ttl h1{font-size:.9rem}.backlink{padding:6px 9px;font-size:.8rem}.sbtn{padding:6px 9px;font-size:.8rem}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 </head>
 <body>
-<main>
-  <h1 class="serif" style="margin:0 0 4px">數靈召喚師：生活中的幾何圖形</h1>
-  <p style="margin:0 0 14px;opacity:.8">國一下 第六章 · 數理大陸探索日誌／全冊完結篇</p>
+<header class="top">
+  <a class="backlink" href="../world-map-vol2-all.html">← 回總覽</a>
+  <div class="ttl"><h1 class="serif">第六章：生活中的幾何圖形</h1><small>國一下 · 數理大陸探索日誌</small></div>
+  <div class="rk"><b id="rank"></b><div class="pbar"><div id="rbar"></div></div></div>
+  <button class="sbtn" id="sopen" aria-expanded="false" aria-controls="side">📖 圖鑑・無極限</button>
+</header>
 
-  <section class="card head">
-    <div><p class="rank serif" id="rank"></p><small>目前稱號</small></div>
-    <div class="grow"><b id="tot"></b><div class="pbar"><div id="rbar"></div></div><small id="nxt"></small></div>
-  </section>
+<div class="stagearea"><div class="mapwrap" id="mapwrap"></div></div>
 
-  <section class="card rule">
-    <b>⭐ 星等規則</b><br>
-    練兵模式：最多 3 ⭐　→　拿到 2 ⭐ 解鎖「實戰模式」；拿到 3 ⭐ 解鎖「♾️ 無極限挑戰」<br>
-    實戰模式：正確率 80% 以上 → 4 ⭐　→　解鎖「修羅模式」<br>
-    修羅模式：正確率 100%（全對）→ 5 ⭐
-  </section>
+<div id="peek" class="hide"></div>
 
-  <section class="card who" id="who">
-    <b>👤 我的資料</b>
-    <input id="w-cls" placeholder="班級（例：701）" maxlength="20" aria-label="班級">
-    <input id="w-no" placeholder="座號" maxlength="10" aria-label="座號">
-    <input id="w-name" placeholder="姓名或暱稱" maxlength="30" aria-label="姓名或暱稱">
-    <button id="w-save">儲存</button>
-    <button id="w-exp">📤 匯出我的進度</button>
-  </section>
-
-  <div id="map"></div>
-
-  <section class="ch">
-    <h2 class="serif">🃏 數靈捕獲圖鑑</h2>
-    <small>通關對應的關卡就能收集</small>
+<aside id="side" aria-label="圖鑑與無極限挑戰">
+  <div class="tabs">
+    <button class="on" data-tab="cards">🃏 數靈圖鑑</button>
+    <button data-tab="endless">♾️ 無極限挑戰</button>
+    <button class="cl" id="sclose" aria-label="收起側邊欄">✕</button>
+  </div>
+  <div class="pane" id="pane-cards">
+    <small>通關對應的關卡就能收集；本章全部通關後，可以點開卡片挑選一隻「主力培養怪」</small>
+    <div class="mainline" id="main-line"></div>
     <div class="cards" id="cards"></div>
-  </section>
-
-  <p class="tiny"><button id="reset">重置我的進度</button></p>
-</main>
+    <p class="tiny"><button id="reset">重置我的進度</button></p>
+  </div>
+  <div class="pane hide" id="pane-endless">
+    <h2 class="serif">♾️ 無極限挑戰</h2>
+    <small>每一關拿到 3⭐ 後，就能挑戰無限題，題目源源不絕，5 顆心用完為止。</small>
+    <div class="nodes" id="endless"></div>
+  </div>
+</aside>
 
 <div id="ov" class="hide"><button id="x" aria-label="關閉">✕</button><iframe id="fr" title="關卡"></iframe></div>
 <div id="toast" class="hide"></div>
@@ -114,13 +186,16 @@ button:focus-visible{outline:3px solid var(--bronze);outline-offset:2px}
     <div class="cm-lv" id="cm-lv"></div>
     <div class="cm-bar"><div id="cm-bar-fill"></div></div>
     <div class="cm-exp" id="cm-exp"></div>
+    <div class="cm-stats" id="cm-stats"></div>
     <div class="cm-desc" id="cm-desc"></div>
+    <button class="cm-main" id="cm-main"></button>
   </div>
 </div>
 
+<script src="../game-config.js"></script>
 <script>
-/*LOGIC*/
-const CH6=[
+/*LOGIC（與舊版相同：關卡資料、解鎖規則、星數、經驗值）*/
+const CHX=[
  {n:'6-1｜幾何圖形的終焉聖域',sub:'幾何圖形與垂直關係・線對稱圖形與對稱軸・立體圖形的三視圖',st:[['6-1-1','垂直線段精靈','stage6-1-1.html'],['6-1-2','鏡像對稱蝶','stage6-1-2.html'],['6-1-3','最終 Boss：空間三視幻影怪','stage6-1-3.html']]}
 ];
 const RK=[[0,'見習測量師'],[3,'幾何學徒'],[6,'幾何行者'],[10,'幾何騎士'],[14,'數理大陸傳奇召喚師']]; // 滿星 = 關卡數(3) × 5 = 15
@@ -130,125 +205,231 @@ const CARDS=[
  ['6-1-3','空間三視幻影怪','數理大陸第二冊的最終守護者，由正方體堆疊而成，只有真正發動「空間透視眼」的召喚師才能看穿牠的前視圖、上視圖與側視圖。','👻']
 ];
 const KEY='monster-ch6-progress-v1',PERSTAGE=5; // 每關最多 5 星（練兵3 + 實戰4 + 修羅5）
-const EXP_CORRECT=10,EXP_WRONG=4,LEVEL_STEP=50; // 答對每次+10、答錯每次+4（答對是答錯的2.5倍），每50經驗升一級
+const EXP_CORRECT=10,EXP_WRONG=4,LEVEL_STEP=50; // 答對每次+10、答錯每次+4，每50經驗升一級
 let P={};
-const idsOf=ci=>CH6[ci].st.map(s=>s[0]);
-const flatAll=CH6.flatMap((c,i)=>idsOf(i));
+const idsOf=ci=>CHX[ci].st.map(s=>s[0]);
+const flatAll=CHX.flatMap((c,i)=>idsOf(i));
 const MAXSTAR=flatAll.length*PERSTAGE;
-const b3=id=>Math.min(3,st(id)); // 解鎖用的「基本星」，最多算 3 顆
+const b3=id=>Math.min(3,st(id));
 const ebOf=id=>(P[id]&&P[id].eb)||0;
 const expOf=id=>(P[id]&&P[id].exp)||0;
 const lvOf=exp=>Math.floor(exp/LEVEL_STEP)+1;
 const st=id=>(P[id]&&P[id].stars)||0;
 const total=()=>flatAll.reduce((a,id)=>a+st(id),0);
 const rankOf=t=>RK.filter(r=>r[0]<=t).pop();
-// 6-1 群組：三關依序解鎖；最終 Boss（6-1-3）額外需要前兩關合計基本星 ≥ 4（滿分 6 的 2/3）
+const TOPIC={"6-1-1": "幾何圖形與垂直關係", "6-1-2": "線對稱圖形與對稱軸", "6-1-3": "最終 Boss：立體圖形的三視圖"};
+const DESC={"6-1-1": "【垂直線段精靈】守著一條神秘直線！牠說：「從線外一點到這條線的所有線段中，垂直線段最短！」認識符號「⊥」、找出點到直線的距離，就能通過精靈的考驗！", "6-1-2": "【鏡像對稱蝶】展開翅膀，考驗召喚師找出對稱點！關於 y 軸對稱：x 變號；關於 x 軸對稱：y 變號；關於原點對稱：x、y 都變號。算出正確的對稱點坐標，就能複製對稱蝶的翅膀紋路！", "6-1-3": "【空間三視幻影怪】由許多正方體堆疊而成！鳥瞰圖上的數字代表堆疊的高度：前視圖看「每一直行的最高高度」、側視圖看「每一排的最高高度」、上視圖看「哪些位置有方塊」。發動空間透視眼，徹底淨化幻影怪，通關整本數學第二冊！"};
 function lockCh(ci,k){
   if(k===0)return '';
-  if(k===1)return st(CH6[0].st[0][0])>0?'':`先通關 ${CH6[0].st[0][0]}`;
+  if(k===1)return st(CHX[0].st[0][0])>0?'':`先通關 ${CHX[0].st[0][0]}`;
   const need=4,ids=idsOf(0).slice(0,2),s=ids.reduce((a,id)=>a+b3(id),0);
-  if(st(CH6[0].st[1][0])<=0)return `先通關 ${CH6[0].st[1][0]}`;
+  if(st(CHX[0].st[1][0])<=0)return `先通關 ${CHX[0].st[1][0]}`;
   return s>=need?'':`挑戰 Boss 需要前兩關合計 ${need} 顆星（目前 ${s} 顆），回去重打拿更多星吧`;
 }
 const owned=()=>CARDS.filter(c=>st(c[0])>0).map(c=>c[1]);
-function makeExport(){
-  const stages={};flatAll.forEach(id=>{if(P[id])stages[id]={stars:P[id].stars||0,best:P[id].best||0,eb:P[id].eb||0}});
-  return {v:1,who:P._who||{},stages:stages,q:P._q||{},at:new Date().toISOString()};
-}
+const chDone=()=>flatAll.every(id=>st(id)>0);
+const mainOf=()=>{const m=P._main;return(m&&chDone()&&CARDS.some(c=>c[0]===m))?m:null;};
+const cardName=id=>{const c=CARDS.find(x=>x[0]===id);return c?c[1]:id;};
+
 /*UI*/
 const $=s=>document.querySelector(s);
 let cur='',tt=0;
 function load(){try{P=JSON.parse(localStorage.getItem(KEY))||{}}catch(e){P={}}}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(P))}catch(e){}}
 function toast(h){const t=$('#toast');t.innerHTML=h;t.classList.remove('hide');clearTimeout(tt);tt=setTimeout(()=>t.classList.add('hide'),3800)}
-function groupHTML(){
-  return CH6.map((c,ci)=>`<section class="ch card"><h2 class="serif">${c.n}</h2><small>${c.sub}</small><div class="nodes">`+
-    c.st.map((s,k)=>{
-      const isBoss=/Boss/.test(s[1]);
-      const r=lockCh(ci,k),n=st(s[0]),cls=['node',isBoss?'boss':'',r?'locked':'',n?'done':''].join(' ');
-      return `<button class="${cls}" data-ci="${ci}" data-k="${k}"><b>${r?'🔒':isBoss?'👹':'⚔️'} ${s[0]}</b><span>${s[1]}</span><span>${n?'⭐'.repeat(n)+'☆'.repeat(5-n):'尚未通關'}</span></button>`;
-    }).join('')+`</div></section>`).join('');
+
+// ===== 地圖座標：用「背景圖的百分比」定位，再依 cover 縮放換算成螢幕位置 =====
+// 橫式圖 1920×1080、直式圖 1080×1920；島都在圖正中央，路線從左下蜿蜒到右上（直式：由下往上）
+function layout(n,T){
+  // 若在 config-editor.html 的「章節地圖編排器」排過位置，就用設定檔的（game-config.js 的 chapterMaps）
+  const cm=window.GAME_CONFIG&&GAME_CONFIG.chapterMaps&&GAME_CONFIG.chapterMaps[+KEY.match(/ch(\d+)/)[1]],ca=cm&&cm[T?'T':'L'];
+  if(ca&&ca.length===n)return ca.map(p=>[+p[0],+p[1]]);
+  const P=[];
+  for(let i=0;i<n;i++){
+    const t=n>1?i/(n-1):.5,last=i===n-1,zig=last?0:(i%2?-1:1);
+    if(T)P.push([last&&n>1?50:(i%2?66:34),84-68*t]);
+    else P.push([28+44*t,66-31*t+zig*8]);
+  }
+  return P;
 }
-const ENDLESS_NEED=3;
-function endlessHTML(){
-  return `<h2 class="serif" style="margin:28px 0 0;color:var(--bronze)">♾️ 無極限挑戰</h2>`+
-  `<p style="margin:4px 0 0;opacity:.8;line-height:1.7">關卡拿到 ${ENDLESS_NEED} ⭐ 就解鎖該關的無限題作答區，題目源源不絕，5 顆心用完為止。</p>`+
-  `<section class="ch card"><div class="nodes">`+
-  CH6.flatMap((c,ci)=>c.st.map((s,k)=>{
-    const n=st(s[0]),lk=n<ENDLESS_NEED,eb=ebOf(s[0]);
-    return `<button class="node ${lk?'locked':''} ${eb?'done':''}" data-e="1" data-ci="${ci}" data-k="${k}"><b>${lk?'🔒':'♾️'} ${s[0]}</b><span>${s[1]}</span><span>${lk?`需 ${ENDLESS_NEED} ⭐（目前 ${n}）`:(eb?'🏆 最高 '+eb+' 題':'尚無紀錄')}</span></button>`;
-  })).join('')+`</div></section>`;
+const portrait=()=>window.matchMedia('(max-aspect-ratio:1/1)').matches;
+const STAGES=CHX.flatMap((c,ci)=>c.st.map((s,k)=>({id:s[0],name:s[1],url:s[2],topic:TOPIC[s[0]]||c.sub,ci,k,boss:/Boss/.test(s[1])})));
+const cardOf=id=>CARDS.find(c=>c[0]===id);
+function faceHTML(id,cls){const c=cardOf(id);return `<img class="${cls}" src="images/battle/${id}.png" alt="" onerror="this.outerHTML='<span class=&quot;emo&quot;>${c?c[3]:'❓'}</span>'">`}
+function hereIdx(){ // 勇者所在：第一個「已解鎖但還沒通關」的關卡；全通關就停在 Boss
+  for(let i=0;i<STAGES.length;i++){const s=STAGES[i];if(!lockCh(s.ci,s.k)&&!st(s.id))return i}
+  return STAGES.length-1;
 }
-function stageURL(url,id,endless){
-  return url+(url.includes('?')?'&':'?')+'stars='+st(id)+'&eb='+ebOf(id)+(endless?'&endless=1':'');
+function pathD(pts,upto){ // 圓滑曲線，只畫到 upto 為止
+  const p=pts.slice(0,upto+1);if(p.length<2)return '';
+  let d=`M${p[0][0]} ${p[0][1]}`;
+  for(let i=1;i<p.length;i++){const a=p[i-1],b=p[i],mx=(a[0]+b[0])/2;d+=` C${mx} ${a[1]},${mx} ${b[1]},${b[0]} ${b[1]}`}
+  return d;
 }
-function render(){
-  const t=total(),rk=rankOf(t),nx=RK.find(r=>r[0]>t);
-  $('#rank').textContent=rk[1];$('#tot').textContent=`${t} / ${MAXSTAR} ⭐`;$('#rbar').style.width=(t/MAXSTAR*100)+'%';
-  $('#nxt').textContent=nx?`再 ${nx[0]-t} 顆星，升為「${nx[1]}」`:'你已經是最高階了！';
-  $('#map').innerHTML=groupHTML()+endlessHTML();
+let VIEW={W:0,H:0,iw:1920,ih:1080,s:1,ox:0,oy:0,T:false};
+function view(){
+  const w=$('#mapwrap'),T=portrait(),W=w.clientWidth||innerWidth,H=w.clientHeight||innerHeight,iw=T?1080:1920,ih=T?1920:1080,s=Math.max(W/iw,H/ih);
+  VIEW={W,H,iw,ih,s,ox:(W-iw*s)/2,oy:(H-ih*s)/2,T};
+  w.style.setProperty('--ns',Math.max(52,Math.min(T?W*.17:H*.14,110))+'px');
+}
+const toPx=p=>[VIEW.ox+p[0]/100*VIEW.iw*VIEW.s,VIEW.oy+p[1]/100*VIEW.ih*VIEW.s];
+function zonePos(pts,idxs){ // 區域名稱：放在該區最低一關的下方
+  const xs=idxs.map(i=>pts[i][0]),ys=idxs.map(i=>pts[i][1]);
+  const cx=xs.reduce((a,b)=>a+b,0)/xs.length,my=Math.max(...ys);
+  return VIEW.T?[Math.min(Math.max(cx,30),70),my+7.5]:[cx,my+13];
+}
+function renderMap(){
+  view();
+  const T=VIEW.T,pts=layout(STAGES.length,T).map(toPx),here=hereIdx();
+  const raw=layout(STAGES.length,T);
+  let reach=-1;STAGES.forEach((s,i)=>{if(st(s.id)>0)reach=i});
+  const pp=(arr,upto)=>{const p=arr.slice(0,upto+1);if(p.length<2)return '';let d=`M${p[0][0]} ${p[0][1]}`;for(let i=1;i<p.length;i++){const a=p[i-1],b=p[i];if(T){const my=(a[1]+b[1])/2;d+=` C${a[0]} ${my},${b[0]} ${my},${b[0]} ${b[1]}`}else{const mx=(a[0]+b[0])/2;d+=` C${mx} ${a[1]},${mx} ${b[1]},${b[0]} ${b[1]}`}}return d};
+  let h=`<svg class="trail" viewBox="0 0 ${VIEW.W} ${VIEW.H}" preserveAspectRatio="none"><path class="t0" d="${pp(pts,pts.length-1)}"/>${reach>0?`<path class="t1" d="${pp(pts,reach)}"/>`:''}</svg>`;
+  // 區域名稱
+  CHX.forEach((c,ci)=>{
+    const idxs=STAGES.map((s,i)=>s.ci===ci?i:-1).filter(i=>i>=0);
+    if(T||!idxs.length||(CHX.length>1&&idxs.length===1&&STAGES[idxs[0]].boss))return;
+    const zp=toPx(zonePos(raw,idxs)),nm=c.n.split('｜');
+    h+=`<div class="zone" style="left:${zp[0]}px;top:${zp[1]}px">${nm[0]}｜${nm[1]}</div>`;
+  });
+  h+=STAGES.map((s,i)=>{
+    const r=lockCh(s.ci,s.k),n=st(s.id),cls=['node',s.boss?'boss':'',r?'locked':'',n?'done':'',i===here?'here':''].join(' ');
+    return `<button class="${cls}" data-i="${i}" style="left:${pts[i][0]}px;top:${pts[i][1]}px" aria-label="${s.id} ${s.name}">${faceHTML(s.id,'face')}${r?'<span class="lk">🔒</span>':''}<span class="id">${s.boss?'👹 ':''}${s.id}</span><span class="stars">${n?'⭐'.repeat(n)+'<span style="opacity:.35">'+'⭐'.repeat(5-n)+'</span>':(r?'未開放':'尚未通關')}</span></button>`;
+  }).join('');
+  if(!st(STAGES[STAGES.length-1].id)||STAGES.some(x=>!st(x.id)))h+=`<div class="pin big" style="left:${pts[here][0]}px;top:calc(${pts[here][1]}px - var(--ns)*${STAGES[here].boss?.85:.62})"><b>下一關</b><i></i></div>`;
+  $('#mapwrap').innerHTML=h;
+}
+function renderTop(){
+  const t=total(),rk=rankOf(t);
+  $('#rank').textContent=`${rk[1]}　${t}/${MAXSTAR} ⭐`;$('#rbar').style.width=(t/MAXSTAR*100)+'%';
+}
+function renderEndless(){
+  $('#endless').innerHTML=STAGES.map(s=>{
+    const lk=!!lockCh(s.ci,s.k)||st(s.id)<3,eb=ebOf(s.id);
+    return `<button class="enode ${lk?'locked':''} ${eb?'done':''}" data-e="${s.id}"><b>${lk?'🔒':'♾️'} ${s.id}</b><span>${s.name}</span><span>${lk?(lockCh(s.ci,s.k)?'先解鎖這一關':'先拿 3⭐ 解鎖'):(eb?'🏆 最高 '+eb+' 題':'尚無紀錄')}</span></button>`;
+  }).join('');
+}
+function renderCards(){
   $('#cards').innerHTML=CARDS.map(c=>st(c[0])>0?
-    `<div class="cd" data-card="${c[0]}"><span class="lv">Lv.${lvOf(expOf(c[0]))}</span><img src="images/cards/${c[0]}.png" alt="${c[1]}" onerror="this.style.display='none';this.nextElementSibling.style.display='';"><div class="cd-emoji">${c[3]}</div><b>${c[1]}</b>${c[2]}</div>`
+    `<div class="cd${mainOf()===c[0]?' ismain':''}" data-card="${c[0]}">${mainOf()===c[0]?'<span class="mainbadge">⭐ 主力</span>':''}<span class="lv">Lv.${lvOf(expOf(c[0]))}</span><img src="images/cards/${c[0]}.png" alt="${c[1]}" onerror="this.style.display='none';this.nextElementSibling.style.display='';"><div class="cd-emoji">${c[3]}</div><b>${c[1]}</b>${c[2]}</div>`
     :`<div class="cd lock"><b>？？？</b>通關 ${c[0]} 解鎖</div>`).join('');
+  renderMain();
+}
+function render(){renderTop();renderMap();renderEndless();renderCards();}
+function renderMain(){
+  const el=$('#main-line'),m=mainOf();
+  if(m){el.className='mainline on';el.innerHTML=`⭐ 本章主力培養怪：<b>${cardName(m)}</b>　Lv.${lvOf(expOf(m))}　（本章做題的經驗值都會加給牠，點開卡片可以更換）`;}
+  else if(chDone()){el.className='mainline';el.innerHTML='🎉 本章已經完全通關！點開任何一張卡片，按「設為主力培養」，就能選一隻代表本章出戰。<br><small>還沒設定時，經驗值會加給各關原本的怪。</small>';}
+  else{const d=flatAll.filter(id=>st(id)>0).length;el.className='mainline';el.innerHTML=`🔒 本章完全通關後（目前 ${d}/${flatAll.length} 關），可以挑一隻主力培養怪。`;}
+}
+function toggleMain(id){
+  if(!chDone())return toast('🔒 本章要全部通關才能設定主力培養怪');
+  if(P._main===id){delete P._main;save();toast('已取消主力設定，經驗值會回到各關原本的怪');}
+  else{P._main=id;save();toast('⭐ 主力培養怪換成「'+cardName(id)+'」！之後本章做題的經驗值都會加給牠');}
+  render();openCard(id);
 }
 function openCard(id){
   const c=CARDS.find(x=>x[0]===id);if(!c)return;
-  const exp=expOf(id),lv=lvOf(exp),cur=exp%LEVEL_STEP;
+  const exp=expOf(id),lv=lvOf(exp),cu=exp%LEVEL_STEP;
   $('#cm-img').src='images/cards/'+id+'.png';$('#cm-img').alt=c[1];$('#cm-img').style.display='';
   $('#cm-emoji').style.display='none';$('#cm-emoji').textContent=c[3];
   $('#cm-img').onerror=()=>{$('#cm-img').style.display='none';$('#cm-emoji').style.display='';};
   $('#cm-name').textContent=c[1];
   $('#cm-lv').textContent='Lv.'+lv;
-  $('#cm-bar-fill').style.width=(cur/LEVEL_STEP*100)+'%';
-  $('#cm-exp').textContent=`經驗值 ${cur} / ${LEVEL_STEP}（累計 ${exp}）`;
+  $('#cm-bar-fill').style.width=(cu/LEVEL_STEP*100)+'%';
+  $('#cm-exp').textContent=`經驗值 ${cu} / ${LEVEL_STEP}（累計 ${exp}）`;
   $('#cm-desc').textContent=c[2];
+  {const B=(window.GAME_CONFIG&&window.GAME_CONFIG.battle)||null,el=$('#cm-stats');
+   if(B&&B.statBase){const sb=B.statBase,sg=B.statGrowth||{},r=B.monOtherRate||2,rows=[['❤️生命',Math.max(1,Math.round(((B.baseHp||0)+(B.growthHp||0)*(lv-1))*(B.hpRate||1)))]];
+    [['mp','🔷魔力'],['atk','⚔️普攻'],['matk','✨魔攻'],['def','🛡️物防'],['mdef','🔮魔防'],['spd','🏃速度']].forEach(function(q){if(sb[q[0]]!=null)rows.push([q[1],Math.max(1,Math.round((sb[q[0]]+(sg[q[0]]||0)*(lv-1))*r))])});
+    el.innerHTML='<b>📊 目前能力（Lv.'+lv+'）</b><div class="cm-grid">'+rows.map(function(x){return '<span>'+x[0]+' <b>'+x[1]+'</b></span>'}).join('')+'</div><div class="cm-sk">✨ 專屬技能：研發部重新設計中</div>';el.style.display='';}
+   else el.style.display='none';}
+  const mb=$('#cm-main');mb.dataset.id=id;
+  if(!chDone()){mb.disabled=true;mb.className='cm-main';mb.textContent='🔒 本章全部通關後，才能設為主力培養怪';}
+  else if(mainOf()===id){mb.disabled=false;mb.className='cm-main on';mb.textContent='⭐ 目前的主力培養怪（再按一次取消）';}
+  else{mb.disabled=false;mb.className='cm-main';mb.textContent='設為本章主力培養怪';}
   $('#card-modal').classList.remove('hide');
 }
 function closeCard(){$('#card-modal').classList.add('hide')}
-$('#map').onclick=e=>{
-  const b=e.target.closest('.node');if(!b)return;
-  const ci=+b.dataset.ci,k=+b.dataset.k,s=CH6[ci].st[k];
-  if(b.dataset.e){
-    if(st(s[0])<ENDLESS_NEED)return toast(`🔒 ${s[0]} 要先拿到 ${ENDLESS_NEED} ⭐（目前 ${st(s[0])} ⭐）才能挑戰無限題`);
-    cur=s[0];$('#fr').src=stageURL(s[2],s[0],true);$('#ov').classList.remove('hide');return;
-  }
-  const r=lockCh(ci,k);
+
+// ===== 關卡小卡（點地圖上的關卡）=====
+function stageURL(url,id,endless,mode){
+  const G=(window.GAME_CONFIG&&GAME_CONFIG.stage)||{},K={star2:'easyStar2',star3:'easyStar3',realpass:'realPass',hardpass:'hardPass',realneed:'realNeed',hardneed:'hardNeed',endlessneed:'endlessNeed',tutormiss:'tutorMiss',dwell:'dwellMs',soft:'softBanner'};
+  let cf='';for(const k in K)if(G[K[k]]!==undefined)cf+='&'+k+'='+encodeURIComponent(G[K[k]]);
+  return url+(url.includes('?')?'&':'?')+'stars='+st(id)+'&eb='+ebOf(id)+(endless?'&endless=1':(mode?'&mode='+mode:''))+cf+(window.__extra||'');
+}
+function openStage(id,endless,mode){const s=STAGES.find(x=>x.id===id);cur=id;closePeek();$('#fr').src=stageURL(s.url,id,endless,mode);$('#ov').classList.remove('hide');}
+const toPxY=i=>toPx(layout(STAGES.length,VIEW.T)[i])[1];
+function closePeek(){$('#peek').classList.add('hide')}
+function openPeek(i){
+  const s=STAGES[i],n=st(s.id),c=cardOf(s.id);
+  const ok=n>=3;
+  const MB=[['easy','🛡️ 練兵','不限時，最高 3⭐。還有「老師教我」可以幫忙！',''],['real','⚔️ 實戰','限時作答，正確率 80% 以上拿 4⭐',''],['hard','🔥 修羅','更短時間、全對才拿 5⭐',''],['end','♾️ 無極限','題目一直出，5 顆心用完為止。'+(ok?'':'（這一關先拿到 3⭐ 才能挑戰，目前 '+n+'⭐）'),ok?'':' dis']];
+  $('#peek').innerHTML=`<button class="px" aria-label="關閉">✕</button><img src="images/battle/${s.id}.png" alt="" onerror="this.outerHTML='<div class=&quot;pe&quot;>${c[3]}</div>'"><div class="pt"><h3 class="serif">${s.id}｜${s.name}</h3><p class="pd">${DESC[s.id]||s.topic}</p><p><small style="opacity:.7">${CHX[s.ci].n}｜${s.topic}</small><br>${n?'⭐'.repeat(n)+'☆'.repeat(5-n):'尚未通關'}</p><div class="btns">${MB.map(m=>`<button class="mb${m[3]}" data-m="${m[0]}" data-id="${s.id}" data-tip="${m[2]}">${m[1]}</button>`).join('')}</div></div>`;
+  $('#peek').classList.toggle("atop",toPxY(i)>($('#mapwrap').clientHeight*.52));$('#peek').classList.remove('hide');
+}
+$('#mapwrap').onclick=e=>{
+  const b=e.target.closest('.node');if(!b){closePeek();return}
+  const i=+b.dataset.i,s=STAGES[i],r=lockCh(s.ci,s.k);
   if(r)return toast('🔒 '+r);
-  cur=s[0];$('#fr').src=stageURL(s[2],s[0],false);$('#ov').classList.remove('hide');
+  openPeek(i);
 };
-function closeStage(){$('#ov').classList.add('hide');$('#fr').src='about:blank';render()}
-$('#x').onclick=closeStage;
+$('#peek').onclick=e=>{
+  if(e.target.closest('.px'))return closePeek();
+  const b=e.target.closest('.mb');if(!b)return;
+  if(b.dataset.m==='end'){if(b.classList.contains('dis'))return toast('🔒 這一關要先拿到 3⭐ 才能挑戰無極限');return openStage(b.dataset.id,true);}
+  openStage(b.dataset.id,false,b.dataset.m);
+};
+
+// ===== 側邊欄 =====
+function sideOpen(on){$('#side').classList.toggle('open',on);$('#sopen').setAttribute('aria-expanded',on);if(on)closePeek()}
+$('#sopen').onclick=()=>sideOpen(!$('#side').classList.contains('open'));
+$('#sclose').onclick=()=>sideOpen(false);
+document.querySelectorAll('.tabs [data-tab]').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('.tabs [data-tab]').forEach(x=>x.classList.toggle('on',x===b));
+  $('#pane-cards').classList.toggle('hide',b.dataset.tab!=='cards');
+  $('#pane-endless').classList.toggle('hide',b.dataset.tab!=='endless');
+});
+$('#endless').onclick=e=>{
+  const b=e.target.closest('.enode');if(!b)return;
+  const id=b.dataset.e,es=STAGES.find(x=>x.id===id),er=lockCh(es.ci,es.k);
+  if(er)return toast('🔒 '+er);
+  if(st(id)<3)return toast('🔒 這一關先拿到 3⭐ 才能挑戰無極限（目前 '+st(id)+'⭐）');
+  sideOpen(false);openStage(id,true);
+};
 $('#cards').onclick=e=>{
   const b=e.target.closest('.cd');if(!b)return;
   if(b.classList.contains('lock'))return toast('🔒 這隻數靈還沒捕獲，通關對應關卡就能解鎖！');
   openCard(b.dataset.card);
 };
 $('#cm-close').onclick=closeCard;
+$('#cm-main').onclick=e=>{const id=e.currentTarget.dataset.id;if(id)toggleMain(id);};
 $('#card-modal').onclick=e=>{if(e.target.id==='card-modal')closeCard();};
-addEventListener('keydown',e=>{if(e.key==='Escape')closeCard();});
+addEventListener('keydown',e=>{if(e.key==='Escape'){closeCard();closePeek();sideOpen(false)}});
+function closeStage(){$('#ov').classList.add('hide');$('#fr').src='about:blank';render()}
+$('#x').onclick=closeStage;
 addEventListener('message',e=>{
   if(e.source!==$('#fr').contentWindow)return;
   const d=e.data||{};
   if(d.type=='stage-result'&&!d.fail&&d.id==cur){
-    const r0=rankOf(total())[1],c0=owned().length,old=P[d.id]||{stars:0,best:0};
+    const r0=rankOf(total())[1],c0=owned().length,old=P[d.id]||{stars:0,best:0},done0=chDone();
     P[d.id]={...old,stars:Math.max(old.stars,d.stars),best:Math.max(old.best,d.score)};save();
     const msg=[];
     if(!old.stars)msg.push('🎉 首次捕獲 '+d.id+'！');
-    if(old.stars<2&&d.stars>=2)msg.push('🔓 '+d.id+' 實戰模式解鎖！');
-    if(old.stars<3&&d.stars>=3)msg.push('🔓 '+d.id+' ♾️ 無極限挑戰解鎖！');
-    if(old.stars<4&&d.stars>=4)msg.push('🔓 '+d.id+' 修羅模式解鎖！');
     if(old.stars<5&&d.stars>=5)msg.push('👑 '+d.id+' 修羅全對，滿星 5 ⭐！');
     if(owned().length>c0)msg.push('🃏 獲得圖鑑：'+owned().pop()+'！');
     const r1=rankOf(total())[1];if(r1!=r0)msg.push('🎖️ 稱號提升：'+r1+'！');
+    if(!done0&&chDone())msg.push('🏅 本章完全通關！打開右上「圖鑑」挑一隻「主力培養怪」吧');
     if(msg.length)toast(msg.join('<br>'));
   }
   if(d.type=='wave-log'&&typeof d.id=='string'&&typeof d.qtype=='string'){
     const key=d.id+':'+d.qtype;P._q=P._q||{};const r=P._q[key]||{n:0,ok:0};r.n++;if(d.ok)r.ok++;P._q[key]=r;
-    const old=P[d.id]||{stars:0,best:0,exp:0};
+    const tid=mainOf()||d.id;
+    const old=P[tid]||{stars:0,best:0,exp:0};
     const oldLv=lvOf(old.exp||0);
     const newExp=(old.exp||0)+(d.ok?EXP_CORRECT:EXP_WRONG);
-    P[d.id]={...old,exp:newExp};save();
-    if(st(d.id)>0&&lvOf(newExp)>oldLv)toast('✨ '+d.id+' 升級了！目前 Lv.'+lvOf(newExp));
+    P[tid]={...old,exp:newExp};save();
+    if(st(tid)>0&&lvOf(newExp)>oldLv)toast('✨ '+cardName(tid)+' 升級了！目前 Lv.'+lvOf(newExp));
   }
   if(d.type=='endless-result'&&d.id==cur&&Number.isFinite(d.count)){
     const old=P[d.id]||{stars:0,best:0},o=old.eb||0;
@@ -257,16 +438,14 @@ addEventListener('message',e=>{
   if(d.type=='stage-exit')closeStage();
 });
 $('#reset').onclick=()=>{if(confirm('確定要清除所有星星與圖鑑嗎？這個動作無法復原。')){P={};save();render()}};
-function fillWho(){const w=P._who||{};$('#w-cls').value=w.cls||'';$('#w-no').value=w.no||'';$('#w-name').value=w.name||''}
-function saveWho(){P._who={cls:$('#w-cls').value.trim(),no:$('#w-no').value.trim(),name:$('#w-name').value.trim()};save()}
-$('#w-save').onclick=()=>{saveWho();toast('✅ 已儲存你的資料')};
-$('#w-exp').onclick=()=>{
-  saveWho();const o=makeExport(),w=o.who,safe=x=>String(x||'').replace(/[^\w\u4e00-\u9fff-]/g,'');
-  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(o,null,1)],{type:'application/json'}));
-  a.download=`progress-ch6-${safe(w.cls)}-${safe(w.no)}-${safe(w.name)}.json`;document.body.appendChild(a);a.click();a.remove();
-  toast('📤 已匯出，請把檔案交給老師');
-};
-load();fillWho();render();
+addEventListener('resize',()=>{clearTimeout(window._rz);window._rz=setTimeout(renderMap,120)});
+matchMedia('(max-aspect-ratio:1/1)').addEventListener('change',renderMap);
+load();render();
+/* 主城「每日挑戰／錯題練習」帶進來：?practice=daily|weak&sid=關卡&types=題型,題型 */
+(function(){try{const q=new URLSearchParams(location.search),p=q.get('practice'),sid=q.get('sid');if(!p||!sid||!/^(daily|weak)$/.test(p))return;
+ const s=STAGES.find(x=>x.id===sid);if(!s||lockCh(s.ci,s.k))return;
+ window.__extra='&practice='+p+'&types='+encodeURIComponent(q.get('types')||'');openStage(sid,false,'');window.__extra='';}catch(e){}})();
 </script>
+<script src="../audio/bgm.js"></script>
 </body>
 </html>
