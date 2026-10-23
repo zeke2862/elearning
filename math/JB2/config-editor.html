@@ -41,6 +41,12 @@ table{border-collapse:collapse;background:#fff}td,th{border:1px solid #ccc;paddi
 <div class="bar"><button id="sav">💾 直接存進遊戲資料夾（推薦）</button><button class="g" id="exp">📤 匯出 game-config.js（版本自動 +0.1）</button><button class="g" id="imp">📥 匯入 game-config.js／json</button><button class="g" id="rst">還原成載入時的內容</button>
 <input type="file" id="impF" accept=".js,.json" style="display:none"> <span class="note" id="dirty"></span></div>
 <div id="root"></div>
+<h2 style="margin-top:20px">🧙 勇者換裝微調器（帽子／法杖的位置與大小）</h2>
+<div class="note">選一件帽子或法杖，在右邊預覽上<b>用滑鼠拖曳</b>就能移動；用滑桿或輸入數字可精準調整位置與大小；滑鼠滾輪＝縮放。調好後按上方「💾 直接存進遊戲資料夾」。</div>
+<div id="hp" style="display:flex;gap:18px;flex-wrap:wrap;align-items:flex-start;margin:8px 0">
+<div id="hpCtl" style="min-width:260px;flex:1;max-width:420px"></div>
+<div id="hpPrev" style="position:relative;width:260px;height:390px;background:#f3ead7 url(images/home/wallpaper.jpg) center/cover;border:3px solid #5b3d1a;border-radius:10px;overflow:hidden;touch-action:none;cursor:grab;flex:none"></div>
+</div>
 <h2 style="margin-top:20px">🏠 小屋編排器（拖曳、縮放、旋轉）</h2>
 <div class="note">用滑鼠拖曳物件移動；右下紅點＝縮放；上方藍點＝旋轉；也可以選取後用方向鍵微調（Shift＝移動較多）。改完記得按上方「💾 直接存進遊戲資料夾」。背景用 images/home/wallpaper.jpg（沒有就是米色底）。</div>
 <div class="hrow"><label><input type="radio" name="hv" value="pc" checked> 電腦畫面（16:10）</label><label><input type="radio" name="hv" value="phone"> 手機直向（4:5）</label>
@@ -114,7 +120,7 @@ function rerender(keep){
   r.innerHTML='';r.insertAdjacentHTML('beforeend',summary());
   Object.keys(C).forEach(function(k){if(k==='labels'||k==='version'||k==='updated'||k==='chapterMaps')return;r.appendChild(build(C[k],[k],k,0))});
   r.querySelectorAll('details').forEach(function(d,i){if(open.indexOf(i)>=0)d.open=true});
-  $('#ver').textContent='目前版本 '+C.version+'（'+C.updated+'）'}
+  $('#ver').textContent='目前版本 '+C.version+'（'+C.updated+'）';if(window.__hp)window.__hp()}
 function makeTxt(){
   var v=(+C.version+0.1).toFixed(1);C.version=v;var d=new Date();C.updated=d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);
   return '/* 遊戲設定檔 — 請用 config-editor.html 修改，不要手改 */\nwindow.GAME_CONFIG = '+JSON.stringify(C,null,1)+';\n'}
@@ -259,6 +265,48 @@ function tools(){
     if($('#rb').checked){var h=rd('jb2-hub-v1');h.seen={};for(var i=1;i<=C.chapters.length;i++){var dd=rd('monster-ch'+i+'-progress-v1'),st=0,ex=0;for(var q in dd){if(q[0]==='_')continue;st+=dd[q].stars|0;ex+=dd[q].exp|0}h.seen[i]={stars:st,exp:ex}}localStorage.setItem('jb2-hub-v1',JSON.stringify(h))}
     msg('第'+n+'章已全部設為 '+s+' 星')};
 }
-tools();
+/* ===== 勇者換裝微調器 ===== */
+(function(){
+var sel={cloak:'cloak_blue',item:'hat_apprentice',other:''};
+function items(slot){return (C.shop.items||[]).filter(function(i){return i.slot===slot&&!/_none$/.test(i.id)})}
+function find(id){return (C.shop.items||[]).filter(function(i){return i.id===id})[0]}
+function lay(it){if(!it.lay)it.lay={x:0,y:0,s:1};return it.lay}
+function opts(list,cur){return list.map(function(i){return '<option value="'+esc(i.id)+'"'+(i.id===cur?' selected':'')+'>'+esc(i.name||i.id)+'</option>'}).join('')}
+function ctl(){
+  var box=$('#hpCtl'),cl=items('cloak'),ad=items('hat').concat(items('staff'));
+  if(!find(sel.cloak)&&cl.length)sel.cloak=cl[0].id;
+  if(!find(sel.item)&&ad.length)sel.item=ad[0].id;
+  var it=find(sel.item);if(!it){box.innerHTML='找不到帽子或法杖';return}
+  var other=it.slot==='hat'?items('staff'):items('hat');
+  if(sel.other&&!find(sel.other))sel.other='';
+  var l=lay(it);
+  function row(k,lbl,mn,mx,st){return '<div style="margin:6px 0"><b>'+lbl+'</b> <input type="number" data-k="'+k+'" step="'+st+'" value="'+(+l[k]).toFixed(2)+'" style="width:80px"><br><input type="range" data-r="'+k+'" min="'+mn+'" max="'+mx+'" step="'+st+'" value="'+l[k]+'" style="width:100%"></div>'}
+  box.innerHTML='<div>穿的袍子：<select id="hpC">'+opts(cl,sel.cloak)+'</select></div>'+
+   '<div style="margin-top:6px">要調整的物品：<select id="hpI">'+opts(ad,sel.item)+'</select></div>'+
+   '<div style="margin-top:6px">一起顯示：<select id="hpO"><option value="">（不搭配）</option>'+opts(other,sel.other)+'</select></div>'+
+   row('x','左右位置（%，往右為正）',-80,80,0.1)+row('y','上下位置（%，往下為正）',-80,80,0.1)+row('s','大小（1＝原大小）',0.2,2.5,0.01)+
+   '<div style="margin-top:8px"><button class="g" id="hpR">↺ 這件還原成載入時的值</button></div>';
+  $('#hpC').onchange=function(){sel.cloak=this.value;prev()};
+  $('#hpI').onchange=function(){sel.item=this.value;sel.other='';ctl();prev()};
+  $('#hpO').onchange=function(){sel.other=this.value;prev()};
+  box.querySelectorAll('input').forEach(function(e){e.oninput=function(){var k=e.dataset.k||e.dataset.r,v=parseFloat(e.value);if(isNaN(v))return;set(k,v,e)}});
+  $('#hpR').onclick=function(){var o=JSON.parse(orig).shop.items.filter(function(i){return i.id===sel.item})[0];it.lay=o&&o.lay?JSON.parse(JSON.stringify(o.lay)):{x:0,y:0,s:1};mark();ctl();prev()};
+}
+function set(k,v,src){var it=find(sel.item),l=lay(it);l[k]=Math.round(v*100)/100;mark();
+  $('#hpCtl').querySelectorAll('input').forEach(function(e){if(e!==src&&(e.dataset.k===k||e.dataset.r===k))e.value=l[k]});prev()}
+function layer(src,l){return '<img src="'+esc(src)+'" draggable="false" style="position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none;transform:translate('+l.x+'%,'+l.y+'%) scale('+l.s+')">'}
+function prev(){
+  var h=layer('images/hero/body_'+sel.cloak+'.png',{x:0,y:0,s:1});
+  [sel.other,sel.item].forEach(function(id){if(!id)return;var it=find(id);if(!it)return;var l=lay(it);h+=layer('images/hero/'+id+'.png',{x:+l.x||0,y:+l.y||0,s:+l.s||1})});
+  $('#hpPrev').innerHTML=h;
+}
+var drag=null,pv=$('#hpPrev');
+pv.addEventListener('pointerdown',function(e){var it=find(sel.item);if(!it)return;var l=lay(it);drag={px:e.clientX,py:e.clientY,x:+l.x||0,y:+l.y||0};pv.setPointerCapture(e.pointerId);pv.style.cursor='grabbing'});
+pv.addEventListener('pointermove',function(e){if(!drag)return;var r=pv.getBoundingClientRect();set('x',drag.x+(e.clientX-drag.px)/r.width*100);set('y',drag.y+(e.clientY-drag.py)/r.height*100)});
+pv.addEventListener('pointerup',function(){drag=null;pv.style.cursor='grab'});
+pv.addEventListener('wheel',function(e){e.preventDefault();var it=find(sel.item);if(!it)return;var l=lay(it);set('s',Math.max(0.2,Math.min(2.5,(+l.s||1)*(e.deltaY<0?1.03:0.97))))},{passive:false});
+window.__hp=function(){ctl();prev()};
+window.__hp();
 })();
-</script></body></html>
+tools();
+})();</script></body></html>

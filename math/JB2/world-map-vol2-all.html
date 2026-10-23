@@ -86,6 +86,9 @@ table.w td,table.w th{border-bottom:1px solid var(--line);padding:5px 6px;text-a
 .win .hill{position:absolute;left:-10%;right:-10%;bottom:-20%;height:55%;border-radius:50%;background:#2f7d4a}
 .win .tm{position:absolute;left:6px;bottom:4px;font-size:calc(var(--u)*1.5);background:#0008;padding:0 6px;border-radius:6px;color:#fff}
 .win .cross{position:absolute;inset:0;background:linear-gradient(#5b3d1a,#5b3d1a) center/calc(var(--u)*.6) 100% no-repeat,linear-gradient(#5b3d1a,#5b3d1a) center/100% calc(var(--u)*.6) no-repeat}
+.win.art{border:calc(var(--u)*1.1) solid #7a4b22;border-image:url('images/home/win_wood.jpg') 36 round;border-radius:0;box-shadow:inset 0 0 calc(var(--u)*1.6) #3b230d99,0 calc(var(--u)*.4) calc(var(--u)*1) #0004}
+.win.art .cross{background:url('images/home/win_wood.jpg') center/auto 100% repeat;-webkit-mask:linear-gradient(#000,#000) center/calc(var(--u)*.7) 100% no-repeat,linear-gradient(#000,#000) center/100% calc(var(--u)*.7) no-repeat;mask:linear-gradient(#000,#000) center/calc(var(--u)*.7) 100% no-repeat,linear-gradient(#000,#000) center/100% calc(var(--u)*.7) no-repeat;filter:drop-shadow(0 1px 1px #0006)}
+.win.art .tm{background:#4a2c1090;font-family:inherit}
 .fur{position:absolute;background:none;border:0;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0}
 .fur .e{font-size:calc(var(--u)*7);line-height:1;filter:drop-shadow(0 3px 3px #0008);display:flex;max-height:80%}
 .fur .e img{max-width:100%;max-height:100%}
@@ -633,7 +636,7 @@ function renderHome(){
   const ceilStars=owned('furn_stars');
   let h=`<div class="ceil${ceilStars?' st':''}">${ceilStars?'✨ ⭐ ✨ ⭐ ✨ ⭐ ✨ ⭐ ✨ ⭐ ✨ ⭐ ✨ ⭐ ✨ ⭐ ✨':''}</div>`;
   const w=HM.window;
-  h+=`<div class="win" style="left:${w.x}%;top:${w.y}%;width:${w.w}%;height:${w.h}%;background:linear-gradient(${sky[0]},${sky[1]})"><span class="sun">${sky[2]}</span>${t==='night'?'<span class="sun" style="left:14%;right:auto;top:30%;font-size:calc(var(--u)*2)">✨</span><span class="sun" style="left:48%;right:auto;top:14%;font-size:calc(var(--u)*1.6)">⭐</span>':''}<div class="hill"></div><div class="cross"></div><span class="tm">${pad(now.getHours())}:${pad(now.getMinutes())}</span></div>`;
+  h+=`<div class="win art" style="left:${w.x}%;top:${w.y}%;width:${w.w}%;height:${w.h}%;background:url('images/home/win_${t}.jpg') center/cover,linear-gradient(${sky[0]},${sky[1]})"><div class="cross"></div><span class="tm">${pad(now.getHours())}:${pad(now.getMinutes())}</span></div>`;
   HM.furniture.forEach(f=>{if(!owned(f.id))return;const im=OK[f.img];h+=`<div class="deco ${im?'img':f.cls}" style="left:${f.x}%;top:${f.y}%;width:${f.w}%;height:${f.h}%;transform:rotate(${f.rot||0}deg);z-index:${f.z||1}">${im?`<img src="${esc(im)}" alt="">`:esc(f.emoji)}</div>`});
   HM.items.forEach(f=>{h+=`<button class="fur" aria-label="${esc(f.label)}" data-act="${esc(f.act)}" style="left:${f.x}%;top:${f.y}%;width:${f.w}%;height:${f.h}%;transform:rotate(${f.rot||0}deg);z-index:${f.z||3}"><span class="e">${imgOr(f.img,esc(f.emoji))}</span></button>`});
   h+=`<div class="heroSpot" style="left:${HM.hero.x}%;top:${HM.hero.y}%;width:${HM.hero.w}%;transform:rotate(${HM.hero.rot||0}deg);z-index:${HM.hero.z||4}">${heroSVG(H.eq,200).replace('width="200"','width="100%"').replace(/height="[\d.]+"/,'')}</div>`;
