@@ -1022,9 +1022,9 @@ window.GAME_CONFIG = {
     "img": "images/shop/hat_apprentice.png",
     "color": "#6b4bb8",
     "lay": {
-     "x": 0,
-     "y": 0,
-     "s": 1
+     "x": 0.02,
+     "y": -30.53,
+     "s": 0.5
     }
    },
    {
@@ -1041,9 +1041,9 @@ window.GAME_CONFIG = {
     "color": "#1f2f6b",
     "star": 1,
     "lay": {
-     "x": 0,
-     "y": 0,
-     "s": 1
+     "x": 0.02,
+     "y": -39.17,
+     "s": 0.37
     }
    },
    {
@@ -1058,9 +1058,9 @@ window.GAME_CONFIG = {
     "effect": "外觀",
     "img": "images/shop/hat_crown.png",
     "lay": {
-     "x": 0,
-     "y": 0,
-     "s": 1
+     "x": -0.02,
+     "y": -34.15,
+     "s": 0.46
     }
    },
    {
@@ -1074,8 +1074,8 @@ window.GAME_CONFIG = {
     "shaft": "#8a5a2b",
     "orb": "#7fd1ff",
     "lay": {
-     "x": 0,
-     "y": 0,
+     "x": -0.15,
+     "y": 0.1,
      "s": 1
     }
    },
@@ -1093,8 +1093,8 @@ window.GAME_CONFIG = {
     "shaft": "#6b7bd6",
     "orb": "#b388ff",
     "lay": {
-     "x": 0,
-     "y": 0,
+     "x": -0.18,
+     "y": -0.13,
      "s": 1
     }
    },
@@ -1112,8 +1112,8 @@ window.GAME_CONFIG = {
     "shaft": "#f2c230",
     "orb": "#ff7ab8",
     "lay": {
-     "x": 0,
-     "y": 0,
+     "x": -0.18,
+     "y": 0.07,
      "s": 1
     }
    },

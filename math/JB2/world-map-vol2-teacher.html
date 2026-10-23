@@ -942,5 +942,32 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden&&ready){lo
 init();
 })();
 </script>
+<script>
+/* 小貓圖示統一：把畫面上所有的 🐱 自動換成 images/home/catnest.png（智慧貓小圖）。想換圖只改 MS_CAT_URL。 */
+var MS_CAT_URL = (function () { try { return 'images/home/catnest.png'; } catch (e) { return 'images/home/catnest.png'; } })();
+(function () {
+  function mk() { var i = document.createElement('img'); i.src = MS_CAT_URL; i.alt = '智慧貓'; i.className = 'ms-catico'; i.style.cssText = 'height:1.25em;width:1.25em;object-fit:contain;vertical-align:-.3em'; return i; }
+  var busy = false;
+  function fixNode(root) {
+    if (!root) return;
+    var w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null), list = [], n;
+    while ((n = w.nextNode())) {
+      if (n.nodeValue.indexOf('\uD83D\uDC31') < 0) continue;
+      var p = n.parentNode; if (!p || /^(SCRIPT|STYLE|TEXTAREA|TITLE|OPTION)$/i.test(p.nodeName) || (window.SVGElement && p instanceof SVGElement)) continue;
+      list.push(n);
+    }
+    list.forEach(function (t) {
+      var parts = t.nodeValue.split('\uD83D\uDC31'), f = document.createDocumentFragment();
+      parts.forEach(function (s, k) { if (k) f.appendChild(mk()); if (s) f.appendChild(document.createTextNode(s)); });
+      t.parentNode.replaceChild(f, t);
+    });
+  }
+  function run() { if (busy) return; busy = true; try { fixNode(document.body); } finally { busy = false; } }
+  var pend = false;
+  function later() { if (pend) return; pend = true; (window.requestAnimationFrame || setTimeout)(function () { pend = false; run(); }); }
+  function start() { run(); try { new MutationObserver(later).observe(document.body, { childList: true, subtree: true, characterData: true }); } catch (e) {} }
+  if (document.body) start(); else document.addEventListener('DOMContentLoaded', start);
+})();
+</script>
 </body>
 </html>
