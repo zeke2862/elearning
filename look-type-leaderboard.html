@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
-<title>英文看打排行榜</title>
+<title>看打排行榜（中打／英打）</title>
 <style>
   body { font-family: sans-serif; background: #f4f4f9; padding: 20px; }
   .container { max-width: 1400px; margin: auto; background: white; padding: 25px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
@@ -11,7 +11,7 @@
   select { padding: 8px; font-size: 1rem; border: 1px solid #ccc; border-radius: 5px; }
   table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.9rem; }
   th, td { border: 1px solid #ccc; padding: 6px 8px; text-align: center; white-space: nowrap; }
-  th { background: #6f42c1; color: white; position: sticky; top: 0; }
+  th { background: var(--theme, #6f42c1); color: white; position: sticky; top: 0; }
   tr:nth-child(even) { background: #f8f8f8; }
   tr:hover { background: #f0e9fb; }
   td.rank { font-weight: bold; }
@@ -21,18 +21,43 @@
   .hint { color: #888; font-size: 0.85rem; margin-top: 10px; }
   .table-wrap { overflow-x: auto; }
   .empty { text-align: center; color: #888; padding: 30px; }
+
+  /* 中打／英打 切換按鈕 */
+  .type-switch { display: inline-flex; border: 2px solid var(--theme, #6f42c1); border-radius: 8px; overflow: hidden; }
+  .type-switch button { padding: 8px 18px; font-size: 1rem; border: none; background: white; color: var(--theme, #6f42c1); cursor: pointer; font-weight: bold; }
+  .type-switch button.on { background: var(--theme, #6f42c1); color: white; }
+  .type-switch button:hover:not(.on) { background: #f3eefc; }
+
+  .assign-box { background: #f5f0fc; border: 1px solid #d9c8f5; border-radius: 8px; padding: 15px 20px; margin-bottom: 20px; }
+  .assign-box h3 { margin: 0 0 10px 0; color: #6f42c1; font-size: 1.05rem; }
+  .assign-row { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 8px; }
+  .assign-row label { min-width: 90px; font-weight: bold; color: #444; }
+  .assign-row select { flex: 1; min-width: 180px; padding: 8px; font-size: 1rem; border: 1px solid #ccc; border-radius: 5px; }
+  #assignSaveBtn { padding: 8px 18px; font-size: 1rem; background: #6f42c1; color: white; border: none; border-radius: 5px; cursor: pointer; }
+  #assignSaveBtn:hover { background: #5a34a0; }
+  #assignSavedMsg { color: #157347; font-weight: bold; margin-left: 10px; }
+  .no-class-hint { background: #fff3cd; border: 1px solid #ffe08a; border-radius: 8px; padding: 12px 20px; margin-bottom: 20px; color: #7a5c00; }
 </style>
 </head>
 <body>
 
 <div class="container">
   <div class="header-row">
-    <h1>🏆 英文看打排行榜</h1>
+    <h1 id="pageTitle">🏆 英文看打排行榜</h1>
+    <div class="type-switch">
+      <button id="btnTypeEn" onclick="setType('en')">⌨️ 英打</button>
+      <button id="btnTypeZh" onclick="setType('zh')">📖 中打</button>
+    </div>
+    <select id="classFilter" onchange="onClassFilterChange()">
+      <option value="">全部班級</option>
+    </select>
+    <select id="dateSelect" onchange="onDateChange()"></select>
     <select id="articleFilter" onchange="onArticleFilterChange()">
       <option value="">全部文章</option>
     </select>
-    <select id="dateSelect" onchange="onDateChange()"></select>
   </div>
+
+  <div id="assignSection"></div>
 
   <div class="table-wrap">
     <table id="boardTable">
@@ -43,55 +68,115 @@
           <th>生日</th>
           <th>身分證</th>
           <th>題目</th>
-          <th>速度</th>
-          <th>等級</th>
+          <th>得分</th>
+          <th>扣分</th>
+          <th>實得分數</th>
+          <th id="speedHeader">速度</th>
+          <th>正確率</th>
+          <th>錯誤率</th>
+          <th>級別</th>
           <th>班級</th>
           <th>座號</th>
           <th>測驗時間</th>
           <th>使用時間</th>
-          <th>正確率</th>
-          <th>錯誤率</th>
           <th>輸入法</th>
           <th>測驗日期</th>
           <th>代碼</th>
-          <th>總分</th>
-          <th>得分</th>
           <th>IP</th>
         </tr>
       </thead>
       <tbody id="boardBody">
-        <tr><td colspan="19" class="empty">載入中...</td></tr>
+        <tr><td colspan="20" class="empty">載入中...</td></tr>
       </tbody>
     </table>
   </div>
-  <p class="hint">選一篇文章：篩選出只打過該篇的成績（同一篇可比較不同學生的兩次表現）。選「全部文章」：顯示所有看打成績，依得分高到低排序。</p>
+  <p class="hint">先按上面的「英打／中打」切換要看哪一種，再依序選班級、日期、文章。文章選「全部文章」就會列出這一天這一班所有的成績，依實得分數高到低排序。表格裡的得分、扣分、實得分數、速度、正確率、錯誤率、級別，跟學生交卷時看到的成績單是同一組數字。</p>
 </div>
 
 <script>
-  // 載入文章清單到下拉選單
+  // ============================================================
+  // 💡 中打成績跟英打存在同一個資料表（都走 /submit-look-type），
+  // 中打的題目名稱前面多了「中打_」（例如 中打_T3.txt），
+  // 所以這個頁面靠這個前綴把兩種分開，不用改 server.js。
+  // ============================================================
+  const ZH_PREFIX = '中打_';
+  const ZH_ARTICLES = Array.from({ length: 28 }, (_, i) => `T${i + 1}.txt`);   // 跟 chinese-look-type.html 的題庫一致
+  const THEME = { en: '#6f42c1', zh: '#c0392b' };
+
+  let currentType = 'en';
+  let currentDate = null;
+  let enArticleList = [];   // 從主機 /articles 拿到的英打文章清單
+
+  // 網址帶 ?type=zh 可直接開中打；沒有的話記住上次看的那一種
+  (function initType() {
+    const t = new URLSearchParams(location.search).get('type');
+    if (t === 'zh' || t === 'en') { currentType = t; return; }
+    try { const saved = localStorage.getItem('lookTypeBoardType'); if (saved === 'zh' || saved === 'en') currentType = saved; } catch (e) {}
+  })();
+
+  function isZhRecord(r) { return String(r.articleFilename || '').startsWith(ZH_PREFIX); }
+  function displayArticleName(name) { return String(name || '').replace(ZH_PREFIX, ''); }
+
+  function setType(type) {
+    currentType = type;
+    try { localStorage.setItem('lookTypeBoardType', type); } catch (e) {}
+    applyTypeUI();
+    renderAssignSection();
+    fillArticleOptions();
+    loadAvailableDates();
+  }
+
+  function applyTypeUI() {
+    const zh = currentType === 'zh';
+    document.documentElement.style.setProperty('--theme', THEME[currentType]);
+    document.getElementById('pageTitle').textContent = zh ? '🏆 中文看打排行榜' : '🏆 英文看打排行榜';
+    document.title = zh ? '中文看打排行榜' : '英文看打排行榜';
+    document.getElementById('btnTypeEn').classList.toggle('on', !zh);
+    document.getElementById('btnTypeZh').classList.toggle('on', zh);
+    document.getElementById('speedHeader').textContent = '速度(字/分)';  // 兩份成績單的速度單位都寫「字/分」
+  }
+
+  // 文章下拉：英打用主機上的文章清單，中打用 T1～T28（送給主機時要加上「中打_」）
+  function fillArticleOptions() {
+    const select = document.getElementById('articleFilter');
+    select.innerHTML = '<option value="">全部文章</option>';
+    if (currentType === 'zh') {
+      ZH_ARTICLES.forEach(f => select.appendChild(new Option(f, ZH_PREFIX + f)));
+    } else {
+      enArticleList.forEach(a => select.appendChild(new Option(a.filename, a.filename)));
+    }
+  }
+
   function loadArticleOptions() {
     fetch('/articles')
       .then(res => res.json())
-      .then(articles => {
-        const select = document.getElementById('articleFilter');
-        articles.forEach(a => {
-          const opt = document.createElement('option');
-          opt.value = a.filename;
-          opt.textContent = a.filename;
-          select.appendChild(opt);
-        });
+      .then(list => {
+        enArticleList = Array.isArray(list) ? list.filter(a => !String(a.filename).startsWith(ZH_PREFIX)) : [];
+        fillArticleOptions();
       })
-      .catch(err => console.error('載入文章清單失敗:', err));
+      .catch(err => { console.error('載入文章清單失敗:', err); fillArticleOptions(); });
   }
 
-  // 💡 目前選的日期（預設今天；只列出真的有資料的日期，配合文章篩選一起變動）
-  let currentDate = null;
+  // 載入「有成績紀錄」的班級清單
+  function loadClassOptions() {
+    fetch('/look-type-leaderboard-classes')
+      .then(res => res.json())
+      .then(classes => {
+        const select = document.getElementById('classFilter');
+        classes.forEach(c => select.appendChild(new Option(c, c)));
+      })
+      .catch(err => console.error('載入班級清單失敗:', err));
+  }
 
+  // 只列出真的有資料的日期（跟著班級、文章一起變動）
   function loadAvailableDates() {
     const articleFilename = document.getElementById('articleFilter').value;
-    const url = articleFilename
-      ? `/look-type-leaderboard-dates?articleFilename=${encodeURIComponent(articleFilename)}`
-      : `/look-type-leaderboard-dates`;
+    const className = document.getElementById('classFilter').value;
+    const dateParams = new URLSearchParams();
+    if (articleFilename) dateParams.set('articleFilename', articleFilename);
+    if (className) dateParams.set('className', className);
+    const qs = dateParams.toString();
+    const url = qs ? `/look-type-leaderboard-dates?${qs}` : `/look-type-leaderboard-dates`;
     fetch(url)
       .then(res => res.json())
       .then(dates => {
@@ -110,64 +195,196 @@
       .catch(err => console.warn('無法取得日期清單:', err));
   }
 
-  function onArticleFilterChange() {
-    loadAvailableDates(); // 換了文章，有資料的日期也要重新抓
-  }
+  function onArticleFilterChange() { loadAvailableDates(); }
+  function onClassFilterChange() { loadAvailableDates(); }
   function onDateChange() {
     currentDate = document.getElementById('dateSelect').value;
     loadLeaderboard();
   }
 
-  function loadLeaderboard() {
-    if (!currentDate) return;
-    const articleFilename = document.getElementById('articleFilter').value;
-    const params = new URLSearchParams({ date: currentDate });
-    if (articleFilename) params.set('articleFilename', articleFilename);
-    const url = `/look-type-leaderboard?${params.toString()}`;
+  // ============================================================
+  // 💡 數字格式比照學生的「成績單」：
+  //   英打成績單：得分 280.0、扣分 20、實得分數 260.0、速度 26.00、正確率 99.29%、錯誤率 0.71%
+  //   中打成績單：得分／扣分／實得分數／速度 都是小數 2 位，正確率、錯誤率也是小數 2 位
+  // ============================================================
+  function num(v) { const n = Number(v); return (v === null || v === undefined || v === '' || isNaN(n)) ? null : n; }
+  function fmt(v, digits) { const n = num(v); return n === null ? '-' : n.toFixed(digits); }
+  function fmtPercent(v) {
+    if (v === null || v === undefined || v === '') return '-';
+    const n = num(String(v).replace('%', ''));
+    return n === null ? String(v) : n.toFixed(2) + '%';
+  }
+  function isDisqualified(r) { return r.disqualified === true || r.disqualified === 1 || r.disqualified === 'true' || r.level === '不合格'; }
 
-    fetch(url)
-      .then(res => res.json())
-      .then(data => {
-        const tbody = document.getElementById('boardBody');
-        if (!data || data.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="19" class="empty">目前還沒有任何看打成績紀錄</td></tr>';
-          return;
-        }
-        tbody.innerHTML = data.map(r => {
-          // 💡 obtainedScore === -999：學生於測驗/練習進行中提前關閉頁面（比照 ETP 模式）
-          const isAborted = r.obtainedScore === -999;
-          return `
-          <tr${isAborted ? ' style="background:#3a1f1f;"' : ''}>
-            <td class="rank">${r.rank}</td>
-            <td>${r.name}</td>
+  function renderRow(r, i, zh) {
+    // obtainedScore === -999：學生於測驗/練習進行中提前關閉頁面
+    const isAborted = Number(r.obtainedScore) === -999;
+    const dq = isDisqualified(r);
+    const scoreDigits = zh ? 2 : 1;            // 得分、實得分數的小數位數
+    const dedDigits = zh ? 2 : 0;              // 扣分的小數位數（英打成績單是整數）
+    const score = num(r.totalScore);
+    // 扣分：新版成績有直接存 deduction；舊資料沒有的話用「得分 − 實得分數」推回來
+    let deduction = num(r.deduction);
+    const net = num(r.netScore) !== null ? num(r.netScore) : num(r.obtainedScore);
+    if (deduction === null && score !== null && net !== null && !dq) deduction = Math.max(0, score - net);
+    const speed = num(r.speed) !== null ? num(r.speed) : num(r.wpm);
+
+    if (isAborted) {
+      return `
+          <tr style="background:#ffe5e5;">
+            <td class="rank">${i + 1}</td><td>${r.name || '-'}</td><td>${r.birthdate || '-'}</td><td>${r.idNumber || '-'}</td>
+            <td>${displayArticleName(r.articleFilename) || '-'}</td>
+            <td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td>
+            <td><span style="color:#d9363e; font-weight:bold;">⚠️ 提前關閉</span></td>
+            <td>${r.class || '-'}</td><td>${r.seatNumber || '-'}</td><td>${r.timeLimit || '-'}</td><td>${r.timeUsed || '-'}</td>
+            <td>${r.inputMethod || '-'}</td><td>${r.testDate || '-'}</td><td>${r.code || '-'}</td><td>${r.ip || '-'}</td>
+          </tr>`;
+    }
+    return `
+          <tr${dq ? ' style="background:#fff3cd;"' : ''}>
+            <td class="rank">${i + 1}</td>
+            <td>${r.name || '-'}</td>
             <td>${r.birthdate || '-'}</td>
             <td>${r.idNumber || '-'}</td>
-            <td>${r.articleFilename || '-'}</td>
-            <td>${r.speed || '-'}</td>
-            <td>${isAborted ? '<span style="color:#ff6b6b;">⚠️ 提前關閉</span>' : (r.level || '-')}</td>
+            <td>${displayArticleName(r.articleFilename) || '-'}</td>
+            <td>${fmt(score, scoreDigits)}</td>
+            <td>${fmt(deduction, dedDigits)}</td>
+            <td>${fmt(net, scoreDigits)}${dq ? '<br><small style="color:#d9363e;">（不予計算）</small>' : ''}</td>
+            <td>${fmt(speed, 2)}</td>
+            <td>${fmtPercent(r.accuracy)}</td>
+            <td>${fmtPercent(r.wrongRate)}</td>
+            <td>${r.level || '-'}</td>
             <td>${r.class || '-'}</td>
             <td>${r.seatNumber || '-'}</td>
             <td>${r.timeLimit || '-'}</td>
             <td>${r.timeUsed || '-'}</td>
-            <td>${r.accuracy || '-'}</td>
-            <td>${r.wrongRate !== '' && r.wrongRate !== null ? r.wrongRate + '%' : '-'}</td>
             <td>${r.inputMethod || '-'}</td>
             <td>${r.testDate || '-'}</td>
             <td>${r.code || '-'}</td>
-            <td>${r.totalScore}</td>
-            <td>${r.obtainedScore}</td>
             <td>${r.ip || '-'}</td>
-          </tr>
-        `;
-        }).join('');
+          </tr>`;
+  }
+
+  function loadLeaderboard() {
+    if (!currentDate) return;
+    const articleFilename = document.getElementById('articleFilter').value;
+    const className = document.getElementById('classFilter').value;
+    const params = new URLSearchParams({ date: currentDate });
+    if (articleFilename) params.set('articleFilename', articleFilename);
+    if (className) params.set('className', className);
+
+    fetch(`/look-type-leaderboard?${params.toString()}`)
+      .then(res => res.json())
+      .then(data => {
+        const tbody = document.getElementById('boardBody');
+        const zh = currentType === 'zh';
+        // 主機回傳的是中打＋英打混在一起，這裡只留下目前選的那一種，並依實得分數重新排名次
+        const rows = (Array.isArray(data) ? data : [])
+          .filter(r => zh ? isZhRecord(r) : !isZhRecord(r))
+          .sort((a, b) => (Number(b.obtainedScore) || 0) - (Number(a.obtainedScore) || 0));
+
+        if (rows.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="20" class="empty">這一天目前還沒有任何${zh ? '中打' : '英打'}成績紀錄</td></tr>`;
+          return;
+        }
+        tbody.innerHTML = rows.map((r, i) => renderRow(r, i, zh)).join('');
       })
       .catch(err => {
         document.getElementById('boardBody').innerHTML =
-          `<tr><td colspan="19" class="empty">載入失敗：${err.message}</td></tr>`;
+          `<tr><td colspan="20" class="empty">載入失敗：${err.message}</td></tr>`;
       });
   }
 
+  // ============================================================
+  // 💡 老師指定文章（英打、中打都有）：從網址參數拿到目前「上課班級」（由 admin.html 選好班級後帶過來），
+  // 設定這個班「第一次」「第二次」要打哪篇文章，學生連線教師 IP 後會直接套用。
+  //   英打：存在主機的班級代號就是班級本身（例如 701）→ look-type.html 讀取
+  //   中打：班級代號前面加「中打_」（例如 中打_701）→ chinese-look-type.html 讀取
+  // 兩邊各存各的，互不影響，也不用改 server.js。
+  // ============================================================
+  const urlParams = new URLSearchParams(window.location.search);
+  const assignYear = urlParams.get('year');
+  const assignClassName = urlParams.get('className');
+  const ZH_ASSIGN_PREFIX = '中打_';
+
+  function assignKey() { return currentType === 'zh' ? ZH_ASSIGN_PREFIX + assignClassName : assignClassName; }
+
+  function renderAssignSection() {
+    const box = document.getElementById('assignSection');
+    const label = currentType === 'zh' ? '中打' : '英打';
+    if (!assignClassName) {
+      box.innerHTML = `<div class="no-class-hint">💡 如果要設定${label}「第一次／第二次」指定文章，請回到管理後台「三、選擇上課班級」點選班級後，再重新開啟這個排行榜。</div>`;
+      return;
+    }
+    box.innerHTML = `
+      <div class="assign-box" style="border-color:${currentType === 'zh' ? '#f2c2b8' : '#d9c8f5'}; background:${currentType === 'zh' ? '#fdf1ee' : '#f5f0fc'};">
+        <h3 style="color:var(--theme);">📌 設定「${assignYear || '2026'} 年度 / ${assignClassName}」${label}指定文章</h3>
+        <p class="hint" style="margin-top:0;">設定好之後，這個班的學生在${label}頁面連線教師 IP 後會直接看到指定的題目，不用自己選。留空「不指定」代表照原本方式（學生自行選題或自動抽題）。英打、中打的指定是分開存的。</p>
+        <div class="assign-row">
+          <label>第一次：</label>
+          <select id="assignAttempt1"><option value="">（不指定）</option></select>
+        </div>
+        <div class="assign-row">
+          <label>第二次：</label>
+          <select id="assignAttempt2"><option value="">（不指定）</option></select>
+        </div>
+        <div class="assign-row">
+          <button id="assignSaveBtn" style="background:var(--theme);" onclick="saveAssignedArticles()">💾 儲存設定</button>
+          <span id="assignSavedMsg"></span>
+        </div>
+      </div>
+    `;
+    loadAssignDropdownOptions();
+  }
+
+  function loadAssignDropdownOptions() {
+    const sel1 = document.getElementById('assignAttempt1');
+    const sel2 = document.getElementById('assignAttempt2');
+    const fill = names => {
+      names.forEach(n => { sel1.appendChild(new Option(n, n)); sel2.appendChild(new Option(n, n)); });
+      loadCurrentAssignment();
+    };
+    if (currentType === 'zh') { fill(ZH_ARTICLES); return; }
+    fetch('/articles')
+      .then(res => res.json())
+      .then(list => fill(list.map(a => a.filename).filter(f => !String(f).startsWith(ZH_PREFIX))))
+      .catch(err => console.error('載入文章清單失敗（指定文章用）:', err));
+  }
+
+  function loadCurrentAssignment() {
+    const params = new URLSearchParams({ year: assignYear || '2026', className: assignKey() });
+    fetch(`/look-type-articles?${params.toString()}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.attempt1) document.getElementById('assignAttempt1').value = data.attempt1;
+        if (data.attempt2) document.getElementById('assignAttempt2').value = data.attempt2;
+      })
+      .catch(err => console.warn('取得目前指定文章設定失敗:', err));
+  }
+
+  function saveAssignedArticles() {
+    const attempt1 = document.getElementById('assignAttempt1').value;
+    const attempt2 = document.getElementById('assignAttempt2').value;
+    const msg = document.getElementById('assignSavedMsg');
+    msg.textContent = '儲存中...';
+
+    fetch('/set-look-type-articles', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ year: assignYear || '2026', className: assignKey(), attempt1, attempt2 })
+    })
+      .then(res => { if (!res.ok) throw new Error('儲存失敗'); return res.text(); })
+      .then(() => {
+        msg.textContent = '✅ 已儲存';
+        setTimeout(() => { msg.textContent = ''; }, 2500);
+      })
+      .catch(err => { msg.textContent = '❌ 儲存失敗：' + err.message; });
+  }
+
+  applyTypeUI();
+  renderAssignSection();
   loadArticleOptions();
+  loadClassOptions();
   loadAvailableDates();
 </script>
 

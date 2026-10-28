@@ -1,0 +1,1838 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>中文看打練習</title>
+<script src="./sync-client.js"></script>
+<style>
+  :root {
+    --bg: #f0f0f0;
+    --panel: #ece9d8;
+    --border: #919b9c;
+    --accent: #c0392b;      /* 中文版主色改用朱紅，跟英文版（紫）一眼分得出來 */
+    --danger: #d9363e;
+    --text: #222;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: "Microsoft JhengHei", "PMingLiU", sans-serif;
+    background: var(--bg);
+    margin: 0;
+    padding: 20px;
+    color: var(--text);
+    display: flex;
+    justify-content: center;
+  }
+
+  /* ---------- 設定對話框 ---------- */
+  #setup-dialog {
+    width: 100%;
+    max-width: 540px;
+    background: #f5f4ee;
+    border: 1px solid #8a8a8a;
+    border-radius: 4px;
+    box-shadow: 0 4px 18px rgba(0,0,0,0.25);
+  }
+  #setup-titlebar {
+    background: linear-gradient(#d98b5a, #b9552f);
+    color: white;
+    padding: 6px 12px;
+    font-size: 0.95rem;
+    font-weight: bold;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-radius: 3px 3px 0 0;
+  }
+  #setup-body { padding: 16px 20px; }
+  .form-row { display: flex; align-items: center; margin-bottom: 10px; gap: 8px; }
+  .form-row label { width: 118px; flex-shrink: 0; font-size: 0.92rem; text-align: right; padding-right: 4px; }
+  .form-row input[type=text], .form-row input[type=number], .form-row select {
+    flex: 1; padding: 5px 7px; border: 1px solid #999; border-radius: 2px; font-size: 0.92rem;
+  }
+  .form-row input[disabled] { background: #e0e0e0; color: #666; }
+  .inline-group { display: flex; align-items: center; gap: 6px; }
+  .sub-label { font-size: 0.85rem; color: #555; }
+  .radio-group { display: flex; gap: 14px; align-items: center; }
+  .radio-group label { width: auto; font-size: 0.9rem; display: flex; align-items: center; gap: 4px; }
+  .checkbox-group { display: flex; gap: 18px; align-items: center; flex-wrap: wrap; }
+  .checkbox-group label { width: auto; font-size: 0.88rem; display: flex; align-items: center; gap: 5px; }
+  #conn-status-row { font-size: 0.85rem; color: #666; margin: 8px 0 14px 0; padding-left: 126px; }
+  #conn-status-row.connected { color: #157347; font-weight: bold; }
+  #conn-status-row.failed { color: var(--danger); font-weight: bold; }
+
+  .btn {
+    padding: 7px 16px; font-size: 0.9rem; border: 1px solid #7a7a7a; border-radius: 3px;
+    background: linear-gradient(#fdfdfd, #dcdcdc); cursor: pointer;
+  }
+  .btn:hover { background: linear-gradient(#fff, #e8e8e8); }
+  .btn:disabled { color: #999; cursor: not-allowed; background: #e5e5e5; }
+  .btn-primary { background: linear-gradient(#e29a6a, #c0603a); color: white; border-color: #843; }
+  .btn-primary:hover { background: linear-gradient(#f0a878, #d0704a); }
+  .btn-primary:disabled { background: #e0c4b4; color: #eee; border-color: #a98; }
+  .btn-danger { background: linear-gradient(#f08c8c, #d9363e); color: white; border-color: #832; }
+
+  #setup-footer {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 10px 20px 16px 20px; border-top: 1px solid #d3d0c4;
+  }
+  .footer-left { display: flex; gap: 10px; flex-wrap: wrap; }
+  .footer-right { display: flex; gap: 10px; align-items: center; font-size: 0.85rem; color: #444; }
+
+  /* ---------- 各式彈窗 ---------- */
+  #ime-modal, #confirm-modal, #second-modal {
+    display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.45); z-index: 1000; justify-content: center; align-items: center;
+  }
+  .modal-box {
+    background: white; border-radius: 6px; padding: 24px 30px; max-width: 400px; width: 90%;
+    text-align: center; box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+  }
+  .modal-box h3 { margin-top: 0; color: var(--accent); }
+  .modal-box input {
+    width: 100%; padding: 10px; font-size: 1.1rem; text-align: center; border: 2px solid #999;
+    border-radius: 4px; margin: 12px 0; letter-spacing: 2px;
+  }
+  .modal-box input.error { border-color: var(--danger); background: #fff0f0; }
+  .modal-msg { font-size: 0.85rem; color: #666; min-height: 20px; }
+  .modal-msg.error { color: var(--danger); font-weight: bold; }
+
+  /* ---------- 測驗畫面 ---------- */
+  #test-screen {
+    display: none;
+    flex-direction: column;
+    width: 100%;
+    max-width: none;
+    height: calc(100vh - 24px);
+    box-sizing: border-box;
+  }
+  #test-header {
+    display: flex; justify-content: space-between; align-items: center;
+    background: #333; color: white; padding: 10px 18px; border-radius: 6px 6px 0 0; font-size: 0.95rem;
+    flex-shrink: 0;
+  }
+  #test-body {
+    background: #fff; padding: 0; border: 1px solid #ccc; border-top: none;
+    flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden;
+  }
+  #test-timer { font-weight: bold; }
+  #test-timer.warning { color: #ff8f8f; animation: pulse 1s infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+  /* 中文看打版面：紅字原文列 + 黑字輸入列 一組一組配對顯示。
+     原文列與輸入列刻意使用同一組字型／字級／左右內距，
+     中文字在細明體下是等寬的，兩列的字才會上下對齊，好比對。 */
+  #article-lines {
+    flex: 1; min-height: 0; overflow-y: auto;
+    max-width: 1000px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 4px 0 40vh 0;   /* 底部留白，最後幾行也能捲到畫面中間 */
+  }
+  .line-pair { border-bottom: 1px solid #ddd; }
+  .line-pair:nth-child(odd) { background: #fafafa; }
+  .ref-line, .typed-input {
+    font-family: "MingLiU", "PMingLiU", "Noto Sans TC", monospace;
+    font-size: 1.28rem;
+    padding: 6px 18px;
+    white-space: pre;
+    line-height: 1.55;
+    min-height: 1.55em;
+    letter-spacing: 0;
+  }
+  .ref-line { color: #c0392b; }
+  .typed-input {
+    display: block; width: 100%; color: #111; border: none; outline: none;
+    background: transparent; border-radius: 0;
+  }
+  .line-pair.active { background: #fffdf0; }
+  .line-pair.active .ref-line { background: #fff7e0; }
+  .line-pair.active .typed-input { background: #fffef5; box-shadow: inset 0 0 0 2px #ffcf40; }
+  #article-lines.hide-ref .ref-line { visibility: hidden; }
+
+  #test-footer-bar {
+    display: flex; justify-content: space-between; align-items: center;
+    background: #e9e9e9; border: 1px solid #ccc; border-top: none; padding: 8px 16px; border-radius: 0 0 6px 6px;
+    flex-shrink: 0;
+  }
+
+  /* ---------- 成績單／總成績 彈窗 ---------- */
+  #score-modal, #final-modal, #rule-modal {
+    display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.45); z-index: 1000; justify-content: center; align-items: center;
+  }
+  .score-box {
+    background: #f0f0f0; border: 1px solid #8a8a8a; border-radius: 4px; width: 92%; max-width: 470px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+  }
+  .score-titlebar {
+    background: linear-gradient(#d98b5a, #b9552f); color: white; padding: 6px 12px;
+    font-size: 0.95rem; font-weight: bold; display: flex; justify-content: space-between; align-items: center;
+    border-radius: 3px 3px 0 0;
+  }
+  .score-body { padding: 16px 22px; }
+  .score-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 18px; margin-bottom: 6px; }
+  .score-grid .field { display: flex; align-items: baseline; gap: 6px; font-size: 0.92rem; }
+  .score-grid .field .flabel { color: #333; white-space: nowrap; }
+  .score-grid .field .fvalue { font-weight: bold; color: #111; }
+  .score-grid.wide { grid-template-columns: 1fr; }
+  .score-highlight-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 18px; margin: 10px 0; padding: 10px 0; border-top: 1px dashed #bbb; border-bottom: 1px dashed #bbb; }
+  .score-highlight-row .field .fvalue { font-size: 1.05rem; }
+  .score-note { color: var(--danger); font-size: 0.85rem; text-align: center; margin: 10px 0 4px 0; }
+  .score-footer { display: flex; justify-content: space-between; align-items: center; padding: 12px 20px 16px 20px; border-top: 1px solid #d3d0c4; }
+  .score-footer .footer-left { display: flex; gap: 10px; }
+
+  .form-row input[readonly] { background: #e0e0e0; color: #666; }
+
+  /* ---------- 看打稿對照彈窗 ---------- */
+  #draft-modal {
+    display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.5); z-index: 1100; justify-content: center; align-items: center;
+  }
+  .draft-box {
+    background: #fff; border: 1px solid #8a8a8a; border-radius: 4px; width: 94%; max-width: 820px;
+    max-height: 86vh; display: flex; flex-direction: column; box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+  }
+  .draft-titlebar {
+    background: linear-gradient(#d98b5a, #b9552f); color: white; padding: 6px 12px;
+    font-size: 0.95rem; font-weight: bold; display: flex; justify-content: space-between; align-items: center;
+    border-radius: 3px 3px 0 0; flex-shrink: 0;
+  }
+  #draft-body { padding: 14px 20px; overflow-y: auto; flex: 1; }
+  .draft-legend { font-size: 0.82rem; color: #555; margin-bottom: 10px; display: flex; gap: 14px; flex-wrap: wrap; }
+  .draft-legend span.dot { display:inline-block; width:10px; height:10px; border-radius:2px; margin-right:4px; vertical-align:-1px; }
+  .draft-line-pair { border-bottom: 1px solid #ddd; padding: 4px 0; }
+  .draft-line-pair:nth-child(odd) { background: #fafafa; }
+  .draft-ref, .draft-typed {
+    font-family: "MingLiU", "PMingLiU", "Noto Sans TC", monospace; font-size: 1.05rem;
+    padding: 2px 10px; white-space: pre-wrap; word-break: break-all; line-height: 1.5;
+  }
+  .draft-ref { color: #777; }
+  .draft-typed { color: #111; }
+  .draft-typed .c-ok { color: #157347; }
+  .draft-typed .c-sub { color: #d9363e; background: #ffe3e3; border-radius: 2px; }
+  .draft-typed .c-ins { color: #b36b00; background: #fff0d6; border-radius: 2px; text-decoration: underline wavy #b36b00; }
+  .draft-typed .c-del { color: #999; background: #eee; border-radius: 2px; }
+  .draft-typed .c-swap { color: #3a5bb0; background: #e8edfb; border-radius: 2px; text-decoration: underline dashed #3a5bb0; }
+  .draft-footer { display: flex; justify-content: flex-end; gap: 10px; padding: 10px 20px 14px 20px; border-top: 1px solid #d3d0c4; flex-shrink: 0; }
+
+  /* ---------- 評分規則彈窗 ---------- */
+  .rule-box {
+    background: #fff; border: 1px solid #8a8a8a; border-radius: 4px; width: 94%; max-width: 640px;
+    max-height: 86vh; display: flex; flex-direction: column; box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+  }
+  #rule-body { padding: 16px 24px; overflow-y: auto; flex: 1; font-size: 0.93rem; line-height: 1.75; }
+  #rule-body h4 { color: var(--accent); margin: 16px 0 6px 0; }
+  #rule-body ol { padding-left: 22px; margin: 6px 0; }
+  #rule-body table { border-collapse: collapse; width: 100%; margin: 8px 0; font-size: 0.9rem; }
+  #rule-body th, #rule-body td { border: 1px solid #ccc; padding: 5px 8px; text-align: center; }
+  #rule-body th { background: #fbeee8; }
+  .rule-tip { background: #fff7e0; border: 1px solid #ffcf40; border-radius: 6px; padding: 10px 14px; color: #7a5b00; margin-top: 10px; }
+</style>
+</head>
+<body>
+
+<!-- ============== 一、設定對話框 ============== -->
+<div id="setup-dialog">
+  <div id="setup-titlebar">
+    <span id="dialog-title">📖 中文看打練習</span>
+    <span>✕</span>
+  </div>
+  <div id="setup-body">
+
+    <div class="form-row">
+      <label>姓名：</label>
+      <input type="text" id="f-name" placeholder="請輸入姓名">
+    </div>
+    <div class="form-row">
+      <label>學號/身份證字號：</label>
+      <input type="text" id="f-idnumber" placeholder="請輸入學號或身分證字號">
+    </div>
+    <div class="form-row">
+      <label>班級：</label>
+      <input type="text" id="f-class" placeholder="請輸入班級" style="max-width:140px;">
+      <label style="width:auto; margin-left:10px;">座號：</label>
+      <input type="text" id="f-seat" placeholder="座號" style="max-width:80px;">
+    </div>
+    <div class="form-row">
+      <label>E-Mail/手機：</label>
+      <input type="text" id="f-contact" placeholder="（選填）">
+    </div>
+    <div class="form-row">
+      <label>生日：</label>
+      <div class="inline-group">
+        <input type="number" id="f-year" value="2026" style="max-width:80px;"><span class="sub-label">西元(年)</span>
+        <select id="f-month" style="max-width:70px;"></select><span class="sub-label">月</span>
+        <select id="f-day" style="max-width:70px;"></select><span class="sub-label">日</span>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <label>測驗題目：</label>
+      <input type="text" id="f-article-display" placeholder="尚未選擇題目" disabled>
+      <button class="btn" id="btn-choose-article" onclick="openArticlePicker()">…</button>
+      <button class="btn" id="btn-random-article" onclick="pickRandomArticle()">自動抽題</button>
+    </div>
+    <div class="form-row">
+      <label>目前題目：</label>
+      <input type="text" id="f-current-article" disabled>
+    </div>
+    <div class="form-row">
+      <label>輸入法：</label>
+      <select id="f-input-method" style="max-width:180px;">
+        <option value="注音輸入法">注音輸入法</option>
+        <option value="倉頡輸入法">倉頡輸入法</option>
+        <option value="速成輸入法">速成輸入法</option>
+        <option value="大易輸入法">大易輸入法</option>
+        <option value="嘸蝦米輸入法">嘸蝦米輸入法</option>
+        <option value="其他中文輸入法">其他中文輸入法</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label>測驗時間：</label>
+      <input type="number" id="f-time-limit" value="10" min="1" max="60" style="max-width:70px;">
+      <span class="sub-label">分鐘</span>
+    </div>
+    <div class="form-row">
+      <label>測驗別：</label>
+      <span class="sub-label">第</span>
+      <input type="number" id="f-attempt-no" value="1" min="1" max="2" style="max-width:60px;">
+      <span class="sub-label">次</span>
+    </div>
+    <div class="form-row">
+      <label>顯示文稿：</label>
+      <div class="radio-group">
+        <label><input type="radio" name="show-text" value="no"> 否</label>
+        <label><input type="radio" name="show-text" value="yes" checked> 是</label>
+      </div>
+    </div>
+    <div class="form-row">
+      <label>成績儲存於：</label>
+      <div class="checkbox-group">
+        <label><input type="checkbox" id="chk-local" onchange="onStorageChange('local')"> 本機路徑</label>
+        <label><input type="checkbox" id="chk-host" onchange="onStorageChange('host')"> 主機或IP位置</label>
+      </div>
+    </div>
+    <div id="conn-status-row">連線狀態：<span id="conn-status-text">尚未連線至主機</span></div>
+
+  </div>
+  <div id="setup-footer">
+    <div class="footer-left">
+      <button class="btn" onclick="showInfo()">操作說明</button>
+      <button class="btn" onclick="openRuleModal()">📏 評分規則</button>
+      <a id="homeNavLink" href="./login.html" class="btn" style="display:none; text-decoration:none; color:#333; text-align:center;">🏠 回登入首頁</a>
+    </div>
+    <div class="footer-right">
+      <span id="ready-hint">請準備【<span id="ready-article-name">尚未選題</span>】試題</span>
+    </div>
+  </div>
+  <div id="setup-footer" style="border-top:none; padding-top:0;">
+    <div></div>
+    <div class="footer-right">
+      <button class="btn btn-primary" id="btn-start-test" onclick="startTestFlow()">開始測驗</button>
+      <button class="btn" onclick="closeWindowSafely()">離開</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============== 主機 IP 輸入彈窗 ============== -->
+<div id="ip-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.45); z-index:1000; justify-content:center; align-items:center;">
+  <div class="modal-box">
+    <h3>連線至主機</h3>
+    <p class="sub-label">請輸入教師端主機 IP（例如 192.168.1.1）</p>
+    <input type="text" id="host-ip-input" placeholder="192.168.1.1">
+    <p class="modal-msg" id="ip-modal-msg"></p>
+    <div style="display:flex; gap:10px; justify-content:center; margin-top:10px;">
+      <button class="btn btn-primary" onclick="connectToHost()">連線</button>
+      <button class="btn" onclick="cancelHostConnect()">取消</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============== 文章選擇彈窗 ============== -->
+<div id="article-picker-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.45); z-index:1000; justify-content:center; align-items:center;">
+  <div class="modal-box" style="max-width:330px;">
+    <h3>選擇測驗題目</h3>
+    <select id="article-picker-select" style="width:100%; padding:8px; margin:10px 0;"></select>
+    <div style="display:flex; gap:10px; justify-content:center;">
+      <button class="btn btn-primary" onclick="confirmArticlePicker()">確定</button>
+      <button class="btn" onclick="closeArticlePicker()">取消</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============== 二、輸入法驗證彈窗（中文版：確認已切到中文輸入法） ============== -->
+<div id="ime-modal">
+  <div class="modal-box">
+    <h3>請確認輸入法</h3>
+    <p class="sub-label">請先切換到你要使用的<b>中文輸入法</b>（注音／倉頡／速成…），並輸入下方四個字：</p>
+    <p style="font-size:1.5rem; font-weight:bold; letter-spacing:6px; margin:10px 0; color:#c0392b;">中文測驗</p>
+    <input type="text" id="ime-check-input" autocomplete="off" placeholder="請在此輸入">
+    <p class="modal-msg" id="ime-check-msg"></p>
+    <button class="btn btn-primary" onclick="verifyImeInput()">正確</button>
+  </div>
+</div>
+
+<!-- ============== 結束測驗確認彈窗 ============== -->
+<div id="confirm-modal">
+  <div class="modal-box">
+    <h3 id="confirm-title">確定要結束測驗嗎？</h3>
+    <p class="sub-label" id="confirm-desc">結束後即無法再繼續作答，是否確定要離開？</p>
+    <div style="display:flex; gap:10px; justify-content:center; margin-top:14px;">
+      <button class="btn btn-danger" onclick="confirmYes()">是</button>
+      <button class="btn" onclick="confirmNo()">否</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============== 第二次測驗詢問彈窗 ============== -->
+<div id="second-modal">
+  <div class="modal-box">
+    <h3>是否要進行第二次測驗？</h3>
+    <p class="sub-label">資料將會保留，測驗次數 +1</p>
+    <div style="display:flex; gap:10px; justify-content:center; margin-top:14px;">
+      <button class="btn btn-primary" onclick="startSecondAttempt()">是，進行第二次</button>
+      <button class="btn" onclick="finishAllAttempts()">否，查看成績</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============== 單次成績單彈窗 ============== -->
+<div id="score-modal">
+  <div class="score-box">
+    <div class="score-titlebar"><span>中文看打成績單</span><span>✕</span></div>
+    <div class="score-body">
+      <div class="score-grid">
+        <div class="field"><span class="flabel">測驗人：</span><span class="fvalue" id="sc-name"></span></div>
+        <div class="field"><span class="flabel">測驗日：</span><span class="fvalue" id="sc-date"></span></div>
+        <div class="field"><span class="flabel">身分證：</span><span class="fvalue" id="sc-id"></span></div>
+        <div class="field"><span class="flabel">測驗題目：</span><span class="fvalue" id="sc-article"></span></div>
+        <div class="field"><span class="flabel">生日：</span><span class="fvalue" id="sc-birth"></span></div>
+        <div class="field"><span class="flabel">測驗時間：</span><span class="fvalue" id="sc-timeused"></span></div>
+      </div>
+      <div class="score-highlight-row">
+        <div class="field"><span class="flabel">正確字數：</span><span class="fvalue" id="sc-correct"></span></div>
+        <div class="field"><span class="flabel">錯誤次數：</span><span class="fvalue" id="sc-errors"></span></div>
+        <div class="field"><span class="flabel">扣字數：</span><span class="fvalue" id="sc-deductchar"></span></div>
+        <div class="field"><span class="flabel">淨字數：</span><span class="fvalue" id="sc-netchar"></span></div>
+        <div class="field"><span class="flabel">正確率：</span><span class="fvalue" id="sc-accuracy"></span></div>
+        <div class="field"><span class="flabel">錯誤率：</span><span class="fvalue" id="sc-wrongrate"></span></div>
+      </div>
+      <div class="score-highlight-row" style="border-top:none;">
+        <div class="field"><span class="flabel">得分：</span><span class="fvalue" id="sc-score"></span></div>
+        <div class="field"><span class="flabel">扣分：</span><span class="fvalue" id="sc-deduct"></span></div>
+        <div class="field"><span class="flabel">實得分數：</span><span class="fvalue" id="sc-netscore" style="color:#b9552f;"></span></div>
+        <div class="field"><span class="flabel">速度：</span><span class="fvalue" id="sc-speed"></span></div>
+      </div>
+      <div class="score-grid wide">
+        <div class="field"><span class="flabel">級別：</span><span class="fvalue" id="sc-level"></span></div>
+        <div class="field"><span class="flabel">💎 獲得代幣：</span><span class="fvalue" id="sc-gbit"></span></div>
+      </div>
+      <div id="sc-disqualify-note" style="display:none; margin-top:10px; padding:10px; background:#ffe0e0; border:1px solid #ff8080; border-radius:8px; color:#a30000; font-weight:bold;"></div>
+      <div id="sc-indent-note" style="display:none; margin-top:10px; padding:10px; background:#e8f1ff; border:1px solid #7aa7ff; border-radius:8px; color:#1d3f8a; font-size:0.88rem; text-align:left;"></div>
+      <div id="sc-practice-hint" style="display:none; margin-top:10px; padding:10px; background:#fff7e0; border:1px solid #ffcf40; border-radius:8px; color:#7a5b00; font-size:0.88rem; text-align:left;"></div>
+    </div>
+    <div class="score-footer">
+      <div class="footer-left">
+        <button class="btn" onclick="showDraftView()">看打稿</button>
+        <button class="btn" onclick="openRuleModal()">評分規則</button>
+      </div>
+      <div class="footer-left">
+        <button class="btn" onclick="saveScoreAsFile('score')">另存新檔</button>
+        <button class="btn btn-primary" onclick="closeScoreModal()">離開</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============== 總成績彈窗 ============== -->
+<div id="final-modal">
+  <div class="score-box" style="max-width:430px;">
+    <div class="score-titlebar"><span>總成績</span><span>✕</span></div>
+    <div class="score-body">
+      <div class="score-grid wide" style="text-align:center; margin-bottom:6px;">
+        <div class="field" style="justify-content:center;"><span class="flabel">姓名：</span><span class="fvalue" id="fn-name"></span></div>
+        <div class="field" style="justify-content:center;"><span class="flabel">生日：</span><span class="fvalue" id="fn-birth"></span></div>
+        <div class="field" style="justify-content:center;"><span class="flabel">身分證號：</span><span class="fvalue" id="fn-id"></span></div>
+      </div>
+      <div class="score-grid" style="border-top:1px dashed #bbb; padding-top:8px;">
+        <div class="field"><span class="flabel">考試次數：</span><span class="fvalue" id="fn-attempts"></span></div>
+        <div class="field"><span class="flabel">測驗別：</span><span class="fvalue">總成績</span></div>
+        <div class="field" style="grid-column:1 / -1;"><span class="flabel">考試日期：</span><span class="fvalue" id="fn-date"></span></div>
+      </div>
+      <div class="score-highlight-row">
+        <div class="field"><span class="flabel">得分：</span><span class="fvalue" id="fn-score"></span></div>
+        <div class="field"><span class="flabel">扣分：</span><span class="fvalue" id="fn-deduct"></span></div>
+        <div class="field" style="grid-column:1 / -1;"><span class="flabel">實得分數：</span><span class="fvalue" id="fn-netscore" style="color:#b9552f;"></span></div>
+      </div>
+      <div class="score-grid">
+        <div class="field"><span class="flabel">正確率：</span><span class="fvalue" id="fn-accuracy"></span></div>
+        <div class="field"><span class="flabel">錯誤率：</span><span class="fvalue" id="fn-wrongrate"></span></div>
+        <div class="field"><span class="flabel">速度：</span><span class="fvalue" id="fn-speed" style="color:#d9363e;"></span></div>
+        <div class="field"><span class="flabel">最佳級別：</span><span class="fvalue" id="fn-level"></span></div>
+      </div>
+      <div class="score-note">請先等監考老師登記完畢後，再登出本畫面，否則視為零分！</div>
+      <div id="fn-practice-hint" style="display:none; margin-top:10px; padding:10px; background:#fff7e0; border:1px solid #ffcf40; border-radius:8px; color:#7a5b00; font-size:0.85rem; text-align:left;"></div>
+    </div>
+    <div class="score-footer" style="justify-content:center; gap:16px;">
+      <button class="btn" onclick="openRuleModal()">評分規則</button>
+      <button class="btn btn-primary" onclick="closeWindowSafely()">結束</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============== 看打稿對照彈窗 ============== -->
+<div id="draft-modal">
+  <div class="draft-box">
+    <div class="draft-titlebar"><span>📄 看打稿對照 — <span id="draft-article-name"></span>（第 <span id="draft-attempt-no"></span> 次）</span><span>✕</span></div>
+    <div id="draft-body">
+      <div class="draft-legend">
+        <span><span class="dot" style="background:#157347;"></span>打對的字</span>
+        <span><span class="dot" style="background:#ffe3e3; border:1px solid #d9363e;"></span>錯打字</span>
+        <span><span class="dot" style="background:#fff0d6; border:1px solid #b36b00;"></span>多打字</span>
+        <span><span class="dot" style="background:#eee; border:1px solid #999;"></span>漏打字</span>
+        <span><span class="dot" style="background:#e8edfb; border:1px solid #3a5bb0;"></span>顛倒字</span>
+      </div>
+      <div id="draft-lines"></div>
+    </div>
+    <div class="draft-footer">
+      <button class="btn" onclick="closeDraftModal()">關閉</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============== 評分規則彈窗 ============== -->
+<div id="rule-modal">
+  <div class="rule-box">
+    <div class="draft-titlebar"><span>📏 中文輸入技能認證 評分規則</span><span>✕</span></div>
+    <div id="rule-body">
+      <h4>一、正確字</h4>
+      依照試題輸入相同的字視為正確字，每輸入正確一字計得 1 字。
+      <h4>二、錯打字</h4>
+      輸入與試題不同的字視為錯打字，每錯打一字計錯誤 1 次。
+      <h4>三、多打字</h4>
+      較試題多輸入不需輸入的字視為多打字，每多打一字計錯誤 1 次。
+      <h4>四、漏打字</h4>
+      依照試題應輸入而未輸入的字視為漏打字，每漏打一字計錯誤 1 次。
+      <h4>五、顛倒字</h4>
+      在一行中如二連續單字有前後顛倒，計錯誤 1 次。
+      <h4>六、罰則</h4>
+      每錯誤 1 次扣該列正確字數 0.5 字，扣至 0 字為止，但錯誤次數仍累計至錯誤率。
+      <h4>七、以列計算每列淨字數</h4>
+      該列所有正確字數扣除因錯打、多打、漏打所扣之字數即為淨字數，淨字數不得小於 0。
+      <h4>八、錯誤率</h4>
+      錯誤率若 ≧ 10％，該次成績不予計算。
+      <h4>九、成績計算</h4>
+      <ol>
+        <li>每分鐘平均字數 ＝ 每列淨字數之總和 ÷ 測驗時間（分鐘）</li>
+        <li>錯誤率 ＝ 總錯誤次數 ÷ 應輸入字數</li>
+      </ol>
+
+      <h4>十、合格標準與等級（每分鐘平均字數）</h4>
+      <table>
+        <tr><th>級別</th><th>每分鐘平均字數</th></tr>
+        <tr><td>專業級（乙級）</td><td>80 字（含）以上</td></tr>
+        <tr><td>進階級（丙級）</td><td>30 – 79 字</td></tr>
+        <tr><td>實用級（初級）</td><td>15 – 29 字</td></tr>
+        <tr><td>未達標準</td><td>未滿 15 字</td></tr>
+      </table>
+
+      <div class="rule-tip">
+        💡 <b>本系統的實作說明（給老師看的）</b><br>
+        1.「應輸入字數」只算學生<b>實際打到的範圍</b>（時間到還沒打到的行不列入分母），避免因為時間不夠而錯誤率被灌爆。<br>
+        2. 時間到時<b>正在打的那一行</b>，只比對「已經打出來的長度」，後面沒打到的字不算漏打。<br>
+        3. 中間<b>跳過整行沒打</b>（後面卻繼續打）＝ 該行每個字都算漏打，比照規則四。<br>
+        4. 顛倒字用「相鄰兩字對調」自動判定，兩個字合計只算 1 次錯誤（規則五）。<br>
+        5. 段落開頭的兩個<b>全形空格</b>一律列入計分（比照正式檢定）。學生沒空、少空或打成半形空格，都算錯，交卷後成績單會列出是哪幾行，並提示改用全形空格。
+      </div>
+    </div>
+    <div class="draft-footer">
+      <button class="btn" onclick="closeRuleModal()">關閉</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============== 三、測驗畫面 ============== -->
+<div id="test-screen">
+  <div id="test-header">
+    <div>📖 <b id="test-article-title"></b>　第 <span id="test-attempt-no"></span> 次測驗</div>
+    <div>剩餘時間：<b id="test-timer">--分--秒</b></div>
+  </div>
+  <div id="test-body">
+    <div id="article-lines"></div>
+  </div>
+  <div id="test-footer-bar">
+    <div class="sub-label">按 <b>Enter</b> 換到下一行；可用滑鼠或上下方向鍵回頭修改。最後一行按 Enter 即交卷。</div>
+    <button class="btn btn-danger" id="btn-end-test" onclick="requestEndTest()">結束測驗</button>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// 💡 可調整設定區（要改什麼，改這裡就好）
+// ============================================================
+const ARTICLE_DIR = './Chinese_Look_Subject/';       // 中文題庫資料夾（放 T1.txt ~ T28.txt，Big5 編碼）
+const ARTICLE_FILES = Array.from({ length: 28 }, (_, i) => `T${i + 1}.txt`);
+const AUTO_REPORT_HOST = 'http://192.168.1.1:3000';  // 學校主機（跟英文看打／ETP 同一台）
+const SUBMIT_PATH = '/submit-look-type';             // 成績上傳路徑（沿用英文看打的後端，不用改 server.js）
+const ARTICLE_LABEL_PREFIX = '中打_';                // 上傳時題目名稱前綴，老師在排行榜一眼分得出中打/英打
+const LEVEL_TABLE = [                                // 合格標準與等級（每分鐘淨字數），依中文輸入技能認證規則
+  { min: 80, label: '專業級（乙級）' },
+  { min: 30, label: '進階級（丙級）' },
+  { min: 15, label: '實用級（初級）' }
+];
+const GBIT_DIVISOR = 8;   // 實得分數 ÷ 這個值 ＝ 代幣數（值越小發越多）
+const GBIT_MIN = 1;       // 每次交卷最少發這麼多
+
+// ============================================================
+// 💡 全域狀態
+// ============================================================
+const params = new URLSearchParams(location.search);
+const testMode = params.get('mode') === 'test' ? 'test' : 'practice';
+document.getElementById('dialog-title').textContent = testMode === 'test' ? '📖 中文看打測驗' : '📖 中文看打練習';
+if (testMode === 'test') {
+  document.getElementById('setup-titlebar').style.background = 'linear-gradient(#e07a7a, #b33a3a)';
+  document.getElementById('f-idnumber').placeholder = '格式：A123456789';
+  document.getElementById('f-idnumber').maxLength = 10;
+}
+
+let hostUrl = null;
+let studentId = null;
+let articles = [];               // [{ filename }]
+let currentArticle = null;       // { filename, content }
+let attemptResults = [];
+let currentScoreModalAttempt = null;
+let currentAttemptNo = 1;
+let maxAttempts = 2;
+let timeLimitMinutes = 10;
+let timerInterval = null;
+let timeRemainingSec = 0;
+let testStartTime = null;
+let testInProgress = false;
+let abortAlreadySent = false;
+const countIndent = true;        // 段落開頭的全形空格一律計分（比照正式檢定，不開放關閉）
+
+// 測驗畫面資料
+let originalLines = [];          // 原文每一行（字串）
+let typedLines = [];             // 學生每一行輸入
+let currentLine = 0;             // 目前焦點在第幾行
+let maxReachedLine = 0;          // 這次測驗最遠打到第幾行
+
+function fetchWithTimeout(url, opts, ms) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), ms || 3000);
+  return fetch(url, Object.assign({}, opts, { signal: controller.signal })).finally(() => clearTimeout(timer));
+}
+function reportHost() { return hostUrl || AUTO_REPORT_HOST; }
+
+// 生日 月/日 下拉選單
+(function initDateSelects() {
+  const monthSel = document.getElementById('f-month');
+  const daySel = document.getElementById('f-day');
+  for (let m = 1; m <= 12; m++) { const o = document.createElement('option'); o.value = m; o.textContent = m; monthSel.appendChild(o); }
+  for (let d = 1; d <= 31; d++) { const o = document.createElement('option'); o.value = d; o.textContent = d; daySel.appendChild(o); }
+})();
+
+function showInfo() {
+  alert('中文看打操作說明：\n' +
+    '1. 填寫姓名、學號/身分證字號、班級、座號與生日。\n' +
+    '2. 選擇題目（自行選題或自動抽題）。\n' +
+    '3. 按「開始測驗」後，先確認中文輸入法，再進入測驗畫面。\n' +
+    '4. 紅色是原文、下面白色那一行就是你要打的地方，打完一行按 Enter 換下一行。\n' +
+    '5. 打錯了可以用滑鼠點回去、或用上下方向鍵移動，隨時修改。\n' +
+    '6. 計分方式請按下方的「評分規則」按鈕查看。');
+}
+
+// ============================================================
+// 💡 評分規則彈窗
+// ============================================================
+function openRuleModal() { document.getElementById('rule-modal').style.display = 'flex'; }
+function closeRuleModal() { document.getElementById('rule-modal').style.display = 'none'; }
+
+// ============================================================
+// 💡 成績儲存位置：本機路徑 / 主機或IP位置（互斥勾選）
+// ============================================================
+let localDirHandle = null;
+let localChineseDirHandle = null;
+
+async function onStorageChange(which) {
+  const chkLocal = document.getElementById('chk-local');
+  const chkHost = document.getElementById('chk-host');
+
+  if (which === 'local' && chkLocal.checked) {
+    chkHost.checked = false;
+    hostUrl = null;
+    if (!window.showDirectoryPicker) {
+      alert('您的瀏覽器不支援「資料夾存取」功能（建議改用電腦版 Chrome 或 Edge），暫時無法使用本機路徑自動存檔。');
+      chkLocal.checked = false;
+      updateConnStatus('尚未連線至主機', 'idle');
+      return;
+    }
+    try {
+      localDirHandle = await window.showDirectoryPicker();
+      localChineseDirHandle = await localDirHandle.getDirectoryHandle('中文看打', { create: true });
+      updateConnStatus(`成績將存於「${localDirHandle.name}」資料夾內的「中文看打」子資料夾`, 'connected');
+    } catch (err) {
+      chkLocal.checked = false;
+      updateConnStatus('尚未選擇本機資料夾', 'idle');
+      return;
+    }
+  } else if (which === 'host' && chkHost.checked) {
+    chkLocal.checked = false;
+    localDirHandle = null;
+    localChineseDirHandle = null;
+    openIpModal();
+  } else if (which === 'host' && !chkHost.checked) {
+    hostUrl = null;
+    studentId = null;
+    teacherAssigned = false;
+    refreshArticleButtons();
+    updateConnStatus('尚未連線至主機', 'idle');
+  } else if (which === 'local' && !chkLocal.checked) {
+    localDirHandle = null;
+    localChineseDirHandle = null;
+    updateConnStatus('尚未連線至主機', 'idle');
+  }
+}
+
+async function saveScoreToLocalFolder(filename, textContent) {
+  if (!localChineseDirHandle) return;
+  try {
+    const fileHandle = await localChineseDirHandle.getFileHandle(filename, { create: true });
+    const writable = await fileHandle.createWritable();
+    await writable.write(textContent);
+    await writable.close();
+  } catch (err) {
+    console.error('寫入本機成績檔失敗：', err.message);
+  }
+}
+
+function updateConnStatus(text, state) {
+  document.getElementById('conn-status-text').textContent = text;
+  document.getElementById('conn-status-row').className =
+    state === 'connected' ? 'connected' : (state === 'failed' ? 'failed' : '');
+}
+
+function openIpModal() {
+  document.getElementById('ip-modal').style.display = 'flex';
+  document.getElementById('ip-modal-msg').textContent = '';
+}
+function cancelHostConnect() {
+  document.getElementById('ip-modal').style.display = 'none';
+  document.getElementById('chk-host').checked = false;
+  updateConnStatus('尚未連線至主機', 'idle');
+}
+async function connectToHost() {
+  const ip = document.getElementById('host-ip-input').value.trim();
+  const msg = document.getElementById('ip-modal-msg');
+  if (!ip) { msg.textContent = '請輸入主機 IP'; msg.className = 'modal-msg error'; return; }
+  if (!/^(\d{1,3}\.){3}\d{1,3}$/.test(ip)) {
+    msg.textContent = 'IP 格式不正確，請輸入例如 192.168.1.1 的格式（請用半形數字）';
+    msg.className = 'modal-msg error';
+    return;
+  }
+  const url = `http://${ip}:3000`;
+  msg.textContent = '連線中...'; msg.className = 'modal-msg';
+  try {
+    const res = await fetchWithTimeout(`${url}/ping`, {}, 3000);
+    if (!res.ok) throw new Error('主機無回應');
+    hostUrl = url;
+    document.getElementById('ip-modal').style.display = 'none';
+    updateConnStatus(`已連線至主機 ${ip}`, 'connected');
+    await applyTeacherAssignment(parseInt(document.getElementById('f-attempt-no').value, 10) || 1);
+  } catch (err) {
+    msg.textContent = `連線失敗：${err.message}（請確認 IP 是否正確、主機是否已開啟）`;
+    msg.className = 'modal-msg error';
+  }
+}
+
+// ============================================================
+// 💡 老師指定題目（中打版）
+// 老師在 look-type-leaderboard.html 切到「中打」設定這個班第一次／第二次要打哪一篇。
+// 沿用英打同一組主機路徑（/look-type-articles），只是班級代號前面加上「中打_」，
+// 例如「中打_701」，這樣中打、英打的指定就各存各的，不會互相蓋掉，server.js 也不用改。
+// 學生連線教師 IP 後：有指定 → 直接套用、鎖住選題按鈕；沒指定 → 照原本自己選題。
+// ============================================================
+const ASSIGN_CLASS_PREFIX = '中打_';
+let teacherAssigned = false;
+
+async function fetchTeacherAssignment(attemptNo) {
+  if (!hostUrl) return null;
+  const className = document.getElementById('f-class').value.trim();
+  if (!className) return null;
+  try {
+    const qs = new URLSearchParams({ year: document.getElementById('f-year').value, className: ASSIGN_CLASS_PREFIX + className });
+    const res = await fetchWithTimeout(`${hostUrl}/look-type-articles?${qs.toString()}`, {}, 3000);
+    if (!res.ok) return null;
+    const data = await res.json();
+    const fn = String((attemptNo === 2 ? data.attempt2 : data.attempt1) || '').replace(ARTICLE_LABEL_PREFIX, '');
+    return ARTICLE_FILES.includes(fn) ? fn : null;
+  } catch (err) {
+    console.warn('取得老師指定題目失敗，改由學生自行選題：', err.message);
+    return null;
+  }
+}
+
+function refreshArticleButtons() {
+  const lockedBySecondAttempt = currentAttemptNo > 1 && testMode === 'test';
+  const locked = teacherAssigned || lockedBySecondAttempt;
+  document.getElementById('btn-choose-article').disabled = locked;
+  document.getElementById('btn-random-article').disabled = locked;
+}
+
+async function applyTeacherAssignment(attemptNo) {
+  const fn = await fetchTeacherAssignment(attemptNo);
+  teacherAssigned = !!fn;
+  if (fn && (!currentArticle || currentArticle.filename !== fn || !currentArticle.content)) {
+    await setCurrentArticle(fn);
+  }
+  if (fn && hostUrl) {
+    const ip = hostUrl.replace('http://', '').replace(':3000', '');
+    updateConnStatus(`已連線至主機 ${ip}｜老師指定第 ${attemptNo} 次題目：${fn}`, 'connected');
+  }
+  refreshArticleButtons();
+  return fn;
+}
+
+// 連上主機之後才填班級的話，填完班級就馬上去問老師有沒有指定題目
+document.getElementById('f-class').addEventListener('change', () => {
+  if (hostUrl) applyTeacherAssignment(parseInt(document.getElementById('f-attempt-no').value, 10) || 1);
+});
+
+// ============================================================
+// 💡 題庫：Chinese_Look_Subject 資料夾（Big5 編碼的 .txt）
+// 瀏覽器內建的 TextDecoder 就看得懂 Big5，所以不用先把檔案轉成 UTF-8，
+// 直接把原始檔案丟進資料夾就能用。萬一檔案其實是 UTF-8，也會自動改用 UTF-8 解讀。
+// ============================================================
+function decodeArticleBuffer(buf) {
+  try {
+    const big5 = new TextDecoder('big5').decode(buf);
+    if (!/\uFFFD/.test(big5)) return big5;           // 沒有亂碼符號 → Big5 解對了
+  } catch (err) { /* 瀏覽器不支援 big5 就往下走 UTF-8 */ }
+  return new TextDecoder('utf-8').decode(buf);
+}
+
+// 依序嘗試幾個可能的位置，哪個拿得到就用哪個（放在主機上、放在同一台電腦、或連教師主機）
+function articleUrlCandidates(filename) {
+  const list = [];
+  if (hostUrl) list.push(`${hostUrl}${ARTICLE_DIR.replace('./', '/')}${encodeURIComponent(filename)}`);
+  list.push(`${ARTICLE_DIR}${encodeURIComponent(filename)}`);
+  list.push(`${AUTO_REPORT_HOST}${ARTICLE_DIR.replace('./', '/')}${encodeURIComponent(filename)}`);
+  return list;
+}
+
+async function fetchArticleContent(filename) {
+  for (const url of articleUrlCandidates(filename)) {
+    try {
+      const res = await fetchWithTimeout(url, {}, 4000);
+      if (!res.ok) continue;
+      const buf = await res.arrayBuffer();
+      const text = decodeArticleBuffer(buf);
+      if (text && text.trim()) return text;
+    } catch (err) { /* 換下一個位置再試 */ }
+  }
+  return null;
+}
+
+function initArticleList() {
+  articles = ARTICLE_FILES.map(f => ({ filename: f }));
+}
+initArticleList();
+
+function openArticlePicker() {
+  const sel = document.getElementById('article-picker-select');
+  sel.innerHTML = articles.map(a => `<option value="${a.filename}">${a.filename}</option>`).join('');
+  document.getElementById('article-picker-modal').style.display = 'flex';
+}
+function closeArticlePicker() { document.getElementById('article-picker-modal').style.display = 'none'; }
+function confirmArticlePicker() {
+  setCurrentArticle(document.getElementById('article-picker-select').value);
+  closeArticlePicker();
+}
+function pickRandomArticle() {
+  const rand = articles[Math.floor(Math.random() * articles.length)];
+  setCurrentArticle(rand.filename);
+}
+
+async function setCurrentArticle(filename) {
+  document.getElementById('f-article-display').value = `Chinese_Look_Subject\\${filename}`;
+  document.getElementById('f-current-article').value = '讀取中…';
+  document.getElementById('ready-article-name').textContent = filename;
+  currentArticle = { filename, content: null };
+  const builtin = BUILTIN_ARTICLES[filename];
+
+  // 直接雙擊開檔（file://，校外離線版）→ 直接用內建題庫，不必等連線逾時
+  // 透過主機開啟（http://）→ 先讀主機上的 Chinese_Look_Subject（老師改過題目會以主機為準），讀不到再用內建題庫
+  const text = (location.protocol === 'file:' && builtin) ? null : await fetchArticleContent(filename);
+  if (currentArticle.filename !== filename) return;   // 讀取期間學生又換了題目，以最後選的為準
+  if (text) {
+    currentArticle.content = text;
+    document.getElementById('f-current-article').value = filename;
+  } else if (builtin) {
+    currentArticle.content = builtin;
+    document.getElementById('f-current-article').value = filename;
+  } else {
+    currentArticle.content = null;
+    document.getElementById('f-current-article').value = '讀取失敗，請改選其他題目';
+    alert(`讀不到題目檔 ${filename}。\n請確認 Chinese_Look_Subject 資料夾有跟這個網頁放在一起。`);
+  }
+}
+
+// ============================================================
+// 💡 開始測驗流程
+// ============================================================
+function validateSetupForm() {
+  const name = document.getElementById('f-name').value.trim();
+  const idNumber = document.getElementById('f-idnumber').value.trim();
+  const className = document.getElementById('f-class').value.trim();
+  const seat = document.getElementById('f-seat').value.trim();
+
+  if (!name) { alert('請輸入姓名'); return false; }
+  if (!idNumber) { alert('請輸入學號或身份證字號'); return false; }
+  if (testMode === 'test' && !/^[A-Z][0-9]{9}$/.test(idNumber)) {
+    alert('中文看打測驗的學號/身分證字號格式須為：1 個大寫英文字母＋9 碼數字（例如 A123456789）');
+    return false;
+  }
+  if (!className) { alert('請輸入班級'); return false; }
+  if (!seat) { alert('請輸入座號'); return false; }
+  if (!currentArticle || !currentArticle.content) { alert('請先選擇測驗題目（自行選題或自動抽題），並確認題目已讀取完成'); return false; }
+  return true;
+}
+
+async function startTestFlow() {
+  // 有連線教師主機：開始前再問一次老師有沒有指定這一次的題目（班級可能是後來才填的）
+  if (hostUrl) await applyTeacherAssignment(parseInt(document.getElementById('f-attempt-no').value, 10) || 1);
+  if (!validateSetupForm()) return;
+  document.getElementById('btn-start-test').disabled = true;
+  try {
+    if (hostUrl) {
+      const body = {
+        name: document.getElementById('f-name').value.trim(),
+        idNumber: document.getElementById('f-idnumber').value.trim(),
+        className: document.getElementById('f-class').value.trim(),
+        seatNumber: document.getElementById('f-seat').value.trim(),
+        year: document.getElementById('f-year').value
+      };
+      try {
+        const res = await fetchWithTimeout(`${hostUrl}/look-type-identify`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        }, 4000);
+        if (res.ok) {
+          const data = await res.json();
+          studentId = data.studentId;
+        }
+      } catch (err) {
+        console.warn('身份確認失敗，改由主機依來源 IP 自動比對：', err.message);
+      }
+    }
+    timeLimitMinutes = parseInt(document.getElementById('f-time-limit').value, 10) || 10;
+    currentAttemptNo = parseInt(document.getElementById('f-attempt-no').value, 10) || 1;
+    openImeCheck();
+  } finally {
+    document.getElementById('btn-start-test').disabled = false;
+  }
+}
+
+// ============================================================
+// 💡 輸入法確認：中文版要求輸入「中文測驗」四個中文字
+// ============================================================
+function openImeCheck() {
+  const input = document.getElementById('ime-check-input');
+  input.value = '';
+  document.getElementById('ime-check-msg').textContent = '';
+  input.classList.remove('error');
+  document.getElementById('ime-modal').style.display = 'flex';
+  setTimeout(() => input.focus(), 50);
+}
+function containsChinese(str) { return /[\u4E00-\u9FFF]/.test(str); }
+
+function verifyImeInput() {
+  const input = document.getElementById('ime-check-input');
+  const msg = document.getElementById('ime-check-msg');
+  const val = input.value.trim();
+
+  if (!containsChinese(val)) {
+    msg.textContent = '沒有偵測到中文字，請先切換到中文輸入法（例如按 Ctrl + Shift 或 Shift 鍵）再試一次';
+    msg.className = 'modal-msg error';
+    input.classList.add('error'); input.value = ''; input.focus();
+    return;
+  }
+  if (val !== '中文測驗') {
+    msg.textContent = '輸入內容不正確，請重新輸入「中文測驗」';
+    msg.className = 'modal-msg error';
+    input.classList.add('error'); input.value = ''; input.focus();
+    return;
+  }
+  input.blur();
+  document.getElementById('ime-modal').style.display = 'none';
+  enterTestScreen();
+}
+document.getElementById('ime-check-input').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !e.isComposing) { e.stopPropagation(); verifyImeInput(); }
+});
+
+// ============================================================
+// 💡 中文輸入技能認證 評分引擎
+// ------------------------------------------------------------
+// 用「Damerau–Levenshtein 對位比較」一行一行比對原文與學生輸入，
+// 直接對應到評分規則的四種錯誤：
+//   取代(substitution) → 二、錯打字
+//   插入(insertion)    → 三、多打字
+//   刪除(deletion)     → 四、漏打字
+//   相鄰對調(transposition) → 五、顛倒字（兩個字合計只算 1 次）
+// 每種錯誤都各計 1 次，再套規則六（每錯 1 次扣該列 0.5 個正確字，扣到 0 為止）。
+// ============================================================
+function stripIndent(line) { return line.replace(/^[\u3000\s]+/, ''); }
+
+// 回傳 { correct, errors, ops }；ops 供「看打稿對照」上色使用
+function diffLine(orig, typed) {
+  const a = Array.from(orig);
+  const b = Array.from(typed);
+  const n = a.length, m = b.length;
+  const d = [];
+  for (let i = 0; i <= n; i++) { d.push(new Array(m + 1).fill(0)); d[i][0] = i; }
+  for (let j = 0; j <= m; j++) d[0][j] = j;
+
+  for (let i = 1; i <= n; i++) {
+    for (let j = 1; j <= m; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      let best = Math.min(
+        d[i - 1][j] + 1,        // 漏打（原文有、學生沒打）
+        d[i][j - 1] + 1,        // 多打（學生多打了一個字）
+        d[i - 1][j - 1] + cost  // 相同或錯打
+      );
+      if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) {
+        best = Math.min(best, d[i - 2][j - 2] + 1); // 顛倒字：兩個字合計算 1 次
+      }
+      d[i][j] = best;
+    }
+  }
+
+  // 回溯，產生每個字的判定結果
+  const ops = [];
+  let i = n, j = m;
+  let correct = 0, errors = 0;
+  while (i > 0 || j > 0) {
+    if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1] && d[i][j] === d[i - 2][j - 2] + 1) {
+      // 注意：最後整串 ops 會被 reverse()，所以這裡要先放後面那個字，
+      // 翻轉後才會照學生實際輸入的順序顯示。
+      ops.push({ type: 'swap', ch: b[j - 1] });
+      ops.push({ type: 'swap', ch: b[j - 2] });
+      errors += 1;           // 規則五：一對顛倒只算 1 次
+      i -= 2; j -= 2;
+      continue;
+    }
+    if (i > 0 && j > 0 && a[i - 1] === b[j - 1] && d[i][j] === d[i - 1][j - 1]) {
+      ops.push({ type: 'ok', ch: b[j - 1] });
+      correct += 1;
+      i--; j--;
+      continue;
+    }
+    if (i > 0 && j > 0 && d[i][j] === d[i - 1][j - 1] + 1) {
+      ops.push({ type: 'sub', ch: b[j - 1], orig: a[i - 1] });  // 錯打字
+      errors += 1;
+      i--; j--;
+      continue;
+    }
+    if (j > 0 && d[i][j] === d[i][j - 1] + 1) {
+      ops.push({ type: 'ins', ch: b[j - 1] });                  // 多打字
+      errors += 1;
+      j--;
+      continue;
+    }
+    if (i > 0) {
+      ops.push({ type: 'del', ch: a[i - 1] });                  // 漏打字
+      errors += 1;
+      i--;
+      continue;
+    }
+    break;
+  }
+  ops.reverse();
+  return { correct, errors, ops };
+}
+
+/**
+ * 整篇評分。
+ * @param origLines  原文每一行
+ * @param typed      學生每一行輸入
+ * @param lastLine   這次最遠打到第幾行（0 起算）
+ * @param incomplete 是否為「時間到／提前結束」（true 時 lastLine 那行只比對已打長度）
+ */
+function scoreArticle(origLines, typed, lastLine, incomplete) {
+  let totalCorrect = 0, totalErrors = 0, totalNet = 0, totalRequired = 0;
+  const lineReports = [];
+
+  for (let i = 0; i < origLines.length; i++) {
+    if (i > lastLine) {
+      lineReports.push({ line: i, type: 'not-reached', correct: 0, errors: 0, net: 0, ops: [] });
+      continue; // 還沒打到的行：不算對、不算錯，也不列入分母
+    }
+
+    let orig = origLines[i];
+    let typedText = typed[i] !== undefined ? typed[i] : '';
+    if (!countIndent) { orig = stripIndent(orig); typedText = stripIndent(typedText); }
+
+    // 時間到／提前結束當下正在打的那一行：只比對「已經打出來的長度」，
+    // 後面還沒打到的字不算漏打（規則四只罰「該打卻沒打」，不罰「還沒輪到打」）。
+    const isStoppedLine = incomplete && i === lastLine;
+    if (isStoppedLine) {
+      const cut = Math.min(Array.from(orig).length, Array.from(typedText).length);
+      orig = Array.from(orig).slice(0, cut).join('');
+    }
+
+    const required = Array.from(orig).length;
+    if (required === 0 && typedText.length === 0) {
+      lineReports.push({ line: i, type: 'blank', correct: 0, errors: 0, net: 0, ops: [] });
+      continue;
+    }
+
+    const { correct, errors, ops } = diffLine(orig, typedText);
+    const net = Math.max(0, correct - 0.5 * errors);   // 規則六＋七
+
+    totalCorrect += correct;
+    totalErrors += errors;
+    totalNet += net;
+    totalRequired += required;
+    lineReports.push({ line: i, type: 'normal', correct, errors, net, ops });
+  }
+
+  return { totalCorrect, totalErrors, totalNet, totalRequired, lineReports };
+}
+
+// 段落開頭空格檢查：原文開頭是全形空格「　　」的行，學生要打一樣的全形空格。
+// 回傳有問題的行：half＝打成半形空格、missing＝沒空或少空
+function findIndentIssues(origLines, typed, lineReports) {
+  const issues = [];
+  lineReports.forEach(rep => {
+    if (rep.type !== 'normal') return;
+    const i = rep.line;
+    const orig = origLines[i] || '';
+    const t = typed[i] || '';
+    if (!t) return;
+    const need = (orig.match(/^　+/) || [''])[0];
+    const got = (t.match(/^[　 \t ]+/) || [''])[0];
+    if (got === need) return;
+    if (/[ \t ]/.test(got)) issues.push({ line: i + 1, kind: 'half' });
+    else if (need && got.length < need.length) issues.push({ line: i + 1, kind: 'missing' });
+    else issues.push({ line: i + 1, kind: 'extra' });
+  });
+  return issues;
+}
+
+function indentNoteText(issues) {
+  if (!issues || issues.length === 0) return '';
+  const pick = k => issues.filter(x => x.kind === k).map(x => `第${x.line}行`);
+  const parts = [];
+  const half = pick('half'), miss = pick('missing'), extra = pick('extra');
+  if (half.length)  parts.push(`${half.join('、')}：段落開頭打成「半形空格」`);
+  if (miss.length)  parts.push(`${miss.join('、')}：段落開頭沒有空兩格（或少空一格）`);
+  if (extra.length) parts.push(`${extra.join('、')}：這行開頭不用空格，卻多打了空格`);
+  return parts.join('\n');
+}
+
+function computeLevel(speed, disqualified) {
+  if (disqualified) return '不合格';
+  for (const row of LEVEL_TABLE) if (speed >= row.min) return row.label;
+  return '未達標準';
+}
+
+// ============================================================
+// 💡 測驗畫面：每一行一個輸入框（才能正常使用中文輸入法）
+// ============================================================
+function parseArticleLines(rawText) {
+  return rawText.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n').filter(l => l.trim() !== '');
+}
+function escapeHtml(str) {
+  return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function enterTestScreen() {
+  document.getElementById('setup-dialog').style.display = 'none';
+  document.getElementById('test-screen').style.display = 'flex';
+
+  document.getElementById('test-article-title').textContent = currentArticle.filename;
+  document.getElementById('test-attempt-no').textContent = currentAttemptNo;
+  document.getElementById('btn-end-test').style.display = (testMode === 'test') ? 'none' : 'inline-block';
+
+  originalLines = parseArticleLines(currentArticle.content || '');
+  typedLines = [];
+  currentLine = 0;
+  maxReachedLine = 0;
+
+  buildTestLines();
+
+  const showText = document.querySelector('input[name="show-text"]:checked').value;
+  document.getElementById('article-lines').classList.toggle('hide-ref', showText === 'no');
+
+  timeRemainingSec = timeLimitMinutes * 60;
+  updateTimerDisplay();
+  testStartTime = Date.now();
+  testInProgress = true;
+  abortAlreadySent = false;
+  timerInterval = setInterval(tickTimer, 1000);
+
+  const first = document.querySelector('.typed-input[data-line="0"]');
+  if (first) setTimeout(() => first.focus(), 60);
+}
+
+function buildTestLines() {
+  const container = document.getElementById('article-lines');
+  container.innerHTML = originalLines.map((line, i) => `
+    <div class="line-pair" data-line="${i}">
+      <div class="ref-line">${escapeHtml(line) || '&nbsp;'}</div>
+      <input class="typed-input" type="text" data-line="${i}"
+             autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+             maxlength="${Array.from(line).length + 10}">
+    </div>`).join('');
+
+  container.querySelectorAll('.typed-input').forEach(inp => {
+    inp.addEventListener('input', onLineInput);
+    inp.addEventListener('focus', onLineFocus);
+    inp.addEventListener('keydown', onLineKeydown);
+    inp.addEventListener('compositionstart', onCompositionStart);
+    inp.addEventListener('compositionend', onCompositionEnd);
+    inp.addEventListener('paste', e => e.preventDefault());   // 禁止貼上，避免直接複製原文
+  });
+}
+
+// 💡 需求1：某一行打超過原文字數時，多出來的字自動搬到下一行，游標也跟著跳過去，
+// 學生不用自己按 Enter，跟正式中打軟體的手感一致。
+// 兩個保護：
+//   (1) 注音／倉頡「選字中」(composition) 絕對不跳行，否則字會被打斷成半個。
+//   (2) 只有游標停在「這一行最後面」才跳行；學生回頭修改中間的字時不跳，
+//       不然打到一半游標會突然飛走，反而改不動。
+let composingLine = -1;
+
+function lineInputEl(idx) { return document.querySelector(`.typed-input[data-line="${idx}"]`); }
+
+function overflowToNextLine(idx) {
+  if (idx >= originalLines.length - 1) return;      // 最後一行不跳，留給學生自己按 Enter 交卷
+  const el = lineInputEl(idx);
+  if (!el) return;
+
+  const limit = Array.from(originalLines[idx]).length;
+  const chars = Array.from(el.value);
+  if (chars.length <= limit) return;
+  if (el.selectionStart !== el.value.length) return; // 游標不在行尾＝正在回頭修改，不跳行
+
+  const keep = chars.slice(0, limit).join('');
+  const overflow = chars.slice(limit).join('');
+  el.value = keep;
+  typedLines[idx] = keep;
+
+  const next = lineInputEl(idx + 1);
+  if (!next) return;
+  next.value = overflow + next.value;
+  typedLines[idx + 1] = next.value;
+  next.focus();
+  next.setSelectionRange(overflow.length, overflow.length);
+
+  overflowToNextLine(idx + 1);                      // 下一行也可能被擠爆，繼續往下推
+}
+
+function onLineInput(e) {
+  const idx = parseInt(e.target.dataset.line, 10);
+  typedLines[idx] = e.target.value;
+  if (e.isComposing || composingLine === idx) return;
+  overflowToNextLine(idx);
+}
+
+function onCompositionStart(e) { composingLine = parseInt(e.target.dataset.line, 10); }
+
+function onCompositionEnd(e) {
+  const idx = parseInt(e.target.dataset.line, 10);
+  composingLine = -1;
+  typedLines[idx] = e.target.value;
+  overflowToNextLine(idx);                          // 選完字才判斷要不要跳行
+}
+
+function onLineFocus(e) {
+  const idx = parseInt(e.target.dataset.line, 10);
+  currentLine = idx;
+  if (idx > maxReachedLine) maxReachedLine = idx;
+  if (typedLines[idx] === undefined) typedLines[idx] = e.target.value || '';
+  document.querySelectorAll('.line-pair.active').forEach(el => el.classList.remove('active'));
+  const pair = e.target.closest('.line-pair');
+  if (pair) {
+    pair.classList.add('active');
+    pair.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  }
+}
+
+function focusLine(idx) {
+  const el = document.querySelector(`.typed-input[data-line="${idx}"]`);
+  if (el) { el.focus(); el.setSelectionRange(el.value.length, el.value.length); }
+}
+
+function onLineKeydown(e) {
+  if (e.isComposing || e.keyCode === 229) return;   // 注音/倉頡選字中，不攔截任何按鍵
+  const idx = parseInt(e.target.dataset.line, 10);
+
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    typedLines[idx] = e.target.value;
+    if (idx >= originalLines.length - 1) {
+      maxReachedLine = originalLines.length - 1;
+      finishAttempt(false);     // 最後一行按 Enter＝主動交卷
+      return;
+    }
+    focusLine(idx + 1);
+    return;
+  }
+  // 自動跳行之後，學生常會想退回上一行看看：在行首按 Backspace 就把游標移回上一行行尾
+  // （只移動游標，不會刪掉上一行的字，避免誤刪整行）
+  if (e.key === 'Backspace' && idx > 0 && e.target.selectionStart === 0 && e.target.selectionEnd === 0) {
+    e.preventDefault();
+    focusLine(idx - 1);
+    return;
+  }
+  if (e.key === 'ArrowUp' && idx > 0) { e.preventDefault(); focusLine(idx - 1); return; }
+  if (e.key === 'ArrowDown' && idx < originalLines.length - 1) { e.preventDefault(); focusLine(idx + 1); return; }
+}
+
+function tickTimer() {
+  timeRemainingSec--;
+  updateTimerDisplay();
+  if (timeRemainingSec <= 0) finishAttempt(true);
+}
+function updateTimerDisplay() {
+  const m = Math.floor(Math.max(timeRemainingSec, 0) / 60);
+  const s = Math.max(timeRemainingSec, 0) % 60;
+  const el = document.getElementById('test-timer');
+  el.textContent = `${m}分${String(s).padStart(2, '0')}秒`;
+  el.classList.toggle('warning', timeRemainingSec <= 60);
+}
+
+let pendingConfirmAction = null;
+function requestEndTest() {
+  document.getElementById('confirm-title').textContent = '確定要結束測驗嗎？';
+  document.getElementById('confirm-desc').textContent = '結束後即無法再繼續作答，是否確定要離開？';
+  pendingConfirmAction = () => finishAttempt(true);
+  document.getElementById('confirm-modal').style.display = 'flex';
+}
+function confirmYes() {
+  document.getElementById('confirm-modal').style.display = 'none';
+  if (pendingConfirmAction) pendingConfirmAction();
+}
+function confirmNo() { document.getElementById('confirm-modal').style.display = 'none'; }
+
+// ============================================================
+// 💡 代幣發放（跟塔防遊戲、英文看打共用同一份瀏覽器存檔）
+// ============================================================
+function calcGbit(score) { return Math.max(GBIT_MIN, Math.round(score / GBIT_DIVISOR)); }
+function currentSaveKey() {
+  const BASE = 'keyagent_save_v1';
+  try {
+    const raw = localStorage.getItem('keyagent_active_student');
+    if (!raw) return BASE;
+    const identity = JSON.parse(raw);
+    if (identity && identity.studentNumber) return `${BASE}:${identity.studentNumber}`;
+  } catch (err) { /* 存檔壞掉就當作沒登入 */ }
+  return BASE;
+}
+function awardLocalGbit(amount) {
+  if (!amount || amount <= 0) return;
+  const key = currentSaveKey();
+  try {
+    const raw = localStorage.getItem(key);
+    const save = raw ? JSON.parse(raw) : {};
+    save.gbit = (save.gbit || 0) + amount;
+    save.gbitEarnedLifetime = (save.gbitEarnedLifetime || 0) + amount;
+    localStorage.setItem(key, JSON.stringify(save));
+  } catch (err) {
+    console.error('代幣發放失敗（本機存檔讀寫錯誤）：', err);
+  }
+}
+
+// 從 login.html 登入過來的話，順手把姓名/班級/座號帶進表單
+document.addEventListener('DOMContentLoaded', () => {
+  try {
+    const raw = localStorage.getItem('keyagent_active_student');
+    if (!raw) return;
+    const identity = JSON.parse(raw);
+    if (!identity || !identity.studentNumber) return;
+    const homeLink = document.getElementById('homeNavLink');
+    if (homeLink) homeLink.style.display = 'inline-block';
+    if (!identity.verified) return;
+    const nameEl = document.getElementById('f-name');
+    const seatEl = document.getElementById('f-seat');
+    const classEl = document.getElementById('f-class');
+    if (nameEl && identity.name && !nameEl.value) nameEl.value = identity.name;
+    if (seatEl && identity.seatNumber && !seatEl.value) seatEl.value = identity.seatNumber;
+    if (classEl && identity.className && !classEl.value) classEl.value = identity.className;
+  } catch (err) { /* 格式壞掉就跳過 */ }
+});
+
+// ============================================================
+// 💡 單次測驗結束：評分 → 上傳 → 顯示成績單
+// ============================================================
+async function finishAttempt(endedEarlyOrTimeout) {
+  clearInterval(timerInterval);
+  testInProgress = false;
+
+  // 把目前畫面上每一格的內容都收回來（避免最後一格還沒觸發 input 事件）
+  document.querySelectorAll('.typed-input').forEach(inp => {
+    const i = parseInt(inp.dataset.line, 10);
+    if (inp.value !== '' || typedLines[i] !== undefined) typedLines[i] = inp.value;
+  });
+  document.querySelectorAll('.typed-input').forEach(inp => { inp.disabled = true; });
+
+  const elapsedSec = Math.max(1, Math.round((Date.now() - testStartTime) / 1000));
+  const timeUsedStr = `${Math.floor(elapsedSec / 60)}分${String(elapsedSec % 60).padStart(2, '0')}秒`;
+  const testMinutes = Math.max(elapsedSec / 60, 1 / 60);
+
+  const lastLine = Math.min(maxReachedLine, originalLines.length - 1);
+  // 時間到／按下結束測驗＝中斷，最後停留的那一行只比對「已打出來的長度」；
+  // 在最後一行按 Enter 主動交卷則是完整作答，整篇都要比對。
+  const incomplete = !!endedEarlyOrTimeout;
+  const r = scoreArticle(originalLines, typedLines, lastLine, incomplete);
+
+  // 規則九：每分鐘平均字數＝淨字數總和 ÷ 測驗時間（分鐘）
+  const speed = r.totalNet / testMinutes;
+  const wrongRate = r.totalRequired > 0 ? (r.totalErrors / r.totalRequired) * 100 : 0;
+  const accuracy = Math.max(0, 100 - wrongRate);
+  const disqualified = wrongRate >= 10;                       // 規則八
+
+  const totalScore = r.totalCorrect / testMinutes;            // 得分（每分鐘毛字數）
+  const deduction = (0.5 * r.totalErrors) / testMinutes;      // 扣分（罰則換算成每分鐘）
+  const netScore = Math.max(0, speed);                        // 實得分數＝每分鐘淨字數
+  const obtainedScore = disqualified ? 0 : Math.round(netScore);
+
+  const attemptData = {
+    attemptNo: currentAttemptNo,
+    articleFilename: currentArticle.filename,
+    timeUsedStr, speed, wrongRate, accuracy, disqualified,
+    totalCorrect: r.totalCorrect, totalErrors: r.totalErrors,
+    totalNet: r.totalNet, totalRequired: r.totalRequired,
+    deductChar: r.totalCorrect - r.totalNet,
+    totalScore, deduction, netScore, obtainedScore,
+    level: computeLevel(speed, disqualified),
+    draftOriginalLines: originalLines.slice(),
+    draftTypedLines: typedLines.slice(),
+    draftLineReports: r.lineReports,
+    indentIssues: findIndentIssues(originalLines, typedLines, r.lineReports)
+  };
+  attemptResults.push(attemptData);
+
+  attemptData.gbitEarned = calcGbit(obtainedScore);
+  awardLocalGbit(attemptData.gbitEarned);
+
+  // 上傳成績（沿用英文看打的後端路徑，題目名稱加上「中打_」前綴以資區別）
+  const year = document.getElementById('f-year').value;
+  const month = document.getElementById('f-month').value;
+  const day = document.getElementById('f-day').value;
+  // 💡 2026-10-24：上傳的數字一律跟「成績單」上顯示的一樣（四捨五入到小數 2 位），
+  // 以前是先取整數才送，排行榜就會跟成績單差一點點（例如成績單 26.33、排行榜 26）。
+  const r2 = x => Math.round((x + Number.EPSILON) * 100) / 100;
+  const payload = {
+    studentId,
+    articleFilename: ARTICLE_LABEL_PREFIX + currentArticle.filename,
+    level: attemptData.level,
+    timeLimit: `${timeLimitMinutes}分鐘`,
+    timeUsed: timeUsedStr,
+    accuracy: accuracy.toFixed(2) + '%',       // 跟成績單「正確率」同格式
+    wrongRate: r2(wrongRate),                   // 錯誤率(%)
+    inputMethod: document.getElementById('f-input-method').value,
+    birthdate: `${year}/${month}/${day}`,
+    idNumber: document.getElementById('f-idnumber').value.trim(),
+    totalScore: r2(totalScore),                 // 成績單「得分」
+    obtainedScore: disqualified ? 0 : r2(netScore), // 成績單「實得分數」（不合格＝0，排名用）
+    wpm: r2(speed),                             // 排行榜「速度」欄位；中文版＝每分鐘淨字數
+    // ---- 跟成績單一一對應的欄位 ----
+    scoringVersion: 'zh-v1',
+    speed: r2(speed),
+    deduction: r2(deduction),                   // 成績單「扣分」
+    netScore: r2(netScore),                     // 成績單「實得分數」（不合格也照實記錄）
+    disqualified,
+    correctChars: r.totalCorrect,               // 正確字數
+    errorCount: r.totalErrors,                  // 錯誤次數
+    netChars: r2(r.totalNet),                   // 淨字數
+    examMinutes: r2(testMinutes)
+  };
+  try {
+    await fetchWithTimeout(`${reportHost()}${SUBMIT_PATH}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    }, 4000);
+  } catch (err) {
+    console.error('成績上傳失敗：', err.message);
+    if (typeof keyagentQueuePendingAttempt === 'function') {
+      keyagentQueuePendingAttempt('lookType', payload);
+    }
+  }
+  if (typeof keyagentCloudSyncNow === 'function') keyagentCloudSyncNow();
+
+  document.getElementById('test-screen').style.display = 'none';
+  showScoreModal(attemptData);
+}
+
+// ============================================================
+// 💡 單次成績單
+// ============================================================
+function showScoreModal(a) {
+  currentScoreModalAttempt = a;
+  const name = document.getElementById('f-name').value.trim();
+  const now = new Date();
+  const dateStr = `${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, '0')}/${String(now.getDate()).padStart(2, '0')}`;
+
+  document.getElementById('sc-name').textContent = name;
+  document.getElementById('sc-date').textContent = dateStr;
+  document.getElementById('sc-id').textContent = document.getElementById('f-idnumber').value.trim();
+  document.getElementById('sc-article').textContent = a.articleFilename;
+  document.getElementById('sc-birth').textContent =
+    `${document.getElementById('f-year').value}/${document.getElementById('f-month').value}/${document.getElementById('f-day').value}`;
+  document.getElementById('sc-timeused').textContent = a.timeUsedStr;
+
+  document.getElementById('sc-correct').textContent = a.totalCorrect + ' 字';
+  document.getElementById('sc-errors').textContent = a.totalErrors + ' 次';
+  document.getElementById('sc-deductchar').textContent = a.deductChar.toFixed(1) + ' 字';
+  document.getElementById('sc-netchar').textContent = a.totalNet.toFixed(1) + ' 字';
+  document.getElementById('sc-accuracy').textContent = a.accuracy.toFixed(2) + '%';
+  document.getElementById('sc-wrongrate').textContent = a.wrongRate.toFixed(2) + '%';
+  document.getElementById('sc-score').textContent = a.totalScore.toFixed(2);
+  document.getElementById('sc-deduct').textContent = a.deduction.toFixed(2);
+  document.getElementById('sc-netscore').textContent = a.netScore.toFixed(2);
+  document.getElementById('sc-speed').textContent = a.speed.toFixed(2) + ' 字/分';
+  document.getElementById('sc-level').textContent = a.level;
+  document.getElementById('sc-gbit').textContent = `+${a.gbitEarned || 0} GBit`;
+
+  const dqEl = document.getElementById('sc-disqualify-note');
+  if (a.disqualified) {
+    dqEl.style.display = 'block';
+    dqEl.textContent = `⚠️ 錯誤率 ${a.wrongRate.toFixed(2)}%（達 10% 以上），依規則八本次成績不予計算`;
+  } else {
+    dqEl.style.display = 'none';
+  }
+
+  const indentEl = document.getElementById('sc-indent-note');
+  const indentText = indentNoteText(a.indentIssues);
+  if (indentText) {
+    indentEl.style.display = 'block';
+    indentEl.innerHTML = `📏 <b>段落開頭的空格要用「全形」：</b><br>${escapeHtml(indentText).replace(/\n/g, '<br>')}` +
+      `<br>👉 <b>怎麼打全形空格：</b>按 <b>Shift＋空白鍵</b> 切換成「全形」，再按兩下空白鍵；打完記得再按一次 Shift＋空白鍵切回來。` +
+      `<br>（這些空格都算錯字，已經扣分了）`;
+  } else {
+    indentEl.style.display = 'none';
+  }
+
+  const hintEl = document.getElementById('sc-practice-hint');
+  const advice = buildPracticeAdvice([a]);
+  if (advice && (a.speed < 20 || a.accuracy < 95)) {
+    hintEl.style.display = 'block';
+    hintEl.innerHTML = advice;
+  } else {
+    hintEl.style.display = 'none';
+  }
+
+  document.getElementById('score-modal').style.display = 'flex';
+
+  if (localChineseDirHandle) {
+    const safeName = (name || '學生').replace(/[\\/:*?"<>|]/g, '_');
+    saveScoreToLocalFolder(`${safeName}_第${a.attemptNo}次_${Date.now()}.txt`, buildScoreText('score'));
+  }
+}
+
+// ============================================================
+// 💡 看打稿對照：逐行逐字上色
+// ============================================================
+function showDraftView() {
+  const a = currentScoreModalAttempt;
+  if (!a || !a.draftLineReports) { alert('目前沒有可對照的測驗資料'); return; }
+
+  document.getElementById('draft-article-name').textContent = a.articleFilename;
+  document.getElementById('draft-attempt-no').textContent = a.attemptNo;
+
+  const clsMap = { ok: 'c-ok', sub: 'c-sub', ins: 'c-ins', del: 'c-del', swap: 'c-swap' };
+  let html = '';
+  for (let i = 0; i < a.draftOriginalLines.length; i++) {
+    const rep = a.draftLineReports[i];
+    let typedHtml;
+    if (!rep || rep.type === 'not-reached') {
+      typedHtml = '<span class="c-del">（時間到，未打到此行）</span>';
+    } else if (!rep.ops || rep.ops.length === 0) {
+      typedHtml = '&nbsp;';
+    } else {
+      typedHtml = rep.ops.map(op => `<span class="${clsMap[op.type] || ''}">${escapeHtml(op.ch)}</span>`).join('');
+    }
+    const stat = (rep && rep.type === 'normal')
+      ? `<span style="float:right; font-size:0.8rem; color:#888;">對${rep.correct}／錯${rep.errors}／淨${rep.net.toFixed(1)}</span>`
+      : '';
+    html += `
+      <div class="draft-line-pair">
+        <div class="draft-ref">${escapeHtml(a.draftOriginalLines[i]) || '&nbsp;'}${stat}</div>
+        <div class="draft-typed">${typedHtml}</div>
+      </div>`;
+  }
+  document.getElementById('draft-lines').innerHTML = html;
+  document.getElementById('draft-modal').style.display = 'flex';
+}
+function closeDraftModal() { document.getElementById('draft-modal').style.display = 'none'; }
+
+// ============================================================
+// 💡 練習建議：統計最常打錯的字 + 最常犯的錯誤類型
+// ============================================================
+function buildPracticeAdvice(results) {
+  const charCount = {};
+  const typeCount = { sub: 0, ins: 0, del: 0, swap: 0 };
+  results.forEach(r => {
+    (r.draftLineReports || []).forEach(rep => {
+      (rep.ops || []).forEach(op => {
+        if (op.type === 'ok') return;
+        typeCount[op.type] = (typeCount[op.type] || 0) + 1;
+        const key = op.type === 'sub' ? op.orig : op.ch;
+        if (key && /\S/.test(key)) charCount[key] = (charCount[key] || 0) + 1;
+      });
+    });
+  });
+
+  const top = Object.entries(charCount).sort((x, y) => y[1] - x[1]).slice(0, 5);
+  if (top.length === 0) return null;
+
+  const charList = top.map(([ch, c]) => `「${ch}」(${c}次)`).join('、');
+  const typeLabel = { sub: '錯打字（打成別的字）', ins: '多打字（多打了不該打的字）', del: '漏打字（跳過沒打）', swap: '顛倒字（兩個字前後對調）' };
+  const worst = Object.entries(typeCount).sort((x, y) => y[1] - x[1])[0];
+
+  let advice = '';
+  if (worst && worst[1] > 0) {
+    if (worst[0] === 'del') advice = '你最常發生的是「漏打字」，通常是打字時眼睛跳行或跟不上。建議把速度放慢一點，用手指或尺壓著原文那一行，打完一行再換下一行。';
+    else if (worst[0] === 'ins') advice = '你最常發生的是「多打字」，通常是選字時不小心多按了一次 Enter 或空白。建議選完字後看一眼螢幕再繼續。';
+    else if (worst[0] === 'swap') advice = '你最常發生的是「顛倒字」，兩個字打反了。這通常是背詞組打太快造成的，建議一個字一個字看清楚再打。';
+    else advice = '你最常發生的是「錯打字」，也就是選錯字。建議選字時多看一眼候選字，特別是同音字（例如「在／再」、「的／得」）。';
+  }
+  return `💡 <b>這次比較容易打錯的字：</b>${charList}<br>📌 <b>建議：</b>${advice}`;
+}
+
+// ============================================================
+// 💡 成績文字檔／第二次測驗／總成績
+// ============================================================
+function buildScoreText(which) {
+  const g = id => document.getElementById(id).textContent;
+  const lines = [];
+  if (which === 'score') {
+    lines.push('中文看打成績單');
+    lines.push(`測驗人：${g('sc-name')}`);
+    lines.push(`測驗日：${g('sc-date')}`);
+    lines.push(`身分證：${g('sc-id')}`);
+    lines.push(`測驗題目：${g('sc-article')}`);
+    lines.push(`生日：${g('sc-birth')}`);
+    lines.push(`測驗時間：${g('sc-timeused')}`);
+    lines.push(`正確字數：${g('sc-correct')}`);
+    lines.push(`錯誤次數：${g('sc-errors')}`);
+    lines.push(`扣字數：${g('sc-deductchar')}`);
+    lines.push(`淨字數：${g('sc-netchar')}`);
+    lines.push(`正確率：${g('sc-accuracy')}`);
+    lines.push(`錯誤率：${g('sc-wrongrate')}`);
+    lines.push(`得分：${g('sc-score')}`);
+    lines.push(`扣分：${g('sc-deduct')}`);
+    lines.push(`實得分數：${g('sc-netscore')}`);
+    lines.push(`速度：${g('sc-speed')}`);
+    lines.push(`級別：${g('sc-level')}`);
+    lines.push(`獲得代幣：${g('sc-gbit')}`);
+    const ind = currentScoreModalAttempt && indentNoteText(currentScoreModalAttempt.indentIssues);
+    if (ind) lines.push('段落空格提醒（請用全形空格）：', ind);
+  } else {
+    lines.push('中文看打總成績');
+    lines.push(`姓名：${g('fn-name')}`);
+    lines.push(`生日：${g('fn-birth')}`);
+    lines.push(`身分證號：${g('fn-id')}`);
+    lines.push(`考試次數：${g('fn-attempts')}`);
+    lines.push(`考試日期：${g('fn-date')}`);
+    lines.push(`得分：${g('fn-score')}`);
+    lines.push(`扣分：${g('fn-deduct')}`);
+    lines.push(`實得分數：${g('fn-netscore')}`);
+    lines.push(`正確率：${g('fn-accuracy')}`);
+    lines.push(`錯誤率：${g('fn-wrongrate')}`);
+    lines.push(`速度：${g('fn-speed')}`);
+    lines.push(`最佳級別：${g('fn-level')}`);
+  }
+  return lines.join('\n');
+}
+
+function saveScoreAsFile(which) {
+  const blob = new Blob([buildScoreText(which)], { type: 'text/plain;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = which === 'score' ? `中文看打成績_第${currentAttemptNo}次.txt` : '中文看打總成績.txt';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function closeScoreModal() {
+  document.getElementById('score-modal').style.display = 'none';
+  if (currentAttemptNo < maxAttempts) {
+    document.getElementById('second-modal').style.display = 'flex';
+  } else {
+    finishAllAttempts();
+  }
+}
+
+function startSecondAttempt() {
+  document.getElementById('second-modal').style.display = 'none';
+  currentAttemptNo++;
+  document.getElementById('f-attempt-no').value = currentAttemptNo;
+  lockSetupFieldsForSecondAttempt();
+  document.getElementById('setup-dialog').style.display = 'block';
+  // 有連線教師主機：第二次照老師指定的「第二次」題目（老師沒指定就保留第一次的題目）
+  if (hostUrl) applyTeacherAssignment(currentAttemptNo);
+}
+
+function lockSetupFieldsForSecondAttempt() {
+  ['f-name', 'f-idnumber', 'f-class', 'f-seat', 'f-contact', 'f-year', 'f-month', 'f-day',
+   'f-time-limit', 'f-attempt-no', 'f-input-method'].forEach(id => {
+    document.getElementById(id).disabled = true;
+  });
+  document.querySelectorAll('input[name="show-text"]').forEach(r => r.disabled = true);
+  document.getElementById('chk-local').disabled = true;
+  document.getElementById('chk-host').disabled = true;
+
+  refreshArticleButtons();   // 測驗模式第二次、或老師有指定題目 → 不能自己換題
+}
+
+function finishAllAttempts() {
+  document.getElementById('second-modal').style.display = 'none';
+  showFinalModal();
+}
+
+function showFinalModal() {
+  const n = attemptResults.length || 1;
+  const now = new Date();
+  const dateStr = `${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, '0')}/${String(now.getDate()).padStart(2, '0')} ` +
+    `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
+
+  const sumScore = attemptResults.reduce((s, r) => s + r.totalScore, 0);
+  const sumDeduct = attemptResults.reduce((s, r) => s + r.deduction, 0);
+  const sumNet = attemptResults.reduce((s, r) => s + r.netScore, 0);
+  const avgAccuracy = attemptResults.reduce((s, r) => s + r.accuracy, 0) / n;
+  const avgWrongRate = attemptResults.reduce((s, r) => s + r.wrongRate, 0) / n;
+  const avgSpeed = attemptResults.reduce((s, r) => s + r.speed, 0) / n;
+  const bestSpeed = attemptResults.reduce((m, r) => Math.max(m, r.disqualified ? 0 : r.speed), 0);
+
+  document.getElementById('fn-name').textContent = document.getElementById('f-name').value.trim();
+  document.getElementById('fn-birth').textContent =
+    `${document.getElementById('f-year').value}/${document.getElementById('f-month').value}/${document.getElementById('f-day').value}`;
+  document.getElementById('fn-id').textContent = document.getElementById('f-idnumber').value.trim();
+  document.getElementById('fn-attempts').textContent = n;
+  document.getElementById('fn-date').textContent = dateStr;
+  document.getElementById('fn-score').textContent = sumScore.toFixed(2);
+  document.getElementById('fn-deduct').textContent = sumDeduct.toFixed(2);
+  document.getElementById('fn-netscore').textContent = sumNet.toFixed(2);
+  document.getElementById('fn-accuracy').textContent = avgAccuracy.toFixed(2) + '%';
+  document.getElementById('fn-wrongrate').textContent = avgWrongRate.toFixed(2) + '%';
+  document.getElementById('fn-speed').textContent = avgSpeed.toFixed(2) + ' 字/分';
+  document.getElementById('fn-level').textContent = computeLevel(bestSpeed, bestSpeed <= 0);
+
+  const hintEl = document.getElementById('fn-practice-hint');
+  const advice = buildPracticeAdvice(attemptResults);
+  if (advice) { hintEl.style.display = 'block'; hintEl.innerHTML = advice; }
+  else { hintEl.style.display = 'none'; }
+
+  document.getElementById('setup-dialog').style.display = 'none';
+  document.getElementById('final-modal').style.display = 'flex';
+
+  if (localChineseDirHandle) {
+    const safeName = (document.getElementById('f-name').value.trim() || '學生').replace(/[\\/:*?"<>|]/g, '_');
+    saveScoreToLocalFolder(`${safeName}_總成績_${Date.now()}.txt`, buildScoreText('final'));
+  }
+}
+
+function closeWindowSafely() {
+  if (window.parent && window.parent !== window) {
+    try {
+      window.parent.postMessage({ type: 'lookType:close' }, '*');
+      return;
+    } catch (err) { console.warn('postMessage 通知父頁面關閉失敗：', err.message); }
+  }
+  window.location.href = './login.html';
+}
+
+// ============================================================
+// 💡 提前關閉偵測：測驗進行中把視窗關掉 → 送出 -999 讓教師端看得到
+// ============================================================
+function submitAbort() {
+  if (!testInProgress || abortAlreadySent) return;
+  abortAlreadySent = true;
+
+  const year = document.getElementById('f-year').value;
+  const month = document.getElementById('f-month').value;
+  const day = document.getElementById('f-day').value;
+  const payload = {
+    studentId: studentId || null,
+    articleFilename: ARTICLE_LABEL_PREFIX + (currentArticle ? currentArticle.filename : ''),
+    level: '提前關閉',
+    timeLimit: `${timeLimitMinutes}分鐘`,
+    timeUsed: '00分00秒',
+    accuracy: '0%',
+    wrongRate: -999,
+    inputMethod: document.getElementById('f-input-method').value,
+    birthdate: `${year}/${month}/${day}`,
+    idNumber: document.getElementById('f-idnumber').value.trim(),
+    totalScore: -999,
+    obtainedScore: -999
+  };
+  const target = `${reportHost()}${SUBMIT_PATH}`;
+  try {
+    if (window.parent && window.parent !== window) {
+      fetch(target, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+        .catch(err => console.error('提前關閉成績上傳失敗：', err.message));
+    } else {
+      const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
+      const ok = navigator.sendBeacon(target, blob);
+      if (!ok) {
+        fetch(target, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload), keepalive: true
+        }).catch(() => {});
+      }
+    }
+  } catch (err) {
+    console.error('提前關閉成績上傳失敗：', err.message);
+  }
+}
+window.addEventListener('pagehide', submitAbort);
+window.addEventListener('beforeunload', submitAbort);
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') submitAbort();
+});
+window.notifyClosingIfInProgress = submitAbort;
+
+// ============================================================
+// 💡 內建題庫（T1～T28 全部內嵌在網頁裡）：校外離線、直接雙擊開檔也能看到所有文章
+const BUILTIN_ARTICLES = {
+  "T1.txt": "　　「生活」與「生存」為人類兩件大事，人要生存，便要生活，要\n生活便要有職業，這是職業問題所由發生。人類為謀求生存，就不能\n不有謀求生存的方法，因此各自講求謀生的技能，各就所長以產生今\n日職業的種別。人類初期，原無固定職業，一直到人類覺得個人需要\n依靠他人才能生存時，始則以物易物，日中為市；繼之，或則百工居\n肆，或則坐賈行商，演變易今，職業已分門別類，多至不可勝數。因\n為人類本屬一種互助合作的群居動物。正因為人類有群居的必要，故\n個人必須服務大眾，才能取得相等的報酬以維持生活，這種服務是職\n業的最高精神。故職業為一個人謀生的唯一手段。反之缺乏職業就是\n缺乏生存的泉源。\n　　職業的本質，有利己性，也有利人性。為利己性，職業必須有收\n入；為利人性，必須重視職業道德，故二者不可偏廢。職業與道德本\n為一體兩面，相互間非常的密切。人人有了平等的職業和服務道德，\n人人才有安定的生活，國家才能富強康樂。\n　　技術有精粗，職業無貴賤，我國是民主國家，一切的職業都是平\n等，除了遵守國家所頒佈的法令，及不危害國家民族的利益外，任你\n三百六十行，行行都是合法的，同時也都受著法律的保障，但是有人\n，對於各種職業，心目中無形的存著一種高低的成見，往往幹一行厭\n一行，見異思遷，到後來一無所成，這是很惋惜的，我以為在職業平\n等原則下，吾人不可以不「慎之於始」，在就業前，宜根據自己的志\n趣，認真選擇，既就業，更宜本職業平等的原則，敬業、樂業。同時\n我們應該感謝國家所賦予的恩惠，我們應不辜負國家的一番雅意，從\n業要以服務為前提，以道德為楷範，做一個正正當當的職業者，以報\n效國家，造福人群，才對得起自己，對得起國家。\n　　但是有少數觀念錯誤的人，利欲薰心，就業任事不擇手段，枉顧\n國家民族利益，只圖一己之私，致市儈奸商、貪官污吏、搗亂社會，\n危害國家，做出那傷天害理，泯滅天良，甚至出賣國家民族的職業；\n大焉者，甘心作帝國主義的走狗，喪權辱國；小焉者，走私、販毒，\n干犯法紀，貽害社會。當前我國正處於危急存亡之秋，凡我國民，應\n如何一心一德，安分守己，增產報國。我們一方面要珍惜自己的職業\n，提高職業道德；一方面對於這些自私自利的害群之馬，更不能讓其\n逍遙法外！我們應一致的檢舉並徹底鏟除之。\n　　總之，職業原無貴賤，道德自有高下；職業平等的真義，在盡個\n人的聰明才智，為社會人群服務。所以「聰明才力愈大者，當盡其能\n力而服千萬人之務，造千萬人之福；聰明才力略小者，當盡其能力以\n服百十人之務，造百十人之福。」是以為人群服務是重要的職業道德\n之一。故凡百工技術，都要落實服務道德，誠實不欺，發揚服務精神\n，否則爾虞我詐，唯利是圖，則雖學優技良，也只增賊人賊己之程度\n，於社會究無所補。從上面歸納起來：人不可無職業，一切職業都是\n平等的，但是平等在服務道德，而不在職業的高低，職業平等與服務\n道德，是一件事的兩面；二者相因而成，如響斯應，關係至密切。\n　　聽雨是一種暇思、是閒情、是一種意境，也許是哀愁、也許是歡\n樂。忙碌的人生能有幾許閒情？因為如此，更珍惜每一次雨天的日子\n，有了這份心，聽雨的暇思就不曾改變。\n　　金門老家保留中國傳統閩南鄉間建築，以四合院為主，院有一天\n井，若至下雨天不必下田耕種，加上童年稚幼無煩憂，最愛呆坐廳堂\n前看雨。雖然天井為四邊屋簷都有雨滴落下，但還是以廳堂的雨水氣\n勢最宏偉。下雨天屋瓦匯集的雨水多成排順著屋簷滴落下來，側看時\n像飛瀑，正看又似珠簾，一串串晶瑩剔透從屋頂串連到地面，每一串\n都比水晶剔透，而串串的珠簷每一分每一秒都閃爍不同的形貌。珠簾\n外的天井雨絲依然紛霏，隔個天井向外望去是灰濛濛的天際，天空下\n的遠山綠樹也只灰濛濛的不很清楚，相互之間卻映成雨天才有的怡人\n景緻。\n　　心隨境轉，雨天的心境更是如此，軍旅歲月緣於工作，駐防過台\n灣的東西南北、埠阜離島，少則一兩年，多則三、五年，有喧囂的市\n集、遼闊的機場、孤島的高峰、洶湧的濱海，每一地有每一地的景緻\n，每一地有每一地的心境，記憶中最清楚的還是下雨天的日子吧。記\n得馭守澎湖，在五月中，滿山遍野的菊花盛開，天藍海藍漂亮極了，\n心情也隨之壯闊明朗了起來，但一到雨天，氤氳不去的陰霾籠罩整島\n，此時山見不到花簇島翔，海看不到過往千帆，綿霏不絕的雨絲卻又\n像渲洩開來的鄉愁，輕輕盈盈，自天而下，匯成淙淙水注入廣闊的海\n洋，海的另一個島嶼有著故鄉的草土風味，當浪濤拍擊著金門的花崗\n石，拍打出激越鏗然的聲音，有我對母親、孩子的思念，對家鄉的問\n候。\n　　艱苦對一個軍人而言，不是苦難而是鍛鍊，軍隊的營房曾是鋁皮\n搭建的圓拱形建築，在鉛皮屋中聽雨又是另一種意境，白居易曾以「\n大珠小珠落玉盤」來形容琵琶清脆音色之美，然而身在圓拱型的鉛皮\n屋中，聽雨打落鉛皮的聲音想必比白居易聽到的琵琶音色更勝百倍，\n雨滂沱時像是萬馬奔騰、氣勢磅礡；雨小時又如吟詠詩歌，抑揚頓挫\n，詩意無限。營前連綿的稻田因隨風隨雨輕蕩，一波波像海浪，但有\n海浪所沒有的翠綠和清新，偶有幾隻白鷺在田間覓食，潔白的身影在\n綠波中更顯飄逸。有時整群輕輕飛起，飛入清脆山林，景緻何等悠閒\n。山中的雨也是美的，曾在夏日晴雨不定的雨后，佇足日月潭畔，群\n山環繞中的深悠湖水，足可滌去心靈盛暑的燠熱。那湖水波浪不興，\n遠山、近山盡映入湖中，山色水色隨雲來雲去變幻，無可預測的變化\n。雲來時，山色由綠而灰濛而深黛，而至雲霧繚繞不知所蹤，湖面也\n湮沒大半。忽而一陣細雨斜風，涼意透入心脾，張開雨傘也遮不住斜\n來的細雨，就叫雨淋吧！誰叫眼前的雨景叫人不忍離去。剛風停雨住\n，又看那雲幾乎壓到湖面，突然又是一陣急雨，湖光山色盡隱入濛濛\n煙雨之中，只有任憑大雨、小雨在湖面上激起陣陣水花，這時除了急\n迅的雨聲，只有寂靜。人站立在浮橋碼頭，腳下由竹筏編成的碼頭隨\n波輕盪，感覺像盪到湖心，忽而一隙金光自雲中射入湖面，粼粼波光\n飾著天空雲彩，彷彿天上人間。一陣雨後，雲淡霧開，遠近群峰、山\n野村舍，又一一清晰在目，此時又是一種曠野的山水情趣。沒多久雲\n又變、景又變，而不管景色如何多變，而開闊的青山依然不變，這正\n是喜歡在山中聽雨、看雨的穩定感受。\n　　雨是多情的，可以歡欣、可以痴迷；雨是無情的，可以灰心、哀\n愁、憎恨，不管你是什麼心境，雨都會懂，任由渲洩，喚醒心靈的關\n懷，歷經風雨之後，雨會滋潤你的心靈！豐富的心靈是人生璀璨的開\n始，我想少有人不喜歡雨的。（摘錄自「達德青年」）",
+  "T2.txt": "　　人生在世，猶如汪洋中行船。時而風平浪靜，一帆風順；時而卻\n是浪濤洶湧，一波未平一波又起。如何在這變幻無常的人世間，處之\n泰然，怡然自得，全看你以何種態度來處世。\n　　西方莎士比亞曾說過：「希望是治療不幸的妙方」。「希望」就\n像人生命中的火炬，它能激勵世人。在面對不幸、挫折的時刻，燃燒\n無比的熱情和信心，使人的生命中注入一股活力及衝勁。而古文人蘇\n東坡當年偕友人同遊赤壁時，朋友們抒發對人生短暫、渺小的感慨，\n同行的蘇東坡卻是以豁達，樂觀的態度來看待人生，更是以「希望」\n來治療人生無常之感慨的一刻良方。所以，面對渺茫不可預知的人生\n旅途中之種種考驗，倘乏堅定之希望意念，必使人喪失生存、奮鬥的\n勇氣。然而，「希望」並非一昧地沈醉於自我的幻想中。例如：當今\n時下年輕朋友，慣用迷幻藥、品來製造幻覺上的自我陶醉，終致走上\n人生的不歸路，也正是對人生缺乏「希望」所致，只好尋求暫時的麻\n醉。\n　　「希望」有如在大海中船隻的無形錨，它能使人的生命小舟處於\n狂風巨浪中屹立不搖。又如迷途歸雁的一道指引，能引領歸雁找到一\n條回家的路。「希望」是人生快樂的泉源，一個滿懷希望的人，不論\n命運多乖舛，多艱辛，仍會突破力爭上游，突破重圍。終而開創一條\n屬於自己的康莊大道。\n　　其實，世上沒有無望的「事」，只有擁有希望的「人」，面對未\n來若能懷有一股永久的希望，勝過任何不可恃的財富、權勢。所以，\n任何人無論身處逆境或順境，都應時時以「希望」來支持自己。\n　　又見鳳凰花開，又將有一批莘莘學子踏入社會，成為社會新鮮人\n，展開人生另一里程，在未來的日子裡，將要面對無數不可知的挫折\n或難關，在畢業前夕，謹以「希望」與所有達德畢業生共勉，只要你\n能心懷「希望」，成功便屬於你。\n　　「人生如夢，築夢踏實」，是每個人在求學過程中必定寫過的一\n篇作文，在文章中必定充滿了壯志豪情，也充滿了對生命的憧憬，更\n用豐富的想像力增添了文章的內容，那就是「我的願望」。\n　　小孩子皆有夢想，正因他們生命是無限的寬廣，長輩們總愛問孩\n子們：「長大後，你要做什麼？」也告訴孩子，「長大後你便能做什\n麼」。於是，夢想的種子便在幼小的心靈中漸漸的萌芽，更期待著長\n大。而讓「夢」消失與實現的重要因素便是「時間」，時間會讓人們\n慢慢的認識現實世界，因此有人的夢因而消失，但更有人了解夢想所\n在，更投入於「夢工程」的建設。\n　　長大後，「夢想」成為我們所努力的目標，而不再需要豐富的想\n像力，實現夢想的關鍵便是自己，想想小時候所許下的願望實現了嗎\n？或是你早已成為生活的奴隸？早已忘了當年對生命的期許。\n　　經過了一學期的觀察，發覺學生們都很少在做「夢」，且普遍自\n信心不足，低估自己實力，忽略了潛能，不禁令人想問這是教育成功\n？還是教育失敗？以現今升學主義掛帥的時代，學生遵循機械式的學\n習，將注意力集中於考試，從國小、國中、高中、大學等階段皆離不\n開考試，升學，教育成功了，因為已經製造出無數的考試機器；反之\n，教育失敗了，因為升學主義已奪走了學生創造發明的能力，更將學\n業成就低的學生的信心摧毀了，讓他們不敢再有目標與希望。\n　　平時和學生聊天的過程中，最常問學生的問題是：「畢業後要做\n什麼？升學？就業？若升學想考怎樣的學校？若就業想找什麼工作？\n」。但學生多數是一臉茫然的回答：「不知道」；「不知道」這是一\n個非常好的答案，因為「不知道」是「夢」的開始，無論做什麼樣的\n夢，做什麼樣的規劃，總是由「不知道」中尋找「知道」，再執行，\n實現，不論何時開始計劃生命，「夢」永遠是第一步驟。\n　　做夢須從思考開始，想像自己是張白紙，想像自己心中是純淨，\n忘掉以前的種種不愉快的經驗，拋開心中所有雜念，讓心靈沉澱，讓\n自己在心中繪出一幅最想要的成就，再接著尋找曾讓自己廢寢忘食的\n那股衝勁，有了目標和衝勁，接著規劃如何達成目標的道路，而這樣\n的道路是條鋪滿了達成目標所需的相關知識，和努力的學習，如此一\n來才能盡情的展翅翱翔，掌握生活，達成目標。\n　　只要你願意，做夢不難；只要您願意，現在就是重生的起點，只\n要你願意，你就能改變你自己。\n　　人類文明的演變與進化全賴於種族與群體的繁衍延續，從世代交\n替到薪火相傳其所憑藉的即是新生命的誕生，從而產生發揚光大的效\n果，因此我們可以深切體會到愛護生命，尊重生命，是奠定國家生存\n的基本基礎。\n　　尊重生命的第一步就是不要看輕自己，所謂天不生無用之人，其\n正面的定義就是天生我材必有用，只要人人各盡其責各守本分，自然\n能精益求精，發揮個人的事業技能，結合成一股渾厚的力量來改善，\n促進社會和諧安詳，福利的功能泉源，至於個人事業的成功與失敗，\n其關鍵之樞紐，亦在於不妄自菲薄，能夠尊重自己是主掌一個人一生\n成敗的法寶，同樣地如果稍遇挫折便心灰意冷，沮喪、消沉，或者對\n學問事業往往不求圓滿充實，或淺嚐即止、半途而廢，那麼除了帶給\n社會、家庭一份沉重的負擔之外，亦否定了個人存在於天地之間的價\n值。\n　　在今天物質富裕、經濟發達的社會，常有人以價格代替價值，以\n金錢衡量一切，以致於在金錢的激流中迷失自己的方向，尤其生活在\n多元化的社會，無時無刻要面對各種誘惑與抉擇，以致心理失衡，生\n活脫序導引出不適的行為，甚至進而發生結束自己生命的悲劇，凡此\n種種，均是對自己不負責任的行為，孔子說：「身體髮膚受之父母」\n古人尚能如此重視生命的價值，今人又怎能如此浪費，輕賤自己，因\n此生命內涵的完成，首先必須具備充分的自信人生的價值，必須經由\n相信自己的能力，才能夠表現出來，至於由個人的成功進而回饋社會\n促進群體生活的和諧，是最能彰顯生命意義的顛峰。\n　　今日多元化的時代，社會結構急速的轉變，隨著服務大眾的層面\n也愈寬廣，所以要提昇個人，造福人群，必須要能深刻了解本身存在\n的價值，否則不學無術，生既無用於時，死亦無損於世，一生渾渾噩\n噩豈不枉渡一生嗎？所以人活著是一輩子的事，所以不管壽命長短都\n應好好珍惜自己的生命，積極掌握住自己人生的方向盤，活出亮麗多\n彩的生命。（摘錄自「達德青年」）",
+  "T3.txt": "　　資訊的發達，交通的便利，使得知識與各地的消息能迅速的接收\n，也造成現代的孩子很聰明的錯覺，社會上問題的產生，似乎和放任\n與功利抬頭劃上了平行線，身為父母親，為了讓家人過著富裕的生活\n而忙錄奔波，認為教育是學校的事情，殊不知學校教的只是學識、知\n識，而非常識、價值判斷，而學校所教的道德觀，只是學分為主導之\n下的送分題，說一說，考一考，能完全做到還沒幾個，在人生的過程\n中，不僅僅只有書本、分數而已，還會遇到許多挫折、壓力、無力感\n，在父母親沒空，學校沒教之下，只能向同儕觀摩、學習，也就分不\n清是非，弄不明利害關係，例如，聯考逼近時，必定傳出學生自殺事\n件，及前一陣子的少年飆砍人事件，和最近的青少年結夥搶劫等，難\n道他們不知道這是錯誤的事嗎？大部份不是不知道，而是分不清，加\n上不知調適壓力所帶來的衝擊和物質欲望的誘惑之下，造成無法挽回\n的悲劇和遺憾。\n　　在社會上的某一塊地方，人人笑臉迎人，態度和藹，就像親人或\n老朋友般的分享心中的苦與樂，最可貴的要是每人都有一顆誠摯而善\n良的心，幾乎每一個人都事業有成，家庭和樂，溫恭謙良，但卻不辭\n勞苦而默默的幫助任何需要幫助的人，曾經質疑：為什麼他們要拋棄\n身段的做一些吃力不討好的事呢？如：掃街，替貧苦人整修房舍，每\n逢某處有災禍，不幸發生時，必定立即動身，前往援助，幾經觀察和\n親身經歷發現，讓人遠離痛苦，獲得快樂，其中的成就感和喜樂數倍\n於付出的心力，精神層面的滿足，勝過了錦衣玉食、良田美眷、家財\n萬貫，他們就是：慈濟功德會。他們給了多數人一個希望，讓人在生\n存的叢林中堅信，人畢竟是善良的，雖然一般人無法像他們一樣的付\n出，一樣的執著，無法割捨，起而效尤，如他們一般的偉大，但至少\n守住本分即是為善。\n　　獨善其身而未推己及人，雖保一時安逸，卻也冷漠的放任慾望縱\n橫，而終至可預見的禍事無奈的加諸己身；不因惡小而為之，不因善\n小而忽之，重視自己的微小的善良習慣，不因外在環境而改變，就連\n順手撿個垃圾、移開路中的石頭、一個微笑，甚至一個柔和善意的眼\n神，都能視為一種善念的基礎，就像蓮花不因污泥而改變綻放絢麗花\n朵的使命，其價值不在結果，而在於其過程中引人的借鏡，然而有多\n少人能仔細品嚐、瞭解箇中的滋味？\n　　臺灣！人人都說它是個美麗的寶島，四季如春，物產豐富，是每\n個人所嚮往的。不過，近年來的臺灣，由於人口的急速增加，工商業\n發展，交通發達，因而造成很多的污染，破壞了不少自然生態和景觀\n，也對人類的健康造成嚴重的威脅，這不禁令人感嘆！\n　　臺灣發展一日千里，經濟的繁榮，被視為「工業奇蹟」。雖然我\n們的國家精益求精，不斷地進步，但卻忽略了「環境保護」的重要，\n隨著時間的長久，我們的國家都被污染得十分嚴重，生活在這科技的\n時代，人人都只求方便，甚至亂丟垃圾，隨地吐痰等等，使生活在周\n圍的人，都難忍受，如果是你，你希望生活在如此髒亂的世界嗎？\n　　現在！噪音此起彼落，工廠林立，煙囪黑霧瀰漫天際，一片煙塵\n濛濛，目前呈現在你我眼前的小溪流，不再是清澈見底，而是汙濁骯\n髒一片，而那綠油油的田園，以及碧草如茵的綠色，已被鋪上一層層\n的柏油，和一棟棟高樓大廈，以前的山光水色，那迷人的鄉土風光、\n氣息，竟在一瞬間，都消逝了，再也找不回。\n　　我們現在生存的地方，還是昔日的寶島嗎？\n　　因為我們不斷的開發資源，砍伐林木，種植了許多五顏六色的水\n果、蔬菜等等，能滿足人類，又實用的東西，卻忽略了水土保持的工\n作，使得生態環境每下愈況，這不令人擔心？生活在沒有經過美化的\n環境，會覺得厭倦、易怒，所以環境保護是非常重要的，而美化環境\n，正是生活中不可缺少的一環，我們必須了解，當今的社會資源如果\n無限制的開發，將會面臨資源匱乏的危機，到時候我們的生活會如何\n呢？所以現在很多資源回收站，這是值得利用的，還有很多不可回收\n的東西，我們都可運用自己靈巧的雙手來化「腐朽為神奇」，充分利\n用廢棄物，這就是廢物利用的價值，相信人人都能做到。\n　　然而要拯救地球，做到保護環境，必須要大家通力合作，才有實\n現的一天。我們應如何做好環保工作呢？\n一、不將垃圾、廢物丟於河川之中，不把廢水等含有化學物質的水排\n入河川中，才不造成污染，導致河川中的魚、蝦死亡。必須整治已受\n污染的河川，並防止再受破壞、污染，讓生態平衡，改善河川污染。\n二、不濫墾山坡地，不濫伐森林，才不會導致土壤大量流失，影響水\n庫蓄水的功能。開發山坡地必須做好水土保持的工作，才不致使土壤\n淤積在水庫。\n三、不亂丟垃圾、紙屑、圾圾要分類處理，使用適當的方法處理垃圾\n，使用可回收的物品，禁止使用塑膠，保麗龍的餐具，產品，達到資\n源回收目的，減少垃圾的產生。\n四、野生動物的保護。中國人（其實不只是中國人），喜歡進補，也\n喜歡虎皮、犀牛角、象牙、貂皮大衣，卻深深影響了動物的生態環境\n。這些人是否知道，整個生物是息息相關的，這樣做會造成生態的不\n平衡及人類的危機！因此，不能夠為了一己之私而危害人類及其他的\n生物，況且這也是違法的！\n五、汽、機車應使用無鉛汽油，改良排氣筒的裝置。工廠盡量減少排\n放廢氣、毒氣，人們不可露天燃燒垃圾，減少使用含有破壞臭氧體的\n物品，改善天空降下酸雨，臭氧層的破洞不再擴大的空氣污染問題。\n　　環保意識的實踐，實在是人類的重要課題，地球是人類污染的，\n自然也要人類改善。我們只有一個地球，為了讓人類千萬代的子孫在\n這塊土地上成長，做好環保更是刻不容緩的世界大事！更要懂得「前\n人種樹，後人乘涼」的道理，我們應該改善環境污染的問題，不再製\n造污染，讓青山永在，綠水常流，請為咱們後代的子孫留下一片乾淨\n清新沒有污染的美好世界吧！讓我們為未來共同努力吧！\n　　年輕，當然不是「打架滋事」，也不是「飆車」、「夜遊」、「\n鬥狼」、「賭博」等，更不是「只要是我喜歡有什麼不可以」。但是\n無可否認的，年輕是美好的，就好比人生的春天般，從頭到腳都是新\n盈的、亮麗的、容光煥發的；更到處都充滿著鳥語花香的芬芳氣息，\n洋溢著青春蓬勃的朝氣。喔！年輕是多麼的美好呀！\n　　年輕，是無知、羞澀的，天真無邪，而卻也是熱血奔騰的，在此\n階段，更是些處心積慮，不安好心的狡猾狐狸們，所虎視眈眈的點心\n、臘肉、獵物；因為正值青春年少的我們，對於一切的事物，都充滿\n著新奇，而這些喜好著尋求刺激的少男少女，狡猾的狐狸，豈肯放過\n這大好機會，饒了咱們。牠便是看準了這些弱點，來引誘咱們，使咱\n們成了可憐的小綿羊，只因愈是新奇、刺激，則愈是年輕的弱點、致\n命傷。不過年輕是不怕挫折、困難、阻礙的，越是險峻的高山、湍急\n的溪流，越能激發咱們的好勝心，絕不向「敗」字低頭，而這也是在\n說明，年輕，永遠都充滿著自信心。（摘錄自「達德青年」）",
+  "T4.txt": "　　現今社會中，用品愈來愈多，產品也愈變愈好，因此如何做好消\n費者保護工作，也是人民和政府的一項措施與學問。而政府成立了「\n消費者委員會」，以保障人民對消費的權利，這項政策共分五大點：\n（一）確保消費者安全：政府需要檢討並且充實相關法令，對產品提\n昇適當規格及標準，登記發行的物品與藥品需加強檢驗及測試，並且\n建立監視及預警制度，發行販賣檢驗出有危害性產品，需加強健全回\n收制度。（二）提供消費者資訊與辦理教育宣導：政府需告知消費者\n充實的消費資訊，並加強消費者的消費教育，多多推動類似的消費者\n的工作。（三）促進消費選擇自由：政府需維護廣告、標示及包裝之\n真實，並要求企業經營者保障消費者並使用定型化契約達到消費公平\n性，在市場方面需維持公平的競爭秩序。（四）尊重消費者意見：企\n業經營者有權利扶植、獎勵消費者保護團體，消費者有權利暢通意見\n並表達意見管道。（五）完善消費損害救濟制度：企業經營者需健全\n責任保險與補償制度，使消費者安心選購，企業經營者在案發時需達\n到迅速、妥適處理消費爭議，讓消費者明白企業經營者有心解決問題\n，企業經營者需整理並建立事故原因究明制度，防止相同的事故再度\n發生並了解應負起的責任，政府有心去推動，人民應該舉雙手贊成，\n並且幫忙實施。\n　　國人消費的過程中，往往都會偏重物美價廉或少許錢便可買多東\n西的觀念，但俗語說得好：「一分錢，一分貨，便宜沒好貨」。此句\n話便可得知古人對金錢和物品就有一種認知與理念，但身為文明人也\n會犯下這小小的錯誤？正確應該說國人的消費觀念應該落實在那呢？\n既然知道要買某產品，何不買口碑好，多人用，價錢公道，又有保障\n，而去買沒口碑，少人用，很便宜，但沒保障，誰願意拿自己的生命\n開玩笑嗎？如果是我，我當然不會，如果是你，你會嗎？政府制定的\n消費者政策雖然非常不錯，但是消費者本身還要和企業經營者配合，\n並且選購政府立案有合格標誌的商品，以免事情一發生，就算政府有\n再好的措施也無法彌補，變成消費者損害自己的消費權利。\n　　目前國內仍然有些商品被不良業者侵害，而致好產品有高低價的\n差別，被盜用的商品有藥品、輪胎、電器產品等，在此我舉例說明，\n這是我的思考及見識，新聞報導中，有不良業者在某藥品裡加入藥品\n，使吃藥者上癮，再牟取暴利，但還是遭警方逮捕。另一則是某汽車\n修理廠老闆把客人換下的外胎重新製作成再生胎，但因技術不好無法\n抗壓，一上高速公路馬上就爆胎，製成車禍。最後一則就是某一品牌\n的插座，因成本少，所以做出的東西無法抗電壓形成電線走火。雖然\n都是為了賺錢，但因此變成害人的工具了，這些案例可說都是不良業\n者，沒有不良業者就沒有不良商品，因為民間會自治，那政府更有力\n量去實施、推行並改善政策，但這還是須要人民和政府的配合，在此\n希望未來的社會，人民和政府能互相幫助互相信任，使社會更進步更\n繁榮。\n　　在科技發達、社會繁榮，以及近十幾年經濟發展，創造無限的成\n果，昔日我國，可說處於風雨飄搖的局勢之中，而在人們努力的發展\n，讓經濟蒸蒸日上，而也隨著經濟發展迅速，使人們生活水準，也逐\n漸提升了不少，而為了追求更好的生活品質，對於事物的品質也愈來\n愈高；除了對事物品質要求外，對於服務也有極高的期許。\n　　如近幾年經濟發達及企業界製造產品，許多人們對物質上的需求\n，例如各家電及日常生活中的物品就足夠吸引顧客因好奇心而上門，\n以及甚至把產品電腦化、自動化，可說百分之百的滿足顧客的需求，\n也作為產品的號召令，並強力推銷其產品，在於物質的各種推銷，難\n免吸引顧客的需求及動心，而為了讓顧客有所驚奇，在物品上做出許\n多千變萬化的模樣，讓顧客有所好奇心，而在產品上，對消費者有好\n有壞。\n　　所以為了自己的權益，消費者在採購產品時，一定不要為了一時\n貪求小便宜，而害了自己，一定要明辨產品上的品質，不要在產品上\n，看到產品的千變萬化的模樣，而忽視自己的利益上的損失，應該認\n清產品、精挑細選，按照使用說明操作。最重要的是，認清仿冒品，\n以免受騙而損失，而製造日期也極為重要，這樣一來自己的權益也受\n到相當的保護。\n　　而對於有些企業界，往往只顧到自己的利潤，不斷推出及生產不\n同的產品，而忽視消費者的權益，使企業界的市場變得愈來愈沒有人\n性化，俗語說：「只錯買而沒有錯賣」，吃虧的總是無辜的消費者，\n所以企業界對於消費者權益的保護更應為第一優先，再為消費者的保\n護運動不應該排斥，而要不斷積極的支持。因為重視消費者的權益及\n需求，才能在企業界有所立足，也對自己工廠所生產的產品、品質提\n高，讓消費更加肯定，更加了解概況，這樣一來產品受到大眾的信賴\n與喜愛，而使企業界進一步的發展，所以保護消費者的權益，對企業\n界也會有利。\n　　而對於消費者權益的保護，促進消費者的生活安全、提升消費者\n的生品質又有利消費者的健康安全，都要視為第一，這樣消費者才能\n夠安心購買產品，如果反觀消費者沒有權益上的保護、生活上沒有安\n全的措施以及品質上沒有顧慮要求，這樣對消費者更加大大損失，如\n果對消費者的權益、生活上的安全、品質上的要求能更加注重，相信\n企業界與消費者能在買賣處得非常好的關係，而相反的，如果沒有符\n合一切的條件，消費者為了保護自己的權益，應在合理的法律爭取自\n己的權益，而不可以自動用私人武力去爭取，以及小人的作風，應該\n要明確的想清楚如何對自己的權益有益，而無損失方法，也一定要認\n知一點：「唯有水準以上的消費者才得到權益上的保護。如此一來企\n業界與消費者應該有良好的和諧方式，這樣企業有所責任感，對消費\n者有所重視，消費者權益上有合理的保障，也能受到權利上的保護。\n　　年輕，是充滿理想、有朝氣、有幹勁、有活力、有抱負的，是人\n生的春天，是勝敗的關鍵，更是迎接美好未來的踏板。陶淵明詩云：\n「盛年不重來，一日難再晨，及時當勉勵，歲月不待人。」而杜秋娘\n亦云：「勸君莫惜金縷衣，勸君惜取少年時，花開堪折直須折，莫待\n無花空折枝。」不正是在勸導咱們，應該要好好的把握住這美好的人\n生春天，好好的善加利用，充實這般美好的青春，花樣年華嗎？\n　　所謂：「輕輕揮灑自己的色彩，年輕不要留白」，難道你不希望\n趁著，你還擁有著別人寸金也難買的青春歲月，做出一些更有意義，\n更值得的事嗎？你看年輕是這麼的美好、吸引人，且是如此的天真、\n逍遙，這般的美妙。要是浪擲了這般花樣年華，不是非常可惜？且等\n到年老了，就再也無法有所做為了。所以，何不趁著這大好時光，善\n加利用，策劃將來，使它能更充實、美滿、有意義。\n　　年輕是多麼美好啊！（摘錄自「達德青年」）",
+  "T5.txt": "　　網路化技職教育多媒體線上學園之規劃：終身資訊與網路知能應\n用教育將是技職教師進入二十一世紀的鑰匙，在此原則下，技職教師\n無論是對教學目標、課程、內容或教學方法等都應重新作思考與整合\n。而在教室電腦化與網路化的新教學環境下，與其他學科或層級間的\n橫向或縱向面，都應善用資訊應用與網路知能建立良好聯繫體系，並\n進而導引學生邁向全方位的資訊學習社會。本文就推展技職教師資訊\n與網路知能及建構技職教育多媒體線上學園提出一些看法與建議。\n　　近年來個人電腦快速的普及以及網際網路使用率急速成長，加速\n了資訊新世代的來臨。面對資訊化社會的種種挑戰，教育是重要的關\n鍵。教育在個人與社會的持續發展中具有相當重要的作用，藉由教育\n可以提昇國家的競爭力，加強社會的人文關懷，因應地球村所帶來的\n國際化挑戰，亦為促進個人成長的不二法門。（教育部，民八十七）\n　　網際網路由於採用開放式系統，只要是合乎網際網路的標準協定\n要求的電腦系統，都可透過電腦網路或數據機與它連結在一起。網際\n網路已經形成全世界最大的電腦系統與資源，因此如何運用其豐富的\n資源與開放式的特性，已成為世界各國政府、企業界與教育界重要的\n工作目標。\n　　企業內（或校園內）網路則是應用網際網路技術，將企業內的電\n腦系統與資源透過網路連接在一起。對使用者而言，其應用和操作方\n式與網際網路幾乎是相同的。因此，兩者最大的不同是，使用對象僅\n限於該企業內的成員或獲得授權的人員，是屬於非開放式的系統，只\n有取得授權的人方能使用相關的資源。各個企業組織會定義其內部網\n路服務型式，但主要在於提供快速出版、資訊管理、知識工作與遠距\n教學等四大類機會，每類機會都會提昇組織內每位成員的生產力與活\n動力及彼此的互動性。企業間網路是繼網際網路與企業內網路產生的\n新應用概念與模式，它仍然引用網際網路的技術在企業內網路的平台\n內與其他單位的企業網路之間作連接，使用對象是互相授權的企業間\n成員。依照各自擁有的權限，透過網際網路分享彼此提供的資源。\n　　發展資訊與網路應用落實技職教師終身教育：面對資訊與網路化\n社會的種種挑戰，技職教育將是是重要的關鍵。技職教育在個人與社\n會的互動關係閉與持續發展中，具有相當重要的提昇作用，落實技職\n教育可以提昇國家的競爭力，並加強資訊化社會後的人文關懷，亦為\n教師與學生相互成長的原動力。\n　　根據教育部的資料顯示，從一九九四年至一九九八年中偏遠地區\n技職學校自辦校內研習的活動中，電腦知能的研習佔了百分之五十八\n（教育部技職司，民八十七）。由此看來，不獨在都市中的學校，偏\n遠地區的技職學校亦深刻體認資訊知能對教師工作的迫切需求。資訊\n與網路的終身教育將是導引我們因應世界資訊與網路科技快速變遷所\n帶來的最佳方案之一。在知識經濟階段的生產中，「網路經濟」已成\n為社會市場的新特徵，電子商務等新經濟活動方式將成為傳統市場另\n一波革命趨勢。在這種新的形勢下，惟有培育能運用高科技資源的新\n一代技職教師，方能創造出高階的市場競爭力。（饒達欽等，民八十\n七）\n　　事實上，教育部為因應資訊化社會的需求，推展資訊教育改革，\n已訂立了資訊教育發展目標：推動資訊教育基礎建設，培育適應資訊\n化社會之現代化國民。加速推廣網路應用，整體提昇教學、研究及行\n政效率與品質。應用資訊科技融入各科教學，改善教學模式。建置社\n會教育資訊網路系統，營造終身學習環境。配合國家資訊通信基本建\n設，培育所需人才。\n　　然而，建立資訊化、網路化學習社會的關鍵，在於培養教師具有\n終身資訊應用學習的觀念與素養，以引導全體國民邁向全方位的資訊\n網路學習社會。技職教師（包括正規教育與非正規教育的師資）本身\n不僅需要具有終身資訊與網路應用學習的觀念，幫助學生終身學習，\n技職教師亦應不斷地進修，實踐力行終身資訊與網路應用學習理念。\n　　技職教師因應網路化社會四種學習方式：一九九六年聯合國教科\n文組織出版的「學習：內在的財富」一書曾指出：終身教育是未來社\n會的中心，也是人類進入二十一世紀的一把鑰匙。根據此書對未來人\n類適應多元化社會快速變遷的需要，所提出的四種基本學習方式，技\n職教師在建立資訊與網路知能的終身學習方式，應把握：學會資訊與\n網路認知、學會應用資訊與網路知能解決問題的能力、學會以資訊與\n網路科技來合作學習、學會運用資訊與網路自我成長與發展。\n　　學會資訊與網路認知這是激發個人資訊終身學習的基礎與動力，\n每個人必須具有廣博的知識，尤其是資訊的知能，才能對資訊化社會\n問題作深入的瞭解。因此，終身資訊與網路學習對教師而言，是絕對\n有必要的。學會應用資訊與網路知能解決問題的能力：做中學是應用\n資訊與網路科技的特質之一，培養一面學習資訊新知能，一方面以資\n訊與網路知能解決問題的能力，讓學習與教學工作之間緊密的交替與\n融合。學會應用資訊與網路合作式學習：由於網際網路加速地球村的\n形成，人類相互依賴日深，運用以網路通訊為基礎的合作共處學習，\n可培養技職教師具有區域觀與國際觀，並經由相互合作共同解決未來\n各種可能的風險和挑戰，及建立良好的人際互動關係。學會運用資訊\n與網路自我成長與發展：透過對資訊與網路應用科技不斷的學習，讓\n每位技職教師的所有才能充份地發揮，並藉以自我不斷成長與發展。\n　　技職教育資訊傳播網與技職教師：技職教育體系由縱貫面來看，\n從國中技藝教育銜貫至科技大學，已有約一百三十餘萬名學生及三十\n萬名教職員；由橫斷面來看，涵跨科技、教育訓練、就業及企業等相\n關領域，範圍廣大，傳統訊息傳播的方法與技術，已不敷需求。因此\n，運用網路快速、廣泛與超越時空的特性與方式來傳遞技職教育訊息\n，已刻不容緩。\n　　有鑑於此，教育部技職司正著手進行規劃與建置技職教育資訊傳\n播網，該傳播網採分散式與聯合式的網際網路特性，以教育部技職司\n網站為核心網站，並超連結至各網站，包括：技職機關學校、相關教\n育機構、訓練及企業，以及特定網站等。其中技職機關學校涵蓋科技\n大學、技術學院、大學附設二技、專科學校、職業學校、高中附設職\n業類科、綜合高中，及國中技藝中心與開設國中技藝班學校和各高職\n教學資源中心等串聯。另外，將訂定各技職學校網站建置基本架構規\n範，減少各校因網站系統規劃而重覆浪費人力，並讓各技職學校得以\n互相觀摩提昇網站技術與服務內容。\n　　為分散教育部技職司核心網站之頻寬，規劃逐步建置區域性核心\n分站以分擔風險與頻寬，採用同步式對映複製與出版等相關技術達到\n網站間內容的同步與管理，讓技職教育資源的分享與服務，達到透明\n化、全方位化與無時空限制等效果。目前建置中的教育部技職司核心\n網站是以網頁資訊呈現為主，配合資料庫伺服器處理技術，其內容包\n括：公布欄、業務介紹、重要政策、技職法規、成果集錦、文書回報\n處理、技職網站天地與交流園地等主項目。未來則將結合人工智慧與\n訊息處理、網站間管理等技術，達到資訊決策支援與遠距教學教材資\n源庫之管理與服務等效果。\n　　對於技職教師而言，可利用技職教育傳播網查詢有關法規、進修\n訊息、技職教育研究成果；企業界與校園間產學合作的管道，將因技\n職傳播網的全面推動而更為通暢，教師將有更多參與產學合作研究或\n至業界實習的機會。相信經由技職教育資訊傳播網透明化、有效率的\n推動方式，會讓技職教育傳播網成為技職教師與學生間高互動式的終\n身學習樂園之一。（本文摘錄自國立臺灣師範大學戴建耘教授之「健\n全師資培育的前瞻與發展」）",
+  "T6.txt": "　　推動技職教師參與建置多媒體技職教育線上學園。任何學習系統\n必須兼顧成本效益與學習效率。遠距教學是未來網路上最有價值的應\n用方式之一，也將是未來技職教育資訊傳播網對技職教師與學生重要\n的教學應用衍生方式之一。對「網頁化的遠距教學」曾作如下的定義\n：網頁化的遠距教學是一種多元化與多媒體的遠距教學系統，採用了\n網頁技術的互動式、動態式與可合作式等能力來創作或傳遞及管理個\n別化與群體化學習。因此，就衍生了兩種系統，即網頁化訓練系統與\n網頁化教學系統。事實上，兩者在製作技術上與學習的呈現效果上是\n大同小異的。\n　　網頁化訓練系統直覺上，較易使人認為是改善工作環境所需的技\n能，但實際上也應當包含了改變工作態度與擴展知識等領域。網頁化\n教學系統多用於學術上或校園中，因此，在技職教育中以使用網頁化\n教學系統為多。無論如何，網頁化遠距教學是一種「完全學習的系統\n」，也是世界各國在邁向跨世紀的技職教育中，應當重視的一環。未\n來各個技職學校將逐步建置自屬的教學專用網站，把各學科或各教師\n的講義或教材內容送上網，而自然形成「多媒體技職教育線上學園」\n。學生可運用網路依其權限或教師預先排班的課程，隨時上網預習或\n複習。因此，技職教師對於如何運用其資訊素養與網路特性，以建構\n或轉置成電子網路化教材，將成為其基本能力之一。\n　　技職教師研製教材的基本參考模式。一般在研製教材通常會參酌\n採用下列三種學習模式：以教師為教學中心：這種方式是以教師為學\n習主導者，多用於傳統教室中，由教師以講演方式傳授觀念與知識，\n管理實習或練習活動，並導引相互討論。像微軟公司發展的認證課程\n中的講習教材就是這種模式。以學生為學習中心：這種方式尤其適合\n技能科目的訓練或較高學習層次的研究，強調實作與演練或自我思想\n規劃，教師從旁導引或重點說明。團體式學習中心：這種方式著重群\n組的學習成果轉換。例如，如何改進事務的處理程序或克服傳統的思\n想束縛創造新的解決方案或設計新產品。技職教師在研發教材時，應\n當將此三種模式都適當地融入其中，網頁化教學活動與教材的設計可\n以同時容納多種教學模式與目標。\n　　教師在建構教材可採取的流程大致如下：\n一、選定單元並規劃教材大綱，規範學科的教材呈現模式、單元教學\n目標。二、撰寫教材內容，含畫面規劃與設計及媒體分類。三、媒體\n編輯，依文字、圖案（靜畫、動畫）、影像與音效等類別。四、媒體\n與教學內容整合，媒體素材整合與畫面編輯。五、測試與修正，分專\n家與一般學習者兩方面做使用測試並修正。六、傳遞教材，以網路傳\n送至學校或指定的網路資源庫管理中心。\n　　技職教學的科目含括了工科、商科、家事科、農科、護理、海事\n等科，無論是理論科目或是技術實作科目皆需大量的圖表與實務性工\n作情境為主，因此在教學呈現模式上，會以教導式、反覆練習式、測\n驗式及模擬式為主，配合電子書的超媒體處理技術，最後以網頁方式\n在網路平台的「多媒體技職教育線上學園」內，由教師或學生分享教\n學資源。其中，為提昇實際教學執行效果，應盡量採用即播即放的串\n流技術做為教材的整合編輯技術。\n　　多媒體技職教育線上學園的整個活動可分由幾個部份所組成，包\n括教學、評量與管理及其他活動，但是在實施時是運用網路平台與主\n客兩端的電腦做為主要的活動工具。以教學與實習活動而言可能又細\n分為課前重點預習、教學及課後複習或師生討論與輔助等活動，此部\n份可依照各校或各訓練單位的需求規劃設計與建置。一般為避免風險\n，在規劃時宜以由上而下的宏觀方式進行，在實施時可採取循序漸進\n由下而上的具體方式來進行，讓系統的擴充彈性最大而風險最小。無\n論在教學或是評量、管理等活動中，資料庫與訊息庫將是相當重要的\n後端支援工具。因此，多媒體技職教育線上學園的教學部份要運用教\n學軟體庫作為支援，評量部份要運用測驗題庫作為支援，管理部份至\n少要有學生與教務、訓導、總務與實習輔導等資料庫來運作。此外，\n所有活動要有傳達訊息與雙向溝通的功能，這個部份可藉由訊息管理\n系統來協助達成。訊息管理系統的資料型態，可包括常用的電子信件\n與電子表單資料型態。當然，它們可能以多媒體的方式呈現。同樣地\n，教學用軟體的資料型態應該以合乎網路協定的網頁資料文件來呈現\n。如此，可確保教學軟體及文件資料在網路上通行無阻。訊息管理系\n統所處理的功能或活動方式至少應包括電子信件、電子表單、資訊出\n版與張貼、線上專題論壇等。另外，測驗題庫資料應與媒體庫及教學\n資料庫或知識庫有結合的關聯或超連結關係，以便整合學習與評量的\n功能。\n　　建置多媒體技職教育線上學園的方法，可分成幾個階段來進行：\n　　分年或分階段建立各技職學校的網路多媒體平台。技職學校的資\n訊技術人才雖較一般學校為多，然而目前在建置新網路技術的經驗與\n人才仍較缺乏，各校若能分年或分階段逐步進行是比較保險的做法。\n另外，先建置多媒介網路電腦教室或單一處室的網路系統，完成並成\n功運作一段期間後，再擴大辦理也是很好的方式。選用的伺服器由於\n需全天候工作，硬體必須能作長時期的服務，且記憶體的容量要夠大\n。伺服器軟體除了網路作業系統外，尚應包含資料庫伺服器與訊息系\n統伺服器等軟體。另外，配備可燒錄的光碟櫃伺服器對於多媒體教材\n的保存與實際教學應用，都有實質上的價值。\n　　規劃教材發展模式。網頁化教學的教材發展與傳統多媒體教材的\n發展方式，在處理技術與觀念會有若干差異，尤其是網路的特性與技\n術，對教學環境與師生互動關係及教材的研讀方式等，都有其特殊之\n處。因此，教學活動的安排觀念與技巧及模式，自然有若干差異。\n　　選擇局部學科進行多媒體教學軟體或題庫的編製或轉換。由單一\n學科逐步進行多媒體網頁教學軟體或題庫研製是較好的方式，待建立\n相關模式與技術經驗後，再逐步衍生至其他科目。初期以選用和資訊\n學科有關的科目為佳，如此參與研發的教師就不需為了專業領域或電\n腦技術問題，花費太多額外的精神，可專心致力於多媒體網頁教材或\n題目的研製。另外，若能先從線上測驗評量的方式來實施通常較容易\n成功，因為題目的命製比起整個學科各單元教學軟體的研發與應用更\n容易、有效率。而與技能檢定試題作結合，亦不失為一種實務性的處\n理對策。\n　　教師應用網路資源觀念與能力的培訓。教師是否具有應用網路資\n源的素養與能力，將是多媒體技職教育線上學園推動成功的重要因素\n。因此，必須有計畫地提供技職教師，進修研習多媒體與網路應用技\n術相關課程的機會。\n　　評估與修正。一個教學系統實施的良窳，需經過時間與實際運用\n考驗，以找出並修正、解決問題。任何再好的教學系統，在各個技職\n學校也會有不同的實施問題或困難產生，因此謹慎地評鑑及適當地修\n正是絕對有其必要的。\n　　編製或轉換更多學科的多媒體教學軟體與題庫。當以上階段修正\n或運作成功後，再逐步發展其他學科的多媒體教學軟體與題庫，讓更\n多的學科教師與學生參與。\n　　配合國家資訊基礎建設，提昇國家總體競爭力，教育是最重要的\n基礎工作。「推展網路化終身教育，建立多元化學習社會」將是技職\n教師的重責大任，推動終身資訊與網路知能應用教育，亦是協助技職\n教師進入二十一世紀的鑰匙。在此原則下，技職教師無論是對教學目\n標、課程、內容或教學方法等都應重新作思考與整合。而在一般或專\n科教室電腦化、網路化的新教學環境下，與其他學科或層級間的橫向\n或縱向面，都應善用資訊與網路應用知能，建立良好聯繫體系，並進\n而導引技職學生邁向全方位的資訊學習社會。\n　　建構多媒體技職教育線上學園已是各先進國家在邁向新資訊二十\n一世紀的發展重點之一。本文從網路的概念，技職教育傳播網的發展\n精神與概況，以及網頁化遠距教學的特性，進一步導引至多媒體技職\n教育線上學園的特性、內涵架構與建置重點。經由以上的討論與說明\n可以瞭解，建置網路多媒體互動式的教學與研究環境，將是目前及未\n來幾年技職學校應全力規劃與進行的工作之一。茲再提供下列建議作\n為未來努力的重點：改善各校園內部網路的主幹與多媒體教室速率。\n且應該使用專責的伺服器（如資料庫伺服器）以因運不同的應用需求\n。規劃技職教育網頁化教學與教材發展模式。研究各學科新教學模式\n與新教學法。加強各學科技職教師在資訊與網路應用知能研習。培養\n具網路建置與管理能力的教師。培養教師應用或研發網路多媒體教學\n軟體的能力。培養教師應用網路多媒體測驗題庫命製與實施的觀念與\n能力。除了建置電腦教室外，一般與專科教室電腦化、網路化的建置\n觀念與實施亦應加速進行。（本文摘錄自國立臺灣師範大學戴建耘教\n授之「健全師資培育的前瞻與發展」）",
+  "T7.txt": "　　我們是一個民主法治的國家，每一個國民都享有政治民主和經濟\n自由，但是民主和法治是絕不可分的，民主政治更必須以法治為基礎\n，什麼是法治呢？簡單的說，就是有關權利和義務的行為規則都用法\n律來規定，而且政府和國民的行為都要依據法律來實行。\n　　民主政治也是法治政治，如果只實行民主，只能維護個人的權利\n與自由，現在有不少人，有錯誤的觀念，就是在民主自由的社會中，\n什麼人也不能約束他的行為，我行我素。例如：現在青少年的飆車、\n吸毒、嗑藥、搶劫、恐嚇、竊盜、攜帶刀械、綁票、整天無所事事、\n遊手好閒、製造一些堂會上的亂象，嚴重的危害到一些善良老百姓，\n尤其是一些老幼婦孺，甚至於連晚上都不敢出門，商店不敢營業太晚\n，讓社會動盪不安，人心惶惶，生活在恐懼之中。因此，如果同時嚴\n厲的實行法治，由國家來強制執行或加以重罰，人民不可以自己用武\n力或暴力來處理。如犯了罪，就該接受法律的判決，所以民主與法治\n二者是缺一不可，同時，能崇尚民主又能宏揚法治的社會，這才是我\n們努力的目標。\n　　最近我們國家發生幾件重大的刑案，尤其是白曉燕案中的兇嫌陳\n進興，竟然去綁票外國使節，這種嚴重的錯誤示範，直接的影響到我\n國政府的形象，更成為國際間的一個笑話，在我們法治的國家，是不\n容許這種敗類的存在，應該接受最嚴厲的法律來制裁，還我們社會一\n個應有的尊嚴和安定。\n　　因此就民主法治最高的境界，就是法律之前人人平等，法律之內\n人人自由，人民的權益得到確切的保障，社會秩序才得以維護，社會\n也才有安寧，所以我們更要從小養成守法的習慣，人人都以守法為榮\n，使我們的國家成為一個現代化的民主法治國家。\n　　人類不斷進步之中，政治型態是一項很重要的改變。中古歐洲一\n直有著「君權神授」的說法，到了後來「啟蒙運動」才使人們領悟到\n「天賦人權」的意義，盧梭及多人提出「主權在民」等見解普遍引起\n大眾的共鳴，於是由君主專制，不斷演變至今，才從革命，戰爭的血\n淚中正式嚐到民主的果實，過程艱辛，難能可貴。\n民主與法治\n　　我國亦是如此，幾經歷史更迭，才自帝制王朝步向民主、自由的\n道路。民主是自由的表徵，有真正的民主才有充分的自由。但是許多\n人卻誤解了民主的精義，以為自由是無限度的。隨心所欲，這倒變成\n了極不自由，扭曲了民主的真諦。\n　　曾經有個這麼樣的故事：在一列擁擠的火車上，有一個人一上車\n，就粗魯的把他人的行李從架上丟出窗外，然後把自己的擺上去；行\n李被丟的人很不服氣，便責問他：那人說「這是我的自由！」於是他\n也把那人的行李拋出窗外，隨口道「這也是我的自由！」兩人便二話\n不說，竟大打出手，最後是兩敗俱傷。\n　　因為有一個錯誤的觀念存在大家的心裡，以致許多亂象叢生；民\n代有「言論免責權」所以就無的放矢；請願或示威抗議的人士毆打警\n察，甚至波及無辜的民眾等，造成社會浮動不安。民主是要普遍，平\n等的自由，若是將自己的快樂建築在他人痛苦之上，以強欺弱，以大\n欺小，只能算是霸道。\n　　所以，真正的民主是要建立於法治的基礎之上，自由才能有所保\n障。法治即是社會規範中最具有強制力的，具有維護社會秩序功能，\n現今複雜社會中人與人間不免會發生許多關係，也會有所摩擦、衝突\n；法治即能以其公平性做最好的仲裁，大公無私，不偏不倚，使違法\n的人受處罰，保障守法的人，促進社會進步。\n　　「法律之前，人人平等」，就是對於自由做最好的註釋。每個人\n都不踰矩，就不必擔心自由會被剝奪或是侵佔，法治就是民主有力的\n後盾；唯有如此，民主始能真正落實。因此，在極力爭取民主自由的\n同時，也要重視法治的存在，只有在兩者並行下，且相輔而行時，正\n義、公理才得以伸張，而借自由之名，實放縱之行亦不復再現。\n　　法律是社會規範性的當然法則，具有強制力，是保障國家安全，\n維持社會秩序和保障大眾權益的有力工具。法律是代表著社會的公理\n與正義，法律之前，人人平等。有了它，一些作姦犯科、為非作歹的\n人，在恢恢法網下，無所遁其形，而大眾受國家的庇護，我們得到真\n正的平安與幸福。所以守法就是愛國，守法就是道德，我們每一個人\n都應該守法。\n　　我們自古以來就是一個「仁道」主義的社會，絕大部分是靠著道\n德的力量，來維繫著幾千年來的社會傳統，法治的架構並不明朗。加\n上近數十年來，社會變遷的幅度太快，一些從來沒有經歷過的改變，\n相繼而來，衝擊了人心，使社會結構起了很大的變化。以文化而言，\n如思想的開放，觀念的更新，以社會而言，如個人主義的興起，倫常\n道德的沒落。因此，道德的約束力量，逐漸式微，社會違規犯法的人\n，越來越多，花樣更是無奇不有，與日翻新；像交通紊亂、逃稅、詐\n欺，甚至兇殺、搶劫、綁架、強暴等更是層出不窮，雖有法律，卻視\n若無睹；藐視法紀，更司空見慣。所以人人養成守法的習慣，確是今\n日當務之急。\n　　那麼，如何養成守法的習慣呢？法律既是社會生活規範，社會上\n每一個人都應該去瞭解，這就是知法；如果對它加以信守，就是守法\n。談守法，首先必須知法。就以我們青年學生來說，首先應該充實法\n律常識，在家聽從父母的教導，在學校則遵守校規，出校門則遵守法\n令，人人隨時做一個奉公守法的好國民。其次要認知守法就是愛國的\n表現，以愛國家、愛同胞的精神，來遵守法令，使守法的行為，以愛\n心為出發點，出自內心，出自良心的自然約束。這樣，才能真正養成\n守法的習慣。進而協助治安機關，勸人守法，檢舉不法，使我們的社\n會成為法治的社會。\n　　由此觀之，只要人人養成守法的習慣，社會自然安寧，國家也必\n因之強盛了。所以生為現代的國民，應該以守法為榮。\n　　在一家高級餐館內，有一位顧客把餐巾繫在脖子上。經理很反感\n，叫來一名招待員說：「你設法讓這位紳士懂得，在我們餐館裏，那\n樣做是不被允許的。但話要儘量委婉些。」\n　　招待員來到那人的桌旁，極有禮貌地問：「先生，你是刮鬍子，\n還是理髮？」語音一落，那位顧客立即意識到自己的失禮，趕快取下\n了餐巾。\n　　另一則故事是有個酒鬼，貪戀杯中之物，酒醉之後常常誤了大事\n。妻子多次勸他，但他怎麼也聽不進去。一天，他兒子對他說了幾句\n話，使他如當頭棒喝，受到極大的震憾，從此再也不敢喝酒了。他兒\n子說：「爸爸，我送給你一個指南針。」「孩子，你留著它玩吧，我\n用不著它。」「可是，你從酒吧間出來時，不是常常迷路嗎？」　\n　　故事中，使用的就是「微辭曲達」法。所謂微辭，是指批評的話\n語；曲達，則是指委婉曲折表達出來。不直接對他的人行為提出批評\n，以隱蔽幽默的方式委婉的批評，起了很好的諷刺作用。生活中，人\n與人之間的相處，經常要利用語言的方式來溝通，採用合宜的方法，\n一來尊重了對方或保留了對方的面子，使他樂於接受。二來也達到了\n批評的目的，實在值得我們深思、研究及效法。（摘錄自「達德青年\n」）",
+  "T8.txt": "　　醫師雖然是幫助病人解除病痛的，但是，醫師也是人，也要同樣\n歷經生、老、病、死的痛苦。這是老天對「人們」最公平的地方。　\n　　第一次當病人時，患的是盲腸炎，那年我三十歲，擔任總住院醫\n師，負責管理門診事務。記得那一天早上，肚子很痛，先上腹後右下\n腹，也有局部壓疼，當時自己診斷為盲腸炎。下午四點同學馮光憲醫\n師看我腹疼已忍了半天，還未緩解，說實在的，我雖很怕開刀，但也\n只好請馮光憲醫師開刀。馮醫師當時是總醫師，藝高膽大，也許因同\n學，不忍相煎，就請許書劍教授來幫忙開刀。\n　　在決定是否開刀前，我有兩大擔心，一、就是擔心麻醉後醒不過\n來，內心十分恐慌。二、萬一別的器官被撕壞或被破壞，將會成為其\n他病症的患者，痛苦一生。因此，我當時咬緊牙關，決定局部麻醉，\n不要全身麻醉，以免一去不回。\n　　進了手術房後，許教授很尊重我，沒有全麻，只做「局部」麻醉\n，我當年雖然是總醫師，還算瘦，不胖，但是肚皮也有些厚度。許教\n授切割到很深的地方，在腹膜處（神經特別多）時，許教授告訴我會\n很痛，但是我咬緊牙，仍舊硬說不痛。開完刀後，第二天我就下床了\n。說實在的，醫師也和一般人一樣，有生、老、病、死，只是，知道\n的多一些，但是也和一般人一樣怕疼，擔心這，擔心那，比無知的病\n人更多了一分擔心和恐懼，畢竟，知道的越多，也就擔心的越多，反\n而是無知的人比較有福，一切擔心交給醫護人員，只要好好的養病即\n可。\n　　爬山是我的休閒生活之一，前年在爬插天山時，在山路上，我從\n橫石路上的橫木上一躍而下，在踏到路面時，不慎踩上一塊石頭，我\n的左腳踝就呈一百多度扭轉，當時一陣劇痛。一會兒痛過去，我不以\n為意，仍然和大夥兒繼續走了一公里，腳開始腫得很大，也很痛。這\n時候，自己深深覺得，醫師也有判斷錯誤的時候。\n　　由於腳腫得很大，左腳無法著力，剛開始，我以單腳跳的方式來\n走，後來同伴們就輪流來背我下山。那時我的體重是六十八公斤，剛\n開始背我的人，一次可以走十公尺，然後換人背，後來不到五公尺就\n要換人背，大夥兒輪流背負著我。當時的選擇是錯誤，不應往前走向\n一個不了解的路況，應該往回頭路走才對。因為前面不明瞭的路況越\n來越來崎嶇難行，一直走了四、五個小時才到山下，幸好先遣部隊已\n先下山，叫了台大醫院的救護車。\n　　當救護車來到時，我躺上單架後，心中覺得這一剎那是最快樂的\n享受，一下子有解脫了、解救了的感覺。救護車開到急診處，在那兒\n醫師幫忙我打上了石膏，也順便打了一劑安眠藥。等到醒過來，覺得\n精神非常好。\n　　在病房裡，第二天發現石膏打得不理想，重新到開刀房內上石膏\n，這是高度技巧性的矯正，大家都很用心的幫我診療，但是，卻也不\n盡如意。我認為醫療行為如用到感情的，都不能盡如意。就好像有許\n多醫師，不為自己的親人開刀，就是這個原因。因此醫師們在為我治\n療時，就分兩個意見：一派是主張開刀，開刀後把骨頭矯正，釘上釘\n子；另一派是主張不開刀，用光照，看調整的位置是否正確，作為調\n整依據。大多數醫師都以好友心情，幫忙決定不用開刀，以免受苦。\n　　因為骨折，希望骨頭能接得很直，由於我是急性子的人，一直希\n望能快點長出新骨頭。雖然住院長達六個星期，但是幾乎每天都到研\n究室上班，只是晚上才回病房睡覺。在等待復原的時候，內心是十分\n的焦急，希望快點好，但又不能拆石膏，那種期待之情無法以言語來\n表達。當石膏一拆下，我迫不及待的回復從前慢跑的規律生活。就是\n心太急切，一拆石膏就馬上慢跑，使得左腳的腳踝幾乎不完全矯正。\n　　在生病時候，有如下列的感覺：\n一、生病很無奈，無奈的心情，心想事無法達成（因病無法去做而導\n致。）好夢成空，心有餘而力不足。\n二、自己感到健康沒事就好了，降低自己的要求。\n三、深感醫學的有限，為何不能馬上好，無法盡善盡美。\n　　生病時雖然很多親朋好友來探視，但是朋友走後，特別感覺生病\n時的孤單。（摘錄自自由時報「生病經驗談」專欄，丁華華）\n　　清大校長劉炯朗，最近到香港開會，碰到其他的校長，每個人都\n驚訝的問他說：「你是吃了什麼，怎麼看起來那麼年輕呢？」劉校長\n很高興的說：「其實我也沒有甚麼養生秘訣，不過是生活正常規律罷\n了。」\n　　現年六十三歲的劉校長說，他從出生到現在，幾乎沒有患過任何\n病痛，連感冒也很少。這可能和遺傳基因有關，他的父親現在已經九\n十五歲了，身體仍然十分硬朗。談到養生，劉校長可以說是一位身體\n力行的人。每天清晨五點多，他就在清大校園散步或慢跑一個小時，\n遇到週末、假日就多加一個小時。平時運動完就回家洗個澡，睡半小\n時的回籠覺再去上班。\n　　劉校長有時候必須到台北開會，或住在台北的清大辦事處時，他\n也不會中斷運動的習慣。他說，在台北時，一樣五點多起床，從金華\n街走到台北火車站，有時候會走到凱悅飯店或中山北路，然後吃一頓\n豐盛的早餐，再坐計程車回金華街。劉校長說，清晨散步或慢跑，剛\n開始運動的十五分鐘肌肉比較緊張，但是十五分鐘後，整個人就輕鬆\n起來，感覺就不同了。他說在散步和慢跑中，可以完全放鬆，可以想\n事情，尤其是演說前，或是某個研究專題時，可以從中找到靈感。\n　　劉校長是一位幽默又開朗的人，他說，他很容易忘記不愉快的事\n，如果遇到困難，他會發揮工程師的精神，不計成敗勇往直前，對別\n人的建議一向虛心接納。在飲食方面，他十分注意乾淨、清潔的食物\n，他的血糖、膽固醇、血壓等都在正常範圍內，因此他從不忌口。他\n的早餐常是一個大木瓜，有時候加一碗麥片，中餐、晚餐都正常吃。\n他說，藥補不如食補，因此，除了每天一顆多種維他命和鈣片外，不\n吃任何的補藥，他每天攝取大量的水分的水果。\n　　對於能擁有健康的身體，劉校長認為和規律的生活有關，他每天\n早睡（晚上九點、十點睡覺）早起（五點多起床），中午小睡十五分\n鐘，讀書做事都有規律，他是個身體力行的人，因此一向都是精神奕\n奕，神采飛揚。（摘錄自自由時報「名人談養生」專欄，丁華華）",
+  "T9.txt": "　　六十三歲的清華大學校長劉炯朗說，他從出生到現在，幾乎沒有\n患過任何病痛，連小感冒也很少。在幾年前，雖然因五十肩造成肩膀\n疼痛，現在他已六十多了，這些年來居然肩膀也不疼了。劉校長說，\n這可能和基因遺傳有關，因為他的父親九十五歲了，身體仍是十分健\n朗。至於養生，劉校長可以說是一位身體力行的人。\n　　每天早上五點多起床，在清華校園裡散步、慢跑一個小時，遇到\n周末、假日就多加一小時。平時運動完六點多回家，洗個澡，睡半個\n小時的回籠覺，然後準時去上班。有時候必須到台北開會，或必須住\n在台北的清大台北辦事處時，他仍然依照慣例，早上五點多起床，從\n金華街走到台北火車站，有時候會走到凱悅或中山北路、然後吃一頓\n很豐盛的早餐，坐計程車回金華街。\n　　提起了每天的晨運，劉校長很高興的說，清晨散步或慢跑，在剛\n開始的十五分鐘肌肉比較緊張，但是等走過了十五分鐘後，整個人都\n輕鬆起來，感覺就完全不同了。他說，在散步和慢跑中，可以完全放\n鬆，而且可以想想事情，尤其是在要演說前，或是研究某個專題時，\n可從走路中找到靈感。\n　　劉校長是位性情開朗的人，他說，他很容易忘記一切不愉快的事\n，若是遇到困難，他會發揮工程師精神，不計較成敗，勇往直前去做\n，對於別人的批評他一向是虛心的接納。\n　　至於飲食方面，他說，他的身體十分健康，血糖、膽固醇、血壓\n等都在正常範圍內，因此從不忌口。他早餐常是：一個大木瓜，有時\n候加一碗麥片，　中餐、晚餐都正常吃。他覺得藥補不如食補，因此\n，除了每天一顆多種維他命和鈣片外，不吃任何的補藥，每天他喝大\n量的水分、吃很多水果。\n　　擁有健康的身體，劉炯朗認為與穩定生活習慣有關，每天早睡（\n晚上九、十點睡覺）、早起（五點多起床），中午瞇一下十五分鐘，\n書、做事十分規律，難怪他一出現總是精神奕奕、神采飛揚。\n　　親切、和諧、平易近人，是靜宜大學李家同校長給人的第一印象\n。他在大學求學期間，就常去台北監獄、新店軍人獄替受刑人服務，\n目前仍是台中啟明學校和新竹德蘭中心義工，內心充滿「愛」。\n　　李家同指出，每當青少年發生了一些問題，社會上、教育界人士\n就會自然的去想－這孩子的背景：家庭背景、家庭歷史（不好的方面\n）等等，但是卻忽略了「道德」觀念，這才是重要的問題。最近李校\n長與善牧基金會討論有關犯罪後的「復原力」，也就是犯罪的人是否\n能很快的改過？有的罪犯很快能過，但是有人卻改不過來。他舉例說\n：像雛妓，告訴她們做那事是不好的，而且教了她們另一項技能，但\n是，出獄後不久，她們又重操舊業，問題就在「是非觀」上，因為是\n非不明，她們無法改過。\n　　那些青少年比容易自殺？李家同認為，對父母親要求很多的孩子\n，這種人才會有此傾向，因為父母一直很容易就滿足孩子，萬一有一\n次得不到滿足，他就用自殺抗議，所以家長要注意，看起來憂鬱的孩\n子不見得有自殺的傾向，反而是「想要什麼就得到什麼的人」才會有\n自殺傾向。\n　　李校長除了在學術上地位受肯定外，在文學作品方面也是膾炙人\n口，他是很晚才開始寫作的，引起他寫作的動機是什麼呢？李家同說\n：他的第一篇文章是為盲人恩師寫的，他要讓人知道，一位全盲的老\n師也能教書。接下來寫的是大學時代在監獄裡為受刑人服務的事情，\n還有學生時代的事情。這些真實故事刊出後廣受到讀者的喜愛。\n　　問他怎麼這麼會編故事，而且個個故事都編的如此生動？李家同\n說：那是因為他很喜歡看偵探推理小說。讀推理小說至少有兩個好處\n一、訓練邏輯思想，二、是增加創造力和想像力。李家同說，寫小說\n必須要有敏銳的觀察力，但是基本上，作者必須有「惻隱之心」才能\n寫出好的作品。因此找靈感是不必到咖啡中找，而是在社會上、群眾\n中，用敏銳的觀察力，發現身邊唾手可得的材料。\n　　提到了如何保健身體，李家同說，他對健康並未太刻意去注重，\n只是努力過健康正常的生活。他表示，過多的應酬和壓力是不健康的\n。因此他過的是簡單忙碌，心情愉快生活。身為虔誠的教徒，他說，\n宗教的教義是「愛人」，他不斷的散佈對別人的愛，因此，「愛」讓\n他過得既充實、又快樂。\n　　恩主公醫院院長也是國內神經內科權威陳榮基教授，不論在醫術\n、道得修養方面為人所稱道。他本身是佛教徒，曾經擔任台大醫院慈\n光佛學社長。他的養生之道和佛學有著密不可分的關係，因為佛學也\n是在教人修身養性之道。\n　　陳院長為了方便人們記憶，提出了「保健八戒」和「佛」理不謀\n而合。第一戒：戒酒，少量的酒，可以促進社交關係，增進人和人之\n間的友誼。但，過量的酒對人體的害處，已是眾所皆知，因此，佛教\n徒是把酒列入五戒之一。第二戒：戒檳榔，嚼檳榔會造成口腔癌，為\n害人體，該戒之。第三戒：戒菸，菸害對健康已是鐵證如山，除了是\n引起肺癌的重要元兇外，對心臟、腦、血管都有害處。醫學已證明，\n不論在任何年齡戒菸，對人體健康都有很大的好處。如果已養成惡習\n，就應儘量減少用量，到沒人的地方或沒有冷氣循環的空曠空間吸菸\n以免二手菸戕害親友，更可避免對後代造成不良示範。第四戒：戒毒\n第五戒：戒邪淫，在佛家五戒之一的戒邪淫，就是戒婚姻以外的性關\n係。這種婚外性行為，不但破壞家庭和諧，容易造成悲劇，更是傳播\n各種性病和愛滋病的泉源。而逼良為娼引人墮落，製造社會不安，更\n是人神共憤。第六戒：戒瞋，暴怒或憤懣的情緒，不但會引起身體很\n多不良反應，容易誘發突發性的重病，如：腦中風、心臟病發作等，\n更會因情緒失控，造成後悔莫及的慘劇。佛經上一再宣示：「貪、瞋\n、痴」，是造惡業的根源，如能戒除瞋怒，那對健康和處事，都有大\n利。第七戒：戒賭。第八戒：戒恨，陳院長說，如果「瞋」使人短時\n間失去理性，那麼暗埋在心中恨，會慢慢腐蝕自，己不佰心理上永遠\n不快樂，而且生理上也較容易引發內分泌和免疫系統的失衡，而招惹\n各種疾病，如果因恨而作出報復的行為，雖可逞一時之快，但因此引\n起悲劇，可能傷人傷己，最後還是得不償失。\n　　以上是陳院長提供的保健八戒，如果你們試一試，一定會有個更\n健康、快樂的人生！（摘錄自中國時報「名人養生」專欄，丁華華）",
+  "T10.txt": "　　有人說：「人死如燈滅。」親人過世就好比自己的一瑰寶突然在\n一瞬間失落。\n　　我曾經看過日本一位醫師寫的一本書，內容有關於死亡。書中提\n到，這名醫師看到無數病人在死前的不同表情和行為，比較特別是，\n有的人在死前唱軍歌然後去世，還有的是哈哈大笑後含笑而去。\n　　死亡也是一種文化的表現，這會受到各個風俗背景、個人教育、\n人生觀、宗教信仰的影響，使每一個人在死前的一瞬間會有著不同的\n情景。\n　　父親的去世，可說是頗神奇的事。一般人就算是醫師，也無法正\n確算出病人去世的時辰，但是父親卻能選擇自己要走的時間，而且事\n先預告。父親選擇在凌晨離開人世。在他古老的觀念裡，如果人「走\n」而不吃三餐，就可以把三餐留給子孫，他走之前就如此預告，果真\n在淩晨過世。父親是個老菸槍，菸抽到七十多歲，而且一天要抽兩包\n菸。我告訴他，你要治病先把菸戒了，否則我無法治你病，第二天他\n把菸戒掉了。\n　　父親八十多歲去世，去世之前一點也沒有畏懼，記得他說：「我\n一生沒做壞事心安理得，兒女也都長大成人不必擔心，可以去了」，\n他要求去南部鄉下老家探視親友。當年我還向友人借了一部車子，陪\n著父親到高雄茄萣老家巡視，與老友們話別。一切安排就緒，他把每\n一個子孫一一叫進來，告訴他們的缺點及要改進的地方。父親在去世\n前，交代了許多事要不同的人辦理，把後事都一一交代清楚才辭世。\n　　每個要「走」的人都有不同的情景，有的人走得拖泥帶水，有人\n走得很豪邁、阿沙力。年輕的，對人生沒有任何體驗，在無知無覺中\n就心臟停止了。我想，人死前的表現，應與對人生的體驗、歷練、智\n慧有關。\n　　行醫多年，認為「生死」與「因果」有著密不可分的關係。推測\n，做許多好事的人離世時，總是走得心安理得，平靜，了無牽掛。三\n十多年的醫師生涯每天忙於病人的生死之間的事，有所感觸與心得，\n把感想敘述一二：有的人走得很安詳溫和，有的人走得惡形惡狀，這\n些和病情有相當大的關係。\n　　在女性方面，上一代的女性，由於受高教育水準的較少，比較沒\n有自我意識，因此可說是糊里糊塗的生，也糊里糊塗的死。對她們來\n說，死反而是一種解脫。對無知的人來說，生死是莫名其妙的。反觀\n對有歷練、有知識的人來說，死是很大的掙扎。上一輩的女人較認命\n（也就是一般人說的油麻菜籽的命）。對生活痛苦，家境貧困的女病\n人來說，死是非常的認命和認份。但是，來自富裕家庭的女性，死前\n比較會掙扎，認為人生尚有許多未享受盡，因此掙扎得厲害，這些都\n是生理心理極致的表現。\n　　記得我母親在家中最貧苦時中風，拖了兩年後才去世。她一直期\n待她的兒女有所成，能把家中經濟情形改善（那時我還在台大醫學院\n唸書，要畢業那年母親去世）。記憶最深的是，母親面臨死亡，每呼\n吸一次就嘆息一次，我想她當時嘆息，是因為無法眼見所期待的事實\n現。\n　　在男人方面，因為男人多數在外打拚，有太多沒完成的期待、期\n許，較不能面對「死亡」，都會有生死的掙扎。至於有魄力的企業家\n，當他面臨即將步入人生終站時，往往不會拖泥帶水，而一些軟弱無\n主見型的男人，倒是一番掙扎，非常的痛苦。\n　　印象中很深刻的一件事：某先生病重，是心肌梗塞的病人，心律\n不整，年紀很輕，身體外觀看起很有本錢，但只有心臟不好。當你看\n到即將瀕臨死亡的人，你會發現，首先，他的臉已沒有光澤，天庭黯\n淡無光，膚色蒼白沒有活力，皮膚摸起來冰冷，生命之光要滅了。\n　　心臟對循環最敏感的器官是腦，腦只要缺氧四至六分鐘，腦細胞\n就會死掉，不能恢復正常功能。事實上人死後，還有器官不會馬上死\n，那就是結締組織，它會繼續生長（頭髮和指甲）。\n　　其實不是每個人都會痛苦的死，自然死應是快樂的。在解剖，人\n要死時，會產生一種分泌物讓人快樂的去承接「死」，而死在心理上\n卻是痛苦的，因為不想和親人分離。人是生物，因此活越老，器官各\n方面也會越老化。所謂髮蒼蒼視茫茫，牙齒動搖，這是自然老化的過\n程。面臨死亡，應是迎接死亡而非對抗死亡。醫學重大目標應是預防\n重於治療。對於醫病方面，有些病是可醫治的，至於老化、衰老，無\n法醫治時，面對死亡是另一個人生觀「哲學」的問題。（摘錄自自由\n時報「杏林網站」專欄，丁華華）\n　　台灣的性學專家江萬宣教授，今年七十六，但是看起來容光煥發\n，精神抖擻，一點也沒有老態。每天一早就從家裡步行到台大醫院，\n晚上也是步行回家。他常掛在嘴上一句話就是－「兩腳走，三腳勇」\n，動物就是要動，不動就會退化。（所謂的第三腳就是男人的寶貝）\n　　江萬宣教授說，他愛爬山，爬山的山齡已有十多年了。他參加的\n是台大「無名」登山隊，隊友成員都是教授、法官們，每個星期天風\n雨無阻，早上七點半集合，邊爬邊聊，無所不談，到山頂正好中午時\n分，大家在山頂上把帶來的粗食打開大家吃個飽，天南地北，一起蓋\n一蓋，直到下午三、四點下山。\n　　提到他名言「兩腳走，三腳勇」，他說，古代皇帝每年春秋時節\n都去打獵，後宮佳麗再多也能應付，而現代人動都懶得動，還要靠藥\n物來壯陽，卻不見得有用。\n　　江萬宣教授幽默的說，要多運動才「行」，現代人愛打小白球，\n他十分鼓勵人們多打高爾夫球，他說，打完十八洞後，打第十九洞才\n有力。（家裡太太的那一洞）。\n　　提起養身之道，江教授說，他的原則是：粗茶粗飯；沒事多行路\n；不菸不酒；看到人就笑，當然就會「秋」（台語發音意思就是「壯\n」，也是性能力很強之意）。江教授說，如每天苦個臉，那當然「秋\n」不起來了。\n　　江教授說，他們夫妻結婚五十二年，太太也行，五十多年來性生\n活沒有停過，而且是每月不打烊，對一個七十六歲的人來說，一個月\n一、兩次已經很不錯了。\n　　提到了人生的樂事，他說，他的人生是要有三件事他就十分滿足\n了：有路可走；有書可看；有病人可看。當然，吃飯、做愛也不在話\n下了，江教授的養身之道，簡單、明瞭，值得為一般人介紹！\n　　江萬宣人生另一件得意的事，就是他的衣缽有了傳人，年輕有才\n氣的泌尿科專家江漢聲醫師就是他的公子，提起了江漢聲，江萬宣教\n授笑得口都合不攏。江萬宣經常保持開朗，難怪七十六歲的人，看起\n來卻只有五十多歲。（摘錄自中國時報「名人養生」專欄，丁華華）",
+  "T11.txt": "　　森林可以保持水土並調整氣候，也可提供動物的棲息，以及人們\n生活所需的資源，是人類在地球上，擁有最多功能的資產之一，另外\n就調解氣候的功能來說，有森林的地方，因為樹木水份的蒸散，下雨\n的機會自然也跟著增加。而在森木對於整個地球的氣候影響方面，由\n於樹木在行光合作用時，能吸收溫室效應氣體中的二氧化碳，因此植\n樹造林以增加地球上的森林面積，將可緩和二氧化碳所造成的溫室效\n應。相反地，如果地球上的森林面積減少，其結果則是，釋放更多的\n二氧化碳於大氣中，而加速溫室效應的產生。至於溫室效應帶來的，\n不僅是氣溫的上昇，同時也可能是整個地球生態的變化。\n　　依據現行的任期規定，大法官一任九年。其職掌則載明憲法，掌\n理憲法解釋與法令統一解釋，並有審理違憲政黨解散事項之權，與其\n他憲政成熟的國家相較，我國以大法官做為憲法守護神的憲政設計，\n其目的並無二致。所謂憲法的守護神，意謂大法官要秉持民主憲政良\n知，以獨立不阿的精神，使一部寫在紙上的憲法，產生規範政治權力\n的警鐘綸音，具備對應社會實況的生命活力，真正達成憲法限制權力\n、保障人權的終極目的。必須憲法的守護神，真能隨時在權力競逐的\n遊戲中守護憲法，並運用憲法在社會生活裡保護人民權益，憲政才不\n致淹沒於政治權力的衝擊激盪，憲法才能真正生根，民主政治的價值\n也才能真正體現。\n　　大坑風景區內農業資源豐富，盛產四季水果，是其特色，如柳橙\n、桶柑、柿子、荔枝、龍眼、枇杷、梅、李等。到此一遊時，請別忘\n了品嚐，相信有令您難忘的滋味在心頭，下次還想再來。「筍」普遍\n受到大眾喜愛，其更為大坑區內之主要農產品；每年農曆二至十月是\n「麻竹筍」的生產期，體形大，纖維細，可口味美；常被製成「筍千\n」更是鮮脆，特具風味。麻竹的葉子，常是五月端陽包粽子時主要材\n料。除本區大量之麻竹筍外，更有綠竹、孟宗竹和桂竹，其中桂竹還\n是製做各式竹器的最佳材料；喜愛竹的您共同來編織「竹的故鄉」。\n　　臺灣在短短四、五年內躍居高公債國家，除了肇因我國餘元，歲\n出卻都高達一兆元以上外，政府諸多不當和浮爛預算導致的浪費，和\n重大工程弊端頻傳、追加預算無度，造成的預算大黑洞，嚴重流失民\n脂民膏也是主因。以全國各級政府兩兆三千億元的債務，一年光是要\n用於還本付息的預算，恐怕就要近兩千億元。未來幾年隨著許多公債\n必須開始還本，還本付息金額還會巨幅成長，而在諸多重大工程正如\n火如荼進行中，短時間內國內又沒有巨幅加稅的環境，如果政府不儘\n速改革各級政府中的不當和浮濫預算，防堵重大公共工程追加預算的\n預算大黑洞，則年復一年「以債養債」、「舉新債還就債」的結果，\n我國財政將可能因此破產。\n　　稻米為人類主要糧食之一，分佈甚廣，世界各地均有栽培，但以\n亞洲的栽培面積最多，故稻米為亞洲人民的主食，其生產豐碩對民生\n、社會和經濟安定都有莫大影響。臺灣位於熱帶與亞熱帶之間，氣候\n溫暖多雨，適合水稻生長，大部份水田可栽培兩期水稻。栽培方式仍\n以移植栽培為主，雖有部分稻田採用直播法或宿根栽培，但面積有限\n。甘蔗原產於熱帶，在亞熱帶亦可栽培。生長以年平均氣溫高，溫差\n小最為有利。生長盛期以雨量豐富、濕度高、且不宜有狂風暴雨，亦\n不宜連續乾旱最為有利。成熟期則應較為乾燥而氣溫較低，可有助於\n糖分累積。冬季氣溫低而乾燥，並有季風，均不利甘蔗生長。大體上\n，氣溫、雨量和季風是控制本省甘蔗生長的重要因素。\n　　南非首次不分種族的全國大選，在汽車炸彈炸頻傳聲後，終於在\n昨日完成。隨著大選結果的揭曉，三百四十二年來的白人統治亦將正\n式劃一休止符；代之而起的則是由黑人多數主導的多種族和多政黨的\n共治政治。新政府成立後面臨的最大挑戰，是如何振興經濟。南非經\n濟長期不振，失業人口眾多，加以黑白貧富懸殊現象存在已久，黑人\n取得選舉權後，多期待早日改善窮困生活。然而，曼德拉的五年重建\n計畫即使順利執行，亦只能嘉惠部分黑人；因此，多數黑人或會要求\n改採激進的社會主義路線，從而引發社會的動亂及不安。曼德拉他在\n大選前公開表示，當選總統後不會立刻與中共建交；即使與中共建交\n，亦不會與我國斷交。此言似乎是權衡利弊得失後的結果，並非外交\n詞令。我們認為，欲求鞏固與南非的邦交，最有效的辦法是擴增雙邊\n的經貿關係，使兩國的邦交得以建立在更堅實的互惠基礎上。\n　　很多人喜歡秋季，微涼的天氣，晴朗的天空，可以穿層層的搭配\n又不至於像冬天一般厚重。秋季令人聯想到落地的滿天楓葉，黃昏的\n夕陽，所以秋季的顏色是大地的色彩、咖啡、褐紅、鵝黃、米白都是\n秋季的代表色。我把春天認為是「澳洲」，青翠的大草地，自然界的\n動物自由放逐，花朵繽紛。而夏日則像「美洲」，熱情奔放，四處不\n同國度充滿理想和實際的人潮心態，聒噪的招呼，高度文明的建築物\n品。秋季呢？秋季若說是「歐洲」，古色古香的建築物，露天咖啡座\n濃濃的黑咖啡和奶香，還有剛剛出爐的法式烤餅、麵包，冷冷的空氣\n和「歐洲人」深刻而優美的輪廓，彷彿秋季一到，就該到「歐洲」去\n旅行一般，我對秋季的憧憬，濃烈得就像那些夢中的國度。好像三毛\n的小說，浪跡天涯，留下足印，秋季真是四季中最浪漫也最有畫面的\n季節。是浪漫和理智結合的好季節，有重大的決定或抉擇，不妨選在\n秋季做一個新計畫的開始。\n　　依照世界衛生組織的標準，只要六十五歲以上的人群是全人口的\n百分之七以上，就是「老人國」，台灣去年九月正式成為老邁國家，\n今後人口老化現象將逐年加劇。心臟血管及腦血管疾病是老人的最主\n要病因及死因，亦是我們即將面臨的重大疾病問題。近年來，台灣社\n會經濟繁榮，生活富裕；營養過剩或不當的飲食習慣，生活忙碌緊張\n及欠缺運動，被歸咎是各種慢性病增加的原因，更是高脂血症的主因\n。高脂血症治療，首以衛生教育及飲食治療為要；即改變生活型態及\n飲食習慣是最基本且重要的步驟。\n\u001a",
+  "T12.txt": "　　世界上許多民族都以頭髮暗示「性」，因此我說頭髮不只是儀容\n的問題，而是最「敏感」的象徵。所以愈去「禁」他，他愈反抗。而\n且這反抗往往會由儀容問題，升高到另一層次，即情感的反抗。反之\n，你愈順其自然，讓他有所表達，反而可以紓解年輕人的反抗心態。\n以前一般人的想法可能是：頭髮短、整齊，就代表乖。其實叫他們乖\n，一定有別的方法。我想說的就是，有關青少年的服裝、髮式、行為\n，最好不要只由表面上判定，而要從比較內在的方面去考量、引導。\n　　尤其在今天這樣一個快速變遷的工業社會裡，價值觀不斷改變，\n青少年接受新事物的意願大、速度快，加上現代大眾傳播無遠弗屆，\n年輕人自然會有與年齡較大，或與上一代歧異的觀念、做法。更何況\n青少年性格中，本來就有好動、好奇，和反抗的因子，因此他們的所\n思所行，就產生了突出、創新、甚至標新立異的獨特現象。這些都可\n以解釋成「青年次文化」中，對既有制度與價值的抗議與批判的色彩\n。所謂的「次文化」，是研究社會文化的人常用的一個名詞，這是指\n一個社會中不同人群，所特有的生活格調與行為方式。每個社會都有\n許許多多的「次文化」：不同省份的人，有他們特有的風俗習慣與生\n活傳統，因此就形成很多不同的「地方次文化」，四川、湖南人好吃\n辣；山東人愛吃大蒜；湖南人被稱為「騾子脾氣」；客家人勤勞；江\n南的「吳儂軟語」等等，都是地方次文化的好例子。同樣的，不同年\n齡群的人，也會有他們特有的生活習慣與人生態度，又形成不同的「\n年齡次文化」。例如老人穩重保守，講究形式，規矩多，就是「老年\n次文化」的特色，而青年，或近年來的青少年，他們的行為在整個大\n文化中經常表現得極為突出，不但「引人注目」，甚至「令人側目」\n，於是也形成「青年次文化」或「青少年次文化」。\n　　而青少年次文化中最明顯的特徵之一，即是對形式主義的反抗，\n他們不論在行動或服飾上處處流露不拘形式、不守成規的習性；他們\n偏好簡潔、省略，不繁文禮節的語言、應對與人關係；由於追求創新\n、創舉，進而偏好突出的表現，難免使他們看起來十分「前衛」。看\n到「前衛」這兩個字，我們很可能聯想到一九六零年代的嬉痞和八零\n年代的龐克。在一般人的眼光中，他們的奇裝異服無疑是標新立異的\n極至。但是你再往前一步想，民國初年的人，如果看到現在電視上的\n造型、穿著，或者外國人看民初中國人的辮子和小腳，所受到的「視\n覺震撼」，與我們看龐克差不了太多。因此，對我而言，只要是沒有\n真正妨害到社會秩序，我們何妨把他們看成走在時代前方的人。服裝\n其實只是一種媒介，人類藉著它的形式來表達內在感情。所以無論外\n在的造型如何，藉由它來尋找內在情感的（密碼），才是最重要的。\n　　任何一個社會都有一套要通行的密碼。龐克只是換了一套屬於他\n們自己圈內的密碼。同樣的，青少年的種種表達，也有他們的密碼，\n我們正好可以藉此了解他們的內心活動。我可以舉一個顏色密碼的例\n子。不同的顏色，在不同社會中也各有其表達意義。以汽車而言，大\n多數社會的密碼中，黑色的轎車多半是公家車，由司機駕駛，因此私\n人轎車很少是黑色的。你高高興興開了一部黑色新車，別人卻根據約\n定俗成的密碼，將你判讀成司機，這多掃興。另外，傳統中國人婚禮\n的顏色是大紅的，只有喪禮穿孝，才選擇白色。而在西方的顏色密碼\n中，新娘穿白色。寡婦才穿黑色。一般人通常把白色判讀為「純潔」\n，黑色判讀為「悲傷」，其實不只如此。根據人類學家的研究，西方\n人的衣服顏色大致分為兩類，其一是平常穿著，多是五顏六色的「彩\n色系」；而在儀式性的日子裡，則必須穿「無色系」：包括黑、白二\n色。於是我們看到，婚禮中的白色與喪禮中的黑色。\n　　而西方神父在作彌撒時多穿白色，平常的日子卻穿黑色神職服，\n這又代表什麼呢？原來白色屬於「儀式行為中」的顏色：黑色代表「\n儀式行為外」的用色，因此新娘在結婚典禮中穿白色禮服，而喪禮中\n，寡婦已屬結婚儀典行為外的屬群，才穿黑色。這是西洋人衣服顏色\n的密碼。假如能找到密碼所代表的內在意義，所有的外在形式，其實\n沒什麼好驚怪的。一般人不能接受龐克，或是時下的青少年，可能只\n是因為與他們密碼不同，讀不出內在心情，才會覺得詭異乖違。然而\n，我們真正關心的問題是，我們的青少年外在表現出的形式，真正能\n代表他們的內心嗎？他們的密碼表裡合一，或只是庸俗的模仿？\n　　龐克如果有意義，乃在他們的「創造」，他們創造了一套恰能表\n達內在想法的密碼。如果我們的青少年只懂得模仿日本，按著雜誌把\n自己打扮成原宿少年，而漫無創意，那才值得擔心。提到模仿日本，\n我想到一個有關「家庭」的現象。日本人的家族，採用長子繼承制，\n換句話說，次子以下的家庭成員，都不能繼承財產。他們在成年之後\n，就必須出外發展，獨力創業。有些研究日本的專家認為，日本後期\n現代化的經濟基礎，就是靠這些必須自力更生的中產階級締造的。\n　　而在中國家族裡，所有的兒子都有權利分家產。直到最近，我們\n不是還聽說某一大家族為了分產，鬧得很大。在傳統習慣裡，只有男\n子有繼承權，而在現代男女平等的法律下，連女兒也有權利加入爭奪\n戰，情勢就更形複雜了。為了得到家產，年輕人多半一板一眼地遵守\n家族規範、模式，也養成較大的依賴心。這是傳統因子，而現代青少\n年對家庭的依賴更大，加上較為刻板的升學教育，創造力可能也比較\n差一些。在這裡我必須強調的是，我個人研究的重點是民族宗教儀典\n，對青少年的問題，並沒有作過長時間、有系統的思考和研究，因此\n，對於這個問題，純粹是由人類學的角度所作的觀察，僅能提供大家\n作思考的資料。\n　　另外，「對功利商業主義的抗議」，原本應該是青年次文化的主\n要特質之一，但不少人認為現在的年輕人卻顯的很功利、很現實。我\n倒覺得這些事情真不能全怪他們，因為現在的社會競爭的確太厲害，\n整個社會趨向現實功利，年輕人又如何天真得起來？當年我進臺大的\n時候，根本沒想過畢業之後的職業。因為在當時，大學畢業一定有事\n做，現在卻不同。所謂的熱門科系卻不一定能找到理想的工作，我們\n又怎能責備高中生「現實」，志願不填基礎科學？現在師範學院的分\n數年年高昇，也實在是沒辦法的事。我常舉一個例子：一九八四年奧\n運，有一個美國田徑選手卡爾路易士，得到四面金牌，而一九三八年\n也有一位得到四面金牌的美國選手傑西歐文斯，也是一位黑人。但在\n這五十年之間，我們可以看出運動員態度的明顯不同。\n　　對傑西歐文斯而言，他參加競技的目的是創造人類體能的極限，\n得金牌只是副產品。他一點兒也不把金牌看成最主要的目的。路易士\n就不一樣，在跳遠的時候，每個選手有六次機會，當他跳到第三次，\n大會宣佈他已得第一名，他就停止了。\n\u001a",
+  "T13.txt": "　　證管會已有意延長股市交易時間，朝國際化方向發展，未來一旦\n實施的話，國內股市生態將更趨於法人操作為主。經過台灣證券交易\n商開過公聽會研擬後，證管會初步打算將股市交易時間訂為週一至週\n五上午九時至十二時三十分，週六則休市，這種交易時間比較偏歐美\n國家股市交易的類型，只是歐美股市交易時間更長一些，會採用這種\n交易時間，主要也是希望逐漸與多數先進國家股市交易時間趨於一致\n，只不過目前驟然實施的話，國內各項措施未能配合，投資人習性也\n不適應，阻力會比較大，所以採階段性的逐漸改變。\n　　投信公司人士認為，台灣股市這一、二年的生態已有改變，主力\n大戶對市場影響性減少許多，未來股市交易時間延長的話，主力大戶\n的人為操作色彩會更明顯消失，繼之而起將是專業投資機構的法人市\n場，在股市交易時間朝國際化發展方向而延長下去的話，很可能日後\n會延長到下午二、三點，那時會有更多的散戶投資人因而退出市場，\n如果還有興趣投資股市的話，就必須透過買基金等方式委託專業機構\n進行投資，在法人佔市場比例漸增情形下，股市起伏也將更為穩定。\n　　財政部上週政策決定開放外人來台設立新台幣帳戶，並同時開放\n國內金融機構可至國外開立新台幣帳戶，由於目前兩岸貿易頻繁，一\n旦國內金融機構在香港陸續開立新台幣帳戶，新台幣極可能在台、港\n及大陸之間，形成共同流通的強勢貨幣。已往政府為避免新台幣國際\n化，因此禁止外人來台開設新台幣帳戶，不過，隨著政府積極推動國\n際化、自由化，這些禁令都將在近期內廢除。\n　　兩岸貿易有關資金的流出入，均是以外匯作為媒介，理由是第三\n地區，並沒有新台幣帳戶的開辦，在企業習慣使用美元的情況下，新\n台幣在台、港、大陸之間流通的情況不多，不過，隨著國內金融機構\n可至國外開設新台幣帳戶，香港極可能成為國內金融業開立新台幣帳\n戶的大本營。一旦香港地區的銀行開辦新台幣帳戶的家數快速成長，\n新台幣勢必成為在香港兩岸貿易的媒介，甚至流通至大陸，屆時極可\n能形成，兩岸貿易未直通，但新台幣已領先直通的局面。另外，財部\n官員指出，國內金融業大量至國外開設新台幣帳戶，刺激國外銀行積\n極開新台幣帳戶業務後，新台幣國際化無疑向前邁進一大步。\n　　八十四年度即將到來，根據統計，在新年度之初財經部會就有多\n項重大財經政策要推動，包括土地交易課稅新制度、存款計息改按三\n百六十五天、通匯及自動提款機提款手續費下降、年度重大查稅計畫\n展開以及旅客攜帶水果入境限量由六公斤降為二公斤。\n　　由於前述重大財經政策或大事，均將在七月份陸續推動，一方面\n不僅關係到整體國家的發展，同時對民眾權益也息息相關，因此格外\n引人注意。尤其是，財政部即將在七月份宣布放寬外商銀行來台設立\n分行的標準，更深切影響到我國未來金融環境的變遷。\n　　巴西國稅局長羅培斯二十一日在上級官員允許奪得世界杯冠軍的\n巴西足球隊隊員攜帶十多噸物品免稅進口後，憤而辭職。巴西足球隊\n三十人代表團十九日晚凱旋歸國，受到英雄式的歡迎，數以百萬計的\n巴西人因為巴西隊創記錄贏得四度世界杯而狂喜。但是在里約的加利\n歐國際機場，巴西隊受阻兩個小時，原因是他們把價值一百四十萬美\n元的十七噸物品帶回國而與海關人員起爭執。\n　　根據報紙的報導，選手威脅，如果這批行李不能免稅通關，就要\n退還總統佛郎哥所贈予的獎章並且要杯葛勝利大遊行。經過磋商後，\n上級官員終於下令讓巴西隊通關。國稅局長羅培斯幾乎立即辭職。他\n說，財政部長里古匹羅的決定剝奪了他的權柄。如果他無法執行國家\n的稅法，他必須下台。羅培斯說：「這些偶像，比任何人更應該身為\n表率。」雖然根據報導里古匹羅下了免稅通關命令，財政部一名顧問\n二十一日說，命令不知道是誰下達，而且，此事正在調查。無論如何\n，一名法官和里約的一名律師說，也們將提出訴訟迫使里古匹羅補償\n一百四十萬元美元的未繳稅款。巴西隊明星選手馬里歐否認隊員發出\n威脅，並且說他們帶回來的只是私人用品和禮物。他說：「當他們宣\n布行李將在次日晨間放行時，我們已在消防車上開始遊行。這是我們\n抱怨的原因，但是沒有發出威脅。」\n　　根據巴西的法律，在海外購物，價值五百美元以下者，免稅。價\n值超過五百美元，課稅百分之百：超出一千美元時課稅百分之一百三\n十。本屆爆冷門風潮由亞洲的南韓隊率先開創，以一個足球小國，甫\n亮相即表現強勁後勢，硬是逼和歐洲勁旅西班牙，接著硬是踢和了南\n美的玻利維亞，又差點使衛冕的德國大軍險些陰溝裡翻船，一路追成\n了二比三的戰果，顯露了東方猛虎的不可欺。第二波的冷門來自賽前\n廣被看好的「超極黑馬」哥倫比亞隊。\n　　這支有實力以五球令阿根廷輪得很難堪的新銳，一直被視為本屆\n有望突破過去只有六個奪標國家的傳統，但卻成了最早被殘酷的現實\n踢回家的隊伍。哥倫比亞從球王比利看好奪標熱門到率先被淘汰，進\n一步顯示出本屆世界杯的一反常規戰果。綜觀世界杯大賽，綜觀全部\n比賽，沒有一支可以號稱為頂尖超級隊，除了希臘表現失水準外，也\n沒有一支特別弱的隊伍。\n\u001a",
+  "T14.txt": "　　距離原預計可在年底舉行的省市長選舉時間不過半年左右，但目\n前省縣自治法尚在立法院待審未決，因此省市長民選的法源仍未確立\n，且兩大政黨提名制度亦未出爐，有意參選的人選仍處在勾心鬥角的\n狀態。故決策當局曾考慮延緩辦理省市長選舉，俟立法後完成周詳準\n備再行辦理，不過日前仍有部分人士及媒體反對延期舉行。\n　　省市長選舉在台灣是一項重要的大選，不僅選區遼闊涵蓋全島，\n且為政黨視為執政的試金石，各政黨勢必傾全力決戰外，就台灣而言\n亦將是首度實施的大選，由於過去缺乏省市長選務經驗，因此為做好\n妥善的準備工作，選務作業的規劃必然需耗費一段時間，若果倉卒舉\n行，而選務無法充分運作配合，可能將衍生諸多紛爭，造成不良的後\n遺症，使政府開放省市長民選，而政局不但未蒙其利，反受其害，將\n是得不償失。\n　　尤其台灣既為法治國家，任何大政策之推行，自必須合於法治程\n序，亦即在完成立法之後才能推動實施。目前規範省市長選舉的省縣\n自治法、直轄市自治法均在立院待審，未來變化如何尚難定論。因此\n在法律尚未訂出之前，行政機關事先議定實施日期，再迫使立法部門\n完成立法，實是反其道而行，違反法治程序與精神；省市長民選無疑\n是我國家首見之重大選舉，既應慎重其事，更應透過立法手段，在立\n法過程中經由充分的討論決定方向，再據以展開實施的準備作業，唯\n有依據法定程序而逐步推動，才能使始此重大的選務工作不致出現瑕\n疵，妨礙選舉。\n　　轉眼年底將屆，而立法工作尚未進入重要的決定程序，若僅為個\n別的因素而主張省市長選舉於年底舉行，實令人對此一重大選舉的品\n質感到憂慮；吾人更不希望兩大政黨在倉卒的選務中投機獲利，因此\n為使選舉充分反映政治天秤，建立一套合於法治的選舉制度，延後省\n市長選舉誰曰不宜？\n　　針對已負債高達兩百億元的台汽公司存廢問題，省府下週將召開\n專案會議，討論台汽所提逐段分區開放民營的業務整頓方案，如果開\n放民營順利，台汽公司則將考關閉。台汽公司營運僅十餘年即負債兩\n百億元，如此平均每年虧損十幾億的營運效率，對任何一個稍具財務\n管理的民間企業而言，都是匪夷所思之事。因此台汽斷然決定逐線開\n放民營，這對日益沈重的政府財政負擔，以及鼓勵民間參與公眾服務\n事業，皆是一項值得肯定的訊息。\n　　事實上，不獨負債兩百億元的台汽早應開放民營，他如台鐵、捷\n運系統這類由政府經營注定虧本的公眾運輸事業，均應一併及早規劃\n轉為民營；不容諱言，不少主持公眾運輸事業的政府主管，是以「太\n平官員」的公務員心態出任該職，人事酬庸而冗員浮濫、官商勾結而\n利益輸送、專業經理人才未獲相對重用，因此不僅使得這類公眾運輸\n事業的營運效率奇差無比，甚至事故連連而善後處理又老大敷衍；當\n年日本國鐵虧損連年，日本政府斷然決定開放若干路線民營，而在私\n鐵的競爭壓力下，日本國鐵被迫調整財務管理結構與經營模式，這才\n逐漸轉虧為盈。\n　　愈來愈多靠嗓門吃飯的人，得長期忍受慢性扁桃腺炎反覆發作之\n所苦，中國醫藥學校附設醫院中醫內科嘗試以「滋陰降火，宣肺化痰\n」藥物治療，患者不但症狀大幅改善，也擺脫經常發作的因擾。經醫\n生指出，這類患者最好從注意保養者手，避免過度勞累或吃刺激的食\n物，還要多運動，以提高抵抗力，並減少感冒，以免造成慢性扁桃腺\n炎惡化。門診發現，老師，業務員，公司職員，門診護士或常扯者嗓\n門罵小孩的家庭主婦，都因為話說得太多或是用力方式不對，常受到\n慢性扁桃腺炎的因擾，陳醫師指出，患者的主要症狀多是喉嚨乾癢，\n灼熱有異物感，每每好像有一個異物或是痰等黏液卡在喉嚨，吞不下\n又吐不出，並且多在功作勞累、熬夜或吃過辛辣、油炸食物後，症狀\n會更加明顯。\n　　由於症狀無礙飲食，檢查又沒器官性病變，中醫常會診斷為西醫\n屬官能症範疇的「梅咳氣」，就是患者感覺有如梅核阻塞，但是以此\n症治療卻未見症狀改善，結果在經過咽喉部的仔細檢查後發現，患者\n顎扁桃腺有紅腫，局部有散在性小紅點，証實為慢性扁桃腺炎，改以\n滋陰降火，宣肺化痰的藥物後，患者不但症狀已改善，也不再時常發\n作，另外患者還需注意日常保養，多做運動，不吃刺激的食物，生活\n作息正常，才能免受此疾之苦。\n　　台大醫學院生化學研究所指出，薑黃素是薑科植物中普遍存在的\n多種類化合物，為植物呈黃色的主要成份，像烹飪上常使用的辛香料\n薑，便含有少量的薑黃素，而以製造咖哩的原料「薑黃」的這種植物\n含量最為豐富。他指出，根據實驗，利用致癌物刺激老鼠皮膚和腸發\n生腫瘤後，給予薑黃素，癌細胞的生長便會受到抑製，並用量只要極\n微量，便會產生作用，而且毒性極低；因此他們將展開臨床實驗。\n\u001a",
+  "T15.txt": "　　日本各政黨二十六日展開新聯合政權的重組工作，惟因並無突出\n的合作模式，在國會本會期於二十九日結束前，是否能完成新首相之\n推舉並順利組成新內閣，已引起各方之矚目。\n　　社會黨委員長村山富市表示，將與執政聯盟再談合作問題，如無\n法獲得協議，可能與自民黨聯合組成選舉管理內閣。自民黨總裁河野\n洋平則表示，將重視與社會黨、先驅黨之合作。河野說，政策固然重\n要，但民主更重要；他反對執政聯盟之部分政治手法及羽田孜重新出\n任首相，但不排斥村山富市出任新首相。\n　　公明黨書記長市川雄一指出，執政聯盟難與社會黨繼續協商，希\n望自民黨與社會黨中贊同執政聯盟政策者共同合作。新生黨代理代表\n幹事渡部恆三表示，能合作者均為同志。先驅黨黨魁武村正義表示願\n與社會黨與自民黨共組政權，並願意為此擔任該兩黨之仲介角色，村\n山富市可任新首相。\n　　根據金融人士表示，日本的政治危機將會延緩經濟自由化及開放\n外國貨物進口的腳步，並可能會使日圓價位更趨強勢。雖然大部分的\n人都同意首相羽田孜二十五日的辭職並不會產生立即的影響，但此舉\n可能會導致眾議院的改選，並使日本的政治真空期延長。時事新聞社\n弔述金融人士的預測表示，由於羽田內閣的下台可能會導致在其任內\n承諾的日、美貿易談判延期舉行，這將會使市場投機者繼續買進日圓\n，使日圓價位持續堅挺，不過羽田孜在二十五日與美國總統柯林頓通\n話時，向其保證日美間的貿易談判將不會受其辭職所影響。\n　　中醫師指出，看一個人的耳廓皮膚變化，其實可以知道他的健康\n情形，譬如非經物理刺激而產生的耳朵發紅、發熱，表示這個人生理\n功能緊張，應學習放鬆，必要時，可用耳針緩解症狀。\n　　中華民國過敏及氣喘病研究協會昨天在台大醫院景福館，舉行專\n題演講會，邀請中國醫藥學院台中附設醫院針灸科主治醫師吳振華演\n講「耳診對呼吸道疾病的診斷意義」。吳振華指山，中醫診病有「望\n、聞、問、切」四大步驟，其中望診在四診法中居首位，並且對觀察\n耳朵的形態、色澤變化十分重視，因此有「望耳診病，以知其性」的\n說法，這是因為耳朵是許多經脈會聚的地方，像耳朵的最外圈的神經\n支配，以第二、三頸椎神經和交感神經為主，而在耳朵凹陷處最下方\n的「耳胛區」，則由迷走神經所支配。\n　　當耳輪區出現發紅、充血現象時表示交感神經處於興奮狀態，通\n常情緒緊張、失眠、熬夜或面臨聯考壓力等，都會出現此皮膚變化，\n這時，就要告訴自己放鬆情緒，如果症狀一直持續無法改善，可以請\n中醫師用耳針挑耳後的紅筋「即擴張血管」，做類似放血的治療。\n　　此外，當胛區出現白色節結、膿包、紅色丘疹等，代表此人有呼\n吸道疾病，譬如在急性肩桃腺發炎患者的耳胛區，可見膿包反應；感\n冒發作時，耳胛區可見紅色小丘疹；而慢性鼻炎、慢性氣管炎、肺氣\n腫病患的耳胛區，可觀察到白色節結等變化。\n　　當氣管痙攣急症期，扎耳針可及時緩解不適症狀，不過針灸易產\n生耐受性，扎針幾次就無效，就必須改變治療方法及調整穴位。\n　　雖然羊癲瘋早經醫界証實源自於腦部放電異常，但對羊癲瘋兒的\n父母來說，他們不僅得隨時面對周遭對病兒投來的異樣眼光，更憂慮\n兒女突然因羊癲瘋不定時發作，釀成生命危險。\n　　根據統計，大約每一千人中，就有三至五人罹患羊癲瘋，以台灣\n每年出生卅萬的新生兒中，估計每年就有一千五百名羊癲瘋兒；而台\n中榮總小兒科主任遲景上對台中國小學童羊癲瘋問診調查，學童罹患\n羊癲瘋的比率為每千人中更多達六點七人。因此，每個或多或少都曾\n接觸羊癲瘋兒，學習與羊癲瘋兒童相處之道，協助他們跨出疾病的陰\n影，不但是父母的責任，也是學校老師與學生共同課題。\n　　羊癲瘋發生的型態不同，頻率也各異，依羊癲瘋發作的方式，約\n可分為全面發作和部份發作。許多人對羊癲瘋的印象停留在：患者肌\n肉抽動、口吐白沫，這是全面發作的一種，病人會突然昏到在地，稱\n為「落地發作」：一部份病人則以「失視發作」表現，即短暫失去知\n覺幾秒鐘，之後又清醒如常人，像這樣有時一天可以發作數十次。\n　　一般而言，兒童羊癲瘋以全面發作居多，局部發作者較少。局部\n發作的病人可能手腳抽動，出現感覺障礙，有五分之一之的病人在局\n部發作後，會續發全面性的發作。此外，新生兒如果有眼球不當地偏\n向一方轉動、眼皮抽動、嘴巴不當啜吸、雙手作划水狀、兩腳不停動\n或全身強直的症狀，稱為「新生兒發作」，這類型尤以早產兒居多；\n出生二至六個月大的嬰兒，則可能出現「嬰兒點頭發作」。\n　　羊癲瘋的發生與遺傳有關，幼年時若腦部受撞、如車禍，跌倒等\n；也可能造成腦部受傷，潛藏羊癲瘋發作的危險因子，極少數的病人\n則與腫瘤，高血壓造成血管硬化有關。某些外在因素也可能誘發羊癲\n瘋的產生。的確有一部分的羊癲瘋病人，因腦部對閃光刺激敏感時，\n會誘發羊癲瘋，通常光敏感者可以藉腦波得知，大約每四千名兒童中\n，就有一人對閃光敏感。除了閃光刺激外，聲音、情緒、荷爾蒙變化\n，也可能誘發羊癲瘋。有一部份的孩子面考試的壓力，或欣賞車窗外\n一閃而逝的風景也會引發羊癲瘋。　\n\u001a",
+  "T16.txt": "　　藝術史上過去只知漢代陶俑，誰知秦陵附近還沈睡著數以千計與\n真人真馬大小相仿的秦俑，發現後被譽為二十世紀考古史上重大發現\n。秦俑坑每一座精雕細琢的陶俑，無一不是秦代名工巧匠嘔心瀝血的\n創作，其造型藝術令參觀者玩味再三，也令史學家從實物資料了解秦\n代社會、軍事、文化等各方面制度。\n　　首先，從秦俑坑出土的八千多兵馬俑沒有發現任何一件武士俑戴\n頭盔，有人認為不戴頭盔無法打仗，以此否定俑坑的軍事性質，但據\n考古學家印證，這種軍隊秦代特有的「科頭軍」戰勝了六國，秦朝自\n商鞅變法以來實行嚴格獎懲制度，使「免冑挽髻」的士卒勇猛地衝入\n敵陣以求功賞。其次，軍吏俑的造型與一般武士俑的區別在於是否戴\n頭冠。軍吏俑身份最高的是將軍，頭戴單板長冠者為下級軍吏，頭戴\n雙皮長冠者為中級軍吏。將軍俑的造型風格及神態，與一般的士卒截\n然不同。軍吏俑身材塑造分三級，下級軍吏俑個子與一般武士俑差不\n多，身高約一公尺七，但中級軍吏俑就比較魁梧，身高達一公尺七八\n，胸腹圍尺寸也大，最魁梧的高級軍吏俑，也就是將軍俑，則身高達\n一米九，胸腹圍比中級軍吏要大出四、五十公分。以在出土兵器陳列\n室展出的將軍俑為例，抬頭挺胸，腹部微鼓，威風勇猛一覽無遺。其\n三，造型傳神是秦俑藝術的顯著特點，由於塑造方法採用模塑結合，\n秦俑大小差異不大，但秦俑在面部的刻畫上刻意著力，以細部的面部\n變化，塑造出不同官階，不同兵種，不同年齡，不同容貌，不同性格\n的戰士，並分別出當年來自不同地區不同民族的人物形象。\n　　前清時代，替皇帝作管家的「內務府」，常被人看不起。他們雖\n然官位不小，而且油水很多，但卻不是「兩榜及第」出身的，多為攀\n龍附鳳這樣上來的，所以正途出身的仕宦人家，不樂和他們打交道。\n「內務府」的人，逮著機會就發財了，可是由於肚裏沒墨水，有了錢\n，卻是「暴發戶」，這自然更令人家瞧不順眼了，於是就專有兩句話\n臭他們，說是「樹小屋新畫不古，此人必是內務府」。挺傳神的。由\n此可見，花錢的學問很大，不是有了錢什麼都行，還得會花，才能贏\n得尊敬，否則反而惹人譏笑。古時候，有句話十分的封建，但卻也講\n到花錢之道。這話是：「作官三代，才懂得穿衣吃飯」。意思是光穿\n衣吃飯的學問就很大，非得官宦世家之子弟，別人學不來。現在來看\n這句話，當然覺得太陳腐了。不過若從以前的時代背景而言，也不是\n說不通的。\n　　第四，秦人祖先擅長養馬，秦馬在歷史上久負盛名，秦俑坑將有\n五百多件陶馬出土，具體重現當年秦俑的相貌。有駕馭戰車的陶馬，\n也有供騎兵使用的陶鞍馬。秦俑陶馬的造型藝術難能可貴的就是與真\n馬毫髮纖細不差。中國古代藝術造型浪漫象形的不在少數，寫實的相\n對較少，秦俑這種直接表現軍事、政治組織的大型寫實作品，則是第\n一次發現。陶俑的寫實藝術，難就難在要求更高的燒窯科學與技術匹\n配。其五，秦俑的造型寫實藝術已到精緻入微的地步。跪射俑連鞋底\n上的針織花紋也沒放過，鞋的腳尖與腳跟織得緊密，中間則織得較疏\n，鞋底高度兩頭與中間也不一樣，製鞋完全符合人體工學，陶雕竟然\n一絲不苟地完全表現出來。盔甲的疊片也是如同實物一般排列雕出。\n就是馬的牙齒也塑造出四到六顆，正是青春的實際情況。殘留的彩繪\n也表現出極力模仿真馬、舌苔、馬齒的顏色都比照實物，神似且形同\n，令人目眩神迷。\n　　一旦發現孩子羊癲瘋發作，第一步應保持鎮靜，鬆開其身上過緊\n的衣物，不要移動病人。家長可將孩子身體翻向一側，在頭下墊個墊\n子，防止唾液流到氣管，也可避免舌頭往後、塞住氣管，無法呼吸。\n　　如果來得及，可以用手帕或布條包住筷子或壓舌板，塞到孩子兩\n排臼齒之間，避免牙齒咬到舌頭，但不要太勉強進行。規律的服用抗\n羊癲瘋的藥物，是目前治療羊癲瘋的最好方法，大約百分之七十五可\n以有效的減少發作次數和嚴重度，甚而完全的停止發作；但對藥物療\n效有限的頑固性羊癲瘋病人而言，並非治療就此絕望；醫界近年來發\n展手術與針灸治療，証實也可改善病情，甚而痊癒。\n　　打電腦已經是許多上班族工作的一部份，加上幾乎每個學童都人\n手一部電玩，眼科醫生指出，使用電玩和電腦最會消耗眼力，且長時\n間近距離集中視力，是加速近視度數的危險因素。因此，眼鏡族最好\n在打電腦和玩電玩時，應改戴近視度數較淺的眼鏡，可防止度數的加\n深。目前學生罹患近視有三大特色，一為近視比率「高」，其次是近\n視度數「深」，第三是發生近視年齡「早」，顯示家長應多注意孩子\n視力問題。他以到視力保健中心的受檢的孩子為例，以前家長解釋孩\n子近視原因為看書及看電視所致，現在有許多小孩迷著打電玩更是造\n成近視的另一主因。長時間近距離工作，閱讀者，應特別注意姿勢，\n光線並避免讓眼睛過度的負荷，由於長時間戴眼鏡看近物時如打電玩\n或打電腦時，會迫使水晶體過度澎脹及眼壓升高，睫狀肌更需費力的\n調整焦距，將加重眼睛疲勞，容易使眼睛度數增加。\n　　電腦硬碟容量愈作愈大，一來是軟體不斷推陳出新，內容愈來愈\n多；各品牌硬碟不斷調降售價，更是刺激電腦使用者選購高容量硬碟\n的主因。而換市場上，最近強力推薦四百二十百萬位元容量的機種，\n成交價不過約七千元而，更意味著個人電腦容量已向更高境界邁進。\n\u001a",
+  "T17.txt": "　　李登輝總統應國民大會之邀，發表國情報告並答覆國是建言，對\n當前立國之根本與國家發展之導向，作了立場嚴正而論述周延的宣示\n。值此內外情勢處於高度動態發展之際，對凝聚團結共識、促進安定\n進步，均具有重大意義，值得朝野各方深刻領會。國家之安全、團結\n與發展，非有堅定不移之基本國策不足以維繫正確方向於不變。今日\n我國所處環境，內有民主建設大業百事待舉，外有海峽兩岸關係潛伏\n重大變數。對此，李總統在國情報告中開宗明義指出：「為迎接新時\n代的挑戰，我們一定要把眼光放得更廣、更遠。中華民國不能自絕於\n中國大陸，也不能自外於世界。我們不僅要將台澎金馬締造為合乎世\n界潮流與先進水準的現代社會，更要為自由、民主、均富、統一的新\n中國奠定堅實的基礎。」\n　　秉此原則立場，落實在兩岸關係的問題上，李總統明確的指出：\n「我們的大陸政策是依循國家統一綱領，在民主、自由、均富的基礎\n上，實現國家統一的目標。」國統綱領作為大陸政策的最高指導原則\n，是李總統親自主持並審慎周嚴研訂而成，是現階段確保兩岸關係和\n平發展的根本準據，也是促進全中國最終和平民主統一的合理可行方\n案。李總統重申國統綱領的原則精神和實踐目標，即是進一步確認中\n國統一的方向絕不改變，反對國土分裂的立場絕不動搖。這是一項至\n為關鍵重要的政策宣示，對於兩岸的大局相當具有穩定作用，必獲國\n人堅定的支持。\n　　近年來，國內民主改革大幅躍進，多元化社會蔚為盛況，此固為\n整體社會發展進步之可喜現象，但民主與開放，目的在鞏固和發展國\n家生存條件，而非傷害國家生存根基。若干國代在國是建言中倡議更\n改國旗、國號、國歌，以建立台灣獨立國，此等極不負責任的論調，\n李總統堅決加以否定，並表示「老百姓是不會同意的。」他指出：「\n中華國民在台灣是大家的，不要分本省、外省，應共同為建設強有力\n的台灣而奮鬥，這就是中華民國。我們要奮鬥的是國家整體的發展，\n不是改國旗、國號、國歌。」\n　　今天台灣兩千一百萬人民，幾乎全部是從大陸來的先後期移民，\n所謂外省人與本省人之分，除了時間因素之外，毫無意義可言。李總\n統說：「我是台灣人，台灣人都是中國人」，完全切合歷史與現實之\n正確認識，實非一鬆褊狹膚淺之說可以比擬。「台灣人」與「中國人\n」並非對立不相容的概念，台灣人是中國人的一部分，住在台灣的中\n國人即可稱之為台灣人，經國先生說「我是台灣人」即為此意。如若\n干人終於褊狹情結，否定台灣人與中國人的一體關係，進而主張變更\n國旗、國號、國歌，實乃私心自用誤導歷史。李總統之認為老百姓「\n絕不會同意」的論斷，無非就是期望國人，無分族群，不論地域，擴\n大團結，齊心奮鬥，追求共同的前途與福祉。\n　　在大陸政策方面，李總統重申「國統綱領」的原則，呼籲兩岸要\n突破互信不足的障礙，使雙方互動能建立制度化的軌道。足以見李總\n統已洞察到兩岸關係發展的迫切性，不容再事拖延，更不容退而不進\n。辜汪星島會談之後，兩岸關係一度柳暗花明，然在千島湖事件以及\n後續事務性會談的破裂後，兩岸關係似又蒙上一層陰影，日前大陸海\n協會汪道涵會長發表沈痛談話，顯然希望能夠打開因千島湖事件所形\n成的僵局，並呼籲能再舉行一次辜汪高層會談。在汪道涵談話中所顯\n示的客觀與冷靜，已足以窺見大陸對兩岸的溝通並非全無誠意；而我\n方海基會董事長辜振甫先生之主張「推動兩會負責人舉行高層的政策\n性對話的呼籲」，應該是兩岸進一步將事務性談判升高為政策性談判\n的試探。\n　　因此我們認為，兩岸如一直繭縛於事務性談判的小格局中，非僅\n雙方在文字句讀間容易自陷於困境，且往往因枝微末節而肇致意氣之\n爭。古人常說，「君子務本」，如本末倒置，何能期其於成？今天兩\n岸領導者如均能認清中國前途，合則兩利之真諦，自應摒除一切疑忌\n，鼓足勇氣，儘速促成辜汪第二次會談，而會談內容亦應立即升高為\n政策性。這樣做，至少可以讓兩岸中國人都能知道，中國統一的困難\n何在，認知的差距何在，如何方能彌補這些裂痕。我們當然不能期待\n一、兩次辜汪會談就能達致令人滿意的結果，但只要管道暢通，會談\n的層級還可以再升高，並且會談的內容還可以再深入。\n　　我們之所以對辜汪第二次會談抱持這麼遠大的期望，理由是因兩\n岸目前的會談「動機」已較以前更為成熟。尤其在李總統重申其一貫\n的立場，釐清中國和平統一方向的談話之後，令人具有更多的信心。\n我們不能當時機成熟之時視而不見，更不應對善意的回應拒而不納。\n陸委會成立之初，顧名思義，即是為開拓兩岸關係所設。面對這樣重\n大的任務，理應在盤根錯節的困局中尋找出路，更須有極大的耐心與\n勒性解決由歷史所形成的複雜問題；既不應該存有意氣之見，尤其不\n應該有矜持之態斤斤拘泥於細微末節，致使兩岸關係停滯不進。現李\n總統既已廓釐清霧，指出正確的政策方向，則雙方期盼的辜汪二次會\n談，在負有推動兩岸基本政策之責任的陸委會，實應全力促成會談的\n成功，不應該再有背道而馳的意見，有負總統的苦心與全民的殷望。\n　　行政院主計處昨天公布五月份台灣地區物價變動概況指出，消費\n者物價指數較去年同月上漲百分之四點三三，與躉售物價指數同創新\n高點，進口物價指數更上漲達百分之五點零七。台灣地區的物價之高\n，本就在世界上名列前茅。如今又因新台幣對美元大幅貶值使進口成\n本增加，以及央行採取低利率政策使市面銀根寬鬆，而形成通貨膨脹\n的壓力。消費者物價升至新高點，雖有人為哄抬的因素羼雜在內；但\n其所反映的通貨膨脹趨勢，實已不容政府當局漠視。\n\u001a",
+  "T18.txt": "　　近三年來，因房地產價格高漲，而有所謂「無殼蝸牛」街頭遊行\n及夜宿，造成對不合理房地產價格抗議行動的一次高潮。政府對房地\n產問題，始終以經濟制度轉換期不可避免之現象及民間游資寸多等為\n理由，僅能提出增加國民住宅供應及所謂對空屋加強扣稅等對策，做\n表面上之應付，無法採取治本之道。\n　　我國為實施三民主義制度的國家，並非資本主義國家，當亦非共\n產國家。筆者對三民主義之研究極少，所知內容極有限，但至少與大\n多數讀者一樣，粗淺瞭解國父所創「民有」、「平均地權」及「土地\n漲價歸公」等偉大土地政策之理想。筆者無法評論政府所採取之房地\n產政策是否能真正符合國父遺教或三民主義之制度，但始終懷疑前述\n國父土地政策遺教，是否為造成今日房地產大漲的元凶？若其答案是\n肯定的，則可認為國父遺教之土地政策有問題；若其答案是否定的，\n則可認為政府未能遵照國父遺教執行有偏差。\n　　國父既然主張「漲價歸公」之理念，並不表示土地價格不會上漲\n，而是認為土地上漲是社會及經濟繁榮所造成，不應歸於私人所得，\n應歸於「公有」，由國家取得其上漲部分的利益。過去，政府所採取\n之「漲價歸公」政策，是使用公告價格之方式，對公告價格之上漲部\n分，課徵相當稅額，但卻忽視人為操作所引起之上漲問題。在美國，\n由於地廣人稀，土地狂飆及上漲有限，但在我國，尤其台灣地狹人稠\n之情況下，受人為操作所生之不合理上漲極為可怕。事實上，推行「\n漲價歸公」應該是穩定土地價格上漲之良策，但若未能採取適當手段\n，不但不見效果，反而會造成反效果，促使土地價格上漲，因為投機\n者反而以公告價格之上漲為其加價之理由。因此，採取「漲價歸公」\n政策，政府對各地段採用公告地價之方式，依實際使用之情形，確定\n土地之價格外，尚應配合維持其土地價格政策，始能獲得「漲價歸公\n」之實際效益。\n　　至於政府維持房地產價格，應以何種標準為基礎，應有周詳考慮\n。就房地產價格而言，可分為房價與地價兩部分，其中房價依造價而\n變動，應不成問題；但土地價格應有相當控制之必要。筆者認為，土\n地價格之上漲率或調整率，應以平均經濟成長率為限，不應超出此標\n準。為價持房地產價格上漲率不致超出平均經濟成長率，政府應採取\n之根本政策如下：\n　　一、許可制：有關房地產之購買，應經一定手續，向特定機關申\n請，取得許可之後始能為之，於過戶時須提出許可證為憑。於申請時\n，應提出購買價格、資金之來源及用途等。採取許可證之目的，在於\n控制實際需要，避免假性需求及人為操作。此種方法日本政府已採用\n，並不稀奇，但需要有相當之主管機關。\n　　二、改進課稅制度：不少人主張對空屋及持有三屋以上者，課徵\n特別稅或加重課稅。筆者認為，此種做法的效果極為有限，正如去年\n財政部課徵證券交易稅一樣，以為會收到效果，但卻於發布後不到一\n年，不得不更改課徵方式，決定於交易時課徵，避免投資人以分散或\n設立公司方式，逃避課徵。對於房地產之課稅制度，應採用下列制度\n：對都市計畫區內之私有房地：每人以土地十坪及房屋二十坪為基礎\n，確定其課稅率。超出此標準者，課徵面積之累進稅，其最高累進稅\n可達百分之二百或三百。對都市計畫區內之公司行號所有房地：以資\n本額及從業員數為準加以分級，確定各級房地基本課稅率，超出各該\n級基本者，課徵面積累進稅，其最高累進稅可達百分之二百或三百。\n對非都市計畫區內者：採取現行制度，但非都市計畫區內變更為都市\n計畫區者，應於一年內提出土地使用計畫，經主管機關核定後，其課\n徵之稅制，自滿三年後，照前述兩種情形，分別課徵之。\n　　三、設立「房地管理局」：為使前述政策能貫徹執行，於內政部\n設立「房地管理局」為其主管機關。此機關得將現有之內政部地政司\n擴大其組織及功能。房地管理局之主要職權及功能如下：（一）研擬\n房地產政策、（二）房地價格之控制、（三）房地購買許可之審核、\n（四）違規者之稽查、（五）土地使用之管理及控制等。\n　　為使房地產政策能發生更高效力，必須採取下列配合措施：一、\n填海措施：荷蘭使用填海方法，以擴大國土，為人人皆知之事實。日\n本於東京灣使用填海方式，建設貨櫃裝卸碼頭，此外，亦於大阪灣及\n神戶港採用填海方式，建設國際機場及其他設備。台灣土地極有限，\n而西海岸有相當長度之淺水區域，倘若能使用適當方法，做周詳計畫\n，進行填海，以擴張使用地，應非不可行。填海所生之土地，由政府\n劃分為各種工業區及新城市，統一公共設施及防汙設備，以出租方式\n，提供使用。二、遷移都市計畫內工業區之業者：在有計畫的填海措\n施下；所產生之各新生地，優先提供都市計畫內之業者使用，業對都\n市計畫內之工業區，做有計畫地遷移，而遷移後之土地，由所有權者\n提出使用計畫，經核定後執行之。三、空地之計畫性使用：由空地所\n有者提出使用計畫，經核定後執行之。若空地所有者未能於一定期間\n內提出使用計畫，或其使用計畫不適當者，由主管機關擬訂使用計畫\n，依其計畫執行之。四、墓地管理：加強墓地之使用及管理，由政府\n設公有火葬墓地及土葬墓地，劃定不同面積區域，設定不同面積及方\n向之單價格，提供使用。對於現有之公有墓地，應確定相當期間，逐\n區改進。\n　　房地價格之大漲，不但對國家，社會及經濟無利益，反而會帶來\n極大弊害。因此，日本、韓國、新加坡等國家均採取相當積極、具體\n而有效之政策，以避免房地產之飛漲，並穩定房地產價格，使一般人\n得有適當之居住房屋。在三民主義制度下，應採取之房地產政策，應\n該比資本主義國家更為積極，尤其在台灣更需如此。依據統計，國民\n所得之差距日益擴大，而貧富之差距亦然。我國之經濟發展被認為是\n「奇蹟」，但不少人認為，在三民義制度下，人口僅二千萬，而能創\n造出世界第六大富翁（除三名國王，應為第三名），更是奇蹟中之大\n奇蹟。目前的社會問題，如投機、治安及其他各種問題，產生之主因\n及基本因素，是不在於不合理之房地價格？實值得省思與深入探討。\n筆者曾參加某立法委員所舉辦之財經問題研討會，某企業代素於會中\n表示，土地價格高漲，企業無法擴張其規模與設備，當然有害於企業\n之成長。因此，如何長期穩定房地價格，對絕大多數人有利，同時亦\n可避免房地產市場之投機，縮短貧富差距，並可直接或間接減少許多\n問題，而且是在三民主義之下，政府應有的基本政策。\n　　無論從何種觀點而言，政府應將房地產政策列入最基本之最重要\n政策之一，並即速研訂短期性及長期性方策，於最短期間內實施。如\n此，將會受到百分之九十以上國民之稱讚與擁護，否則將會受到廣泛\n批評與反對，其後果將不堪設想。\n\u001a",
+  "T19.txt": "　　國內貿易出超大幅萎縮，為帶動出口成長，中央銀行引導雙率走\n低的政策方向已經確定。據了解，繼今年初採取寬鬆貨幣政策引台幣\n利率下降之後，央行已決定以放任台幣走貶的方式，進一步以匯率政\n策來刺激出口上提。而在匯率貶值及低利率的雙率政策引導下，台幣\n兌美元匯率在五月上旬一口氣貶值四角，目前已在向二十七元兌一美\n元的低檔關卡逼近；新台幣利率則不僅拉平了和美元利率之間的利差\n，更已進入民國七十八年以來的最低利率時期。\n　　這幾天來電視等大眾媒體一再貶抑貢寮公投的結果。在美國，不\n少核電廠即因公民投票及經濟效率太低，被關閉或停止興建，公投的\n效力是絕對無法否認的。更奇怪的，江丙坤部長居然把沒去投票的人\n數當為並未反核。如果百分之九十七的反對票不具代表性，那麼那一\n位國民黨民意代表具有代表性呢？如果這種顯然的道理都無法了解，\n我懷疑江部長真的能了解高度複雜的核能問題。\n　　中央銀行副總裁邱正雄昨日表示，經濟部日前公布的今年一到四\n月我國出超減少近七成，和我國經濟正逢轉型期，且「台灣接單、我\n國出口」的比例增加有關；他並強調，包括中央銀行在內的各部會都\n認為，「一至四月的出超數字，比預期中少。」他說，央行針對此一\n狀況會採取什麼政策，他不可能公開表示意見，但是，「央行在做什\n麼，市場上都會反映出來。」\n　　中央銀行外匯局高級官員也指出，要帶動我國經濟成長，最重要\n的動力，還是來自「出口」。官員說，近來有部分人士認為，在我國\n經濟轉型後，「出口」對台灣經濟成長的貢獻，將逐漸變成負數，並\n由「內銷」所取代。但就統計數來說，八十二年我國經濟成長六點零\n三％，其中有二點六七個百分點是靠出口來支撐；而在八十二年度的\n國民生產毛額中，商品及勞務出口所佔比例就高達四十五％。官員指\n出由此可見，不論以往或是現在，「出口的持續成長仍為台灣經濟成\n長的重要動力。」\n　　而在匯率持續貶值之際，中央銀行對利率的控制，將傾向維持在\n低檔水準。統計顯示，以貨幣市場利率及債券市場利率為代表的新台\n幣短期及長期利率，在央行持續寬鬆的引導下，目前都是處於民國七\n十八年以來的最低水準，其中貨幣市場利率約在五點五％上下，而長\n期債券利率則已跌到七％上下（銀行一年期定期存款利率為七點二五\n％）。邱正雄說，無論就貨幣市場利率，或債券市場利率而言，目前\n台幣利率都和美元利率水準已經大致「相當」。\n　　核能只是能源中的一種，它的經濟效率比不上其他的能源。同時\n最重要的是台灣不適合發展高耗能源的石化、水泥等工業，而這些又\n都是高污染的工業。在一個民主國家裡，少數人的意見應受到尊重，\n而且每個人的生命皆是珍貴的。我們反對美國、法國以南太平洋的島\n嶼來進行核子試爆，咱也沒有理由要蘭嶼的人民接受台電的核廢物。\n同樣地，貢寮的居民有權利來反對核四廠興建在他們的家鄉。其他地\n方的居民沒有權利來強迫貢寮的人民接受核四的興建。己所不欲，勿\n施於人，其他縣市如真的「愛國」大可以公投的方式來歡迎核四在這\n些縣市設廠。\n　　在交通擁塞成為各都會區普遍的現象後，申辦戶籍、監理、地政\n等業務，已成為民眾最頭痛的事情；幸好，根據草擬中的國家級資料\n庫整體規畫草案，未來民眾只要在一個服務窗口，便可辦理所有的文\n件事務，而這個窗口的設計，理論上可像自動提款機般普遍設置。美\n國白宮日前發表的「全國資訊基礎建設行動綱領」，提到這項計畫的\n效益時說，「全國資訊基礎建設加速推動，在二零零七年將使國內生\n產毛額增加一九四零億到三二一零億美元，生產力提昇二十％到四十\n％，每年節省六百億醫療資源，降低三十％教育成本」。\n　　正因為預期效益如此巨大，所以自從美國柯林頓政府提出美國全\n國資訊基礎建設計畫後，日本和新加坡這兩個以效率和生產力著稱的\n國家也隨即跟進，其他許多國家也都有醞釀類似的方案。面對新一波\n被視為國力提昇工程的國家級資訊建設競賽，國內也開始認為思考我\n國的全國資訊基礎建設藍圖要怎麼畫。資訊工業策進會推廣處長程嘉\n君說，面對美國已經推進到全國資訊基礎建設的行動方案，新加坡也\n提出了建設成為智慧島的規畫，日本更將資訊建設列為政府發行公債\n的主要用途之一，可以預料的是，未來幾年內，資訊基礎建設將在國\n內各種與資訊、科技發展相關活動及會議中，成為無可替代的最主要\n議題之一。\n　　究竟什麼是「全國資訊基礎建設」，美國政府在對民眾說明中，\n直截了當表明全國資訊基礎建設帶給美國民眾新希望：不論你何時到\n何地出差，家中的小朋友都可以看到你，和你通話，及隨時隨地可以\n看到各地圖書館中最新期刊或資料、參與全國最好老師的最精采課程\n、住在自己喜歡的地方在家上班、直接享受公家服務不必排隊等等。\n綜合來說，全國基礎建設是要所有人民無論何時、身處何地，都可以\n取得資訊，並且以聲音、影像、資料或視訊相互溝通，將可提昇國家\n的競爭力、創造就業機會，並解決面臨的各種社會問題。\n　　在反核聲浪中，台電已向原委會提出增加核電廠燃料運轉週期時\n間的申請，由原來的約十二個月延長至十八個月，亦即核電廠每十八\n個月才安排大修，原委會官員正對台電的申請評估中。不過，有官員\n私下透露，台電核電廠跳機不斷，目前距離每年跳機一次的標準仍然\n遙遠，如何能談要延長運轉週期時間，台電現提出此要求，有些太「\n急躁」了。\n\u001a",
+  "T20.txt": "　　二屆國大第四次臨時會自從四月二十九日舉行第一次會議以來，\n一開始便氣氛詭異，令人有山雨欲來風滿樓之感。但初期還算勉強維\n持外弛內張的局面。迨至進入修憲議程後，代表們的狐狸尾巴，便迫\n不及待地露了出來。脫序現象，不一而足，而且愈演愈烈。一場場的\n武打秀，打得天翻地覆，甚至受傷掛彩。昨天更演出驚心動魄的打耳\n光大戲，使國會殿堂，淪為市井宵小，嘯聚滋事之所。而那些代表們\n，展示肢體動作，行為暴力之不足，更另闢蹊徑，以口出粗鄙語言，\n亂開黃腔來消遣漫長的會期，展示看家的本領。\n　　若干代表們在會場上，經常口吐三字經，互相辱罵，也許是其草\n根性的習慣使然，媒體多加以曲諒，只在報導中零星提及，促其注意\n改正。然而這些人卻因此而益加放肆，變本加厲。並以女性同儕作為\n消遣的對象，以性的戲虐作為取笑的話栽。出言髒穢，語涉意淫。在\n「帶出場」等下流措辭之後，日前更有猥褻偷窺女國代內褲，並公然\n大聲作為插科打揮的題材。事為在場的記者所目睹親聞，撰為報導，\n刊諸報端，因此而引起女性國代對此種鄙俗荒謬言行的強烈抗議，且\n有事態擴大之虞。於是當事人竟然召開記者會，對顧自己無蘆的作為\n，不但毫無歉憾的表示，卻還公然說謊，一概否認，抑且以「抹黑」\n、「誤導」來誣賴媒體，推卸責任。\n　　同時因老羞成怒，部分國代居然還要透過政黨黨團，以記者的「\n眼睛不好」、「耳朵不太靈」、報導國大臨時會新聞發生很多錯誤為\n由，建議禁止記者進入會場採訪。這種欲蓋彌彰的扭劣作風與「鴨霸\n」心態，真令人哭笑不得，浩然興嘆。老實說，就事件本身而論，以\n猥褻的行為、粗鄙的言辭來取樂，在市纏之間，私人場合，根本司空\n見慣，媒體也決不會報導以致浪費寶貴的篇幅，污染讀者的耳目。但\n是，這種俚言鄙行，是出之於位高任重的中央級民意代表，發生於莊\n嚴隆重的國會殿堂，且又是在以修憲為使命的臨會期間，那就十分嚴\n重，而有非加報導不可的不得已理由。\n　　首先，國代們既是最高民意代表，便屬於公眾人物，公眾人物的\n言行，影響公眾的利益，因此必須充分曝光，以接受公眾的檢驗，用\n作評鑑的標準。是以公眾人物必須犧牲隱私權。任何民主國家的公眾\n人物，常因行為不檢，私德有虧，而為輿論所揭露，因而下台者，比\n比皆是。惟有自己謹言慎行，才是避禍求福之道。其次，此次國大臨\n時會的任務，一是進行第三階段的修憲，以及行使司法院正副院長及\n大法官的同意權。國大代表的責任，是如何艱巨，如何崇高。因此就\n前者而言，國代必須集中心力於憲政的認識與憲法的研究，念茲在茲\n，以期完成這崇高的使命，毋負選民的付託，隨班進退，言不及義，\n猶未為可，而況亂開黃腔，污辱女性？\n　　再次，國大代表，絕大部分是由選民投票，直接選舉而來，在代\n議制度下，代表選民，行使憲法規定的權利，而他們在開會期間，領\n取高額報酬，每日所耗總數達三百萬元，都是納稅人的血汗錢。因此\n他們在開會時的表現，有必要讓全體選民，全體納稅人獲悉，以便接\n受公評。本乎此，國大開會期間媒體的詳盡報導，正是對國大功能、\n國代作為不容推卸的責任。而況根據憲法，言論自由必須獲得充分的\n保障。今以守護憲法為職責的國代，竟然要禁止記者入場，杯葛記者\n採訪，事之悖謬，一至於此。\n　　抑有進者，作為一名政治人物，必須堅守誠信的原則，才能贏得\n社會大眾的信心，奠定穩固的民意基礎，延續其政治生命。實際上，\n這次猥褻偷窺、亂開黃腔事件，涉入者不過數人；可能也只是一時失\n態、失言，經媒體揭發，反躬自省，深自引咎、悔悟而表達歉意，以\n平息風波，所謂君子之過，如日月之蝕，過而能改，善莫大焉。然而\n當事人卻不此之圖，居然睜眼說瞎話，對鐵一般的事實，全予否認，\n反而把自己的錯誤諉諸記者的「亂講」，同時還要由政黨的黨鞭把場\n否認，由政黨的黨團提出建議杯葛採訪，這種毫無責任觀念，不顧道\n德倫理公然說謊而不臉紅的政治動作，比無恥還要無恥。我們不能不\n為民主政治的前途悲哀。\n　　國大開會的地點陽明山中山樓，原為表彰中華文化之博大悠久而\n建。國大之選擇在這一場所舉行，亦所以欲提昇文化水準，彰顯民主\n精義。如今卻由這麼一群缺乏文化素養，不知民主為何物的人物在內\n胡搞亂鬧，實在玷辱了文化，踐踏了民主。當然，其不知自愛者，只\n是一部分人，但人自對國的觀感，卻是整體的。國人對國易的印象一\n向相當惡劣，最近所發生的種種丟臉的事，更使國大的形象徹底破壞\n，廢止國大、使國會單一化的呼聲，甚囂塵上。如果此時舉行一次民\n意測驗，國大聲譽，必然墜落至谷底。國大前途，惟有繫諸國代自身\n的抉擇了。\n　　在我國，由於長期以來均由國民黨一黨執政，而且常態憲政體制\n在很長一段時間內均受到非常體制的箝制，「文官中立」的制度與文\n化均缺乏成長的環境。雖然自解嚴以來，國人已習慣多黨競爭的政治\n型態，而且朝野政治菁英也開始大力倡導行政中立的觀念，但在現實\n政治中，行政中立的原則仍經常遭政黨與政治人物的破壞，而且不少\n公務人員政黨政治觀念模糊，對國家、政府、政黨分際認知不足，行\n政中立的意識淡薄。而且隨著選舉競爭日益激烈，黨政不分的現象，\n甚至有越演越烈的趨勢。\n\u001a",
+  "T21.txt": "　　依剛進幼稚園的幼兒而言，皆是從各階層、不同生活環境聚集成\n一個小社會群，每一個幼兒（習性皆有所差異），如何把來自不同家\n庭的幼兒，培養成有良好的行為習慣與態度，使其成為身心能均衡發\n展，手腦能並用且德智兼修、文武合一的人材，端賴教師們在幼兒入\n學時，給予的生活常規訓練，以及人格教育之培養。首先應讓幼兒知\n道如何與人相處，適應團體生活，透過教師的言教及身教之典範，充\n分了解自重人重的真諦。讓幼兒從生活中潛移默化；從修己善群做起\n，以奠立「己立」與「立人」的基礎。在每日的生活領域中，由孩子\n的自我教育來啟發其自動、自治、自律的精神，落實生活即教育；俾\n有利於日後接受知識教育時的學習態度。並與同儕互助合作，共享學\n習的興趣與成長的喜悅。\n　　不過生涯路上常常是崎嶇不平的，有句俗話說：「人生不如意事\n十之八九」，於是有人將人的生涯發展形容為雪地裡的鬱金香，從落\n地生根到出芽長莖、含苞待放，以至花枝招展、成熟結蒂，這中間充\n滿辛勞、危機與困境，「要怎麼收就要怎麼栽」，所以近年來有許多\n人談論生涯規畫，無論是學生、上班族、中年人或將退休的公務員，\n重點在強調個人對自己一生的發展，應該有所準備與安排。學生涉世\n不深，未來尚有長遠的路要走，因此更需要做好生涯規畫的工作。\n　　能力是從事某項工作或學習某種知能的基礎，而興趣是引發個人\n投入並施展能力的原動力，因此在個人發展或選擇未來方向時，首先\n必須把握這兩項特質。許多學生在面臨就業或升學關卡時，常會思考\n自己的性向、興趣適合走什麼路，有些學生也會到輔導中心要求做性\n向測驗或興趣測驗，希望藉測驗結果來肯定自己的抉擇，甚至幫助自\n己做決定。不過，「測驗能告訴我將來可從事什麼職業」這種過度相\n信與依賴測驗的心態不一定正確，最好再利用其他方式，譬如全心投\n入某一件事（如考試、工讀、參加活動等），從所獲得的成績、經驗\n和別人的回報（如老師的評語、同學的觀察與意見等）中，確實認清\n自己的專長與興趣方向。能多做一件事，就多一次自我考驗、自我了\n解、自我成長機會。\n　　社會分工日益精細，工作世界的內涵也愈複雜，加上新興職業不\n斷出現，許多傳統的工作方式逐漸被淘汰，這些都會使刪從學校畢業\n出來的學生感到困怠惑，再加上社會各種光怪陸離的現象推陳出新，\n層出不窮，更加造成社會新鮮人的適應問題，許多工作適應不良、不\n滿的問題，常常就因為對社會缺乏正確的認識與完整的了解而產生，\n因此青年人在踏出校門之前，應多利用機會認識社會現況，深入了解\n工作世界的真象；同時也藉機會可以分析一般雇對員工的期望；看看\n自己是否已具備這些條件，不足的地方還可以趁在學期間多多的學習\n。現在很多學生會利用假期去打工或實習，讓自己去試驗一下，看未\n來能否勝任工作上的要求，從這樣的經驗當中把自己和這個世界連結\n起來，這種經驗對生涯規畫很有幫助。\n　　你愈感到困難的情境，愈勇於面對。譬如你最怕這個人，偏偏故\n意去面對他，或者假想他即在你眼前，你坦率地告訴他：我是多麼怕\n你、多麼恨你；或者用幽默的方法面對他。這種方法有助你克服自己\n、處理困難情境。如果你心情不好、喜歡自責、煩惱、不高興、焦慮\n、想到未來有許多事情煩惱不完，你就把手錶或鬧鐘設定十分鐘，在\n這十分鐘內儘管自責自怨自嘆，或焦慮得痛快，然後結束，去沖個澡\n或做其他事情。用十分鐘來當做處理低潮的憂鬱時間、自責時間。譬\n如生氣時摔凳子，把鬱悶情緒疏解；有的是撕紙來發洩，或在白報紙\n上亂塗一陣務使自己的憤怒不致囤積壓抑，反而得以處理，但是，並\n非找個人來當出氣筒。不滿的情緒，用大聲么喝的方法傾吐出來，達\n到宣洩負面情緒的作用。\n　　個人一生的發展可說是無數大大小小的決定串連起來，一個人在\n面臨抉擇的時刻，能否澄清自己的目標、思索各種可行的途徑、預估\n各個途徑可能發生的結果，最後再根據這些分析和比較，進而做出明\n智的選擇，從這一連串作抉定的過程之後所得到的結果，往往都會對\n個人的生涯發展造成重大的影響，雖然決定以後還可能更改，但必然\n要付出時間、金錢以及一些無形的代價，所以作決定一定要慎重。我\n國傳統家庭教育的方式較為保守，父母常藉各種方式過度保護子女，\n以致學生普遍缺乏自己下判斷、作決定、擬計畫的機會，學校教育也\n未針對此等現象加以補救，造成學生在遭遇問題時，只是被動地等待\n父母師長的指示，這種依賴的心理使得學生無法獨立思考適應環境的\n衝擊，而且往往造成不負責、也無法負責的結果。所以現在就必須多\n利用機會，從日常生活中的小事開始學習如何作決定抉擇、如何擬定\n行動計畫，先一步一步的練習等到真正面臨關鍵時刻，自然就可以做\n出妥善抉擇。\n　　本司為建立出版品之識別系統，便於內部統一管理及外界識別，\n乃委請明志工專設計服務中心依據技職教育識別標幟發展設計出版品\n封面，並區分本司出版品種類為行政、宣導、課程、活動及研究報告\n等五大類且依其特性規劃不同的封面設計，不論是簡單莊重的行政類\n封面或色彩鮮明活潑之宣導類封面，均一改過去政府機關出版品之呆\n板沈重，重新展現出生動活潑之風貌，令人耳目一新。藉著本司出版\n品封面識別系統的建立，期能與社會各界及各級學校建立更良好之溝\n通管道，亦為技職教育塑造新的形象。\n\u001a",
+  "T22.txt": "　　本部目前正在推動「發展與改進國中技藝教育方案一邁向十年國\n教目標」，亦須大家支持配合推動。部分國中生對國中現有學科較乏\n興趣每有挫折感，據悉參加技藝教育班後卻能發現興趣，重新肯定自\n己並因此能找到自己的將來。希望各位教育工作者能多替我們的社會\n、我們的青年付出關心，予以適性輔導，這是關乎年輕人的前途。青\n年人若沒適度地培育，將埋沒他們的能力。有許多國中同學在家庭生\n活並不美滿，但在某些興趣、能力上，各有專長如能適時予以指導，\n往這方面發展則可彌補某些家庭的問題，請各校長重視技藝教育班的\n學生，其實輔導這些同學，也等於在為社會做善事、積陰德。\n　　我們強調勤儉建國，勤是止於至善，儉是善用資源，期使資源得\n到合理的分配。無疑地，職業教育最基本的是要重視師生倫理、工作\n倫理、職業倫理、改正跳槽的風氣。如此培育出來之人才不僅有本科\n之專長，亦有基之人文涵養。從上述郭部長語重心長之一席話，與會\n人員皆深切體認出「加強推展人文教育，帶動教育的改革與發展，重\n整社會風氣與秩序」，應是每一位教育工作者責無旁貸之重任。此外\n，本部林司長亦受邀以「由管理學觀點談學校之經營」為題，作專題\n演講，他從投入、產出體系與經營，及管理學各項功能剖析當前學校\n之經營，頗獲與會校長之認同。\n　　學校是一個傳授知識、道德與學習技能之場所，除幫助學生在五\n育上獲得發展外，對其人格發展亦有重要之影響。它原本應是一個很\n單純從事教學或學習的地方，但從最近校園暴力事件之一再發生，犯\n罪統計上在學學生所占之少年犯罪人口比例約占半數，許多學生因害\n怕受欺負而不敢上學、及最近吸食安非他命學生人口之激增等情形來\n看，不得不讓我們重視學校安全與校園犯罪之問題。一九七五年一項\n全國性蓋格普調查顯示，少年犯罪問題就已成為美國學校十大問題之\n一。台灣地區各學校少年犯罪現象之發展雖未像美國發展那麼早，但\n從最近許多學生吸食安非他命之情形與在學學生參與犯罪問題也已成\n為我國學校重大之隱憂。\n　　我們以前的社會認為多子多孫是福，而現在政府民間都在鼓勵「\n兩個恰恰好」的家庭計劃。孩子的多少會影響父母的行為進而再影響\n子女的行為。舉兩個例子來說明：心理學家研究子女的排行與性格的\n關係時，家裡的老大往往比較有責任感而較缺乏安全感，習慣於照顧\n或指使別人而較怕痛；老二則較喜往外發展，往多方面發展，性格比\n較開朗，是一匹黑馬；老三總是比較敏感，在家不太受注意；而老么\n受縱容的機會比較大。等「兩個恰恰好」的計劃完全實施之後，家裡\n只有老大和老么，沒有老二老三，假如兩個是異性，又變成獨生子獨\n生女了。這樣，他們的行為當然要受影響。第二個例子是有關性別的\n問題。以前多子多孫，一個家庭生了五個男孩子，再生就還有機會生\n一個女的。現在兩個恰恰好，多數的父母希雍一男一女，如果兩個都\n是男的，或都是女的，父母親就有「繼續生」或「不生了」的衝突，\n而對這兩個同性的子女也有不同的期望和看法。從這兩個例子可以了\n解家庭子女人數的多少會影響父母的態度，進而影響子女的行為。\n　　除此之外，師生關係當然也至關要緊。導師與學生間的關係，是\n班級輔導成敗的關鍵。導師不能過於權威，令學生敬而遠之，使師生\n間產生隔閡；但也不能真的打成一片、完全平起平坐。導師平常要笑\n容可掬，令學生樂於親近，有問題時肯向老師請教；有心事時肯向老\n師吐露。但當學生故意犯錯、或屢勸不改時，老師也應拿出威嚴來讓\n學生知所敬畏。只要是非分寸掌握得宜，中學以上的青少年是知道好\n歹的。在和諧的同學和師生關係中，積極主動的學習，固然可以使學\n生度過快樂的學校生活，但，這還不夠，導師的教育目標是長遠的，\n導師要幫助學生過快樂的一輩子。\n　　我們常為了各種慾望或是情感上之一時不順心，就會憎恨、悲哀\n、惱怒、自憐、痛苦甚至到自暴自棄之地步；相反地，如果在名利的\n追求上稍為有所收獲就欣喜若狂，自誇自大，由於過份重視利害得失\n，常把自己與別人劃清界限而無法去愛人，親近別人，久而久之把自\n己孤立起來，這無異於將自己的心靈上了一道鎖。打開心鎖唯一法寶\n其實就是「改變觀念」如果不固執己見，您將發現很多事情常常是小\n題大做，或是太鑽牛角尖，假如能從一個廣角度來看人生，心胸自然\n就會開朗起來，然後就能跳出自己偏窄之心理困境。「自以為樂則樂\n，自以為苦則苦」；凡事在一念之間，快樂也是過一生，痛苦也是過\n一生，何不瀟灑走一回呢？且讓我們敞開心胸，以充沛的活力工作，\n心中藏有愛去面對人生各種挑戰，您將發現自己是不會寂寞的。\n　　睽違了二十年的亞運會，經過了重重困難後，終於如願以償，我\n培訓兩年餘的參加亞運選手，將可順利的開往北平，重返亞洲最大規\n模的運動場上與亞洲一流選手比個高下。這是現役國手的幸運，也是\n國人之對體育運動成績考驗的最大期盼。所以我們絕不能再以「志在\n參加」來作掩飾，因為亞運場上是我們爭勝奪標的希望。我們也具備\n有此實力，只要全力以赴，奪取更多的獎牌，並非難事。當然，運動\n場上競技是最現實的，所謂「一分耕耘，一分收穫」，成功是要靠平\n時的努力苦練才能得到的。運動成績的提昇，是要看平時的汗水流的\n多寡所造成的。亞運距今，已不足六個月，在這短短的時間內，我們\n應如何把握最後的衝刺，這是我們體育主管單位、教練、選手所必須\n詳加計畫的課題。因為再沒有時間任其蹉跎，所以必須提出幾點建議\n，願與大家共勉。\n\u001a",
+  "T23.txt": "　　觀光事業是廿一世紀經濟發展的主流，而吸引觀光客的主要手段\n以舉辦大型國際競賽為最有效的手段。諸如八四年洛杉磯奧運、八六\n年漢城亞運及八八年漢城奧運。美、韓兩國在運動會結束後，經結算\n均賺進大筆外匯，這並未包括飯店、交通、各行各業之銷售。因而世\n界各國紛紛起而爭取國際大賽其目的昭然若視，所以說舉辦國際競賽\n是促進觀光事業，爭取外匯的有效手段。綜觀世界各國運動成優異者\n，其該項目器材既為國際比賽之寵兒，故而競相使用，各參賽國家為\n爭取優異成績，對其所製造生產之器材，更是趨之若騖，使其運動器\n材工業成為外貿的主流，無形中增進了國家經濟的效益。\n　　國際體育交流逐漸流行，使國與國間的距離相對的縮短，尤於彼\n此間的相互瞭解，也達到人與人間、民族與民族間的和諧友好，這確\n實是促進國際和平的最佳使者。國際間的實力展現，多以體育運動成\n績作標的，這是除武力之外的體能競技，由於科技發展的突飛猛進，\n燬武器的性能威力強大，國際間均在有所顧忌下不敢輕舉妄動，爾後\n的展現國力最實際的是體育運動競技，所以體育運動將成為國際舞台\n的主要角色。過去數屆奧運會，因受政治的干預而出現部份國家的抵\n制，至漢城奧運會雖宣稱是近幾屆參加國家最多的一次，可是仍然有\n少數國家宣佈抵制，這種現象在未來的奧運會中將會逐漸消失，這是\n由於民主浪潮洶湧，已衝開了專制的社會主義國家大門，連蘇俄也接\n受了這一無可抗拒的潮流，所以未來的體育運動在國際活動中，將逐\n漸失去政治色彩是必然的趨勢。\n　　各種運動協會是推動運動訓練，競賽的主流，組織的健全與否直\n接影響其運動成就及工作的推展，教育部委請體育運動總會擬訂專才\n專職的辦法，其協會的主要幹部必須專業專任，由教育部撥專案經費\n核撥薪資，使各運動協會幹事部有專業專職人員辦事，推動其各項業\n務。教練是運動成績能否提昇的關鍵，我國教練技術及學養，均難與\n世界級選手教練相較，是故體育運動總會除改進各種運動協會的教練\n資格的介定，每年舉辦三期教練講習，每期一個月，以提昇其運動科\n學新知為主要講習內容，並每年選派十五至二十位優秀教練出國進修\n，以增進其技術與學養，希望在不久的將來，我們的教練也都是國際\n水準的教練，訓練出世界級選手為國爭光。\n　　另一方面，我們對「定義」本身也有曲解。曖味也好，模糊也好\n，它們都是語詞，要對它們加以定義，又少不了語詞。例如，當我們\n要弄清某個詞語的定義，我們一定會去查辭典，而辭典上對任何一詞\n的定義都是用語詞進行的。如果我們對說明某一詞所用的那些語詞的\n意思不甚了解，當然也就不可能掌握它的全部含意。例如，當我們中\n國人查漢英辭典時就常常會發生這種情況，在要查的那個詞的定義中\n，又出現了不認識的語詞。在查數學或哲學名詞辭典時也會發生這種\n情況。最糟的是，我們要查一個名詞的意思，而在其定義或說明中卻\n出現了不認識的語詞，致使不得不去查這些語詞的確切含意。這個過\n程進行到最後，或許又碰到了當初所要查的那個語詞。為了不發生這\n種循環定義，必須把定義或說明語詞所用的語詞嚴格限定在一個有限\n的語詞集合內。這個集合內的語詞都是常見而有確切含義的。\n　　所謂集合也是一個幾乎無法嚴格定義的概念。簡而言之，就是一\n組事物。人們常把一組相關的事物當作一個集合來處理，並賦予它一\n個名稱。這個名稱就叫集合名。構成一個集合的每一個事物叫作該集\n合的元素。例如，試考察「我的親友」這樣一個集合。這個集合的名\n稱就是「我的親友」，我的每一個親友都是這個集合的元素。這裡一\n個值得注意的問題是，在考察一個人是否屬於「我的親友」這個集合\n之前，首先必須把考察對象的範圍明確限定下來。例如，可以把考察\n對象的範圍限定為目前活在世上的所有人，或所有我所認識的人，或\n大學時代的友人。我們稱這種考察對象的範圍為全集。由此看來，在\n考察集合的時候，首先要有一個全集的概念，亦即，把考察對象的範\n圍明確限定下來。全集也是一種集合，相對於全集而言，我們這裡所\n說的集合又叫子集。\n　　到目前為止，有許多人都認為剛出生的嬰兒沒有感覺、沒有感情\n、不懂得語言，也沒有記憶力，因此，在理論上要教育嬰兒當然是不\n可行的。而事實上，剛生下來的嬰兒已了解語言，而記憶力也開始活\n動。新生兒具有不靠語言而能與人溝通的能力。這項能力可從他完全\n了解父母、周圍的人所說的話而得知。而在此之前的學說，認為嬰兒\n的腦部當未發育完全之前是不具任何能力的。而且，思考是藉由語言\n才辦得到，因此，得到的結論就是嬰兒不會語言，所以沒有思考的能\n力。但是，以現今發達的心理學來說，「複雜的行動完全是發端於單\n純的行動」的這項大原則已經落伍了。嬰兒的許多行動，從最初開始\n就是複雜且精密的。他們具有超年齡的天份，而且是隱藏有相當大思\n考力的人類。不僅了解語言、具有記憶的能力，更是一生中學習能力\n最強的時期了。\n　　在被責備的環境之下成長的小孩，就會發育得不夠健全。不管是\n誰，只要受到責備的話，心情當然會不好。這種情形即使是母親也是\n如此。比如每天都被婆婆責備的話，不妨想像那種情景，就不難了解\n被人責備的滋味了。人在生氣、急躁、恐懼時，頭中的血液會變成酸\n性。因此導致學習荷爾蒙無法產生來，而影響到學習能力。反之，若\n受到稱讚的話，頭腦的運作會比平常高出二十倍。以前的人認為不是\n地球在轉動，轉動的是太陽。這種觀念就是所謂的天動說。後來轉變\n成地動說。接著，從牛頓的宇宙說轉變成愛因斯坦的相對論宇宙說。\n然後由合理主義萬能的科學，轉變成二十一世紀的新自然科學。就像\n這樣，人類考慮方式的架構隨著時代而改變。現在，最頂尖的物理學\n者們，日夜致力於研究遠超過日常生活意識的新自然科學領域。實際\n說起來，人類的意識已邁入新的階段，於是，新的自然觀便在人們之\n間陸續地展開來。\n\u001a",
+  "T24.txt": "　　為了提高閱讀的速度，非考慮到利用右腦不可。現今所流行的速\n讀訓練，在將來的二十一世紀當然更是成為必要的事項。二十一世紀\n中，閃耀、具備有創造性的人，將成為企業界錄用的對象。這也是右\n腦的功能所導致的。因此，利用以往的左腦教育來培育小孩的話，將\n會培育出不符合社會需求的孩子來。那麼，如何才能培育出右腦型的\n孩子來呢？首先，應該知道右腦和左腦功能的不同之處，而且必須了\n解如何正確地推動左腦、右腦的方法。右腦主司映像、直覺，綜合來\n說，就是音樂、繪畫、雕刻、創造等方面的作用；而左腦則主司語言\n、理論、分析方面，也就是文字、記號、計算等的作用。\n　　而右腦和左腦對於資訊處理的方式也不同，這點必須了解。右腦\n是利用並聯的處理方式來處理資訊，學習任何事物時，適合從全部到\n部分的學習；左腦則為串聯處理方式，適合從部分到全部的學習方式\n。然後，必須知道的一點就是，左腦和右腦比較起來的話，右腦隱藏\n有天才般的功能，而只是左腦一直扮演一家之主的角色，讓右腦沒有\n機會出場而已。也因為如此，才使得人類一直都沒有注意到右腦隱藏\n著天才般的才能之事實。小孩子長大之後將活躍的二十一世紀，可以\n說是右腦人類活躍的時代。因此，對於左腦型的人類來說，可是非常\n不利的時代喔！這麼一來，將自家的小孩培育成右腦型的人類，可就\n成了每位父母的心願。\n　　一日只需三十分鐘，相信再怎麼忙的夫婦應該也都可以抽出時間\n。只是，每天三十分鐘的啟發工作，必須持續到小孩子上學之前，因\n此，最重要的是要有耐心。只要持之以恆，必可培育出優越素質的小\n孩來。剛生下來的任何一個嬰兒，都具有天才般的資質。若持著嬰兒\n什麼都不會而要把他培育成天才的心理來教育的話，那可就很傷腦筋\n！但是，若知道小孩子本來就具備有天才般的資質，就應該知道啟發\n的工作是相當簡單的。培育小孩輕鬆就會說英文，其實只要在吃飯時\n每天讓他聽三十分鐘的英文錄音帶就可以了。做起來並不困難。如果\n在小孩子上國中時，才開始讓他學英文的話，即使一天聽兩個小時的\n錄音帶，也無法趕上從幼兒時期就開始學的小孩。\n　　技術的訓練已到頂尖、成熟地步，重要的是要能轉換到比賽的應\n用上，要能有贏的策略，心理與體能的調適是相當重要的，球場上的\n變化能充分掌握應付，不斷的借助於比賽經驗來累積更高的排名，這\n一連串的訓練主要來自於自我的調適與思考，選手的資質可以從比賽\n的表現略知大概，光講求技術而不運用智慧的話，永遠無法贏得勝利\n，這時往往教練的重點式指點，同樣能扭轉一個人作戰的成果，這階\n段不論對於球場表面的適應，陽光和風向，觀眾等之干擾都必須有一\n套應變的方法，所以說要學習的東西可多的是，尤其參加國際賽更須\n對語言及競賽方法多加研究，以免造成對比賽的疑慮，比賽的重要性\n可想而知，其佔有訓練的份量約為百分之七十至八十。\n　　高地訓練是增進運動選手肌耐力及心肺功能的最佳訓練方式，這\n也是運動科學專家們一致認同的方式。張理事長在上任後，即積極以\n籌設高地運動訓練中心為其重點工作之一，曾親自率團親赴各山區遍\n尋符合標準的地點，最後決定於標高二千三百公尺之嘉義阿里山二零\n九林班地為興建地點，確定後即函請有關單位協助爭取准撥土地，現\n經有關單位同意已進行鑽探及測量，完成後即開始整體規劃，是項工\n程係列入國家體育建設中程計畫內，預定一九九二年巴塞隆納奧運會\n前完成使用。經政府檢討及傳播媒體的建議，對中正體育獎章的打破\n全國紀錄給獎，而影響選手成績的提昇。因而教育部責成體育運動會\n獎勵委員會研議修訂，其主要重點，提高在國際比賽中獲得獎牌的獎\n勵，而中正體育獎章僅保留在國際比賽中打破紀錄且未獲國光體育獎\n章者始能獲得，使以前體育獎章的弊病一掃而光，雖然在研議中的條\n文仍有對其極少的部份仍有微詞，而大部份確能獲得大眾的認同，這\n可說是過去一年來最大的收獲。\n　　九零年代的降臨，體育運動界邁向美好的里程，政府的體育建設\n中程計畫編列了一百八十五億餘元的經費支援，再加上企業的熱誠參\n與，正是我們體育運動界大展源圖之際，絕不能以微小的嫌隙而影響\n了大局。眾所週知，小自一個球隊，大至整個體育運動團體，無論是\n訓練、競賽、輔導均須大家同心協力，步調一致，作法一致才能達成\n。體育運動界本來是一個最團結最單純的園地，絕不能容許任何污染\n而破壞優良的傳統榮譽，但願我們體育運動界有此共識。體育運動的\n推展，重在「紮根」、「連貫」、「精緻」的三級「金字塔」式的執\n行計畫。以普及基層作紮根，以莊敬自強訓練作連貫，以科技精緻訓\n練達到邁向國際水準，使我國體育運動能夠達到根深蒂固的境地是為\n正途。惟這些計畫的執行，需要全國參與執行工作人員、教練、裁判\n、選手共同努力，各盡所長，才能展現績效。但是這種連貫性的執行\n計畫，必須全各階層有關人士團結和諧，捐棄成見，來開創體育運動\n的新紀元。\n　　體育運動已經呈現了美好的遠景，除了大家參與的意願普遍高漲\n外，政府又大力支持體育建設的中程計畫，在四年內編列了一百八十\n五億元龐大經費，均責成各有關單位逐步執行。這雖然不是絕後，但\n確是空前的大手筆，這證明政府及全體國民共同的認知，體育運動才\n是國家富強，國力展示，國際地位提昇的最佳途徑。在這九零年代的\n來臨的時刻，從事體育運動工作的我們，興奮雀躍之餘，應該認清自\n己的責任，團結和諧來開創體育運動的新紀元，願與大家共勉之。\n\u001a",
+  "T25.txt": "　　「台灣是販毒者的樂園？吸毒者的天堂？」如此聳動聽聞的標語\n，最近經常出現在各中外媒體之中。而愈來愈多的破獲毒品紀錄，以\n及煙毒犯佔受刑人比例愈來愈高的現象，似乎又說明了毒品在台灣地\n區氾濫的現象並不是空穴來風。一年前，行政院長連戰甫接任政務工\n作第一件重大的施政政策就是向毒品宣戰。連內閣一年來責成法務部\n反毒任務，雷厲風行，嚴格察查，破獲販毒無數。並且以調查局為首\n的稽查單位，在緝毒的作業方法上也做了許多重大的變革，使察查毒\n品的工作更具效率，也更具公信力。政府在反毒的工作上的確做了許\n多事情。另外，政府和民間公益團體也不斷的以宣導、集會、舉辦各\n種活動等來積極參與反毒的活動。這些政府與民間共同反毒的熱潮，\n的確對大眾反毒觀念的建立，以及社會教育深化有相當大的貢獻。這\n些努力我們要肯定與鼓勵，並希望這些反毒的宣導工作能夠堅定的繼\n續推動。\n　　然而，另一方面我們又不得不承認，販毒、吸食毒品的情形也有\n日趨嚴重的現象。最可怕的是吸食毒品的情形已經向青少年階層、中\n產階層，甚至於工商企業當中延伸。這種侵蝕社會根基的可怕發展，\n在反毒之餘，值得我們深思與警惕。根據多項研究的發現，台灣地區\n的毒品幾乎都是外來的，而且種類花樣之多，已不讓許多「毒品王國\n」專美於前。而吸毒人口不斷的增加，幾乎印證了毒品市場供需的實\n況，這到底是怎麼一回事呢？追究毒品氾濫的原因，不外乎：第一、\n今天這倨社會正感染經濟富裕併發症。價值觀念的轉變，富裕生活的\n陋習，各個社會結構紀律的鬆弛，使得我們國民有閒、有錢之餘，培\n養了毒品的溫床；第二、這幾年來金錢遊戲的糜爛，助長了許多不正\n常、不正當的行業與工作習性，尤其是青少年向這些不正當行業靠攏\n，使得販毒者有可乘之機；第三、自由化、開放的腳步走得很快，但\n是許多套配的規範與防範措施仍未健全，使得毒品的管道大開。\n　　這三項因素，幾乎是構成今天台灣毒品氾濫的主要原因。我們都\n有對毒品危害國家的認知。一百多年前，外國販毒給我國，使得中國\n幾乎亡國滅種。今天我們更相信，如果不有效制止毒品和吸毒人口的\n惡化，我們仍然可能重蹈一百多年前的命運。如前所言，國內的毒品\n幾乎都是外來的。因此政府在緝查毒品的工作上一定要嚴厲、再嚴厲\n。根據政府查獲毒品的經驗，我國毒品的來源許多是出自大陸彼岸。\n調查局的統計數據指出，前年所緝獲的毒品，有百分之二十二來自大\n陸，去年更上升到百分之四十七。大陸每年生產的海洛因有百分之三\n十流入台灣，而安非他命的主要成分麻黃素幾乎是大陸製造，經由走\n私入台。這種毒品流向的源頭，不得不使我們更要謹慎注意中共對我\n們的企圖。中共以毒品來腐化我們，以達到不用兵而奪取台灣的目的\n不是不可能的事。因此，如何「拒毒於彼岸」可謂是在緝毒工作上首\n要解決的問題。\n　　其次，以教化與法治健全社會秩序，善導人心思想和生活習慣，\n可能是全體國民同心協力一齊反毒的唯一法寶。只要吸毒的人口愈來\n愈少，毒品就沒有市場，而政府反毒的工作效率將更為提高。星、馬\n等國的作法值得借鏡。總之，反毒的工作已經成為國家最重要的政策\n。政府與國人要以堅定、堅決的態度和行動，合作無間，務使毒品有\n朝一日在我國絕跡。\n　　行政院主計處日前提出「台灣地區住宅狀況調查研析報告」指出\n，今年元月台灣地區無人居住的空屋高達八十二萬戶，且每年以五萬\n戶的速度增加。據估計，如此大量的空屋，每年造成社會成本損失達\n兩千兩百餘億元，嚴重浪費國家資源。在出現大量空屋的同時，仍有\n一百萬戶左右的家庭沒有自用住宅，可見，住宅市場裡供需嚴重失調\n。雖然絕大多數的家庭都有自用住宅，建築業仍然不斷的推出新屋。\n更奇怪的是，既然供給遠超過需求，房價仍然居高不下，所以許多人\n還是買不起。台灣居民和其他地區居民相比，特別偏愛買房子。主計\n處所做的國富調查顯示，房地產價占總家庭資產價值的百分之五十九\n，可見不動產是每一個家庭最大宗的投資。英、美、日等國的住宅自\n有率只不過六成到七成。而台灣卻有八成二，在這麼高的住宅自有率\n下，台灣居民仍有，百分之八的家庭計劃在未來三年內購置新屋，其\n中無殼家庭約有百分之十八有購屋計劃，有殼家庭中也有百分之五點\n六還要購屋。\n\u001a",
+  "T26.txt": "　　回顧近年來國內的政治、社會發展思潮，「反商情結」儼然是一\n股不能令人小覷的力量，這是放眼當今各現代化國家所罕見的，也是\n對我國正在追求「全方位現代化」的國家發展極為不利的心理因素；\n難怪李總統登輝先生在接見全國商業總會理事長王又曾時，要語重心\n長地指出：反商情結是不應該有的，假如國家沒有工商界，我們的社\n會無法有長足的進步。從臺灣的經濟發展過程來看，可以充分證實李\n總統看法的正確性。以我們的人口密度之高，及資源的相對貧乏，過\n去數十年中，能從一個極為貧窮的社會，發展出如今舉世稱道的繁榮\n局面，工商界的貢獻是何等的重大！而展望未來，我們不論是要追求\n經濟的進一步成長，或在兩岸關係中，維持競爭的獨特地位，或在國\n際社會中發揮不可或缺的影響力，絕對不能沒有工商界的努力。這應\n該是稍有知識的人皆有的共識。\n　　然而，為什麼我們的社會會有「反商情結」的心理呢？其實，更\n嚴謹地說，這一種「反商情結」它還擴散到「反追求利益」的泛領域\n中，而這是有深厚的文化心理背景與社會現實因素所形成的。以文化\n心理層面來說，以儒家為主流的中國文化傳統，雖不言積極「反商」\n，但在長期的農業社會時代裡，它總是強調「重義輕利」的觀念，而\n且認為人的良好道德應是建立在樸拙的生活態度上，「重生產、輕消\n費」，甚至鄙夷追求利益的行為。在司馬遷「史記」中雖首開「貨殖\n列傳」，並有如下的雄豪壯語：「無巖處奇士之行，而長貧賤，好語\n仁義，亦足羞也」，但畢竟在社會的傳統中，「商」居四民之末，與\n地位的低落，正反應出中國人對追求利益者的貶抑之文化心理。在此\n種心理壓抑下，商人也往往不敢以追求利益為榮，甚至人格受到扭曲\n，形成「無商不奸」的不良職業形象，這對中國經濟文化的發展遲緩\n甚或停滯，以及民族競爭力的低下，有極大的影響。\n　　「臺灣經驗」在某種程度上來說，是中國歷史上少數出現「重商\n時代」的結果；現在到了全面提升「臺灣經驗」的時刻，如何賦予我\n們社會更健康的心態，來看待追求利益的行為，使整個社會的進化能\n得到更有力的泉源，實為當務之急。而首要之途，即在建立全民對「\n協作式社會價值觀」的共識，也就是李總統所說的：我國四十多年來\n的經濟發展成果，是全國同胞和政府相互配合、合作努力而達成，這\n個成績不僅僅是勞工、農民的努力，而且是所有工商企業人士的奮鬥\n而得來的。所以，我們應該在教育上與文化上，擺脫、超越傳統「反\n商情結」的心裡陰影，鼓勵國人追求利益、冒險上進的精神，做為新\n時代的新思潮。其次，我們要建立工商業社會的完備法制規章，實現\n法治社會的理想，讓「追求合法、合理利益」的行為受到保障與鼓舞\n，消除經濟活動中的反競爭與反淘汰現象，使工商業界能在良好的大\n環境下來生存與發展。最重要的是健全租稅制度，改善政治風氣，完\n備陽光法案，貫徹公平交易法規，使工商業行為能成為正正當當追求\n利益的行為，根本上扭轉「商」的傳統形象。這是根本之舉。\n　　當然，工商企業界也要改變一些不當心態與做法，要去除投機、\n取巧，甚至詐騙的歪風，恢復「信義為立業之本」的古訓，建立工商\n業時代的行業倫理，這樣才能為自己行業在社會中確立良好形象。此\n外，在追求利益的同時，不忘回饋社會的舉動，譬如捐資助學、從事\n社福工作、社區服務，甚至進行大規模文化性、公益性活動等，皆可\n為現代「陶朱公」奠定良好社會形象，而它所能發揮的企業經營之邊\n際效益，往往也是異常高的。總之，邁向二十一世紀，既是追求總體\n國力提升的時代，更是社會各種角色分工協作的時代，「反商情結」\n應該歸還歷史，展望未來，能否創造「新貨殖列傳」的精神，與中國\n人能否在二十一世紀得到全面復興，正息息相關呢！\n　　這種特殊的投資偏好，可以用文化、經濟、和制度面的因素來解\n釋。也許台灣剛從農業社會轉型進入工商社會，民眾仍然維持農業社\n會時的生活習慣，每個家庭都要有自己的土地、房產。也許因為過去\n幾十年台灣經濟快速發展，不動產價格水漲船高，在預期未來的利潤\n仍然很高的情況下，民眾有錢時喜歡投資過去最看好的不動產。從制\n度面來看，政府過去政策比較偏向幫助民眾購買自用住宅，而不提倡\n租屋。政府所蓋的國宅絕大多數都是出售。而且，購屋者有利息支出\n減稅優待，租屋者卻沒有任何優待。這些因素都會誘導民眾偏愛購屋\n。民眾偏愛購屋，自然形成一定的需求，使房價攀升。房價攀升則會\n帶動更多人追買，而造成房巾的投機風潮。房市的投機泡沫誘使建築\n商大興土木，增加新屋供給。可是供給增加，房價卻沒有隨之下跌，\n就形成了目前空屋過多，而無殼者買不起的局面。\n\u001a",
+  "T27.txt": "　　我國近百年來的政治發展，要從一個飽經專制摧殘的社會基礎上\n，發展出光彩奪目的健全民主政治，此一歷程之艱辛，較諸各民主先\n進國家，實遠為崎嶇坎坷。而　國父孫先生獨具慧眼，早在本世紀初\n，即洞悉西方民主體制之各種限制與缺失，故所提出來的政治建設主\n張，乃以超越中西政制，創造真正「主權在民」的最新民主境界為鵠\n的。可惜由於內憂外患，此一理想難以實現。以至臺灣雖創造了「經\n濟奇蹟」，但在政治發展上，仍還有待國人匯聚眾智，來突破窠臼，\n創新典範，才能解決目前國家發展所面臨的各項瓶頸，釋放出國民的\n鉅大能力，形成形神兼備的「生命共同體」。能否達成這一目標，是\n決定我們國家前途的關鍵所在。從這樣的觀點來理解李總統登輝先生\n所提出來基本政治改革理念，才能看出他的高瞻遠矚，以及與整個時\n代進化方向相契合的精神。\n　　在期勉行政院舉辦的「國建班」學員講話中，李總統再次重申他\n倡導「主權在民」與「生命共同體」的理念，認為「主權在民」是民\n主國家政治體制的中心理念，是全人類掙脫集權專制的思想基礎，是\n現代化文明成長發皇的基本動力，而人民的自由意志則必須重新凝聚\n成「生命共同體」，才有實質意義。因此，「主權在民」是我們推動\n民主化的根據，凝聚「生命共同體」則是我們推動民主化的目標。現\n在，李總統的政治理念已非常清晰了，接下來我們要研究的是：透過\n什麼樣的過程與系統來落實呢？答案是建立一個真正實現「主權在民\n」的社會，建立一個機會均等、公平參與、相互扶持、共同發展的「\n生命共同體」社會。而這也是解決目前各種政治、社會、經濟發展亂\n象的根治之道。\n　　目前國人最感困惑的一個現象是：我們的政治發展方向，不是朝\n著「國民主權」在進化，反朝著「國會主權」，甚或「議會主權」走\n去。「代議政治」的基本精神：「代議而不代決」固已蕩然無存，「\n間接民權」的各種弊病又已雪上加霜，使得政治上陷入一片混沌狀況\n，各種不正常的狀況在不斷演出，傷害了國人對民主政治的信心。現\n在，徹底的解決之道，是清除各種「間接民權」的弊病，以及改革「\n代議政治」的缺失，把我國政治環境提升到真正「主權在民」的層次\n，才能打開僵局，直接鑿通民主的大道。照保守的思考角度來看，這\n雖然困難重重，但我們如從創新的角度來思考，則現在卻是一個良機\n，因為今天我們在臺灣，具備四個良好條件：民智大開，民心可用，\n交通便捷，資訊發達。使我們完全有可能落實真正的「主權在民」；\n而在前年美國大選時，富商裴洛已提出類似主張，新加坡現在積極規\n劃全民資訊網路，預為「真接民權」做好準備。我們目前的處境，在\n政治發展上，惟有超越西方「代議政治」的格局，落實「主權在民」\n理想，方能再次創造「臺灣奇蹟」。\n　　我們建議執政黨與政府，應積極配合李總統的政治理念，擬妥政\n治發展的長、短程計畫。就長期策略而言，要規劃全民資訊網路，以\n充分反映民意，推動社區建設，強化地方自治，落實民主政治由下而\n上的民意整合運作，以創造一種嶄新而充滿活力的政治環境，使我國\n能脫胎換骨，遠離「政治低度發展」的各種鐘擺現象，進入民主政治\n的高峰階段，「主權在民」成為國本民脈所在，「生命共同體」成為\n生存發展的動源所在。就短期策略言，責成新聞局儘速建立全國民意\n調查系統，針對重大爭議性問題，了解最新民意所在，以科學的過程\n，來做為民主決策的依據，這是可行性最高的做法。\n　　我們希望主事者要多體會李總統的胸襟與氣魄，他說：這是改革\n的年代，發展的年代，革舊圖新的任務極其繁重艱鉅，而新世紀就在\n眼前，新問題、新考驗迎面而來，如果我們領導的品質、工作的方法\n這麼落伍，這麼庸碌、無效率，我們的任務要依靠什麼去達成？我們\n的前途又在那裡？我們該怎麼做？方向不是已經很清楚了嗎！\n　　房價居高不下，的確是目前房市分配不均的一個基本原因。民國\n七十年到八十一年，台灣地區平均房價上漲近二點三倍，但同期間平\n均每戶可支配所得只增加了一點四倍。房價漲，所得沒有等幅增加。\n民國七十年平均房價只是每戶可支配年所得的五倍，到了八十一年增\n加為六點八倍。美國的比率只有二點五倍左右。所以房價偏高，購屋\n能力不足，造成房市供過於求。所得的高低，決定無殼者是否有能力\n購屋，也決定市場的需求，現行的高房價低所得，大大減少了無殼者\n的有效購屋需求。相反的，高房價卻是建築商投資興建住宅的誘因，\n所以新屋供給大量增加。由於房價的向下僵硬性，房市供需無法平衡\n。未來，不是房價下跌，就得所得大幅調升，否則房市無法均衡。\n\u001a",
+  "T28.txt": "　　地球存在宇宙間究竟已多少年，數據很難提證；但是我們可以肯\n定一件事，如果照二十世紀末葉人類行徑任意多以雜蹋的結果，地球\n必然很快折壽，即使勉強維持不至絕滅，也將不利人類生活了。直至\n有識之士的覺察，提出了野生動植物保育的呼聲，乃使保育意識一時\n風起雲湧。因為大家開始意識到「地球只有一個」，毀壞了地球也就\n毀滅了全人類，甚至摧毀了全地球的物種。可是「地球」這一名詞對\n某些人來說仍無知到感覺很抽象，殊不知看到的摸到的乃至嗅到的都\n是地球的一部分，正因為地球的「寬宏大量」，竟使這個人類的衣食\n父母不僅未受絲毫敬意，甚至恣意揮霍摧折。因此，我們覺得「地球\n只有一個」的警語，對某些人尚起不了作用，一如「錢不多，要節省\n」一樣的平凡訓誡，這些人總覺得地球上有近五十億人，烙印了「天\n生萬物以養人」的謬誤概念，以致存有「保育」也者少了我又有何妨\n的心態，這正是今天人類潛藏的最大危機，也是人類自我毀滅的最大\n動能。\n　　就國人而言，除非故作健忘，否則世人加諸我們的「犀牛終結者\n」、「野生動物黑洞」等名號，以及美國「培利法案」制裁的陰影，\n總該記憶猶新；可是，很遺憾的，美化環境基金會在越南的調查，發\n現台灣觀光客消費野生動物的惡形惡狀竟是千真萬確的，這些劣跡將\n必很快傳揚世界各地，這該是多麼汗顏無地的事！地球上瀕臨絕種的\n動植物，世界各國的環保、保育組織，護之愛之猶恐不及，而我們同\n胞卻食之嚐之唯恐不及；世界保育組織對中華民國台灣地區的人民，\n無不瞪眼以視之際，我們同胞對世界各地的「奇吃異味」無不要啖之\n而後快，甚至還要啖之唯恐人不知，這種野蠻、陳腐之舉，與原始人\n類又有何異？二千多年前孟子所說：「魚我所欲也，熊掌亦我所欲也\n，二者不可得兼，舍魚而取熊掌也。」乃意指人不可貪得，而且古時\n漁獵工具粗陋魚與熊取之不易，且熊更能危害人類，致有這種說法。\n時至今日人類生存空間幾已佔盡地球，大洋之中的魚源尚虞枯竭，致\n有某些魚類受到保護，而熊類生存空間已至極限，人類何忍而欲得其\n一掌而後快？其餘虎鞭、豹鞭之屬乃至穿山甲，難道真是「懷鞭其罪\n」乎？說句粗俗話，人若須賴獸鞭以壯己，那麼這個人還有何用，豈\n非人不如獸的廢料而已！如果說人還迷信「吃什麼補什麼」的陳腐之\n言，那麼有些人吃了這麼多飛禽走獸，還要寢其皮為其飾，豈不要補\n成了一個充滿獸性之徒。\n　　不久前，我們同胞出國觀光很受歡迎，因「採購團」之號名聞遐\n邇；如今濫購狂疲乏了，但不幸卻又患了「濫吃狂」，所幸採購只是\n濫掏自己腰包而已，與人無涉，如今不惜高價濫吃保育動物，不但花\n了錢，也丟了人，這種「暴發戶心態」老毛病，不知道該吃什麼「獸\n心」才能療補？人格是每個人的，國格卻是舉國之人的形象，個人失\n格尚且為人不齒；國之失格，則舉國之人皆蒙羞。不僅如此，環保與\n保育正是今天全人類的重責大任，因為要維護整個地球的生命並延長\n其壽命，亦即保全人類自己世世代代的生命；而國人不此之圖，還出\n外濫吃保育動物，把我們的整個國格都吃垮了，我們所要付出的代價\n，不僅是丟人現眼而已，實質性的懲罰必將接踵而至。華盛頓公約組\n織正是全世界人類自覺覺人，自愛愛人，及至愛屋及烏、仁民愛物的\n一個集合體，因為我們不是聯合國的會員國，所以該組織有關單位集\n會時，我們的代表希冀旁聽一席而不可得，若當我們且同胞在越南如\n此肆無忌憚大吃稀禽珍獸的某些器官影片在會場中血淋淋地播放時，\n人家會怎樣想？會怎樣看這個「經濟奇蹟」下出產的那些怪人？會怎\n樣決定懲罪辦法？這些後遺症，同胞們應該是深作省思時刻了！要知\n道地球不是人類的私產；亦唯人類才能體悟「民吾同胞，物吾與也」\n的箴言，讓我們愛人、愛物更愛大自然吧！\n　　要平抑房價，政府得拿出具體的行動來，在供給面，釋出國有土\n地、農業用地，改為住宅、工商使用，降低地價。在需求面，則應抑\n制購屋需求，而鼓勵民眾租屋居住。甚至提供只租不售的低租金國宅\n，解決民眾住的問題，能改變民眾投資不動產習慣，才能扭轉房價飛\n漲的惡性循環。\n　　所以，經過幾年的不景氣，房價跌幅有限，而沒有什麼交易。許\n多仲介業者紛紛倒閉。二、建築商或空屋持有人財力雄厚，有能力在\n房市不景氣時，自行吸收貸款的利息及其他相關費用，所以不願意賠\n本出售。財力雄厚可以幫助他們撐得很久。三、金融體系願意以展期\n的方式繼續融資，而不把以不動產抵押貸款者斷頭。只要金融業者不\n對不動產投資者抽銀根，他們就可以再撐下去。過高的房、地價格不\n但使一般民眾無力購買，企業界也因而無力投資，而影響台灣長期的\n經濟發展。高房價誘使過多的人力、資金流入不動產，而減少了製造\n業的發展資源，扭曲了產業結構。同時房價的飛漲也造成了財富分配\n不均的問題。住宅的有無，已成為貧富差距的主要原因，未來恐將形\n成嚴重的社會問題。\n\u001a"
+};
+</script>
+</body>
+</html>

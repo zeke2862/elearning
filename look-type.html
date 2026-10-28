@@ -99,25 +99,44 @@
   .modal-msg.error { color: var(--danger); font-weight: bold; }
 
   /* ---------- 測驗畫面 ---------- */
-  #test-screen { display: none; width: 100%; max-width: 860px; }
+  /* 💡 需求1：打字畫面直接放大成「視窗大小」，並隨使用者螢幕大小自動調整：
+     不再用固定的 max-width:860px 限制寬度，改用 100% 寬 + 依視窗高度(vh)計算高度，
+     內部用 flex 直向排列，把中間的文章區塊(#test-body / #article-lines)撐滿剩餘空間。 */
+  #test-screen {
+    display: none;
+    flex-direction: column;
+    width: 100%;
+    max-width: none;
+    height: calc(100vh - 24px);
+    box-sizing: border-box;
+  }
   #test-header {
     display: flex; justify-content: space-between; align-items: center;
     background: #333; color: white; padding: 10px 18px; border-radius: 6px 6px 0 0; font-size: 0.95rem;
+    flex-shrink: 0;
   }
-  #test-body { background: #fff; padding: 0; border: 1px solid #ccc; border-top: none; }
+  #test-body {
+    background: #fff; padding: 0; border: 1px solid #ccc; border-top: none;
+    flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden;
+  }
   #test-timer { font-weight: bold; }
   #test-timer.warning { color: var(--danger); animation: pulse 1s infinite; }
   @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
 
-  /* 💡 TQC 看打版面：紅字原文列 + 黑字輸入列 一組一組配對顯示 */
+  /* 💡 TQC 看打版面：紅字原文列 + 黑字輸入列 一組一組配對顯示
+     文章區塊改用 flex:1 撐滿畫面剩餘空間，不再用固定 480px 高度上限，
+     螢幕越大能看到的行數就越多。字級也放大一點，全螢幕看起來更舒適。 */
   #article-lines {
-    max-height: 480px; overflow-y: auto;
+    flex: 1; min-height: 0; overflow-y: auto;
+    max-width: 900px;   /* 💡 文章區塊限制寬度，才能置中，不會貼齊左右兩側 */
+    width: 100%;
+    margin: 0 auto;
   }
   .line-pair { border-bottom: 1px solid #ddd; }
   .line-pair:nth-child(odd) { background: #fafafa; }
   .ref-line, .typed-line {
-    font-family: 'Consolas', 'Courier New', monospace; font-size: 1.05rem;
-    padding: 4px 14px; white-space: pre; line-height: 1.5; min-height: 1.5em;
+    font-family: 'Consolas', 'Courier New', monospace; font-size: 1.15rem;
+    padding: 6px 18px; white-space: pre; line-height: 1.6; min-height: 1.6em;
   }
   .ref-line { color: #d9363e; }
   .typed-line { color: #111; cursor: text; }
@@ -132,6 +151,7 @@
   #test-footer-bar {
     display: flex; justify-content: space-between; align-items: center;
     background: #e9e9e9; border: 1px solid #ccc; border-top: none; padding: 8px 16px; border-radius: 0 0 6px 6px;
+    flex-shrink: 0;
   }
   #test-controls { display: flex; justify-content: flex-end; margin-top: 14px; }
 
@@ -169,7 +189,9 @@
   .score-highlight-row .field .fvalue { font-size: 1.05rem; }
   .score-note { color: var(--danger); font-size: 0.85rem; text-align: center; margin: 10px 0 4px 0; }
   .score-footer { display: flex; justify-content: space-between; align-items: center; padding: 12px 20px 16px 20px; border-top: 1px solid #d3d0c4; }
-  .score-footer .footer-left { display: flex; gap: 10px; }
+  .score-footer { flex-wrap: wrap; gap: 8px; }  /* 體驗員回饋：按鈕變 5 個後會擠到換行，改成自動換排、按鈕文字不折行 */
+  .score-footer .footer-left { display: flex; gap: 8px; flex-wrap: wrap; }
+  .score-footer .btn { white-space: nowrap; }
 
   /* ---------- 第二次設定畫面：已鎖定欄位比照截圖，唯獨題目可更換 ---------- */
   .form-row input[readonly] { background: #e0e0e0; color: #666; }
@@ -203,6 +225,7 @@
   .draft-typed { color: #111; }
   .draft-typed .w-ok { color: #157347; }
   .draft-typed .w-wrong { color: #d9363e; background: #ffe3e3; border-radius: 2px; text-decoration: underline wavy #d9363e; }
+  .draft-typed .w-partial { color: #3a5bb0; background: #e8edfb; border-radius: 2px; text-decoration: underline dashed #3a5bb0; }
   .draft-typed .w-missing { color: #999; font-style: italic; }
   .draft-footer { display: flex; justify-content: flex-end; gap: 10px; padding: 10px 20px 14px 20px; border-top: 1px solid #d3d0c4; flex-shrink: 0; }
 </style>
@@ -286,7 +309,7 @@
     <div class="footer-left">
       <button class="btn" onclick="showInfo()">操作說明</button>
       <button class="btn" onclick="showContact()">聯絡我們</button>
-      <a id="homeNavLink" href="./index.html" class="btn" style="display:none; text-decoration:none; color:#333; text-align:center;">🏠 回登入首頁</a>
+      <a id="homeNavLink" href="./login.html" class="btn" style="display:none; text-decoration:none; color:#333; text-align:center;">🏠 回登入首頁</a>
     </div>
     <div class="footer-right">
       <span id="ready-hint">請準備【<span id="ready-article-name">尚未選題</span>】試題</span>
@@ -377,6 +400,8 @@
         <div class="field"><span class="flabel">測驗時間：</span><span class="fvalue" id="sc-timeused"></span></div>
       </div>
       <div class="score-highlight-row">
+        <div class="field"><span class="flabel">總打擊數：</span><span class="fvalue" id="sc-strokes"></span></div>
+        <div class="field"><span class="flabel">錯誤字數：</span><span class="fvalue" id="sc-errwords"></span></div>
         <div class="field"><span class="flabel">得分：</span><span class="fvalue" id="sc-score"></span></div>
         <div class="field"><span class="flabel">正確率：</span><span class="fvalue" id="sc-accuracy"></span></div>
         <div class="field"><span class="flabel">扣分：</span><span class="fvalue" id="sc-deduct"></span></div>
@@ -398,6 +423,7 @@
       </div>
       <div class="footer-left">
         <button class="btn" onclick="saveScoreAsFile('score')">另存新檔</button>
+        <button class="btn" onclick="saveCompareReport()">輸出比對檔</button>
         <button class="btn btn-primary" onclick="closeScoreModal()">離開</button>
       </div>
     </div>
@@ -430,6 +456,7 @@
         <div class="field" style="grid-column:1 / -1;"><span class="flabel">速度：</span><span class="fvalue" id="fn-speed" style="color:#d9363e;"></span></div>
       </div>
       <div class="score-note">請先等監考老師登記完畢後，再登出本畫面，否則視為零分！</div>
+      <div id="fn-practice-hint" style="display:none; margin-top:10px; padding:10px; background:#fff7e0; border:1px solid #ffcf40; border-radius:8px; color:#7a5b00; font-size:0.85rem; text-align:left;"></div>
     </div>
     <div class="score-footer" style="justify-content:center; gap:16px;">
       <button class="btn" onclick="showContact()">聯絡我們</button>
@@ -446,6 +473,7 @@
       <div class="draft-legend">
         <span><span class="dot" style="background:#157347;"></span>打對的字</span>
         <span><span class="dot" style="background:#ffe3e3; border:1px solid #d9363e;"></span>打錯的字</span>
+        <span><span class="dot" style="background:#e8edfb; border:1px solid #3a5bb0;"></span>時間到還沒打完（不算錯）</span>
         <span><span class="dot" style="background:#eee; border:1px solid #999;"></span>沒打到的字</span>
       </div>
       <div id="draft-lines"></div>
@@ -577,6 +605,7 @@ const LOCAL_ARTICLES = [
     content: "\n     \"Blueprint For Prosperity\" With its burgeoning trade and high foreign \nexchange reserves, Taiwan is already known as an economic powerhouse in \nEast Asia.  Now a hung infrastructure program has been announced that will \nmake ita trend-setter in improving the quality of life as well.\n     In Taiwan's headlong rush to development over the past 30 years, in-\nfrastructure and lifestyle have been neglected.  Now, all that is going to \nchange under a mammoth US$300 billion six-year development plan designed to \nturn the island into a developed nation by the end of the century.\n     Main areas due to benefit under the plan are transportation and commu-\nnications, but provision of energy and improvement of the environment will \nalso receive large shares.\n     Because of the high-tech nature of many of the projects, a large pro-\nportion of the work needed under the plan will be done by foreign firms, \nand they are currently lining up for lucrative contracts.  In terms of \nspending, the Taiwan plan dwarfs that being taken by other countries, in-\ncluding the effort to rebuild Kuwait after the Gulf War, which only cost \nabout a quarter of the Taiwan total.\n     The 779 individual projects included in the overall plan will involve \npublic works spending of US$199 billion, covering everything from high-\nspeed railways to new universities.  And in view of Taiwan's foreign \nexchange reserves of US$75 billion, no one doubts that the island has the \nability to pay.  The government is even departing from its previous policy \nof not incurring debt by issuing bonds to pay for the plan.  In view of the \nTaiwan public's thirst for investment vehicles, there is little doubt that \nthese bonds will be popular.\n     Apart from upgrading the infrastructure as a whole in Taiwan, the plan \nwill also increase spending in the central, southern and eastern parts of \ncentral, southern and eastern parts of the island to achieve a more equita-\nble spread of wealth and prevent a migration to the overcrowded north.\n     To improve transportation, for instance, a new high-speed railway from \nTaipei in northern Taiwan to Kaohsiung in the south will be built at a cost \nof US$10 billion.  This will reduce the traveling time between the two \ncities from five hours to two hours.\n     The first stage of providing mass rapid transit systems for Taiwan's \nmajor cities is under way with a US$15 billion project in Taipei whose \nfirst stage is due to be completed next year.  The city of Kaohsiung re-\ncently followed the Taipei example of selecting a U.S. consultant for its \nsubway project, which will cost US$7 billion.  Smaller systems are being \nplanned for Taichung in central Taiwan and Tainan in the south.\n     A branch of the Taipei subway will go to the Chiang Kai-shek \nInternational airport, where another facility under the plan will be the \nconstruction of a second terminal to increase capacity from eight million \nto 20 million passengers a year at a cost of US$770 million.  A completely \nnew airport in Kaohsiung will be constructed at a cost of US$500 million,\nand facilities at Green Island, Orchid Island, and Hengchun close to the \nsouthern tip of the island will be upgraded.\n     Also being studied for feasibility is new deep-water port in Kaohsiung \nat a cost of Us$12 billion.  And also in the communications sector, the \nwhole telephone system in Taiwan will be modernized.\n     Since reducing pollution and protecting the environment is regarded as \nhaving greatest priority among most people in Taiwan, a total of US$30 \nbillion will be spent on this sector during the period of the plan to \nconstruct an islandwide network of solid waste incinerators, a pollution \nmonitoring system and improved sewerage systems.\n     Jobs created from the projects are expected to help raise per capita \nincome from the present US$8,000 to US$14,000 by the end of the decade, \nputting Taiwan well within the ranks of developed nations.\n     To reduce sky-high rents, the government will invest US$42 billion in \npublic housing.  By raising the quality of life in Taiwan, it is hoped that \nmore technicians will be persuaded to stay and help make the island \na world financial, technological and commercial center.\n     To built up better relations with its trading partners, Taiwan intends \nto award as many of the contracts as possible to countries with which it \nruns up sizable trade surpluses, notably the United States and some coun-\ntries in Europe.\n     Furthermore, it is expected that Taiwan will receive a big economic \nboost from the projects which will help to prevent a recession over the \nnext few years.\n     According to official policy objective outlined by the government, the \nfive main aims of the plan are to raise the quality of life, increase na-\ntional income, provide sufficient resources for continued industrial grow-\nth, and promote balanced regional development.\n     The government realized that efficient allocation of an ample supply \nof productive resources is the key to industrial modernization and sus-\ntained economic growth.  To ensure the development of more high-tech \nindustrial establishments, the government will carefully monitor the \ndistribution of productive resources such as land, water, energy and trans-\nportation facilities during the period of the plan.\n     Priority is also being given under the plan to accelerating the devel-\nopment of backward areas by improving schools, housing, medical, cultural \nand transportation facilities.\n     To improve national wellbeing, Taiwan will be divided into 18 \"living \nprimeters\" which will be selfcontained communities providing accommoda-\ntion, and medical and shopping facilities.  In addition, a national helath \ninsurance program will be inaugurated in 1994 to provide medical insurance \ncoverage to everyone.  As well as providing a more favorable climate for \neconomic growth, it is expected that the plan will assist social stability \nby providing more employment.\n     On the demand side, and increase in public investment will encourage \nprivate investment and consumption, thereby expanding domestic demand and \nreducing the trade surplus.  These developments will reflect a higher de \ngree of economic independence and reduce vulnerability to economic \nturbulence.\n     The government realizes that success of the program will depend not \nonly on adequate funding and effective implementation, but also on whole-\nhearted support by the private sector.  To ensure that public and private \nresources are put to the best possible use, the government will introduce \nnew fiscal incentives, encourage the relalocation of industries and update \nrelated legislation during the plan period.\n     Among the targets of the plan are that economic growth will average \nseven percent a year, that investment in the public sector will grow by \n12.5 percent a year, manufacturing will grow by 6.5 percent annually, and \nthat the service and high-tech industries will grow particularly quickly.\n     By the end of the plan, Taiwan's power capacity will be raised from 17 \nmillion kilowatts to 27.5 million kilowatts, and on the social and recrea-\ntional fronts, at least one new university and several high schools will be \nset up, as well as a number of libraries, swimming pools, parks and sports \ngrounds.  Social welfare services will be enhanced, and more creational \nareas will be established.\n     \"Gardening Reaches New Heights\" Lack of space at ground level has \ncaused many householders to look at what would otherwise be a desert to \ncreate greenery--the tops of apartment buildings.  Rooftop gardens are now \nall the rage in Taipei, allowing people to show an amazing amount of crea-\ntivity along with their \"green fingers.\"\n     Alongside rapid development in business and industry, Taipei has been \nconstantly changing in decent years.  High-rise buildings have replaced the \nold two-storied houses, and people seldom have the chance to stand on solid \nground.  The high price of land caused businesses to use every piece that \nbecomes available to make even bigger returns.  As green fields become \nscarcer and scarcer, the only greenery left is often in the road dividers \non some main boulevards and a handful of small parks in Taipei."
   }
 ];
+
 
 let articles = [];           // 目前可用文章清單（自行選題用）；未連線時會自動填入 LOCAL_ARTICLES
 let currentArticle = null;   // { filename, content }
@@ -741,14 +770,40 @@ async function loadArticlesFromHost() {
     const res = await fetch(`${hostUrl}/articles`);
     articles = await res.json();
 
-    // 💡 教師端指定題目/次數的功能之後由 look-type-leaderboard.html 製作，
-    // 這裡先預設：連線成功後鎖定自行選題按鈕，沿用清單第一篇作為預設題目，測驗時間固定鎖定。
+    // 💡 連線成功後鎖定自行選題按鈕，題目改由老師在 look-type-leaderboard.html
+    // 為這個班級指定的「第一次」文章直接套用，學生不用自己選。
     resetArticleLock(true);
-    if (articles.length > 0 && !currentArticle) {
-      setCurrentArticle(articles[0].filename);
-    }
+    await loadAssignedArticleForAttempt(1);
   } catch (err) {
     updateConnStatus(`已連線，但取得題目清單失敗：${err.message}`, 'failed');
+  }
+}
+
+// 💡 依「班級 + 目前是第幾次測驗」跟老師端要指定文章（老師在排行榜頁面設定）。
+// 找不到班級、或老師還沒指定這次的文章時：如果目前還沒有任何題目（例如剛連線的第一次），
+// 退回沿用清單第一篇頂著；如果已經在打了（例如第二次沒特別指定），就保留原本的題目，不強制換掉。
+async function loadAssignedArticleForAttempt(attemptNo) {
+  const className = document.getElementById('f-class').value.trim();
+  const year = document.getElementById('f-year').value;
+
+  if (!className) {
+    if (!currentArticle && articles.length > 0) await setCurrentArticle(articles[0].filename);
+    return;
+  }
+
+  try {
+    const params = new URLSearchParams({ year, className });
+    const res = await fetch(`${hostUrl}/look-type-articles?${params.toString()}`);
+    const assigned = await res.json();
+    const filename = attemptNo === 2 ? assigned.attempt2 : assigned.attempt1;
+
+    if (filename) {
+      await setCurrentArticle(filename);
+    } else if (!currentArticle && articles.length > 0) {
+      await setCurrentArticle(articles[0].filename); // 還沒有任何題目時，先用清單第一篇頂著
+    }
+  } catch (err) {
+    if (!currentArticle && articles.length > 0) await setCurrentArticle(articles[0].filename);
   }
 }
 
@@ -863,6 +918,47 @@ async function startTestFlow() {
 
     timeLimitMinutes = parseInt(document.getElementById('f-time-limit').value, 10) || 10;
     currentAttemptNo = parseInt(document.getElementById('f-attempt-no').value, 10) || 1;
+
+    // ============================================================
+    // 💡 修正：英文看打「測驗」模式且已連線教師主機時，不能只看表單目前顯示第幾次——
+    // 學生若中途跳出（沒打第二次）、重新整理頁面再進來，表單一律會重置顯示回「第 1 次」，
+    // 導致又套用教師指定的「第一次」文章，打不到原本該打的「第二次」文章。
+    // 改成一律向教師主機查詢「今天已經正常交卷幾次」，用「已完成次數 + 1」
+    // 才是真正該進行的次數，並重新套用該次數對應的教師指定文章。
+    // ============================================================
+    if (hostUrl && testMode === 'test' && studentId) {
+      try {
+        const cntRes = await fetch(`${hostUrl}/look-type-my-attempts-today?studentId=${encodeURIComponent(studentId)}`);
+        if (cntRes.ok) {
+          const cntData = await cntRes.json();
+          const resumedAttemptNo = (cntData.completedToday || 0) + 1;
+
+          if (resumedAttemptNo > maxAttempts) {
+            // 💡 修正4：學生今天兩次都已經正常交卷、還想再進行（額外練習）時，
+            // 不再擋下來不讓打，改成沿用「這個學生最後一次打的文章」接著打，
+            // 不會突然跳回教師指定的第一次舊文章。次數顯示維持在第 2 次（表單本來就只到第2次）。
+            currentAttemptNo = maxAttempts;
+            document.getElementById('f-attempt-no').value = currentAttemptNo;
+            try {
+              const lastRes = await fetch(`${hostUrl}/look-type-last-article?studentId=${encodeURIComponent(studentId)}`);
+              if (lastRes.ok) {
+                const lastData = await lastRes.json();
+                if (lastData.articleFilename) await setCurrentArticle(lastData.articleFilename);
+              }
+            } catch (err) {
+              console.warn('查詢最後一次打的文章失敗，改用目前題目繼續：', err.message);
+            }
+          } else if (resumedAttemptNo !== currentAttemptNo) {
+            currentAttemptNo = resumedAttemptNo;
+            document.getElementById('f-attempt-no').value = currentAttemptNo;
+            await loadAssignedArticleForAttempt(currentAttemptNo); // 重新套用這個次數老師指定的文章
+          }
+        }
+      } catch (err) {
+        console.warn('查詢今天已完成次數失敗，暫時改用表單原本顯示的次數繼續：', err.message);
+      }
+    }
+
     openImeCheck();
   } catch (err) {
     alert('身份確認失敗，暫時無法開始測驗：' + err.message);
@@ -936,13 +1032,32 @@ document.getElementById('ime-check-input').addEventListener('keydown', (e) => {
 // 💡 測驗畫面
 // ============================================================
 // ============================================================
-// 💡 TQC 英文輸入技能認證 評分引擎（依「TQC英文輸入注意事項」規則實作）
-// 規則對照：
-//   一、行長61-76格(段落最後一行除外) 二、換行多按空白 三、段落縮格5格/Tab
-//   四、標點後空格數 五、破折號 六、連續二單字顛倒 七、漏行 八、一行重打
-//   九、上下行顛倒 十、最後一字 十一、一般拼字錯誤 十二、總擊數 十三、罰則(每錯扣20擊)
-//   十四、WPM=(總擊數-錯誤×20)÷5÷分鐘 十五、等級對照
+// 💡 英文看打 計分引擎 v2（2026-10-21 依「實際看打軟體」成績單 123.txt 反推後整個重寫）
+//
+// 舊版是照 TQC 文字規則自己推算（每錯扣 20 擊、錯誤率 ×20、擊數依游標位置與段落估算），
+// 跟實際軟體的成績單對不起來。這一版改成「實際軟體真的怎麼算，這裡就怎麼算」，
+// 用 123.txt（T20.txt、考試時間 10 分鐘）逐項驗證，8 個數字全部吻合：
+//
+//   總打擊數 = 學生每一行實際打出來的字元數加總（含縮排空白，不含換行；Tab 算 5 擊）  → 1400
+//   錯誤字數 = 以「單字」（用空白切開）逐字比對，大小寫不同也算錯，1 個單字最多 1 錯   → 2
+//   得分     = 總打擊數 ÷ 5                                                          → 280.0
+//   扣分     = 錯誤字數 × 10                                                          → 20
+//   實得分數 = 得分 − 扣分                                                            → 260
+//   速度     = 實得分數 ÷ 考試時間（分鐘）                                            → 26.00
+//   錯誤率   = 錯誤字數 ÷ 得分 × 100                                                  → .71 %
+//   正確率   = 100 − 錯誤率                                                           → 99.29 %
+//
+// 注意：整段包在 SCORING-ENGINE-BEGIN / END 標記裡，驗證腳本會直接把這一段抽出來跑，
+// 所以這一段只能放純計算的函式，不要碰 document / window。
 // ============================================================
+// ===SCORING-ENGINE-BEGIN===
+const LOOKTYPE_RULES = {
+  STROKES_PER_WORD: 5,        // 得分 = 總打擊數 ÷ 5（打字界慣例：5 擊 = 1 字）
+  PENALTY_PER_ERROR: 10,      // 每個錯誤單字扣 10 分（由 123.txt：2 錯 → 扣 20 反推）
+  TAB_STROKES: 5,             // Tab 鍵算 5 擊（段落縮排 5 格）
+  DISQUALIFY_ERROR_RATE: 10   // 錯誤率達 10% 以上，這次成績不合格、不予計算
+};
+
 function parseArticleLines(rawText) {
   const rawLines = rawText.replace(/\r\n/g, '\n').split('\n');
   const lines = [];
@@ -952,10 +1067,8 @@ function parseArticleLines(rawText) {
     if (content.trim() === '') { isNewParagraph = true; continue; }
     const isParagraphStart = isNewParagraph;
     isNewParagraph = false;
-    // 💡 每段開頭要縮排（TQC 規則：段落縮格5格/Tab）。原文如果本來就沒有前導
-    // 空白，這裡補上一個 Tab，讓畫面上顯示的原文列（.ref-line）跟計分邏輯
-    // （checkIndentError）看到的是同一份內容——不然畫面顯示沒縮排，學生照著
-    // 打完卻因為「沒縮排」被扣分，會覺得莫名其妙。
+    // 💡 每段開頭要縮排。原文如果本來就沒有前導空白，補上一個 Tab，
+    // 讓畫面上顯示的原文列跟學生照著打的內容是同一份。
     if (isParagraphStart && !/^[\t ]/.test(content)) {
       content = '\t' + content;
     }
@@ -968,209 +1081,111 @@ function parseArticleLines(rawText) {
   return lines;
 }
 
-function countKeystrokesForLine(lineInfo) {
-  const text = lineInfo.rawContent;
-  const leadingSpaces = text.match(/^[\t ]*/)[0];
-  let bodyText = text.slice(leadingSpaces.length);
-  // 💡 英文字行末的連字號（斷字用的連字符號）不重複計算擊數
-  if (bodyText.endsWith('-')) bodyText = bodyText.slice(0, -1);
-  // 💡 只有「每一段結尾」才計入換行 [Enter] 這一擊，段落中間換行（單純換到
-  // 下一列繼續打）不算——這邊的每一"行"是畫面排版用的，跟正式的段落結尾
-  // 是兩回事，isParagraphEnd 才對應真正的段落結尾。
-  return bodyText.length + (lineInfo.isParagraphEnd ? 1 : 0);
-}
 function splitWords(line) { return line.trim().split(/\s+/).filter(w => w.length > 0); }
 
-// 💡 規則六：一行之中，如果有「相鄰兩個單字」剛好前後對調（打成 B A，原文是 A B），
-// 只算 1 次錯誤（不是各自分開算 2 次）。其餘不成對的錯字，仍然每個字各算 1 次。
-function countWordErrorsWithSwapRule(typedWords, originalWords, wordsToScore) {
+// 一行字的「打擊數」：每個字元 1 擊，Tab 算 5 擊，換行不算（實際軟體的做法）
+function lineStrokes(text) {
+  let n = 0;
+  const s = text || '';
+  for (let i = 0; i < s.length; i++) n += (s[i] === '\t' ? LOOKTYPE_RULES.TAB_STROKES : 1);
+  return n;
+}
+
+// 逐字比對（單字為單位）。連續兩個單字前後對調（原文 A B、打成 B A）合計只算 1 錯。
+// 回傳：errors = 錯誤數；wrong = 被標成錯的單字位置（對調那一對兩個位置都標，但只算 1 錯）
+function diffWordErrors(typedWords, originalWords, wordsToScore) {
+  const wrong = [];
   let errors = 0;
   let w = 0;
   while (w < wordsToScore) {
-    const mismatch = typedWords[w] !== originalWords[w];
+    const tw = typedWords[w];
+    const ow = originalWords[w];
+    if (tw === ow) { w += 1; continue; }
     if (
-      mismatch && w + 1 < wordsToScore &&
-      typedWords[w] !== undefined && typedWords[w + 1] !== undefined &&
-      typedWords[w] === originalWords[w + 1] && typedWords[w + 1] === originalWords[w]
+      w + 1 < wordsToScore &&
+      tw !== undefined && typedWords[w + 1] !== undefined &&
+      tw === originalWords[w + 1] && typedWords[w + 1] === ow
     ) {
-      errors += 1; // 這一對「前後顛倒」的單字，合計只算 1 次錯誤
-      w += 2;
-      continue;
+      errors += 1; wrong.push(w, w + 1); w += 2; continue;
     }
-    if (mismatch) errors += 1;
-    w += 1;
+    errors += 1; wrong.push(w); w += 1;
   }
-  return errors;
-}
-
-// 💡 把 originalLines 依段落切開（用 parseArticleLines() 已經標好的 isParagraphStart），
-// 規則一／二／五／十二都要求「每一段視為一連續行」來計算擊數，不是每個畫面顯示行分開算。
-function groupIntoParagraphs(originalLines) {
-  const paragraphs = [];
-  let current = [];
-  for (const line of originalLines) {
-    if (line.isParagraphStart && current.length > 0) {
-      paragraphs.push(current);
-      current = [];
-    }
-    current.push(line);
-  }
-  if (current.length > 0) paragraphs.push(current);
-  return paragraphs;
-}
-
-// 💡 段落「完整打完」時的擊數：把整段接成連續一行來算長度。
-// 換行處如果原文本來就是斷字用的連字號結尾，連字號本身不計擊數，改算一個空格（規則二／五）；
-// 不是連字號結尾的話，換行處一樣多算一個空格（規則二：換行多按空白）。
-// 段落最後一行結尾不再多加空格。
-function paragraphContinuousLength(paraLines) {
-  let len = 0;
-  paraLines.forEach((line, idx) => {
-    const leading = line.rawContent.match(/^[\t ]*/)[0];
-    let body = line.rawContent.slice(leading.length);
-    const isLastLineOfParagraph = idx === paraLines.length - 1;
-    if (isLastLineOfParagraph) {
-      len += body.length;
-    } else if (/-$/.test(body)) {
-      len += (body.length - 1) + 1; // 去掉連字號、換算成一個空格，長度不變但邏輯上分開寫清楚
-    } else {
-      len += body.length + 1; // 換行處多算一個空格
-    }
-  });
-  return len;
-}
-
-// 💡 段落「打到一半，測驗就結束」時的擊數：從段落第一個字元開始算，算到選手實際打到的位置為止
-// （用已經打完、換行過的行的原文長度 + 目前這一行已經打出來的字數來估算「打到哪」），
-// 最後一樣 +1（換行鍵，依規則文字是連同最後一段一起算進去的）。
-function paragraphReachedLength(paraLines, typedLines, stoppedLineIdx) {
-  let len = 0;
-  for (const line of paraLines) {
-    if (line.index < stoppedLineIdx) {
-      const leading = line.rawContent.match(/^[\t ]*/)[0];
-      const body = line.rawContent.slice(leading.length);
-      if (/-$/.test(body)) len += (body.length - 1) + 1;
-      else len += body.length + 1;
-    } else if (line.index === stoppedLineIdx) {
-      const typed = typedLines[stoppedLineIdx] || '';
-      const typedLeading = typed.match(/^[\t ]*/)[0];
-      const typedBody = typed.slice(typedLeading.length);
-      const origLeading = line.rawContent.match(/^[\t ]*/)[0];
-      const origBody = line.rawContent.slice(origLeading.length);
-      len += Math.min(typedBody.length, origBody.length); // 最多不超過原文這行的長度
-    }
-    // line.index > stoppedLineIdx：這段還沒打到的部分，不列入
-  }
-  return len;
-}
-
-// 💡 規則一／二／五／十二：把總擊數改成「以段落為單位」計算——
-//   - 已經完整打完、繼續往後打的段落：整段連續長度 + 1（Enter）
-//   - 測驗結束當下正在打的那一段：只算打到的位置 + 1（Enter）
-//   - 完全沒打到的段落：不計擊數
-function computeParagraphKeystrokes(paragraphs, typedLines, lineActiveWhenStopped, isIncomplete) {
-  let total = 0;
-  const paragraphReports = [];
-  for (const para of paragraphs) {
-    const firstIdx = para[0].index;
-    const lastIdx = para[para.length - 1].index;
-    let status, keystrokes;
-    if (!isIncomplete || lastIdx < lineActiveWhenStopped) {
-      status = 'completed';
-      keystrokes = paragraphContinuousLength(para) + 1;
-    } else if (firstIdx <= lineActiveWhenStopped && lineActiveWhenStopped <= lastIdx) {
-      status = 'stopped-in';
-      keystrokes = paragraphReachedLength(para, typedLines, lineActiveWhenStopped) + 1;
-    } else {
-      status = 'not-reached';
-      keystrokes = 0;
-    }
-    total += keystrokes;
-    paragraphReports.push({ firstLine: firstIdx, lastLine: lastIdx, status, keystrokes });
-  }
-  return { total, paragraphReports };
+  return { errors, wrong };
 }
 
 /**
- * 逐行評分主函式（每行結束才計算，不中斷選手輸入，允許自行修正後繼續）。
- * 完全依官方 TQC 規則計分：
- *   - 內容跟原文不符 = 1 次錯誤（一個單字最多算 1 次，不論錯字/漏字/多字/大小寫錯誤）
- *   - 規則六：連續兩個單字前後對調，合計只算 1 次錯誤
- *   - 規則七：漏行（跳過整行沒打、但測驗並未在此結束）＝該行每個單字各算錯誤一次
- *   - 最後一字沒打完不計錯誤，但如果最後一字有打完但打錯，仍計 1 次錯誤
- *   - 完全沒打到的行（時間到或提前結束時還沒打到）不算對也不算錯
- *   - 總擊數以「段落」為單位計算（規則一／二／五／十二），不是逐行相加
+ * 計分主函式。
+ *  - originalLines：parseArticleLines() 的結果
+ *  - typedLines：學生每一行打的內容（沒打到的行是 undefined）
+ *  - isIncomplete：true＝時間到／按「結束測驗」；false＝打完最後一行按 Enter 交卷
+ *  - activeLine：結束當下游標在第幾行
+ *
+ * 「打到哪一行」(stopLine) = 游標所在行 與 最後一個有打字的行 取較後面的那個。
+ * （舊版只看游標，學生用滑鼠點回去改字之後，後面打過的行就被整個漏算，這是誤差來源之一）
+ *
+ * 規則：
+ *  - 停止那一行：已經用空白隔開的單字逐一比對；最後一個還沒打完的單字，
+ *    只要已打出來的字母跟原文開頭吻合就不算錯，打歪了才算 1 錯。
+ *    （如果那行最後一個字元是空白，代表最後一個字已經打完，要完整比對）
+ *  - 停止行之前的每一行：整行完整比對，少打、多打都算錯；整行沒打 = 該行每個單字各 1 錯。
+ *  - 停止行之後：沒打到，不算對也不算錯。
  */
-function scoreArticle(originalLines, typedLines, isLastAttemptIncomplete = false, activeLine = -1) {
-  let totalErrors = 0;
-  const lineReports = [];
-
-  for (let i = 0; i < originalLines.length; i++) {
-    const lineInfo = originalLines[i];
-    const typedLine = typedLines[i];
-    const isLastScoredLine = isLastAttemptIncomplete && (i === activeLine);
-    const originalWords = splitWords(lineInfo.rawContent);
-
-    if (typedLine === undefined) {
-      // 💡 這行選手根本沒打到（時間到，或提前結束測驗時還沒打到這裡）：
-      // 不算對也不算錯，也不計擊數。
-      lineReports.push({ line: i, type: 'not-reached', errors: 0 });
-      continue;
-    }
-
-    if (typedLine === '' && originalWords.length > 0 && !isLastScoredLine) {
-      // 💡 規則七（漏行）：這一行完全沒打半個字就換到下一行了，而且測驗並不是在
-      // 這裡結束（後面選手還有繼續打）——代表是「跳過」而不是「來不及打到」，
-      // 這一行每個單字都算錯誤一次。
-      totalErrors += originalWords.length;
-      lineReports.push({ line: i, type: 'missing-line', errors: originalWords.length });
-      continue;
-    }
-
-    const typedWords = splitWords(typedLine);
-    let lineErrors = 0;
-
-    if (isLastScoredLine) {
-      // 規則十：測驗結束時最後一個單字「沒打完」，有打的字元都算擊數、不計錯誤；
-      // 但如果最後一個單字「打完但打錯」，才計錯誤。還沒打到的字（原文超出
-      // 已打範圍）不計錯誤——選手是來不及打，不是漏打。
-      const lastTypedWord = typedWords[typedWords.length - 1];
-      const lastOriginalWordAtSamePos = originalWords[typedWords.length - 1];
-      const lastWordLooksIncomplete = lastTypedWord && lastOriginalWordAtSamePos &&
-        lastOriginalWordAtSamePos.startsWith(lastTypedWord) && lastTypedWord !== lastOriginalWordAtSamePos;
-      const wordsToScore = lastWordLooksIncomplete ? typedWords.length - 1 : typedWords.length;
-      lineErrors = countWordErrorsWithSwapRule(typedWords, originalWords, wordsToScore);
-    } else {
-      // 這行選手已經打完並按 Enter 送出（不是時間到中斷）：完整比對整行，
-      // 少打的字（漏字）、多打的字（多字）都要算錯誤，連續顛倒的一對只算 1 次（規則六）。
-      const maxLen = Math.max(typedWords.length, originalWords.length);
-      lineErrors = countWordErrorsWithSwapRule(typedWords, originalWords, maxLen);
-    }
-
-    totalErrors += lineErrors;
-    lineReports.push({ line: i, type: 'normal', errors: lineErrors });
+function scoreLookTypeArticle(originalLines, typedLines, isIncomplete, activeLine) {
+  const lastIdxAll = originalLines.length - 1;
+  let lastTyped = -1;
+  let totalStrokes = 0;
+  for (let i = 0; i <= lastIdxAll; i++) {
+    const t = typedLines[i];
+    if (t === undefined) continue;
+    totalStrokes += lineStrokes(t);
+    if (t.length > 0) lastTyped = i;
   }
+  const stopLine = isIncomplete
+    ? Math.max(Math.min(typeof activeLine === 'number' ? activeLine : -1, lastIdxAll), lastTyped)
+    : lastIdxAll;
 
-  const paragraphs = groupIntoParagraphs(originalLines);
-  const { total: totalKeystrokes, paragraphReports } = computeParagraphKeystrokes(
-    paragraphs, typedLines, activeLine, isLastAttemptIncomplete
-  );
+  let errorWords = 0;
+  const lineReports = [];
+  for (let i = 0; i <= stopLine; i++) {
+    const originalWords = splitWords(originalLines[i].rawContent);
+    const typedLine = typedLines[i] !== undefined ? typedLines[i] : '';
+    const typedWords = splitWords(typedLine);
+    const isStop = isIncomplete && i === stopLine;
+    const report = { line: i, errors: 0, wrong: [], kind: 'normal', partialIdx: -1 };
 
-  return { totalErrors, totalKeystrokes, lineReports, paragraphReports };
+    if (isStop) {
+      report.kind = 'stop';
+      const endsWithSpace = /\s$/.test(typedLine);
+      const completeCount = endsWithSpace ? typedWords.length : Math.max(0, typedWords.length - 1);
+      const d = diffWordErrors(typedWords, originalWords, completeCount);
+      report.errors = d.errors;
+      report.wrong = d.wrong;
+      if (!endsWithSpace && typedWords.length > 0) {
+        const idx = typedWords.length - 1;
+        const ow = originalWords[idx];
+        report.partialIdx = idx;
+        if (ow === undefined || !ow.startsWith(typedWords[idx])) {
+          report.errors += 1;
+          report.wrong.push(idx);
+        }
+      }
+    } else if (typedWords.length === 0 && originalWords.length > 0) {
+      report.kind = 'missing-line';
+      report.errors = originalWords.length;
+      report.wrong = originalWords.map((_, k) => k);
+    } else {
+      const d = diffWordErrors(typedWords, originalWords, Math.max(typedWords.length, originalWords.length));
+      report.errors = d.errors;
+      report.wrong = d.wrong;
+    }
+    errorWords += report.errors;
+    lineReports.push(report);
+  }
+  return { totalStrokes, errorWords, stopLine, lineReports };
 }
-function computeWPM(totalKeystrokes, totalErrors, testMinutes) {
-  const netKeystrokes = totalKeystrokes - (totalErrors * 20);
-  return Math.max(0, Math.round(netKeystrokes / 5 / Math.max(testMinutes, 1/60)));
-}
-// 💡 錯誤率 = 總錯誤次數 / 應輸入字數（整篇文章的總單字數，不管實際打到哪）× 100%，
-// ≥ 10% 就不合格，這次成績不予計算。
-function countArticleTotalWords(originalLines) {
-  return originalLines.reduce((sum, l) => sum + splitWords(l.rawContent).length, 0);
-}
-function computeErrorRate(totalErrors, totalWordCount) {
-  if (totalWordCount <= 0) return 0;
-  return (totalErrors / totalWordCount) * 100;
-}
+
+function round2(x) { return Math.round((x + Number.EPSILON) * 100) / 100; }
+
 function computeTQCLevel(wpm, disqualified) {
   if (disqualified) return '不合格';
   if (wpm >= 110) return '特優級';
@@ -1181,6 +1196,86 @@ function computeTQCLevel(wpm, disqualified) {
   if (wpm >= 12) return '初級';
   return '未達標準';
 }
+
+// 由「總打擊數、錯誤字數、考試分鐘數」算出成績單上所有數字（全部都由這三個數字推出來）
+function computeLookTypeMetrics(totalStrokes, errorWords, examMinutes) {
+  const R = LOOKTYPE_RULES;
+  const score = totalStrokes / R.STROKES_PER_WORD;                 // 得分
+  const deduction = errorWords * R.PENALTY_PER_ERROR;              // 扣分
+  const netScore = Math.max(0, score - deduction);                 // 實得分數
+  const minutes = Math.max(examMinutes, 1 / 60);
+  const speed = round2(netScore / minutes);                        // 速度
+  const rawErrRate = score > 0 ? Math.min(100, errorWords / score * 100) : 0;
+  const errorRate = round2(rawErrRate);                            // 錯誤率(%)
+  const accuracy = score > 0 ? round2(Math.max(0, 100 - rawErrRate)) : 0; // 正確率(%)
+  const disqualified = rawErrRate >= R.DISQUALIFY_ERROR_RATE;
+  return {
+    totalStrokes, errorWords, score, deduction, netScore,
+    examMinutes: minutes, speed, errorRate, accuracy, disqualified,
+    obtainedScore: disqualified ? 0 : netScore,
+    level: computeTQCLevel(speed, disqualified)
+  };
+}
+
+// ---------- 比對檔（版面比照實際軟體的成績單 txt，方便跟實際軟體產生的檔案逐行對照） ----------
+function realFmtRate(x) { const s = x.toFixed(2); return s.startsWith('0.') ? s.slice(1) : s; } // 0.71 → .71
+function expandTabs(s) { return (s || '').replace(/\t/g, ' '.repeat(LOOKTYPE_RULES.TAB_STROKES)); }
+function wordStartCols(s) { const cols = []; const re = /\S+/g; let m; while ((m = re.exec(s)) !== null) cols.push(m.index); return cols; }
+function padRight(s, width) { return s + ' '.repeat(Math.max(1, width - s.length)); }
+
+function buildRealFormatReport(info) {
+  // info: { name, idNumber, birthdate, attemptNo, examMinutes, dateStr, articleFilename,
+  //         metrics, originalLines, typedLines, lineReports }
+  const m = info.metrics;
+  const out = [];
+  out.push('軟體版本：英文看打練習');
+  out.push('姓　　名 : ' + info.name);
+  out.push('身份證號 : ' + info.idNumber);
+  out.push('生　　日 : ' + info.birthdate);
+  out.push('測 驗 別 : ' + info.attemptNo);
+  out.push('考試時間 : ' + info.examMinutes);
+  out.push('總打擊數 : ' + m.totalStrokes.toFixed(1));
+  out.push('錯誤字數 : ' + m.errorWords);
+  out.push('得分 : ' + m.score.toFixed(1));
+  out.push('扣分: ' + m.deduction);
+  out.push('考試日期 : ' + info.dateStr);
+  out.push('考試題目 : ' + info.articleFilename);
+  out.push('錯誤率:' + realFmtRate(m.errorRate) + ' %');
+  out.push('正確率:' + realFmtRate(m.accuracy) + ' %');
+  out.push('速度:' + m.speed.toFixed(2));
+  out.push('');
+
+  const NUM_COL = 85; // 數字從「前綴 7 格 + 85」= 第 92 格開始
+  let ansCum = 0, typCum = 0, errCum = 0;
+  info.lineReports.forEach((r, k) => {
+    const orig = info.originalLines[r.line].rawContent;
+    const typed = info.typedLines[r.line] !== undefined ? info.typedLines[r.line] : '';
+    ansCum += lineStrokes(orig);
+    typCum += lineStrokes(typed);
+    errCum += r.errors;
+    const origShow = expandTabs(orig).replace(/\s+$/, '');
+    const typedShow = expandTabs(typed);
+    out.push('答案==>' + padRight(origShow, NUM_COL) + ansCum);
+    out.push('======>' + padRight(typedShow, NUM_COL) + typCum);
+    // 第三行：在「錯誤單字的開頭」標 x，最後面是目前累計錯誤數
+    const typedWords = splitWords(typedShow);
+    const typedCols = wordStartCols(typedShow);
+    const origCols = wordStartCols(origShow);
+    let marks = [];
+    r.wrong.forEach(idx => {
+      const col = idx < typedWords.length ? typedCols[idx] : origCols[idx];
+      if (col !== undefined) marks.push(col);
+    });
+    let markRow = '';
+    marks.sort((a, b) => a - b).forEach(col => {
+      if (markRow.length <= col) markRow += ' '.repeat(col - markRow.length) + 'x';
+    });
+    out.push(' '.repeat(7) + padRight(markRow, NUM_COL) + '(' + errCum + ')');
+    if (k < info.lineReports.length - 1) out.push('');
+  });
+  return out.join('\r\n');
+}
+// ===SCORING-ENGINE-END===
 
 // ============================================================
 // 💡 測驗畫面：紅字原文列／黑字輸入列 配對顯示，Enter 換行送出，錯誤不中斷、不提醒，選手自行修正
@@ -1196,7 +1291,8 @@ let lineActiveWhenStopped = 0;
 
 function enterTestScreen() {
   document.getElementById('setup-dialog').style.display = 'none';
-  document.getElementById('test-screen').style.display = 'block';
+  // 💡 改成 'flex'，才能讓 #test-screen 內部用 flex 直向撐滿整個視窗高度
+  document.getElementById('test-screen').style.display = 'flex';
 
   document.getElementById('test-article-title').textContent = currentArticle.filename;
   document.getElementById('test-attempt-no').textContent = currentAttemptNo;
@@ -1447,7 +1543,7 @@ function calcLookTypeGbit(obtainedScore) {
 }
 
 // 💡 學號登入整合：跟 savesys.html 用同一套規則算存檔 key——
-// 登入過（index.html 寫進 keyagent_active_student）就用學號專屬的
+// 登入過（login.html 寫進 keyagent_active_student）就用學號專屬的
 // key，沒登入就退回沒有後綴的舊 key（維持原本單機共用的行為）。
 function currentSaveKey() {
   const BASE_SAVE_KEY = "keyagent_save_v1";
@@ -1474,7 +1570,7 @@ function awardLocalGbit(amount) {
   }
 }
 
-// 💡 如果是從 index.html 登入過來的（已核對座位），順手把姓名/座號帶進報名表單，
+// 💡 如果是從 login.html 登入過來的（已核對座位），順手把姓名/座號帶進報名表單，
 // 省得再打一次。未核對（本機模式）或沒登入過就不動，維持原本手動填寫的流程。
 document.addEventListener('DOMContentLoaded', () => {
   try {
@@ -1483,7 +1579,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const identity = JSON.parse(raw);
     if (!identity || !identity.studentNumber) return;
 
-    // 💡 只要是從 index.html 登入進來的（不論是否核對過座位），就顯示「回登入首頁」連結
+    // 💡 只要是從 login.html 登入進來的（不論是否核對過座位），就顯示「回登入首頁」連結
     const homeLink = document.getElementById('homeNavLink');
     if (homeLink) homeLink.style.display = 'inline-block';
 
@@ -1498,7 +1594,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ============================================================
-// 💡 單次測驗結束：以 TQC 規則逐行評分、計算 WPM/等級、上傳（若有連線）、詢問是否第二次
+// 💡 單次測驗結束：依「實際看打軟體」的算法計分（見上方 計分引擎 v2）、上傳（若有連線）、詢問是否第二次
 // ============================================================
 async function finishAttempt(endedEarlyOrTimeout) {
   clearInterval(timerInterval);
@@ -1511,54 +1607,80 @@ async function finishAttempt(endedEarlyOrTimeout) {
   const usedMin = Math.floor(elapsedSec / 60);
   const usedSec = elapsedSec % 60;
   const timeUsedStr = `${usedMin}分${usedSec}秒`;
-  const testMinutes = Math.max(elapsedSec / 60, 1/60);
 
   const isIncomplete = endedEarlyOrTimeout && lineActiveWhenStopped < originalLines.length;
-  const scoreResult = scoreArticle(originalLines, typedLines, isIncomplete, lineActiveWhenStopped);
-  const wpm = computeWPM(scoreResult.totalKeystrokes, scoreResult.totalErrors, testMinutes);
-  const accuracy = scoreResult.totalKeystrokes > 0
-    ? Math.max(0, Math.round(((scoreResult.totalKeystrokes - scoreResult.totalErrors * 20) / scoreResult.totalKeystrokes) * 100))
-    : 100;
-  // 💡 官方規則：錯誤率 = 總錯誤次數 ÷ 應輸入字數（整篇文章總單字數）× 100%，
-  // ≥ 10% 就不合格，這次成績不予計算（畫面顯示「不合格」，仍保留原始數字供老師參考）。
-  const totalWordCount = countArticleTotalWords(originalLines);
-  const wrongRate = Math.round(computeErrorRate(scoreResult.totalErrors, totalWordCount) * 10) / 10;
-  const disqualified = wrongRate >= 10;
-  const totalScore = wpm;      // 應得總分（滿分基準＝WPM）
-  // 💡 修正7：得分/扣分先前完全沒有統計。扣分依 TQC 規則「每個錯誤扣 20 擊」換算成分數：
-  // 扣分 = 錯誤數 × 20 擊 ÷ 5 ÷ 測驗分鐘數（與 WPM 同單位換算），實得分數 = 總分 − 扣分（不小於 0）。
-  const deduction = Math.round((scoreResult.totalErrors * 20) / 5 / Math.max(testMinutes, 1/60));
-  const netScore = Math.max(0, totalScore - deduction);
-  const obtainedScore = disqualified ? 0 : netScore;
+  const scoreResult = scoreLookTypeArticle(originalLines, typedLines, isIncomplete, lineActiveWhenStopped);
 
+  // 💡 速度的分母：時間到＝設定的考試時間；提早交卷／按「結束測驗」＝實際花的時間（最多不超過考試時間）。
+  // （2026-10-21 修正：之前提早結束也用整段考試時間，會讓提早交卷的學生速度被低估）
+  const examMinutes = testFinishedByTimeout
+    ? timeLimitMinutes
+    : Math.min(timeLimitMinutes, Math.max(elapsedSec / 60, 1/60));
+  const metrics = computeLookTypeMetrics(scoreResult.totalStrokes, scoreResult.errorWords, examMinutes);
+
+  // 為了讓下面的舊欄位（成績單彈窗、總成績、代幣、排行榜）繼續能用，名稱沿用舊的：
+  //   wpm＝速度、totalScore＝得分、wrongRate＝錯誤率(%)、accuracy＝正確率(%)
   const attemptData = {
     attemptNo: currentAttemptNo,
     articleFilename: currentArticle.filename,
-    wpm, accuracy, wrongRate, timeUsedStr, totalScore, deduction, netScore, obtainedScore, disqualified,
-    totalErrors: scoreResult.totalErrors, totalKeystrokes: scoreResult.totalKeystrokes,
+    wpm: metrics.speed,
+    accuracy: metrics.accuracy,
+    wrongRate: metrics.errorRate,
+    timeUsedStr,
+    totalScore: metrics.score,
+    deduction: metrics.deduction,
+    netScore: metrics.netScore,
+    obtainedScore: metrics.obtainedScore,
+    disqualified: metrics.disqualified,
+    totalErrors: metrics.errorWords,
+    totalKeystrokes: metrics.totalStrokes,
+    metrics,
+    examMinutes: timeLimitMinutes,
+    finishedAt: new Date(),
+    lineReports: scoreResult.lineReports,
     // 💡 看打稿對照用：保留這次測驗當下的原文與選手輸入內容快照，
     // 因為 originalLines/typedLines 會在下一次測驗開始時被覆寫。
     draftOriginalLines: originalLines.map(l => l.rawContent),
-    draftTypedLines: typedLines.slice()
+    draftTypedLines: typedLines.slice(),
+    // 「打到哪一行」改用計分引擎算出的 stopLine（游標與最後有打字的行取較後面者），
+    // 看打稿對照畫面用它判斷哪些行算入成績。
+    draftActiveLine: scoreResult.stopLine,
+    draftIsIncomplete: isIncomplete
   };
   attemptResults.push(attemptData);
 
-  // 💡 依成績發代幣，寫進跟塔防遊戲共用的本機存檔（不合格的話 obtainedScore 是 0，
-  // 換算出來的代幣會落在最低保底量，不會完全沒有，鼓勵有交卷就有收穫）
-  attemptData.gbitEarned = calcLookTypeGbit(obtainedScore);
+  // 💡 依成績發代幣，寫進跟塔防遊戲共用的本機存檔。
+  // 代幣一向是用「速度」等級的數字換算（舊版 obtainedScore 大約就是 WPM），
+  // 新版 obtainedScore 改成實得分數（例 260），數字大 10 倍，所以這裡改傳速度，發幣量維持原本的水準。
+  attemptData.gbitEarned = calcLookTypeGbit(metrics.disqualified ? 0 : metrics.speed);
   awardLocalGbit(attemptData.gbitEarned);
 
+  // 💡 送給教室主機的資料（/submit-look-type）。
+  // 舊欄位全部保留（排行榜頁面、舊版主機照樣看得懂），另外加上「跟實際軟體成績單同名同意思」的新欄位。
   const lookTypeSubmitPayload = {
     studentId,
     articleFilename: currentArticle.filename,
-    level: computeTQCLevel(wpm, disqualified),
+    level: metrics.level,
     timeLimit: `${timeLimitMinutes}分鐘`,
     timeUsed: timeUsedStr,
-    accuracy: accuracy + '%',
-    wrongRate: wrongRate,
+    accuracy: metrics.accuracy.toFixed(2) + '%',
+    wrongRate: metrics.errorRate,          // 錯誤率(%)，例 0.71
     inputMethod: '半形英數輸入法',
-    totalScore,
-    obtainedScore
+    totalScore: metrics.score,             // 得分
+    obtainedScore: metrics.obtainedScore,  // 實得分數（不合格時為 0）
+    wpm: metrics.speed,                    // 速度
+    // ---- 新欄位（與實際軟體成績單一致）----
+    scoringVersion: 'real-v1',
+    totalStrokes: metrics.totalStrokes,    // 總打擊數
+    errorWords: metrics.errorWords,        // 錯誤字數
+    score: metrics.score,                  // 得分 = 總打擊數 ÷ 5
+    deduction: metrics.deduction,          // 扣分 = 錯誤字數 × 10
+    netScore: metrics.netScore,            // 實得分數 = 得分 − 扣分
+    speed: metrics.speed,                  // 速度 = 實得分數 ÷ 考試時間
+    errorRate: metrics.errorRate,          // 錯誤率(%) = 錯誤字數 ÷ 得分 × 100
+    accuracyRate: metrics.accuracy,        // 正確率(%) = 100 − 錯誤率
+    examMinutes: metrics.examMinutes,      // 速度所用的考試分鐘數
+    disqualified: metrics.disqualified     // 錯誤率≧10% 不合格（排行榜標示「不予計算」用）
   };
 
   {
@@ -1570,23 +1692,24 @@ async function finishAttempt(endedEarlyOrTimeout) {
     const year = document.getElementById('f-year').value;
     const birthdate = `${year}/${month}/${day}`;
     const idNumber = document.getElementById('f-idnumber').value.trim();
+    const fullPayload = Object.assign({}, lookTypeSubmitPayload, { birthdate, idNumber });
 
     try {
       await fetchWithTimeout(`${reportHost()}/submit-look-type`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(Object.assign({}, lookTypeSubmitPayload, { birthdate, idNumber }))
+        body: JSON.stringify(fullPayload)
       }, 4000);
     } catch (err) {
       // 💡 連不到教室主機（通常是在家練習）：先存進待同步佇列，等雲端同步補送
       console.error('成績上傳失敗：', err.message);
       if (typeof keyagentQueuePendingAttempt === "function") {
-        keyagentQueuePendingAttempt("lookType", lookTypeSubmitPayload);
+        keyagentQueuePendingAttempt("lookType", fullPayload);
       }
     }
   }
 
-  // 💡 交卷後順手試著同步一次雲端（登入過、有設定中繼站才會真的動作，
+// 💡 交卷後順手試著同步一次雲端（登入過、有設定中繼站才會真的動作，
   // 沒有的話會安靜跳過，不影響任何原有流程）
   if (typeof keyagentCloudSyncNow === "function") keyagentCloudSyncNow();
 
@@ -1615,11 +1738,13 @@ function showScoreModal(attemptData) {
   document.getElementById('sc-article').textContent = attemptData.articleFilename;
   document.getElementById('sc-birth').textContent = `${year}/${month}/${day}`;
   document.getElementById('sc-timeused').textContent = attemptData.timeUsedStr;
-  document.getElementById('sc-score').textContent = attemptData.totalScore.toFixed(2);
+  document.getElementById('sc-strokes').textContent = attemptData.metrics.totalStrokes.toFixed(1);
+  document.getElementById('sc-errwords').textContent = attemptData.metrics.errorWords;
+  document.getElementById('sc-score').textContent = attemptData.totalScore.toFixed(1);
   document.getElementById('sc-accuracy').textContent = attemptData.accuracy.toFixed(2) + '%';
-  document.getElementById('sc-deduct').textContent = attemptData.deduction.toFixed(2);
+  document.getElementById('sc-deduct').textContent = String(attemptData.deduction);
   document.getElementById('sc-wrongrate').textContent = attemptData.wrongRate.toFixed(2) + '%';
-  document.getElementById('sc-netscore').textContent = attemptData.netScore.toFixed(2);
+  document.getElementById('sc-netscore').textContent = attemptData.netScore.toFixed(1);
   document.getElementById('sc-speed').textContent = attemptData.wpm.toFixed(2) + '字/分';
   document.getElementById('sc-level').textContent = computeTQCLevel(attemptData.wpm, attemptData.disqualified);
 
@@ -1634,12 +1759,24 @@ function showScoreModal(attemptData) {
 
   // 💡 熟練度不夠時，軟性建議去塔防遊戲練習（不強制、不阻擋，只是提醒）。
   // 門檻先給合理預設，覺得太鬆/太嚴，改這兩個常數就好。
+  // 💡 需求2：不再只有一句籠統的提醒，改用 buildPracticeAdvice() 分析這次實際打錯的字，
+  // 具體指出該加強左手/右手、上列/中列/下列、符號、還是大小寫混淆，並附上遊戲連結。
   const PRACTICE_HINT_WPM_THRESHOLD = 20;
   const PRACTICE_HINT_ACCURACY_THRESHOLD = 85;
   const hintEl = document.getElementById('sc-practice-hint');
   if (attemptData.wpm < PRACTICE_HINT_WPM_THRESHOLD || attemptData.accuracy < PRACTICE_HINT_ACCURACY_THRESHOLD) {
     hintEl.style.display = 'block';
-    hintEl.textContent = '💡 這次的速度或正確率還可以再練練，建議去塔防遊戲練習打字手感，打好基本功再回來挑戰！';
+    const advice = buildPracticeAdvice([attemptData]);
+    if (advice) {
+      hintEl.innerHTML =
+        `💡 <b>這次容易誤植的字母：</b>${advice.charList}<br>` +
+        `${advice.adviceText}<br>` +
+        KEYAGENT_LINK_HTML;
+    } else {
+      hintEl.innerHTML =
+        `💡 這次的速度或正確率還可以再練練，建議去「打字塔防」遊戲練習打字手感，打好基本功再回來挑戰！<br>` +
+        KEYAGENT_LINK_HTML;
+    }
   } else {
     hintEl.style.display = 'none';
   }
@@ -1657,22 +1794,31 @@ function showScoreModal(attemptData) {
 // 💡 看打稿對照：顯示整篇文章原文，與選手當次實際輸入結果逐行、逐字比對，
 // 方便選手自己找出打錯的地方。打對＝綠色，打錯＝紅色底線，沒打到＝灰色斜體。
 // ============================================================
-function buildDraftLineHtml(originalText, typedText) {
+function buildDraftLineHtml(originalText, typedText, report, inScoredRange) {
   const originalWords = splitWords(originalText);
   const typedWords = splitWords(typedText);
   const maxLen = Math.max(originalWords.length, typedWords.length);
+  // 💡 錯字標記直接用計分引擎算出來的結果（report.wrong），畫面上標紅的字和成績單的「錯誤字數」同一套標準。
+  // 打到一半、字母都對的最後一個字（report.partialIdx）用藍色虛線，不算錯。
+  const wrongSet = new Set(report ? report.wrong : []);
+  const partialIdx = report ? report.partialIdx : -1;
 
   let typedHtml = '';
   for (let i = 0; i < maxLen; i++) {
     const ow = originalWords[i];
     const tw = typedWords[i];
     if (tw === undefined) {
-      // 選手沒打到這個字：用原文淡灰顯示，標記為缺漏
-      typedHtml += `<span class="w-missing">${escapeHtml(ow)}</span> `;
-    } else if (tw === ow) {
-      typedHtml += `<span class="w-ok">${escapeHtml(tw)}</span> `;
-    } else {
+      if (inScoredRange && wrongSet.has(i)) {
+        typedHtml += `<span class="w-wrong" title="漏打">${escapeHtml(ow)}</span> `;   // 漏打：算錯
+      } else {
+        typedHtml += `<span class="w-missing">${escapeHtml(ow)}</span> `;               // 還沒打到
+      }
+    } else if (wrongSet.has(i)) {
       typedHtml += `<span class="w-wrong">${escapeHtml(tw)}</span> `;
+    } else if (i === partialIdx && tw !== ow) {
+      typedHtml += `<span class="w-partial">${escapeHtml(tw)}</span> `;
+    } else {
+      typedHtml += `<span class="w-ok">${escapeHtml(tw)}</span> `;
     }
   }
   return {
@@ -1699,7 +1845,8 @@ function showDraftView() {
   for (let i = 0; i < origLines.length; i++) {
     const originalText = origLines[i];
     const typedText = typedLinesSnapshot[i] !== undefined ? typedLinesSnapshot[i] : '';
-    const { refHtml, typedHtml } = buildDraftLineHtml(originalText, typedText);
+    const report = (attemptData.lineReports || [])[i] || null;      // 沒有 report＝這行沒打到（不算入成績）
+    const { refHtml, typedHtml } = buildDraftLineHtml(originalText, typedText, report, !!report);
     html += `
       <div class="draft-line-pair">
         <div class="draft-ref">${refHtml}</div>
@@ -1727,6 +1874,8 @@ function buildScoreText(which) {
     lines.push(`測驗題目：${document.getElementById('sc-article').textContent}`);
     lines.push(`生日：${document.getElementById('sc-birth').textContent}`);
     lines.push(`測驗時間：${document.getElementById('sc-timeused').textContent}`);
+    lines.push(`總打擊數：${document.getElementById('sc-strokes').textContent}`);
+    lines.push(`錯誤字數：${document.getElementById('sc-errwords').textContent}`);
     lines.push(`得分：${document.getElementById('sc-score').textContent}`);
     lines.push(`正確率：${document.getElementById('sc-accuracy').textContent}`);
     lines.push(`扣分：${document.getElementById('sc-deduct').textContent}`);
@@ -1750,6 +1899,38 @@ function buildScoreText(which) {
     lines.push(`速度：${document.getElementById('fn-speed').textContent}`);
   }
   return lines.join('\n');
+}
+
+// 💡 輸出比對檔：版面比照實際看打軟體產生的成績單（含逐行答案／輸入／錯字 x 標記），
+// 老師可以拿它跟實際軟體同一份測驗的成績單並排對照，驗證分數有沒有誤差。
+// （實際軟體的檔案是 Big5 編碼；瀏覽器這邊輸出 UTF-8 含 BOM，用記事本開啟中文不會亂碼）
+function saveCompareReport() {
+  const a = currentScoreModalAttempt;
+  if (!a || !a.metrics) { alert('目前沒有可輸出的成績資料'); return; }
+  const d = a.finishedAt || new Date();
+  const p2 = n => String(n).padStart(2, '0');
+  const dateStr = `${d.getFullYear()}/${p2(d.getMonth()+1)}/${p2(d.getDate())} ${p2(d.getHours())}:${p2(d.getMinutes())}:${p2(d.getSeconds())}`;
+  const originalLinesSnap = a.draftOriginalLines.map((t, i) => ({ index: i, rawContent: t }));
+  const text = buildRealFormatReport({
+    name: document.getElementById('f-name').value.trim(),
+    idNumber: document.getElementById('f-idnumber').value.trim(),
+    birthdate: `${document.getElementById('f-year').value}/${document.getElementById('f-month').value}/${document.getElementById('f-day').value}`,
+    attemptNo: a.attemptNo,
+    examMinutes: Number(a.metrics.examMinutes.toFixed(2)),   // 速度實際用的分鐘數（時間到＝考試時間；提早打完＝實際花的時間）
+    dateStr,
+    articleFilename: a.articleFilename,
+    metrics: a.metrics,
+    originalLines: originalLinesSnap,
+    typedLines: a.draftTypedLines,
+    lineReports: a.lineReports
+  });
+  const blob = new Blob(['\uFEFF' + text], { type: 'text/plain;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const el = document.createElement('a');
+  el.href = url;
+  el.download = `looktype_compare_attempt${a.attemptNo}.txt`;
+  el.click();
+  URL.revokeObjectURL(url);
 }
 
 function saveScoreAsFile(which) {
@@ -1784,6 +1965,12 @@ function startSecondAttempt() {
 
   lockSetupFieldsForSecondAttempt();
   document.getElementById('setup-dialog').style.display = 'block';
+
+  // 💡 只要有連線教師IP，不管是「測驗」還是「練習」模式，第二次都要照老師在
+  // 排行榜頁面指定的文章來打（老師沒特別指定第二次的話，會自然保留第一次的題目）。
+  if (hostUrl) {
+    loadAssignedArticleForAttempt(currentAttemptNo);
+  }
 }
 
 // 鎖定除了「測驗題目」以外的所有欄位（姓名/學號/班級座號/Email/生日/測驗時間/測驗別/顯示文稿/成績儲存於）
@@ -1811,6 +1998,168 @@ function lockSetupFieldsForSecondAttempt() {
 function finishAllAttempts() {
   document.getElementById('second-modal').style.display = 'none';
   showFinalModal();
+}
+
+// ============================================================
+// 💡 修正5：完成兩次測驗後，統計這個學生兩次一起「最常打錯的字元」，
+// 給出具體、針對性的練習建議（而不是只有一句籠統的「多加練習」）。
+// 用 draftOriginalLines / draftTypedLines（每次交卷時保留的原文與輸入快照）
+// 逐字元比對，只比對「兩邊都有打到」的範圍（沒打到的字不算打錯，是來不及打而已）。
+//
+// 💡 鍵位分類直接沿用「打字塔防」遊戲（英打測試36線上功能.html）裡的 ROW_DEFS，
+// 上列/中列/下列/符號 跟左右手的字母分組完全對齊該遊戲的選單分類，
+// 這樣提醒學生「該練哪一列、哪隻手」時，才能直接對應到遊戲裡真的選得到的關卡，
+// 不是自己隨便講一套跟遊戲對不起來的分類。
+// ============================================================
+const ROW_DEFS = {
+  top:     { p1: 'qwert',  p2: 'yuiop',                    label: '上列' },
+  home:    { p1: 'asdfg',  p2: 'hjkl',                     label: '中列' },
+  bottom:  { p1: 'zxcvb',  p2: 'nm',                       label: '下列' },
+  symbols: { p1: '~!@#$%', p2: "^&*()_+-=[]{}|;:'\",.<>/?", label: '符號' }
+};
+
+function findRowAndHand(ch) {
+  const lower = ch.toLowerCase();
+  for (const key of ['top', 'home', 'bottom']) {
+    const def = ROW_DEFS[key];
+    if (def.p1.includes(lower)) return { rowKey: key, rowLabel: def.label, hand: '左手' };
+    if (def.p2.includes(lower)) return { rowKey: key, rowLabel: def.label, hand: '右手' };
+  }
+  if (ROW_DEFS.symbols.p1.includes(ch) || ROW_DEFS.symbols.p2.includes(ch)) {
+    return { rowKey: 'symbols', rowLabel: '符號', hand: '' };
+  }
+  return { rowKey: 'all', rowLabel: '綜合', hand: '' };
+}
+
+function analyzeCommonMistakes(results) {
+  const charCount = {};
+  results.forEach(r => {
+    const origLines = r.draftOriginalLines || [];
+    const typedLines = r.draftTypedLines || [];
+    for (let i = 0; i < origLines.length; i++) {
+      const orig = origLines[i] || '';
+      const typed = typedLines[i];
+      if (typed === undefined) continue; // 這行根本沒打到，不能算打錯
+      const len = Math.min(orig.length, typed.length);
+      for (let c = 0; c < len; c++) {
+        const oc = orig[c];
+        if (oc === ' ' || oc === '\t') continue; // 空白/縮排不算錯字統計
+        if (oc !== typed[c]) charCount[oc] = (charCount[oc] || 0) + 1;
+      }
+    }
+  });
+  return Object.entries(charCount)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5)
+    .map(([ch, count]) => ({ ch, count }));
+}
+
+// ============================================================
+// 💡 需求2：練習指引精準化 ——
+// 把「打錯的每一個字」分類成：左手／右手 × 上列／中列／下列、符號、大小寫混淆 五大類，
+// 而不是只看單一個字。這樣才能明確告訴學生「該加強哪一種手位/鍵位」，
+// 而不是只有一句籠統的「多加練習」。
+//
+// 大小寫混淆的判斷：原文與輸入是「同一個字母」，只是大小寫不同
+// （例如原文是 A，卻打成 a）——這種錯誤通常是 Shift 鍵按的時機沒抓準，
+// 跟「按錯鍵位」是不同的問題，所以獨立分成一類，不會被誤判成上列/中列/下列的錯誤。
+//
+// 鍵位分類沿用「打字塔防」遊戲（英打測試36線上功能.html）裡的 ROW_DEFS 分組，
+// 讓建議可以直接對應到遊戲選單裡真正選得到的關卡：上列／中列／下列／符號專攻／混合進階。
+// ============================================================
+const PRACTICE_ROW_LABEL_MAP = {
+  top: '上列', home: '中列', bottom: '下列', symbols: '符號專攻', case: '混合進階'
+};
+const KEYAGENT_LINK = './英打測試36線上功能.html';
+const KEYAGENT_LINK_HTML =
+  `<a href="${KEYAGENT_LINK}" target="_blank" style="color:#6f42c1; font-weight:bold; text-decoration:underline;">👉 點我前往「打字塔防」遊戲加強練習</a>`;
+
+// 判斷單一個打錯的字元，屬於哪一種類型：大小寫混淆／符號／某一列＋左右手
+function classifyMistake(oc, tc) {
+  const isLetter = /[a-zA-Z]/;
+  if (isLetter.test(oc) && isLetter.test(tc) && oc !== tc && oc.toLowerCase() === tc.toLowerCase()) {
+    return { type: 'case', rowKey: 'case', hand: '', label: '大小寫混淆' };
+  }
+  const info = findRowAndHand(oc);
+  if (info.rowKey === 'symbols') {
+    return { type: 'symbol', rowKey: 'symbols', hand: '', label: '符號' };
+  }
+  if (info.rowKey === 'all') {
+    return { type: 'other', rowKey: 'all', hand: '', label: '其他' };
+  }
+  return { type: 'row', rowKey: info.rowKey, hand: info.hand, label: `${info.rowLabel}${info.hand ? '．' + info.hand : ''}` };
+}
+
+// 把整份（或這幾次）測驗中所有打錯的字，依上面的分類逐一歸類加總，
+// 找出「錯最多的那一類」，才能給出真正有針對性的建議。
+function analyzeMistakeCategories(results) {
+  const tally = {};
+  results.forEach(r => {
+    const origLines = r.draftOriginalLines || [];
+    const typedLines = r.draftTypedLines || [];
+    for (let i = 0; i < origLines.length; i++) {
+      const orig = origLines[i] || '';
+      const typed = typedLines[i];
+      if (typed === undefined) continue;
+      const len = Math.min(orig.length, typed.length);
+      for (let c = 0; c < len; c++) {
+        const oc = orig[c];
+        const tc = typed[c];
+        if (oc === ' ' || oc === '\t') continue;
+        if (oc === tc) continue;
+        const cat = classifyMistake(oc, tc);
+        if (!tally[cat.label]) tally[cat.label] = { label: cat.label, count: 0, type: cat.type, rowKey: cat.rowKey, hand: cat.hand };
+        tally[cat.label].count++;
+      }
+    }
+  });
+  return Object.values(tally).sort((a, b) => b.count - a.count);
+}
+
+// 統整成「最常錯的字」＋「最需要加強的方向」文字說明，供單次成績單／總成績單共用。
+function buildPracticeAdvice(results) {
+  const topMistakes = analyzeCommonMistakes(results);
+  if (topMistakes.length === 0) return null;
+
+  const charList = topMistakes.map(m => `「${m.ch}」(誤植${m.count}次)`).join('、');
+  const categories = analyzeMistakeCategories(results);
+  const top = categories[0];
+
+  let adviceText;
+  if (!top) {
+    adviceText = `整體錯誤比較分散，建議到「打字塔防」遊戲挑選「單人自主修煉」做綜合練習即可。`;
+  } else if (top.type === 'case') {
+    adviceText = `你比較常「大小寫按反」（該打小寫卻打成大寫，或相反），這通常是 Shift 鍵按的時機沒抓準。` +
+      `建議放慢速度、看清楚字母大小寫後再下手，並到「打字塔防」遊戲挑選「單人自主修煉」→「${PRACTICE_ROW_LABEL_MAP.case}」關卡加強。`;
+  } else if (top.type === 'symbol') {
+    adviceText = `你比較常打錯「符號」鍵位（標點或需要按 Shift 的符號），建議先熟悉符號在鍵盤上的位置，` +
+      `並到「打字塔防」遊戲挑選「單人自主修煉」→「${PRACTICE_ROW_LABEL_MAP.symbols}」關卡集中練習。`;
+  } else if (top.type === 'row') {
+    const rowLabel = PRACTICE_ROW_LABEL_MAP[top.rowKey] || top.label;
+    const handText = top.hand ? `（${top.hand}負責的按鍵）` : '';
+    adviceText = `你比較常打錯「${rowLabel}」${handText}，建議到「打字塔防」遊戲挑選「單人自主修煉」→「${rowLabel}」關卡，` +
+      `集中練熟這幾個鍵位對應的手指分工，下次再挑戰會更順手！`;
+  } else {
+    adviceText = `建議到「打字塔防」遊戲挑選「單人自主修煉」做綜合練習加強手感。`;
+  }
+
+  return { charList, adviceText };
+}
+
+function renderFinalPracticeHint() {
+  const hintEl = document.getElementById('fn-practice-hint');
+  const advice = buildPracticeAdvice(attemptResults);
+
+  if (!advice) {
+    hintEl.style.display = 'none';
+    return;
+  }
+
+  hintEl.style.display = 'block';
+  hintEl.innerHTML =
+    `📌 <b>這兩次容易誤植的字母：</b>${advice.charList}<br>` +
+    `💡 <b>建議：</b>${advice.adviceText}<br>` +
+    KEYAGENT_LINK_HTML;
 }
 
 // ============================================================
@@ -1845,6 +2194,8 @@ function showFinalModal() {
   document.getElementById('fn-accuracy').textContent = avgAccuracy.toFixed(2);
   document.getElementById('fn-wrongrate').textContent = avgWrongRate.toFixed(2);
   document.getElementById('fn-speed').textContent = avgSpeed.toFixed(2);
+
+  renderFinalPracticeHint();
 
   document.getElementById('setup-dialog').style.display = 'none';
   document.getElementById('final-modal').style.display = 'flex';
@@ -1881,13 +2232,13 @@ function closeWindowSafely() {
       console.warn('直接呼叫父頁面關閉函式失敗：', err.message);
     }
   }
-  // 💡 修正：實際的使用情境是從 index.html 用一般 <a href> 連結導覽過來的
+  // 💡 修正：實際的使用情境是從 login.html 用一般 <a href> 連結導覽過來的
   // （不是用 window.open() 開新分頁，也不是 iframe 嵌入）。瀏覽器基於安全限制，
   // 只有「用程式 window.open() 開出來的分頁」才允許被 window.close() 關掉；
   // 一般導覽過來的分頁呼叫 window.close() 會被瀏覽器直接忽略、畫面完全沒反應，
   // 學生點「離開」後就卡在結果畫面出不去。改成直接導回登入首頁，
   // 不管這個頁面實際上是怎麼被打開的，都一定會有反應。
-  window.location.href = './index.html';
+  window.location.href = './login.html';
 }
 
 // ============================================================
