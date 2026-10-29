@@ -198,7 +198,16 @@ function gen(t){
        ansText:'找因數：'+cl.filter(c=>c.fam=='g').map(c=>c.t.replace(/<\/?b>/g,'')).join('；')+'　找倍數：'+cl.filter(c=>c.fam=='l').map(c=>c.t.replace(/<\/?b>/g,'')).join('；'),
        explain:cl.map(c=>`${c.t} → ${c.fam=='g'?'找因數（最大公因數）':'找倍數（最小公倍數）'}`).join('<br>')};
   }
-  o.type=t;return o;
+  o.steps=stepsFor(t,o);o.type=t;return o;
+}
+// 練兵「軍師拆解」
+function stepsFor(t,o){
+  const T=TS.st;
+  if(t=='tac')return TS.tactic(o.fam);
+  if(t=='sort')return[T('最大、最多、分裝、剪裁 → 找<b>因數</b>；同時再遇、週期、最小、最少 → 找<b>倍數</b>。準備好一條一條判斷了嗎？','好',[['我還沒準備好','再看一次關鍵字口訣就可以開始。']],'看關鍵字'),...o.clues.map(c=>T(`${c.t}<br>這一條要找？`,c.fam=='g'?'找因數（最大公因數）':'找倍數（最小公倍數）',[[c.fam=='g'?'找倍數（最小公倍數）':'找因數（最大公因數）',c.fam=='g'?'「最大、分裝、剪裁」是切開，找因數。':'「同時再遇、週期、最少」是往後找倍數。']],c.fam=='g'?'找因數':'找倍數'))];
+  if(t=='rem'){const r=o.v=='r',k=r?o.r:o.s;
+    return[T(r?`「剩下 ${k} 顆」：要先怎麼處理，才能剛好平分？`:`「還差 ${k} 顆」：要先怎麼處理，才能剛好平分？`,r?'把剩下的拿掉（減）':'把不足的補上（加）',[[r?'把不足的補上（加）':'把剩下的拿掉（減）',r?'剩下的糖平分不了，要先拿掉。':'還差的糖要補上，才夠平分。']],r?'剩餘 → 用減的':'不足 → 用加的'),
+      T(`${o.a} ${r?'−':'+'} ${k} ＝ ？`,o.ans,[[r?o.a+k:o.a-k,'加減弄反了。']],`${o.a} ${r?'−':'+'} ${k} = ${o.ans}`)]}
 }
 function buildPanel(){
   const cl=q.clues,st=cl.map(()=>''),box=document.createElement('div');box.className='bp';

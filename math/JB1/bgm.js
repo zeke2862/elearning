@@ -36,6 +36,8 @@
   function fallback(k, fb) { stopFile(); if (kind === k) startSynth(SC[fb] ? fb : (SC[k] ? k : 'battle')); }
   function play(k, fb) {
     if (!k || (kind === k && (timer || audio))) return;
+    // 同一個畫面（地圖 + 關卡 iframe）只留一份背景音樂：新的開始前，先把別的視窗正在播的停掉
+    try { var T = window.top; if (T.__jbBgmStop && T.__jbBgmStop !== stop) T.__jbBgmStop(); T.__jbBgmStop = stop; } catch (e) {}
     stop(); kind = k;
     if (failed[k]) { startSynth(SC[fb] ? fb : (SC[k] ? k : 'battle')); return; }
     try {

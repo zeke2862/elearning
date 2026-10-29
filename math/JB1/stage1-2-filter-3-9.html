@@ -140,7 +140,19 @@ function gen(t){
     o={text:`${pre}□ 要是 ${d} 的倍數，□ 可以填哪個數字？`,ans:good,options:opts(good,()=>pick(bads)),hint:`先把已知的位數加起來，再想想加上□後，和要能被 ${d} 整除。`,explain:`已知位數相加：${ds(pre).join('+')}=${s}。${s}+${good}=${s+good}，能被 ${d} 整除，所以填 ${good}。`,scan:`${pre}${good}：${expr(Number(''+pre+good))}`};
   }
   if(t[0]!='b')o.explain+='<br>檢查其他盾牌：'+o.options.filter(x=>x!==o.ans).map(x=>`${x}（${expr(x)}）`).join('、');
-  o.type=t;return o;
+  o.steps=stepsFor(t,o);o.type=t;return o;
+}
+// 練兵「軍師拆解」：3、9 看位數和
+function stepsFor(t,o){
+  const T=TS.st,d=(t=='m9'||t=='b9')?9:3;
+  const sums=a=>a.map(n=>T(`算 <b>${n}</b> 的各位數字和：${ds(n).join(' + ')} ＝ ？`,sm(n),[[sm(n)+1,'再加一次，小心漏加。'],[sm(n)-1,'再加一次，小心漏加。']],`${n}：${expr(n)}`));
+  const intro=T(`判斷 ${d} 的倍數，要把什麼加起來？`,'各位數字',[['末位數字','看末位是 2、5 的方法；3、9 要把每一位都加起來。'],['奇數位減偶數位','那是 11 的方法。']],'把各位數字相加');
+  const need=T(`位數和要是什麼，這個數才是 ${d} 的倍數？`,`${d} 的倍數`,[[`${d} 的因數`,`位數和要能被 ${d} 整除，也就是 ${d} 的倍數。`]],`位數和要是 ${d} 的倍數`);
+  if(t=='m3'||t=='m9'||t=='t39')return[intro,need,...sums(o.options)];
+  if(t=='six')return[T('「同時」是 2 和 3 的倍數，要通過幾個濾鏡？','兩個都要通過',[['只要通過一個','「同時」就是兩個都要。']],'2 號、3 號都要過'),...sums(o.options)];
+  const pre=+/^(\d+)□/.exec(o.text.replace(/<[^>]+>/g,''))[1],s=sm(pre),m=Math.ceil(s/d)*d;
+  return[intro,T(`先把已知的位數加起來：${ds(pre).join(' + ')} ＝ ？`,s,[[s+1,'再加一次，小心漏加。'],[s-1,'再加一次，小心漏加。']],`已知位數和 ${s}`),
+    T(`${s} ＋ □ 要變成 ${d} 的倍數。從 ${s} 開始往上找，第一個 ${d} 的倍數是？`,m,[[m+d,'要找「第一個」，這樣 □ 才會是 0～9 的數字。']],`${s} + □ 要到 ${m}（或 ${m+d}…）`)]
 }
 
 // ---------- 畫面 ----------

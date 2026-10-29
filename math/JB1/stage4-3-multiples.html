@@ -186,7 +186,18 @@ function gen(t){
        ansText:f=='lcm'?`[${a.join(', ')}] = ${L}`:`[${a.join(', ')}] = ${L}，最後答案 ${fin}`,
        explain:f=='lcm'?`同時再遇，直接求最小公倍數：[${a.join(', ')}] = ${L}。`:EXS[f](a,L,k,fin)};
   }
-  o.type=t;return o;
+  o.steps=stepsFor(t,o);o.type=t;return o;
+}
+// 練兵「軍師拆解」：先求最小公倍數 → 再加／減
+function stepsFor(t,o){
+  const T=TS.st;
+  if(t=='line')return[T('「同時再出現」是在找？','最小公倍數',[['最大公因數','同時再遇、週期 → 最小公倍數。']],'找最小公倍數'),...TS.gcdSteps(o.ps,'lcm')];
+  if(t=='act'){const f=o.fam,lr=f=='lr';
+    return[...TS.tactic(f),...TS.gcdSteps(o.a,'lcm'),...(f=='lcm'?[]:[T(lr?`剩下 ${o.k} 人，要再加回去：${o.L} ＋ ${o.k} ＝ ？`:`還差 ${o.k} 人，要減掉不足：${o.L} － ${o.k} ＝ ？`,o.fin,[[lr?o.L-o.k:o.L+o.k,'加減弄反了：剩下要加、還差要減。']],`${o.L} ${lr?'+':'−'} ${o.k} = ${o.fin}`)])]}
+  if(t=='add'||t=='sub'){const lr=o.f=='lr';
+    return[T(lr?'「幾個一數，都剩 r 個」：要先求哪一個？':'「幾個一數，都還差 s 個才滿」：要先求哪一個？','最小公倍數（先湊成剛好整除）',[['最大公因數','人數要往上找倍數，是最小公倍數。']],'先求最小公倍數'),
+      ...TS.gcdSteps(o.a,'lcm'),
+      T(lr?`剩下 ${o.k} 人，要再加回去：${o.L} ＋ ${o.k} ＝ ？`:`還差 ${o.k} 人，要減掉不足：${o.L} － ${o.k} ＝ ？`,o.ans,[[lr?o.L-o.k:o.L+o.k,'加減弄反了：剩下要加、還差要減。']],`${o.L} ${lr?'+':'−'} ${o.k} = ${o.ans}`)]}
 }
 function lineDots(p,maxT,c){let h='';for(let m=p;m<=maxT;m+=p)h+=`<i class="${c}" style="left:${m/maxT*100}%"></i>`;return h}
 function buildPanel(){q.layout=='line'?buildLine():buildAct()}

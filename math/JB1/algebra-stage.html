@@ -236,6 +236,7 @@ function genB(){
     val = a*x + b;
   }
   const coefTerm = a===1?'x':(a===-1?'-x':`${a}x`);
+  const xt = xLabel.replace(/<span class="frac"><span class="num">(.*?)<\/span><span class="den">(.*?)<\/span><\/span>/g,'$1/$2').replace(/<[^>]+>/g,''), xp = xt.startsWith('-') ? `(${xt})` : xt, ap = a<0 ? `(${a})` : `${a}`;
   const exprHTML = `${coefTerm} ${b>=0?'+':'-'} ${Math.abs(b)}`;
   const {opts, correctIndex} = numericOptions(
     val,
@@ -248,6 +249,12 @@ function genB(){
     promptHTML:`若 ${exprHTML}，當 x = ${xLabel} 時，咒語能量為？`,
     opts, correctIndex,
     explain:`代入 x = ${xLabel.replace(/<[^>]+>/g,'')}：結果為 ${val}`,
+    steps:[
+      TS.pair(`把 x 換成 ${xp} 之後，式子是 ${ap} × ${xp} ${b>=0?'＋':'－'} ${Math.abs(b)}。先自己點出「要相乘的兩個數字」。`,
+        `選好了：${ap} × ${xp}。算算看 ＝ ？（負 × 正 ＝ 負、負 × 負 ＝ 正）`,
+        [{t:ap,id:'a'},{t:'×'},{t:xp,id:'x'},{t:b>=0?'＋':'－'},{t:`${Math.abs(b)}`,id:'b'}], ['a','x'], a*x, `${a}x = ${a*x}`, '要相乘的是「x 前面的係數」和「x 換成的那個數」，請點 ' + ap + ' 和 ' + xp + '。'),
+      TS.st(`再加上常數：${a*x} ${b>=0?'+':'−'} ${Math.abs(b)} ＝ ？`, val, [[a*x-b,'常數的正負號要照抄。'],[-val,'正負號弄反了。']], `結果 = ${val}`)
+    ],
     optClass:'opt2'
   };
 }
@@ -277,6 +284,15 @@ function genC(){
     promptHTML:`解除封印：<br><span class="op-hl">${promptHTML}</span> = ？`,
     opts, correctIndex,
     explain:`括號前是「${sign1>0?'正':'負'}」號，${sign1>0?'內部保持不變':'內部每一項都要變號'}`,
+    steps:[
+      TS.st(`括號前面是「${sign1>0?'＋':'－'}」號，去括號時裡面每一項要怎麼處理？`, sign1>0?'符號都不變':'每一項都變號（＋變－、－變＋）', [[sign1>0?'每一項都變號（＋變－、－變＋）':'符號都不變', sign1>0?'前面是「＋」，括號裡的符號照抄。':'前面是「－」，括號裡每一項都要變號，不是只有第一項。']], sign1>0?'＋括號：照抄':'－括號：每項變號'),
+      TS.tog(`自己動手去括號：括號裡的每一項，「要變號」的請點一下（＋變－、－變＋），不用變號的就不要點，再按確認。`,
+        [`＋${a}x`, `${innerSign>0?'＋':'－'}${b}`],
+        [`${sign1>0?'＋':'－'}${a}x`, `${(innerSign*sign1)>0?'＋':'－'}${b}`],
+        [sign1<0, sign1<0],
+        `去括號後：${sign1>0?'':''}${coefX}x ${cst>0?'+':'−'} ${Math.abs(cst)}`,
+        sign1>0?'前面是「＋」，括號裡照抄，不用變號。':'前面是「－」，括號裡每一項都要變號。')
+    ],
     optClass:'opt2'
   };
 }
@@ -297,6 +313,10 @@ function genD(){
   // 保證彼此不同、也保證跟正確答案不同
   const altCoef = altVal(coefX, coefX + q);
   const altCst  = altVal(cst, cst + d);
+  // 練兵拆解用：把原式、去括號後的式子做成「可以點的數字」
+  const DTOK = [{t:`${p}`,id:'p'},{t:'('},{t:`${a}x`,id:'a'},{t:s1>0?'＋':'－'},{t:`${b}`,id:'b'},{t:')'},{t:op2>0?'＋':'－'},{t:`${q}`,id:'q'},{t:'('},{t:`${c}x`,id:'c'},{t:s2>0?'＋':'－'},{t:`${d}`,id:'d'},{t:')'}];
+  const tm = (v,x,first)=> (first?(v<0?'－':''):(v<0?'－':'＋')) + Math.abs(v) + (x?'x':'');
+  const MTOK = [{t:tm(p*a,true,true),id:'t1'},{t:tm(s1*p*b,false),id:'t2'},{t:tm(op2*q*c,true),id:'t3'},{t:tm(op2*q*s2*d,false),id:'t4'}];
   const distractors = [
     linearHTML(altCoef, cst),      // x 項係數算錯（忘記分配符號）
     linearHTML(coefX, altCst),     // 常數項算錯（忘記分配符號）
@@ -309,6 +329,26 @@ function genD(){
     promptHTML:`化簡：<br><span class="op-hl">${promptHTML}</span>`,
     opts, correctIndex,
     explain:`展開後同類項合併，結果為 ${correctHTML.replace(/<[^>]+>/g,'')}`,
+    steps:[
+      TS.pair(`括號外的 ${p} 要乘進括號裡的「每一項」。先自己點出「要相乘的兩個數字」：點「括號外的數」和「括號裡的 x 項」。`,
+        `選好了：${p} 乘 ${a}x。係數相乘：${p} × ${a} ＝ ？`, DTOK, ['p','a'], p*a, `第一組 x 項：${p*a}x`, '要相乘的是「括號外的數」和「括號裡的一項」，請點 ' + p + ' 和 ' + a + 'x。'),
+      TS.pair(`${p} 也要乘括號裡的另一項。請點出要相乘的兩個數字：括號外的數和括號裡的常數項。`,
+        `選好了：${p} 乘 ${s1>0?'＋':'－'}${b}。算算看：${p} × ${s1>0?'':'(−'}${b}${s1>0?'':')'} ＝ ？（正負號要一起算）`, DTOK, ['p','b'], s1*p*b, `第一組：${p*a}x ${s1*p*b>0?'+':'−'} ${p*b}`, '要相乘的是「括號外的數」和「括號裡的常數項」，請點 ' + p + ' 和 ' + b + '。'),
+      TS.pair(`第二組：${q} 要乘進括號裡的每一項。請點出要相乘的兩個數字：括號外的數和括號裡的 x 項。`,
+        `選好了：${q} 乘 ${c}x。係數相乘：${q} × ${c} ＝ ？（先不管括號前的正負號）`, DTOK, ['q','c'], q*c, `${q} × ${c}x = ${q*c}x`, '要相乘的是「括號外的數」和「括號裡的 x 項」，請點 ' + q + ' 和 ' + c + 'x。'),
+      TS.pair(`${q} 也要乘第二組括號裡的常數項。請點出要相乘的兩個數字。`,
+        `選好了：${q} 乘 ${s2>0?'＋':'－'}${d}。算算看：${q} × ${s2>0?'':'(−'}${d}${s2>0?'':')'} ＝ ？（括號裡的正負號要一起算）`, DTOK, ['q','d'], s2*q*d, `${q} × ${s2>0?'':'(−'}${d}${s2>0?'':')'} = ${s2*q*d}`, '要相乘的是「括號外的數」和「括號裡的常數項」，請點 ' + q + ' 和 ' + d + '。'),
+      TS.tog(`第二組：${q} 先乘進括號，得到 ${q*c}x ${s2>0?'＋':'－'} ${q*d}。括號前面是「${op2>0?'＋':'－'}」，去括號時「要變號」的項請點一下，再按確認。`,
+        [`＋${q*c}x`, `${s2>0?'＋':'－'}${q*d}`],
+        [`${op2>0?'＋':'－'}${q*c}x`, `${(op2*s2)>0?'＋':'－'}${q*d}`],
+        [op2<0, op2<0],
+        `第二組：${op2*q*c}x ${op2*q*s2*d>0?'+':'−'} ${q*d}`,
+        op2>0?'前面是「＋」，括號裡照抄，不用變號。':'前面是「－」，括號裡每一項都要變號。'),
+      TS.pair(`去括號後有四項。要合併的是「同類項」（字母一樣的項）。請點出哪兩項是 x 項，可以先合併。`,
+        `選好了：${p*a}x 和 ${op2*q*c}x 是同類項。係數相加：${p*a} ＋ (${op2*q*c}) ＝ ？（連同正負號一起加）`, MTOK, ['t1','t3'], coefX, `x 項 = ${coefX}x`, '同類項是字母一樣的項：x 項和 x 項可以合併，數字（常數項）和數字合併。請點兩個 x 項。', '合併'),
+      TS.pair(`接下來合併常數項。請點出哪兩項是沒有字母的常數項。`,
+        `選好了：${s1*p*b} 和 ${op2*q*s2*d} 是常數項。相加：${s1*p*b} ＋ (${op2*q*s2*d}) ＝ ？（連同正負號一起加）`, MTOK, ['t2','t4'], cst, `常數項 = ${cst}`, '常數項是沒有字母、只有數字的項。請點兩個常數項。', '合併')
+    ],
     optClass:'opt2'
   };
 }
@@ -334,6 +374,10 @@ function genE(){
       promptHTML:`鑑定咒語結構：<br><span class="op-hl">${exprHTML}</span><br>它的一次項係數與常數項各是多少？`,
       opts, correctIndex,
       explain:`x 前面的數字是一次項係數，單獨的數字是常數項`,
+      steps:[
+        TS.st('「一次項係數」是 x 前面的數字，要連同正負號。這個式子的一次項係數是？', coef, [[-coef, '正負號要照式子寫的。'],[cst, '那是常數項。']], `係數 ${coef}`),
+        TS.st('「常數項」是沒有 x、單獨的那個數字（連同正負號）。常數項是？', cst, [[-cst, '正負號要照式子寫的。'],[coef, '那是 x 的係數。']], `常數項 ${cst}`)
+      ],
       optClass:'opt1col'
     };
   } else {
@@ -351,6 +395,10 @@ function genE(){
       promptHTML:`一次項係數 = ${coef}，常數項 = ${cst}，這個代數式是？`,
       opts, correctIndex,
       explain:`把一次項係數放在 x 前面、常數項接在後面，組成完整代數式 ${correctHTML.replace(/<[^>]+>/g,'')}`,
+      steps:[
+        TS.st('一次項係數要寫在 x 的哪裡？', 'x 的前面（連同正負號）', [['x 的後面','係數寫在字母前面，例如 3x，不寫 x3。']], `x 項：${coef===1?'x':coef===-1?'-x':coef+'x'}`),
+        TS.st(`常數項是 ${cst}，接在 x 項後面，連接的符號是？`, cst>0?'＋（因為是正的）':'－（因為是負的，寫成減去它的絕對值）', [[cst>0?'－（因為是負的，寫成減去它的絕對值）':'＋（因為是正的）','正的接「＋」，負的接「－」。']], `常數項：${cst>0?'+ ':'- '}${Math.abs(cst)}`)
+      ],
       optClass:'opt2'
     };
   }
@@ -525,6 +573,10 @@ function genF_discount(){
     promptHTML:`商人公告：「原本會員優惠 ${oldFoldText}折，現在調漲 ${inflatePct}%，改為 ${newFoldText}折優惠。」<br>設原價為 x 元，這是真划算還是話術陷阱？`,
     opts: allOpts, correctIndex: allOpts.indexOf(correctHTML),
     explain:`新價格＝(1+${inflatePct}%)×${newFoldText}折 = ${newMult}x，原本是 ${oldFoldText}折＝${oldFold}x，比較兩者大小即可判斷`,
+    steps:[
+      TS.st(`漲價 ${inflatePct}% 後再打 ${newFoldText} 折，新價格是原價 x 的幾倍？ (1 + ${inflatePct/100}) × ${newFold} ＝ ？`, newMult, [[Math.round((1-inflatePct/100)*newFold*1000)/1000,'漲價是「加」，不是減。'],[Math.round((1+inflatePct/100)*1000)/1000,'還要再乘以折數。']], `新價格 = ${newMult}x`),
+      TS.st(`原本 ${oldFoldText} 折，價格是 ${oldFold}x。比較 ${newMult} 和 ${oldFold}，哪一個大？`, newMult>oldFold+0.0049?'新價格比較大':newMult<oldFold-0.0049?'原本的價格比較大':'一樣大', [['新價格比較大','再比較一次兩個數。'],['原本的價格比較大','再比較一次兩個數。'],['一樣大','再比較一次兩個數。']].filter(w=>w[0]!==(newMult>oldFold+0.0049?'新價格比較大':newMult<oldFold-0.0049?'原本的價格比較大':'一樣大')), `${newMult} ${newMult>oldFold?'>':newMult<oldFold?'<':'='} ${oldFold}`)
+    ],
     optClass:'opt3'
   };
 }
@@ -546,6 +598,12 @@ function genF_age(){
     scenario:'符號商人的生存戰・年齡謎題',
     promptHTML, opts, correctIndex,
     explain:`化簡得 2x + ${diff} = ${total}，解得 x = ${youngerAge}`,
+    steps:[
+      TS.pair(`去括號合併：x + (x + ${diff}) ＝ 2x + ${diff}，式子變成 2x + ${diff} ＝ ${total}。第一步：把 ${diff} 移到等號右邊（移項要變號）。請先自己點出「右邊要一起運算的兩個數字」。`,
+        `選好了：${total} 和 ${diff}。移項變號：${total} − ${diff} ＝ ？`, [{t:'2x'},{t:'＋'},{t:`${diff}`,id:'d'},{t:'＝'},{t:`${total}`,id:'T'}], ['d','T'], total-diff, `2x = ${total-diff}`, '要運算的是「被移項的 '+diff+'」和「等號右邊的 '+total+'」。', '運算'),
+      TS.pair(`第二步：2x ＝ ${total-diff}。兩邊同時除以 x 的係數。請先自己點出「要相除的兩個數字」。`,
+        `選好了：${total-diff} ÷ 2。算算看 ＝ ？`, [{t:'2',id:'a'},{t:'x'},{t:'＝'},{t:`${total-diff}`,id:'r'}], ['a','r'], youngerAge, `x = ${youngerAge}`, '要相除的是「x 的係數」和「等號右邊的數」。', '相除')
+    ],
     optClass:'opt2'
   };
 }
@@ -567,6 +625,16 @@ function genF_basketball(){
     scenario:'符號商人的生存戰・籃球得分推理',
     promptHTML, opts, correctIndex,
     explain:`化簡得 −x + ${3*totalShots} = ${score}，解得 x = ${twoPt}`,
+    steps:[
+      TS.pair(`先去括號：3 要乘進括號裡的每一項。請先自己點出「要相乘的兩個數字」：括號外的 3 和括號裡的 ${totalShots}。`,
+        `選好了：3 × ${totalShots} ＝ ？`, [{t:'2x'},{t:'＋'},{t:'3',id:'m'},{t:'('},{t:`${totalShots}`,id:'t'},{t:'－'},{t:'x'},{t:')'},{t:'＝'},{t:`${score}`}], ['m','t'], 3*totalShots, `${3*totalShots}`, '要相乘的是「括號外的 3」和「括號裡的 '+totalShots+'」。'),
+      TS.pair(`去括號後：2x + ${3*totalShots} − 3x ＝ ${score}。接著合併 x 的項。請先自己點出「要合併的兩個 x 項」。`,
+        `選好了：2x 和 −3x。係數相加：2 ＋ (−3) ＝ ？`, [{t:'2x',id:'a'},{t:'＋'},{t:`${3*totalShots}`,id:'c'},{t:'－'},{t:'3x',id:'b'},{t:'＝'},{t:`${score}`}], ['a','b'], -1, `−x + ${3*totalShots} = ${score}`, '同類項是字母一樣的項：請點兩個有 x 的項（2x 和 3x）。', '合併'),
+      TS.pair(`−x + ${3*totalShots} ＝ ${score}。把 ${3*totalShots} 移到等號右邊（移項要變號）。請先自己點出「右邊要一起運算的兩個數字」。`,
+        `選好了：${score} 和 ${3*totalShots}。移項變號：${score} − ${3*totalShots} ＝ ？`, [{t:'−x'},{t:'＋'},{t:`${3*totalShots}`,id:'c'},{t:'＝'},{t:`${score}`,id:'s'}], ['c','s'], score-3*totalShots, `−x = ${score-3*totalShots}`, '要運算的是「被移項的常數」和「等號右邊的數」。', '運算'),
+      TS.pair(`−x ＝ ${score-3*totalShots}。−x 的係數是 −1，兩邊同時除以 −1。請先自己點出「要相除的兩個數字」。`,
+        `選好了：${score-3*totalShots} ÷ (−1)。算算看 ＝ ？`, [{t:'−1',id:'a'},{t:'x'},{t:'＝'},{t:`${score-3*totalShots}`,id:'r'}], ['a','r'], twoPt, `x = ${twoPt}`, '要相除的是「x 的係數 −1」和「等號右邊的數」。', '相除')
+    ],
     optClass:'opt2'
   };
 }
@@ -591,6 +659,16 @@ function genF_mix(){
     scenario:'符號商人的生存戰・混合採購推理',
     promptHTML, opts, correctIndex,
     explain:`化簡後可解得 x = ${xA}`,
+    steps:[
+      TS.pair(`先去括號：${priceB} 要乘進括號裡的每一項。請先自己點出「要相乘的兩個數字」：括號外的 ${priceB} 和括號裡的 ${totalCount}。`,
+        `選好了：${priceB} × ${totalCount} ＝ ？`, [{t:`${priceA}x`},{t:'＋'},{t:`${priceB}`,id:'m'},{t:'('},{t:`${totalCount}`,id:'t'},{t:'－'},{t:'x'},{t:')'},{t:'＝'},{t:`${totalPrice}`}], ['m','t'], priceB*totalCount, `${priceB*totalCount}`, '要相乘的是「括號外的 '+priceB+'」和「括號裡的 '+totalCount+'」。'),
+      TS.pair(`去括號後：${priceA}x + ${priceB*totalCount} − ${priceB}x ＝ ${totalPrice}。接著合併 x 的項。請先自己點出「要合併的兩個 x 項」。`,
+        `選好了：${priceA}x 和 ${priceB}x。係數：${priceA} − ${priceB} ＝ ？（${priceB}x 前面是減號）`, [{t:`${priceA}x`,id:'a'},{t:'＋'},{t:`${priceB*totalCount}`,id:'c'},{t:'－'},{t:`${priceB}x`,id:'b'},{t:'＝'},{t:`${totalPrice}`}], ['a','b'], priceA-priceB, `${priceA-priceB}x + ${priceB*totalCount} = ${totalPrice}`, '同類項是字母一樣的項：請點兩個有 x 的項。', '合併'),
+      TS.pair(`${priceA-priceB}x + ${priceB*totalCount} ＝ ${totalPrice}。把 ${priceB*totalCount} 移到等號右邊（移項要變號）。請先自己點出「右邊要一起運算的兩個數字」。`,
+        `選好了：${totalPrice} 和 ${priceB*totalCount}。移項變號：${totalPrice} − ${priceB*totalCount} ＝ ？`, [{t:`${priceA-priceB}x`},{t:'＋'},{t:`${priceB*totalCount}`,id:'c'},{t:'＝'},{t:`${totalPrice}`,id:'s'}], ['c','s'], totalPrice-priceB*totalCount, `${priceA-priceB}x = ${totalPrice-priceB*totalCount}`, '要運算的是「被移項的常數」和「等號右邊的數」。', '運算'),
+      TS.pair(`${priceA-priceB}x ＝ ${totalPrice-priceB*totalCount}。兩邊同時除以 x 的係數。請先自己點出「要相除的兩個數字」。`,
+        `選好了：${totalPrice-priceB*totalCount} ÷ (${priceA-priceB})。算算看 ＝ ？`, [{t:`${priceA-priceB}`,id:'a'},{t:'x'},{t:'＝'},{t:`${totalPrice-priceB*totalCount}`,id:'r'}], ['a','r'], xA, `x = ${xA}`, '要相除的是「x 的係數」和「等號右邊的數」。', '相除')
+    ],
     optClass:'opt2'
   };
 }
@@ -646,6 +724,14 @@ function genG(){
     promptHTML:`情境：x 代表「${sc.name}」（單位：${sc.unit}）<br>解出 x = ${valText}，這個答案合理嗎？`,
     opts, correctIndex: reasonable?0:1,
     explain: reasonable ? `${sc.name}可以是這個數值，答案成立` : `${sc.name}不可能是這個數值（需符合現實限制），此解要捨去`,
+    steps: (()=>{
+      const RT={posInt:'正整數（1、2、3…）',posIntMin1:'1 以上的整數',date:'1～31 的整數',nonNeg:'0 或正數（可以有小數）',posNum:'正數（可以有小數，但不能是 0 或負數）'};
+      const wrong=Object.keys(RT).filter(k=>k!==sc.rule).slice(0,2).map(k=>[RT[k],'再想想「'+sc.name+'」在現實中是什麼樣的數。']);
+      return [
+        TS.st(`x 代表「${sc.name}」。在現實中，它必須是什麼樣的數？`, RT[sc.rule], wrong, RT[sc.rule]),
+        TS.st(`解出 x = ${valText}。它符合「${RT[sc.rule]}」嗎？`, reasonable?'符合':'不符合', [[reasonable?'不符合':'符合', reasonable?'再檢查一次：它是不是負數、小數、或 0？':'再檢查一次：有沒有負數、小數或 0？']], reasonable?'符合 → 合理':'不符合 → 要捨去')
+      ];
+    })(),
     optClass:'opt2'
   };
 }
@@ -709,6 +795,66 @@ function startTimer(){
   },100);
 }
 
+/* ---------- 練兵「軍師拆解」：簡記規則、解一元一次方程式 ---------- */
+const NUMT='\\d+(?:\\.\\d+)?(?:/\\d+)?';
+const nv=s=>{const m=String(s).split('/');return m.length>1?m[0]/m[1]:parseFloat(s)};
+const r2=v=>Math.round(v*100)/100;
+const PP=s=>String(s).startsWith('-')?`(${s})`:String(s);
+const plainH=h=>{const s=String(h).replace(/<span class="frac"><span class="num">(.*?)<\/span><span class="den">(.*?)<\/span><\/span>/g,'$1/$2').replace(/<br\s*\/?>/g,' ');const d=document.createElement('div');d.innerHTML=s;return d.textContent.replace(/\s+/g,' ').trim()};
+function parseLin(s){
+  s=s.trim();let m=new RegExp(`^(-?)(${NUMT})?x(?: ([+-]) (${NUMT}))?$`).exec(s);
+  if(m){const c=(m[1]?-1:1)*nv(m[2]||'1');return{hasX:true,c,ctok:(m[1]||'')+(m[2]||'1'),k:m[3]?(m[3]=='-'?-1:1)*nv(m[4]):0}}
+  if(new RegExp(`^-?${NUMT}$`).test(s))return{hasX:false,k:nv(s),ktok:s};
+  return null;
+}
+function eqSteps(q){
+  const t=plainH(q.promptHTML);if(!/求出 x 的值/.test(t))return null;
+  const body=t.replace(/^.*?x 的值[：:]\s*/,''),sp=body.split(' = ');if(sp.length!=2)return null;
+  const T=TS.st,want=nv(plainH(q.opts[q.correctIndex]));
+  const divm=new RegExp(`^x ÷ (-?${NUMT})$`).exec(sp[0]);
+  let steps=null,x;
+  const Rr=parseLin(sp[1]);
+  if(divm&&Rr&&!Rr.hasX){const a=divm[1];x=r2(Rr.k*nv(a));
+    steps=[TS.pair(`兩邊同時乘以 ${a}，把「÷ ${a}」消掉。請先自己點出「要相乘的兩個數字」：除數 ${a} 和等號右邊的 ${sp[1]}。`,`選好了：${PP(sp[1])} × ${a}。算算看 ＝ ？`,[{t:'x'},{t:'÷'},{t:a,id:'a'},{t:'＝'},{t:sp[1],id:'c'}],['a','c'],x,`x = ${x}`,'要相乘的是「除數」和「等號右邊的數」。','相乘')]}
+  else{const L=parseLin(sp[0]);
+    if(L&&L.hasX&&Rr&&!Rr.hasX){const c=Rr.k,k=L.k,a=L.c,atok=L.ctok,fr=String(atok).includes('/');
+      const inv=atok.replace('-','').split('/').reverse().join('/');
+      const solve=(rhs,rtxt)=>{const x=r2(rhs/a);return TS.pair(`兩邊同時${fr?'乘以係數的倒數':'除以 x 的係數'}，x 就單獨留下來了。請先自己點出「要${fr?'相乘':'相除'}的兩個數字」：x 的係數和等號右邊的數。`,fr?`選好了：${PP(rtxt)} × ${a<0?'(−':''}${inv}${a<0?')':''}。算算看 ＝ ？`:`選好了：${PP(rtxt)} ÷ ${PP(atok)}。算算看 ＝ ？`,[{t:atok,id:'a'},{t:'x'},{t:'＝'},{t:rtxt,id:'c'}],['a','c'],x,`x = ${x}`,`要${fr?'相乘':'相除'}的是「x 的係數」和「等號右邊的數」。`,fr?'相乘':'相除')};
+      if(k===0&&a!==1){x=r2(c/a);steps=[solve(c,sp[1])]}
+      else if(a===1&&k!==0){x=r2(c-k);steps=[TS.pair(`移項：要把「${k>0?'＋':'－'}${Math.abs(r2(k))}」移到等號右邊（移項要變號）。請先自己點出「右邊要一起運算的兩個數字」。`,`選好了：${PP(sp[1])} ${k>0?'−':'＋'} ${Math.abs(r2(k))}（移項變號）。算算看 ＝ ？`,[{t:'x'},{t:k>0?'＋':'－'},{t:`${Math.abs(r2(k))}`,id:'k'},{t:'＝'},{t:sp[1],id:'c'}],['k','c'],x,`x = ${x}`,'要運算的是「被移項的數」和「等號右邊的數」。','運算')]}
+      else if(k!==0&&a!==1){x=r2((c-k)/a);const rhs=r2(c-k);steps=[TS.pair(`第一步：先把常數項「${k>0?'＋':'－'}${Math.abs(r2(k))}」移到等號右邊（移項要變號）。請先自己點出「右邊要一起運算的兩個數字」。`,`選好了：${PP(sp[1])} ${k>0?'−':'＋'} ${Math.abs(r2(k))}（移項變號）。算算看 ＝ ？`,[{t:atok,id:'a'},{t:'x'},{t:k>0?'＋':'－'},{t:`${Math.abs(r2(k))}`,id:'k'},{t:'＝'},{t:sp[1],id:'c'}],['k','c'],rhs,`${atok}x = ${rhs}`,'要運算的是「被移項的常數」和「等號右邊的數」。','運算'),solve(rhs,String(rhs))]}
+    }else if(L&&Rr&&L.hasX&&Rr.hasX){const A=r2(L.c-Rr.c),B=r2(Rr.k-L.k);if(A!==0){x=r2(B/A);
+      const ct=o=>(o.ctok==='1'?'x':o.ctok==='-1'?'-x':o.ctok+'x');
+      const hasK=L.k!==0&&Rr.k!==0;
+      const eqTok=[{t:ct(L),id:'lc'},{t:L.k>=0?'＋':'－',},{t:`${Math.abs(r2(L.k))}`,id:'lk'},{t:'＝'},{t:ct(Rr),id:'rc'},{t:Rr.k>=0?'＋':'－'},{t:`${Math.abs(r2(Rr.k))}`,id:'rk'}];
+      steps=[hasK?TS.pair(`第一步：把含 x 的項都移到左邊。右邊的「${ct(Rr)}」要移過來（移項要變號）。請先自己點出「要一起合併的兩個 x 項」。`,`選好了：${ct(L)} 和 ${ct(Rr)}。x 的係數：${r2(L.c)} − (${r2(Rr.c)}) ＝ ？（移項要變號，是「減掉」）`,eqTok,['lc','rc'],A,`x 的係數 ${A}`,'要合併的是兩個「有 x 的項」：左邊一個、右邊一個。','合併'):T(`把 x 的項移到左邊：x 的係數 ${r2(L.c)} − (${r2(Rr.c)}) ＝ ？`,A,[[r2(L.c+Rr.c),'移項要變號，是「減掉」。'],[-A,'順序弄反了。']],`x 的係數 ${A}`),
+        hasK?TS.pair(`第二步：把常數項都移到右邊。左邊的常數要移過去（移項要變號）。請先自己點出「要一起運算的兩個常數項」。`,`選好了：${PP(String(r2(Rr.k)))} 和 ${PP(String(r2(L.k)))}。右邊的常數 − 左邊的常數：${r2(Rr.k)} − (${r2(L.k)}) ＝ ？`,eqTok,['lk','rk'],B,`${A}x = ${B}`,'要運算的是兩個「沒有 x 的常數項」：左邊一個、右邊一個。','運算'):T(`把常數移到右邊：${r2(Rr.k)} − (${r2(L.k)}) ＝ ？`,B,[[r2(Rr.k+L.k),'移項要變號，是「減掉」。'],[-B,'順序弄反了。']],`${A}x = ${B}`),
+        TS.pair(`最後：${A}x ＝ ${B}。兩邊同時除以 x 的係數。請先自己點出「要相除的兩個數字」。`,`選好了：${B} ÷ (${A})。算算看 ＝ ？`,[{t:`${A}`,id:'A'},{t:'x'},{t:'＝'},{t:`${B}`,id:'B'}],['A','B'],x,`x = ${x}`,'要相除的是「x 的係數」和「等號右邊的數」。','相除')]}}
+  }
+  return steps&&Math.abs(x-want)<1e-6?steps:null;
+}
+const RULES={
+  mulInt:['數字和字母相乘，簡記時要怎麼寫？','係數寫在字母前面，乘號省略',[['字母寫在前面','規定係數寫在前面，例如 3x，不寫 x3。'],['要保留 × 號','簡記就是把乘號省略。']]],
+  mulDecimal:['小數和字母相乘，簡記時要怎麼寫？','係數寫在字母前面，乘號省略',[['字母寫在前面','規定係數（含小數）寫在前面。'],['要保留 × 號','簡記就是把乘號省略。']]],
+  mulFrac:['分數和字母相乘，簡記時要怎麼寫？','分數係數寫在字母前面',[['字母寫在前面','規定係數（含分數）寫在前面。'],['分子分母上下顛倒','相乘不用顛倒分子分母。']]],
+  oneVar:['1 乘以任何數會怎樣？','還是原來的數，係數 1 不用寫',[['變成 0','乘以 0 才會變成 0。'],['要寫成 1x','係數是 1 時，1 省略不寫。']]],
+  power:['同一個字母連乘很多次，簡記成什麼？','用次方（右上角寫幾個）',[['字母前面寫次數','x×x×x 是次方 x³，不是 3x（那是 x+x+x）。']]],
+  negOne:['乘以 (−1)，簡記成什麼？','在字母前面加負號，係數 1 不寫',[['寫成 −1x','係數 1 不用寫，直接寫 −x。'],['字母不變號','乘 (−1) 會變成相反數。']]],
+  div:['字母除以一個數，簡記成什麼？','寫成分數（字母在上、數字在下）',[['寫成乘法','除法簡記成分數。'],['數字在上、字母在下','被除的在上面（分子），除數在下面（分母）。']]],
+  divDecimal:['除以小數，要怎麼處理？','除以一個數 ＝ 乘以它的倒數',[['直接把小數寫在後面','要把除法換成乘以倒數。']]]
+};
+function attachSteps(qq){
+  try{
+    if(!qq.steps){
+      const r=RULES[qq.qtype];
+      if(r)qq.steps=[TS.st(r[0],r[1],r[2],r[1])];
+      else qq.steps=eqSteps(qq)||undefined;
+    }
+    // 要算出數字的步驟：讓學生自己用數字鍵輸入，不用選擇題
+    if(qq.steps)qq.steps.forEach(s=>{if(!s.toggle&&/^-?\d+(\.\d+)?$/.test(s.ok))s.input=true});
+  }catch(e){qq.steps=undefined}
+  return qq;
+}
 function start(){
   MS.begin(false);
   hearts=5; combo=0; score=0; right=0; wrongs=[]; idx=0;
@@ -719,7 +865,7 @@ function next(){
   if(MS.halt()) return;
   if(MS.active()) mode = MS.prep(idx+1);
   if(hearts<=0 || (!MS.active() && idx>=10)) return finish();
-  q = DEF.gen(); lock=false; idx++;
+  q = attachSteps(DEF.gen()); lock=false; idx++;
   $('#wave').textContent = MS.wave(idx,10,'題');
   $('#scen').textContent = q.scenario;
   $('#qt').innerHTML = q.promptHTML;

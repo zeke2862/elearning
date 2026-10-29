@@ -190,7 +190,20 @@ function gen(t){
        hint:'最大、間隔、分裝 → 最大公因數；同時再遇、最少 → 最小公倍數；一數剩要加餘數，還差要減不足。',
        explain:{gcd:'間隔最大，是在找因數：直接求最大公因數。',lcm:'同時再遇、最少：直接求最小公倍數。',lr:'一數剩 r：先求最小公倍數，再加上餘數。',ls:'一數還差 s：先求最小公倍數，再減去不足的數。'}[f]};
   }
-  o.type=t;return o;
+  o.steps=stepsFor(t,o);o.type=t;return o;
+}
+// 練兵「軍師拆解」
+function stepsFor(t,o){
+  const T=TS.st;
+  if(t=='tac')return TS.tactic(o.fam);
+  if(t=='tree'||t=='tree0'){const P=o.S.reduce((a,b)=>a+b,0);
+    return[T('樹距要能整除每一條邊，而且要最大。這是在找？','最大公因數',[['最小公倍數','整除每一邊、距離要最大 → 最大公因數。']],'找最大公因數'),...TS.gcdSteps(o.S,'gcd'),
+      T(`周長 ${o.S.join(' + ')} ＝ ？`,P,[[P-o.S[0],'每一邊都要加進去。']],`周長 ${P}`),T(`棵數 ＝ 周長 ÷ 樹距 ＝ ${P} ÷ ${o.g} ＝ ？`,o.n,[[P-o.g,'是「除」。']],`${P} ÷ ${o.g} = ${o.n} 棵`)]}
+  if(t=='army'){const r=o.v=='r',val=o.chips[0],bad=o.chips.find(x=>x%o.a);
+    return[T(`先看 ${o.b} 人一數、${o.c} 人一數都${r?'多':'還差'} ${o.k} 人，要先求哪一個？`,'最小公倍數',[['最大公因數','人數往上找倍數，是最小公倍數。']],'先求 [b, c]'),...TS.gcdSteps([o.b,o.c],'lcm'),
+      T(`人數是 ${o.L} 的倍數${r?'加':'減'} ${o.k}。第一個候選：${o.L} ${r?'＋':'－'} ${o.k} ＝ ？`,val,[[r?o.L-o.k:o.L+o.k,'加減弄反了。']],`候選：${o.chips.slice(0,4).join('、')}…`),
+      T(`候選人數 ${o.chips.slice(0,5).join('、')}… 裡，第一個能被 ${o.a} 整除的是？`,o.valid[0],bad&&bad!=o.valid[0]?[[bad,`${bad} ÷ ${o.a} 除不盡。`]]:[[o.valid[0]+1,'再檢查是否整除。']],`能被 ${o.a} 整除：${o.valid.slice(0,2).join('、')}…`),
+      ...(o.N?[T(`題目說要超過 ${o.N} 人，所以答案是哪一個？`,o.fin,[[o.valid[0],`${o.valid[0]} 不超過 ${o.N} 人。`]],`答案 ${o.fin}`)]:[])]}
 }
 function buildPanel(){q.layout=='tree'?buildTree():buildArmy()}
 function buildTree(){

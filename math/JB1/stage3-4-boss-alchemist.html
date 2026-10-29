@@ -204,7 +204,20 @@ function gen(t){
        hint:'「同時再遇」、「重複」、「週期」這類字眼，是在找最小公倍數。',
        explain:`${x} = ${stdN(x)}，${y} = ${stdN(y)}，[${x}, ${y}] = ${l}。所以每 ${l} 分鐘會同時發車一次。`};
   }
-  o.type=t;return o;
+  o.steps=stepsFor(t,o);o.type=t;return o;
+}
+// 練兵「軍師拆解」：分解 → 取最多次方 → 相乘
+function stepsFor(t,o){
+  const T=TS.st;
+  if(t=='std'){const ps=[...o.text.matchAll(/<b>[AB] = (.*?)<\/b>/g)].map(m=>TS.parseStd(m[1]));return[T('A、B 已經寫成標準分解式了。最小公倍數要取哪些質因數？','所有出現過的質因數，次方取最多',[['只取兩個都有的，次方取最少','那是最大公因數。']],'全部質因數、取最多'),...TS.expSteps(ps,['A','B'],'lcm')]}
+  if(t=='word'){return[T('「同時再發車、至少再過多久」是在找？','最小公倍數',[['最大公因數','同時再遇、重複、週期 → 最小公倍數。']],'找最小公倍數'),...TS.gcdSteps([o.x,o.y],'lcm')]}
+  if(t=='both'){const f=o.arr.map(TS.fac);return[T('兩種配方：哪一個要取「最少」的次方？','最大公因數 (A, B)',[['最小公倍數 [A, B]','最小公倍數取「最多」，最大公因數才取「最少」。']],'(A,B) 取最少；[A,B] 取最多'),...TS.gcdSteps(o.arr,'gcd'),...TS.expSteps(f,o.arr,'lcm')]}
+  if(t=='comp'){const{v,a,b,g,l}=o;
+    return[T('公式：兩個數的 最大公因數 × 最小公倍數 ＝ ？','這兩個數相乘（A × B）',[['這兩個數相加','公式是 (A,B) × [A,B] = A × B。']],'(A,B) × [A,B] = A × B'),
+      ...(v==0?[T(`${g} × ${l} ＝ ？`,g*l,[[g+l,'是「乘」。']],`${g} × ${l} = ${g*l} = ${a} × B`),T(`B ＝ ${g*l} ÷ ${a} ＝ ？`,b,[[g*l-a,'是「除」。']],`B = ${b}`)]
+      :v==1?[T(`${a} × ${b} ＝ ？`,a*b,[[a+b,'是「乘」。']],`${a} × ${b} = ${a*b}`),T(`[${a}, ${b}] ＝ ${a*b} ÷ ${g} ＝ ？`,l,[[a*b-g,'是「除」。']],`[A,B] = ${l}`)]
+      :[T(`(A,B) ＝ ${a*b} ÷ ${l} ＝ ？`,g,[[a*b-l,'是「除」。']],`(A,B) = ${g}`)])]}
+  if(t=='lcm'){const arr=/<b>([\d、]+)<\/b>/.exec(o.text)[1].split('、').map(Number);return TS.gcdSteps(arr,'lcm')}
 }
 function buildPanel(){
   const box=document.createElement('div');box.className='bp';

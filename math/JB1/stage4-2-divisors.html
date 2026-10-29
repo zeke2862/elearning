@@ -185,7 +185,20 @@ function gen(t){
     o={ans:bad,options:sh([bad,...goods]),text:`某個數去除 ${X}，餘數是 ${r}。下列哪一個數「不可能」是這個除數？`,
        hint:'想想看：餘數可以比除數大嗎？',explain:`餘數一定比除數小。所以除數一定要大於 ${r}，而 ${bad} 不大於 ${r}，不可能。`};
   }
-  o.type=t;return o;
+  o.steps=stepsFor(t,o);o.type=t;return o;
+}
+// 練兵「軍師拆解」：先處理餘數／不足 → 再求最大公因數
+function stepsFor(t,o){
+  const T=TS.st;
+  if(t=='calc'||t=='act'){
+    const f=o.fam,ad=f=='gr'?o.arr.map(v=>v-o.r):f=='gs'?o.arr.map(v=>v+o.s):o.arr,out=[];
+    out.push(T('分裝問題，要先看每一種有沒有「剩下」或「還差」。這一題要怎麼處理數字？',HOW[f],Object.keys(HOW).filter(k=>k!=f).map(k=>[HOW[k],{gcd:'題目有「剩下」或「還差」，要先處理。',gr:'題目是「剩下」，要先減掉餘數。',gs:'題目是「還差」，要先加上不足。'}[k]]),HOW[f]));
+    if(f!='gcd')o.arr.forEach((v,i)=>{const k=f=='gr'?o.r:o.s;out.push(T(`${v} ${f=='gr'?'−':'+'} ${k} ＝ ？`,ad[i],[[f=='gr'?v+k:v-k,'加減弄反了：剩下要減、不足要加。']],`${v} ${f=='gr'?'−':'+'} ${k} = ${ad[i]}`))});
+    return out.concat(TS.gcdSteps(ad,'gcd'));
+  }
+  if(!/餘數是 \d+/.test(o.text))return;
+  const r=+/餘數是 (\d+)/.exec(o.text)[1];
+  return[T('除以一個數的「餘數」，和這個數（除數）比起來，誰比較大？','餘數一定比除數小',[['餘數可以比除數大','除以 5 的餘數只可能是 0～4，不會比 5 大。']],'餘數 < 除數'),T(`餘數是 ${r}，所以除數一定要比 ${r} ___？`,'大',[['小','除數必須大於餘數。']],`除數 > ${r}`)]
 }
 function buildPanel(){
   const box=document.createElement('div');box.className='bp';

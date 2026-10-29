@@ -815,7 +815,7 @@ function endlessHTML(){
     `</div></section>`).join('');
 }
 function stageURL(url,id,endless){
-  return url+(url.includes('?')?'&':'?')+'stars='+st(id)+'&eb='+ebOf(id)+'&rv='+bagN('revive_m')+(endless?'&endless=1':'');
+  return url+(url.includes('?')?'&':'?')+'stars='+st(id)+'&eb='+ebOf(id)+'&rv='+bagN('revive_m')+'&rk='+myRankIdx()+(endless?'&endless=1':'');
 }
 // ===== 🖼️ 圖片區（新增）=====
 // 把您做好的圖片依照下面的檔名放進 world-map.html 同一層的 images 資料夾即可自動套用；

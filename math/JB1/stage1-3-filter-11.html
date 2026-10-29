@@ -143,7 +143,17 @@ function gen(t){
     o={text:`要讓下面的數是 11 的倍數，□ 要填哪個數字？<br>${col(m)}`,ans:ans,options:opts(ans,()=>R(0,9)),hint:HINT,
        explain:`完整的數是 ${c}：${info(c)}，所以 □ 填 ${ans}。`,scan:`${c}：${info(c)}`};
   }
-  o.type=t;return o;
+  o.steps=stepsFor(t,o);o.type=t;return o;
+}
+// 練兵「軍師拆解」：11 看奇偶位的差
+function stepsFor(t,o){
+  const T=TS.st;
+  const intro=T('判斷 11 的倍數：先算「奇數位和」與「偶數位和」，再看它們的差。差要是？','0 或 11 的倍數',[['3 的倍數','那是 3 的規則。'],['2 或 5 的倍數','那是 2、5 的規則。']],'差是 0 或 11 的倍數 → 是 11 的倍數');
+  const df=n=>T(`<b>${n}</b>：奇數位（🔵）${od(n).join(' + ')} ＝ ${S(od(n))}，偶數位（🟠）${ev(n).join(' + ')} ＝ ${S(ev(n))}。兩邊相差多少？`,diff(n),[[S(od(n))+S(ev(n)),'是「相減」，不是相加。'],[diff(n)+1,'再算一次。']],`${n}：差 ${diff(n)}`);
+  if(t!='b11'&&!/□/.test(o.text))return[intro,...o.options.map(df)];
+  const s=o.text.replace(/<[^>]+>/g,'').split('？').pop().trim(),p=s.indexOf('□');
+  let a=0,b=0;s.split('').forEach((c,i)=>{if(c=='□')return;if(i%2==p%2)a+=+c;else b+=+c});
+  return[intro,T(`□ 在第 ${p+1} 位，是${p%2?'偶':'奇'}數位。同一組其他數字的和是 ${a}，另一組的和是 ${b}。${a} − ${b} ＝ ？`,a-b,[[b-a,'順序弄反了，是「□ 這一組」減「另一組」。'],[a+b,'是「相減」，不是相加。']],`${a} + □ 與 ${b} 的差要是 0 或 11 的倍數`)]
 }
 
 // ---------- 畫面 ----------

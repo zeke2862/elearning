@@ -196,7 +196,15 @@ function gen(t){
        hint:'互質不一定要是質數！只要兩個數除了 1 以外沒有共同的因數就可以。',
        explain:`(${A}, ${B}) 的最大公因數是 1，所以互質，就算 ${A} 和 ${B} 都是合數也可以。其他：`+ws.map(w=>`(${w[0]}, ${w[1]}) = ${gcd(w[0],w[1])}`).join('、')+'，都有共同的因數。'};
   }
-  o.type=t;return o;
+  o.steps=stepsFor(t,o);o.type=t;return o;
+}
+// 練兵「軍師拆解」：分解 → 取最少次方 → 相乘
+function stepsFor(t,o){
+  const T=TS.st;
+  if(t=='pack'){const arr=o.items.map(i=>i.a);return[T('每一種水果的數量，都要能被「盒數」整除，而且盒數要最多。這是在找？','最大公因數',[['最小公倍數','分裝要整除、盒數要最多 → 最大公因數。']],'找最大公因數'),...TS.gcdSteps(arr,'gcd')]}
+  if(t=='std'){const ps=[...o.text.matchAll(/<b>[AB] = (.*?)<\/b>/g)].map(m=>TS.parseStd(m[1]));return[T('A、B 已經寫成標準分解式了。最大公因數要取哪些質因數？','兩個都有的質因數，次方取最少',[['所有出現過的，次方取最多','那是最小公倍數。']],'共同質因數、取最少'),...TS.expSteps(ps,['A','B'],'gcd')]}
+  if(t=='coprime')return[T('「互質」的意思是兩個數的什麼是 1？','最大公因數',[['最小公倍數','互質是最大公因數是 1。'],['兩數的和','互質看的是最大公因數。']],'互質 ⟺ 最大公因數 = 1'),...o.options.map(s=>{const[x,y]=s.match(/\d+/g).map(Number),g=TS.gcd(x,y);return T(`(${x}, ${y}) 的最大公因數是多少？`,g,[[g+1,'再算一次。'],[g==1?2:1,g==1?'它們沒有共同的因數 1 以外。':'有共同的因數，不是 1。']],`(${x}, ${y}) = ${g}`)})];
+  if(t=='gcd'){const arr=/<b>([\d、]+)<\/b>/.exec(o.text)[1].split('、').map(Number);return TS.gcdSteps(arr,'gcd')}
 }
 function buildPanel(){
   const items=q.items,mx=Math.min(...items.map(i=>i.a)),box=document.createElement('div');box.className='bp';

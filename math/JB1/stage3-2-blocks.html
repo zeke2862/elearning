@@ -181,7 +181,21 @@ function gen(t){
        hint:'p 的 n 次方，是把 p 連乘 n 次，不是 p×n。',
        explain:`${std} = ${f.join('×')} = ${N}。`+(big?`小心：${term(big[0],big[1])} 是 ${Array(big[1]).fill(big[0]).join('×')} = ${big[0]**big[1]}，不是 ${big[0]}×${big[1]} = ${big[0]*big[1]}！`:'每個質數只出現一次，直接相乘就好。')};
   }
-  o.type=t;return o;
+  o.steps=stepsFor(t,o);o.type=t;return o;
+}
+// 練兵「軍師拆解」
+function stepsFor(t,o){
+  const T=TS.st;
+  if(t=='build'){const N=o.N,f=o.f,good=TS.std(N);
+    return[T(`先用短除法，把 <b>${N}</b> 拆成質因數相乘：`,f.join(' × '),(f.length>1?[[[f[0]*f[1],...f.slice(2)].join(' × '),`${f[0]*f[1]} 不是質數，還可以再拆。`],[f.slice(0,-1).join(' × '),'乘起來不等於原來的數。']]:[[f[0]+' × '+f[0],'乘起來不等於原來的數。']]),`${N} = ${f.join(' × ')}`),
+      T('同一個質數出現幾次，次方就是幾。寫成標準分解式是？',good,TS.stdWrong(N),`${N} = ${good}`)]}
+  if(t=='read'){const terms=TS.parseStd(/<b>(.*?)<\/b>/.exec(o.text)[1]);
+    return terms.filter(([p,e])=>e>1).map(([p,e])=>T(`<b>${p}${TS.sup(e)}</b> 是 ${p} 連乘 ${e} 次。算出來是？`,p**e,[[p*e,'次方是「連乘」，不是 '+p+' × '+e+'。']],`${p}${TS.sup(e)} = ${p**e}`)).concat(terms.every(([p,e])=>e==1)?[T('每個質數都只出現一次（次方是 1），要怎麼算？','直接相乘',[['要加起來','標準分解式是質因數「相乘」。']],'把所有質數相乘')]:[])}
+  if(t=='std'){const N=+/<b>(\d+)<\/b>/.exec(o.text)[1],f=TS.fac(N).flatMap(([p,e])=>Array(e).fill(p)),good=f.join(' × ');
+    const wr=[];if(f.length>1)wr.push([[f[0]*f[1],...f.slice(2)].join(' × '),`${f[0]*f[1]} 不是質數，還可以再拆。`],[f.slice(0,-1).join(' × '),'乘起來不等於原來的數，漏掉了一個因數。']);else wr.push([f[0]+' × '+f[0],'乘起來不等於原來的數。']);
+    return[T('標準分解式的「底數」一定要是什麼數？','質數',[['合數','像 4、9 這種合數還可以再拆，不能當底數。'],['奇數','2 也是質數，底數是質數才對。']],'底數要是質數，由小排到大'),
+      T(`先用短除法，把 <b>${N}</b> 拆成質因數相乘：`,good,wr,`${N} = ${good}`),
+      T('同一個質數出現幾次，右上角的次方就寫幾。把相同的質數合在一起，寫成次方，答案是哪一種格式？','質數底數 + 次方，由小到大',[['只寫原本的連乘','要把相同的質數合起來，用次方表示。']],'相同的質數合成次方')]}
 }
 function buildPanel(){
   const N=q.N,pool=PS[mode],ex={};pool.forEach(p=>ex[p]=0);
