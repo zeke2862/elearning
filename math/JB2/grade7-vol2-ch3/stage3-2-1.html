@@ -117,6 +117,7 @@ button:focus-visible{outline:3px solid var(--bronze);outline-offset:2px}
 </main>
 <script src="lessons3.js"></script>
 <script src="mode-system.js"></script>
+<script src="explain-th.js"></script>
 <script>
 const $=s=>document.querySelector(s);
 const R=(a,b)=>Math.floor(Math.random()*(b-a+1))+a;
@@ -343,7 +344,9 @@ function miss(btn){
   hearts--;combo=0;wrongs.push(q);log(false);drawHearts();drawCombo();
   document.querySelectorAll('.opt').forEach(b=>{if(b.dataset.v===q.ans)b.classList.add('ok')});
   $('#say').classList.remove('hide');
-  say(`<b>${btn?'💥 加速馬反擊，召喚師受到傷害！':'⏰ 時間到，加速馬逃脫了一波！'}</b><br>🐱 導師智慧貓：正確答案是 <b>${q.ans}</b>。${q.explain}<br><button class="btn" id="nx" style="margin-top:8px">${hearts<=0?'查看戰報':'下一回合'}</button>`,'lose');
+  const zhTxt=`<b>${btn?'💥 加速馬反擊，召喚師受到傷害！':'⏰ 時間到，加速馬逃脫了一波！'}</b><br>🐱 導師智慧貓：正確答案是 <b>${q.ans}</b>。${q.explain}`;
+  say(`<span id="exbox">${zhTxt}</span><br><button class="btn ghost" id="thb" style="margin-top:8px;margin-right:8px"></button><button class="btn" id="nx" style="margin-top:8px">${hearts<=0?'查看戰報':'下一回合'}</button>`,'lose');
+  if(window.JB2TH){JB2TH.attach($('#thb'),$('#exbox'),zhTxt,`<b>${btn?'💥 加速馬反擊，召喚師受到傷害！':'⏰ 時間到，加速馬逃脫了一波！'}</b><br>`+JB2TH.line(q))}else{$('#thb').remove()}
   $('#nx').onclick=next;$('#nx').focus();
 }
 function finish(){
@@ -363,7 +366,10 @@ function finish(){
   const j=$('#e-jail');j.innerHTML='';
   if(wrongs.length){
     const h=document.createElement('div');h.innerHTML=`<b>📖 數靈觀察日誌（${wrongs.length} 題）</b>`;j.appendChild(h);
-    wrongs.forEach(w=>{const d=document.createElement('div');d.innerHTML=`${w.text}<br>正解：<b>${w.ans}</b>　${w.explain}`;j.appendChild(d)});
+    wrongs.forEach(w=>{const d=document.createElement('div');const zh=`${w.text}<br>正解：<b>${w.ans}</b>　${w.explain}`;
+      d.innerHTML='<span class="jtx">'+zh+'</span>';j.appendChild(d);
+      if(window.JB2TH){const bx=document.createElement('button');bx.className='btn ghost';bx.style.cssText='padding:3px 12px;font-size:.85rem;margin:6px 0 0 8px';
+        JB2TH.attach(bx,d.firstChild,zh,`${w.text}<br>คำตอบที่ถูกคือ <b>${w.ans}</b> ${JB2TH.tr(w.explain)}`);d.appendChild(bx)}});
   }
   $('#rescue').classList.toggle('hide',!wrongs.length||rescue);
   $('#back').classList.toggle('hide',!EMB);
