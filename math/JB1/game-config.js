@@ -2,7 +2,7 @@
    用法：覆蓋遊戲資料夾裡的 game-config.js，學生重新整理即可套用。 */
 window.GAME_CONFIG_DEFAULT = {
  "relax": {
-  "enabled": 1,
+  "enabled": 0,
   "every": 5,
   "streak": 5,
   "level": "easy",
