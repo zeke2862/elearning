@@ -2757,7 +2757,7 @@ window.GAME_CONFIG = {
   }
  },
  "relax": {
-  "enabled": true,
+  "enabled": false,
   "every": 5,
   "multiple": true,
   "streak": 5,
