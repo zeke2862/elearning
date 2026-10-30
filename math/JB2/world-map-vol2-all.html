@@ -415,7 +415,7 @@ function onNode(i){
   if(walking)return;
   if(i>=1&&locked(i)){toast(lockMsg(i));return}
   if(!ready)return;
-  if(i>=1){enter(i);return}
+  if(i>=1){if(heroNode===i)enter(i);else walkTo(i,()=>enter(i));return}
   if(heroNode===i){showCard(i);return}
   walkTo(i,()=>showCard(i));
 }
