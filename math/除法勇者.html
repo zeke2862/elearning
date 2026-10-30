@@ -103,12 +103,18 @@
         .map-title { font-size: 28px; color: #3E2723; text-shadow: 2px 2px 0px #fff; line-height: 1.1; }
         .map-sub { font-size: 14px; color: #5D4037; font-weight: 700; text-shadow: 1px 1px 0 #fff; }
 
+        /* 地圖不壓縮：#map-wrap 用原本大小（1694px 寬），放進可捲動的視窗，玩家自己拖曳／滑動 */
+        #map-scroll {
+            width: calc(100% - 16px); flex: 1 1 0; min-height: 0; margin-bottom: 8px;
+            overflow: auto; border-radius: 10px; cursor: grab;
+            box-shadow: 0 0 0 4px #5D4037, 0 10px 24px rgba(0,0,0,0.45);
+            touch-action: pan-x pan-y; overscroll-behavior: contain; background: #e8d9b0;
+        }
+        #map-scroll.dragging { cursor: grabbing; }
         #map-wrap {
             position: relative;
-            width: calc(100% - 16px);
+            width: 1694px;
             aspect-ratio: 1695 / 928;
-            border-radius: 10px;
-            box-shadow: 0 0 0 4px #5D4037, 0 10px 24px rgba(0,0,0,0.45);
             overflow: hidden;
             flex-shrink: 0;
             background: #e8d9b0;
@@ -475,11 +481,11 @@
             <div class="map-title">🌍 除法冒險地圖 - 關卡選擇</div>
             <div class="map-sub">點一下發亮的關卡，勇者就會走過去！</div>
         </div>
-        <div id="map-wrap">
+        <div id="map-scroll"><div id="map-wrap">
             <img class="map-img" src="./assets/Division-hero/world-map.jpg" alt="除法冒險世界地圖" draggable="false">
             <img id="map-hero" src="./assets/Division-hero/hero-idle.png" alt="勇者" draggable="false">
             <div id="map-toast"></div>
-        </div>
+        </div></div>
     </div>
 
     <!-- 戰鬥畫面 -->
@@ -1038,6 +1044,7 @@
         mapHero.style.transition = 'left ' + sec + 's linear, top ' + sec + 's linear';
         mapHero.style.left = pctX(b.x);
         mapHero.style.top = pctY(b.y);
+        followHero(sec * 1000 + 60);
 
         setTimeout(() => {
             mapHero.src = HERO_IMG.idle;
@@ -1045,6 +1052,39 @@
             setTimeout(done, 200);
         }, sec * 1000 + 60);
     }
+
+    // 把地圖視窗捲到勇者身上（開地圖時瞬間移過去；勇者走路時一路跟著）
+    const mapScroll = document.getElementById('map-scroll');
+    function centerMapOnHero() {
+        const k = mapWrap.offsetWidth / MAP_W;
+        const s = allStagesList.find(x => x.id === heroStageId);
+        let x = mapHero.offsetLeft, y = mapHero.offsetTop;
+        if (s && !mapBusy) { const p = heroSpot(s); x = p.x * k; y = p.y * k; }
+        mapScroll.scrollLeft = x - mapScroll.clientWidth / 2;
+        mapScroll.scrollTop = y - mapScroll.clientHeight / 2;
+    }
+    function followHero(ms) {
+        const t0 = performance.now();
+        (function f(now) { centerMapOnHero(); if (now - t0 < ms) requestAnimationFrame(f); })(t0);
+    }
+    // 電腦滑鼠：按住拖曳地圖（手機直接用手指滑動）
+    (function () {
+        let d = null, moved = false;
+        mapScroll.addEventListener('pointerdown', e => {
+            if (e.pointerType !== 'mouse' || e.button) return;
+            const sc = parseFloat(getComputedStyle(document.getElementById('game-container')).getPropertyValue('--scale')) || 1;
+            d = { x: e.clientX, y: e.clientY, l: mapScroll.scrollLeft, t: mapScroll.scrollTop, sc }; moved = false;
+        });
+        window.addEventListener('pointermove', e => {
+            if (!d) return;
+            const dx = (e.clientX - d.x) / d.sc, dy = (e.clientY - d.y) / d.sc;
+            if (Math.abs(dx) + Math.abs(dy) > 5) { moved = true; mapScroll.classList.add('dragging'); }
+            if (moved) { mapScroll.scrollLeft = d.l - dx; mapScroll.scrollTop = d.t - dy; }
+        });
+        window.addEventListener('pointerup', () => { d = null; mapScroll.classList.remove('dragging'); setTimeout(() => { moved = false; }); });
+        mapScroll.addEventListener('click', e => { if (moved) { e.stopPropagation(); e.preventDefault(); } }, true);
+    })();
+    window.addEventListener('resize', () => { if (!mapBusy && !document.getElementById('map-screen').classList.contains('hidden')) centerMapOnHero(); });
 
     function showMapToast(text) {
         mapToast.innerText = text;
@@ -1078,6 +1118,7 @@
         switchScreen('map');
         void mapWrap.offsetWidth; // 畫面顯示後再更新狀態，新解鎖的區域才會有「迷霧散開」的動畫
         refreshMap();
+        centerMapOnHero();
     }
 
     // ================= 戰鬥邏輯 =================
