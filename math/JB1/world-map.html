@@ -424,6 +424,7 @@ button:focus-visible{outline:3px solid var(--bronze);outline-offset:2px}
 </style>
 <script src="game-config.js?v=20261023a"></script>
 <script src="math_hero_engine.js"></script>
+<script src="stroke-data.js"></script>
 <script src="bgm.js"></script>
 <script src="sfx.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
@@ -2331,11 +2332,16 @@ function renameDialog(x){
 /* ===== 🎲 第一次登入：建立角色（依 math_hero_engine） ===== */
 function maybeCreate(){if(P._hero)return;const box=$('#create');box.classList.remove('hide');
   box.innerHTML=`<div class="card"><h2 class="serif" style="margin:0;color:var(--bronze)">🧙 建立你的勇者</h2>
-  <div>請輸入角色名（英文名會自動計算字母值；中文名請填姓名總筆劃）</div>
+  <div>請輸入角色名（英文名會自動計算字母值；中文名會<b>自動算出姓名總筆畫</b>）</div>
   <div style="margin:6px 0;color:var(--bronze);font-weight:700">⚠️ 第一次取名免費，取好之後<u>無法自己修改</u>，想改名要在商店買「改名卡」。請想清楚再按喔！</div>
-  <input id="cr-name" placeholder="角色名" maxlength="20"><input id="cr-str" class="hide" type="number" min="1" placeholder="姓名總筆劃（中文名必填）">
+  <input id="cr-name" placeholder="角色名" maxlength="20"><div id="cr-info" class="hide" style="margin:6px 0;color:var(--bronze);font-weight:700"></div><input id="cr-str" class="hide" type="number" min="1" placeholder="姓名總筆畫（自動算好，覺得不對可以自己改）">
   <div id="cr-msg" style="color:#ff9a8a"></div><button id="cr-go">🎲 擲骰子並建立角色</button></div>`;
-  $('#cr-name').oninput=e=>$('#cr-str').classList.toggle('hide',!/[^\x00-\x7F]/.test(e.target.value));
+  let strDirty=false;$('#cr-str').oninput=()=>{strDirty=true};
+  $('#cr-name').oninput=e=>{const zh=/[^\x00-\x7F]/.test(e.target.value),info=$('#cr-info'),st=$('#cr-str');
+    st.classList.toggle('hide',!zh);info.classList.toggle('hide',!zh);if(!zh)return;
+    const r=window.nameStrokes?nameStrokes(e.target.value):{total:0,parts:[],unknown:[]};
+    info.textContent=(r.parts.length?'📝 筆畫：'+r.parts.map(x=>x[0]+x[1]).join('＋')+'＝共 '+r.total+' 畫':'')+(r.unknown.length?(r.parts.length?'　':'')+'⚠️「'+r.unknown.join('')+'」電腦不認得，請自己數筆畫，填進下面的格子（要填整個名字的總筆畫）':'');
+    if(!strDirty||!st.value)st.value=r.unknown.length||!r.total?'':r.total}
   $('#cr-go').onclick=()=>{try{const h=MathHeroEngine.createCharacter({name:$('#cr-name').value,chineseStrokeTotal:$('#cr-str').value});
     P._hero=h;P._who=P._who||{};P._who.name=h.name;save();fillWho();
     box.innerHTML=`<div class="card"><h2 class="serif" style="margin:0;color:var(--bronze)">✨ ${h.name}，你是「${h.archetype}」！</h2>
