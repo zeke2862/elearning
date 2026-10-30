@@ -2336,16 +2336,15 @@ function maybeCreate(){if(P._hero)return;const box=$('#create');box.classList.re
   <div style="margin:6px 0;color:var(--bronze);font-weight:700">⚠️ 第一次取名免費，取好之後<u>無法自己修改</u>，想改名要在商店買「改名卡」。請想清楚再按喔！</div>
   <input id="cr-name" placeholder="角色名" maxlength="20"><div id="cr-info" class="hide" style="margin:6px 0;color:var(--bronze);font-weight:700"></div><input id="cr-str" class="hide" type="number" min="1" placeholder="姓名總筆畫（自動算好，覺得不對可以自己改）">
   <div id="cr-msg" style="color:#ff9a8a"></div><button id="cr-go">🎲 擲骰子並建立角色</button></div>`;
-  let strDirty=false;$('#cr-str').oninput=()=>{strDirty=true};
+  let strDirty=false,rnd=0;const rnd6=()=>rnd||(rnd=1+Math.floor(Math.random()*6));$('#cr-str').oninput=()=>{strDirty=true};
   $('#cr-name').oninput=e=>{const zh=/[^\x00-\x7F]/.test(e.target.value),info=$('#cr-info'),st=$('#cr-str');
     st.classList.toggle('hide',!zh);info.classList.toggle('hide',!zh);if(!zh)return;
-    const r=window.nameStrokes?nameStrokes(e.target.value):{total:0,parts:[],unknown:[]};
-    info.textContent=(r.parts.length?'📝 筆畫：'+r.parts.map(x=>x[0]+x[1]).join('＋')+'＝共 '+r.total+' 畫':'')+(r.unknown.length?(r.parts.length?'　':'')+'⚠️「'+r.unknown.join('')+'」電腦不認得，請自己數筆畫，填進下面的格子（要填整個名字的總筆畫）':'');
-    if(!strDirty||!st.value)st.value=r.unknown.length||!r.total?'':r.total}
-  $('#cr-go').onclick=()=>{try{const h=MathHeroEngine.createCharacter({name:$('#cr-name').value,chineseStrokeTotal:$('#cr-str').value});
+    const r=nameStrokes(e.target.value),none=!r.total;
+    info.textContent=none?'🎲 這些字電腦算不出筆畫，系統幫你隨機給 '+rnd6()+' 畫（想改可以自己改下面的數字）':'📝 筆畫：'+r.parts.map(x=>x[0]+x[1]).join('＋')+'＝共 '+r.total+' 畫'+(r.unknown.length?'（「'+r.unknown.join('')+'」算不出來，先略過）':'');
+    if(!strDirty||!st.value)st.value=none?rnd6():r.total}
+  $('#cr-go').onclick=()=>{try{const h=MathHeroEngine.createCharacter({name:$('#cr-name').value,chineseStrokeTotal:$('#cr-str').value||rnd6()});
     P._hero=h;P._who=P._who||{};P._who.name=h.name;save();fillWho();
     box.innerHTML=`<div class="card"><h2 class="serif" style="margin:0;color:var(--bronze)">✨ ${h.name}，你是「${h.archetype}」！</h2>
-    <div>骰子：${h.dice.die1}＋${h.dice.die2}＝${h.dice.sum}　（${h.nameValue.method} ${h.nameValue.total}，餘數 ${h.remainder}）</div>
     <div class="stat-grid">${['HP','ATK','DEF','SPD','MATK','MDEF'].map(k=>`<div class="sbox"><b>${h.stats[k]}</b><span>${k}</span></div>`).join('')}</div>
     <button id="cr-ok">⚔️ 出發冒險！</button></div>`;
     $('#cr-ok').onclick=()=>{box.classList.add('hide');box.innerHTML='';render();checkGifts()}}catch(err){$('#cr-msg').textContent=err.message}}}
