@@ -94,13 +94,38 @@ button:hover{background:var(--btnh)}button:disabled{opacity:.35;cursor:not-allow
 #login-status{margin-top:14px;font-size:14px}
 #topbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px}#topbar .modes{margin:0;flex:1;justify-content:center}
 body.ingame #app>h1{display:none}
-#mapw{width:min(100%,calc((100vh - 170px)*1.7917));margin:0 auto 8px}
+/* 地圖不壓縮：#mapw 固定用原圖大小（1376px 寬），放進可滑動的視窗，玩家自己拖曳／滑動 */
+#mapscr{height:calc(100vh - 170px);height:calc(100dvh - 170px);min-height:260px;overflow:auto;border-radius:12px;margin-bottom:8px;cursor:grab;touch-action:pan-x pan-y;overscroll-behavior:contain}
+#mapscr.dragging{cursor:grabbing}
+#mapw{width:1376px;margin:0}
 #hdr{padding:6px 10px}.coinb{font-size:15px;color:#ffd86b;font-weight:bold;margin-right:8px}
 #eq:not([hidden]){position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(1000px,94vw);max-height:86vh;overflow:auto;z-index:12;box-shadow:0 0 0 100vmax rgba(0,0,0,.65)}
 #res{position:fixed;inset:0;background:#000b;display:flex;align-items:center;justify-content:center;z-index:9}
 #res .card{max-width:420px;text-align:center;font-size:18px;line-height:1.7}
 .fl{position:absolute;font-weight:bold;font-size:28px;animation:up 1s forwards;pointer-events:none}@keyframes up{to{transform:translateY(-60px);opacity:0}}
 @media(max-width:640px){#stage{flex-wrap:wrap;height:auto;min-height:680px}.side img{height:150px}.side{flex:none;width:44%}#mid{width:100%;flex:none;order:3}#q{font-size:22px}}
+/* 對戰畫面：橫放、直放都完整塞進一個螢幕（高度用 dvh，避開手機網址列） */
+body.ingame #battle:not([hidden]){display:flex;flex-direction:column;gap:6px;height:calc(100vh - 20px);height:calc(100dvh - 20px)}
+#battle #top{flex:none;flex-wrap:wrap}#battle #title{min-width:0;font-size:clamp(12px,3.4vw,18px)}
+#battle #stage{flex:1 1 auto;min-height:0;height:auto;align-items:stretch}
+#battle .side{display:flex;flex-direction:column;min-height:0}
+#battle .side img{flex:1 1 0;min-height:0;height:auto;max-height:100%}
+@media(max-width:640px){
+ #battle #stage{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:minmax(0,34%) minmax(0,1fr);align-items:stretch;min-height:0;padding:6px}
+ #battle .side{width:auto;flex:none}
+ #battle #mid{grid-column:1/-1;grid-row:2;width:100%;max-height:none;min-height:0;padding:6px}
+ #battle #q{font-size:20px;padding:6px}#battle #ans{font-size:26px;min-height:34px}#battle #msg{font-size:15px;min-height:20px}
+ #battle #pad{gap:4px;margin-top:4px}#battle #pad button{font-size:18px;padding:3px}
+ #battle .tp{height:min(15dvh,130px);padding:4px 6px}#battle #hint{height:auto;max-height:36px;font-size:12px}
+}
+@media(max-height:560px) and (min-width:641px){
+ #app{padding:4px}body.ingame #battle:not([hidden]){height:calc(100vh - 8px);height:calc(100dvh - 8px)}
+ #battle #top button{padding:4px 10px;font-size:14px}
+ #battle #stage{padding:6px}#battle #mid{width:min(470px,52%);padding:4px}
+ #battle #hint{font-size:12px;height:auto;max-height:30px}#battle .tp{height:min(26dvh,92px);padding:2px 6px;font-size:12px}
+ #battle #q{font-size:20px;padding:4px}#battle #ans{font-size:24px;min-height:30px}#battle #msg{font-size:14px;min-height:18px}
+ #battle #pad{gap:3px;margin-top:3px}#battle #pad button{font-size:15px;padding:0}#battle #pad{max-width:300px}
+}
 </style></head><body>
 <div id="app">
 <h1>💀 亡靈序曲：骷髏暴君的逆襲</h1>
@@ -248,14 +273,24 @@ function onNode(id){if(walking)return;
  if(id===heroId)return go(id);
  walking=true;const a=POS[heroId],b=POS[id],h=$('mh'),sec=Math.min(2.4,Math.max(.7,Math.hypot(b[0]-a[0],b[1]-a[1])/380));
  h.src=A+(b[0]>=a[0]?'hero-run-right.gif':'hero-run-left.gif');h.style.setProperty('--wd',sec+'s');
- h.style.left=b[0]/MW*100+'%';h.style.top=(b[1]-22)/MH*100+'%';
+ h.style.left=b[0]/MW*100+'%';h.style.top=(b[1]-22)/MH*100+'%';followHero(sec*1000+150);
  setTimeout(()=>{walking=false;heroId=id;go(id)},sec*1000+150)}
 function menu(){
  $('home').hidden=true;document.body.classList.add('ingame');$('battle').hidden=true;$('menu').hidden=false;hdr();
  $('modes').innerHTML=Object.entries(MODES).map(([k,v])=>`<button class="${k===mode?'on':''}" onclick="setMode('${k}')">${v.n}</button>`).join('');
  if(heroId==null||!unlocked(heroId))heroId=frontier();bgm('hub');
- $('chs').innerHTML='<div id="mapw"></div>';
- buildMap()}
+ $('chs').innerHTML='<div id="mapscr"><div id="mapw"></div></div>';
+ buildMap();initMapDrag();centerMapOnHero()}
+// 把地圖視窗捲到勇者身上（開地圖時瞬間移過去；勇者走路時一路跟著）
+function centerMapOnHero(){const v=$('mapscr'),h=$('mh');if(!v||!h)return;v.scrollLeft=h.offsetLeft-v.clientWidth/2;v.scrollTop=h.offsetTop-v.clientHeight/2}
+function followHero(ms){const t0=performance.now();(function f(n){centerMapOnHero();if(n-t0<ms)requestAnimationFrame(f)})(t0)}
+// 電腦滑鼠：按住拖曳地圖（手機直接用手指滑動）
+function initMapDrag(){const v=$('mapscr');let d=null,moved=false;
+ v.onpointerdown=e=>{if(e.pointerType!=='mouse'||e.button)return;d={x:e.clientX,y:e.clientY,l:v.scrollLeft,t:v.scrollTop};moved=false};
+ window.onpointermove=e=>{if(!d)return;const dx=e.clientX-d.x,dy=e.clientY-d.y;if(Math.abs(dx)+Math.abs(dy)>5){moved=true;v.classList.add('dragging')}if(moved){v.scrollLeft=d.l-dx;v.scrollTop=d.t-dy}};
+ window.onpointerup=()=>{d=null;v.classList.remove('dragging');setTimeout(()=>{moved=false})};
+ v.addEventListener('click',e=>{if(moved){e.stopPropagation();e.preventDefault()}},true)}
+window.addEventListener('resize',()=>{if(!walking)centerMapOnHero()});
 const go=i=>start(ST[i]);
 // ===== ♾ 無限關卡：自己選 6-1-1～6-5-3 任一關無限挑戰；每關各自記錄輪數，中途離開會保存當下進度 =====
 const eInfo=id=>E[id]||(E[id]={round:1,best:0});
