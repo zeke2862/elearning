@@ -15,6 +15,88 @@
    ?eb=N      這一關無極限的歷史最高題數
    ?endless=1 進入無極限挑戰
    ===================================================================== */
+/* 小貓圖示統一：把畫面上所有的 🐱 自動換成 images/home/catnest.png（智慧貓小圖）。想換圖只改 MS_CAT_URL。 */
+var MS_CAT_URL = (function () { try { return new URL('../images/home/catnest.png', document.currentScript.src).href; } catch (e) { return '../images/home/catnest.png'; } })();
+(function () {
+  function mk() { var i = document.createElement('img'); i.src = MS_CAT_URL; i.alt = '智慧貓'; i.className = 'ms-catico'; i.style.cssText = 'height:1.25em;width:1.25em;object-fit:contain;vertical-align:-.3em'; return i; }
+  var CAT = '🐱';
+  /* 式子不換行：把算式裡的空白換成「不斷行空白」，整條式子留在同一行；太寬放不下時自動縮小字級。
+     只動畫面文字（資料與答案比對不受影響）。算式以外的中文敘述仍可正常換行。 */
+  var MATH = /[0-9A-Za-z+\-−–－×÷=＝<>≤≥≠*·.\/()\[\]{}（）²³  ]+/g;
+  var OPS = /[+\-−–－×÷=＝<>≤≥≠()\[\]{}（）\/]/;
+  var SKIP = /^(SCRIPT|STYLE|TEXTAREA|TITLE|OPTION|INPUT|SELECT)$/i;
+  function okParent(p) { return p && !SKIP.test(p.nodeName) && !(window.SVGElement && p instanceof SVGElement); }
+  function isFr(n) { return n && n.nodeType === 1 && n.classList && n.classList.contains('fr'); }
+  function nbspNode(t) {
+    var s = t.nodeValue, pf = isFr(t.previousSibling), nf = isFr(t.nextSibling);
+    var s2 = s.replace(MATH, function (run, off) {
+      var core = run.replace(/^[  ]+|[  ]+$/g, '');
+      if (!core || !OPS.test(core) || !(/[0-9A-Za-z]/.test(core) || pf || nf)) return run;
+      var lead = run.slice(0, run.indexOf(core)), trail = run.slice(run.indexOf(core) + core.length);
+      if (off === 0 && pf) lead = lead.replace(/ /g, ' ');
+      if (off + run.length === s.length && nf) trail = trail.replace(/ /g, ' ');
+      return lead + core.replace(/ /g, ' ').replace(/(^|[ (\[{（])-/g, '$1−').replace(/(^|[ (\[{（])-/g, '$1−') + trail;
+    });
+    if (s2 !== s) { t.nodeValue = s2; return true; }
+    return false;
+  }
+  function blockOf(el) {
+    var p = el;
+    while (p && p.nodeType === 1 && /^(inline|contents)$/.test(getComputedStyle(p).display)) p = p.parentElement;
+    return p && p.nodeType === 1 ? p : null;
+  }
+  function fitBlock(b) {
+    try {
+      if (!b || b === document.body) return;
+      b.style.fontSize = '';
+      var cs = getComputedStyle(b), avail = b.clientWidth - parseFloat(cs.paddingLeft || 0) - parseFloat(cs.paddingRight || 0);
+      if (avail < 40 || b.scrollWidth <= b.clientWidth + 1) return;
+      var fs = parseFloat(cs.fontSize);
+      b.style.fontSize = Math.max(11, Math.floor(fs * (b.clientWidth - 2) / b.scrollWidth * 10) / 10) + 'px';
+    } catch (e) {}
+  }
+  var fitSet = [];
+  function fixText(t) {
+    var p = t.parentNode, v = t.nodeValue;
+    if (!okParent(p)) return;
+    var nodes = [t];
+    if (v.indexOf(CAT) >= 0) {
+      var parts = v.split(CAT), f = document.createDocumentFragment(); nodes = [];
+      parts.forEach(function (s, k) { if (k) f.appendChild(mk()); if (s) { var tn = document.createTextNode(s); f.appendChild(tn); nodes.push(tn); } });
+      p.replaceChild(f, t);
+    }
+    var lk = p.closest && p.closest('.st-cur,.st-hist > div'); if (lk && fitSet.indexOf(lk) < 0) fitSet.push(lk);
+    var b0 = blockOf(p); if (b0 && b0.style && b0.style.fontSize && fitSet.indexOf(b0) < 0) fitSet.push(b0);
+    nodes.forEach(function (n) { if (nbspNode(n)) { var b = blockOf(n.parentNode); if (b && fitSet.indexOf(b) < 0) fitSet.push(b); } });
+  }
+  function fixNode(root) {
+    if (!root) return;
+    if (root.nodeType === 3) { fixText(root); return; }
+    if (root.nodeType !== 1 || SKIP.test(root.nodeName)) return;
+    var w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null), list = [], n;
+    while ((n = w.nextNode())) list.push(n);
+    list.forEach(fixText);
+  }
+  var busy = false, queue = [], pend = false;
+  function flush() {
+    pend = false; if (busy) return; busy = true;
+    try { var q = queue; queue = []; q.forEach(function (n) { if (n.isConnected) fixNode(n); }); var fs = fitSet; fitSet = []; fs.forEach(fitBlock); } finally { busy = false; }
+  }
+  function later(recs) {
+    if (busy) return;
+    recs.forEach(function (r) {
+      if (r.type === 'characterData') queue.push(r.target);
+      else Array.prototype.forEach.call(r.addedNodes, function (n) { queue.push(n); });
+    });
+    if (!pend && queue.length) { pend = true; (window.requestAnimationFrame || setTimeout)(flush); }
+  }
+  function start() {
+    queue.push(document.body); flush();
+    try { new MutationObserver(later).observe(document.body, { childList: true, subtree: true, characterData: true }); } catch (e) {}
+    window.addEventListener('resize', function () { var seen = []; Array.prototype.forEach.call(document.querySelectorAll('.opt,#qt,.st-q,.q .t'), function (b) { if (b.textContent.indexOf('\u00A0') >= 0) fitBlock(b); }); });
+  }
+  if (document.body) start(); else document.addEventListener('DOMContentLoaded', start);
+})();
 (function () {
   'use strict';
   var CFG = {
@@ -29,6 +111,8 @@
     TAUGHT_MAX: 2,     // 練兵用了「老師教我」之後，這一局最多幾顆星
     EASY_STAR2_ACC: 0.7, // 練兵 2 ⭐ 的答對率門檻（0.7＝70%）
     EASY_STAR3_ACC: 1,   // 練兵 3 ⭐ 的答對率門檻（1＝全對；而且整局沒用提示才算）
+    REAL_TIME: 0,      // 實戰每題限時（秒）；0＝用各關自己的設定（game-config.js 的 stage.realTime）
+    HARD_TIME: 0,      // 修羅每題限時（秒）；0＝用各關自己的設定（stage.hardTime）
     SOFT_BANNER: true,   // 答錯／超時橫幅用溫和說法（false＝回到「怪物反擊」原文）
     TUTOR_MISS_MAX: 1,   // 小老師帶做的題：失誤超過幾次就記答錯（1＝失誤 2 次以上記答錯）
     TUTOR_DWELL_MS: 1500, // 小老師做完後，停留幾毫秒再自動送出答案
@@ -39,7 +123,7 @@
   var qp = new URLSearchParams(location.search);
   /* 數值由關卡地圖依 game-config.js 的 stage 區塊（修改器可改）用網址帶進來；也可手動測試：?star2=0.6&star3=1&tutormiss=2&dwell=800&soft=0 */
   (function () {
-    var map = { star2: 'EASY_STAR2_ACC', star3: 'EASY_STAR3_ACC', tutormiss: 'TUTOR_MISS_MAX', dwell: 'TUTOR_DWELL_MS', realpass: 'REAL_PASS', hardpass: 'HARD_PASS', realneed: 'REAL_NEED', hardneed: 'HARD_NEED', endlessneed: 'ENDLESS_NEED' };
+    var map = { star2: 'EASY_STAR2_ACC', star3: 'EASY_STAR3_ACC', tutormiss: 'TUTOR_MISS_MAX', dwell: 'TUTOR_DWELL_MS', realpass: 'REAL_PASS', hardpass: 'HARD_PASS', realneed: 'REAL_NEED', hardneed: 'HARD_NEED', endlessneed: 'ENDLESS_NEED', realtime: 'REAL_TIME', hardtime: 'HARD_TIME' };
     if (qp.has('soft')) CFG.SOFT_BANNER = qp.get('soft') !== '0';
     Object.keys(map).forEach(function (k) { if (qp.has(k)) { var v = parseFloat(qp.get(k)); if (!isNaN(v) && v >= 0) CFG[map[k]] = v; } });
   })();
@@ -115,7 +199,9 @@
       '@keyframes st-late{from{opacity:0}to{opacity:1}}' +
       '#ms-st-ov .ms-tstage,#ms-st-ov .st-hist,#ms-st-ov .st-cur,#ms-st-ov .st-ch,#ms-st-ov .ms-ctl{animation:st-late .4s ease 1.2s both}' +
       '.st-hist{margin:8px 0 2px;opacity:.65;font-size:1.05rem;line-height:1.8}' +
-      '.st-cur{margin:4px 0 10px;padding:10px 12px;background:#0004;border-radius:10px;font-size:1.5rem;line-height:2;min-height:3em;word-break:keep-all}' +
+      '.st-cur{margin:4px 0 10px;padding:10px 12px;background:#0004;border-radius:10px;font-size:1.5rem;line-height:2;min-height:3em;word-break:keep-all;white-space:nowrap}' +
+      '.st-cur,.st-hist > div{width:0;min-width:100%;box-sizing:border-box;overflow:hidden}.st-hist > div{white-space:nowrap}' +
+      '.st-cur .st-b{font-size:1em;min-width:1.5em;min-height:2em;line-height:2em;padding:0 .2em;margin:0 .06em}' +
       '.st-cur .op{opacity:.8}.st-b{cursor:pointer;color:var(--bronze,#d2a24c);display:inline-block;min-width:34px;min-height:42px;line-height:42px;text-align:center;font-size:1.5rem;padding:0 6px;margin:0 2px;border:2px dashed #d2a24c88;border-radius:10px;vertical-align:middle}.st-b:hover{background:#d2a24c44}.st-b.hot{background:#d2a24c55;box-shadow:0 0 0 2px #d2a24c}.st-b.sel{background:#d2a24c;color:#2a1d05}' +
       '.st-ch{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}' +
       '.st-fb{margin:8px 0 2px;padding:8px 12px;border-radius:12px;font-size:.95rem;line-height:1.5;display:none;background:#ffe3dc;color:#5a1d12}.st-fb.hint{background:#fff3c4;color:#4d3a00}.st-gl{font-size:.85rem;line-height:1.5}.st-gl .gl{margin:6px 0;padding:6px 10px;border-radius:10px;background:#e3f0ff;color:#14304f}.st-meter{margin:6px 0 2px;font-size:.82rem;opacity:.9}.st-meter.over{color:#ff9d8d;font-weight:bold}' +
@@ -129,6 +215,7 @@
       '.ms-cat{flex:none;width:76px;text-align:center;font-size:3.2rem;line-height:1;position:relative}' +
       '.ms-cat small{display:block;font-size:.7rem;opacity:.75;margin-top:2px;line-height:1.2}' +
       '.ms-cat .cap{position:absolute;left:50%;top:-12px;transform:translateX(-50%) rotate(-8deg);font-size:1.5rem}' +
+      '.ms-cat img.face{width:1.05em;height:1.05em;object-fit:contain;display:inline-block;vertical-align:bottom}' +
       '.ms-cat.talk .face{display:inline-block;animation:msbob .5s ease-in-out infinite}' +
       '@keyframes msbob{50%{transform:translateY(-6px) rotate(-4deg)}}' +
       '.ms-bubble{flex:1;position:relative;background:var(--paper,#f1e8d2);color:#2b2416;border-radius:14px;padding:12px 14px;min-height:96px;line-height:1.75;font-size:1rem;animation:mspop .25s ease-out}' +
@@ -176,7 +263,7 @@
     var box = document.createElement('div'); box.className = 'ms-lesson';
     box.innerHTML =
       '<div class="ms-thead">🐱 智慧貓小老師說明</div>' +
-      '<div class="ms-tstage"><div class="ms-cat talk" id="ms-cat"><span class="cap">🎓</span><span class="face">🐱</span><small>小老師</small></div>' +
+      '<div class="ms-tstage"><div class="ms-cat talk" id="ms-cat"><span class="cap">🎓</span><img class="face" src="' + MS_CAT_URL + '" alt="智慧貓"><small>小老師</small></div>' +
       '<div class="ms-bubble" id="ms-bub"></div></div>' +
       '<div class="ms-dots" id="ms-dots"></div>' +
       '<div id="ms-vid"></div>' +
@@ -414,7 +501,7 @@
       '<div class="ms-thead">🧑‍🏫 老師教我</div>' +
       '<div id="ms-t0"><div class="ms-bubble" style="margin:6px 0">用了「老師教我」之後，<b>這一局練兵最多拿 ' + CFG.TAUGHT_MAX + ' ⭐</b>（想拿 3 ⭐ 的話，請不要用）。<br>要讓老師示範嗎？</div>' +
       '<div class="ms-ctl"><button class="btn ghost" id="ms-tno">不用了</button><button class="btn" id="ms-tyes">🐱 好，請老師教我</button></div></div>' +
-      '<div id="ms-t1" class="hide"><div class="ms-tstage"><div class="ms-cat talk" id="ms-tcat"><span class="cap">🎓</span><span class="face">🐱</span><small>老師</small></div>' +
+      '<div id="ms-t1" class="hide"><div class="ms-tstage"><div class="ms-cat talk" id="ms-tcat"><span class="cap">🎓</span><img class="face" src="' + MS_CAT_URL + '" alt="智慧貓"><small>老師</small></div>' +
       '<div class="ms-bubble" id="ms-tbub"></div></div>' +
       '<div class="ms-tq hide" id="ms-tq"><div class="qt" id="ms-tqt"></div><div class="ms-topts" id="ms-topts"></div></div>' +
       '<div class="ms-ctl"><button class="btn ghost" id="ms-tcancel">取消</button><button class="btn" id="ms-tnext2">下一步 ▶</button></div></div>';
@@ -635,7 +722,7 @@
     var ov = document.createElement('div'); ov.id = 'ms-st-ov';
     ov.innerHTML = '<div class="box"><div class="ms-thead">小老師帶你一步一步化簡</div>' +
       '<div class="st-q spot" id="st-q"></div>' +
-      '<div class="ms-tstage"><div class="ms-cat talk"><span class="cap">🎓</span><span class="face">🐱</span><small>小老師</small></div><div class="ms-bubble" id="st-say" style="min-height:70px"></div></div>' +
+      '<div class="ms-tstage"><div class="ms-cat talk"><span class="cap">🎓</span><img class="face" src="' + MS_CAT_URL + '" alt="智慧貓"><small>小老師</small></div><div class="ms-bubble" id="st-say" style="min-height:70px"></div></div>' +
       '<div class="st-fb" id="st-fb"></div><div class="st-gl" id="st-gl"></div><div class="st-meter" id="st-meter"></div>' +
       '<div class="st-hist" id="st-hist"></div><div class="st-cur" id="st-cur"></div><div class="st-ch" id="st-ch"></div>' +
       '<div class="ms-ctl"><button class="btn ghost" id="st-hint">💡 提示</button></div></div>';
@@ -2477,7 +2564,7 @@
     var ov = document.createElement('div'); ov.id = 'ms-st-ov';
     ov.innerHTML = '<div class="box"><div class="ms-thead">小老師帶你一步一步解</div>' +
       '<div class="st-q spot" id="st-q"></div>' +
-      '<div class="ms-tstage"><div class="ms-cat talk"><span class="cap">🎓</span><span class="face">🐱</span><small>小老師</small></div><div class="ms-bubble" id="st-say" style="min-height:70px"></div></div>' +
+      '<div class="ms-tstage"><div class="ms-cat talk"><span class="cap">🎓</span><img class="face" src="' + MS_CAT_URL + '" alt="智慧貓"><small>小老師</small></div><div class="ms-bubble" id="st-say" style="min-height:70px"></div></div>' +
       '<div class="st-fb" id="st-fb"></div><div class="st-gl" id="st-gl"></div><div class="st-meter" id="st-meter"></div>' +
       '<div class="st-hist" id="st-hist"></div><div class="st-ch" id="st-ch"></div>' +
       '<div class="ms-ctl"><button class="btn ghost" id="st-hint">💡 提示</button></div></div>';
@@ -2565,6 +2652,16 @@
     init: function (M, sid) {
       S.M = M || null;
       S.sid = sid || '';
+      // 修改器設定的每題限時（秒）：>0 就覆蓋各關自己的 t；同步改掉模式按鈕上的「每題 N 秒」字樣
+      if (M) {
+        if (CFG.REAL_TIME > 0 && M.real) M.real.t = CFG.REAL_TIME;
+        if (CFG.HARD_TIME > 0 && M.hard) M.hard.t = CFG.HARD_TIME;
+        ['real', 'hard'].forEach(function (k) {
+          if (!M[k] || !(M[k].t > 0)) return;
+          var sm = document.querySelector('#modes .mode[data-m="' + k + '"] small');
+          if (sm) sm.textContent = sm.textContent.replace(/每題\s*\d+(?:\.\d+)?\s*秒/, '每題 ' + M[k].t + ' 秒');
+        });
+      }
       wrapGen();
       if (M && M.real && M.hard) S.orig = { real: M.real.t, hard: M.hard.t };
       injectStyle();

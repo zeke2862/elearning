@@ -136,24 +136,6 @@ button:focus-visible{outline:3px solid var(--bronze);outline-offset:2px}
 @keyframes btBurst{0%{opacity:1;transform:scale(.3)}60%{opacity:1;transform:scale(1.4)}100%{opacity:0;transform:scale(1.8)}}
 @keyframes btCap{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 @media (max-height:560px){.bt-stage{--sp:88px}.bt-eqi{width:22px;height:22px}.bt-panel{max-height:52vh}}
-/* 手機橫放／直放都要看得到完整對戰畫面：舞台高度用 dvh，角色大小同時受高、寬限制 */
-.bt-stage{height:100vh;height:100dvh;bottom:auto}
-.bt-stage{--sp:clamp(56px,min(22dvh,30vw),150px)}
-.bt-arena{overflow:hidden}
-@media (max-height:560px){
- .bt-stage{--sp:clamp(48px,min(26dvh,22vw),88px)}
- .bt-arena{padding:4px 10px}
- .bt-row{gap:8px}
- .bt-card{padding:4px 8px;flex-basis:210px;max-width:60vw}
- .bt-card b{font-size:.85rem}
- .bt-card small{font-size:.68rem}
- .bt-eq{display:none}
- .bt-caption{font-size:.8rem;min-height:0;padding:3px 10px}
- .bt-panel{padding:6px 10px 8px;max-height:46dvh}
- .bt-panel .blog{max-height:44px}
-}
-@media (orientation:landscape) and (max-height:560px){.bt-panel{max-height:52dvh}}
-@media (orientation:portrait) and (max-width:480px){.bt-card{flex-basis:0;min-width:0;flex:1 1 0}.bt-panel{max-height:42dvh}}
 
 .ic-mon{width:46px;height:46px}
 .ic-mon img,.ic-mon .emoji-fb{width:46px;height:46px;font-size:34px}

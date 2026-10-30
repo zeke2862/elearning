@@ -361,7 +361,7 @@ function closeCard(){$('#card-modal').classList.add('hide')}
 
 // ===== 關卡小卡（點地圖上的關卡）=====
 function stageURL(url,id,endless,mode){
-  const G=(window.GAME_CONFIG&&GAME_CONFIG.stage)||{},K={star2:'easyStar2',star3:'easyStar3',realpass:'realPass',hardpass:'hardPass',realneed:'realNeed',hardneed:'hardNeed',endlessneed:'endlessNeed',tutormiss:'tutorMiss',dwell:'dwellMs',soft:'softBanner'};
+  const G=(window.GAME_CONFIG&&GAME_CONFIG.stage)||{},K={star2:'easyStar2',star3:'easyStar3',realpass:'realPass',hardpass:'hardPass',realneed:'realNeed',hardneed:'hardNeed',endlessneed:'endlessNeed',tutormiss:'tutorMiss',dwell:'dwellMs',soft:'softBanner',realtime:'realTime',hardtime:'hardTime'};
   let cf='';for(const k in K)if(G[K[k]]!==undefined)cf+='&'+k+'='+encodeURIComponent(G[K[k]]);
   return url+(url.includes('?')?'&':'?')+'stars='+st(id)+'&eb='+ebOf(id)+(endless?'&endless=1':(mode?'&mode='+mode:''))+cf+(window.__extra||'');
 }
