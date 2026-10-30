@@ -364,10 +364,10 @@ const wrap=()=>$('#mapwrap');
 function fit(){
   const w=wrap(),hud=$('#hud').offsetHeight;w.style.paddingTop=hud+'px';
   const cw=w.clientWidth,ch=w.clientHeight-hud;
-  scale=Math.max(M.minScale||.5,Math.max(cw/W,ch/HT)*1.18);
+  scale=Math.max(1,cw/W,ch/HT); /* 不壓縮：原大小顯示，玩家自己拖曳／捲動；螢幕比地圖大時才放大填滿 */
   const s=$('#map');s.style.width=(W*scale)+'px';s.style.height=(HT*scale)+'px';
 }
-function centerOnHero(smooth){const w=wrap(),s=$('#map');w.scrollTo({left:heroXY.x*scale+s.offsetLeft-w.clientWidth/2,top:heroXY.y*scale+s.offsetTop-w.clientHeight/2,behavior:smooth?'smooth':'auto'})}
+function centerOnHero(smooth){const w=wrap(),s=$('#map'),wr=w.getBoundingClientRect(),sr=s.getBoundingClientRect(),ox=sr.left-wr.left+w.scrollLeft,oy=sr.top-wr.top+w.scrollTop;w.scrollTo({left:heroXY.x*scale+ox-w.clientWidth/2,top:heroXY.y*scale+oy-(w.clientHeight+(parseFloat(w.style.paddingTop)||0))/2,behavior:smooth?'smooth':'auto'})}
 /* 走路：相鄰的島直接走環狀路，其他的島先回村莊再出發 */
 const edgeEl=(a,b)=>document.getElementById('e'+Math.min(a,b)+'_'+Math.max(a,b));
 function routeOf(a,b){if(a===b)return[a];if(a===0||b===0)return[a,b];const d=Math.abs(a-b);return(d===1||d===NCH-1)?[a,b]:[a,0,b]}
@@ -939,7 +939,7 @@ function init(){
   probe(list,()=>{drawMap();renderHero();place(0);if($('#home').classList.contains('on'))renderHome();document.body.classList.remove('mapwait')});
   reportNow(false);
 }
-window.addEventListener('resize',()=>{fit();centerOnHero(false)});
+let _lw=0,_lh=0;window.addEventListener('resize',()=>{const w=wrap();const ch=w.clientWidth!==_lw||Math.abs(w.clientHeight-_lh)>150;_lw=w.clientWidth;_lh=w.clientHeight;fit();if(ch)centerOnHero(false)});
 window.addEventListener('pageshow',ev=>{if(ev.persisted){load();refreshAll(false);centerOnHero(false)}});
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&ready){load();calcStats();sync(false);drawMap();refreshHUD();reportNow(false)}});
 init();
