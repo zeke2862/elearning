@@ -1,7 +1,7 @@
-/* 遊戲設定檔：用 config-editor.html 修改後匯出覆蓋；格式為純 JSON */
+/* 遊戲設定檔 — 請用 config-editor.html 修改，不要手改 */
 window.GAME_CONFIG = {
- "version": "1.1",
- "updated": "2026-10-22",
+ "version": "1.2",
+ "updated": "2026-10-30",
  "currency": {
   "name": "數靈幣",
   "icon": "💰"
@@ -33,13 +33,28 @@ window.GAME_CONFIG = {
   },
   "loginGift": {
    "days": [
-    { "gold": 20 },
-    { "gold": 30 },
-    { "gold": 40 },
-    { "gold": 50 },
-    { "gold": 60 },
-    { "gold": 80 },
-    { "gold": 120, "item": "boost" }
+    {
+     "gold": 20
+    },
+    {
+     "gold": 30
+    },
+    {
+     "gold": 40
+    },
+    {
+     "gold": 50
+    },
+    {
+     "gold": 60
+    },
+    {
+     "gold": 80
+    },
+    {
+     "gold": 120,
+     "item": "boost"
+    }
    ]
   },
   "missions": [
@@ -1414,7 +1429,9 @@ window.GAME_CONFIG = {
   "endlessNeed": 3,
   "tutorMiss": 1,
   "dwellMs": 1500,
-  "softBanner": 1
+  "softBanner": 1,
+  "realTime": 85,
+  "hardTime": 45
  },
  "report": {
   "enabled": false,
@@ -1432,6 +1449,8 @@ window.GAME_CONFIG = {
   "endlessNeed": "解鎖無極限所需星數（以該關目前星數計）",
   "tutorMiss": "小老師帶做：容許失誤幾次（1＝失誤超過 1 次，也就是第 2 次起，這題才記答錯）",
   "dwellMs": "小老師做完後停留多久再送出答案（單位：毫秒，1000＝1 秒，1500＝1.5 秒）",
+  "realTime": "實戰每題限時（秒；0＝用各關原本設定，多數關卡是 15 秒，第 1 章部分關卡 18～25 秒；填 20 就是所有關卡都 20 秒）",
+  "hardTime": "修羅每題限時（秒；0＝用各關原本設定，多數關卡是 10 秒，第 1 章部分關卡 12～18 秒；填 15 就是所有關卡都 15 秒）",
   "softBanner": "答錯／超時橫幅文字（1＝溫和說法，0＝怪物反擊原文；只改文字，不影響計分）",
   "version": "版本號",
   "updated": "更新日期",
@@ -1460,7 +1479,7 @@ window.GAME_CONFIG = {
   "pass": "達標題數（答對幾題以上拿全額獎勵）",
   "partial": "參加獎幣（沒達標）",
   "loginGift": "登入小禮（連續登入第幾天領什麼）",
-  "days": "7 天一輪的禮物（item 填 boost 會送雙倍券，可留空）",
+  "days": "天數係數（價格＝基準收入×係數）",
   "missions": "每日任務",
   "desc": "說明（{n}＝數量）",
   "type": "類型",
@@ -1509,7 +1528,6 @@ window.GAME_CONFIG = {
   "shop": "商店",
   "tabs": "分頁",
   "slot": "類別",
-  "days": "天數係數（價格＝基準收入×係數）",
   "price": "直接指定價格（空白＝自動）",
   "need": "購買條件",
   "effect": "效果說明",
@@ -1643,7 +1661,7 @@ window.GAME_CONFIG = {
    "u": 10,
    "x": 20
   },
-  "basicP": 1.0,
+  "basicP": 1,
   "basicNames": [
    "算式衝擊",
    "軸線突刺",
@@ -1720,7 +1738,7 @@ window.GAME_CONFIG = {
    "D": {
     "n": "吸魔",
     "k": "drain",
-    "p": 1.0,
+    "p": 1,
     "pct": 0.2,
     "mp": 50
    },
@@ -2757,7 +2775,7 @@ window.GAME_CONFIG = {
   }
  },
  "relax": {
-  "enabled": false,
+  "enabled": true,
   "every": 5,
   "multiple": true,
   "streak": 5,

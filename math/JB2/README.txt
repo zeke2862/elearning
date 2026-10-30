@@ -1,9 +1,17 @@
-JB2 update3 (2026-10-23)
-全部放進遊戲資料夾（JB2V2），同名檔案直接覆蓋：
-  game-config.js               -> JB2V2/            （帽子大小與位置已重新校正，頭髮不外露）
-  config-editor.html           -> JB2V2/            （新增「勇者換裝微調器」：拖曳/滑桿調帽子、法杖位置與大小）
-  world-map-vol2-all.html      -> JB2V2/            （小屋窗戶改成水彩風）
-  world-map-vol2-teacher.html  -> JB2V2/
-  images/home/win_day.jpg, win_dawn.jpg, win_dusk.jpg, win_night.jpg, win_wood.jpg
-                               -> JB2V2/images/home/ （窗外四種時段畫面與木窗框）
-注意：若您已用修改器改過 game-config.js，請先備份；本檔會覆蓋成新的帽子數值。
+JB2 更新：實戰／修羅「每題限時」可在修改器調整
+================================================
+放法：整個資料夾裡的檔案，照同樣的資料夾位置覆蓋進 JB2V2 即可。
+  config-editor.html                         -> JB2V2/
+  game-config.js                             -> JB2V2/   （注意：見下方）
+  grade7-vol2-ch1~6/mode-system.js           -> 各章資料夾
+  grade7-vol2-ch1~6/world-map-vol2chN.html   -> 各章資料夾
+
+用法：開 config-editor.html -> 「關卡難度與星等」最下面兩欄
+  實戰每題限時（秒）／修羅每題限時（秒）
+  填 0 ＝ 各關維持原本秒數（15／10，第 1 章少數關卡較長）
+  填 20 ＝ 所有關卡的實戰都變 20 秒（模式按鈕上的「每題 N 秒」也會跟著變）
+
+注意：
+ - 如果您最近用修改器改過 game-config.js，請不要覆蓋它；只換其他檔案，
+   修改器會自動補出這兩個新欄位，改完存檔即可。
+ - 「時間凍結 10 秒」道具的秒數仍是固定的，這次沒動。

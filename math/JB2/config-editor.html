@@ -69,6 +69,11 @@ var $=function(s){return document.querySelector(s)};
 if(!window.GAME_CONFIG){document.body.innerHTML='<h1>找不到 game-config.js</h1><p>請把本檔放在和 game-config.js 同一個資料夾。</p>';return}
 var orig=JSON.stringify(window.GAME_CONFIG),C=JSON.parse(orig),dirty=false;
 var L=C.labels||{};
+/* 舊版 game-config.js 沒有的新項目，自動補上預設值（0＝沿用各關原本設定），這樣舊檔也能在修改器裡調整 */
+(function(){var S=C.stage;if(!S)return;if(S.realTime===undefined)S.realTime=0;if(S.hardTime===undefined)S.hardTime=0;
+L.realTime=L.realTime||'實戰每題限時（秒；0＝用各關原本設定，多數關卡是 15 秒，第 1 章部分關卡 18～25 秒；填 20 就是所有關卡都 20 秒）';
+L.hardTime=L.hardTime||'修羅每題限時（秒；0＝用各關原本設定，多數關卡是 10 秒，第 1 章部分關卡 12～18 秒；填 15 就是所有關卡都 15 秒）';
+C.labels=C.labels||{};C.labels.realTime=L.realTime;C.labels.hardTime=L.hardTime})();
 function msg(m){var e=$('#msg');e.textContent=m;e.style.display='block';setTimeout(function(){e.style.display='none'},7000)}
 function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
 function lab(k){return L[k]||k}
