@@ -124,6 +124,16 @@
       '.mt-pad{max-width:320px;margin:10px auto 0}.mt-disp{font-size:1.4rem;font-weight:700;text-align:center;padding:8px;background:#0004;border-radius:10px;margin-bottom:8px;min-height:2.2em;font-variant-numeric:tabular-nums}.mt-keys{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.mt-key{padding:12px 0;font-size:1.3rem;font-weight:700;border-radius:10px;border:2px solid var(--line,#3a4270);background:var(--ink,#161a2e)}.mt-key:hover{border-color:var(--bronze,#d2a24c)}.mt-key.go{grid-column:span 2;background:var(--bronze,#d2a24c);color:#2a1d05;border-color:var(--bronze,#d2a24c)}' +
       '.mt-chips{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}.mt-chip{padding:12px 16px;border:2px solid var(--line,#3a4270);border-radius:12px;font-size:1.4rem;font-weight:700;background:var(--ink,#161a2e);min-width:3.2em}.mt-chip.flip{background:#a4362a;border-color:#d24a33}' +
       '.mt-ch2{margin-top:6px}' +
+      /* 版面修正：算式太長時自動換行（不再被切掉）、所有要點的數字與符號至少 44px（手指好點） */
+      '.mt-expr{overflow-x:visible}.mt-expr .h{white-space:normal;overflow-wrap:anywhere;font-size:clamp(.95rem,4vw,1.1rem)}' +
+      '.mt-expr .cur{white-space:normal;overflow-wrap:anywhere;font-size:clamp(1.15rem,5.2vw,1.7rem);line-height:2.5}' +
+      '.mt-op{display:inline-flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;padding:0 .3em;margin:2px 2px;vertical-align:middle;box-sizing:border-box}' +
+      '.mt-op.sup{min-width:36px;min-height:36px;padding:0 .2em;font-size:.85em;vertical-align:top;margin:0 3px 0 1px}' +
+      '.mt-n{display:inline-block;min-width:1.2em;text-align:center}.mt-n.pk,.mt-n.on{display:inline-flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;padding:0 .3em;margin:2px;box-sizing:border-box;vertical-align:middle}' +
+      '#ms-tut .mt-pairx{flex-wrap:wrap;overflow-x:visible;white-space:normal;gap:6px;justify-content:center;font-size:clamp(1.1rem,5vw,1.4rem)}#ms-tut .mt-tk{min-width:44px;min-height:44px;padding:4px 10px;box-sizing:border-box;flex:none}#ms-tut .mt-tx{min-width:.8em;text-align:center}' +
+      '#ms-tut .mt-pad{width:100%;max-width:360px}#ms-tut .mt-disp{font-size:clamp(1.05rem,4.6vw,1.4rem);overflow-wrap:anywhere}#ms-tut .mt-key{min-height:56px;font-size:1.5rem}' +
+      '.ex-proc li,.ex-proc,.th-box,.th-box div,.th-box li,#say{overflow-wrap:anywhere}' +
+      '#ms-tut .mt-chip{min-width:56px;min-height:48px}#ms-tut .mt-opt{min-height:48px;overflow-wrap:anywhere}' +
       '.ex-proc{margin:8px 0;padding:8px 12px;border-left:4px solid var(--jade,#43a58f);background:#ffffff0d;border-radius:6px;line-height:1.8;font-size:.95rem;text-align:left}.ex-proc ol{margin:4px 0 0;padding-left:1.4em}.ex-proc li{margin:2px 0}' +
       '.th-box{margin:8px 0;padding:10px 12px;border-radius:10px;background:#0004;border:1px solid #d2a24c88;text-align:left;line-height:1.8;font-size:.95rem;font-family:"Leelawadee UI","Tahoma","Noto Sans Thai","Noto Sans TC",sans-serif}.th-title{font-weight:700;color:var(--bronze,#d2a24c)}.th-gl{margin-top:8px;padding-top:6px;border-top:1px dashed #ffffff44;font-size:.85rem;opacity:.9}.th-ms{margin-top:6px;opacity:.7;font-size:.85rem}' +
       '.mt-pairx{display:flex;flex-wrap:nowrap;gap:4px;justify-content:center;align-items:center;font-size:1.25rem;font-weight:700;padding:10px 6px;background:#0003;border-radius:10px;margin-bottom:8px;overflow-x:auto;white-space:nowrap}.mt-pairx.good{background:#43a58f33}.mt-tx{padding:0 1px}' +
@@ -592,7 +602,7 @@
     if (n.k === 'abs') return '|' + exPr(n.a, true) + '|';
     if (n.k === 'pow') return (n.a.k === 'n' ? (n.a.v < 0 ? '(' + fmtN(n.a.v) + ')' : fmtN(n.a.v)) : '(' + exPr(n.a, true) + ')') + supS(n.e);
     if (n.k === 'neg') { var c = n.a; return '-' + (c.k === 'n' ? (c.v < 0 ? '(' + fmtN(c.v) + ')' : (c.par ? '(+' + fmtN(c.v) + ')' : fmtN(c.v))) : c.k === 'abs' || c.k === 'pow' ? exPr(c, false) : '(' + exPr(c, true) + ')'); }
-    var wrap = function (c, right) { return c.k === 'b' && (c.par || PREC[c.op] < PREC[n.op] || (right && PREC[c.op] <= PREC[n.op])); };
+    var wrap = function (c, right) { return (c.k === 'b' && (c.par || PREC[c.op] < PREC[n.op] || (right && PREC[c.op] <= PREC[n.op]))) || (right && c.k === 'neg'); };
     var L = wrap(n.a, false) ? '(' + exPr(n.a, true) + ')' : exPr(n.a, first);
     var R = wrap(n.b, true) ? '(' + exPr(n.b, true) + ')' : exPr(n.b, false);
     return L + ' ' + n.op + ' ' + R;
@@ -703,6 +713,8 @@
           var rd = exReady(root), n = rd[0].n, val = exEval(n), why;
           if (rd[0].g) why = ['括號（或絕對值）裡面先算', 'คำนวณในวงเล็บ (หรือค่าสัมบูรณ์) ก่อน'];
           else if (n.k === 'pow') why = ['先算次方', 'ยกกำลังก่อน'];
+          else if (n.k === 'neg') why = ['前面的負號：取相反數', 'เครื่องหมายลบด้านหน้า: หาจำนวนตรงข้าม'];
+          else if (n.k === 'abs') why = ['絕對值：到原點的距離', 'ค่าสัมบูรณ์: ระยะห่างจากจุดกำเนิด'];
           else if (n.k === 'b' && (n.op === '×' || n.op === '÷') && hasAddSub(root)) why = ['先乘除、後加減', 'คูณหารก่อน แล้วค่อยบวกลบ'];
           else why = ['同一級由左到右依序算', 'ทำจากซ้ายไปขวาตามลำดับ'];
           var d = exDesc(n), vs = fmtN(val).replace('-', '−');
@@ -807,7 +819,7 @@
     if (n.k === 'abs') return opSp(n, '|') + exHtml(n.a, true) + opSp(n, '|');
     if (n.k === 'pow') return (n.a.k === 'n' ? exHtml(n.a, false) : '(' + exHtml(n.a, true) + ')') + opSp(n, supS(n.e), 'sup');
     if (n.k === 'neg') { var c = n.a; return opSp(n, '−') + (c.k === 'n' ? '<span class="mt-n">' + exNum(c.v, false) + '</span>' : (c.k === 'abs' || c.k === 'pow') ? exHtml(c, false) : '(' + exHtml(c, true) + ')'); }
-    var wrap = function (c, right) { return c.k === 'b' && (c.par || PREC[c.op] < PREC[n.op] || (right && PREC[c.op] <= PREC[n.op])); };
+    var wrap = function (c, right) { return (c.k === 'b' && (c.par || PREC[c.op] < PREC[n.op] || (right && PREC[c.op] <= PREC[n.op]))) || (right && c.k === 'neg'); };
     var L = wrap(n.a, false) ? '(' + exHtml(n.a, true) + ')' : exHtml(n.a, first), R = wrap(n.b, true) ? '(' + exHtml(n.b, true) + ')' : exHtml(n.b, false);
     return L + ' ' + opSp(n, n.op === '-' ? '−' : n.op) + ' ' + R;
   }
