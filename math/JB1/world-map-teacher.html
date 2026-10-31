@@ -287,26 +287,6 @@ button:focus-visible{outline:3px solid var(--bronze);outline-offset:2px}
 @keyframes btBurst{0%{opacity:1;transform:scale(.3)}60%{opacity:1;transform:scale(1.4)}100%{opacity:0;transform:scale(1.8)}}
 @keyframes btCap{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 @media (max-height:560px){.bt-stage{--sp:88px}.bt-eqi{width:22px;height:22px}.bt-panel{max-height:52vh}}
-/* 手機橫放／直放都要看得到完整對戰畫面：高度用 dvh（避開瀏覽器網址列），角色大小同時受高、寬限制 */
-.bt-stage{height:100vh;height:100dvh;bottom:auto;--sp:clamp(56px,min(22dvh,30vw),150px)}
-.bt-arena{overflow:hidden}
-.bt-vs{--vz:clamp(90px,min(34dvh,40vw),250px)}
-@media (max-height:560px){
- .bt-stage{--sp:clamp(48px,min(26dvh,22vw),88px)}
- .bt-arena{padding:4px 10px}
- .bt-row{gap:8px}
- .bt-stage .bt-card{padding:4px 8px;flex-basis:210px;max-width:60vw}
- .bt-stage .bt-card b,.bt-stage .bt-card b.nm{font-size:.85rem}
- .bt-stage .bt-card small{font-size:.68rem}
- .bt-stage .bt-eq{display:none}
- .bt-stage .bt-caption{font-size:.8rem;min-height:0;padding:3px 10px}
- .bt-panel{padding:6px 10px 8px;max-height:46dvh}
- .bt-panel .blog{max-height:44px}
- .bt-panel .amenu{gap:5px}
- .bt-panel .amenu button{padding:5px 8px;font-size:.85rem}
-}
-@media (orientation:landscape) and (max-height:560px){.bt-panel{max-height:54dvh}}
-@media (orientation:portrait) and (max-width:480px){.bt-stage .bt-card{flex:1 1 0;min-width:0;max-width:none}.bt-panel{max-height:42dvh}}
 #nav{margin:0 0 10px}#nav button{background:var(--ink);border:2px solid var(--bronze);border-radius:8px;padding:8px 14px}
 .flow{display:flex;align-items:stretch;gap:8px;flex-wrap:wrap;margin:10px 0 16px}
 .fnode{flex:1;min-width:210px;background:var(--ink2);border:2px solid var(--line);border-radius:14px;padding:14px;text-align:left}
@@ -424,7 +404,6 @@ button:focus-visible{outline:3px solid var(--bronze);outline-offset:2px}
 </style>
 <script src="game-config.js?v=20261023a"></script>
 <script src="math_hero_engine.js"></script>
-<script src="stroke-data.js"></script>
 <script src="bgm.js"></script>
 <script src="sfx.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
@@ -1959,8 +1938,6 @@ function mapBuild(){
   vp.onpointerup=vp.onpointerleave=()=>{vp.style.cursor='grab';setTimeout(()=>{dr=null})};
   vp.addEventListener('click',e=>{if(dr&&dr.m){e.stopPropagation();e.preventDefault()}},true);
 }
-/* 手機轉向（橫放／直放）時，地圖視窗大小會變，自動把畫面拉回勇者位置 */
-let _mapW=0;window.addEventListener('resize',()=>{const vp=document.getElementById('mapvp');if(!vp||vp.clientWidth===_mapW)return;_mapW=vp.clientWidth;if(MPOS&&MPOS[HN]){vp.scrollLeft=MPOS[HN][0]-vp.clientWidth/2;vp.scrollTop=MPOS[HN][1]-vp.clientHeight/2}});
 function pickChapter(gi){
   const idx=MNODES.map((n,i)=>i).filter(i=>MNODES[i].gi===gi);
   if(!nUn(MNODES[idx[0]])){const r=MNODES[idx[0]].lock(MNODES[idx[0]].ci,0);return toast('🔒 '+cm(r||'這一章還沒開放，先通關前一章吧！'))}
@@ -2334,19 +2311,15 @@ function renameDialog(x){
 /* ===== 🎲 第一次登入：建立角色（依 math_hero_engine） ===== */
 function maybeCreate(){if(P._hero)return;const box=$('#create');box.classList.remove('hide');
   box.innerHTML=`<div class="card"><h2 class="serif" style="margin:0;color:var(--bronze)">🧙 建立你的勇者</h2>
-  <div>請輸入角色名（英文名會自動計算字母值；中文名會<b>自動算出姓名總筆畫</b>）</div>
+  <div>請輸入角色名（英文名會自動計算字母值；中文名請填姓名總筆劃）</div>
   <div style="margin:6px 0;color:var(--bronze);font-weight:700">⚠️ 第一次取名免費，取好之後<u>無法自己修改</u>，想改名要在商店買「改名卡」。請想清楚再按喔！</div>
-  <input id="cr-name" placeholder="角色名" maxlength="20"><div id="cr-info" class="hide" style="margin:6px 0;color:var(--bronze);font-weight:700"></div><input id="cr-str" class="hide" type="number" min="1" placeholder="姓名總筆畫（自動算好，覺得不對可以自己改）">
+  <input id="cr-name" placeholder="角色名" maxlength="20"><input id="cr-str" class="hide" type="number" min="1" placeholder="姓名總筆劃（中文名必填）">
   <div id="cr-msg" style="color:#ff9a8a"></div><button id="cr-go">🎲 擲骰子並建立角色</button></div>`;
-  let strDirty=false,rnd=0;const rnd6=()=>rnd||(rnd=1+Math.floor(Math.random()*6));$('#cr-str').oninput=()=>{strDirty=true};
-  $('#cr-name').oninput=e=>{const zh=/[^\x00-\x7F]/.test(e.target.value),info=$('#cr-info'),st=$('#cr-str');
-    st.classList.toggle('hide',!zh);info.classList.toggle('hide',!zh);if(!zh)return;
-    const r=nameStrokes(e.target.value),none=!r.total;
-    info.textContent=none?'🎲 這些字電腦算不出筆畫，系統幫你隨機給 '+rnd6()+' 畫（想改可以自己改下面的數字）':'📝 筆畫：'+r.parts.map(x=>x[0]+x[1]).join('＋')+'＝共 '+r.total+' 畫'+(r.unknown.length?'（「'+r.unknown.join('')+'」算不出來，先略過）':'');
-    if(!strDirty||!st.value)st.value=none?rnd6():r.total}
-  $('#cr-go').onclick=()=>{try{const h=MathHeroEngine.createCharacter({name:$('#cr-name').value,chineseStrokeTotal:$('#cr-str').value||rnd6()});
+  $('#cr-name').oninput=e=>$('#cr-str').classList.toggle('hide',!/[^\x00-\x7F]/.test(e.target.value));
+  $('#cr-go').onclick=()=>{try{const h=MathHeroEngine.createCharacter({name:$('#cr-name').value,chineseStrokeTotal:$('#cr-str').value});
     P._hero=h;P._who=P._who||{};P._who.name=h.name;save();fillWho();
     box.innerHTML=`<div class="card"><h2 class="serif" style="margin:0;color:var(--bronze)">✨ ${h.name}，你是「${h.archetype}」！</h2>
+    <div>骰子：${h.dice.die1}＋${h.dice.die2}＝${h.dice.sum}　（${h.nameValue.method} ${h.nameValue.total}，餘數 ${h.remainder}）</div>
     <div class="stat-grid">${['HP','ATK','DEF','SPD','MATK','MDEF'].map(k=>`<div class="sbox"><b>${h.stats[k]}</b><span>${k}</span></div>`).join('')}</div>
     <button id="cr-ok">⚔️ 出發冒險！</button></div>`;
     $('#cr-ok').onclick=()=>{box.classList.add('hide');box.innerHTML='';render();checkGifts()}}catch(err){$('#cr-msg').textContent=err.message}}}
