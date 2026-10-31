@@ -124,6 +124,7 @@
       '.mt-pad{max-width:320px;margin:10px auto 0}.mt-disp{font-size:1.4rem;font-weight:700;text-align:center;padding:8px;background:#0004;border-radius:10px;margin-bottom:8px;min-height:2.2em;font-variant-numeric:tabular-nums}.mt-keys{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.mt-key{padding:12px 0;font-size:1.3rem;font-weight:700;border-radius:10px;border:2px solid var(--line,#3a4270);background:var(--ink,#161a2e)}.mt-key:hover{border-color:var(--bronze,#d2a24c)}.mt-key.go{grid-column:span 2;background:var(--bronze,#d2a24c);color:#2a1d05;border-color:var(--bronze,#d2a24c)}' +
       '.mt-chips{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}.mt-chip{padding:12px 16px;border:2px solid var(--line,#3a4270);border-radius:12px;font-size:1.4rem;font-weight:700;background:var(--ink,#161a2e);min-width:3.2em}.mt-chip.flip{background:#a4362a;border-color:#d24a33}' +
       '.mt-ch2{margin-top:6px}' +
+      '.ex-proc{margin:8px 0;padding:8px 12px;border-left:4px solid var(--jade,#43a58f);background:#ffffff0d;border-radius:6px;line-height:1.8;font-size:.95rem;text-align:left}.ex-proc ol{margin:4px 0 0;padding-left:1.4em}.ex-proc li{margin:2px 0}' +
       '.th-box{margin:8px 0;padding:10px 12px;border-radius:10px;background:#0004;border:1px solid #d2a24c88;text-align:left;line-height:1.8;font-size:.95rem;font-family:"Leelawadee UI","Tahoma","Noto Sans Thai","Noto Sans TC",sans-serif}.th-title{font-weight:700;color:var(--bronze,#d2a24c)}.th-gl{margin-top:8px;padding-top:6px;border-top:1px dashed #ffffff44;font-size:.85rem;opacity:.9}.th-ms{margin-top:6px;opacity:.7;font-size:.85rem}' +
       '.mt-pairx{display:flex;flex-wrap:nowrap;gap:4px;justify-content:center;align-items:center;font-size:1.25rem;font-weight:700;padding:10px 6px;background:#0003;border-radius:10px;margin-bottom:8px;overflow-x:auto;white-space:nowrap}.mt-pairx.good{background:#43a58f33}.mt-tx{padding:0 1px}' +
       '.mt-tk{padding:4px 9px;border:2px dashed var(--bronze,#d2a24c);border-radius:10px;background:var(--ink,#161a2e);font-size:1.25rem;font-weight:700;flex:none}.mt-tk:hover{background:#ffffff1f}.mt-tk.on{background:var(--jade,#43a58f);border-style:solid;color:#06231c}' +
@@ -521,7 +522,8 @@
     var out = [{ t: fmtN(ok), ok: true }], seen = {}; seen[out[0].t] = 1;
     function add(v, why) { if (v == null || !isFinite(v)) return; var t = fmtN(v); if (seen[t] || out.length >= 4) return; seen[t] = 1; out.push({ t: t, ok: false, why: why }); }
     (wr || []).forEach(function (w) { add(w[0], w[1]); });
-    [[ok + 1, '差了 1，再算一次。'], [ok - 1, '差了 1，再算一次。'], [ok + 2, '再仔細算一次。'], [ok - 2, '再仔細算一次。']].forEach(function (w) { add(w[0], w[1]); });
+    var near = '這個數和正確答案只差一點。常見原因：進位、退位算錯，或正負號寫錯。請把算式寫出來，逐項重算一次。';
+    [[ok + 1, near], [ok - 1, near], [ok + 2, near], [ok - 2, near]].forEach(function (w) { add(w[0], w[1]); });
     return shuffle(out);
   }
   function txtOpts(ok, wr) {
@@ -668,6 +670,75 @@
     if (root.k !== 'n' || !steps.length || steps.length > 10 || Math.abs(root.v - parseFloat(q.ans)) > 1e-6) return null;
     return { steps: steps, first: m[1].trim(), pickLast: false };
   }
+  /* 每一步的提示：用這一步自己的做法（錯誤選項的原因、要點哪兩個數的理由），不是籠統的「再算一次」 */
+  var GENERIC_WHY = /^(再|這個數和正確答案只差一點|差了|算出來)/;
+  function deriveHint(s) {
+    if (s.pair && s.pair.why) return s.pair.why;
+    if (s.toggle && s.toggle.why) return s.toggle.why;
+    var why = [];
+    (s.wr || []).forEach(function (w) { if (w[1] && why.indexOf(w[1]) < 0 && !GENERIC_WHY.test(w[1]) && why.length < 2) why.push(w[1]); });
+    return why.join('');
+  }
+  function firstSentence(say) { var t = String(say || '').replace(/<[^>]+>/g, '').split(/[。？]/)[0]; return t ? '想一想：' + t + '。' : ''; }
+  /* 📝 答錯後的「解題過程」：依這題的每一步，把算式一步一步寫出來 */
+  function opExprOf(src) {
+    var s = String(src || '').replace(/<[^>]+>/g, ''), re = /([\d(（|x−\-][^＝=？，。：；]*?)\s*[＝=]\s*？/g, m, last = null;
+    while ((m = re.exec(s))) last = m[1];
+    if (!last || /[㐀-鿿]/.test(last) || !/[＋－×÷+−\-]|\^/.test(last)) return '';
+    return last.replace(/\s+/g, ' ').trim();
+  }
+  function stepProc(s) {
+    var z = '', l = s.line || '';
+    if (/^-?\d+(\.\d+)?$/.test(String(s.ok || ''))) { var ex = opExprOf(s.say2 || s.say); if (ex) z = ex + ' ＝ ' + fmtN(+s.ok).replace('-', '−'); }
+    if (z && l && l.replace(/\s/g, '') !== z.replace(/\s/g, '')) z += '　→　' + l; else if (!z) z = l;
+    return z;
+  }
+  function processFor(qq) {
+    var out = [];
+    try {
+      var root = qq.steps ? null : exParseQ(qq);
+      if (root) {
+        var guard = 0;
+        while (root.k !== 'n' && guard++ < 20) {
+          var rd = exReady(root), n = rd[0].n, val = exEval(n), why;
+          if (rd[0].g) why = ['括號（或絕對值）裡面先算', 'คำนวณในวงเล็บ (หรือค่าสัมบูรณ์) ก่อน'];
+          else if (n.k === 'pow') why = ['先算次方', 'ยกกำลังก่อน'];
+          else if (n.k === 'b' && (n.op === '×' || n.op === '÷') && hasAddSub(root)) why = ['先乘除、後加減', 'คูณหารก่อน แล้วค่อยบวกลบ'];
+          else why = ['同一級由左到右依序算', 'ทำจากซ้ายไปขวาตามลำดับ'];
+          var d = exDesc(n), vs = fmtN(val).replace('-', '−');
+          root = exReplace(root, n, { k: 'n', v: val, id: n.id });
+          var after = root.k === 'n' ? '' : '　→　' + exPr(root, true).replace(/-/g, '−');
+          out.push({ zh: why[0] + '：' + d + ' ＝ ' + vs + after, th: why[1] + ': ' + d + ' = ' + vs + after });
+        }
+        return out;
+      }
+      (qq.steps || []).forEach(function (s) { var z = stepProc(s); if (z) out.push({ zh: z }); });
+    } catch (e) {}
+    return out;
+  }
+  function procBlock() {
+    var say = document.getElementById('say'); if (!say || say.querySelector('.ex-proc') || !q) return;
+    var items = processFor(q); if (items.length < 2) return;   // 只有一步時，上面的說明已經講完了
+    var anchor = say.querySelector('.th-btn') || document.getElementById('nx'); if (!anchor) return;
+    var box = document.createElement('div'); box.className = 'ex-proc';
+    box.innerHTML = '<b>📝 解題過程（一步一步）</b><ol>' + items.slice(0, 12).map(function (it) { return '<li>' + esc(it.zh) + '</li>'; }).join('') + '</ol>';
+    anchor.parentNode.insertBefore(box, anchor);
+  }
+  // 遞等式「算這一組」的做法提示
+  function exHint(n) {
+    var a = n.a && n.a.v, b = n.b && n.b.v;
+    if (n.k === 'b' && (n.op === '+' || n.op === '-')) {
+      var B = n.op === '+' ? b : -b, same = (a >= 0) === (B >= 0), s = (n.op === '-' ? '減去一個數 ＝ 加上它的相反數：' + exNum(a, true) + ' ＋ ' + exNum(B, false) + '。' : '');
+      return s + (same ? '同號相加：絕對值相加（' + Math.abs(a) + ' ＋ ' + Math.abs(B) + ' ＝ ' + (Math.abs(a) + Math.abs(B)) + '），符號不變（都是' + (a < 0 ? '負' : '正') + '）。' : '異號相加：絕對值大的減小的（' + Math.max(Math.abs(a), Math.abs(B)) + ' − ' + Math.min(Math.abs(a), Math.abs(B)) + ' ＝ ' + Math.abs(Math.abs(a) - Math.abs(B)) + '），符號跟絕對值大的那個（' + (Math.abs(a) > Math.abs(B) ? exNum(a, true) : exNum(B, true)) + '）。');
+    }
+    if (n.k === 'b') {
+      var neg = (a < 0) !== (b < 0), mul = n.op === '×';
+      return '先決定正負：' + (neg ? '一正一負（異號）→ 結果是負' : '兩個同號 → 結果是正') + '。再算絕對值：' + Math.abs(a) + ' ' + n.op + ' ' + Math.abs(b) + (mul ? ' ＝ ' + Math.abs(a * b) : ' ＝ ' + fmtN(Math.abs(a / b))) + '。所以答案是' + (neg ? '負的' : '正的') + '。';
+    }
+    if (n.k === 'pow') return exDesc(n) + ' 是把 ' + exNum(a, false) + ' 連乘 ' + n.e + ' 次。負數的奇數次方是負、偶數次方是正。';
+    if (n.k === 'neg') return '前面的「−」是取相反數：正的變負、負的變正。';
+    return '絕對值是「到原點的距離」，距離不會是負的：正數不變、負數去掉負號。';
+  }
   /* 題目格式有兩種：整數／因倍數關卡用 text + options + ans；代數關卡用 promptHTML + opts(HTML) + correctIndex */
   function htmlPlain(h) {
     var s = String(h == null ? '' : h).replace(/<span class="frac"><span class="num">(.*?)<\/span><span class="den">(.*?)<\/span><\/span>/g, '$1/$2').replace(/<sup>(.*?)<\/sup>/g, '^$1').replace(/<br\s*\/?>/g, ' ');
@@ -678,7 +749,7 @@
   function stepsPlan(q) {
     var algebra = !!(q.opts && q.correctIndex != null), olist = algebra ? q.opts : q.options;
     if (!q.steps || !q.steps.length) return null;
-    var steps = q.steps.map(function (s) { return { say: s.say, hint: s.hint || q.hint, vis: s.vis, opts: s.toggle ? [] : txtOpts(s.ok, s.wr), line: s.line || '', input: !!s.input, ans: s.ok, toggle: s.toggle || null, pair: s.pair || null, say2: s.say2 || '' }; });
+    var steps = q.steps.map(function (s) { return { say: s.say, hint: s.hint || deriveHint(s) || q.hint || firstSentence(s.say), vis: s.vis, opts: s.toggle ? [] : txtOpts(s.ok, s.wr), line: s.line || '', input: !!s.input, ans: s.ok, toggle: s.toggle || null, pair: s.pair || null, say2: s.say2 || '' }; });
     if (!olist || !olist.length) return { steps: steps, manual: true };   // 自訂操作介面的題目：帶完步驟後，把畫面還給學生自己操作
     var ans = qAns(q);
     steps.push({ say: '把剛剛一步一步想到的合起來，這一題的答案是哪一個？', hint: q.hint, opts: shuffle(olist.map(function (o, i) { var t = algebra ? htmlPlain(o) : String(o), ok = algebra ? i === q.correctIndex : t === ans; return { t: t, h: algebra ? o : null, ok: ok, why: ok ? '' : '和剛剛一步一步推出來的結果不一樣，再對照一次上面的步驟。' }; })), line: '答案：' + ans });
@@ -835,7 +906,7 @@
           if (root.k === 'n') return finish();
           toPick();
         } else {
-          snd('wrong'); misses++; fb('🧙 再算一次：' + esc(exDesc(n)) + ' ＝ ？（這一步要仔細喔）', 'warn'); pad.clear();
+          snd('wrong'); misses++; fb('🧙 ' + esc(exDesc(n)) + ' 的結果不對喔。提示：' + esc(exHint(n)), 'warn'); pad.clear();
         }
       });
     }
@@ -872,8 +943,8 @@
       setTimeout(function () { EQ.flash = null; if (phase === 'pick' && !ov._done && ov.parentNode) render(); }, 1700);
     });
     $o('#mt-hint').onclick = function () {
-      if (phase === 'calc') { fb('💡 ' + esc(exDesc(sel)) + ' 在數線上或用口訣算算看（同號相乘為正、異號為負）。', 'hint'); return; }
-      EQ.flash = exReady(root).map(function (r) { return r.n.id; }); render(); fb('💡 發亮的符號就是現在可以先算的。', 'hint');
+      if (phase === 'calc' || phase === 'pairs') { fb('💡 ' + esc(exHint(sel)), 'hint'); return; }
+      EQ.flash = exReady(root).map(function (r) { return r.n.id; }); render(); fb('💡 順序是：括號先算 → 次方 → 先乘除、後加減 → 同一級由左到右。發亮的符號就是現在可以先算的。', 'hint');
       setTimeout(function () { EQ.flash = null; if (phase === 'pick' && !ov._done && ov.parentNode) render(); }, 1700);
     };
     $o('#mt-skip').onclick = close;
@@ -914,7 +985,7 @@
       function runInput(host) {   // 自己用數字鍵輸入
         var ph = makePad(host, '', function (v) {
           if (Math.abs(Number(v) - Number(s.ans)) < 1e-6) { snd('confirm'); el.innerHTML = ''; good(); }
-          else { snd('wrong'); misses++; fb('🧙 再算一次～ ' + esc(s.hint || ''), 'warn'); ph.clear(); }
+          else { snd('wrong'); misses++; fb('🧙 答案不對喔。' + (s.hint ? '提示：' + esc(s.hint) : '請把這一步的算式再檢查一次。'), 'warn'); ph.clear(); }
         });
       }
       if (s.pair) {   // 先自己點出「要相乘的兩個數字」，再計算
@@ -997,7 +1068,7 @@
         if (pick) pick.click();
       }, TUT.DWELL);
     }
-    $o('#mt-hint').onclick = function () { var s = plan.steps[Math.min(i, plan.steps.length - 1)]; fb('💡 ' + esc(s.hint || qq.hint || '慢慢來，一步一步想！'), 'hint'); };
+    $o('#mt-hint').onclick = function () { var s = plan.steps[Math.min(i, plan.steps.length - 1)]; fb('💡 ' + esc(s.hint || qq.hint || firstSentence(s.say)), 'hint'); };
     $o('#mt-skip').onclick = close;
     show();
   }
@@ -1006,6 +1077,8 @@
   function thaiHtml() {
     var t = window.TH.explain(q.explain, q), h = '<div class="th-title">📘 คำอธิบาย (ภาษาไทย)</div><div>✅ คำตอบที่ถูกต้อง: <b>' + esc(qAns(q)) + '</b></div>';
     h += t.lines.map(function (l) { return '<div>• ' + esc(l) + '</div>'; }).join('');
+    var pr = processFor(q);
+    if (pr.length) h += '<div class="th-title" style="margin-top:6px">📝 ขั้นตอนการแก้ทีละขั้น</div><ol style="margin:4px 0 0;padding-left:1.4em">' + pr.slice(0, 12).map(function (it) { return '<li>' + esc(it.th || (window.TH.line ? window.TH.line(it.zh) : it.zh)) + '</li>'; }).join('') + '</ol>';
     if (t.miss.length) h += '<div class="th-ms">' + t.miss.map(function (l) { return '<div>• ' + esc(l) + '</div>'; }).join('') + '</div>';
     if (t.glossary.length) h += '<div class="th-gl">📖 คำศัพท์ (詞彙)<br>' + t.glossary.map(function (g) { return esc(g[0]) + ' = ' + esc(g[1]); }).join('<br>') + '</div>';
     return h;
@@ -1041,7 +1114,7 @@
       window.miss = function () {
         var was = true; try { was = lock; } catch (e) {}
         var r = oMiss.apply(this, arguments);
-        try { if (!was) { var o = $('#ms-tut'); if (o) o.remove(); $('#s-game').classList.remove('ms-tut-on'); scLose(); thaiButton(); } } catch (e) {}
+        try { if (!was) { var o = $('#ms-tut'); if (o) o.remove(); $('#s-game').classList.remove('ms-tut-on'); scLose(); procBlock(); thaiButton(); } } catch (e) {}
         return r;
       };
     }
@@ -1238,6 +1311,7 @@
     }).observe(document.body, { attributes: true, attributeFilter: ['class'], subtree: true, attributeOldValue: true });
   }
   if (document.body) initSfx(); else document.addEventListener('DOMContentLoaded', initSfx);
+  MS.process = processFor;   // 解題過程（測試與泰文詞彙檢查用）
   window.MS = MS;
 
   /* ---- 關卡寫「練兵拆解步驟」用的小工具：TS.st(說明, 正解, [[錯誤選項, 為什麼錯]], 這一步的結論, 附圖) ---- */

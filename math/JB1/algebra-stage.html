@@ -157,6 +157,22 @@ function numericOptions(correct, wrongCandidates, suffix=''){
 
 /* ---------- Type A: 簡記修復（整數／分數／小數皆有） ---------- */
 const DECIMAL_DIV_MAP = {0.5:2, 0.25:4, 0.2:5, 0.1:10};
+// 簡記題答錯說明：寫出「為什麼這樣寫」的每一步，不只是答案
+function genAExplain(kind, ph, ch){
+  const P = plainH(ph), A = plainH(ch);
+  const head = `正確簡記是 <b>${A}</b>。解題過程：<br>`;
+  const T = {
+    mulInt:`① <b>${P}</b>：這是「字母 × 整數」。<br>② 簡記規則有兩條：乘號省略不寫；數字（係數）寫在字母前面。<br>③ 所以 ${P} 寫成 <b>${A}</b>。<br>常見錯誤：把數字寫在字母後面（不合規定）、寫成相加、或寫成次方（次方是同一個字母連乘）。`,
+    mulDecimal:`① <b>${P}</b>：這是「字母 × 小數」。<br>② 簡記時乘號省略，小數係數寫在字母前面，小數點不能動。<br>③ 所以寫成 <b>${A}</b>。<br>常見錯誤：把小數點去掉（變成 10 倍）、把小數寫在字母後面。`,
+    mulFrac:`① <b>${P}</b>：這是「字母 × 分數」。<br>② 簡記時乘號省略，分數係數寫在字母前面。<br>③ 所以寫成 <b>${A}</b>。<br>常見錯誤：把分子分母顛倒、把分數換成整數。`,
+    oneVar:`① <b>${P}</b>：任何數乘以 1 都等於它自己，所以 1 × 字母 ＝ 字母。<br>② 簡記時係數 1 省略不寫（不寫成 1 乘字母，也不是 0）。<br>③ 所以寫成 <b>${A}</b>。`,
+    power:`① <b>${P}</b>：同一個字母連乘很多次。<br>② 用「次方」表示：把相乘的個數寫在字母的右上角。<br>③ 所以寫成 <b>${A}</b>。<br>注意：數字寫在字母前面（像 3x）是「x + x + x」，不是連乘。`,
+    negOne:`① <b>${P}</b>：乘以 (−1) 就是取相反數，正的變負、負的變正。<br>② 係數 1 省略不寫，只留下負號。<br>③ 所以寫成 <b>${A}</b>。<br>常見錯誤：寫成不帶負號、或寫成 −1 乘字母。`,
+    div:`① <b>${P}</b>：這是「字母 ÷ 數字」。<br>② 除法簡記成分數：被除數寫在分子，除數寫在分母。<br>③ 所以寫成 <b>${A}</b>。<br>除數是負數時，負號寫在分數前面；不要把分子分母顛倒，也不要寫成乘法。`,
+    divDecimal:`① <b>${P}</b>：除以一個小數。<br>② 把小數化成分數，除以一個數 ＝ 乘以它的倒數（分子分母顛倒）。<br>③ 所以 ${P} ＝ 字母 × 倒數，簡記成 <b>${A}</b>。<br>常見錯誤：直接把小數當成係數寫在字母前面。`
+  };
+  return head + (T[kind] || `把乘號省略、數字寫在字母前面，得到 <b>${A}</b>。`);
+}
 function genA(){
   const v = rndPick(VARS);
   const kind = rndPick(['mulInt','mulDecimal','mulFrac','oneVar','power','negOne','div','divDecimal']);
@@ -211,7 +227,7 @@ function genA(){
     scenario:'咒語碎片捕捉・簡記修復',
     promptHTML: `修復咒語：<br><span class="op-hl">${promptHTML}</span> = ？`,
     opts, correctIndex,
-    explain:`正確簡記為 ${correctHTML.replace(/<[^>]+>/g,'')}`,
+    explain:genAExplain(kind, promptHTML, correctHTML),
     optClass:'opt2'
   };
 }
@@ -575,7 +591,7 @@ function genF_discount(){
     explain:`新價格＝(1+${inflatePct}%)×${newFoldText}折 = ${newMult}x，原本是 ${oldFoldText}折＝${oldFold}x，比較兩者大小即可判斷`,
     steps:[
       TS.st(`漲價 ${inflatePct}% 後再打 ${newFoldText} 折，新價格是原價 x 的幾倍？ (1 + ${inflatePct/100}) × ${newFold} ＝ ？`, newMult, [[Math.round((1-inflatePct/100)*newFold*1000)/1000,'漲價是「加」，不是減。'],[Math.round((1+inflatePct/100)*1000)/1000,'還要再乘以折數。']], `新價格 = ${newMult}x`),
-      TS.st(`原本 ${oldFoldText} 折，價格是 ${oldFold}x。比較 ${newMult} 和 ${oldFold}，哪一個大？`, newMult>oldFold+0.0049?'新價格比較大':newMult<oldFold-0.0049?'原本的價格比較大':'一樣大', [['新價格比較大','再比較一次兩個數。'],['原本的價格比較大','再比較一次兩個數。'],['一樣大','再比較一次兩個數。']].filter(w=>w[0]!==(newMult>oldFold+0.0049?'新價格比較大':newMult<oldFold-0.0049?'原本的價格比較大':'一樣大')), `${newMult} ${newMult>oldFold?'>':newMult<oldFold?'<':'='} ${oldFold}`)
+      Object.assign(TS.st(`原本 ${oldFoldText} 折，價格是 ${oldFold}x。比較 ${newMult} 和 ${oldFold}，哪一個大？`, newMult>oldFold+0.0049?'新價格比較大':newMult<oldFold-0.0049?'原本的價格比較大':'一樣大', [['新價格比較大','再比較一次兩個數。'],['原本的價格比較大','再比較一次兩個數。'],['一樣大','再比較一次兩個數。']].filter(w=>w[0]!==(newMult>oldFold+0.0049?'新價格比較大':newMult<oldFold-0.0049?'原本的價格比較大':'一樣大')), `${newMult} ${newMult>oldFold?'>':newMult<oldFold?'<':'='} ${oldFold}`),{hint:`兩個數都是「原價 x 的幾倍」。比小數大小：先比整數位，再依序比十分位、百分位。新價格的倍數比原本大 → 變貴（陷阱）；比較小 → 變便宜；一樣 → 沒有差別。`})
     ],
     optClass:'opt3'
   };
@@ -728,8 +744,8 @@ function genG(){
       const RT={posInt:'正整數（1、2、3…）',posIntMin1:'1 以上的整數',date:'1～31 的整數',nonNeg:'0 或正數（可以有小數）',posNum:'正數（可以有小數，但不能是 0 或負數）'};
       const wrong=Object.keys(RT).filter(k=>k!==sc.rule).slice(0,2).map(k=>[RT[k],'再想想「'+sc.name+'」在現實中是什麼樣的數。']);
       return [
-        TS.st(`x 代表「${sc.name}」。在現實中，它必須是什麼樣的數？`, RT[sc.rule], wrong, RT[sc.rule]),
-        TS.st(`解出 x = ${valText}。它符合「${RT[sc.rule]}」嗎？`, reasonable?'符合':'不符合', [[reasonable?'不符合':'符合', reasonable?'再檢查一次：它是不是負數、小數、或 0？':'再檢查一次：有沒有負數、小數或 0？']], reasonable?'符合 → 合理':'不符合 → 要捨去')
+        Object.assign(TS.st(`x 代表「${sc.name}」。在現實中，它必須是什麼樣的數？`, RT[sc.rule], wrong, RT[sc.rule]), {hint:`想想「${sc.name}」：可以有小數嗎（例如 2.5）？可以是 0 嗎？可以是負數嗎？人數、杯數、數量只能是整數；長度、時間、價錢可以有小數；負數在這些情境裡都不可能。`}),
+        Object.assign(TS.st(`解出 x = ${valText}。它符合「${RT[sc.rule]}」嗎？`, reasonable?'符合':'不符合', [[reasonable?'不符合':'符合', reasonable?'再檢查一次：它是不是負數、小數、或 0？':'再檢查一次：有沒有負數、小數或 0？']], reasonable?'符合 → 合理':'不符合 → 要捨去'), {hint:`逐項檢查 x = ${valText}：① 是不是整數？（${Number.isInteger(val)?'是':'不是，有小數'}）② 是不是 0？（${val===0?'是':'不是'}）③ 是不是負數？（${val<0?'是':'不是'}）④ 有沒有超出範圍？拿它對照上面的條件「${RT[sc.rule]}」。`})
       ];
     })(),
     optClass:'opt2'
