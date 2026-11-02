@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>我的像素角色 demo</title>
+    <style>
+        body {
+            background-color: #222;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            color: white;
+            font-family: Arial, sans-serif;
+        }
+        canvas {
+            background-color: #4a4a4a; /* 地板背景色 */
+            border: 4px solid #fff;
+            image-rendering: pixelated; /* 保持像素清晰 */
+        }
+        .controls {
+            position: absolute;
+            bottom: 20px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
+    <div class="controls">
+        <p>操作說明：</p>
+        <p>← → : 移動 | ↑ : 跳躍 | Z : 攻擊 | X : 防禦 | C : 受傷測試</p>
+    </div>
+
+<script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    // 關閉平滑處理，讓像素圖看起來清晰
+    ctx.imageSmoothingEnabled = false;
+
+    // --- 1. 設定與載入圖片 ---
+    const actions = ['stand', 'run', 'jump', 'attack', 'defense', 'Injuried'];
+    const sprites = {};
+    let imagesLoaded = 0;
+    // 總共圖片數 = 6個動作 * 4張圖 = 24張
+    const totalImages = actions.length * 4; 
+
+    actions.forEach(action => {
+        sprites[action] = [];
+        for (let i = 1; i <= 4; i++) {
+            const img = new Image();
+            // 檔名格式範例: run-1.png
+            img.src = `${action}-${i}.png`;
+            img.onload = () => {
+                imagesLoaded++;
+            };
+            sprites[action].push(img);
+        }
+    });
+
+    // --- 2. 角色參數 ---
+    const player = {
+        x: 350,
+        y: 400,
+        width: 128,  // 根據你的圖片大小調整顯示尺寸
+        height: 128,
+        speed: 5,
+        dx: 0,
+        dy: 0,
+        groundY: 400,
+        gravity: 0.8,
+        jumpPower: -15,
+        isJumping: false,
+        facingRight: true,
+        state: 'stand', // 當前動作
+        frameIndex: 0,  // 當前播放第幾張圖
+        frameTimer: 0,  // 控制動畫速度
+        frameSpeed: 8,  // 數字越大動畫越慢
+        isAttacking: false,
+        isDefending: false,
+        isInjured: false
+    };
+
+    // --- 3. 鍵盤監聽 ---
+    const keys = {};
+
+    window.addEventListener('keydown', (e) => {
+        keys[e.key] = true;
+        
+        // 攻擊 (Z鍵)
+        if (e.key.toLowerCase() === 'z' && !player.isAttacking) {
+            player.isAttacking = true;
+            player.frameIndex = 0;
+            setTimeout(() => { player.isAttacking = false; }, 400); // 攻擊動畫時間
+        }
+        // 受傷測試 (C鍵)
+        if (e.key.toLowerCase() === 'c' && !player.isInjured) {
+            player.isInjured = true;
+            player.frameIndex = 0;
+            setTimeout(() => { player.isInjured = false; }, 500);
+        }
+    });
+
+    window.addEventListener('keyup', (e) => {
+        keys[e.key] = false;
+    });
+
+    // --- 4. 遊戲主迴圈 ---
+    function update() {
+        // 重力與跳躍
+        if (player.y < player.groundY || player.dy < 0) {
+            player.dy += player.gravity;
+            player.y += player.dy;
+        } else {
+            player.y = player.groundY;
+            player.dy = 0;
+            player.isJumping = false;
+        }
+
+        // 移動邏輯
+        player.dx = 0;
+        // 如果正在受傷或攻擊或防禦，通常不能移動 (可依需求修改)
+        if (!player.isInjured && !player.isAttacking && !player.isDefending) {
+            if (keys['ArrowRight']) {
+                player.dx = player.speed;
+                player.facingRight = true;
+            }
+            if (keys['ArrowLeft']) {
+                player.dx = -player.speed;
+                player.facingRight = false;
+            }
+            if (keys['ArrowUp'] && !player.isJumping) {
+                player.dy = player.jumpPower;
+                player.isJumping = true;
+            }
+            
+            // 防禦 (X鍵)
+            if (keys['x'] || keys['X']) {
+                player.isDefending = true;
+            } else {
+                player.isDefending = false;
+            }
+        }
+
+        player.x += player.dx;
+
+        // 邊界檢查
+        if (player.x < 0) player.x = 0;
+        if (player.x > canvas.width - player.width) player.x = canvas.width - player.width;
+
+        // --- 狀態機 (決定現在要播哪個動畫) ---
+        let newState = 'stand';
+
+        if (player.isInjured) {
+            newState = 'Injuried'; // 注意你的檔名是大寫I且拼寫是Injuried
+        } else if (player.isAttacking) {
+            newState = 'attack';
+        } else if (player.isDefending) {
+            newState = 'defense';
+        } else if (player.isJumping) {
+            newState = 'jump';
+        } else if (player.dx !== 0) {
+            newState = 'run';
+        }
+
+        // 如果狀態改變，重置動畫幀
+        if (player.state !== newState) {
+            player.state = newState;
+            player.frameIndex = 0;
+            player.frameTimer = 0;
+        }
+
+        // 動畫幀更新
+        player.frameTimer++;
+        if (player.frameTimer % player.frameSpeed === 0) {
+            player.frameIndex++;
+            if (player.frameIndex >= 4) { // 你的圖片每組都是4張
+                player.frameIndex = 0;
+            }
+        }
+    }
+
+    function draw() {
+        // 清除畫布
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // 等待圖片載入完畢才畫
+        if (imagesLoaded < totalImages) {
+            ctx.fillStyle = "white";
+            ctx.font = "30px Arial";
+            ctx.fillText("Loading...", 350, 300);
+            return;
+        }
+
+        // 取得當前要畫的圖
+        const currentSprite = sprites[player.state][player.frameIndex];
+
+        ctx.save(); // 保存畫布狀態
+
+        // 處理左右翻轉
+        if (!player.facingRight) {
+            ctx.translate(player.x + player.width, player.y);
+            ctx.scale(-1, 1);
+            ctx.drawImage(currentSprite, 0, 0, player.width, player.height);
+        } else {
+            ctx.drawImage(currentSprite, player.x, player.y, player.width, player.height);
+        }
+
+        ctx.restore(); // 恢復畫布狀態
+    }
+
+    function gameLoop() {
+        update();
+        draw();
+        requestAnimationFrame(gameLoop);
+    }
+
+    // 啟動遊戲
+    gameLoop();
+
+</script>
+</body>
+</html>
