@@ -12,13 +12,13 @@
   const KB_ROWS = ['qwertyuiop[]', 'asdfghjkl;', 'zxcvbnm,./'];
   const ROW_HINT = { home_row: 'asdfghjkl;', top_row: 'qwertyuiop[]', bottom_row: 'zxcvbnm,./' };
   const CATEGORY_LABELS = {
-    easy_words: ['Easy Words', '簡單單字'],
-    hard_words: ['Hard Words', '困難單字'],
-    home_row: ['中列', 'ASDF'],
-    top_row: ['上列', 'QWER'],
-    bottom_row: ['下列', 'ZXCV'],
-    chinese: ['中文', '拼音打字'],
-    chinese_article: ['中文-文章', '用輸入法'],
+    easy_words: ['簡單單字', '英文短單字'],
+    hard_words: ['困難單字', '英文長單字'],
+    home_row: ['中列', 'ASDF 那一排'],
+    top_row: ['上列', 'QWER 那一排'],
+    bottom_row: ['下列', 'ZXCV 那一排'],
+    chinese: ['中文拼音', '看字打拼音'],
+    chinese_article: ['中文-文章', '用手機輸入法'],
   };
   const DIFF_LABELS = ['簡單', '普通', '挑戰'];
 

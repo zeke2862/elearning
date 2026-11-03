@@ -926,3 +926,19 @@ body.touch-mode .tc-left  { grid-area: right; }
 body.touch-mode .tc-right { grid-area: left; }
 body.tc-portrait .tc-left  { justify-content: flex-end; padding-left: 4px; padding-right: 14px; }
 body.tc-portrait .tc-right { padding-right: 4px; padding-left: 10px; }
+
+/* 🔠 觸控版主選單：字放大 */
+.tc-menu-title { font-family: "Outfit", "Microsoft JhengHei", "PingFang TC", sans-serif; font-weight: 800; font-size: clamp(34px, 10vw, 52px); letter-spacing: 3px; }
+.tc-menu-title small { font-size: 0.42em; letter-spacing: 2px; }
+.tc-menu-label { font-size: 1.1rem; font-weight: 700; letter-spacing: 3px; color: #c8c8d8; margin-bottom: 7px; }
+.tc-opt { min-height: 58px; font-size: 1.3rem; border-radius: 12px; }
+.tc-opt small { font-size: 0.85rem; margin-top: 2px; }
+.tc-menu-note { font-size: 1.05rem; min-height: 1.5em; }
+.tc-play { height: 66px; font-size: 1.7rem; }
+.tc-mini { min-height: 46px; font-size: 1rem; padding: 8px 16px; }
+.tc-credit { font-size: 0.8rem; }
+body.tc-landscape .tc-menu-title { font-size: clamp(26px, 8vh, 36px); }
+body.tc-landscape .tc-opt { min-height: 46px; font-size: 1.15rem; }
+body.tc-landscape .tc-play { height: 52px; font-size: 1.4rem; }
+body.tc-landscape .tc-mini { min-height: 38px; font-size: 0.9rem; }
+body.tc-landscape .tc-menu-note { font-size: 0.95rem; }

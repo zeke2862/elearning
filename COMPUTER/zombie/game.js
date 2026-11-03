@@ -986,6 +986,14 @@ const ROW_KEYBOARD_CHARS = {
 };
 // 關閉小鍵盤時的加碼分數倍率（沒有提示，難度變高，分數多給一點作為獎勵）
 const KB_HIDDEN_SCORE_BONUS = 1.3;
+// 畫面上所有中文字統一使用的字型
+const UI_FONT = '"Outfit", "Microsoft JhengHei", "PingFang TC", "Noto Sans TC", sans-serif';
+// 主選單版面（繪圖與點擊判斷共用，避免兩邊對不上）
+const MENU_LAYOUT = {
+  diff: { w: 120, h: 40, gap: 10, y: 222 },
+  cat: { w: 140, h: 40, gap: 10, y: 292, rowGap: 8, perRow: 4 },
+  play: { w: 240, h: 52, cy: 438 },
+};
 
 // ── Game ─────────────────────────────────────────────────────
 class TommyQGame {
@@ -1008,12 +1016,12 @@ class TommyQGame {
     };
     this.difficulties = ['簡易版', '普通版', '挑戰版'];
     this.categories = [
-      { id: 'easy_words', label: 'Easy Words' },
-      { id: 'hard_words', label: 'Hard Words' },
+      { id: 'easy_words', label: '簡單單字' },
+      { id: 'hard_words', label: '困難單字' },
       { id: 'home_row', label: '中列' },
       { id: 'top_row', label: '上列' },
       { id: 'bottom_row', label: '下列' },
-      { id: 'chinese', label: '中文' },
+      { id: 'chinese', label: '中文拼音' },
       { id: 'chinese_article', label: '中文-文章' },
     ];
 
@@ -1228,30 +1236,38 @@ class TommyQGame {
     }
   }
 
+  // 第 i 個「練習內容」按鈕的位置（兩排，每排最多 4 個，置中）
+  _menuCatRect(i) {
+    const L = MENU_LAYOUT.cat;
+    const row = Math.floor(i / L.perRow);
+    const col = i % L.perRow;
+    const inRow = Math.min(L.perRow, this.categories.length - row * L.perRow);
+    const rowW = inRow * L.w + (inRow - 1) * L.gap;
+    return { x: (W - rowW) / 2 + col * (L.w + L.gap), y: L.y + row * (L.h + L.rowGap), w: L.w, h: L.h };
+  }
+
   _handleClick(mx, my) {
     if (this.state === 'MENU') {
-      // Play button area
-      if (mx > W/2 - 110 && mx < W/2 + 110 && my > 350 && my < 400) {
+      const L = MENU_LAYOUT;
+      // 開始按鈕
+      if (mx > W/2 - L.play.w/2 && mx < W/2 + L.play.w/2 && my > L.play.cy - L.play.h/2 && my < L.play.cy + L.play.h/2) {
         this._startGame();
         return;
       }
-      // Difficulty buttons
+      // 難度按鈕
+      const dTotal = this.difficulties.length * L.diff.w + (this.difficulties.length - 1) * L.diff.gap;
       this.difficulties.forEach((d, i) => {
-        const bx = W/2 - 150 + i * 110;
-        if (mx > bx && mx < bx + 100 && my > 260 && my < 290) {
+        const bx = (W - dTotal) / 2 + i * (L.diff.w + L.diff.gap);
+        if (mx > bx && mx < bx + L.diff.w && my > L.diff.y && my < L.diff.y + L.diff.h) {
           this.menuSelection.difficultyIndex = i;
           this.menuSelection.difficulty = DIFFICULTY_KEYS[i];
           this.audio.menuClick();
         }
       });
-      // Category buttons
-      const catBtnW = 76;
-      const catBtnGap = 8;
-      const catTotalW = this.categories.length * catBtnW + (this.categories.length - 1) * catBtnGap;
-      const catStartX = (W - catTotalW) / 2;
+      // 練習內容按鈕
       this.categories.forEach((c, i) => {
-        const bx = catStartX + i * (catBtnW + catBtnGap);
-        if (mx > bx && mx < bx + catBtnW && my > 310 && my < 345) {
+        const r = this._menuCatRect(i);
+        if (mx > r.x && mx < r.x + r.w && my > r.y && my < r.y + r.h) {
           this.menuSelection.categoryIndex = i;
           this.menuSelection.category = c.id;
           this.audio.menuClick();
@@ -2031,9 +2047,9 @@ class TommyQGame {
       const icons = { ice: '❄️', bomb: '💣', book: '📖' };
       ctx.font = '18px sans-serif';
       ctx.fillText(icons[this.heldPowerup] || '⚡', px - 10, py + 22);
-      ctx.font = '9px "Press Start 2P", monospace';
+      ctx.font = `bold 12px ${UI_FONT}`;
       ctx.fillStyle = '#ffa';
-      ctx.fillText('ENTER', px - 20, py + 36);
+      ctx.fillText('按Enter', px - 22, py + 36);
       ctx.restore();
     }
 
@@ -2426,26 +2442,26 @@ class TommyQGame {
     ctx.stroke();
 
     // Top row inside HUD
-    ctx.font = '10px "Press Start 2P", monospace';
+    ctx.font = `bold 15px ${UI_FONT}`;
     ctx.fillStyle = '#ffd700';
-    ctx.fillText(`SCORE: ${this.stats.score.toLocaleString()}`, panelX + 16, panelY + 22);
+    ctx.fillText(`分數：${this.stats.score.toLocaleString()}`, panelX + 16, panelY + 22);
 
     ctx.fillStyle = '#2ed573';
-    ctx.fillText(`LEVEL: ${this.stats.level}`, panelX + 230, panelY + 22);
+    ctx.fillText(`等級：${this.stats.level}`, panelX + 230, panelY + 22);
 
     const waveLeft = Math.max(0, Math.ceil(this.waveTimer / 1000));
     ctx.fillStyle = this.waveType === 'HORDE' ? '#ff4757' : '#00d4ff';
-    const waveLabel = this.waveType === 'HORDE' ? `HORDE ${waveLeft}s` : `WAVE ${waveLeft}s`;
+    const waveLabel = this.waveType === 'HORDE' ? `大軍 ${waveLeft} 秒` : `波次 ${waveLeft} 秒`;
     ctx.fillText(waveLabel, panelX + 340, panelY + 22);
 
     // Bottom row inside HUD
     ctx.fillStyle = '#e8e8e8';
-    ctx.fillText(`KILLS: ${this.stats.kills}`, panelX + 16, panelY + 44);
+    ctx.fillText(`擊殺：${this.stats.kills}`, panelX + 16, panelY + 44);
 
     const mins = Math.floor(this.stats.timeAlive / 60);
     const secs = this.stats.timeAlive % 60;
     const timeStr = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
-    ctx.fillText(`TIME: ${timeStr}`, panelX + 230, panelY + 44);
+    ctx.fillText(`時間：${timeStr}`, panelX + 230, panelY + 44);
 
     ctx.restore();
   }
@@ -2460,14 +2476,14 @@ class TommyQGame {
       ctx.save();
       ctx.textAlign = 'center';
       ctx.fillStyle = '#fff';
-      ctx.font = '24px "Press Start 2P", monospace';
+      ctx.font = `bold 40px ${UI_FONT}`;
       ctx.shadowColor = '#ff0000';
       ctx.shadowBlur = 20;
-      ctx.fillText('ZOMBIES APPROACHING!', W / 2, H / 2 - 10);
-      ctx.font = '12px "Press Start 2P", monospace';
+      ctx.fillText('殭屍大軍來襲！', W / 2, H / 2 - 10);
+      ctx.font = `bold 20px ${UI_FONT}`;
       ctx.shadowBlur = 0;
       ctx.fillStyle = '#faa';
-      ctx.fillText('Prepare yourself...', W / 2, H / 2 + 25);
+      ctx.fillText('做好準備…', W / 2, H / 2 + 28);
       ctx.textAlign = 'start';
       ctx.restore();
 
@@ -2478,19 +2494,19 @@ class TommyQGame {
       ctx.save();
       ctx.textAlign = 'center';
       ctx.fillStyle = '#2ed573';
-      ctx.font = '28px "Press Start 2P", monospace';
+      ctx.font = `bold 44px ${UI_FONT}`;
       ctx.shadowColor = '#2ed573';
       ctx.shadowBlur = 15;
-      ctx.fillText('WAVE COMPLETE!', W / 2, H / 2 - 40);
+      ctx.fillText('本波完成！', W / 2, H / 2 - 40);
       ctx.shadowBlur = 0;
 
-      ctx.font = '12px "Press Start 2P", monospace';
+      ctx.font = `bold 20px ${UI_FONT}`;
       ctx.fillStyle = '#e8e8e8';
-      ctx.fillText(`Score: ${this.stats.score.toLocaleString()}  |  Kills: ${this.stats.kills}`, W / 2, H / 2 + 10);
+      ctx.fillText(`分數：${this.stats.score.toLocaleString()}　｜　擊殺：${this.stats.kills}`, W / 2, H / 2 + 10);
 
       ctx.fillStyle = '#ffd700';
       const countdown = Math.ceil(this.overlayTimer / 1000);
-      ctx.fillText(`Next wave in ${countdown}...`, W / 2, H / 2 + 50);
+      ctx.fillText(`${countdown} 秒後開始下一波…`, W / 2, H / 2 + 50);
       ctx.textAlign = 'start';
       ctx.restore();
 
@@ -2503,15 +2519,15 @@ class TommyQGame {
 
       // Title
       ctx.fillStyle = '#00d4ff';
-      ctx.font = '32px "Press Start 2P", monospace';
+      ctx.font = `bold 44px ${UI_FONT}`;
       ctx.shadowColor = '#00d4ff';
       ctx.shadowBlur = 15;
-      ctx.fillText('PAUSED', W / 2, H / 2 - 70);
+      ctx.fillText('遊戲暫停', W / 2, H / 2 - 70);
       ctx.shadowBlur = 0;
 
-      ctx.font = '10px "Press Start 2P", monospace';
-      ctx.fillStyle = '#aaa';
-      ctx.fillText('Press ESC, P or Space to Resume', W / 2, H / 2 - 35);
+      ctx.font = `16px ${UI_FONT}`;
+      ctx.fillStyle = '#bbb';
+      ctx.fillText('按 Esc、P 或空白鍵繼續遊戲', W / 2, H / 2 - 35);
 
       // Buttons
       // Resume Button
@@ -2520,8 +2536,8 @@ class TommyQGame {
       ctx.roundRect(W / 2 - 130, 220, 260, 45, 8);
       ctx.fill();
       ctx.fillStyle = '#000';
-      ctx.font = '14px "Press Start 2P", monospace';
-      ctx.fillText('RESUME (繼續)', W / 2, 248);
+      ctx.font = `bold 22px ${UI_FONT}`;
+      ctx.fillText('繼續遊戲', W / 2, 250);
 
       // Main Menu Button
       ctx.fillStyle = '#6c63ff';
@@ -2529,8 +2545,8 @@ class TommyQGame {
       ctx.roundRect(W / 2 - 130, 280, 260, 40, 8);
       ctx.fill();
       ctx.fillStyle = '#fff';
-      ctx.font = '12px "Press Start 2P", monospace';
-      ctx.fillText('MAIN MENU (回主選單)', W / 2, 305);
+      ctx.font = `bold 20px ${UI_FONT}`;
+      ctx.fillText('回主選單', W / 2, 306);
 
       ctx.textAlign = 'start';
       ctx.restore();
@@ -2544,20 +2560,20 @@ class TommyQGame {
 
       // Title
       ctx.fillStyle = '#ff4757';
-      ctx.font = '36px "Press Start 2P", monospace';
+      ctx.font = `bold 50px ${UI_FONT}`;
       ctx.shadowColor = '#ff4757';
       ctx.shadowBlur = 20;
-      ctx.fillText('GAME OVER', W / 2, H / 2 - 80);
+      ctx.fillText('遊戲結束', W / 2, H / 2 - 80);
       ctx.shadowBlur = 0;
 
       // Stats
-      ctx.font = '12px "Press Start 2P", monospace';
+      ctx.font = `bold 18px ${UI_FONT}`;
       ctx.fillStyle = '#e8e8e8';
       const mins = Math.floor(this.stats.timeAlive / 60);
       const secs = this.stats.timeAlive % 60;
-      ctx.fillText(`Score: ${this.stats.score.toLocaleString()}`, W / 2, H / 2 - 30);
-      ctx.fillText(`Kills: ${this.stats.kills}  |  Level: ${this.stats.level}`, W / 2, H / 2 - 5);
-      ctx.fillText(`Time: ${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}`, W / 2, H / 2 + 20);
+      ctx.fillText(`分數：${this.stats.score.toLocaleString()}`, W / 2, H / 2 - 30);
+      ctx.fillText(`擊殺：${this.stats.kills}　｜　等級：${this.stats.level}`, W / 2, H / 2 - 5);
+      ctx.fillText(`時間：${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}`, W / 2, H / 2 + 20);
 
       // Buttons
       // Play Again
@@ -2566,8 +2582,8 @@ class TommyQGame {
       ctx.roundRect(W/2 - 130, 310, 260, 45, 8);
       ctx.fill();
       ctx.fillStyle = '#000';
-      ctx.font = '14px "Press Start 2P", monospace';
-      ctx.fillText('PLAY AGAIN', W / 2, 340);
+      ctx.font = `bold 22px ${UI_FONT}`;
+      ctx.fillText('再玩一次', W / 2, 341);
 
       // Menu
       ctx.fillStyle = '#6c63ff';
@@ -2575,8 +2591,8 @@ class TommyQGame {
       ctx.roundRect(W/2 - 130, 370, 260, 40, 8);
       ctx.fill();
       ctx.fillStyle = '#fff';
-      ctx.font = '12px "Press Start 2P", monospace';
-      ctx.fillText('MAIN MENU', W / 2, 396);
+      ctx.font = `bold 20px ${UI_FONT}`;
+      ctx.fillText('回主選單', W / 2, 397);
 
       ctx.textAlign = 'start';
       ctx.restore();
@@ -2600,120 +2616,109 @@ class TommyQGame {
 
     ctx.save();
     ctx.textAlign = 'center';
+    const L = MENU_LAYOUT;
 
-    // Title
+    // 標題
     ctx.shadowColor = '#ff4757';
     ctx.shadowBlur = 30;
     ctx.fillStyle = '#ff4757';
-    ctx.font = '48px "Press Start 2P", monospace';
-    ctx.fillText('末日生存', W / 2, 130 + this.menuTitleBounce);
+    ctx.font = `bold 56px ${UI_FONT}`;
+    ctx.fillText('末日生存', W / 2, 92 + this.menuTitleBounce);
     ctx.shadowBlur = 0;
 
-    // Subtitle
     ctx.fillStyle = '#e8e8e8';
-    ctx.font = '16px "Press Start 2P", monospace';
-    ctx.fillText('防禦殭屍戰', W / 2, 170 + this.menuTitleBounce);
+    ctx.font = `bold 26px ${UI_FONT}`;
+    ctx.fillText('防禦殭屍戰', W / 2, 134 + this.menuTitleBounce);
 
-    ctx.font = '9px "Press Start 2P", monospace';
-    ctx.fillStyle = '#6c63ff';
-    ctx.fillText('Clean Edition - No Ads', W / 2, 195);
+    ctx.font = `16px ${UI_FONT}`;
+    ctx.fillStyle = '#8f89ff';
+    ctx.fillText('無廣告純淨版', W / 2, 168);
 
-    // Difficulty selection
-    ctx.fillStyle = '#a0a0b0';
-    ctx.font = '10px "Press Start 2P", monospace';
-    ctx.fillText('DIFFICULTY', W / 2, 240);
+    // 難度
+    ctx.fillStyle = '#c0c0d0';
+    ctx.font = `bold 20px ${UI_FONT}`;
+    ctx.fillText('難度', W / 2, 212);
 
+    const dTotal = this.difficulties.length * L.diff.w + (this.difficulties.length - 1) * L.diff.gap;
     this.difficulties.forEach((d, i) => {
-      const bx = W / 2 - 150 + i * 110;
+      const bx = (W - dTotal) / 2 + i * (L.diff.w + L.diff.gap);
       const selected = i === this.menuSelection.difficultyIndex;
-      ctx.fillStyle = selected ? '#6c63ff' : 'rgba(255,255,255,0.08)';
+      ctx.fillStyle = selected ? '#6c63ff' : 'rgba(255,255,255,0.1)';
       ctx.beginPath();
-      ctx.roundRect(bx, 250, 100, 30, 6);
+      ctx.roundRect(bx, L.diff.y, L.diff.w, L.diff.h, 8);
       ctx.fill();
       if (selected) {
         ctx.strokeStyle = '#00d4ff';
-        ctx.lineWidth = 2;
+        ctx.lineWidth = 2.5;
         ctx.stroke();
       }
-      ctx.fillStyle = selected ? '#fff' : '#888';
-      ctx.font = '10px "Press Start 2P", monospace';
-      ctx.fillText(d, bx + 50, 270);
+      ctx.fillStyle = selected ? '#fff' : '#a8a8b8';
+      ctx.font = `bold 20px ${UI_FONT}`;
+      ctx.textBaseline = 'middle';
+      ctx.fillText(d, bx + L.diff.w / 2, L.diff.y + L.diff.h / 2 + 1);
+      ctx.textBaseline = 'alphabetic';
     });
 
-    // Category selection
-    ctx.fillStyle = '#a0a0b0';
-    ctx.font = '10px "Press Start 2P", monospace';
-    ctx.fillText('WORD TYPE', W / 2, 305);
-
-    const catBtnW = 76;
-    const catBtnGap = 8;
-    const catTotalW = this.categories.length * catBtnW + (this.categories.length - 1) * catBtnGap;
-    const catStartX = (W - catTotalW) / 2;
+    // 練習內容
+    ctx.fillStyle = '#c0c0d0';
+    ctx.font = `bold 20px ${UI_FONT}`;
+    ctx.fillText('練習內容', W / 2, 282);
 
     this.categories.forEach((c, i) => {
-      const bx = catStartX + i * (catBtnW + catBtnGap);
+      const r = this._menuCatRect(i);
       const selected = i === this.menuSelection.categoryIndex;
-      ctx.fillStyle = selected ? '#6c63ff' : 'rgba(255,255,255,0.08)';
+      ctx.fillStyle = selected ? '#6c63ff' : 'rgba(255,255,255,0.1)';
       ctx.beginPath();
-      ctx.roundRect(bx, 314, catBtnW, 28, 5);
+      ctx.roundRect(r.x, r.y, r.w, r.h, 8);
       ctx.fill();
       if (selected) {
         ctx.strokeStyle = '#00d4ff';
-        ctx.lineWidth = 2;
+        ctx.lineWidth = 2.5;
         ctx.stroke();
       }
-      ctx.fillStyle = selected ? '#fff' : '#888';
-      if (c.id === 'chinese') {
-        ctx.font = 'bold 12px "Outfit", "Microsoft JhengHei", sans-serif';
-        ctx.fillText(c.label, bx + catBtnW / 2, 333);
-      } else if (c.id === 'chinese_article') {
-        ctx.font = 'bold 10px "Outfit", "Microsoft JhengHei", sans-serif';
-        ctx.fillText(c.label, bx + catBtnW / 2, 333);
-      } else {
-        ctx.font = '7px "Press Start 2P", monospace';
-        ctx.fillText(c.label, bx + catBtnW / 2, 332);
-      }
+      ctx.fillStyle = selected ? '#fff' : '#a8a8b8';
+      ctx.font = `bold 19px ${UI_FONT}`;
+      ctx.textBaseline = 'middle';
+      ctx.fillText(c.label, r.x + r.w / 2, r.y + r.h / 2 + 1);
+      ctx.textBaseline = 'alphabetic';
     });
 
-    // 中文-文章 mode: show how many articles are currently selected
+    // 提示列（已選文章數 ／ 警告）
+    const noteY = 292 + 2 * 40 + 8 + 24;
     if (this.menuSelection.category === 'chinese_article') {
       const n = window.articleManager ? window.articleManager.getSelectedArticles().length : 0;
       ctx.fillStyle = n > 0 ? '#2ed573' : '#ffa502';
-      ctx.font = '9px "Outfit", "Microsoft JhengHei", sans-serif';
-      ctx.fillText(n > 0 ? `已選 ${n} 篇文章 ✓` : '尚未選擇文章，請點右上角 📚', W / 2, 350);
+      ctx.font = `bold 16px ${UI_FONT}`;
+      ctx.fillText(n > 0 ? `已選 ${n} 篇文章 ✓` : '尚未選擇文章，請點右上角 📚', W / 2, noteY);
     }
-
-    // Warning flash (e.g. no article selected)
     if (this.menuWarningTimer > 0) {
       ctx.fillStyle = '#ff4757';
-      ctx.font = 'bold 11px "Outfit", "Microsoft JhengHei", sans-serif';
-      ctx.fillText(this.menuWarning, W / 2, 350);
+      ctx.font = `bold 17px ${UI_FONT}`;
+      ctx.fillText(this.menuWarning, W / 2, noteY);
     }
 
-    // Play button
-    const playPulse = 0.95 + Math.sin(this.globalTime / 400) * 0.05;
+    // 開始按鈕
+    const playPulse = 0.97 + Math.sin(this.globalTime / 400) * 0.03;
     ctx.save();
-    ctx.translate(W / 2, 375);
+    ctx.translate(W / 2, L.play.cy);
     ctx.scale(playPulse, playPulse);
-
     ctx.fillStyle = '#2ed573';
     ctx.shadowColor = '#2ed573';
     ctx.shadowBlur = 20;
     ctx.beginPath();
-    ctx.roundRect(-110, -25, 220, 50, 10);
+    ctx.roundRect(-L.play.w / 2, -L.play.h / 2, L.play.w, L.play.h, 12);
     ctx.fill();
     ctx.shadowBlur = 0;
-
-    ctx.fillStyle = '#000';
-    ctx.font = '18px "Press Start 2P", monospace';
-    ctx.fillText('PLAY', 0, 8);
+    ctx.fillStyle = '#04210f';
+    ctx.font = `bold 28px ${UI_FONT}`;
+    ctx.textBaseline = 'middle';
+    ctx.fillText('開始遊戲', 0, 2);
     ctx.restore();
 
-    // Instructions
-    ctx.fillStyle = '#666';
-    ctx.font = '8px "Press Start 2P", monospace';
-    ctx.fillText('↑↓ Move  ←→ Face  Type words  Enter = Power-up', W / 2, 430);
-    ctx.fillText('Click PLAY or press Enter/Space to start', W / 2, 450);
+    // 操作說明
+    ctx.fillStyle = '#9a9aac';
+    ctx.font = `15px ${UI_FONT}`;
+    ctx.fillText('↑↓ 換行　←→ 轉向　打字消滅殭屍　Enter ＝ 使用道具　｜　點「開始遊戲」或按 Enter／空白鍵開始', W / 2, 488);
 
     ctx.textAlign = 'start';
     ctx.restore();
