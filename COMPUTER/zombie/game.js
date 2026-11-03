@@ -972,6 +972,8 @@ const LANE_Y = (lane) => 120 + (lane - 1) * 72;
 const BARRICADE_LEFT_X = 200;
 const BARRICADE_RIGHT_X = 716;
 const DIFFICULTY_DELAYS = { Easy: 7000, Medium: 5500, Hard: 2650 };
+// 選單上的三個難度（簡易/普通/挑戰）對應到程式內部使用的名稱
+const DIFFICULTY_KEYS = ['Easy', 'Medium', 'Hard'];
 // HOME ROW / TOP ROW / BOTTOM ROW 提示小鍵盤：每個分類對應要顯示（也用來出題）
 // 的那一排按鍵，含該排鍵盤上實際會用到的標點符號：
 //   Home row：a s d f g h j k l ;
@@ -1131,7 +1133,10 @@ class TommyQGame {
       }
     });
 
-    this.canvas.addEventListener('mousedown', (e) => {
+    // 用 pointerdown：滑鼠、手指、觸控筆都能點（手機不用等 300ms）
+    this.canvas.addEventListener('pointerdown', (e) => {
+      if (e.pointerType === 'mouse' && e.button !== 0) return;
+      e.preventDefault();
       this.audio.init();
       const rect = this.canvas.getBoundingClientRect();
       const scaleX = W / rect.width;
@@ -1171,12 +1176,12 @@ class TommyQGame {
     }
     if (e.key === 'ArrowLeft') {
       this.menuSelection.difficultyIndex = Math.max(0, this.menuSelection.difficultyIndex - 1);
-      this.menuSelection.difficulty = this.difficulties[this.menuSelection.difficultyIndex];
+      this.menuSelection.difficulty = DIFFICULTY_KEYS[this.menuSelection.difficultyIndex];
       this.audio.menuClick();
     }
     if (e.key === 'ArrowRight') {
       this.menuSelection.difficultyIndex = Math.min(2, this.menuSelection.difficultyIndex + 1);
-      this.menuSelection.difficulty = this.difficulties[this.menuSelection.difficultyIndex];
+      this.menuSelection.difficulty = DIFFICULTY_KEYS[this.menuSelection.difficultyIndex];
       this.audio.menuClick();
     }
     if (e.key === 'ArrowUp') {
@@ -1235,7 +1240,7 @@ class TommyQGame {
         const bx = W/2 - 150 + i * 110;
         if (mx > bx && mx < bx + 100 && my > 260 && my < 290) {
           this.menuSelection.difficultyIndex = i;
-          this.menuSelection.difficulty = d;
+          this.menuSelection.difficulty = DIFFICULTY_KEYS[i];
           this.audio.menuClick();
         }
       });
@@ -1348,6 +1353,8 @@ class TommyQGame {
     this.waveTimer = 45000;
     this.spawnTimer = 500;
     this.overlayTimer = 0;
+    // 「中文-文章」模式：在點擊開始的同一瞬間就對準輸入框，手機才會跳出輸入法
+    this._syncChineseTypingBar();
   }
 
   // ── Typing ───────────────────────────────────────────────

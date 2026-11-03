@@ -2,7 +2,11 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#050510">
     <title>末日生存戰 | 打字遊戲</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -20,8 +24,22 @@
 
     <!-- Main Game Container -->
     <main class="game-container" id="gameContainer">
+      <div class="stage" id="stage">
+        <!-- 手機觸控：左側方向鍵 -->
+        <div class="tc-side tc-left" id="tcLeft">
+            <div class="tc-dpad" id="tcDpad">
+                <button type="button" class="tc-btn tc-up" data-key="ArrowUp" tabindex="-1" aria-label="上移一行">▲</button>
+                <button type="button" class="tc-btn tc-lt" data-key="ArrowLeft" tabindex="-1" aria-label="面向左">◀</button>
+                <button type="button" class="tc-btn tc-rt" data-key="ArrowRight" tabindex="-1" aria-label="面向右">▶</button>
+                <button type="button" class="tc-btn tc-dn" data-key="ArrowDown" tabindex="-1" aria-label="下移一行">▼</button>
+            </div>
+        </div>
+
+        <div class="center-col" id="centerCol">
+        <div class="canvas-slot" id="canvasSlot">
         <div class="canvas-wrapper" id="canvasWrapper">
             <canvas id="gameCanvas" width="916" height="500"></canvas>
+        </div>
         </div>
 
         <div class="bottom-bar-row" id="bottomBarRow">
@@ -48,13 +66,53 @@
                 <button id="articlesBtn" class="icon-btn" title="中文文章題庫 / Article Bank">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
                 </button>
+                <button id="touchToggleBtn" class="icon-btn" title="觸控按鈕 開／關 (手機・平板用)">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2" width="10" height="20" rx="2"></rect><line x1="11" y1="18" x2="13" y2="18"></line></svg>
+                </button>
             </div>
         </div>
+
+        <!-- 手機觸控：螢幕鍵盤（英打／拼音模式用） -->
+        <div class="tc-keyboard" id="tcKeyboard"></div>
+        </div>
+
+        <!-- 手機觸控：右側動作鍵 -->
+        <div class="tc-side tc-right" id="tcRight">
+            <button type="button" class="tc-btn tc-action" id="tcAction" data-key="Enter" tabindex="-1">⚡ 道具</button>
+            <div class="tc-toolbar-slot" id="tcToolbarSlot"></div>
+        </div>
+      </div>
 
         <div class="credits">
             華雲學校 黃崧桓老師製作 文章內容為TQC2010練習文章
         </div>
+
+        <!-- 手機提示：橫放／直放 -->
+        <div class="tc-hint" id="tcHint" hidden></div>
     </main>
+
+    <!-- 手機觸控版主選單（手指好按的大按鈕；電腦版仍使用畫面上的選單） -->
+    <div class="tc-menu" id="tcMenu" hidden>
+        <div class="tc-menu-card">
+            <h1 class="tc-menu-title">末日生存<small>防禦殭屍戰</small></h1>
+            <div class="tc-menu-group">
+                <div class="tc-menu-label">難度</div>
+                <div class="tc-menu-row" id="tcDifficulty"></div>
+            </div>
+            <div class="tc-menu-group">
+                <div class="tc-menu-label">練習內容</div>
+                <div class="tc-menu-grid" id="tcCategory"></div>
+            </div>
+            <div class="tc-menu-note" id="tcMenuNote"></div>
+            <button type="button" class="tc-play" id="tcPlay">▶ 開始遊戲</button>
+            <div class="tc-menu-tools">
+                <button type="button" class="tc-mini" id="tcMenuArticles">📚 文章題庫</button>
+                <button type="button" class="tc-mini" id="tcMenuSprites">🎨 自訂角色</button>
+                <button type="button" class="tc-mini" id="tcMenuOff">💻 關閉觸控版面</button>
+            </div>
+            <div class="tc-credit">華雲學校 黃崧桓老師製作　文章內容為TQC2010練習文章</div>
+        </div>
+    </div>
 
     <!-- Sprite Management Panel -->
     <aside id="spritePanel" class="sprite-panel">
@@ -231,6 +289,7 @@
 
     <script src="articles-data.js"></script>
     <script src="game.js"></script>
+    <script src="touch.js"></script>
     <script>
         // UI Interaction Script for Panel
         document.addEventListener('DOMContentLoaded', () => {
@@ -296,7 +355,7 @@
             // Fullscreen Toggle function
             const toggleFullscreen = () => {
                 if (!document.fullscreenElement) {
-                    gameContainer.requestFullscreen().catch(err => {
+                    document.getElementById('gameContainer').requestFullscreen().catch(err => {
                         console.error(`Error attempting to enable fullscreen: ${err.message}`);
                     });
                 } else {
@@ -304,7 +363,10 @@
                 }
             };
 
+            const fullscreenBtn = document.getElementById('fullscreenBtn');
             fullscreenBtn.addEventListener('click', toggleFullscreen);
+            // iPhone 的 Safari 不支援網頁全螢幕，直接把按鈕收起來
+            if (!document.fullscreenEnabled) fullscreenBtn.style.display = 'none';
 
             // File inputs trigger
             document.querySelectorAll('.upload-sprite').forEach(btn => {
@@ -321,6 +383,7 @@
             // Simulated load
             setTimeout(() => {
                 const overlay = document.getElementById('loadingOverlay');
+                if (!overlay) return;
                 overlay.style.opacity = '0';
                 setTimeout(() => overlay.remove(), 500);
             }, 1000);
