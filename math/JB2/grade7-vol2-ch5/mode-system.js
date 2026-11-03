@@ -52,7 +52,7 @@ var MS_CAT_URL = (function () { try { return new URL('../images/home/catnest.png
       var cs = getComputedStyle(b), avail = b.clientWidth - parseFloat(cs.paddingLeft || 0) - parseFloat(cs.paddingRight || 0);
       if (avail < 40 || b.scrollWidth <= b.clientWidth + 1) return;
       var fs = parseFloat(cs.fontSize);
-      b.style.fontSize = Math.max(11, Math.floor(fs * (b.clientWidth - 2) / b.scrollWidth * 10) / 10) + 'px';
+      b.style.fontSize = Math.max(10, Math.floor(fs * (b.clientWidth - 2) / b.scrollWidth * 10) / 10) + 'px';
     } catch (e) {}
   }
   var fitSet = [];
@@ -200,7 +200,7 @@ var MS_CAT_URL = (function () { try { return new URL('../images/home/catnest.png
       '#ms-st-ov .ms-tstage,#ms-st-ov .st-hist,#ms-st-ov .st-cur,#ms-st-ov .st-ch,#ms-st-ov .ms-ctl{animation:st-late .4s ease 1.2s both}' +
       '.st-hist{margin:8px 0 2px;opacity:.65;font-size:1.05rem;line-height:1.8}' +
       '.st-cur{margin:4px 0 10px;padding:10px 12px;background:#0004;border-radius:10px;font-size:1.5rem;line-height:2;min-height:3em;word-break:keep-all;white-space:nowrap}' +
-      '.st-cur,.st-hist > div{width:0;min-width:100%;box-sizing:border-box;overflow:hidden}.st-hist > div{white-space:nowrap}' +
+      '.st-cur,.st-hist > div{width:0;min-width:100%;box-sizing:border-box;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;touch-action:pan-x pan-y pinch-zoom;scrollbar-width:thin}.st-hist > div{white-space:nowrap}' +
       '.st-cur .st-b{font-size:1em;min-width:1.5em;min-height:2em;line-height:2em;padding:0 .2em;margin:0 .06em}' +
       '.st-cur .op{opacity:.8}.st-b{cursor:pointer;color:var(--bronze,#d2a24c);display:inline-block;min-width:34px;min-height:42px;line-height:42px;text-align:center;font-size:1.5rem;padding:0 6px;margin:0 2px;border:2px dashed #d2a24c88;border-radius:10px;vertical-align:middle}.st-b:hover{background:#d2a24c44}.st-b.hot{background:#d2a24c55;box-shadow:0 0 0 2px #d2a24c}.st-b.sel{background:#d2a24c;color:#2a1d05}' +
       '.st-ch{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}' +
