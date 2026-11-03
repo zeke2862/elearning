@@ -2776,7 +2776,7 @@ window.GAME_CONFIG = {
  },
  "relax": {
   "enabled": true,
-  "every": 5,
+  "every": 0,
   "multiple": true,
   "streak": 5,
   "unlockWins": 3,
