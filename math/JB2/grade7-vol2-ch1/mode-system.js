@@ -107,6 +107,8 @@ var MS_CAT_URL = (function () { try { return new URL('../images/home/catnest.png
     HARD_PASS: 1,      // 修羅達標正確率
     REAL_STAR: 4,
     HARD_STAR: 5,
+    REAL_TIERS: [[0.6, 2], [0.8, 3], [1, 4]],   // 實戰：正確率 60%→2⭐、80%→3⭐、100%→4⭐
+    HARD_TIERS: [[0.6, 3], [0.8, 4], [1, 5]],   // 修羅：正確率 60%→3⭐、80%→4⭐、100%→5⭐
     MAXSTAR: 5,
     TAUGHT_MAX: 2,     // 練兵用了「老師教我」之後，這一局最多幾顆星
     EASY_STAR2_ACC: 0.7, // 練兵 2 ⭐ 的答對率門檻（0.7＝70%）
@@ -148,8 +150,8 @@ var MS_CAT_URL = (function () { try { return new URL('../images/home/catnest.png
   }
   var RULE = {
     easy: '🎯 最多 3 ⭐（依錯題數）',
-    real: '🎯 正確率 ' + Math.round(CFG.REAL_PASS * 100) + '% 以上 → ' + CFG.REAL_STAR + ' ⭐',
-    hard: '🎯 正確率 ' + Math.round(CFG.HARD_PASS * 100) + '%（全對）→ ' + CFG.HARD_STAR + ' ⭐'
+    real: '🎯 正確率 60% → 2 ⭐、80% → 3 ⭐、100% → 4 ⭐',
+    hard: '🎯 正確率 60% → 3 ⭐、80% → 4 ⭐、100% → 5 ⭐'
   };
   // 第 n 題的作答秒數：從實戰時間慢慢縮到修羅時間，之後維持修羅時間
   function timeFor(n, tr, th) {
@@ -2787,15 +2789,16 @@ var MS_CAT_URL = (function () { try { return new URL('../images/home/catnest.png
 
       /* ---- 實戰 / 修羅 ---- */
       var real = o.mode === 'real';
-      var need = real ? CFG.REAL_PASS : CFG.HARD_PASS, prize = real ? CFG.REAL_STAR : CFG.HARD_STAR;
+      var tiers = real ? CFG.REAL_TIERS : CFG.HARD_TIERS, need = tiers[0][0], prize = 0;
       var acc = o.total ? o.right / o.total : 0, pct = Math.round(acc * 100);
-      var pass = !o.fail && acc + 1e-9 >= need, gain = pass ? prize : 0, prev2 = S.stars;
+      tiers.forEach(function (tr) { if (acc + 1e-9 >= tr[0]) prize = tr[1]; });
+      var pass = !o.fail && prize > 0, gain = pass ? prize : 0, prev2 = S.stars;
       if (pass) S.stars = Math.max(S.stars, gain);
       var orig = $t.textContent;
       if (!pass) { if (!o.fail) $t.textContent = '差一點就達標了！'; }
       else if (/凱旋！$/.test(orig)) $t.textContent = (real ? '將軍' : '兵仙') + '　凱旋！';   // Boss 關保留原本標題
       $s.textContent = pass ? starStr(gain) : (o.fail ? '🏃' : '');   /* 沒達標：不顯示星星，避免和「差一點」互相矛盾 */
-      var add2 = '<br>🎯 正確率 ' + pct + '%（目標 ' + Math.round(need * 100) + '%）　' + (pass ? '✅ 達標！' : '💪 還差一點，再挑戰一次！這關已有的星數不會減少');
+      var add2 = '<br>🎯 正確率 ' + pct + '%（' + (real ? '60% 2⭐／80% 3⭐／100% 4⭐' : '60% 3⭐／80% 4⭐／100% 5⭐') + '）　' + (pass ? '✅ 達標！' : '💪 還差一點，再挑戰一次！這關已有的星數不會減少');
       if (pass && gain > prev2) add2 += '<br>⭐ 這一關升到 ' + gain + ' 星！';
       if (!pass) add2 += '<br>📊 本關目前最高：' + (S.stars ? starStr(S.stars) : '還沒有星');
       else add2 += '<br>📊 本關目前最高：' + starStr(S.stars);
@@ -2813,7 +2816,7 @@ var MS_CAT_URL = (function () { try { return new URL('../images/home/catnest.png
       var e = document.getElementById('say'); if (!e) return;
       var bb = e.querySelector('b'); if (!bb) return;
       var t = bb.textContent;
-      if (/^💥/.test(t)) { var md = (typeof mode !== 'undefined') ? mode : ''; bb.textContent = md === 'easy' ? '📝 這題先記答錯，再練一次就會了！' : md === 'hard' ? '📝 這題沒答對，看看解析吧；修羅要全對才達標，下次再挑戰！' : '📝 這題沒答對，看看解析，下一題再加油！'; e.style.borderColor = '#e0a030'; }
+      if (/^💥/.test(t)) { var md = (typeof mode !== 'undefined') ? mode : ''; bb.textContent = md === 'easy' ? '📝 這題先記答錯，再練一次就會了！' : md === 'hard' ? '📝 這題沒答對，看看解析吧；修羅正確率要 60% 以上才有星，下次再挑戰！' : '📝 這題沒答對，看看解析，下一題再加油！'; e.style.borderColor = '#e0a030'; }
       else if (/^⏰ 時間到，/.test(t)) { bb.textContent = '⏰ 時間到囉，看看解析，下一題再加油！'; e.style.borderColor = '#e0a030'; }
     }).observe(document.body, { childList: true, subtree: true });
   } catch (e) {}

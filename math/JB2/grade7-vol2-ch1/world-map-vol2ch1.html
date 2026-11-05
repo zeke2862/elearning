@@ -372,7 +372,7 @@ function closePeek(){$('#peek').classList.add('hide')}
 function openPeek(i){
   const s=STAGES[i],n=st(s.id),c=cardOf(s.id);
   const ok=n>=3;
-  const MB=[['easy','🛡️ 練兵','不限時，最高 3⭐。還有「老師教我」可以幫忙！',''],['real','⚔️ 實戰','限時作答，正確率 80% 以上拿 4⭐',''],['hard','🔥 修羅','更短時間、全對才拿 5⭐',''],['end','♾️ 無極限','題目一直出，5 顆心用完為止。'+(ok?'':'（這一關先拿到 3⭐ 才能挑戰，目前 '+n+'⭐）'),ok?'':' dis']];
+  const MB=[['easy','🛡️ 練兵','不限時，最高 3⭐。還有「老師教我」可以幫忙！',''],['real','⚔️ 實戰','限時作答，正確率 60%／80%／100% 拿 2／3／4⭐',''],['hard','🔥 修羅','更短時間，正確率 60%／80%／100% 拿 3／4／5⭐',''],['end','♾️ 無極限','題目一直出，5 顆心用完為止。'+(ok?'':'（這一關先拿到 3⭐ 才能挑戰，目前 '+n+'⭐）'),ok?'':' dis']];
   $('#peek').innerHTML=`<button class="px" aria-label="關閉">✕</button><img src="images/battle/${s.id}.png" alt="" onerror="this.outerHTML='<div class=&quot;pe&quot;>${c[3]}</div>'"><div class="pt"><h3 class="serif">${s.id}｜${s.name}</h3><p class="pd">${DESC[s.id]||s.topic}</p><p><small style="opacity:.7">${CHX[s.ci].n}｜${s.topic}</small><br>${n?'⭐'.repeat(n)+'☆'.repeat(5-n):'尚未通關'}</p><div class="btns">${MB.map(m=>`<button class="mb${m[3]}" data-m="${m[0]}" data-id="${s.id}" data-tip="${m[2]}">${m[1]}</button>`).join('')}</div></div>`;
   $('#peek').classList.toggle("atop",toPxY(i)>($('#mapwrap').clientHeight*.52));$('#peek').classList.remove('hide');
 }
@@ -424,7 +424,7 @@ addEventListener('message',e=>{
     P[d.id]={...old,stars:Math.max(old.stars,d.stars),best:Math.max(old.best,d.score)};save();
     const msg=[];
     if(!old.stars)msg.push('🎉 首次捕獲 '+d.id+'！');
-    if(old.stars<5&&d.stars>=5)msg.push('👑 '+d.id+' 修羅全對，滿星 5 ⭐！');
+    if(old.stars<5&&d.stars>=5)msg.push('👑 '+d.id+' 修羅 100%，滿星 5 ⭐！');
     if(owned().length>c0)msg.push('🃏 獲得圖鑑：'+owned().pop()+'！');
     const r1=rankOf(total())[1];if(r1!=r0)msg.push('🎖️ 稱號提升：'+r1+'！');
     if(!done0&&chDone())msg.push('🏅 本章完全通關！打開右上「圖鑑」挑一隻「主力培養怪」吧');
