@@ -290,6 +290,60 @@ function normalizePinyinInput(s) {
 
 // Build {word, units, char, pinyin} from any Chinese text (a character, a word,
 // an idiom, or a whole punctuated sentence) using the pinyin-pro library.
+// A unit's `display` is its hanzi, or — for a punctuation unit — just the
+// punctuation mark itself. This pulls the bare hanzi back out of a display
+// string so the 候選字 system never leaks anything extra.
+function bareHanzi(display) {
+  const m = (display || '').match(/[一-鿿]/);
+  return m ? m[0] : display;
+}
+
+// Explicit key for every full-width Chinese punctuation mark that has NO
+// Unicode "Fullwidth Forms" counterpart (punctTypingKey below handles the
+// ones that do, algorithmically). Chosen to match how a real IME keys
+// these: the ASCII shape typed to produce each one, same key reused for a
+// mark's open/close pair since only one is ever expected at a given spot.
+const EXPLICIT_PUNCT_KEY_MAP = {
+  '。': '.',              // ideographic full stop
+  '、': '\\',             // enumeration comma — the backslash key in Rime
+  '「': '[', '」': ']',     // corner brackets
+  '『': '{', '』': '}',     // white corner brackets
+  '《': '<', '》': '>',     // book title brackets
+  '“': '"', '”': '"',      // double quotes (Rime alternates open/close on the same key)
+  '‘': "'", '’': "'",      // single quotes (same idea)
+  '—': '_',               // em dash (Rime types two: ——)
+  '…': '^', '⋯': '^',      // ellipsis (Rime types two: ……)
+  '·': '|', '‧': '|',      // interpunct
+};
+
+// Full-width versions of ASCII punctuation (， ？ ！ ： ； （ ） ～ etc.) sit in
+// Unicode's Fullwidth Forms block at a fixed +0xFEE0 offset from the plain
+// ASCII key that produces them in a real IME — so this covers all of them
+// without needing to list each one by hand. Falls back to the explicit
+// table above for CJK-only marks, then to the spacebar as a last resort so
+// literally every punctuation character in an article is typable, never
+// silently given away for free.
+function punctTypingKey(ch) {
+  const code = ch.charCodeAt(0);
+  if (code >= 0xff01 && code <= 0xff5e) {
+    const mapped = String.fromCharCode(code - 0xfee0);
+    // Fullwidth digits (０-９) also live in this range — skip them so they
+    // can never collide with the 候選字 number-key / page-flip controls.
+    if (!/[0-9]/.test(mapped)) return mapped;
+  }
+  return EXPLICIT_PUNCT_KEY_MAP[ch] || null;
+}
+
+function shuffleArray(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+
 function buildChineseUnits(text) {
   if (!text || !window.pinyinPro) return null;
   let tonedArr, plainArr;
@@ -308,19 +362,34 @@ function buildChineseUnits(text) {
       const toned = (tonedArr && tonedArr[i]) || ch;
       const plain = normalizePinyinInput((plainArr && plainArr[i]) || '');
       cumulative += plain.length;
-      units.push({ display: ch, pinyin: toned, input: plain, boundary: cumulative });
-    } else if (units.length > 0) {
-      // Punctuation / whitespace: glue onto the previous hanzi's display text
-      // so it's visible without needing to be typed separately.
-      units[units.length - 1].display += ch;
+      units.push({ display: ch, pinyin: toned, input: plain, boundary: cumulative, isPunct: false });
+    } else if (/\s/.test(ch) || ch === '　') {
+      // Invisible whitespace (including the fullwidth ideographic space):
+      // never needs typing, so it's simply skipped rather than turned into
+      // a unit or glued onto anything.
+      continue;
+    } else {
+      // EVERY other symbol — standard Chinese punctuation, a fullwidth
+      // ASCII look-alike, or anything unrecognized — becomes its own
+      // typable unit. Nothing is free; the key to press is shown above it
+      // the same way pinyin is shown above a hanzi. No candidate selection
+      // either — there's only one possible key, so nothing to choose
+      // between.
+      const mapped = punctTypingKey(ch);
+      const key = mapped || ' ';
+      cumulative += key.length;
+      // `free` marks symbols no input method can produce (digits, Latin
+      // letters, exotic marks) — only the built-in mode asks for a spacebar
+      // press; with the real Rime engine they're skipped automatically.
+      units.push({ display: ch, pinyin: mapped ? key : '␣', input: key, boundary: cumulative, isPunct: true, free: !mapped });
     }
-    // Leading punctuation before any hanzi is simply dropped.
   }
   if (units.length === 0) return null;
-  // Reject if any character's pinyin couldn't be resolved to plain a-z letters
+  // Reject if any hanzi's pinyin couldn't be resolved to plain a-z letters
   // (very rare/variant characters) — better to skip it than spawn an
-  // impossible-to-type zombie.
-  if (units.some(u => !/^[a-z]+$/.test(u.input))) return null;
+  // impossible-to-type zombie. Punctuation units are always valid by
+  // construction, so they skip this check.
+  if (units.some(u => !u.isPunct && !/^[a-z]+$/.test(u.input))) return null;
   const word = units.map(u => u.input).join('');
   return {
     word,
@@ -971,7 +1040,14 @@ const LANE_COUNT = 5;
 const LANE_Y = (lane) => 120 + (lane - 1) * 72;
 const BARRICADE_LEFT_X = 200;
 const BARRICADE_RIGHT_X = 716;
-const DIFFICULTY_DELAYS = { Easy: 7000, Medium: 5500, Hard: 2650 };
+// 怪物出現的節奏：起步比較慢（一隻一隻慢慢來），過關後才會逐漸加快
+// （見下面的升級加速與同時在場數量上限）。
+const DIFFICULTY_DELAYS = { Easy: 10000, Medium: 8000, Hard: 5500 };
+const MIN_SPAWN_DELAY = 1400; // 加速的下限，避免後面的關卡變成不可能完成
+
+// 候選字設定：每個字有 18 個候選字，一頁 9 個，共 2 頁（按 0 或點頁碼換頁）。
+const CANDIDATE_TOTAL = 18;
+const CANDIDATES_PER_PAGE = 9;
 // 選單上的三個難度（簡易/普通/挑戰）對應到程式內部使用的名稱
 const DIFFICULTY_KEYS = ['Easy', 'Medium', 'Hard'];
 // HOME ROW / TOP ROW / BOTTOM ROW 提示小鍵盤：每個分類對應要顯示（也用來出題）
@@ -994,6 +1070,100 @@ const MENU_LAYOUT = {
   cat: { w: 140, h: 40, gap: 10, y: 292, rowGap: 8, perRow: 4 },
   play: { w: 240, h: 52, cy: 438 },
 };
+
+// ── Game ─────────────────────────────────────────────────────
+// ── RIME input method (the engine behind 小狼毫/Weasel) ────────────────────
+// The real librime engine, compiled to WebAssembly, with the 朙月拼音
+// dictionary. Everything it needs lives in the rime/ folder as asset-*.js
+// files (base64), so nothing has to be installed and it also works when
+// index.html is opened straight from disk. If anything fails to load, the
+// game quietly falls back to its built-in 候選字 mode.
+class RimeIME {
+  constructor() {
+    this.status = 'idle'; // idle | loading | ready | failed
+    this.error = null;
+    this._promise = null;
+  }
+
+  load() {
+    if (this._promise) return this._promise;
+    this.status = 'loading';
+    this._promise = this._load()
+      .then(() => { this.status = 'ready'; })
+      .catch(err => {
+        this.status = 'failed';
+        this.error = String(err && err.message || err);
+        console.warn('Rime IME unavailable, using built-in mode:', this.error);
+      });
+    return this._promise;
+  }
+
+  _script(src) {
+    return new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = src;
+      s.onload = resolve;
+      s.onerror = () => reject(new Error('cannot load ' + src));
+      document.head.appendChild(s);
+    });
+  }
+
+  async _load() {
+    const assetNames = [
+      'rime.wasm', 'rime.data',
+      'luna_pinyin.prism.bin', 'luna_pinyin.table.bin',
+      'luna_pinyin.reverse.bin', 'luna_pinyin.schema.yaml',
+    ];
+    for (const n of assetNames) {
+      await this._script('rime/asset-' + n.replace(/\./g, '_') + '.js');
+    }
+    const A = window.RIME_ASSETS || {};
+    const toBytes = (b64) => {
+      const bin = atob(b64);
+      const out = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+      return out;
+    };
+    const wasmBinary = toBytes(A['rime.wasm']);
+    const dataBuf = toBytes(A['rime.data']).buffer;
+
+    window._deployStatus = function () {};
+    await new Promise((resolve, reject) => {
+      window.Module = {
+        wasmBinary,
+        getPreloadedPackage: () => dataBuf,
+        locateFile: (p) => 'rime/' + p,
+        print() {}, printErr() {},
+        onRuntimeInitialized: resolve,
+        onAbort: (m) => reject(new Error('wasm abort ' + m)),
+      };
+      this._script('rime/rime.js').catch(reject);
+    });
+
+    const M = this.M = window.Module;
+    const FS = M.FS;
+    try { FS.mkdir('/rime'); } catch (e) { /* already there */ }
+    try { FS.mkdir('/usr/share/rime-data/build'); } catch (e) { /* already there */ }
+    for (const n of assetNames.slice(2)) {
+      FS.writeFile('/usr/share/rime-data/build/' + n, toBytes(A[n]));
+    }
+    delete window.RIME_ASSETS; // free the big base64 strings
+    M.ccall('init', 'null', [], []);
+    M.ccall('set_ime', 'null', ['string'], ['luna_pinyin']);
+    M.ccall('set_page_size', 'null', ['number'], [5]);
+  }
+
+  _parse(s) {
+    try { return typeof s === 'string' ? JSON.parse(s) : s; } catch (e) { return null; }
+  }
+
+  // Feed one key, using librime key names ("a", " ", ",", "{BackSpace}", "{Return}", "{Escape}")
+  key(k) { return this._parse(this.M.ccall('process', 'string', ['string'], [k])); }
+  select(i) { return this._parse(this.M.ccall('select_candidate_on_current_page', 'string', ['number'], [i])); }
+  // backward=false -> next page, true -> previous page
+  page(backward) { return this._parse(this.M.ccall('change_page', 'string', ['boolean'], [!!backward])); }
+  reset() { try { this.key('{Escape}'); } catch (e) { /* ignore */ } }
+}
 
 // ── Game ─────────────────────────────────────────────────────
 class TommyQGame {
@@ -1083,6 +1253,14 @@ class TommyQGame {
     this.kbFlashTimer = 0;
     this._loadKbSettings();
 
+    // 中文輸入：小狼毫（Rime）輸入引擎；載入不了就自動改用內建的候選字選字模式
+    this.rime = new RimeIME();      // 真正的小狼毫引擎（見 RimeIME）
+    this.rimeActive = false;        // 這一場遊戲是否由 Rime 負責輸入
+    this.imeState = null;           // Rime 最近一次回報的拼音／候選字狀態
+    this._imeToast = null;
+    this.candidatePage = 0;         // 內建候選字模式：目前顯示第幾頁
+    setTimeout(() => this.rime.load(), 300);
+
     this._bindInput();
     this._loop();
   }
@@ -1116,6 +1294,12 @@ class TommyQGame {
 
       // Toggle Pause with Escape or 'p'/'P'
       if (e.key === 'Escape') {
+        if (this.state === 'PLAYING' && this.rimeActive && this.imeState && this.imeState.body) {
+          // 跟真的輸入法一樣：Esc 先取消正在打的拼音
+          this._applyRimeResult(this.rime.key('{Escape}'));
+          this.imeState = null;
+          return;
+        }
         if (this.state === 'PLAYING') {
           this.togglePause();
           return;
@@ -1208,6 +1392,8 @@ class TommyQGame {
     const p = this.player;
     if (!p || p.dead) return;
 
+    if (this.rimeActive && this._handleRimeKey(e)) return;
+
     if (e.key === 'ArrowUp' && p.lane > 1) {
       p.lane--;
       this.targetedEnemies = [];
@@ -1221,18 +1407,23 @@ class TommyQGame {
       p.dir = 1;
       this.targetedEnemies = [];
     } else if (e.key === 'Enter') {
-      if (this.menuSelection.category === 'chinese_article') {
-        if (e.isComposing) return; // 輸入法選字中，先讓輸入法處理這個 Enter
-        this._attemptChineseAttack();
-      } else {
-        this._usePowerup();
-      }
+      this._usePowerup();
+    } else if (e.key === '0' && this._getFlatCandidates().length > CANDIDATES_PER_PAGE) {
+      // "0" flips between the 候選字 pages (9 candidates per page, 18 total)
+      // — like pressing + / page-down in a real input method to see more
+      // candidates when the right one isn't on the first page.
+      const totalPages = Math.ceil(this._getFlatCandidates().length / CANDIDATES_PER_PAGE);
+      this.candidatePage = (this.candidatePage + 1) % totalPages;
+      this.audio.menuClick();
+    } else if (/^[1-9]$/.test(e.key) && this._getVisibleCandidates().length > 0) {
+      // Number keys 1-9 pick a candidate from the current 候選字 page, same
+      // as a real pinyin input method (type the sound, press the digit to
+      // choose the character you meant).
+      const n = parseInt(e.key, 10);
+      const visible = this._getVisibleCandidates();
+      if (visible[n - 1]) this._confirmUnitCandidate(visible[n - 1].entity, visible[n - 1].char);
     } else if (e.key.length === 1 && /[a-zA-Z0-9,.\/';\-=\[\]\\`~ !@#$%^&*()_+{}|:"<>?]/.test(e.key)) {
-      // 「中文-文章」模式的文字改由 #zhTypingInput 輸入框 + 輸入法處理，
-      // 這裡不要攔截字母鍵，否則輸入法沒辦法正常打字/選字。
-      if (this.menuSelection.category !== 'chinese_article') {
-        this._handleTyping(e.key.toLowerCase());
-      }
+      this._handleTyping(e.key.toLowerCase());
     }
   }
 
@@ -1292,8 +1483,24 @@ class TommyQGame {
         this.returnToMenu();
       }
     } else if (this.state === 'PLAYING') {
+      // 候選字列：點選候選字（Rime 小狼毫視窗，或內建的選字列）
+      const barHit = (this._candidateBarHitboxes || []).find(h =>
+        mx >= h.left && mx <= h.right && my >= h.top && my <= h.bottom
+      );
+      if (barHit && barHit.rime) {
+        if (barHit.rime === 'select') this._applyRimeResult(this.rime.select(barHit.index));
+        else this._applyRimeResult(this.rime.page(barHit.rime === 'prev'));
+      } else if (barHit) {
+        if (barHit.isPageFlip) {
+          const totalPages = Math.ceil(this._getFlatCandidates().length / CANDIDATES_PER_PAGE);
+          this.candidatePage = (this.candidatePage + 1) % Math.max(1, totalPages);
+          this.audio.menuClick();
+        } else {
+          this._confirmUnitCandidate(barHit.entity, barHit.char);
+        }
+      }
       // HOME/TOP/BOTTOM ROW 提示小鍵盤：縮小/放大/關閉，關閉後的重新顯示按鈕
-      if (ROW_KEYBOARD_CHARS[this.menuSelection.category]) {
+      if (!barHit && ROW_KEYBOARD_CHARS[this.menuSelection.category]) {
         if (!this.kbVisible) {
           const r = this._getKbReopenLayout();
           if (mx > r.x && mx < r.x + r.w && my > r.y && my < r.y + r.h) {
@@ -1327,7 +1534,7 @@ class TommyQGame {
     if (this.menuSelection.category === 'chinese_article') {
       const selected = window.articleManager ? window.articleManager.getSelectedArticles() : [];
       if (selected.length === 0) {
-        this._flashMenuWarning('請先點右上角 📚 選擇至少一篇文章');
+        this._flashMenuWarning('請先點右下角 📚 選擇至少一篇文章');
         return;
       }
       if (!window.pinyinPro) {
@@ -1346,6 +1553,17 @@ class TommyQGame {
       }
     }
 
+    const isChineseCat = this.menuSelection.category === 'chinese' || this.menuSelection.category === 'chinese_article';
+    if (isChineseCat && this.rime.status === 'loading') {
+      this._flashMenuWarning('輸入法載入中，請稍候幾秒再按「開始遊戲」');
+      return;
+    }
+    this.rimeActive = isChineseCat && this.rime.status === 'ready';
+    this.imeState = null;
+    this._imeToast = null;
+    if (this.rimeActive) this.rime.reset();
+    this._buildHomophoneIndex();
+    this.candidatePage = 0;
     this.audio.init();
     this.state = 'PLAYING';
     this.player = { lane: 3, dir: 1, dead: false, shootAnim: 0 };
@@ -1369,15 +1587,9 @@ class TommyQGame {
     this.waveTimer = 45000;
     this.spawnTimer = 500;
     this.overlayTimer = 0;
-    // 「中文-文章」模式：在點擊開始的同一瞬間就對準輸入框，手機才會跳出輸入法
-    this._syncChineseTypingBar();
   }
 
   // ── Typing ───────────────────────────────────────────────
-  // 注意：「中文-文章」模式不會走這個函式。那個模式改用瀏覽器/系統自己的
-  // 輸入法（真的可以選字），由 #zhTypingInput 這個輸入框處理，
-  // 按 ENTER 時交給 _attemptChineseAttack() 判斷攻擊。
-  // 這裡處理的是其他模式：英打、中文單字（純鍵盤逐字母比對）。
   _handleTyping(key) {
     const p = this.player;
 
@@ -1402,31 +1614,45 @@ class TommyQGame {
       return false;
     };
 
+    // Chinese entities are typed and confirmed one CHARACTER at a time.
+    // Finishing a character's pinyin doesn't kill anything by itself — it
+    // pops up a row of candidate hanzi (the correct one plus several
+    // same-sound decoys, just like a real pinyin input method) and the
+    // player must pick the matching character before the next one can be
+    // typed. This is what makes "selecting the character" a real exercise
+    // in recognizing hanzi instead of a rubber-stamp click.
+    const stillLocked = e => !e.dead && !e.awaitingUnitConfirm;
+
     if (this.targetedEnemies.length > 0) {
       // Direct Chinese character match if typed via IME
-      const directMatches = this.targetedEnemies.filter(e => e.isChinese && e.char === key);
+      const directMatches = this.targetedEnemies.filter(e => !e.awaitingUnitConfirm && e.isChinese && e.char === key);
       if (directMatches.length > 0) {
         this.audio.hit();
-        this._shootAt(directMatches[0]);
         directMatches.forEach(e => {
           e.typed = e.word.length;
-          this._killEnemy(e);
+          this._checkUnitBoundary(e);
         });
-        this.targetedEnemies = this.targetedEnemies.filter(e => !e.dead);
+        this.targetedEnemies = this.targetedEnemies.filter(stillLocked);
         return;
       }
 
       // Continue typing on existing targets
-      const matching = this.targetedEnemies.filter(e => matchesKey(e, e.typed, key));
+      const matching = this.targetedEnemies.filter(e => !e.awaitingUnitConfirm && matchesKey(e, e.typed, key));
       if (matching.length > 0) {
         this.audio.hit();
-        this._shootAt(matching[0]);
+        if (matching.every(e => e.isChinese)) {
+          // Don't auto-shoot yet — nothing is confirmed until the player
+          // selects a candidate; shooting on every keystroke would look like
+          // the game already decided for them.
+        } else {
+          this._shootAt(matching[0]);
+        }
         matching.forEach(e => {
           e.typed++;
-          if (e.typed >= e.word.length) this._killEnemy(e);
+          this._checkUnitBoundary(e);
         });
-        // Remove non-matching from target list
-        this.targetedEnemies = matching.filter(e => !e.dead);
+        // Remove non-matching (and now-awaiting) from target list
+        this.targetedEnemies = matching.filter(stillLocked);
       } else {
         this.audio.error();
       }
@@ -1434,7 +1660,7 @@ class TommyQGame {
       // Find new targets
       const allTypable = [...this.enemies, ...this.powerupItems];
       const candidates = allTypable.filter(e =>
-        !e.dead && e.lane === p.lane &&
+        !e.dead && !e.awaitingUnitConfirm && e.lane === p.lane &&
         ((p.dir > 0 && e.fromRight) || (p.dir < 0 && !e.fromRight)) &&
         (matchesKey(e, 0, key) || (e.isChinese && e.char === key))
       );
@@ -1442,93 +1668,335 @@ class TommyQGame {
       if (candidates.length > 0) {
         this.audio.hit();
         this.targetedEnemies = candidates;
-        this._shootAt(candidates[0]);
+        if (!candidates.every(e => e.isChinese)) {
+          this._shootAt(candidates[0]);
+        }
         candidates.forEach(e => {
           if (e.isChinese && e.char === key) {
             e.typed = e.word.length;
           } else {
             e.typed++;
           }
-          if (e.typed >= e.word.length) this._killEnemy(e);
+          this._checkUnitBoundary(e);
         });
-        this.targetedEnemies = candidates.filter(e => !e.dead);
+        this.targetedEnemies = candidates.filter(stillLocked);
       } else {
         this.audio.error();
       }
     }
   }
 
-  // ── 中文-文章 模式專用：#zhTypingInput 輸入框用瀏覽器/系統輸入法
-  // （注音、拼音、倉頡…都可以）打字選字，選好字、按下 ENTER 時呼叫這裡。
-  // 拿輸入框裡「目前選好的文字」跟玩家面對的怪物「接下來還沒消滅的字」比對——
-  // 如果輸入法一次選出一個詞（例如兩個字的候選字），也會一次把這幾個字
-  // 都消滅掉，不是只能一次消一個字。
-  _attemptChineseAttack() {
-    const input = document.getElementById('zhTypingInput');
-    if (!input) return;
-    const text = input.value.trim();
-    input.value = '';
-    if (!text) return;
+  // Non-Chinese words die the instant they're fully typed, same as before.
+  // A Chinese entity instead checks whether its CURRENT character's pinyin
+  // is now fully typed; if so, it pauses and waits for the player to pick
+  // the right hanzi out of the 候選字 (candidate) row before moving on to
+  // the next character (or dying, if that was its last one).
+  _checkUnitBoundary(e) {
+    if (!e.isChinese) {
+      if (e.typed >= e.word.length) this._killEnemy(e);
+      return;
+    }
+    const unit = e.units[e.curUnit || 0];
+    if (!unit || e.typed < unit.boundary || e.awaitingUnitConfirm) return;
 
-    const p = this.player;
-    if (!p || p.dead) return;
-
-    // 從目前還沒消滅的字開始，一個一個字累加起來跟輸入的文字比對，
-    // 找出「累加起來剛好等於輸入文字」需要用到幾個字，回傳用到的字數（0代表不合）
-    const matchUnitCount = (e) => {
-      const confirmed = e.confirmed || 0;
-      const pending = e.units.filter(u => u.boundary > confirmed);
-      let acc = '';
-      for (let i = 0; i < pending.length; i++) {
-        acc += pending[i].display;
-        if (acc === text) return i + 1;
-        if (acc.length >= text.length) return 0;
+    if (unit.isPunct) {
+      // Punctuation has exactly one possible key — nothing to choose
+      // between, so it's confirmed the instant it's typed, same as a
+      // non-Chinese word's last letter.
+      e.curUnit = (e.curUnit || 0) + 1;
+      if (e.curUnit >= e.units.length) {
+        this._shootAt(e);
+        this._killEnemy(e);
       }
-      return 0;
-    };
+      return;
+    }
 
-    const allTypable = [...this.enemies, ...this.powerupItems];
-    const candidates = allTypable.filter(e => {
-      if (e.dead || e.lane !== p.lane) return false;
-      if (!((p.dir > 0 && e.fromRight) || (p.dir < 0 && !e.fromRight))) return false;
-      if (!e.isChinese || !e.units || !e.units.length) return false;
-      return matchUnitCount(e) > 0;
-    });
+    // Build candidates from the bare hanzi only — if this unit has
+    // trailing (unmapped) punctuation glued on, showing it on just the
+    // correct chip would give the answer away by sight alone.
+    e.pendingCandidates = this._buildCandidates(bareHanzi(unit.display), unit.input);
+    e.awaitingUnitConfirm = true;
+    // Every new character starts back on page 1 of its candidates.
+    this.candidatePage = 0;
+  }
 
-    if (candidates.length > 0) {
-      this.audio.hit();
-      this.targetedEnemies = candidates;
-      this._shootAt(candidates[0]);
-      candidates.forEach(e => {
-        const confirmed = e.confirmed || 0;
-        const pending = e.units.filter(u => u.boundary > confirmed);
-        const n = matchUnitCount(e);
-        e.confirmed = pending[n - 1].boundary;
-        e.typed = e.confirmed;
-        if (e.confirmed >= e.word.length) this._killEnemy(e);
+  // Builds the 候選字 options for one character: the correct hanzi plus
+  // many decoys that share the same (toneless) pinyin — just like a real
+  // input method's candidate list — topped up with random filler characters
+  // if there aren't enough true homophones. 18 total, shown 9-per-page (see
+  // CANDIDATES_PER_PAGE), so there's always a real set of look-alike options
+  // to search through across two pages rather than a single obvious answer.
+  _buildCandidates(correctChar, pinyinToneless) {
+    const index = this.homophoneIndex || {};
+    const known = this.allKnownChars || [];
+    const targetTotal = CANDIDATE_TOTAL;
+    let decoys = shuffleArray((index[pinyinToneless] || []).filter(c => c !== correctChar)).slice(0, targetTotal - 1);
+    if (decoys.length < targetTotal - 1) {
+      const filler = shuffleArray(known.filter(c => c !== correctChar && !decoys.includes(c)));
+      for (const c of filler) {
+        if (decoys.length >= targetTotal - 1) break;
+        decoys.push(c);
+      }
+    }
+    return shuffleArray([correctChar, ...decoys]);
+  }
+
+  // Builds the pinyin → [同音字...] lookup used by _buildCandidates, from the
+  // 500 common built-in characters plus every character that appears in the
+  // currently-selected 中文-文章 articles (so decoys for article mode are
+  // drawn from vocabulary the student has actually seen).
+  _buildHomophoneIndex() {
+    const charSet = new Set(CHINESE_CHARACTERS.map(c => c.char));
+    ['Easy', 'Medium', 'Hard'].forEach(diff => {
+      const pool = (this.articlePools && this.articlePools[diff]) || [];
+      pool.forEach(item => {
+        (item.units || []).forEach(u => {
+          const hanzi = (u.display || '').match(/[一-鿿]/g);
+          if (hanzi) hanzi.forEach(c => charSet.add(c));
+        });
       });
-      this.targetedEnemies = candidates.filter(e => !e.dead);
-    } else {
+    });
+    const allChars = Array.from(charSet);
+    const index = {};
+    if (window.pinyinPro) {
+      allChars.forEach(ch => {
+        let py = '';
+        try { py = normalizePinyinInput(window.pinyinPro.pinyin(ch, { toneType: 'none' })); } catch (e) { py = ''; }
+        if (!py) return;
+        (index[py] = index[py] || []).push(ch);
+      });
+    }
+    this.homophoneIndex = index;
+    this.allKnownChars = allChars;
+  }
+
+  // Confirms one candidate pick: used by clicking its chip in the 候選字 bar
+  // or pressing its number key. A wrong pick just buzzes — the zombie keeps
+  // coming and the candidates stay up so the student can try again. The
+  // right pick advances to the next character, or kills the entity if that
+  // was its last one.
+  _confirmUnitCandidate(entity, char) {
+    if (!entity || entity.dead || !entity.awaitingUnitConfirm) {
       this.audio.error();
+      return;
+    }
+    const unit = entity.units[entity.curUnit || 0];
+    if (!unit || char !== bareHanzi(unit.display)) {
+      this.audio.error();
+      return;
+    }
+    this.audio.hit();
+    entity.awaitingUnitConfirm = false;
+    entity.pendingCandidates = null;
+    entity.curUnit = (entity.curUnit || 0) + 1;
+    this.candidatePage = 0; // list just shrank/changed — back to page 1
+    if (entity.curUnit >= entity.units.length) {
+      this._shootAt(entity);
+      this._killEnemy(entity);
+      this.targetedEnemies = this.targetedEnemies.filter(e => e !== entity);
+    } else if (!this.targetedEnemies.includes(entity)) {
+      this.targetedEnemies.push(entity);
     }
   }
 
-  // ── 顯示/隱藏 #zhTypingBar：只有「中文-文章」模式在遊戲進行中才出現，
-  // 並把輸入框清空、聚焦，讓學生可以直接用輸入法打字 ──
-  _syncChineseTypingBar() {
-    const bar = document.getElementById('zhTypingBar');
-    const input = document.getElementById('zhTypingInput');
-    if (!bar || !input) return;
-    const shouldShow = this.state === 'PLAYING' && this.menuSelection.category === 'chinese_article';
-    const isShown = bar.style.display !== 'none';
-    if (shouldShow) {
-      if (!isShown) bar.style.display = 'flex';
-      if (document.activeElement !== input) input.focus();
-    } else if (isShown) {
-      bar.style.display = 'none';
-      input.value = '';
-      input.blur();
+  // ── Real Rime input (小狼毫 engine) ─────────────────────────
+  _enemiesInFront() {
+    const p = this.player;
+    return [...this.enemies, ...this.powerupItems].filter(e =>
+      !e.dead && e.isChinese && e.units && e.lane === p.lane &&
+      ((p.dir > 0 && e.fromRight) || (p.dir < 0 && !e.fromRight)));
+  }
+
+  _remainingText(e) {
+    return e.units.slice(e.curUnit || 0).map(u => bareHanzi(u.display)).join('');
+  }
+
+  // Symbols no input method can produce (digits, Latin letters, exotic marks)
+  // are skipped automatically when Rime drives the game.
+  _skipFreeUnits(e) {
+    if (!e.units) return;
+    let c = e.curUnit || 0;
+    while (c < e.units.length && e.units[c].free) c++;
+    e.curUnit = c;
+    e.typed = c > 0 ? e.units[c - 1].boundary : 0;
+  }
+
+  // Routes a keypress to the Rime engine. Returns true when the key was used.
+  _handleRimeKey(e) {
+    if (e.ctrlKey || e.metaKey || e.altKey) return false;
+    const composing = !!(this.imeState && this.imeState.body);
+    let k = null;
+    if (e.key === ' ') {
+      if (!composing) return true;       // idle space does nothing
+      k = ' ';
+    } else if (e.key === 'Backspace') {
+      if (!composing) return true;
+      k = '{BackSpace}';
+    } else if (e.key === 'Enter') {
+      if (!composing) return false;      // Enter still fires the power-up
+      k = '{Return}';
+    } else if (e.key.length === 1) {
+      k = /[A-Za-z]/.test(e.key) ? e.key.toLowerCase() : e.key;
+    } else {
+      return false;                      // arrows etc. stay game controls
     }
+    this._applyRimeResult(this.rime.key(k));
+    return true;
+  }
+
+  _applyRimeResult(r) {
+    if (!r) return;
+    if (r.committed) this._onImeCommit(r.committed);
+    if (r.body !== undefined && r.state === 1) this.imeState = r;
+    else if (r.state !== 3) this.imeState = null; // 3 = key not handled, keep what's on screen
+  }
+
+  _imeToastShow(msg) {
+    this._imeToast = { msg, until: performance.now() + 1400 };
+  }
+
+  // The player confirmed some text (a character, a word, a punctuation mark)
+  // in the input method — check it against the zombies they're facing.
+  _onImeCommit(text) {
+    // 只把左右引號視為同一個（同一個鍵）；異體字（爲／為）是不同的字，必須選對
+    const norm = s => (s || '').replace(/”/g, '“').replace(/’/g, '‘');
+    const t = norm(text);
+    const matches = this._enemiesInFront().filter(e => norm(this._remainingText(e)).startsWith(t));
+    if (!t || matches.length === 0) {
+      this.audio.error();
+      this._imeToastShow('✗ 「' + text + '」不是前面殭屍要的字');
+      return;
+    }
+    // Identical text on several zombies: the one closest to the player goes first
+    matches.sort((a, b) => Math.abs(a.x - W / 2) - Math.abs(b.x - W / 2));
+    const e = matches[0];
+    this.audio.hit();
+    e.curUnit = (e.curUnit || 0) + t.length;
+    e.typed = e.curUnit > 0 ? e.units[e.curUnit - 1].boundary : 0;
+    this._skipFreeUnits(e);
+    this._shootAt(e);
+    if (e.curUnit >= e.units.length) this._killEnemy(e);
+  }
+
+  // Weasel-style window: the pinyin being typed on top, numbered candidates below.
+  _drawRimeWindow(ctx) {
+    this._candidateBarHitboxes = [];
+    if (this.htmlCandidates) return;   // 手機：由網頁上的大按鈕顯示（touch.js）
+    if (this.state !== 'PLAYING') return;
+    const st = this.imeState;
+    const now = performance.now();
+    const toast = this._imeToast && now < this._imeToast.until ? this._imeToast.msg : null;
+    const font = 'bold 18px "Outfit", "Microsoft JhengHei", "PingFang SC", sans-serif';
+    const small = '11px "Outfit", "Microsoft JhengHei", sans-serif';
+
+    ctx.save();
+    ctx.textAlign = 'left';
+    if (!st || !st.body) {
+      // Idle: just a small reminder of what's active
+      ctx.font = small;
+      ctx.fillStyle = 'rgba(160,255,190,0.55)';
+      ctx.textAlign = 'center';
+      ctx.fillText('小狼毫輸入引擎（朙月拼音）｜打拼音，空白鍵選第1個，1~5選字，Esc取消', W / 2, H - 10);
+      if (toast) {
+        ctx.font = 'bold 14px "Outfit", "Microsoft JhengHei", sans-serif';
+        ctx.fillStyle = '#ff6b81';
+        ctx.fillText(toast, W / 2, H - 34);
+      }
+      ctx.restore();
+      return;
+    }
+
+    const cands = st.candidates || [];
+    const pad = 12, gap = 16, rowH = 30;
+    ctx.font = font;
+    const items = cands.map((c, i) => {
+      const label = (i + 1) + ' ' + c.text;
+      const cw = ctx.measureText(label).width;
+      let cm = '';
+      if (c.comment) { cm = c.comment; }
+      ctx.font = small;
+      const mw = cm ? ctx.measureText(cm).width + 4 : 0;
+      ctx.font = font;
+      return { i, label, comment: cm, w: cw + mw };
+    });
+    const candW = items.reduce((s, it) => s + it.w, 0) + gap * Math.max(0, items.length - 1);
+    const pagerW = 54;
+    ctx.font = font;
+    const preW = ctx.measureText((st.head || '') + st.body + (st.tail || '')).width;
+    const boxW = Math.max(candW + pagerW, preW) + pad * 2;
+    const boxH = rowH * 2 + pad;
+    const x = Math.round(W / 2 - boxW / 2);
+    const y = H - boxH - 26;
+
+    ctx.fillStyle = 'rgba(8, 14, 26, 0.95)';
+    ctx.beginPath(); ctx.roundRect(x, y, boxW, boxH, 10); ctx.fill();
+    ctx.strokeStyle = '#2ed573'; ctx.lineWidth = 1.5; ctx.stroke();
+
+    // Row 1: what's being typed
+    ctx.fillStyle = '#ffd700';
+    ctx.fillText((st.head || '') + st.body + (st.tail || ''), x + pad, y + 24);
+
+    // Row 2: candidates
+    let cx = x + pad;
+    const ry = y + rowH + 22;
+    items.forEach(it => {
+      const hl = it.i === st.highlighted;
+      if (hl) {
+        ctx.fillStyle = 'rgba(46, 213, 115, 0.35)';
+        ctx.beginPath(); ctx.roundRect(cx - 5, ry - 20, it.w + 10, 28, 6); ctx.fill();
+      }
+      ctx.font = font;
+      ctx.fillStyle = hl ? '#ffffff' : '#d8ffe6';
+      ctx.fillText(it.label, cx, ry);
+      if (it.comment) {
+        ctx.font = small;
+        ctx.fillStyle = '#8fa6a0';
+        ctx.fillText(it.comment, cx + ctx.measureText(it.label).width + 4, ry);
+      }
+      this._candidateBarHitboxes.push({ rime: 'select', index: it.i, left: cx - 5, right: cx + it.w + 5, top: ry - 20, bottom: ry + 8 });
+      cx += it.w + gap;
+    });
+
+    // Pager ◂ ▸
+    const px = x + boxW - pad - 40;
+    const canPrev = (st.page || 0) > 0;
+    const canNext = !st.isLastPage;
+    ctx.font = 'bold 18px sans-serif';
+    ctx.fillStyle = canPrev ? '#ffffff' : '#46524d';
+    ctx.fillText('◂', px, ry);
+    ctx.fillStyle = canNext ? '#ffffff' : '#46524d';
+    ctx.fillText('▸', px + 24, ry);
+    if (canPrev) this._candidateBarHitboxes.push({ rime: 'prev', left: px - 6, right: px + 16, top: ry - 20, bottom: ry + 8 });
+    if (canNext) this._candidateBarHitboxes.push({ rime: 'next', left: px + 18, right: px + 40, top: ry - 20, bottom: ry + 8 });
+
+    if (toast) {
+      ctx.font = 'bold 14px "Outfit", "Microsoft JhengHei", sans-serif';
+      ctx.fillStyle = '#ff6b81';
+      ctx.textAlign = 'center';
+      ctx.fillText(toast, W / 2, y - 8);
+    }
+    ctx.restore();
+  }
+
+  // Flattens every awaiting entity's full (18-per-character) candidate list.
+  // Used to know the total count (for page math) — see _getVisibleCandidates
+  // for what's actually shown on screen right now.
+  _getFlatCandidates() {
+    const result = [];
+    [...this.enemies, ...this.powerupItems].forEach(e => {
+      if (!e.dead && e.isChinese && e.awaitingUnitConfirm && e.pendingCandidates) {
+        e.pendingCandidates.forEach(ch => result.push({ entity: e, char: ch }));
+      }
+    });
+    return result;
+  }
+
+  // The current 9-candidate page (of up to 18 total) — what the 候選字 bar
+  // draws and what number keys 1-9 index into. "0" flips this.candidatePage.
+  _getVisibleCandidates() {
+    const flat = this._getFlatCandidates();
+    const start = this.candidatePage * CANDIDATES_PER_PAGE;
+    return flat.slice(start, start + CANDIDATES_PER_PAGE);
   }
 
   _shootAt(target) {
@@ -1638,10 +2106,12 @@ class TommyQGame {
       pinyin: wordItem.pinyin || null,
       units: wordItem.units || null,
       isChinese: !!wordItem.isChinese,
-      typed: 0, confirmed: 0, dead: false, speed,
+      typed: 0, dead: false, speed,
       bob: Math.random() * Math.PI * 2,
       isPowerup: false,
+      curUnit: 0, awaitingUnitConfirm: false, pendingCandidates: null,
     });
+    if (this.rimeActive) this._skipFreeUnits(this.enemies[this.enemies.length - 1]);
     this.zombiesSpawned++;
   }
 
@@ -1676,7 +2146,8 @@ class TommyQGame {
       pinyin: wordItem.pinyin || null,
       units: wordItem.units || null,
       isChinese: !!wordItem.isChinese,
-      typed: 0, confirmed: 0, dead: false, speed: 0.35,
+      typed: 0, dead: false, speed: 0.35,
+      curUnit: 0, awaitingUnitConfirm: false, pendingCandidates: null,
       isPowerup: true, powerType,
       bob: Math.random() * Math.PI * 2,
     });
@@ -1747,7 +2218,8 @@ class TommyQGame {
           this.state = 'WAVE_COMPLETE';
           this.overlayTimer = 4000;
           this.stats.level++;
-          this.spawnDelay *= 0.78;
+          // 緩和加速：每過一關出怪間隔約快 8%（原本約 22%），並設下限
+          this.spawnDelay = Math.max(MIN_SPAWN_DELAY, this.spawnDelay * 0.92);
           this.stats.waveScore = 0;
           this.stats.waveKills = 0;
           this.waveType = 'NORMAL';
@@ -1761,14 +2233,22 @@ class TommyQGame {
     if (this.waveTimer > 0) {
       this.spawnTimer -= dt;
       if (this.spawnTimer <= 0) {
-        const delay = this.waveType === 'HORDE' ? this.spawnDelay * 0.65 : this.spawnDelay;
+        const delay = this.waveType === 'HORDE' ? this.spawnDelay * 0.75 : this.spawnDelay;
         this.spawnTimer = delay;
 
         if (this.frozenTimer <= 0) {
-          this._spawnZombie();
-          // Occasional power-up
-          if (Math.random() < 0.06 && !this.heldPowerup) {
-            this._spawnPowerup();
+          // 同時在場的怪物數量上限：一開始很少（輕鬆好應付），
+          // 隨著過關逐漸增加，最多 5 隻（對應 5 條路線）。
+          const maxConcurrent = this.waveType === 'HORDE'
+            ? Math.min(3 + (this.stats.level - 1), 5)
+            : Math.min(2 + (this.stats.level - 1), 5);
+          const aliveCount = this.enemies.filter(e => !e.dead).length;
+          if (aliveCount < maxConcurrent) {
+            this._spawnZombie();
+            // Occasional power-up
+            if (Math.random() < 0.06 && !this.heldPowerup) {
+              this._spawnPowerup();
+            }
           }
         }
       }
@@ -1855,6 +2335,11 @@ class TommyQGame {
     this._drawLanes(ctx);
     this._drawBarricades(ctx);
 
+    if (this.rimeActive && this.state === 'PLAYING') {
+      // 小狼毫模式：把玩家面前的怪物標示出來
+      this.targetedEnemies = this._enemiesInFront();
+    }
+
     // Sort all visible entities by lane for depth ordering
     const toDraw = [];
     if (this.player && !this.player.dead) {
@@ -1875,6 +2360,7 @@ class TommyQGame {
     this._drawFloatTexts(ctx);
     this._drawRowKeyboard(ctx);
     this._drawHUD(ctx);
+    this._drawCandidateBar(ctx);
     this._drawFrozenOverlay(ctx);
     this._drawOverlays(ctx);
   }
@@ -2287,38 +2773,36 @@ class TommyQGame {
   // 困難版 full-sentence typing, and works fine for shorter words too).
   _drawChineseUnits(ctx, entity) {
     const isTargeted = this.targetedEnemies.includes(entity);
-    const typed = entity.typed;
+    const awaiting = !!entity.awaitingUnitConfirm;
+    const curUnit = entity.curUnit || 0;
     const WINDOW = 10; // max hanzi shown at once so long sentences don't overflow
 
-    // Only keep units not yet confirmed-eliminated (ENTER pressed for them).
-    // In 中文-文章 mode this waits for Enter; other Chinese modes kill the
-    // whole enemy instantly on completion so `confirmed` never matters there.
-    const confirmedPos = entity.confirmed || 0;
-    const visible = [];
-    let startBoundary = 0;
-    for (const u of entity.units) {
-      const done = u.input.length > 0 && u.boundary <= confirmedPos;
-      if (!done) visible.push({ u, startBoundary });
-      startBoundary = u.boundary;
-    }
-    const shown = visible.slice(0, WINDOW);
-    const hasMore = visible.length > WINDOW;
-    if (shown.length === 0) return; // about to die this frame
+    // Units before curUnit have already been confirmed and typed-away —
+    // they disappear and everything after shifts left to fill the gap.
+    const remaining = entity.units.slice(curUnit);
+    if (remaining.length === 0) return; // about to die this frame
+    const shown = remaining.slice(0, WINDOW);
+    const hasMore = remaining.length > WINDOW;
+    const prevBoundary = curUnit > 0 ? entity.units[curUnit - 1].boundary : 0;
 
     const hanziFont = 'bold 18px "Outfit", "Microsoft JhengHei", "PingFang SC", sans-serif';
     const pinyinFont = 'bold 12px "Outfit", sans-serif';
     const colGap = 4;
     const padX = 10;
 
-    // Measure each visible column
-    const cols = shown.map(({ u, startBoundary: s }) => {
+    // Measure each visible column. Only column 0 (the current character)
+    // has any typing progress — the rest haven't been reached yet.
+    const cols = shown.map((u, idx) => {
       ctx.font = hanziFont;
       const hanziW = ctx.measureText(u.display).width;
       ctx.font = pinyinFont;
       const pinyinW = ctx.measureText(u.pinyin).width;
       const colW = Math.max(hanziW, pinyinW);
-      const typedInUnit = Math.max(0, Math.min(u.input.length, typed - s));
-      return { u, colW, hanziW, pinyinW, typedInUnit };
+      let typedInUnit = 0;
+      if (idx === 0) {
+        typedInUnit = awaiting ? u.input.length : Math.max(0, Math.min(u.input.length, entity.typed - prevBoundary));
+      }
+      return { u, idx, colW, hanziW, pinyinW, typedInUnit };
     });
     let totalW = cols.reduce((sum, c) => sum + c.colW, 0) + colGap * (cols.length - 1);
     if (hasMore) totalW += 18;
@@ -2327,26 +2811,28 @@ class TommyQGame {
     const x = entity.x - boxW / 2;
     const y = entity.y - 82;
 
-    // Box background
-    ctx.fillStyle = isTargeted ? 'rgba(10, 16, 32, 0.92)' : 'rgba(0, 0, 0, 0.85)';
+    // Box background — pulses while the current character awaits selection
+    const pulse = awaiting ? (Math.sin(this.globalTime / 150) + 1) / 2 : 0; // 0..1
+    ctx.fillStyle = awaiting ? 'rgba(10, 30, 20, 0.94)' : (isTargeted ? 'rgba(10, 16, 32, 0.92)' : 'rgba(0, 0, 0, 0.85)');
     ctx.beginPath();
     ctx.roundRect(x, y - 23, boxW, boxH, 6);
     ctx.fill();
-    ctx.strokeStyle = isTargeted ? 'rgba(0, 212, 255, 0.8)' : 'rgba(255, 255, 255, 0.22)';
-    ctx.lineWidth = isTargeted ? 2 : 1.5;
-    if (isTargeted) { ctx.shadowColor = '#00d4ff'; ctx.shadowBlur = 8; }
+    ctx.strokeStyle = awaiting ? `rgba(46, 213, 115, ${0.6 + pulse * 0.4})` : (isTargeted ? 'rgba(0, 212, 255, 0.8)' : 'rgba(255, 255, 255, 0.22)');
+    ctx.lineWidth = awaiting ? 3 : (isTargeted ? 2 : 1.5);
+    if (awaiting) { ctx.shadowColor = '#2ed573'; ctx.shadowBlur = 10 + pulse * 8; }
+    else if (isTargeted) { ctx.shadowColor = '#00d4ff'; ctx.shadowBlur = 8; }
     ctx.stroke();
     ctx.shadowBlur = 0;
 
     // Draw each column: pinyin on top, hanzi below
     let cx = x + padX;
-    cols.forEach((col, idx) => {
-      const isCurrent = idx === 0 && col.typedInUnit > 0;
-      const isNext = idx === 0;
+    cols.forEach((col) => {
+      const isCurrentCol = col.idx === 0;
+      const isAwaitingThis = isCurrentCol && awaiting;
 
       // Hanzi
       ctx.font = hanziFont;
-      ctx.fillStyle = isCurrent ? '#2ed573' : (isNext && isTargeted ? '#00d4ff' : '#ffd700');
+      ctx.fillStyle = isAwaitingThis ? '#2ed573' : (isCurrentCol && col.typedInUnit > 0 ? '#2ed573' : (isCurrentCol && isTargeted ? '#00d4ff' : '#ffd700'));
       ctx.fillText(col.u.display, cx + (col.colW - col.hanziW) / 2, y + 6);
 
       // Pinyin, colored letter-by-letter for the current column's progress
@@ -2354,9 +2840,11 @@ class TommyQGame {
       let px = cx + (col.colW - col.pinyinW) / 2;
       const pinyinLetters = col.u.pinyin.split('');
       for (let i = 0; i < pinyinLetters.length; i++) {
-        if (idx === 0 && i < col.typedInUnit) {
+        if (isAwaitingThis) {
+          ctx.fillStyle = '#8fffb0';
+        } else if (isCurrentCol && i < col.typedInUnit) {
           ctx.fillStyle = '#2ed573'; // typed
-        } else if (idx === 0 && i === col.typedInUnit && isTargeted) {
+        } else if (isCurrentCol && i === col.typedInUnit && isTargeted) {
           ctx.fillStyle = '#ffa502'; // next letter to type
         } else {
           ctx.fillStyle = '#ffffff';
@@ -2373,6 +2861,93 @@ class TommyQGame {
       ctx.fillStyle = '#a0a0b0';
       ctx.fillText('…', cx - colGap + 4, y + 4);
     }
+
+    // Hint once the current character awaits selection — the candidates
+    // themselves (with their own numbers) are in the 候選字 bar below.
+    if (awaiting) {
+      ctx.font = 'bold 10px "Outfit", "Microsoft JhengHei", sans-serif';
+      ctx.fillStyle = `rgba(143, 255, 176, ${0.7 + pulse * 0.3})`;
+      ctx.textAlign = 'center';
+      ctx.fillText('👆 請在下方候選字選出正確的字', x + boxW / 2, y - 30);
+      ctx.textAlign = 'left';
+    }
+  }
+
+  // The 候選字 (candidate) bar: a Weasel/Rime-style numbered strip along the
+  // bottom of the play area listing the current page of candidate characters
+  // (9 of up to 18 total per typed character) — the correct hanzi mixed in
+  // among many decoys. Click a chip or press its number; only the one that
+  // matches the entity's actual character counts. When there's a second
+  // page, a "0 換頁" chip flips between them (same as pressing "0").
+  _drawCandidateBar(ctx) {
+    if (this.rimeActive) { this._drawRimeWindow(ctx); return; }
+    if (this.htmlCandidates) { this._candidateBarHitboxes = []; return; }   // 手機：由網頁上的大按鈕顯示
+    const total = this.state === 'PLAYING' ? this._getFlatCandidates().length : 0;
+    const visible = this.state === 'PLAYING' ? this._getVisibleCandidates() : [];
+    this._candidateBarHitboxes = [];
+    if (total === 0) return;
+
+    const totalPages = Math.ceil(total / CANDIDATES_PER_PAGE);
+    const showPageChip = totalPages > 1;
+
+    ctx.save();
+    const chipH = 34;
+    const chipGap = 8;
+    const padX = 12;
+    const barY = H - chipH - 10;
+
+    ctx.font = 'bold 16px "Outfit", "Microsoft JhengHei", "PingFang SC", sans-serif';
+    const chips = visible.map((c, i) => {
+      const label = `${i + 1}  ${c.char}`;
+      const w = ctx.measureText(label).width + padX * 2 + 14;
+      return { entity: c.entity, char: c.char, label, w, num: i + 1, isPageFlip: false };
+    });
+    if (showPageChip) {
+      const label = `0  第${this.candidatePage + 1}/${totalPages}頁 ▸`;
+      const w = ctx.measureText(label).width + padX * 2 + 14;
+      chips.push({ entity: null, char: null, label, w, num: 0, isPageFlip: true });
+    }
+    const totalW = chips.reduce((s, c) => s + c.w, 0) + chipGap * (chips.length - 1);
+    let cx = W / 2 - totalW / 2;
+
+    // Backing bar
+    ctx.fillStyle = 'rgba(5, 10, 20, 0.88)';
+    ctx.beginPath();
+    ctx.roundRect(cx - 14, barY - 6, totalW + 28, chipH + 12, 10);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(46, 213, 115, 0.5)';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    chips.forEach(chip => {
+      const pulse = (Math.sin(this.globalTime / 150 + chip.num) + 1) / 2;
+      ctx.fillStyle = chip.isPageFlip
+        ? `rgba(0, 212, 255, ${0.18 + pulse * 0.12})`
+        : `rgba(46, 213, 115, ${0.22 + pulse * 0.15})`;
+      ctx.beginPath();
+      ctx.roundRect(cx, barY, chip.w, chipH, 8);
+      ctx.fill();
+      ctx.strokeStyle = chip.isPageFlip ? '#00d4ff' : '#2ed573';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      ctx.fillStyle = chip.isPageFlip ? '#d9f6ff' : '#eafff0';
+      ctx.font = 'bold 16px "Outfit", "Microsoft JhengHei", "PingFang SC", sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText(chip.label, cx + padX, barY + chipH / 2 + 6);
+
+      this._candidateBarHitboxes.push({
+        entity: chip.entity,
+        char: chip.char,
+        isPageFlip: chip.isPageFlip,
+        left: cx, right: cx + chip.w, top: barY, bottom: barY + chipH,
+      });
+
+      cx += chip.w + chipGap;
+    });
+
+    ctx.textAlign = 'left';
+    ctx.restore();
   }
 
   _drawProjectiles(ctx) {
@@ -2689,7 +3264,7 @@ class TommyQGame {
       const n = window.articleManager ? window.articleManager.getSelectedArticles().length : 0;
       ctx.fillStyle = n > 0 ? '#2ed573' : '#ffa502';
       ctx.font = `bold 16px ${UI_FONT}`;
-      ctx.fillText(n > 0 ? `已選 ${n} 篇文章 ✓` : '尚未選擇文章，請點右上角 📚', W / 2, noteY);
+      ctx.fillText(n > 0 ? `已選 ${n} 篇文章 ✓` : '尚未選擇文章，請點右下角 📚', W / 2, noteY);
     }
     if (this.menuWarningTimer > 0) {
       ctx.fillStyle = '#ff4757';
@@ -2718,7 +3293,18 @@ class TommyQGame {
     // 操作說明
     ctx.fillStyle = '#9a9aac';
     ctx.font = `15px ${UI_FONT}`;
-    ctx.fillText('↑↓ 換行　←→ 轉向　打字消滅殭屍　Enter ＝ 使用道具　｜　點「開始遊戲」或按 Enter／空白鍵開始', W / 2, 488);
+    if (this.menuSelection.category === 'chinese' || this.menuSelection.category === 'chinese_article') {
+      const st = this.rime.status;
+      ctx.fillStyle = st === 'ready' ? '#2ed573' : (st === 'failed' ? '#ffa502' : '#c0c0d0');
+      ctx.font = `bold 16px ${UI_FONT}`;
+      ctx.fillText(
+        st === 'ready' ? '⌨ 小狼毫輸入引擎已就緒（朙月拼音）：打拼音 → 空白鍵或數字鍵選字，跟真的輸入法一樣'
+          : st === 'failed' ? '⌨ 輸入引擎載入失敗，改用簡易選字模式（打拼音 → 選出正確的字）'
+          : '⌨ 小狼毫輸入引擎載入中，請稍候…',
+        W / 2, 488);
+    } else {
+      ctx.fillText('↑↓ 換行　←→ 轉向　打字消滅殭屍　Enter ＝ 使用道具　｜　點「開始遊戲」或按 Enter／空白鍵開始', W / 2, 488);
+    }
 
     ctx.textAlign = 'start';
     ctx.restore();
@@ -2732,7 +3318,6 @@ class TommyQGame {
 
     this.update(dt);
     this.draw();
-    this._syncChineseTypingBar();
 
     requestAnimationFrame(() => this._loop());
   }
