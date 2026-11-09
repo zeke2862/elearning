@@ -1133,7 +1133,17 @@ const DRILL_REAL_WORDS = [
   "ad","as","ah","ha","ash","ask","all","ads","gas","has","lag","gal",
   "sad","fad","dad","add","fads","dads","adds","hall","half","hash",
   "dash","lash","slag","flag","glad","salad","alas","salsa","sash",
-  "flask","glass","fall","falls","flags","flasks","halls","shall","jag"
+  "flask","glass","fall","falls","flags","flasks","halls","shall","jag",
+  // 上列真字（Q W E R T Y U I O P）
+  "we","to","up","it","or","tie","toe","too","top","pot","pie","wet","yet","you",
+  "our","out","the","pet","rip","rot","tip","try","pure","quit","type","tree","true",
+  "tower","power","write","quiet","pity","pipe","wipe","your","trip","tire","pretty",
+  // 左手真字（Q W E R T A S D F G Z X C V B）
+  "bad","bag","bat","bed","bet","cab","car","cat","dig","dew","far","fast","fear","get",
+  "gray","great","raft","star","start","water","draw","west","vest","zest","zebra","extra",
+  // 右手真字（Y U I O P H J K L ; N M , . /）
+  "hi","hill","hook","hum","hump","jump","kin","lily","limp","link","lip","loop","mill",
+  "milk","mom","mop","nun","oil","pink","plum","poll","pony","pool","yolk","unit","union"
 ];
 
 
@@ -1325,13 +1335,18 @@ let CHAPTERS = [
   bonusLevel: {
     id: "1-bonus",
     name: "番外篇：中列極速檢定",
+    keys: "ETP 測驗・中列",
     fixedLines: [
       "shdgs kflg; kh;hl kl;dd jajdj gssal gffa; jfahk",
       "ghfld akhgl jhjkj hdaka sgf;d ;jsf; l;slf gsdka",
       "sdakf kldkg ;sf;a lhsjl ;hggj ;sfgj hfddh ajlak",
       "fh;jf gsdkl ksgsf hd;;j lkada kfhgg ;slad jalhj"
     ],
-    timeLimitSec: 150,
+    timeLimitSec: 180,
+    // 💡 星級制：準確度 ≥ minAccuracy 才給星；3 分鐘內 1 星、2 分半內 2 星、2 分鐘內 3 星，
+    // 2 星以上（passStars）才算通過、才能進入下一章。
+    starTimes: { three: 120, two: 150, one: 180 },
+    passStars: 2,
     minAccuracy: 90
   }
 }
@@ -3276,8 +3291,11 @@ const EtpTest = {
     this.timeLimitSec = minigame.timeLimitSec || null;
     clearInterval(this.tickTimer);
     document.getElementById("etpTitle").textContent = minigame.name;
+    const stT = minigame.starTimes;
     document.getElementById("etpTarget").textContent = this.timeLimitSec
-      ? `限時 ${formatTime(this.timeLimitSec)} 內打完，正確率 ≥ ${minigame.minAccuracy}%`
+      ? (stT
+          ? `正確率 ≥ ${minigame.minAccuracy}% 才有星：${formatTime(stT.one)} 內 ★　${formatTime(stT.two)} 內 ★★　${formatTime(stT.three)} 內 ★★★（${minigame.passStars||2}★以上過關）`
+          : `限時 ${formatTime(this.timeLimitSec)} 內打完，正確率 ≥ ${minigame.minAccuracy}%`)
       : `WPM > ${minigame.minWpm}，正確率 ≥ ${minigame.minAccuracy}%`;
     const timeWrap = document.getElementById("etpTimeLeftWrap");
     if(timeWrap) timeWrap.style.display = this.timeLimitSec ? "" : "none";
@@ -3455,9 +3473,27 @@ const EtpTest = {
     let passed, titleText;
     if(this.mode === "chapterBonus"){
       // 限時版本：能跑到這裡代表已經在時限內把全部內容打完了，只再看正確率。
-      passed = acc >= this.minigame.minAccuracy;
-      titleText = passed ? "✅ 檢定通過！第二章已解鎖！" : `正確率 ${acc}%，未達 ${this.minigame.minAccuracy}% 標準，再試一次！`;
-      recordLevelResult(this.chapterId, this.minigame.id, { wpm, acc, combo:0, stars: passed?3:0, cleared: passed });
+      // 星級：正確率達標才給星；依完成時間 3 分鐘內 1 星、2.5 分鐘內 2 星、2 分鐘內 3 星。
+      const st = this.minigame.starTimes || { three:120, two:150, one:180 };
+      const need = this.minigame.passStars || 2;
+      let stars = 0;
+      if(acc >= this.minigame.minAccuracy){
+        if(elapsed <= st.three) stars = 3;
+        else if(elapsed <= st.two) stars = 2;
+        else if(elapsed <= st.one) stars = 1;
+      }
+      passed = stars >= need;
+      const starText = "★".repeat(stars) + "☆".repeat(3-stars);
+      if(acc < this.minigame.minAccuracy){
+        titleText = `正確率 ${acc}%，未達 ${this.minigame.minAccuracy}%，拿不到星星，再試一次！`;
+      } else if(!passed){
+        titleText = `${starText} 只有 ${stars} 星，要 ${need} 星以上（${formatTime(st.two)} 內打完）才能過關，再試一次！`;
+      } else {
+        const ch0 = CHAPTERS.find(c=>c.id===this.chapterId);
+        const hasNext = ch0 && ch0.id < MAX_CHAPTER_ID;
+        titleText = `✅ 檢定通過！${starText}${hasNext ? "　下一章已解鎖！" : ""}`;
+      }
+      recordLevelResult(this.chapterId, this.minigame.id, { wpm, acc, combo:0, stars, cleared: passed });
       if(passed){
         const ch = CHAPTERS.find(c=>c.id===this.chapterId);
         if(ch && isChapterReadyForNextChapter(ch)) advanceStoryProgress(ch.id);
@@ -4081,6 +4117,9 @@ const UI = {
             id: ch.bonusLevel.id, name: ch.bonusLevel.name,
             minAccuracy: ch.bonusLevel.minAccuracy,
             timeLimitSec: ch.bonusLevel.timeLimitSec,
+            starTimes: ch.bonusLevel.starTimes || null,
+            passStars: ch.bonusLevel.passStars || 2,
+            keys: ch.bonusLevel.keys || "",
             unlocked: isChapterFullyCleared(ch.id, ch.levels),
             rec: getLevelRecord(ch.id, ch.bonusLevel.id)
           };
@@ -4325,7 +4364,7 @@ const UI = {
       : (victory
           ? `${Game.level.id} ${Game.level.name} 通關！`
             + (chapterFullyCleared && this.currentChapterObj.bonusLevel && !getLevelRecord(this.currentChapterObj.id, this.currentChapterObj.bonusLevel.id).cleared
-                ? `　還需通過「${this.currentChapterObj.bonusLevel.name}」（正確率 ${this.currentChapterObj.bonusLevel.minAccuracy||90}% 以上）才能解鎖下一章！`
+                ? `　還需通過「${this.currentChapterObj.bonusLevel.name}」（正確率 ${this.currentChapterObj.bonusLevel.minAccuracy||90}% 以上、拿到 ${this.currentChapterObj.bonusLevel.passStars||2} 星以上）才能解鎖下一章！`
                 : "")
           : "基準防線被突破了…再試一次！");
     document.getElementById("resWpm").textContent = wpm;

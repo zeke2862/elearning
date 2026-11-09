@@ -191,7 +191,7 @@ const CHAPTERS_EXT = [
 {
   id:2, key:"ch2", color:"var(--ch2)",
   name:"上列 - 雲端防空戰", short:"第二章 · 上列",
-  keysFocus:"Q W E R T / Y U I O P",
+  keysFocus:"R/U → E/I → W/O → Q/P → T/Y → 全上排",
   unlockTower:"radar", unlockSkill:"OUT",
   story:{
     title:"上列 - 雲端防空戰",
@@ -199,17 +199,37 @@ const CHAPTERS_EXT = [
     quote:"「飛行單位免疫地面攻擊——立刻建造雷達高射砲，Agent！」"
   },
   levels:[
-    lvl("2-1","食指中指上繞", ["top-left"], "flying", {keys:"R T Y U", waveCount:5, spawnInterval:2300, mobSpeed:24}),
-    lvl("2-2","小指無名指外擴", ["top-right"], "flying", {keys:"Q W I O P", waveCount:5, spawnInterval:2200, mobSpeed:25}),
-    lvl("2-3","上列總體戰", ["top-both"], "flying", {keys:"上排全字母（封印中排）", waveCount:6, spawnInterval:2000, mobSpeed:27}),
-    lvl("2-4","雙線齊發", ["top-both"], "flying", {keys:"上排混合", waveCount:6, spawnInterval:1900, mobSpeed:28}),
-    lvl("2-5","雲端總攻", ["top-both"], "flying", {keys:"上排長字隨機", waveCount:7, spawnInterval:1700, mobSpeed:30})
-  ]
+    lvl("2-1","食指前哨：R／U", ["top-both"], "flying", {keys:"R U", drillKeys:["r", "u"], waveCount:5, spawnInterval:2400, mobSpeed:24}),
+    lvl("2-2","中指前哨：E／I", ["top-both"], "flying", {keys:"E I", drillKeys:["e", "i"], waveCount:5, spawnInterval:2350, mobSpeed:25}),
+    lvl("2-3","雙指聯防：R U E I", ["top-both"], "flying", {keys:"R U E I", drillKeys:["r", "u", "e", "i"], waveCount:6, spawnInterval:2300, mobSpeed:26}),
+    lvl("2-4","無名指前哨：W／O", ["top-both"], "flying", {keys:"W O", drillKeys:["w", "o"], waveCount:6, spawnInterval:2250, mobSpeed:26}),
+    lvl("2-5","小指前哨：Q／P", ["top-both"], "flying", {keys:"Q P", drillKeys:["q", "p"], waveCount:6, spawnInterval:2200, mobSpeed:27}),
+    lvl("2-6","上列大會師", ["top-both"], "flying", {keys:"R U E I W O Q P", drillKeys:["r", "u", "e", "i", "w", "o", "q", "p"], waveCount:7, spawnInterval:2000, mobSpeed:27}),
+    lvl("2-7","左手上列：Q W E R", ["top-left"], "flying", {keys:"Q W E R", drillKeys:["q", "w", "e", "r"], waveCount:6, spawnInterval:2150, mobSpeed:27}),
+    lvl("2-8","右手上列：U I O P", ["top-right"], "flying", {keys:"U I O P", drillKeys:["u", "i", "o", "p"], waveCount:6, spawnInterval:2150, mobSpeed:27}),
+    lvl("2-9","食指延伸：T／Y", ["top-both"], "flying", {keys:"T Y", drillKeys:["t", "y"], waveCount:6, spawnInterval:2200, mobSpeed:27}),
+    lvl("2-10","上列總驗收", ["top-both"], "flying", {keys:"Q W E R T Y U I O P", drillKeys:["q", "w", "e", "r", "t", "y", "u", "i", "o", "p"], waveCount:8, spawnInterval:1800, mobSpeed:30})
+  ],
+  bonusLevel: {
+    id: "2-bonus",
+    name: "番外篇：上列極速檢定",
+    keys: "ETP 測驗・上列",
+    fixedLines: [
+      "yweoq tytpi ioqoy ieuuo wurpt rqrpr iqepw tweyu",
+      "qriri ryoty ewuwo wwque yqero oupqt ipupy tpite",
+      "ryppu errtt ewwpe etury otioi yyiou oqwiq wupqq",
+      "wurro trwit oyiuy eqewp pewqi uruyt tppqq iooey"
+],
+    timeLimitSec: 180,
+    starTimes: { three: 120, two: 150, one: 180 },
+    passStars: 2,
+    minAccuracy: 90
+  }
 },
 {
   id:3, key:"ch3", color:"var(--ch3)",
   name:"下列 - 深淵地底防禦", short:"第三章 · 下列",
-  keysFocus:"Z X C V B / N M , .",
+  keysFocus:"V/M → C/， → X/。 → Z/／ → B/N → 全下排",
   unlockTower:"trap", unlockSkill:"MIN",
   story:{
     title:"下列 - 深淵地底防禦",
@@ -217,12 +237,32 @@ const CHAPTERS_EXT = [
     quote:"「它們躲在地底……只有地刺重力陷阱能讓牠們現形！」"
   },
   levels:[
-    lvl("3-1","左手下收", ["bottom-left"], "worm", {keys:"Z X C V B", waveCount:5, spawnInterval:2300, mobSpeed:24}),
-    lvl("3-2","右手下收", ["bottom-right"], "worm", {keys:"N M , .", waveCount:5, spawnInterval:2200, mobSpeed:25}),
-    lvl("3-3","下列總體戰", ["bottom-both"], "worm", {keys:"下排全字母", waveCount:6, spawnInterval:2000, mobSpeed:27}),
-    lvl("3-4","潛伏突襲", ["bottom-both"], "worm", {keys:"下排＋左手混合", waveCount:6, spawnInterval:1900, mobSpeed:28}),
-    lvl("3-5","深淵總攻", ["bottom-both"], "worm", {keys:"下排長字隨機", waveCount:7, spawnInterval:1700, mobSpeed:30})
-  ]
+    lvl("3-1","食指前哨：V／M", ["bottom-both"], "worm", {keys:"V M", drillKeys:["v", "m"], waveCount:5, spawnInterval:2400, mobSpeed:24}),
+    lvl("3-2","中指前哨：C／，", ["bottom-both"], "worm", {keys:"C ,", drillKeys:["c", ","], waveCount:5, spawnInterval:2350, mobSpeed:25}),
+    lvl("3-3","雙指聯防：V M C ，", ["bottom-both"], "worm", {keys:"V M C ,", drillKeys:["v", "m", "c", ","], waveCount:6, spawnInterval:2300, mobSpeed:26}),
+    lvl("3-4","無名指前哨：X／。", ["bottom-both"], "worm", {keys:"X .", drillKeys:["x", "."], waveCount:6, spawnInterval:2250, mobSpeed:26}),
+    lvl("3-5","小指前哨：Z／／", ["bottom-both"], "worm", {keys:"Z /", drillKeys:["z", "/"], waveCount:6, spawnInterval:2200, mobSpeed:27}),
+    lvl("3-6","下列大會師", ["bottom-both"], "worm", {keys:"V M C , X . Z /", drillKeys:["v", "m", "c", ",", "x", ".", "z", "/"], waveCount:7, spawnInterval:2000, mobSpeed:27}),
+    lvl("3-7","左手下列：Z X C V", ["bottom-left"], "worm", {keys:"Z X C V", drillKeys:["z", "x", "c", "v"], waveCount:6, spawnInterval:2150, mobSpeed:27}),
+    lvl("3-8","右手下列：M ， 。 ／", ["bottom-right"], "worm", {keys:"M , . /", drillKeys:["m", ",", ".", "/"], waveCount:6, spawnInterval:2150, mobSpeed:27}),
+    lvl("3-9","食指延伸：B／N", ["bottom-both"], "worm", {keys:"B N", drillKeys:["b", "n"], waveCount:6, spawnInterval:2200, mobSpeed:27}),
+    lvl("3-10","下列總驗收", ["bottom-both"], "worm", {keys:"Z X C V B N M , . /", drillKeys:["z", "x", "c", "v", "b", "n", "m", ",", ".", "/"], waveCount:8, spawnInterval:1800, mobSpeed:30})
+  ],
+  bonusLevel: {
+    id: "3-bonus",
+    name: "番外篇：下列極速檢定",
+    keys: "ETP 測驗・下列",
+    fixedLines: [
+      "bc.zc .v/vn x,mb/ mx,/z ,cn.n ,nzc/ zbbvx .mvxm",
+      "xc/,/ m..xz cxmx. nbzbc cvnv/ .nbnm vb,/, ,mzvz",
+      "x/bzv vnm/c vcm.. bnzc. ,n.v, zb/n, bxm,x /zcmx",
+      "x/mb. vbm,c nv.bz cb/,c m.cvz nv,zx nxm/x /nz.,"
+],
+    timeLimitSec: 180,
+    starTimes: { three: 120, two: 150, one: 180 },
+    passStars: 2,
+    minAccuracy: 90
+  }
 },
 {
   id:4, key:"ch4", color:"var(--ch4)",
@@ -238,8 +278,10 @@ const CHAPTERS_EXT = [
     lvl("4-1","縱向直線", ["all-left"], "jump", {keys:"R-F-V 軸縱向", waveCount:5, spawnInterval:2200, mobSpeed:25}),
     lvl("4-2","跨手斜線", ["all-both"], "jump", {keys:"左中右上交錯", waveCount:5, spawnInterval:2100, mobSpeed:26}),
     lvl("4-3","中上列長字", ["all-both"], "jump", {keys:"中上列長單字", waveCount:6, spawnInterval:2000, mobSpeed:27}),
-    lvl("4-4","風暴前線", ["all-both"], "jump", {keys:"混合縱橫", waveCount:6, spawnInterval:1900, mobSpeed:28}),
-    lvl("4-5","數據總攻", ["all-both"], "jump", {keys:"中上列全隨機", waveCount:7, spawnInterval:1700, mobSpeed:30})
+    lvl("4-4","全左手練習（中上列）", ["all-left"], "jump", {keys:"Q W E R T A S D F G", drillKeys:["q", "w", "e", "r", "t", "a", "s", "d", "f", "g"], waveCount:6, spawnInterval:2100, mobSpeed:26}),
+    lvl("4-5","全右手練習（中上列）", ["all-right"], "jump", {keys:"Y U I O P H J K L ；", drillKeys:["y", "u", "i", "o", "p", "h", "j", "k", "l", ";"], waveCount:6, spawnInterval:2100, mobSpeed:26}),
+    lvl("4-6","風暴前線", ["all-both"], "jump", {keys:"混合縱橫", waveCount:6, spawnInterval:1900, mobSpeed:28}),
+    lvl("4-7","數據總攻", ["all-both"], "jump", {keys:"中上列全隨機", waveCount:7, spawnInterval:1700, mobSpeed:30})
   ]
 },
 {
@@ -256,8 +298,10 @@ const CHAPTERS_EXT = [
     lvl("5-1","手掌內縮", ["all-both"], "split", {keys:"中下排跨度", waveCount:5, spawnInterval:2200, mobSpeed:25}),
     lvl("5-2","跨行突擊", ["all-both"], "split", {keys:"高密度短字海", waveCount:5, spawnInterval:2000, mobSpeed:27}),
     lvl("5-3","節奏控制", ["all-both"], "split", {keys:"長音節字", waveCount:6, spawnInterval:2100, mobSpeed:26}),
-    lvl("5-4","流水線危機", ["all-both"], "split", {keys:"中下排混合", waveCount:6, spawnInterval:1900, mobSpeed:28}),
-    lvl("5-5","重組總攻", ["all-both"], "split", {keys:"中下排全隨機", waveCount:7, spawnInterval:1700, mobSpeed:30})
+    lvl("5-4","全左手練習（中下列）", ["all-left"], "split", {keys:"A S D F G Z X C V B", drillKeys:["a", "s", "d", "f", "g", "z", "x", "c", "v", "b"], waveCount:6, spawnInterval:2100, mobSpeed:26}),
+    lvl("5-5","全右手練習（中下列）", ["all-right"], "split", {keys:"H J K L ； N M ， 。 ／", drillKeys:["h", "j", "k", "l", ";", "n", "m", ",", ".", "/"], waveCount:6, spawnInterval:2100, mobSpeed:26}),
+    lvl("5-6","流水線危機", ["all-both"], "split", {keys:"中下排混合", waveCount:6, spawnInterval:1900, mobSpeed:28}),
+    lvl("5-7","重組總攻", ["all-both"], "split", {keys:"中下排全隨機", waveCount:7, spawnInterval:1700, mobSpeed:30})
   ]
 },
 {
@@ -274,9 +318,26 @@ const CHAPTERS_EXT = [
     lvl("6-1","短字總動員", ["all-both"], "fog", {keys:"4字母以下短字", waveCount:5, spawnInterval:2000, mobSpeed:27}),
     lvl("6-2","常用單字海", ["all-both"], "fog", {keys:"國中1200初級字", waveCount:6, spawnInterval:1900, mobSpeed:28}),
     lvl("6-3","全鍵盤躍進", ["all-both"], "fog", {keys:"高難度長單字", waveCount:6, spawnInterval:1900, mobSpeed:26}),
-    lvl("6-4","記憶保衛戰", ["all-both"], "fog", {keys:"混合單字海", waveCount:7, spawnInterval:1700, mobSpeed:29}),
-    lvl("6-5","RAM 總攻防", ["all-both"], "fog", {keys:"全鍵盤全隨機", waveCount:8, spawnInterval:1500, mobSpeed:31})
-  ]
+    lvl("6-4","全左手練習（全鍵盤）", ["all-left"], "fog", {keys:"Q~B 左手全部按鍵", drillKeys:["q", "w", "e", "r", "t", "a", "s", "d", "f", "g", "z", "x", "c", "v", "b"], waveCount:6, spawnInterval:2100, mobSpeed:26}),
+    lvl("6-5","全右手練習（全鍵盤）", ["all-right"], "fog", {keys:"Y~／ 右手全部按鍵", drillKeys:["y", "u", "i", "o", "p", "h", "j", "k", "l", ";", "n", "m", ",", ".", "/"], waveCount:6, spawnInterval:2100, mobSpeed:26}),
+    lvl("6-6","記憶保衛戰", ["all-both"], "fog", {keys:"混合單字海", waveCount:7, spawnInterval:1700, mobSpeed:29}),
+    lvl("6-7","RAM 總攻防", ["all-both"], "fog", {keys:"全鍵盤全隨機", waveCount:8, spawnInterval:1500, mobSpeed:31})
+  ],
+  bonusLevel: {
+    id: "6-bonus",
+    name: "番外篇：綜合極速檢定",
+    keys: "ETP 測驗・綜合",
+    fixedLines: [
+      "timbg psna/ /adzw znxub ef,l/ wke/l daiqc g,vjs",
+      "xmwhy .uhid oktlq rq,gl xoud; rzhp. yshpj eq;zj",
+      "sf;cf nmye, kr.pj fvvgi caotv tnwbo xbmry kcu.;",
+      "cpxdv utk,b suw/; grqfv lx/.k ls.ho engar ;znpj"
+],
+    timeLimitSec: 180,
+    starTimes: { three: 120, two: 150, one: 180 },
+    passStars: 2,
+    minAccuracy: 90
+  }
 },
 {
   id:7, key:"ch7", color:"var(--ch7)",
@@ -294,7 +355,22 @@ const CHAPTERS_EXT = [
     lvl("7-3","縮寫考驗", ["symbols-right"], "golem", {keys:"'（撇號）", waveCount:6, spawnInterval:2100, mobSpeed:26}),
     lvl("7-4","雙重加密", ["symbols-both"], "golem", {keys:"標點混合", waveCount:6, spawnInterval:2000, mobSpeed:27}),
     lvl("7-5","解碼總決", ["symbols-both"], "golem", {keys:"全符號隨機", waveCount:7, spawnInterval:1800, mobSpeed:28})
-  ]
+  ],
+  bonusLevel: {
+    id: "7-bonus",
+    name: "番外篇：符號極速檢定",
+    keys: "ETP 測驗・符號",
+    fixedLines: [
+      "$_\"\"$ *??<} ><:>| *!?#$ )$|!: _&{(+ +{\"#_ #<<))",
+      "|%>)! ++|}# {><:$ }\"?:{ \"(}>: \"\"!>* %@\"$? }:%:*",
+      "$|:<( <{)<\" :{}&) (!@%? |\":+& (:|\": }<@)_ |$|\"(",
+      "|^}:# (:+$& }%|!# !|><# ?&*$? @<(+% !_>>: %<*:>"
+],
+    timeLimitSec: 180,
+    starTimes: { three: 120, two: 150, one: 180 },
+    passStars: 2,
+    minAccuracy: 90
+  }
 },
 {
   id:8, key:"ch8", color:"var(--ch8)",
@@ -312,7 +388,22 @@ const CHAPTERS_EXT = [
     lvl("8-3","複合專有名詞", ["caseMix-both"], "ghost", {keys:"月份／星期／節日", waveCount:6, spawnInterval:2000, mobSpeed:27}),
     lvl("8-4","秩序交替", ["caseMix-both"], "ghost", {keys:"大小寫混合", waveCount:6, spawnInterval:1900, mobSpeed:28}),
     lvl("8-5","混沌總決", ["caseMix-both"], "ghost", {keys:"全大小寫隨機", waveCount:7, spawnInterval:1700, mobSpeed:29})
-  ]
+  ],
+  bonusLevel: {
+    id: "8-bonus",
+    name: "番外篇：大小寫極速檢定",
+    keys: "ETP 測驗・大小寫",
+    fixedLines: [
+      "TqNes NEgDC Lyako DOzSn ovrGf RbYpa QQeFN cFIYj",
+      "KoZig CuRvA FVrTr xJvdd fBxuq SjfCY AHDRl Oubkt",
+      "VvQiL WAKYd NAkBd DEtuN lMNyR WvihI nKUfu qkyba",
+      "hHeml hiGOr zjUPl qzFLi XAwsM QvQEk jSgJJ MXtnY"
+],
+    timeLimitSec: 180,
+    starTimes: { three: 120, two: 150, one: 180 },
+    passStars: 2,
+    minAccuracy: 90
+  }
 },
 {
   id:9, key:"ch9", color:"var(--ch9)",
@@ -448,7 +539,7 @@ function renderLevels(){
 
   // 番外篇：只有本章節全破（bonusLevel.unlocked）才會顯示成可點擊，
   // 否則顯示鎖定提示，跟一般關卡的鎖定樣式一致但文字提醒是「全破本章」。
-  const bonus = STATE.bonusLevel;
+  const bonus = STATE.chapterBonus || STATE.bonusLevel;
   if(bonus){
     const row = document.createElement("div");
     row.className = "level-row"+(bonus.unlocked?"":" locked");
@@ -459,11 +550,11 @@ function renderLevels(){
       <div class="level-idx" style="color:${meta.color};">✦</div>
       <div class="level-info">
         <div class="lname">${bonus.unlocked? bonus.name : "🔒 番外篇（全破本章解鎖）"}</div>
-        <div class="lsub">${bonus.unlocked? `${bonus.keys||""}　${timeLabel}　正確率需達 ${bonus.minAccuracy}% 以上${bonus.rec && bonus.rec.cleared? "　✅ 已通過" : ""}` : "先通關本章全部關卡"}</div>
+        <div class="lsub">${bonus.unlocked? `${bonus.keys||""}　正確率≥${bonus.minAccuracy}%　3分內★　2分30秒內★★　2分內★★★（需★★以上）${bonus.rec && bonus.rec.cleared? "　✅ 已通過" : ""}` : "先通關本章全部關卡"}</div>
       </div>
-      <div class="level-stars" style="color:${meta.color};">${bonus.unlocked && bonus.rec && bonus.rec.cleared ? "✅" : ""}</div>
+      <div class="level-stars" style="color:${meta.color};">${bonus.unlocked ? "★".repeat((bonus.rec&&bonus.rec.stars)||0)+"☆".repeat(3-((bonus.rec&&bonus.rec.stars)||0)) : ""}</div>
     `;
-    if(bonus.unlocked){ row.addEventListener("click", ()=> post({type:"story:selectBonusLevel", chapterId: meta.id})); }
+    if(bonus.unlocked){ row.addEventListener("click", ()=> post({type:"story:selectBonus", chapterId: meta.id})); }
     list.appendChild(row);
   }
 
