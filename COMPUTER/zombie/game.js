@@ -835,6 +835,20 @@ class SpriteManager {
       img.src = this.defaultCanvases[key].toDataURL();
       this.defaultImages[key] = img;
     }
+
+    // 可愛版預設圖（cute-sprites.js，Canva 製作）：同樣 64x64 繪製、不改任何玩法；
+    // 沒載入或圖片壞掉時，仍使用上面原本的程式繪圖。
+    const cute = window.CUTE_SPRITES;
+    if (cute) {
+      for (const key in cute) {
+        if (!this.defaultCanvases[key]) continue;
+        const cimg = new Image();
+        const fallback = this.defaultImages[key];
+        this.defaultImages[key] = fallback;           // 載入完成前先用舊圖
+        cimg.onload = () => { this.defaultImages[key] = cimg; this.updatePreviews && this.updatePreviews(); };
+        cimg.src = cute[key];
+      }
+    }
   }
 
   _createSprite(w, h, drawFn) {
