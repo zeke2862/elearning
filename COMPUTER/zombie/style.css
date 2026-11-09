@@ -62,16 +62,32 @@ body {
     100% { transform: rotate(360deg); }
 }
 
-/* Top Controls Bar */
+/* Bottom bar row — holds the ENTER-typing box (中文-文章 mode) and the icon
+   controls, side by side, right below the canvas so they never cover the
+   game screen or the pinyin text above the monsters. */
+.bottom-bar-row {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    max-width: 98vw;
+    min-height: 44px;
+    margin-top: 10px;
+}
+
+/* Top Controls Bar — now docked to the right side of .bottom-bar-row,
+   same height as the "輸入文字" typing box, instead of floating over the
+   canvas like before. */
 .top-controls-bar {
     display: flex;
-    justify-content: flex-end;
     align-items: center;
     gap: 10px;
     z-index: 20;
     position: absolute;
-    top: 12px;
-    right: 20px;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
     width: auto;
 }
 
@@ -109,10 +125,10 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    /* Grow to fill the viewport while keeping the game's 916:500 ratio,
-       so the actual game screen (not just a black box) fills the space. */
-    width: min(98vw, 164.88vh);
-    height: min(90vh, 53.49vw);
+    width: min(98vw, calc(90vh * 916 / 500));
+    height: min(90vh, calc(98vw * 500 / 916));
+    max-width: 98vw;
+    max-height: 90vh;
 }
 
 /* Pulsing glow animation for canvas border */
@@ -175,6 +191,49 @@ canvas {
 
 @keyframes rotateGear {
     100% { transform: rotate(360deg); }
+}
+
+.zh-typing-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 8px 16px;
+    background: rgba(10, 16, 32, 0.9);
+    border: 2px solid rgba(46, 213, 115, 0.7);
+    border-radius: 10px;
+    box-shadow: 0 0 16px rgba(46, 213, 115, 0.25);
+    flex-wrap: wrap;
+}
+
+.zh-typing-label {
+    color: #ffd700;
+    font-size: 0.85rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.zh-typing-input {
+    font-size: 1.3rem;
+    font-weight: 700;
+    text-align: center;
+    width: 160px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.95);
+    color: #111;
+    font-family: "Outfit", "Microsoft JhengHei", "PingFang SC", sans-serif;
+}
+
+.zh-typing-input:focus {
+    outline: 2px solid #2ed573;
+}
+
+.zh-typing-hint {
+    color: #a0a0b0;
+    font-size: 0.75rem;
+    white-space: nowrap;
 }
 
 .credits {
@@ -534,3 +593,352 @@ canvas {
         padding: 10px;
     }
 }
+
+
+/* =====================================================================
+   📱 手機／平板 觸控版面（加在原本電腦版樣式的後面）
+   - 電腦：完全維持原樣（下面這些盒子都用 display: contents 隱形）
+   - 手機：body 會加上 touch-mode，再依直放／橫放加上 tc-portrait / tc-landscape
+   ===================================================================== */
+html { overscroll-behavior: none; }
+.sprite-panel { height: 100vh; height: 100dvh; }
+/* 側邊面板收起來時，陰影不要漏到螢幕邊緣 */
+.sprite-panel:not(.open) { box-shadow: none; visibility: hidden; transition: right 0.4s cubic-bezier(0.16, 1, 0.3, 1), visibility 0s linear 0.4s; }
+
+/* 電腦版：多出來的包裝盒子「隱形」，不影響原本版面 */
+.stage, .center-col, .canvas-slot { display: contents; }
+.tc-side, .tc-keyboard, .tc-menu, .tc-hint { display: none; }
+.tc-menu[hidden], .tc-hint[hidden] { display: none !important; }
+
+/* 平板／觸控螢幕在電腦版面時，滑過去的放大效果不要卡住 */
+@media (hover: none) {
+    .icon-btn:hover { transform: none; box-shadow: none; }
+}
+canvas { touch-action: none; -webkit-tap-highlight-color: transparent; }
+
+/* ---------- 觸控版面：共同設定 ---------- */
+body.touch-mode {
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+    touch-action: manipulation;
+    --side-w: clamp(118px, 21vw, 200px);
+    --key-h: clamp(28px, 8.6vh, 42px);
+    --pad: clamp(38px, 11vh, 56px);
+}
+body.touch-mode input { -webkit-user-select: text; user-select: text; }
+
+body.touch-mode .game-container {
+    position: fixed;
+    left: 0;
+    top: var(--vv-top, 0px);
+    width: 100vw;
+    height: var(--vvh, 100dvh);
+    max-width: none;
+    display: block;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+body.touch-mode .stage {
+    display: grid;
+    width: 100%;
+    height: 100%;
+    gap: 0;
+}
+body.touch-mode .center-col { display: contents; }
+body.touch-mode .canvas-slot {
+    display: flex;
+    grid-area: canvas;
+    justify-content: center;
+    align-items: center;
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+    padding: 4px;
+}
+body.touch-mode .canvas-wrapper {
+    flex: 0 0 auto;
+    max-width: none;
+    max-height: none;
+    border-radius: 8px;
+}
+body.touch-mode .bottom-bar-row {
+    grid-area: zh;
+    min-height: 0;
+    margin: 2px 0 0;
+    padding: 0 8px;
+    max-width: none;
+}
+body.touch-mode .credits { display: none; }
+
+/* 左：方向鍵 ／ 右：動作鍵＋工具列 */
+body.touch-mode .tc-side {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 0;
+    padding: 4px;
+}
+body.touch-mode .tc-left { grid-area: left; }
+body.touch-mode .tc-right { grid-area: right; flex-direction: column; gap: 8px; }
+
+body.touch-mode .tc-dpad {
+    display: grid;
+    grid-template-columns: repeat(3, var(--pad));
+    grid-template-rows: repeat(3, var(--pad));
+    gap: 4px;
+}
+.tc-up { grid-column: 2; grid-row: 1; }
+.tc-lt { grid-column: 1; grid-row: 2; }
+.tc-rt { grid-column: 3; grid-row: 2; }
+.tc-dn { grid-column: 2; grid-row: 3; }
+
+/* 所有觸控按鈕的共同外觀 */
+.tc-btn {
+    appearance: none;
+    -webkit-appearance: none;
+    border: 1.5px solid rgba(255, 255, 255, 0.28);
+    background: rgba(255, 255, 255, 0.11);
+    color: #f2f2f2;
+    font-family: "Outfit", "Microsoft JhengHei", "PingFang TC", sans-serif;
+    font-weight: 700;
+    border-radius: 12px;
+    cursor: pointer;
+    touch-action: none;
+    -webkit-tap-highlight-color: transparent;
+    transition: background 0.06s, transform 0.06s;
+}
+.tc-btn.down {
+    background: #ffd700;
+    border-color: #ffd700;
+    color: #111;
+    transform: scale(0.94);
+}
+.tc-dpad .tc-btn { font-size: calc(var(--pad) * 0.42); background: rgba(108, 99, 255, 0.28); border-color: rgba(108, 99, 255, 0.7); }
+.tc-dpad .tc-btn.down { background: #ffd700; }
+
+.tc-action {
+    width: 100%;
+    max-width: 170px;
+    height: calc(var(--pad) * 1.05);
+    font-size: clamp(14px, 4.4vh, 20px);
+    background: rgba(46, 213, 115, 0.3);
+    border-color: rgba(46, 213, 115, 0.9);
+}
+.tc-action.off { opacity: 0.35; }
+
+/* 螢幕鍵盤 */
+body.touch-mode .tc-keyboard {
+    display: flex;
+    flex-direction: column;
+    grid-area: keys;
+    gap: 4px;
+    padding: 4px 4px 6px;
+    width: 100%;
+}
+body.touch-mode.tc-article .tc-keyboard { display: none; }
+.tc-krow { display: flex; gap: 4px; justify-content: center; }
+.tc-krow1 { padding: 0 3%; }
+.tc-krow2 { padding: 0 8%; }
+.tc-key {
+    flex: 1 1 0;
+    min-width: 0;
+    height: var(--key-h);
+    padding: 0;
+    font-size: calc(var(--key-h) * 0.5);
+    border-radius: 8px;
+}
+.tc-key.hint { border-color: #ffd700; background: rgba(255, 215, 0, 0.2); color: #ffe56b; }
+.tc-key.hint.down { color: #111; }
+
+/* 工具列（暫停、回選單…）搬到右邊 */
+.tc-toolbar-slot .top-controls-bar {
+    position: static;
+    transform: none;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px;
+    width: 100%;
+}
+body.touch-mode .icon-btn { width: clamp(32px, calc(var(--pad) * 0.85), 42px); height: clamp(32px, calc(var(--pad) * 0.85), 42px); }
+body.touch-mode .icon-btn svg { width: 18px; height: 18px; }
+
+/* 「中文-文章」輸入條：手機上精簡 */
+body.touch-mode .zh-typing-bar { width: 100%; padding: 6px 10px; gap: 8px; flex-wrap: nowrap; }
+body.touch-mode .zh-typing-hint { display: none; }
+body.touch-mode .zh-typing-input { flex: 1 1 auto; width: auto; min-width: 0; }
+
+/* ---------- 橫放 ---------- */
+body.tc-landscape .stage {
+    grid-template-columns: var(--side-w) minmax(0, 1fr) var(--side-w);
+    grid-template-rows: minmax(0, 1fr) auto auto;
+    grid-template-areas:
+        "left canvas right"
+        "left zh     right"
+        "left keys   right";
+}
+
+/* ---------- 直放 ---------- */
+body.tc-portrait {
+    --key-h: clamp(40px, 6.4vh, 52px);
+    --pad: clamp(46px, 14vw, 62px);
+}
+body.tc-portrait .stage {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto minmax(0, 1fr) auto;
+    grid-template-areas:
+        "canvas canvas"
+        "zh     zh"
+        "left   right"
+        "keys   keys";
+}
+body.tc-portrait .canvas-slot { padding: 2px; }
+body.tc-portrait .tc-left { justify-content: flex-start; padding-left: 14px; }
+body.tc-portrait .tc-right { padding-right: 10px; }
+body.tc-portrait .tc-action { max-width: none; }
+
+/* ---------- 觸控版主選單 ---------- */
+body.touch-mode .tc-menu {
+    display: flex;
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    align-items: center;
+    justify-content: center;
+    overflow-y: auto;
+    padding: env(safe-area-inset-top) 12px env(safe-area-inset-bottom);
+    background: radial-gradient(ellipse at 50% 20%, rgba(255, 71, 87, 0.22), rgba(5, 5, 16, 0.96) 60%), #050510;
+}
+.tc-menu-card {
+    width: 100%;
+    max-width: 640px;
+    margin: auto;
+    padding: 14px 10px 12px;
+    text-align: center;
+}
+.tc-menu-title {
+    font-family: "Press Start 2P", "Microsoft JhengHei", monospace;
+    font-size: clamp(22px, 7vw, 36px);
+    line-height: 1.25;
+    color: #ff4757;
+    text-shadow: 0 0 22px rgba(255, 71, 87, 0.8);
+    margin-bottom: 10px;
+}
+.tc-menu-title small {
+    display: block;
+    margin-top: 6px;
+    font-size: 0.42em;
+    color: #e8e8e8;
+    text-shadow: none;
+}
+.tc-menu-group { margin-bottom: 10px; }
+.tc-menu-label { font-size: 0.8rem; color: var(--text-secondary); letter-spacing: 2px; margin-bottom: 5px; }
+.tc-menu-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.tc-menu-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+.tc-opt {
+    min-height: 46px;
+    padding: 4px 6px;
+    border-radius: 10px;
+    border: 2px solid rgba(255, 255, 255, 0.14);
+    background: rgba(255, 255, 255, 0.07);
+    color: #b9b9c6;
+    font-family: "Outfit", "Microsoft JhengHei", "PingFang TC", sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 1.15;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+}
+.tc-opt small { display: block; font-size: 0.7rem; font-weight: 400; opacity: 0.8; }
+.tc-opt.sel { background: var(--accent-primary); border-color: var(--accent-secondary); color: #fff; box-shadow: 0 0 14px rgba(0, 212, 255, 0.35); }
+.tc-menu-note { min-height: 1.3em; font-size: 0.85rem; color: #ffa502; margin: 4px 0 8px; }
+.tc-menu-note.ok { color: var(--accent-success); }
+.tc-menu-note.bad { color: var(--accent-danger); font-weight: 700; }
+.tc-play {
+    width: min(100%, 320px);
+    height: 56px;
+    border: none;
+    border-radius: 14px;
+    background: var(--accent-success);
+    color: #04210f;
+    font-family: "Outfit", "Microsoft JhengHei", sans-serif;
+    font-size: 1.35rem;
+    font-weight: 800;
+    box-shadow: 0 0 22px rgba(46, 213, 115, 0.55);
+    cursor: pointer;
+}
+.tc-play:active { transform: scale(0.97); }
+.tc-menu-tools { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 12px; }
+.tc-mini {
+    min-height: 40px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    border: 1px solid var(--glass-border);
+    background: var(--glass-bg);
+    color: var(--text-primary);
+    font-family: inherit;
+    font-size: 0.85rem;
+    cursor: pointer;
+}
+.tc-credit { margin-top: 10px; font-size: 0.68rem; color: var(--text-secondary); opacity: 0.7; }
+
+/* 橫放時選單縮小，一屏放得下 */
+body.tc-landscape .tc-menu-card { padding-top: 6px; }
+body.tc-landscape .tc-menu-title { font-size: clamp(18px, 5.2vh, 26px); margin-bottom: 4px; }
+body.tc-landscape .tc-menu-title small { display: inline; margin-left: 10px; }
+body.tc-landscape .tc-menu-group { margin-bottom: 4px; }
+body.tc-landscape .tc-menu-label { display: none; }
+body.tc-landscape .tc-menu-grid { grid-template-columns: repeat(4, 1fr); gap: 6px; }
+body.tc-landscape .tc-menu-row { gap: 6px; }
+body.tc-landscape .tc-opt { min-height: 38px; font-size: 0.9rem; }
+body.tc-landscape .tc-opt small { display: none; }
+body.tc-landscape .tc-play { height: 44px; font-size: 1.15rem; }
+body.tc-landscape .tc-menu-tools { margin-top: 6px; }
+body.tc-landscape .tc-menu-note { margin: 2px 0 6px; min-height: 1.1em; }
+body.tc-landscape .tc-credit { display: none; }
+
+/* 提示小膠囊（請橫放／請直放） */
+body.touch-mode .tc-hint {
+    display: block;
+    position: absolute;
+    top: 6px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 30;
+    max-width: 92%;
+    padding: 7px 14px;
+    border-radius: 18px;
+    background: rgba(255, 215, 0, 0.96);
+    color: #222;
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-align: center;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+}
+
+/* 直放＋中文輸入法：空間不夠時，控制鍵貼著上方排，只會切到最下面一點點，不會蓋到輸入框 */
+body.tc-portrait.tc-article .tc-side { align-items: flex-start; }
+
+/* ➡ 方向鍵改放右手邊；左手邊放「道具／攻擊」鍵與工具列 */
+body.touch-mode .tc-left  { grid-area: right; }
+body.touch-mode .tc-right { grid-area: left; }
+body.tc-portrait .tc-left  { justify-content: flex-end; padding-left: 4px; padding-right: 14px; }
+body.tc-portrait .tc-right { padding-right: 4px; padding-left: 10px; }
+
+/* 🔠 觸控版主選單：字放大 */
+.tc-menu-title { font-family: "Outfit", "Microsoft JhengHei", "PingFang TC", sans-serif; font-weight: 800; font-size: clamp(34px, 10vw, 52px); letter-spacing: 3px; }
+.tc-menu-title small { font-size: 0.42em; letter-spacing: 2px; }
+.tc-menu-label { font-size: 1.1rem; font-weight: 700; letter-spacing: 3px; color: #c8c8d8; margin-bottom: 7px; }
+.tc-opt { min-height: 58px; font-size: 1.3rem; border-radius: 12px; }
+.tc-opt small { font-size: 0.85rem; margin-top: 2px; }
+.tc-menu-note { font-size: 1.05rem; min-height: 1.5em; }
+.tc-play { height: 66px; font-size: 1.7rem; }
+.tc-mini { min-height: 46px; font-size: 1rem; padding: 8px 16px; }
+.tc-credit { font-size: 0.8rem; }
+body.tc-landscape .tc-menu-title { font-size: clamp(26px, 8vh, 36px); }
+body.tc-landscape .tc-opt { min-height: 46px; font-size: 1.15rem; }
+body.tc-landscape .tc-play { height: 52px; font-size: 1.4rem; }
+body.tc-landscape .tc-mini { min-height: 38px; font-size: 0.9rem; }
+body.tc-landscape .tc-menu-note { font-size: 0.95rem; }

@@ -2109,7 +2109,7 @@ class TommyQGame {
     const fromRight = Math.random() > 0.5;
     const type = Math.floor(Math.random() * 5) + 1;
     const wordItem = this._getUniqueWord();
-    const speed = (0.3 + Math.random() * 0.2) * (1 + this.stats.level * 0.08);
+    const speed = (0.3 + Math.random() * 0.2) * (1 + (this.stats.level - 1) * 0.08);
 
     this.enemies.push({
       x: fromRight ? W + 30 : -30,
