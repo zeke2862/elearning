@@ -1138,9 +1138,13 @@ class RimeIME {
       'luna_pinyin.prism.bin', 'luna_pinyin.table.bin',
       'luna_pinyin.reverse.bin', 'luna_pinyin.schema.yaml',
     ];
-    for (const n of assetNames) {
-      await this._script('rime/asset-' + n.replace(/\./g, '_') + '.js');
-    }
+    // 六個大檔同時下載（原本是一個接一個），並記錄已完成幾個，給選單顯示進度
+    this.loadedCount = 0;
+    this.totalCount = assetNames.length;
+    this.loadStartedAt = Date.now();
+    await Promise.all(assetNames.map(n =>
+      this._script('rime/asset-' + n.replace(/\./g, '_') + '.js').then(() => { this.loadedCount++; })
+    ));
     const A = window.RIME_ASSETS || {};
     const toBytes = (b64) => {
       const bin = atob(b64);
@@ -1579,9 +1583,14 @@ class TommyQGame {
 
     const isChineseCat = this.menuSelection.category === 'chinese' || this.menuSelection.category === 'chinese_article';
     if (isChineseCat && this.rime.status === 'loading') {
-      this._flashMenuWarning('輸入法載入中，請稍候幾秒再按「開始遊戲」');
-      return;
+      // 第一次按：提醒；若學生不想等，再按一次就先用「簡易選字模式」開始玩
+      if (!this._startAnywayArmed) {
+        this._startAnywayArmed = true;
+        this._flashMenuWarning('輸入法還在載入。再按一次「開始遊戲」可先用簡易選字模式玩');
+        return;
+      }
     }
+    this._startAnywayArmed = false;
     this.rimeActive = isChineseCat && this.rime.status === 'ready';
     this.imeState = null;
     this._imeToast = null;
@@ -3364,7 +3373,7 @@ class TommyQGame {
       ctx.fillText(
         st === 'ready' ? '⌨ 小狼毫輸入引擎已就緒（朙月拼音）：打拼音 → 空白鍵或數字鍵選字，跟真的輸入法一樣'
           : st === 'failed' ? '⌨ 輸入引擎載入失敗，改用簡易選字模式（打拼音 → 選出正確的字）'
-          : '⌨ 小狼毫輸入引擎載入中，請稍候…',
+          : `⌨ 小狼毫輸入引擎載入中（${this.rime.loadedCount || 0}/${this.rime.totalCount || 6}，已等 ${this.rime.loadStartedAt ? Math.floor((Date.now() - this.rime.loadStartedAt) / 1000) : 0} 秒）｜不想等可連按兩次「開始遊戲」先用簡易模式`,
         W / 2, 488);
     } else {
       ctx.fillText('↑↓ 換行　←→ 轉向　打字消滅殭屍　Enter ＝ 使用道具　｜　點「開始遊戲」或按 Enter／空白鍵開始', W / 2, 488);
