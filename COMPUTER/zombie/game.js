@@ -508,7 +508,7 @@ class ArticleManager {
   }
 
   // 自動把內建的題庫文章（articles-data.js）補進文章清單裡，並確保是最新內容、
-  // 已經勾選。用「固定的 id」判斷每一篇內建文章存不存在，所以：
+  // （預設不勾選）。用「固定的 id」判斷每一篇內建文章存不存在，所以：
   // - 瀏覽器裡完全沒存過文章 → 全部補進來
   // - 瀏覽器裡已經有舊資料（例如之前版本編碼判斷錯誤存下來的亂碼內容）
   //   → 一樣會把內建文章用正確內容補上/更新，不會被舊資料卡住
@@ -528,11 +528,15 @@ class ArticleManager {
         this.articles.push({ id, title: a.title, content });
         changed = true;
       }
-      if (!this.selectedIds.includes(id)) {
-        this.selectedIds.push(id);
+    });
+    // 預設一篇都不勾選：一次性把舊版「預設全選」的紀錄清掉，之後老師自己勾選的會被記住
+    try {
+      if (!localStorage.getItem('zombieTyping_defaultNoneSelected')) {
+        this.selectedIds = [];
+        localStorage.setItem('zombieTyping_defaultNoneSelected', '1');
         changed = true;
       }
-    });
+    } catch (e) { /* ignore */ }
     if (changed) this._save();
   }
 
@@ -543,8 +547,8 @@ class ArticleManager {
     } catch (e) { this.articles = []; }
     try {
       const rawSel = localStorage.getItem('zombieTyping_articleSelection');
-      this.selectedIds = rawSel ? JSON.parse(rawSel) : this.articles.map(a => a.id);
-    } catch (e) { this.selectedIds = this.articles.map(a => a.id); }
+      this.selectedIds = rawSel ? JSON.parse(rawSel) : [];
+    } catch (e) { this.selectedIds = []; }
   }
 
   _save() {
@@ -3277,10 +3281,6 @@ class TommyQGame {
     ctx.fillStyle = '#e8e8e8';
     ctx.font = `bold 26px ${UI_FONT}`;
     ctx.fillText('防禦殭屍戰', W / 2, 134 + this.menuTitleBounce);
-
-    ctx.font = `16px ${UI_FONT}`;
-    ctx.fillStyle = '#8f89ff';
-    ctx.fillText('無廣告純淨版', W / 2, 168);
 
     // 難度
     ctx.fillStyle = '#c0c0d0';
