@@ -3282,10 +3282,6 @@ class TommyQGame {
     ctx.font = `bold 26px ${UI_FONT}`;
     ctx.fillText('防禦殭屍戰', W / 2, 134 + this.menuTitleBounce);
 
-    ctx.font = `16px ${UI_FONT}`;
-    ctx.fillStyle = '#8f89ff';
-    ctx.fillText('無廣告純淨版', W / 2, 168);
-
     // 難度
     ctx.fillStyle = '#c0c0d0';
     ctx.font = `bold 20px ${UI_FONT}`;
