@@ -711,6 +711,41 @@ function buildArticlePools(articles) {
   return pools;
 }
 
+// ── 中文-文章：依文章「出現的先後次序」排好的題目（讓學生有機會默默背下文章）──
+// Easy：文章裡的每個國字，照順序一個一個出（重複的字也照出）
+// Medium：每段連續中文字依序切成 3~5 字的片段（不跨標點）
+// Hard：句子（至少10字），跟原本一樣的斷句方式，但照文章順序出、不去重
+// 這裡只存「字串」，真正的拼音單位等到出怪時才算（見 _nextArticleItem），所以載入不會變慢。
+function buildArticleSequences(articles) {
+  const seq = { Easy: [], Medium: [], Hard: [] };
+  (articles || []).forEach(a => {
+    const content = String(a.content || '');
+    for (const ch of content) if (isHanzi(ch)) seq.Easy.push(ch);
+
+    (content.match(/[\u4e00-\u9fff]+/g) || []).forEach(run => {
+      let n = run.length, pos = 0;
+      if (n < 3) return;
+      while (n > 0) {
+        let take = n <= 5 ? n : 4;
+        if (n > 5 && n - 4 < 3) take = 3;   // 避免剩下 1~2 個字的零碎片段
+        seq.Medium.push(run.slice(pos, pos + take));
+        pos += take; n -= take;
+      }
+    });
+
+    const raw = content.replace(/\r?\n/g, '');
+    const sentences = raw.split(/(?<=[。！？；，、：])/).map(x => x.trim()).filter(Boolean)
+      .flatMap(x => (x.match(/[\u4e00-\u9fff]/g) || []).length > 16 ? (x.match(/.{1,12}/g) || [x]) : [x]);
+    let buffer = '', cnt = 0;
+    sentences.forEach(x => {
+      buffer += x;
+      cnt += (x.match(/[\u4e00-\u9fff]/g) || []).length;
+      if (cnt >= 10) { seq.Hard.push(buffer); buffer = ''; cnt = 0; }
+    });
+  });
+  return seq;
+}
+
 // ── 上傳的 .txt 文章自動判斷編碼 ──
 // 很多老師電腦裡的舊 .txt 檔案其實是「Big5」編碼（Windows 繁體中文的舊格式），
 // 不是 UTF-8。如果整篇檔案硬要用 UTF-8 解碼，中文字會整段變亂碼，導致遊戲抽
@@ -1499,6 +1534,12 @@ class TommyQGame {
     this._articlePoolsKey = null;
     this.englishPools = { Easy: [], Medium: [], Hard: [] };   // 英文-文章 mode
     this._englishPoolsKey = null;
+    // 中文-文章：依文章次序出字。seqIdx＝下一個要出的題目編號；死掉時記下「最早沒打掉的那題」，可選擇接續
+    this.articleSeq = null;
+    this._articleSeqKey = null;
+    this.seqIdx = 0;
+    this._seqUnitCache = new Map();
+    this._resume = null;   // { key, idx }
     this.menuWarning = '';
     this.menuWarningTimer = 0;
 
@@ -1775,12 +1816,16 @@ class TommyQGame {
         this.returnToMenu();
       }
     } else if (this.state === 'GAME_OVER') {
-      // Play Again button
+      const canResume = !!this._resume;
+      // 中文-文章：上面「接續上次進度」、下面「重頭開始」；其他模式維持原本「再玩一次」
       if (mx > W/2 - 130 && mx < W/2 + 130 && my > 310 && my < 360) {
-        this._startGame();
+        this._startGame(canResume);
       }
-      // Menu button
-      if (mx > W/2 - 130 && mx < W/2 + 130 && my > 370 && my < 410) {
+      if (canResume && mx > W/2 - 130 && mx < W/2 + 130 && my > 365 && my < 405) {
+        this._startGame(false);
+      }
+      const menuTop = canResume ? 412 : 370;
+      if (mx > W/2 - 130 && mx < W/2 + 130 && my > menuTop && my < menuTop + 40) {
         this.returnToMenu();
       }
     } else if (this.state === 'PLAYING') {
@@ -1831,7 +1876,7 @@ class TommyQGame {
   }
 
   // ── Game Start / Reset ───────────────────────────────────
-  _startGame() {
+  _startGame(resume = false) {
     if (this.menuSelection.category === 'english_article') {
       const selected = window.articleManager ? window.articleManager.getSelectedArticles('en') : [];
       if (selected.length === 0) {
@@ -1869,6 +1914,15 @@ class TommyQGame {
         this._flashMenuWarning('文章內容太少，請上傳更多文字再試');
         return;
       }
+      // 依文章次序出題；「接續」只在同一組文章＋同一難度時有效，否則從頭開始
+      const seqKey = key + '|' + this.menuSelection.difficulty;
+      if (this._articleSeqKey !== key) {
+        this.articleSeq = buildArticleSequences(selected);
+        this._articleSeqKey = key;
+        this._seqUnitCache = new Map();
+      }
+      this.seqIdx = (resume && this._resume && this._resume.key === seqKey) ? this._resume.idx : 0;
+      this._resume = null;
     }
 
     const isChineseCat = this.menuSelection.category === 'chinese' || this.menuSelection.category === 'chinese_article';
@@ -2417,7 +2471,7 @@ class TommyQGame {
     const lane = Math.floor(Math.random() * 5) + 1;
     const fromRight = Math.random() > 0.5;
     const type = Math.floor(Math.random() * 5) + 1;
-    const wordItem = this._getUniqueWord();
+    const wordItem = this._getUniqueWord(true);
     let speed = (0.3 + Math.random() * 0.2) * (1 + (this.stats.level - 1) * 0.08);
     // 字量越多，走到柵欄的時間要越長（普通版／挑戰版）：
     // 一個「字量單位」＝ 1 個中文字（含選字）或 4 個英文字母。
@@ -2436,6 +2490,7 @@ class TommyQGame {
       y: LANE_Y(lane),
       lane, fromRight, type,
       word: wordItem.word,
+      seqIdx: wordItem.seqIdx,
       char: wordItem.char || null,
       pinyin: wordItem.pinyin || null,
       units: wordItem.units || null,
@@ -2487,7 +2542,34 @@ class TommyQGame {
     });
   }
 
-  _getUniqueWord() {
+  // 中文-文章：照文章次序取下一題（到尾巴就從頭循環）
+  _nextArticleItem() {
+    const list = this.articleSeq && this.articleSeq[this.menuSelection.difficulty];
+    if (!list || list.length === 0) return null;
+    const abs = this.seqIdx++;
+    const str = list[abs % list.length];
+    let item = this._seqUnitCache.get(str);
+    if (!item) {
+      item = buildChineseUnits(str);
+      if (!item) return null;
+      this._seqUnitCache.set(str, item);
+    }
+    return Object.assign({}, item, { seqIdx: abs });
+  }
+
+  // 死掉時記下接續位置：場上最早還沒打掉的那一題；沒有就從下一題開始
+  _recordResume() {
+    if (this.menuSelection.category !== 'chinese_article' || !this.articleSeq) { this._resume = null; return; }
+    const alive = this.enemies.filter(e => !e.dead && e.seqIdx !== undefined).map(e => e.seqIdx);
+    const idx = alive.length ? Math.min(...alive) : this.seqIdx;
+    this._resume = { key: this._articleSeqKey + '|' + this.menuSelection.difficulty, idx };
+  }
+
+  _getUniqueWord(sequential) {
+    if (sequential && this.menuSelection.category === 'chinese_article' && this.articleSeq) {
+      const it = this._nextArticleItem();
+      if (it) return it;
+    }
     const usedWords = [...this.enemies, ...this.powerupItems].map(e => e.word);
     let item;
     let attempts = 0;
@@ -2616,6 +2698,7 @@ class TommyQGame {
         if (b.hp <= 0) {
           b.hp = 0;
           this.player.dead = true;
+          this._recordResume();
           this.state = 'GAME_OVER';
           return;
         }
@@ -3521,16 +3604,27 @@ class TommyQGame {
       ctx.fill();
       ctx.fillStyle = '#000';
       ctx.font = `bold 22px ${UI_FONT}`;
-      ctx.fillText('再玩一次', W / 2, 341);
+      ctx.fillText(this._resume ? '接續上次進度' : '再玩一次', W / 2, 341);
+
+      if (this._resume) {
+        ctx.fillStyle = '#ffa502';
+        ctx.beginPath();
+        ctx.roundRect(W/2 - 130, 365, 260, 40, 8);
+        ctx.fill();
+        ctx.fillStyle = '#000';
+        ctx.font = `bold 20px ${UI_FONT}`;
+        ctx.fillText('重頭開始', W / 2, 392);
+      }
 
       // Menu
+      const menuTop = this._resume ? 412 : 370;
       ctx.fillStyle = '#6c63ff';
       ctx.beginPath();
-      ctx.roundRect(W/2 - 130, 370, 260, 40, 8);
+      ctx.roundRect(W/2 - 130, menuTop, 260, 40, 8);
       ctx.fill();
       ctx.fillStyle = '#fff';
       ctx.font = `bold 20px ${UI_FONT}`;
-      ctx.fillText('回主選單', W / 2, 397);
+      ctx.fillText('回主選單', W / 2, menuTop + 27);
 
       ctx.textAlign = 'start';
       ctx.restore();

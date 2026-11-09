@@ -541,15 +541,41 @@ function extractSpan(article, len, requireHanziStart = true) {
 
 // 一般模式：單一「國字」，顯示拼音，玩家用點選的方式作答
 // 專家模式：單一「文字」（可能是國字，也可能是標點符號），玩家自己打字輸入作答
+// 💡 依文章「出現的先後次序」一個字一個字出（學生可以默默把文章背下來）。
+// seqCursor 指向下一個要出的字（第幾篇、第幾個字），到全部文章尾端就從頭循環。
+let seqCursor = { a: 0, i: 0 };
+let resumeInfo = null;   // 死掉時記下的接續位置 { key, a, i }
+
+function seqKey() {
+  return getSelectedArticles().map(a => a.id).join(',') + '|' + mode;
+}
+
 function pickChineseTarget(isExpert) {
   const articles = getSelectedArticles();
   if (articles.length === 0) return null;
-  for (let attempt = 0; attempt < 10; attempt++) {
-    const article = articles[Math.floor(Math.random() * articles.length)];
-    const target = extractSpan(article, 1, !isExpert);
-    if (target) return target;
+  let guard = 0;
+  const maxSteps = articles.reduce((n, a) => n + (a.chain ? a.chain.length : 0), 0) + 2;
+  while (guard++ <= maxSteps) {
+    if (seqCursor.a >= articles.length) seqCursor = { a: 0, i: 0 };
+    const chain = articles[seqCursor.a].chain || [];
+    if (seqCursor.i >= chain.length) { seqCursor = { a: seqCursor.a + 1, i: 0 }; continue; }
+    const c = chain[seqCursor.i];
+    const pos = { a: seqCursor.a, i: seqCursor.i };
+    seqCursor.i++;
+    if (/^\s*$/.test(c[0])) continue;              // 空白不用打
+    if (!isExpert && c[1] === null) continue;         // 一般模式：標點跳過，只出有拼音的國字
+    return { hanzi: c[0], pinyinDisplay: c[1] || c[0], pos };
   }
   return null;
+}
+
+// 死掉時：從「場上最早還沒打掉的字」開始接續（沒有就從下一個字）
+function recordResume() {
+  if (category !== 'chinese') { resumeInfo = null; return; }
+  const alive = enemies.filter(e => e.seqPos).map(e => e.seqPos);
+  let best = alive.length ? alive[0] : { a: seqCursor.a, i: seqCursor.i };
+  alive.forEach(p => { if (p.a < best.a || (p.a === best.a && p.i < best.i)) best = p; });
+  resumeInfo = { key: seqKey(), a: best.a, i: best.i };
 }
 
 // 產生選字按鈕候選（1 個正確答案 + 其餘干擾選項）——僅一般模式使用
@@ -1119,6 +1145,7 @@ function spawnEnemy() {
     if (!target) return; // 文章資料不足時安全略過
     const en = new Enemy(target.hanzi, x);
     en.isChinese = true;
+    en.seqPos = target.pos;
     en.pinyinLabel = target.pinyinDisplay;
     en.pinyinInput = normalizePinyin(target.pinyinDisplay);
     en.choices = null;
@@ -1516,7 +1543,14 @@ function goToMenu() {
   initMenuShips();
 }
 
-function startGame() {
+function startGame(resume = false) {
+  // 中文：依文章次序出字；「接續」只在同一組文章＋同一模式時有效，否則從頭
+  if (resume === true && resumeInfo && resumeInfo.key === seqKey()) {
+    seqCursor = { a: resumeInfo.a, i: resumeInfo.i };
+  } else {
+    seqCursor = { a: 0, i: 0 };
+  }
+  resumeInfo = null;
   state = STATE.PLAYING;
   maxLives = category === 'chinese' ? 5 : 3;
   score = 0; wave = 1; lives = maxLives; killCount = 0;
@@ -1578,7 +1612,12 @@ function resumeGame() {
 }
 
 function gameOver() {
+  recordResume();
   state = STATE.GAMEOVER;
+  const contBtn = document.getElementById('continueBtn');
+  const restartBtn = document.getElementById('restartBtn');
+  if (contBtn) contBtn.style.display = resumeInfo ? '' : 'none';
+  if (restartBtn) restartBtn.textContent = resumeInfo ? '重頭開始' : '再玩一次';
   const acc = totalKeystrokes > 0 ? Math.round((correctKeystrokes / totalKeystrokes) * 100) : 0;
   document.getElementById('finalScore').textContent = score.toLocaleString();
   document.getElementById('finalWave').textContent = wave;
@@ -1689,7 +1728,8 @@ document.getElementById('resumeBtn').addEventListener('click', resumeGame);
 document.getElementById('pauseMenuBtn').addEventListener('click', goToMenu);
 
 // Game over screen
-document.getElementById('restartBtn').addEventListener('click', startGame);
+document.getElementById('restartBtn').addEventListener('click', () => startGame(false));
+document.getElementById('continueBtn').addEventListener('click', () => startGame(true));
 document.getElementById('overMenuBtn').addEventListener('click', goToMenu);
 
 // Keyboard toggle
