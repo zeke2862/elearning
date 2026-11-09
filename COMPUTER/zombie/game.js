@@ -2311,7 +2311,7 @@ class TommyQGame {
     this.powerupItems = this.powerupItems.filter(p => !p.dead);
 
     // Projectiles
-    this.projectiles.forEach(p => { p.progress += dt / 120; });
+    this.projectiles.forEach(p => { p.progress += dt / 200; });
     this.projectiles = this.projectiles.filter(p => p.progress < 1);
 
     // Particles
@@ -2969,14 +2969,29 @@ class TommyQGame {
     this.projectiles.forEach(p => {
       const cx = p.x + (p.tx - p.x) * p.progress;
       const cy = p.y + (p.ty - p.y) * p.progress - Math.sin(p.progress * Math.PI) * 15;
-      ctx.fillStyle = '#ffffaa';
+      // 丟出去的飛劍：邊飛邊旋轉（純視覺，命中判定不受影響）
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(p.progress * Math.PI * 5);
+      ctx.shadowColor = 'rgba(255,255,200,0.8)';
+      ctx.shadowBlur = 6;
+      // 劍身
+      ctx.fillStyle = '#e8f1ff';
+      ctx.strokeStyle = '#5b6b8c';
+      ctx.lineWidth = 1;
       ctx.beginPath();
-      ctx.arc(cx, cy, 4, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = '#fff';
-      ctx.beginPath();
-      ctx.arc(cx, cy, 2, 0, Math.PI * 2);
-      ctx.fill();
+      ctx.moveTo(15, 0); ctx.lineTo(8, -3); ctx.lineTo(-4, -3);
+      ctx.lineTo(-4, 3); ctx.lineTo(8, 3); ctx.closePath();
+      ctx.fill(); ctx.stroke();
+      // 護手
+      ctx.fillStyle = '#f2c230';
+      ctx.fillRect(-6, -6, 3, 12);
+      // 劍柄與劍首
+      ctx.fillStyle = '#7a4a21';
+      ctx.fillRect(-12, -1.5, 6, 3);
+      ctx.fillStyle = '#f2c230';
+      ctx.beginPath(); ctx.arc(-13, 0, 2.2, 0, Math.PI * 2); ctx.fill();
+      ctx.restore();
     });
     ctx.restore();
   }
