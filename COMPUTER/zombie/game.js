@@ -446,12 +446,15 @@ function buildArticlePools(articles) {
   }
 
   // ── Hard：完整句子，至少10個字，含標點符號 ──
-  // 如果單一句子（用 。！？； 斷句）不到10個字，就跟下一句合併，
+  // 如果單一句子（用 。！？；，、： 斷句）不到10個字，就跟下一句合併，
   // 直到湊滿至少10個中文字為止，確保每篇文章都能產生 Hard 題目。
   const seenSentences = new Set();
   articles.forEach(a => {
     const raw = a.content.replace(/\r?\n/g, '');
-    const sentences = raw.split(/(?<=[。！？；])/).map(s => s.trim()).filter(Boolean);
+    // 用句號與逗號等斷開，湊滿 10 字就出題，避免整段長文一次出現
+    const sentences = raw.split(/(?<=[。！？；，、：])/).map(s => s.trim()).filter(Boolean)
+      // 單句過長（超過 16 個字）就每 12 字切一段，題目不會長到打不完
+      .flatMap(s => (s.match(/[\u4e00-\u9fff]/g) || []).length > 16 ? (s.match(/.{1,12}/g) || [s]) : [s]);
     let buffer = '';
     let bufferHanzi = 0;
     sentences.forEach(s => {
@@ -640,6 +643,13 @@ class ArticleManager {
       listEl.appendChild(row);
     });
   }
+}
+
+// 一隻怪物的「字量」：中文＝字數；英文＝字母數 / 4（4 個字母算 1 單位）
+function entityWork(item) {
+  if (item && item.isChinese && item.units && item.units.length) return item.units.length;
+  const len = item && item.word ? String(item.word).length : 4;
+  return Math.max(0.5, len / 4);
 }
 
 function getWordForCategory(category, difficulty = 'Medium', extra = {}) {
@@ -2109,7 +2119,18 @@ class TommyQGame {
     const fromRight = Math.random() > 0.5;
     const type = Math.floor(Math.random() * 5) + 1;
     const wordItem = this._getUniqueWord();
-    const speed = (0.3 + Math.random() * 0.2) * (1 + (this.stats.level - 1) * 0.08);
+    let speed = (0.3 + Math.random() * 0.2) * (1 + (this.stats.level - 1) * 0.08);
+    // 字量越多，走到柵欄的時間要越長（普通版／挑戰版）：
+    // 一個「字量單位」＝ 1 個中文字（含選字）或 4 個英文字母。
+    // 抵達時間至少 8 秒 + 3.5 秒 × 字量，速度再依關卡慢慢加快。
+    const work = entityWork(wordItem);
+    this.lastSpawnWork = work;
+    if (this.menuSelection.difficulty !== 'Easy') {
+      const dist = Math.abs((fromRight ? BARRICADE_RIGHT_X + 30 : BARRICADE_LEFT_X - 30) - (fromRight ? W + 30 : -30));
+      const minTravelMs = Math.min(60000, 8000 + 3500 * work);
+      const maxSpeed = dist / (minTravelMs / 16) * (1 + (this.stats.level - 1) * 0.08);
+      speed = Math.min(speed, maxSpeed);
+    }
 
     this.enemies.push({
       x: fromRight ? W + 30 : -30,
@@ -2257,8 +2278,16 @@ class TommyQGame {
             ? Math.min(3 + (this.stats.level - 1), 5)
             : Math.min(2 + (this.stats.level - 1), 5);
           const aliveCount = this.enemies.filter(e => !e.dead).length;
-          if (aliveCount < maxConcurrent) {
+          const diff = this.menuSelection.difficulty;
+          const cap = (this.menuSelection.category === 'chinese_article')
+            ? (diff === 'Hard' ? 3 : diff === 'Medium' ? 4 : 5) : 5;
+          if (aliveCount < Math.min(maxConcurrent, cap)) {
             this._spawnZombie();
+            // 字量大的怪物，下一隻出現的間隔也跟著拉長（普通版／挑戰版）
+            if (diff !== 'Easy') {
+              const f = Math.min(4, Math.max(0.8, (this.lastSpawnWork || 1) / 1.5));
+              this.spawnTimer = delay * f;
+            }
             // Occasional power-up
             if (Math.random() < 0.06 && !this.heldPowerup) {
               this._spawnPowerup();
@@ -2822,7 +2851,13 @@ class TommyQGame {
     if (hasMore) totalW += 18;
     const boxW = totalW + padX * 2;
     const boxH = 34;
-    const x = entity.x - boxW / 2;
+    // 長句子的文字框往「柵欄／畫面中間」那一側延伸，並限制在畫面內，
+    // 這樣殭屍一出現就能看到第一個字，不必等它走過來。
+    let x = entity.x - boxW / 2;
+    if (boxW > 130) {
+      x = entity.fromRight ? entity.x + 45 - boxW : entity.x - 45;
+    }
+    x = Math.max(4, Math.min(W - 4 - boxW, x));
     const y = entity.y - 82;
 
     // Box background — pulses while the current character awaits selection
