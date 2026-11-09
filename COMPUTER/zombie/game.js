@@ -835,6 +835,20 @@ class SpriteManager {
       img.src = this.defaultCanvases[key].toDataURL();
       this.defaultImages[key] = img;
     }
+
+    // 可愛版預設圖（cute-sprites.js，Canva 製作）：同樣 64x64 繪製、不改任何玩法；
+    // 沒載入或圖片壞掉時，仍使用上面原本的程式繪圖。
+    const cute = window.CUTE_SPRITES;
+    if (cute) {
+      for (const key in cute) {
+        if (!this.defaultCanvases[key]) continue;
+        const cimg = new Image();
+        const fallback = this.defaultImages[key];
+        this.defaultImages[key] = fallback;           // 載入完成前先用舊圖
+        cimg.onload = () => { this.defaultImages[key] = cimg; this.updatePreviews && this.updatePreviews(); };
+        cimg.src = cute[key];
+      }
+    }
   }
 
   _createSprite(w, h, drawFn) {
@@ -2095,7 +2109,7 @@ class TommyQGame {
     const fromRight = Math.random() > 0.5;
     const type = Math.floor(Math.random() * 5) + 1;
     const wordItem = this._getUniqueWord();
-    const speed = (0.3 + Math.random() * 0.2) * (1 + this.stats.level * 0.08);
+    const speed = (0.3 + Math.random() * 0.2) * (1 + (this.stats.level - 1) * 0.08);
 
     this.enemies.push({
       x: fromRight ? W + 30 : -30,
@@ -2297,7 +2311,7 @@ class TommyQGame {
     this.powerupItems = this.powerupItems.filter(p => !p.dead);
 
     // Projectiles
-    this.projectiles.forEach(p => { p.progress += dt / 120; });
+    this.projectiles.forEach(p => { p.progress += dt / 200; });
     this.projectiles = this.projectiles.filter(p => p.progress < 1);
 
     // Particles
@@ -2955,14 +2969,29 @@ class TommyQGame {
     this.projectiles.forEach(p => {
       const cx = p.x + (p.tx - p.x) * p.progress;
       const cy = p.y + (p.ty - p.y) * p.progress - Math.sin(p.progress * Math.PI) * 15;
-      ctx.fillStyle = '#ffffaa';
+      // 丟出去的飛劍：邊飛邊旋轉（純視覺，命中判定不受影響）
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(p.progress * Math.PI * 5);
+      ctx.shadowColor = 'rgba(255,255,200,0.8)';
+      ctx.shadowBlur = 6;
+      // 劍身
+      ctx.fillStyle = '#e8f1ff';
+      ctx.strokeStyle = '#5b6b8c';
+      ctx.lineWidth = 1;
       ctx.beginPath();
-      ctx.arc(cx, cy, 4, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = '#fff';
-      ctx.beginPath();
-      ctx.arc(cx, cy, 2, 0, Math.PI * 2);
-      ctx.fill();
+      ctx.moveTo(15, 0); ctx.lineTo(8, -3); ctx.lineTo(-4, -3);
+      ctx.lineTo(-4, 3); ctx.lineTo(8, 3); ctx.closePath();
+      ctx.fill(); ctx.stroke();
+      // 護手
+      ctx.fillStyle = '#f2c230';
+      ctx.fillRect(-6, -6, 3, 12);
+      // 劍柄與劍首
+      ctx.fillStyle = '#7a4a21';
+      ctx.fillRect(-12, -1.5, 6, 3);
+      ctx.fillStyle = '#f2c230';
+      ctx.beginPath(); ctx.arc(-13, 0, 2.2, 0, Math.PI * 2); ctx.fill();
+      ctx.restore();
     });
     ctx.restore();
   }

@@ -2,57 +2,123 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tommy Q - Clean Edition | 打字遊戲</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#050510">
+    <title>末日生存戰 | 打字遊戲</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Press+Start+2P&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <!-- 拼音自動標註工具，用來幫「中文-文章」模式的任何文字自動配上正確拼音 -->
-    <script src="https://unpkg.com/pinyin-pro"></script>
+    <script src="pinyin-pro.js"></script>
 </head>
 <body>
     <!-- Loading Overlay -->
     <div id="loadingOverlay" class="loading-overlay">
         <div class="loader"></div>
-        <p>Loading Game...</p>
+        <p>遊戲載入中…</p>
     </div>
 
     <!-- Main Game Container -->
     <main class="game-container" id="gameContainer">
-        <!-- Top Toolbar Controls -->
-        <div class="top-controls-bar">
-            <button id="pauseBtn" class="icon-btn" title="暫停 / Pause (Esc / P)">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
-            </button>
-            <button id="homeBtn" class="icon-btn" title="回主選單 / Main Menu">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
-            </button>
-            <button id="fullscreenBtn" class="icon-btn" title="全螢幕 / Fullscreen (F)">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path></svg>
-            </button>
-            <button id="settingsBtn" class="icon-btn gear-btn" title="設定圖片 / Sprites">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
-            </button>
-            <button id="articlesBtn" class="icon-btn" title="中文文章題庫 / Article Bank">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
-            </button>
+      <div class="stage" id="stage">
+        <!-- 手機觸控：左側方向鍵 -->
+        <div class="tc-side tc-left" id="tcLeft">
+            <div class="tc-dpad" id="tcDpad">
+                <button type="button" class="tc-btn tc-up" data-key="ArrowUp" tabindex="-1" aria-label="上移一行">▲</button>
+                <button type="button" class="tc-btn tc-lt" data-key="ArrowLeft" tabindex="-1" aria-label="面向左">◀</button>
+                <button type="button" class="tc-btn tc-rt" data-key="ArrowRight" tabindex="-1" aria-label="面向右">▶</button>
+                <button type="button" class="tc-btn tc-dn" data-key="ArrowDown" tabindex="-1" aria-label="下移一行">▼</button>
+            </div>
         </div>
 
+        <div class="center-col" id="centerCol">
+        <div class="canvas-slot" id="canvasSlot">
         <div class="canvas-wrapper" id="canvasWrapper">
             <canvas id="gameCanvas" width="916" height="500"></canvas>
         </div>
+        </div>
+
+        <div class="bottom-bar-row" id="bottomBarRow">
+            <div class="zh-typing-bar" id="zhTypingBar" style="display:none;">
+                <span class="zh-typing-label">輸入文字：</span>
+                <input type="text" id="zhTypingInput" class="zh-typing-input" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
+                <span class="zh-typing-hint">選好字後按 ENTER 攻擊面對的怪物</span>
+            </div>
+
+            <!-- Top Toolbar Controls (moved down here so it doesn't cover the canvas / pinyin text) -->
+            <div class="top-controls-bar">
+                <button id="pauseBtn" class="icon-btn" title="暫停（Esc / P）">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
+                </button>
+                <button id="homeBtn" class="icon-btn" title="回主選單">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+                </button>
+                <button id="fullscreenBtn" class="icon-btn" title="全螢幕">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path></svg>
+                </button>
+                <button id="settingsBtn" class="icon-btn gear-btn" title="自訂角色圖片">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                </button>
+                <button id="articlesBtn" class="icon-btn" title="中文文章題庫">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+                </button>
+                <button id="touchToggleBtn" class="icon-btn" title="觸控按鈕 開／關 (手機・平板用)">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2" width="10" height="20" rx="2"></rect><line x1="11" y1="18" x2="13" y2="18"></line></svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- 手機觸控：螢幕鍵盤（英打／拼音模式用） -->
+        <div class="tc-keyboard" id="tcKeyboard"></div>
+        </div>
+
+        <!-- 手機觸控：右側動作鍵 -->
+        <div class="tc-side tc-right" id="tcRight">
+            <button type="button" class="tc-btn tc-action" id="tcAction" data-key="Enter" tabindex="-1">⚡ 道具</button>
+            <div class="tc-toolbar-slot" id="tcToolbarSlot"></div>
+        </div>
+      </div>
 
         <div class="credits">
-            Inspired by Tommy Q from Typing.com | Ad-free clean version
+            華雲學校 黃崧桓老師製作 文章內容為TQC2010練習文章
         </div>
+
+        <!-- 手機提示：橫放／直放 -->
+        <div class="tc-hint" id="tcHint" hidden></div>
     </main>
+
+    <!-- 手機觸控版主選單（手指好按的大按鈕；電腦版仍使用畫面上的選單） -->
+    <div class="tc-menu" id="tcMenu" hidden>
+        <div class="tc-menu-card">
+            <h1 class="tc-menu-title">末日生存<small>防禦殭屍戰</small></h1>
+            <div class="tc-menu-group">
+                <div class="tc-menu-label">難度</div>
+                <div class="tc-menu-row" id="tcDifficulty"></div>
+            </div>
+            <div class="tc-menu-group">
+                <div class="tc-menu-label">練習內容</div>
+                <div class="tc-menu-grid" id="tcCategory"></div>
+            </div>
+            <div class="tc-menu-note" id="tcMenuNote"></div>
+            <button type="button" class="tc-play" id="tcPlay">▶ 開始遊戲</button>
+            <div class="tc-menu-tools">
+                <button type="button" class="tc-mini" id="tcMenuArticles">📚 文章題庫</button>
+                <button type="button" class="tc-mini" id="tcMenuSprites">🎨 自訂角色</button>
+                <button type="button" class="tc-mini" id="tcMenuOff">💻 關閉觸控版面</button>
+            </div>
+            <div class="tc-credit">華雲學校 黃崧桓老師製作　文章內容為TQC2010練習文章</div>
+        </div>
+    </div>
 
     <!-- Sprite Management Panel -->
     <aside id="spritePanel" class="sprite-panel">
         <div class="panel-header">
-            <h2>🎨 自訂角色 / Custom Sprites</h2>
-            <button id="closePanelBtn" class="close-btn" title="Close">
+            <h2>🎨 自訂角色</h2>
+            <button id="closePanelBtn" class="close-btn" title="關閉">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"></path></svg>
             </button>
         </div>
@@ -60,13 +126,13 @@
         <div class="panel-actions">
             <button id="importBtn" class="btn primary-btn">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"></path></svg>
-                匯入 (Import)
+                匯入
             </button>
             <input type="file" id="importInput" accept=".json" hidden>
             
             <button id="exportBtn" class="btn secondary-btn">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5-5 5 5M12 3v12"></path></svg>
-                匯出全部 (Export All)
+                匯出全部
             </button>
         </div>
 
@@ -74,18 +140,18 @@
             <!-- Player -->
             <div class="sprite-item">
                 <div class="sprite-info">
-                    <span class="sprite-name">Player (玩家)</span>
+                    <span class="sprite-name">玩家</span>
                     <div class="sprite-preview" id="preview-player"></div>
                 </div>
                 <div class="sprite-controls">
-                    <button class="action-btn upload-sprite" data-target="player" title="上傳 / Upload">
+                    <button class="action-btn upload-sprite" data-target="player" title="上傳">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5-5 5 5M12 3v12"></path></svg>
                     </button>
                     <input type="file" id="upload-player" accept="image/*" hidden>
-                    <button class="action-btn download-sprite" data-target="player" title="下載 / Download">
+                    <button class="action-btn download-sprite" data-target="player" title="下載">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"></path></svg>
                     </button>
-                    <button class="action-btn reset-sprite danger" data-target="player" title="重置 / Reset">
+                    <button class="action-btn reset-sprite danger" data-target="player" title="重置">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                     </button>
                 </div>
@@ -94,18 +160,18 @@
             <!-- Zombie 1 -->
             <div class="sprite-item">
                 <div class="sprite-info">
-                    <span class="sprite-name">Zombie 1 (殭屍 1)</span>
+                    <span class="sprite-name">殭屍 1</span>
                     <div class="sprite-preview" id="preview-zombie1"></div>
                 </div>
                 <div class="sprite-controls">
-                    <button class="action-btn upload-sprite" data-target="zombie1" title="上傳 / Upload">
+                    <button class="action-btn upload-sprite" data-target="zombie1" title="上傳">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5-5 5 5M12 3v12"></path></svg>
                     </button>
                     <input type="file" id="upload-zombie1" accept="image/*" hidden>
-                    <button class="action-btn download-sprite" data-target="zombie1" title="下載 / Download">
+                    <button class="action-btn download-sprite" data-target="zombie1" title="下載">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"></path></svg>
                     </button>
-                    <button class="action-btn reset-sprite danger" data-target="zombie1" title="重置 / Reset">
+                    <button class="action-btn reset-sprite danger" data-target="zombie1" title="重置">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                     </button>
                 </div>
@@ -114,18 +180,18 @@
             <!-- Zombie 2 -->
             <div class="sprite-item">
                 <div class="sprite-info">
-                    <span class="sprite-name">Zombie 2 (殭屍 2)</span>
+                    <span class="sprite-name">殭屍 2</span>
                     <div class="sprite-preview" id="preview-zombie2"></div>
                 </div>
                 <div class="sprite-controls">
-                    <button class="action-btn upload-sprite" data-target="zombie2" title="上傳 / Upload">
+                    <button class="action-btn upload-sprite" data-target="zombie2" title="上傳">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5-5 5 5M12 3v12"></path></svg>
                     </button>
                     <input type="file" id="upload-zombie2" accept="image/*" hidden>
-                    <button class="action-btn download-sprite" data-target="zombie2" title="下載 / Download">
+                    <button class="action-btn download-sprite" data-target="zombie2" title="下載">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"></path></svg>
                     </button>
-                    <button class="action-btn reset-sprite danger" data-target="zombie2" title="重置 / Reset">
+                    <button class="action-btn reset-sprite danger" data-target="zombie2" title="重置">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                     </button>
                 </div>
@@ -134,18 +200,18 @@
             <!-- Zombie 3 -->
             <div class="sprite-item">
                 <div class="sprite-info">
-                    <span class="sprite-name">Zombie 3 (殭屍 3)</span>
+                    <span class="sprite-name">殭屍 3</span>
                     <div class="sprite-preview" id="preview-zombie3"></div>
                 </div>
                 <div class="sprite-controls">
-                    <button class="action-btn upload-sprite" data-target="zombie3" title="上傳 / Upload">
+                    <button class="action-btn upload-sprite" data-target="zombie3" title="上傳">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5-5 5 5M12 3v12"></path></svg>
                     </button>
                     <input type="file" id="upload-zombie3" accept="image/*" hidden>
-                    <button class="action-btn download-sprite" data-target="zombie3" title="下載 / Download">
+                    <button class="action-btn download-sprite" data-target="zombie3" title="下載">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"></path></svg>
                     </button>
-                    <button class="action-btn reset-sprite danger" data-target="zombie3" title="重置 / Reset">
+                    <button class="action-btn reset-sprite danger" data-target="zombie3" title="重置">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                     </button>
                 </div>
@@ -154,18 +220,18 @@
             <!-- Zombie 4 -->
             <div class="sprite-item">
                 <div class="sprite-info">
-                    <span class="sprite-name">Zombie 4 (殭屍 4)</span>
+                    <span class="sprite-name">殭屍 4</span>
                     <div class="sprite-preview" id="preview-zombie4"></div>
                 </div>
                 <div class="sprite-controls">
-                    <button class="action-btn upload-sprite" data-target="zombie4" title="上傳 / Upload">
+                    <button class="action-btn upload-sprite" data-target="zombie4" title="上傳">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5-5 5 5M12 3v12"></path></svg>
                     </button>
                     <input type="file" id="upload-zombie4" accept="image/*" hidden>
-                    <button class="action-btn download-sprite" data-target="zombie4" title="下載 / Download">
+                    <button class="action-btn download-sprite" data-target="zombie4" title="下載">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"></path></svg>
                     </button>
-                    <button class="action-btn reset-sprite danger" data-target="zombie4" title="重置 / Reset">
+                    <button class="action-btn reset-sprite danger" data-target="zombie4" title="重置">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                     </button>
                 </div>
@@ -174,18 +240,18 @@
             <!-- Zombie 5 -->
             <div class="sprite-item">
                 <div class="sprite-info">
-                    <span class="sprite-name">Zombie 5 (殭屍 5)</span>
+                    <span class="sprite-name">殭屍 5</span>
                     <div class="sprite-preview" id="preview-zombie5"></div>
                 </div>
                 <div class="sprite-controls">
-                    <button class="action-btn upload-sprite" data-target="zombie5" title="上傳 / Upload">
+                    <button class="action-btn upload-sprite" data-target="zombie5" title="上傳">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5-5 5 5M12 3v12"></path></svg>
                     </button>
                     <input type="file" id="upload-zombie5" accept="image/*" hidden>
-                    <button class="action-btn download-sprite" data-target="zombie5" title="下載 / Download">
+                    <button class="action-btn download-sprite" data-target="zombie5" title="下載">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"></path></svg>
                     </button>
-                    <button class="action-btn reset-sprite danger" data-target="zombie5" title="重置 / Reset">
+                    <button class="action-btn reset-sprite danger" data-target="zombie5" title="重置">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                     </button>
                 </div>
@@ -196,8 +262,8 @@
     <!-- Article Bank Panel: 中文-文章 模式的題庫管理 -->
     <aside id="articlePanel" class="sprite-panel article-panel">
         <div class="panel-header">
-            <h2>📚 中文文章題庫 / Article Bank</h2>
-            <button id="closeArticlePanelBtn" class="close-btn" title="Close">
+            <h2>📚 中文文章題庫</h2>
+            <button id="closeArticlePanelBtn" class="close-btn" title="關閉">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"></path></svg>
             </button>
         </div>
@@ -221,7 +287,10 @@
         </div>
     </aside>
 
+    <script src="articles-data.js"></script>
+    <script src="cute-sprites.js"></script>
     <script src="game.js"></script>
+    <script src="touch.js"></script>
     <script>
         // UI Interaction Script for Panel
         document.addEventListener('DOMContentLoaded', () => {
@@ -287,7 +356,7 @@
             // Fullscreen Toggle function
             const toggleFullscreen = () => {
                 if (!document.fullscreenElement) {
-                    gameContainer.requestFullscreen().catch(err => {
+                    document.getElementById('gameContainer').requestFullscreen().catch(err => {
                         console.error(`Error attempting to enable fullscreen: ${err.message}`);
                     });
                 } else {
@@ -295,7 +364,10 @@
                 }
             };
 
+            const fullscreenBtn = document.getElementById('fullscreenBtn');
             fullscreenBtn.addEventListener('click', toggleFullscreen);
+            // iPhone 的 Safari 不支援網頁全螢幕，直接把按鈕收起來
+            if (!document.fullscreenEnabled) fullscreenBtn.style.display = 'none';
 
             // File inputs trigger
             document.querySelectorAll('.upload-sprite').forEach(btn => {
@@ -312,6 +384,7 @@
             // Simulated load
             setTimeout(() => {
                 const overlay = document.getElementById('loadingOverlay');
+                if (!overlay) return;
                 overlay.style.opacity = '0';
                 setTimeout(() => overlay.remove(), 500);
             }, 1000);
