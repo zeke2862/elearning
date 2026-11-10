@@ -45,6 +45,8 @@ function doPost(e) {
 function doGet(e) {
   // 數學科 JB2 老師報表：要帶 ?action=jb2&token=密碼 才會回傳（密碼設在「專案設定 → 指令碼屬性」JB2_TOKEN）
   if (e && e.parameter && e.parameter.action === "jb2") return jb2Report_(e);
+  if (e && e.parameter && e.parameter.action === "games") return gamesReport_(e);
+  if (e && e.parameter && e.parameter.action === "game") return gameReport_(e);
   try {
     const sheet = getSheet_();
     const rows = sheet.getDataRange().getValues();
@@ -143,4 +145,112 @@ function mergeJb2_(a, b, at) {
   out.q = qm;
   out.totalStars = ts; out.totalPlays = tp; out.pSecs = tt;
   return out;
+}
+
+// ============================================================
+// 通用遊戲報表（game-report.html 會呼叫這裡）——任何遊戲（任何科目、任何年級）都能用
+//
+// 權限（密碼）有三種，都設在「專案設定 → 指令碼屬性」：
+//   JB2_TOKEN      ＝總管密碼，可看所有遊戲（老師自己用）。
+//   REPORT_TOKENS  ＝其他人的密碼，格式：  密碼1=範圍;密碼2=範圍;…
+//                    範圍可以是：  *（全部）、 chi-*（所有 chi- 開頭的遊戲，例如國文科）、 chi-hanzi（只有這一款）
+//                    範圍可以用逗號放多個，例如：  abc123=chi-*,eng-*;xyz789=chi-hanzi
+//                    （密碼請用英數字長一點，不要含  = ; ,  ）
+// 遊戲代號：英文小寫、數字、- 、_ ，建議「科目簡碼-遊戲名」，例如 chi-hanzi、eng-vocab、math-jb2。
+// ============================================================
+function tokenScope_(token) {
+  token = String(token || "");
+  if (!token) return null;
+  var props = PropertiesService.getScriptProperties();
+  var master = props.getProperty("JB2_TOKEN");
+  if (master && token === master) return ["*"];
+  var parts = String(props.getProperty("REPORT_TOKENS") || "").split(";");
+  for (var i = 0; i < parts.length; i++) {
+    var at = parts[i].indexOf("=");
+    if (at < 1) continue;
+    if (parts[i].slice(0, at).trim() === token) {
+      return parts[i].slice(at + 1).split(",").map(function (x) { return x.trim(); }).filter(Boolean);
+    }
+  }
+  return null;
+}
+function scopeAllows_(scope, game) {
+  for (var i = 0; i < scope.length; i++) {
+    var s = scope[i];
+    if (s === "*" || s === game) return true;
+    if (s.length > 1 && s.charAt(s.length - 1) === "*" && game.indexOf(s.slice(0, -1)) === 0) return true;
+  }
+  return false;
+}
+
+// 兩份「其他遊戲」紀錄合併（規則跟 sync-client.js 一樣）：best／total／max 開頭或 plays 的數字取大值，其餘取較新的
+function mergeOther_(a, b, newerIsA) {
+  function isObj(v) { return v && typeof v === "object" && !Array.isArray(v); }
+  if (!isObj(a)) return b;
+  if (!isObj(b)) return a;
+  var out = {}, seen = {};
+  Object.keys(a).concat(Object.keys(b)).forEach(function (k) {
+    if (seen[k]) return; seen[k] = 1;
+    var x = a[k], y = b[k];
+    if (x === undefined) out[k] = y;
+    else if (y === undefined) out[k] = x;
+    else if (typeof x === "number" && typeof y === "number") out[k] = /^(best|total|max)|^(plays|updatedAt)$/.test(k) ? Math.max(x, y) : (newerIsA ? x : y);
+    else if (isObj(x) && isObj(y)) {
+      var hasTs = x.updatedAt !== undefined || y.updatedAt !== undefined;
+      var nA = hasTs ? (Number(x.updatedAt) || 0) >= (Number(y.updatedAt) || 0) : newerIsA;
+      out[k] = mergeOther_(x, y, nA);
+    } else out[k] = newerIsA ? x : y;
+  });
+  return out;
+}
+
+// 掃描整份信箱，回傳 { 遊戲代號: { 學號: 合併後的紀錄 } }（只含這把密碼看得到的遊戲）
+function collectGames_(scope, onlyGame) {
+  var sheet = getSheet_(), last = sheet.getLastRow(), out = {};
+  if (last < 2) return out;
+  var vals = sheet.getRange(2, 1, last - 1, 3).getValues();
+  for (var i = 0; i < vals.length; i++) {
+    var raw = String(vals[i][2] || "");
+    if (raw.indexOf('"other"') < 0) continue;
+    if (onlyGame && raw.indexOf('"' + onlyGame + '"') < 0) continue;
+    var p;
+    try { p = JSON.parse(raw); } catch (err) { continue; }     // 超過儲存格上限被截斷的列會解析失敗，略過
+    var o = p && p.other;
+    if (!o || typeof o !== "object") continue;
+    var no = String(p.studentNumber || vals[i][1] || "").trim();
+    if (!no) continue;
+    var at = (vals[i][0] instanceof Date) ? vals[i][0].getTime() : 0;
+    Object.keys(o).forEach(function (g) {
+      var v = o[g];
+      if (!v || typeof v !== "object" || Array.isArray(v)) return;
+      if (!/^[a-z0-9][a-z0-9_-]{1,30}$/.test(g)) return;
+      if (onlyGame && g !== onlyGame) return;
+      if (!scopeAllows_(scope, g)) return;
+      var byNo = out[g] || (out[g] = {});
+      var prev = byNo[no];
+      var rec = prev ? mergeOther_(prev, v, (Number(prev.updatedAt) || 0) >= (Number(v.updatedAt) || 0)) : JSON.parse(JSON.stringify(v));
+      rec._at = Math.max(prev ? (Number(prev._at) || 0) : 0, at);
+      byNo[no] = rec;
+    });
+  }
+  return out;
+}
+
+// ?action=games&token=…  → 這把密碼看得到的遊戲清單與玩過的人數
+function gamesReport_(e) {
+  var scope = tokenScope_(e.parameter.token);
+  if (!scope) return jsonOut_({ success: false, message: "forbidden" });
+  var all = collectGames_(scope, "");
+  var games = Object.keys(all).sort().map(function (g) { return { game: g, students: Object.keys(all[g]).length }; });
+  return jsonOut_({ success: true, games: games });
+}
+
+// ?action=game&game=遊戲代號&token=…  → 這款遊戲每位學生「合併後」的最新紀錄
+function gameReport_(e) {
+  var scope = tokenScope_(e.parameter.token);
+  var g = String(e.parameter.game || "");
+  if (!scope || !scopeAllows_(scope, g)) return jsonOut_({ success: false, message: "forbidden" });
+  var byNo = (collectGames_(scope, g)[g]) || {};
+  var students = Object.keys(byNo).map(function (no) { return { studentNumber: no, rec: byNo[no] }; });
+  return jsonOut_({ success: true, game: g, generatedAt: new Date().getTime(), students: students });
 }
