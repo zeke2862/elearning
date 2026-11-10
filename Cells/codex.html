@@ -51,6 +51,8 @@ button{font-family:var(--mono);cursor:pointer;background:none;border:none;color:
   display:flex;align-items:center;justify-content:center;
   background:var(--panel-2);border:1px solid var(--line);border-radius:3px;
 }
+.comp-card-icon svg{width:34px;height:34px;display:block;}
+.comp-card.type-basic .comp-card-icon{color:#39ff9d;} .comp-card.type-flying .comp-card-icon{color:#4fc3ff;} .comp-card.type-worm .comp-card-icon{color:#b06bff;} .comp-card.type-ghost .comp-card-icon{color:#d7e4ee;} .comp-card.type-boss .comp-card-icon{color:#ff2e6c;}
 .comp-card-body h4{font-size:11px;font-family:var(--disp);margin-bottom:2px;}
 .comp-card-body .comp-tag{font-size:9px;color:var(--text-dim);letter-spacing:.12em;text-transform:uppercase;margin-bottom:4px;}
 .comp-card-body p{font-size:10px;color:var(--text-dim);line-height:1.45;}
@@ -120,7 +122,7 @@ function render(){
   if(activeTab === "mobs"){
     STATE.mobs.forEach(mt=>{
       const card = document.createElement("div");
-      card.className = `comp-card mob-card ${mt.unlocked?"unlocked":"locked"}`;
+      card.className = `comp-card mob-card ${mt.cls||""} ${mt.unlocked?"unlocked":"locked"}`;
       card.innerHTML = `
         <div class="comp-card-icon">${mt.unlocked? mt.icon : "🔒"}</div>
         <div class="comp-card-body">
