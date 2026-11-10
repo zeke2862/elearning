@@ -55,6 +55,10 @@ td.left{text-align:left;}
         <th data-k="bonus">番外篇</th>
         <th data-k="zbest">末日生存<br>最高分 / 次數</th>
         <th data-k="tbest">ZType<br>最高分 / 次數</th>
+        <th data-k="jstars">JB2 總星數</th>
+        <th data-k="jlast">JB2 最後一關</th>
+        <th data-k="jplays">JB2 練習次數</th>
+        <th data-k="jsecs">JB2 練習時間</th>
         <th data-k="synced">最後同步</th>
       </tr>
     </thead>
@@ -70,6 +74,24 @@ const BONUS_CH = [1,2,3,6,7,8];
 let DATA = [], sortKey = 'seat', sortDir = 1;
 
 function stars(n){ return '<span class="star">'+'★'.repeat(n)+'</span><span class="dim">'+'☆'.repeat(3-n)+'</span>'; }
+function fmtSecs(s){ s=Math.round(s||0); if(s<60) return s+' 秒'; const m=Math.floor(s/60); return m<60 ? m+' 分' : Math.floor(m/60)+' 小時 '+(m%60)+' 分'; }
+const MODE_NAME = {easy:'練兵', real:'實戰', hard:'修羅', end:'無極限'};
+function jb2Last(j){
+  if(!j || !j.lastId) return '<span class="dim">—</span>';
+  const ls = j.lastStars==null ? '' : j.lastStars+'★';
+  return `${esc(j.lastId)} ${esc(j.lastName||'')}<br><span class="dim">${esc(MODE_NAME[j.lastMode]||'')} 本次 ${ls||'—'}／最高 ${j.lastBest||0}★</span>`;
+}
+function jb2Detail(j){
+  if(!j) return '';
+  const ids = Object.keys(j.stages||{}).sort((a,b)=>a.localeCompare(b,'en',{numeric:true}));
+  let h = `<br><b>JB2 數靈召喚師</b>（勇者名 ${esc(j.hero)||'—'}）：總 ${j.totalStars||0}★／練習 ${j.totalPlays||0} 次／共 ${fmtSecs(j.totalSecs)}`;
+  h += '<table style="margin:6px 0;width:auto"><tr><th>關卡</th><th>最高星</th><th>練習次數</th><th>花的時間</th><th>最近一次</th></tr>';
+  ids.forEach(id=>{ const s=j.stages[id]; h += `<tr><td class="left">${esc(id)} ${esc(s.n)}</td><td>${s.bestStars}★</td><td>${s.plays}</td><td>${fmtSecs(s.totalSecs)}</td><td>${s.lastStars==null?'—':s.lastStars+'★'} ${esc(MODE_NAME[s.lastMode]||'')}</td></tr>`; });
+  h += '</table>';
+  const w = j.weak||[];
+  h += '<b>弱點題型：</b>' + (w.length ? w.map(r=>{ const [sid,ty]=String(r.k).split(':'); return `${esc(sid)} ${esc(ty||'')}（答對 ${Math.round(r.ok/r.n*100)}%，${r.ok}/${r.n}）`; }).join('、') : '<span class="dim">資料還不夠（同一題型要作答 3 題以上）</span>');
+  return h;
+}
 function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 
 function rowInfo(st){
@@ -77,13 +99,14 @@ function rowInfo(st){
   const pc = (p && p.perChapter) || {};
   const doneCh = Object.keys(CH_TOTAL).filter(c => pc[c] && pc[c].cleared >= CH_TOTAL[c]).length;
   const bonusDone = BONUS_CH.filter(c => pc[c] && pc[c].bonus && pc[c].bonus.cleared).length;
-  const z = p && p.zombie, t = p && p.ztype;
+  const z = p && p.zombie, t = p && p.ztype, j = p && p.jb2;
   return {
+    jstars: j ? (j.totalStars||0) : -1, jlast: j ? (j.lastId||'') : '', jplays: j ? (j.totalPlays||0) : -1, jsecs: j ? (j.totalSecs||0) : -1,
     seat: Number(st.seatNumber)||0, num: st.studentNumber||'', name: st.name||'',
     cleared: p ? p.levelsCleared : -1, stars: p ? p.totalStars : -1,
     chapter: doneCh, bonus: bonusDone,
     zbest: z ? (z.bestScore||0) : -1, tbest: t ? (t.bestScore||0) : -1,
-    synced: st.syncedAt || '', played: !!(p && (p.levelsCleared>0 || z || t))
+    synced: st.syncedAt || '', played: !!(p && (p.levelsCleared>0 || z || t || j))
   };
 }
 
@@ -116,15 +139,20 @@ function render(){
       <td>${p ? `<span class="${i.bonus? 'ok':'dim'}">${i.bonus} / ${BONUS_CH.length}</span>` : '<span class="dim">—</span>'}</td>
       <td>${z ? `${z.bestScore||0} / ${z.plays||0}次${z.resume?'<br><span class="dim">背到第 '+((z.resume.idx||0)+1)+' 題</span>':''}` : '<span class="dim">—</span>'}</td>
       <td>${t ? `${t.bestScore||0} / ${t.plays||0}次${t.resume?'<br><span class="dim">背到第 '+(t.resume.n||'?')+' 字</span>':''}` : '<span class="dim">—</span>'}</td>
+      <td>${p&&p.jb2 ? '<span class="star">★</span> '+(p.jb2.totalStars||0) : '<span class="dim">—</span>'}</td>
+      <td class="left">${jb2Last(p&&p.jb2)}</td>
+      <td>${p&&p.jb2 ? p.jb2.totalPlays||0 : '<span class="dim">—</span>'}</td>
+      <td>${p&&p.jb2 ? fmtSecs(p.jb2.totalSecs) : '<span class="dim">—</span>'}</td>
       <td class="dim">${st.syncedAt ? new Date(st.syncedAt).toLocaleString('zh-TW',{hour12:false}) : '—'}</td>`;
     tr.style.cursor = 'pointer';
     tr.addEventListener('click', ()=>{
       const next = tr.nextElementSibling;
       if(next && next.classList.contains('detail')){ next.remove(); return; }
       const d = document.createElement('tr'); d.className = 'detail';
-      d.innerHTML = `<td colspan="10"><b>各章進度：</b>${chapChips}<br><b>番外篇（ETP 檢定）：</b>${bonusChips}
+      d.innerHTML = `<td colspan="14"><b>各章進度：</b>${chapChips}<br><b>番外篇（ETP 檢定）：</b>${bonusChips}
         ${p ? `<br><b>其他：</b>GBit ${p.gbit}　核心 ${p.core}　難度 ${esc(p.difficulty)||'—'}　角色名 ${esc(p.playerName)||'—'}` : ''}
-        ${p && p.endless && p.endless.plays ? `　深淵模式最佳 ${Math.floor((p.endless.bestTime||0)/60)}分${(p.endless.bestTime||0)%60}秒` : ''}</td>`;
+        ${p && p.endless && p.endless.plays ? `　深淵模式最佳 ${Math.floor((p.endless.bestTime||0)/60)}分${(p.endless.bestTime||0)%60}秒` : ''}
+        ${jb2Detail(p&&p.jb2)}</td>`;
       tr.after(d);
     });
     tb.appendChild(tr);
@@ -150,12 +178,14 @@ async function load(){
 }
 
 function downloadCsv(){
-  const head = ['年度','班級','座號','學號','姓名','通關數','總星數','已通關章節數','番外篇通過數','中列','上列','下列','中上列','中下列','全鍵盤','符號','大小寫','句子','末日最高分','末日次數','ZType最高分','ZType次數','最後同步'];
+  const head = ['年度','班級','座號','學號','姓名','通關數','總星數','已通關章節數','番外篇通過數','中列','上列','下列','中上列','中下列','全鍵盤','符號','大小寫','句子','末日最高分','末日次數','ZType最高分','ZType次數','JB2總星數','JB2最後一關','JB2最後本次星','JB2最後最高星','JB2練習次數','JB2練習秒數','JB2弱點','最後同步'];
   const rows = DATA.map(st=>{
     const p = st.progress, pc = (p&&p.perChapter)||{}, i = rowInfo(st), z = p&&p.zombie, t = p&&p.ztype;
     return [st.year,st.class,st.seatNumber,st.studentNumber,st.name, p?p.levelsCleared:'', p?p.totalStars:'', p?i.chapter:'', p?i.bonus:'',
       ...Object.keys(CH_TOTAL).map(c=>pc[c]?pc[c].cleared+'/'+CH_TOTAL[c]:''),
-      z?z.bestScore:'', z?z.plays:'', t?t.bestScore:'', t?t.plays:'', st.syncedAt||''];
+      z?z.bestScore:'', z?z.plays:'', t?t.bestScore:'', t?t.plays:'',
+      p&&p.jb2?p.jb2.totalStars:'', p&&p.jb2?p.jb2.lastId:'', p&&p.jb2&&p.jb2.lastStars!=null?p.jb2.lastStars:'', p&&p.jb2?p.jb2.lastBest:'', p&&p.jb2?p.jb2.totalPlays:'', p&&p.jb2?p.jb2.totalSecs:'',
+      p&&p.jb2?(p.jb2.weak||[]).map(r=>r.k+' '+Math.round(r.ok/r.n*100)+'%').join(' / '):'', st.syncedAt||''];
   });
   const csv = '﻿' + [head,...rows].map(r=>r.map(v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"').join(',')).join('\r\n');
   const a = document.createElement('a');
