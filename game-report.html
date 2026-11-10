@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>遊戲教師後台（通用版）</title>
+<style>
+:root{--ink:#161a2e;--ink2:#20264a;--line:#3a4270;--bronze:#d2a24c;--paper:#f1e8d2;--red:#d24a33;--jade:#43a58f;--txt:#e9e4d4}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ink);color:var(--txt);font-family:"Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif}
+main{max-width:1280px;margin:0 auto;padding:16px 16px 60px}
+h1{margin:0 0 4px;font-family:"Noto Serif TC","Songti TC",serif}
+button,select,input{font:inherit;color:inherit}
+button{cursor:pointer}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid var(--bronze);outline-offset:2px}
+.bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:12px 0}
+.b{background:var(--ink2);border:2px solid var(--bronze);border-radius:8px;padding:8px 14px}
+.b.on{background:var(--bronze);color:#2a1d05;font-weight:700}
+.b.ghost{border-color:var(--line)}
+select,input[type=number],input[type=text],input[type=password]{background:var(--ink2);border:2px solid var(--line);border-radius:8px;padding:7px 10px}
+input[type=text],input[type=password]{flex:1 1 260px;min-width:0}
+.card{background:var(--ink2);border:2px solid var(--line);border-radius:12px;padding:14px;margin-top:12px}
+.tw{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:.9rem}
+th,td{border:1px solid var(--line);padding:6px 8px;text-align:center;white-space:nowrap}
+th{background:#252c56;position:sticky;top:0}
+td.l,th.l{text-align:left}
+.s0{color:#6b7090}.s00{background:#5a2f2a;color:#f3b9b0}.s1{background:#5a4a1e}.s2{background:#33553d}.s3{background:#2f7a5b;font-weight:700}.s4{background:#2a6f8f;font-weight:700}.s5{background:#8a6d1c;font-weight:700;color:#fff3c4}
+.a0{color:#6b7090}.alo{background:#6a2a22;font-weight:700}.amid{background:#5a4a1e}.ahi{background:#2f7a5b}
+.t1{background:#2a3a66}.t2{background:#2a4f7a}.t3{background:#2a6f8f;font-weight:700}
+.acc{display:inline-block;height:10px;border-radius:5px;background:var(--jade);vertical-align:middle}
+.acc.lo{background:var(--red)}.acc.mid{background:var(--bronze)}
+.msg{margin:6px 0;font-size:.9rem;opacity:.9}
+.hide{display:none}
+small{opacity:.75}
+details summary{cursor:pointer;font-weight:700}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:8px 0}
+.row label{min-width:6em;opacity:.85}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 8px}
+.chip{border:1px solid var(--line);border-radius:999px;padding:3px 12px;font-size:.85rem}
+tr.rw{cursor:pointer}tr.rw:hover td{filter:brightness(1.25)}
+.sm{font-size:.7rem;opacity:.8;font-weight:400}
+</style>
+</head>
+<body>
+<main>
+<h1>遊戲教師後台</h1>
+<small>通用版：任何科目、任何年級的遊戲都能看。學生進度、各關答對率與練習時間、題型弱點、個別診斷。</small>
+
+<div class="card">
+<details id="set">
+<summary>⚙️ 設定（第一次使用要填）</summary>
+<div class="row"><label>接收網址</label><input type="text" id="url" placeholder="https://script.google.com/macros/s/…/exec"></div>
+<div class="row"><label>後台密碼</label><input type="password" id="tok" placeholder="老師給你的密碼（看得到哪些遊戲，由密碼決定）" autocomplete="off"></div>
+<div class="row"><label>班級名單</label><input type="file" id="rost" accept=".xlsx,.xls,.csv"><span id="rostInfo" class="msg"></span></div>
+<div class="msg">名單欄位：班級、座號、學號、姓名。<b>沒有名單也能用</b>，只是看不到姓名和班級（會顯示學號）。名單與密碼只存在「這台電腦的這個瀏覽器」，不會上傳到網路。</div>
+<div class="row"><button class="b" id="save">儲存並載入</button><button class="b ghost" id="clr">清除這台電腦存的名單與密碼</button></div>
+</details>
+</div>
+
+<div class="bar">
+  <label>遊戲 <select id="game"><option value="">（請先載入）</option></select></label>
+  <label>年級 <select id="grade"></select></label>
+  <label>班級 <select id="cls"></select></label>
+  <button class="b on" data-t="prog">班級進度表</button>
+  <button class="b" data-t="weak">題型弱點</button>
+  <button class="b" data-t="one">個別學生</button>
+  <button class="b ghost" id="reload">🔄 重新載入</button>
+  <span class="msg" id="msg"></span>
+</div>
+
+<section id="v-prog" class="card"></section>
+<section id="v-weak" class="card hide"></section>
+<section id="v-one" class="card hide"></section>
+<p class="msg">「已玩」＝練習次數大於 0，或有作答過題目。「練習時間」由各遊戲自己計算（建議只算玩完一局的時間）。「答對率」是該學生在這一關累積作答的答對題數 ÷ 作答題數。表格會依各遊戲實際送來的欄位自動調整，沒有的欄位不會顯示。</p>
+</main>
+
+<script src="math/JB2/xlsx.full.min.js"></script>
+<script>
+const LS = {url: 'gamerep-url', tok: 'gamerep-token', rost: 'gamerep-roster', grade: 'gamerep-grade', game: 'gamerep-game'};
+const COMPAT = {url: 'jb2rep-url', rost: 'jb2rep-roster'};   // 之前在 JB2 報表存過的，沿用
+const MODE = {easy: '練兵', real: '實戰', hard: '修羅', end: '無極限'};
+
+let ROSTER = [], DATA = {}, ROWS = [], STAGES = [], tab = 'prog', view = '', oneNo = '', gradeInit = false;
+const $ = s => document.querySelector(s);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const get = k => { try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } };
+const put = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
+const say = t => { $('#msg').textContent = t; };
+const num = v => (typeof v === 'number' && isFinite(v)) ? v : 0;
+const fmtSecs = s => { s = Math.round(s || 0); if (s < 60) return s + ' 秒'; const m = Math.floor(s / 60); return m < 60 ? m + ' 分' : Math.floor(m / 60) + ' 小時 ' + (m % 60) + ' 分'; };
+const fmtShort = s => { s = Math.round(s || 0); if (!s) return '—'; if (s < 60) return s + '秒'; if (s < 3600) return Math.round(s / 60) + '分'; return (s / 3600).toFixed(1) + '時'; };
+const fmtAt = t => { if (!t) return '—'; const d = new Date(t), p = n => String(n).padStart(2, '0'); return `${p(d.getMonth()+1)}/${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`; };
+const accCls = a => a == null ? 'a0' : a < .6 ? 'alo' : a < .8 ? 'amid' : 'ahi';
+function download(name, text) { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], {type: 'text/csv;charset=utf-8'})); a.download = name; document.body.appendChild(a); a.click(); a.remove(); }
+const csvCell = v => { let s = String(v == null ? '' : v); if (/^[=+\-@\t\r]/.test(s)) s = "'" + s; return /[",\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+const toCSV = rows => '﻿' + rows.map(r => r.map(csvCell).join(',')).join('\r\n');
+
+/* ===== 一筆紀錄的欄位（容許常見的別名） ===== */
+const secsOf = o => num(o.pSecs) || num(o.totalSecs);
+const playsOf = o => num(o.totalPlays) || num(o.plays);
+function normStage(id, x) { x = x || {}; return {id, n: String(x.n || x.name || ''), ch: String(x.ch || ''), bestStars: num(x.bestStars), bestScore: num(x.bestScore), plays: num(x.plays) || num(x.totalPlays), secs: secsOf(x), q: num(x.totalQ), ok: num(x.totalOk), lastStars: x.lastStars == null ? null : num(x.lastStars), lastMode: x.lastMode || ''}; }
+
+/* ===== 名單 ===== */
+function loadRoster() { try { ROSTER = JSON.parse(get(LS.rost) || get(COMPAT.rost)) || []; } catch (e) { ROSTER = []; } rostInfo(); }
+function rostInfo() { $('#rostInfo').textContent = ROSTER.length ? `已匯入 ${ROSTER.length} 位` : '尚未匯入（也可以不匯入）'; }
+function parseRosterRows(rows) {
+  const head = rows[0].map(x => String(x).trim()), ix = n => head.indexOf(n);
+  const ic = ix('班級'), is = ix('座號'), ino = ix('學號'), ina = ix('姓名');
+  if (ic < 0 || ino < 0 || ina < 0) throw new Error('名單第一列要有「班級、座號、學號、姓名」');
+  return rows.slice(1).filter(r => r[ino] != null && String(r[ino]).trim()).map(r => ({cls: String(r[ic] || '').trim(), seat: is >= 0 ? Number(r[is]) || 0 : 0, no: String(r[ino]).trim(), name: String(r[ina] || '').trim()}));
+}
+$('#rost').addEventListener('change', async e => {
+  const f = e.target.files[0]; if (!f) return;
+  try {
+    let rows;
+    if (/\.csv$/i.test(f.name)) rows = (await f.text()).replace(/^﻿/, '').split(/\r?\n/).filter(Boolean).map(l => l.split(','));
+    else { const wb = XLSX.read(await f.arrayBuffer(), {type: 'array'}); rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header: 1, raw: false}); }
+    ROSTER = parseRosterRows(rows); put(LS.rost, JSON.stringify(ROSTER)); rostInfo(); build(); render(); say(`名單已匯入 ${ROSTER.length} 位`);
+  } catch (err) { alert('名單讀取失敗：' + err.message); }
+});
+
+/* ===== 從 Google 讀資料 ===== */
+const api = (q) => { const url = $('#url').value.trim(); return fetch(url + (url.includes('?') ? '&' : '?') + q + '&token=' + encodeURIComponent($('#tok').value.trim())).then(r => r.json()); };
+const needSet = () => !$('#url').value.trim() || !$('#tok').value.trim();
+async function loadGames() {
+  if (needSet()) { $('#set').open = true; say('請先填入接收網址與後台密碼'); return; }
+  say('載入中…');
+  try {
+    const d = await api('action=games');
+    if (!d.success) throw new Error(d.message === 'forbidden' ? '密碼不對，或 Apps Script 還沒更新成新版本' : (d.message || '回應錯誤'));
+    const sel = $('#game'), cur = sel.value || get(LS.game);
+    sel.innerHTML = d.games.length ? d.games.map(g => `<option value="${esc(g.game)}">${esc(g.game)}（${g.students} 人）</option>`).join('') : '<option value="">（這把密碼還沒有任何遊戲的紀錄）</option>';
+    if (d.games.some(g => g.game === cur)) sel.value = cur;
+    if (sel.value) await loadGame(); else { DATA = {}; STAGES = []; build(); render(); say('目前沒有可看的遊戲紀錄'); }
+  } catch (err) { say('❌ 讀取失敗：' + err.message + '（請確認 Apps Script 已重新部署為「新版本」，存取權限是「所有人」）'); }
+}
+async function loadGame() {
+  const g = $('#game').value; if (!g) return;
+  put(LS.game, g); say('載入中…');
+  try {
+    const d = await api('action=game&game=' + encodeURIComponent(g));
+    if (!d.success) throw new Error(d.message === 'forbidden' ? '這把密碼看不到這款遊戲' : (d.message || '回應錯誤'));
+    DATA = {}; d.students.forEach(s => DATA[String(s.studentNumber)] = s.rec);
+    discoverStages(); view = ''; build(); render(); say(`已載入「${g}」${Object.keys(DATA).length} 位學生的紀錄`);
+  } catch (err) { say('❌ 讀取失敗：' + err.message); }
+}
+/* 關卡欄位：不事先固定，由資料裡出現過的關卡自動決定（名稱用資料裡的 n） */
+function discoverStages() {
+  const m = {};
+  Object.values(DATA).forEach(rec => Object.keys(rec.stages || {}).forEach(id => { const s = normStage(id, rec.stages[id]); const o = m[id] || (m[id] = {id, n: '', ch: ''}); if (!o.n && s.n) o.n = s.n; if (!o.ch && s.ch) o.ch = s.ch; }));
+  STAGES = Object.values(m).sort((a, b) => a.id.localeCompare(b.id, 'zh-Hant', {numeric: true}));
+}
+
+/* ===== 組表 ===== */
+const GORDER = ['初一', '初二', '初三', '高一', '高二', '高三'];
+const gradeOf = c => c === '名單外' ? '名單外' : (/^[初高][一二三]/.test(c) ? c.slice(0, 2) : '其他');
+const gRank = g => { const i = GORDER.indexOf(g); return i >= 0 ? i : g === '其他' ? 90 : 99; };
+function mk(r, rec) {
+  const st = {}; let q = 0, ok = 0;
+  if (rec) Object.keys(rec.stages || {}).forEach(id => { st[id] = normStage(id, rec.stages[id]); q += st[id].q; ok += st[id].ok; });
+  if (rec && !q) { q = num(rec.totalQ); ok = num(rec.totalOk); }
+  const plays = rec ? Math.max(playsOf(rec), Object.keys(st).reduce((a, k) => a + st[k].plays, 0)) : 0;
+  const played = !!rec && (plays > 0 || q > 0);
+  return {cls: r.cls, grade: gradeOf(r.cls), seat: r.seat, no: r.no, name: r.name, nick: rec ? String(rec.nick || rec.hero || '') : '', played, rec, st,
+    plays, secs: rec ? Math.max(secsOf(rec), Object.keys(st).reduce((a, k) => a + st[k].secs, 0)) : 0, best: rec ? num(rec.bestScore) : 0,
+    acc: q ? ok / q : null, q, ok, at: rec ? (rec._at || num(rec.lastAt)) : 0};
+}
+function build() {
+  const seen = new Set(), rows = [];
+  ROSTER.forEach(r => { seen.add(r.no); rows.push(mk(r, DATA[r.no])); });
+  Object.keys(DATA).forEach(no => { if (!seen.has(no)) rows.push(mk({cls: ROSTER.length ? '名單外' : '（未匯入名單）', seat: 0, no, name: ''}, DATA[no])); });
+  rows.sort((a, b) => (a.cls > b.cls ? 1 : a.cls < b.cls ? -1 : 0) || a.seat - b.seat || (a.no > b.no ? 1 : -1));
+  ROWS = rows; fillSelects();
+}
+function fillSelects() {
+  const gs = [...new Set(ROWS.map(r => r.grade))].sort((a, b) => gRank(a) - gRank(b));
+  let g = $('#grade').value;
+  if (!gradeInit && ROWS.length) { gradeInit = true; const sv = get(LS.grade); g = sv === 'ALL' ? '' : gs.includes(sv) ? sv : ''; }
+  $('#grade').innerHTML = '<option value="">全部年級</option>' + gs.map(x => `<option value="${esc(x)}">${esc(x)}</option>`).join('');
+  $('#grade').value = gs.includes(g) ? g : '';
+  const cur = $('#cls').value, cs = [...new Set(ROWS.filter(r => !$('#grade').value || r.grade === $('#grade').value).map(r => r.cls))];
+  $('#cls').innerHTML = '<option value="">' + (GORDER.includes($('#grade').value) ? '全' + $('#grade').value + '各班' : '全部班級') + '</option>' + cs.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join('');
+  $('#cls').value = cs.includes(cur) ? cur : '';
+}
+const list = () => ROWS.filter(r => (!$('#grade').value || r.grade === $('#grade').value) && (!$('#cls').value || r.cls === $('#cls').value));
+
+/* ===== 各遊戲有哪些欄位可顯示 ===== */
+function views() {
+  const has = f => ROWS.some(r => Object.values(r.st).some(f));
+  const v = [];
+  if (has(s => s.bestStars > 0)) v.push(['stars', '⭐ 星數']);
+  if (has(s => s.q > 0)) v.push(['acc', '🎯 答對率']);
+  if (has(s => s.bestScore > 0)) v.push(['score', '🏆 最高分']);
+  if (has(s => s.secs > 0)) v.push(['time', '⏱️ 練習時間']);
+  if (has(s => s.plays > 0)) v.push(['plays', '🔁 練習次數']);
+  return v;
+}
+function cell(r, s) {
+  const x = r.st[s.id];
+  if (view === 'stars') { const n = x ? x.bestStars : 0; return n ? `<td class="s${Math.min(5, n)}">${n <= 5 ? '★'.repeat(n) : '★' + n}</td>` : (x ? '<td class="s00" title="有玩，但還沒拿到星">0★</td>' : '<td class="s0">—</td>'); }
+  if (view === 'acc') { const a = x && x.q ? x.ok / x.q : null; return a == null ? '<td class="a0">—</td>' : `<td class="${accCls(a)}" title="答對 ${x.ok} 題／作答 ${x.q} 題">${Math.round(a * 100)}%<div class="sm">${x.ok}/${x.q}</div></td>`; }
+  if (view === 'score') { const n = x ? x.bestScore : 0; return n ? `<td class="t2">${n}</td>` : '<td class="s0">—</td>'; }
+  if (view === 'time') { const t = x ? x.secs : 0; return t ? `<td class="t${t < 300 ? 1 : t < 900 ? 2 : 3}" title="${fmtSecs(t)}">${fmtShort(t)}</td>` : '<td class="s0">—</td>'; }
+  const p = x ? x.plays : 0; return p ? `<td class="t${p < 3 ? 1 : p < 6 ? 2 : 3}">${p}</td>` : '<td class="s0">—</td>';
+}
+const stageHead = s => `<th title="${esc((s.ch ? s.ch + '・' : '') + s.id + ' ' + s.n)}">${esc((s.n || s.id).slice(0, 8))}</th>`;
+const stageName = id => { const s = STAGES.find(x => x.id === id); return s ? (s.n || id) : id; };
+
+/* ===== 班級進度表 ===== */
+function classChips(all) {
+  if (!$('#grade').value || $('#cls').value) return '';
+  const m = {}; all.forEach(r => { const o = m[r.cls] || (m[r.cls] = {n: 0, p: 0}); o.n++; if (r.played) o.p++; });
+  return Object.keys(m).map(c => `<span class="chip">${esc(c)} 已玩 <b>${m[c].p}</b>／${m[c].n}</span>`).join('');
+}
+function renderProg() {
+  const vs = views(); if (!vs.some(x => x[0] === view)) view = vs.length ? vs[0][0] : '';
+  const keep = {st: $('#st') ? $('#st').value : '', q: $('#q') ? $('#q').value : ''};
+  const all = list(), played = all.filter(r => r.played);
+  if (!ROWS.length) { $('#v-prog').innerHTML = '<p>還沒有資料。請先到上方「設定」填入網址與密碼，再按「儲存並載入」。</p>'; return; }
+  const L = all.filter(r => keep.st === 'p' ? r.played : keep.st === 'n' ? !r.played : true).filter(r => { const q = keep.q.trim().toLowerCase(); return !q || (r.name + r.no + r.nick).toLowerCase().includes(q); });
+  const anyBest = ROWS.some(r => r.best > 0);
+  $('#v-prog').innerHTML = `<div class="chips"><span class="chip">共 <b>${all.length}</b> 位</span><span class="chip">已玩 <b>${played.length}</b></span><span class="chip">還沒玩 <b>${all.length - played.length}</b></span>${classChips(all)}</div>
+  <div class="bar">${vs.length ? `<label>每格顯示 <select id="vw">${vs.map(x => `<option value="${x[0]}">${x[1]}</option>`).join('')}</select></label>` : ''}
+  <label>狀態 <select id="st"><option value="">全部</option><option value="p">已玩</option><option value="n">還沒玩</option></select></label>
+  <input type="text" id="q" placeholder="搜尋姓名／學號／遊戲內名稱" style="flex:0 1 220px"><button class="b" id="e-prog">⬇️ 匯出 Excel（CSV）</button></div>
+  <div class="tw"><table><tr><th class="l">班級</th><th>座號</th><th class="l">姓名</th><th>學號</th><th>遊戲內名稱</th><th>練習次數</th><th>練習時間</th>${anyBest ? '<th>最高分</th>' : ''}<th>整體答對率</th><th>最後更新</th>${STAGES.map(stageHead).join('')}</tr>` +
+    L.map(r => `<tr class="rw" data-no="${esc(r.no)}"><td class="l">${esc(r.cls)}</td><td>${r.seat || ''}</td><td class="l">${esc(r.name || '—')}</td><td>${esc(r.no)}</td><td>${r.nick ? esc(r.nick) : '<span class="s0">—</span>'}</td><td>${r.played ? r.plays : '—'}</td><td>${r.played && r.secs ? fmtShort(r.secs) : '—'}</td>${anyBest ? `<td>${r.best || '—'}</td>` : ''}<td>${r.acc == null ? '—' : Math.round(r.acc * 100) + '%'}</td><td class="s0">${fmtAt(r.at)}</td>${STAGES.map(s => cell(r, s)).join('')}</tr>`).join('') + '</table></div>';
+  if ($('#vw')) { $('#vw').value = view; $('#vw').onchange = () => { view = $('#vw').value; renderProg(); }; }
+  $('#st').value = keep.st; $('#q').value = keep.q;
+  $('#st').onchange = renderProg; $('#q').oninput = () => { renderProg(); const q = $('#q'); q.focus(); q.setSelectionRange(q.value.length, q.value.length); };
+  $('#v-prog').querySelectorAll('tr.rw').forEach(tr => tr.onclick = () => { oneNo = tr.dataset.no; tab = 'one'; render(); });
+  $('#e-prog').onclick = () => download(($('#game').value || '遊戲') + '_班級進度表.csv', toCSV([['班級', '座號', '學號', '姓名', '遊戲內名稱', '練習次數', '練習秒數', '最高分', '整體答對率(%)', '最後更新'].concat(...STAGES.map(s => [stageName(s.id) + ' 星', stageName(s.id) + ' 最高分', stageName(s.id) + ' 次數', stageName(s.id) + ' 答對率(%)', stageName(s.id) + ' 練習秒數'])),
+    ...L.map(r => [r.cls, r.seat || '', r.no, r.name, r.nick, r.played ? r.plays : '', r.played ? r.secs : '', r.best || '', r.acc == null ? '' : Math.round(r.acc * 100), r.at ? new Date(r.at).toLocaleString('zh-TW', {hour12: false}) : ''].concat(...STAGES.map(s => { const x = r.st[s.id]; return x ? [x.bestStars || '', x.bestScore || '', x.plays || '', x.q ? Math.round(x.ok / x.q * 100) : '', x.secs || ''] : ['', '', '', '', '']; })))]));
+}
+
+/* ===== 題型弱點（有 q 欄位的遊戲才有） ===== */
+function qList(rec) { const q = rec && rec.q || {}; return Object.keys(q).map(k => { const v = q[k] || {}; const sid = k.indexOf(':') >= 0 ? k.split(':')[0] : ''; return {k, n: num(v.n), ok: num(v.ok), label: (sid ? stageName(sid) + '・' : '') + String(v.label || v.name || (k.indexOf(':') >= 0 ? k.split(':').slice(1).join(':') : k))}; }).filter(x => x.n > 0); }
+const bar = a => { const c = a < .6 ? 'lo' : a < .8 ? 'mid' : ''; return `<span class="acc ${c}" style="width:${Math.max(2, Math.round(a * 100))}px"></span> ${Math.round(a * 100)}%`; };
+function renderWeak() {
+  const L = list().filter(r => r.played), minN = +($('#minn') && $('#minn').value) || 5;
+  const m = {}; L.forEach(r => qList(r.rec).forEach(x => { const o = m[x.k] || (m[x.k] = {k: x.k, label: x.label, n: 0, ok: 0}); o.n += x.n; o.ok += x.ok; }));
+  const rows = Object.values(m).filter(r => r.n >= minN).map(r => Object.assign(r, {acc: r.ok / r.n})).sort((a, b) => a.acc - b.acc || b.n - a.n);
+  if (!L.length) { $('#v-weak').innerHTML = '<p>還沒有資料。</p>'; return; }
+  if (!Object.keys(m).length) { $('#v-weak').innerHTML = '<p>這款遊戲沒有送「題型」資料（紀錄裡沒有 q 欄位），所以沒有題型弱點可看。</p>'; return; }
+  $('#v-weak').innerHTML = `<div class="bar"><b>各題型答對率（由低到高）</b><label>至少作答 <input type="number" id="minn" min="1" value="${minN}" style="width:5em"> 次才列入</label><button class="b" id="e-weak">⬇️ 匯出 Excel（CSV）</button></div><div class="tw"><table><tr><th class="l">題型</th><th>作答次數</th><th class="l">答對率</th></tr>` +
+    (rows.length ? rows.map(r => `<tr><td class="l">${esc(r.label)}</td><td>${r.n}</td><td class="l">${bar(r.acc)}</td></tr>`).join('') : '<tr><td colspan="3">資料還不夠，請調低「至少作答次數」。</td></tr>') + '</table></div>';
+  $('#minn').onchange = renderWeak;
+  $('#e-weak').onclick = () => download(($('#game').value || '遊戲') + '_題型弱點.csv', toCSV([['題型', '作答次數', '答對次數', '答對率(%)'], ...rows.map(r => [r.label, r.n, r.ok, Math.round(r.acc * 100)])]));
+}
+
+/* ===== 個別學生 ===== */
+function renderOne() {
+  const L = list();
+  if (!L.length) { $('#v-one').innerHTML = '<p>還沒有資料。</p>'; return; }
+  let i = L.findIndex(r => r.no === oneNo); if (i < 0) i = 0; const r = L[i]; oneNo = r.no; const rec = r.rec;
+  let h = `<div class="bar"><label>學生 <select id="who">${L.map((s, k) => `<option value="${k}" ${k === i ? 'selected' : ''}>${esc(s.cls)} ${s.seat || ''} ${esc(s.name || '')}（${esc(s.no)}）${s.played ? '' : '（還沒玩）'}</option>`).join('')}</select></label>`;
+  if (!r.played) return $('#v-one').innerHTML = h + '</div><p>這位同學' + (rec ? '只有登入過，還沒有做過任何題目。' : '還沒有任何紀錄。') + '</p>', bindWho(L);
+  h += `<b>練習 ${r.plays} 次｜共 ${r.secs ? fmtSecs(r.secs) : '—'}${r.best ? '｜最高分 ' + r.best : ''}｜整體答對率 ${r.acc == null ? '—' : Math.round(r.acc * 100) + '%（' + r.ok + '/' + r.q + '）'}</b></div>`;
+  h += `<p>遊戲內名稱：${esc(r.nick) || '—'}　學號：${esc(r.no)}　最後更新：${fmtAt(r.at)}</p>`;
+  const sIds = Object.keys(r.st);
+  if (STAGES.length) {
+    h += '<p><b>各關狀況</b></p><div class="tw"><table><tr><th class="l">關卡</th><th>最高星</th><th>最高分</th><th>練習次數</th><th>答對率</th><th>練習時間</th></tr>';
+    STAGES.forEach(s => { const x = r.st[s.id]; const nm = esc((s.ch ? s.ch + '・' : '') + (s.n || s.id));
+      if (!x) { h += `<tr><td class="l s0">${nm}</td><td class="s0">—</td><td class="s0">—</td><td class="s0">—</td><td class="s0">—</td><td class="s0">—</td></tr>`; return; }
+      const a = x.q ? x.ok / x.q : null;
+      h += `<tr><td class="l">${nm}</td>${x.bestStars ? `<td class="s${Math.min(5, x.bestStars)}">${x.bestStars <= 5 ? '★'.repeat(x.bestStars) : '★' + x.bestStars}</td>` : '<td class="s0">—</td>'}<td>${x.bestScore || '—'}</td><td>${x.plays || '—'}</td><td class="${accCls(a)}">${a == null ? '—' : Math.round(a * 100) + '%（' + x.ok + '/' + x.q + '）'}</td><td>${x.secs ? fmtSecs(x.secs) : '—'}</td></tr>`; });
+    h += '</table></div>';
+  }
+  const wr = qList(rec).filter(x => x.n >= 3).map(x => Object.assign(x, {acc: x.ok / x.n})).sort((a, b) => a.acc - b.acc || b.n - a.n).slice(0, 8);
+  if (qList(rec).length) h += '<p><b>最需要加強的題型（作答 3 次以上）：</b></p>' + (wr.length ? `<div class="tw"><table><tr><th class="l">題型</th><th>作答次數</th><th class="l">答對率</th></tr>${wr.map(x => `<tr><td class="l">${esc(x.label)}</td><td>${x.n}</td><td class="l">${bar(x.acc)}</td></tr>`).join('')}</table></div>` : '<p>這位同學的作答資料還不夠。</p>');
+  $('#v-one').innerHTML = h; bindWho(L);
+}
+function bindWho(L) { const w = $('#who'); if (w) w.onchange = () => { oneNo = L[+w.value].no; renderOne(); }; }
+
+/* ===== 切換、事件 ===== */
+function render() {
+  ({prog: renderProg, weak: renderWeak, one: renderOne})[tab]();
+  ['prog', 'weak', 'one'].forEach(t => $('#v-' + t).classList.toggle('hide', t !== tab));
+  document.querySelectorAll('[data-t]').forEach(b => b.classList.toggle('on', b.dataset.t === tab));
+}
+document.querySelectorAll('[data-t]').forEach(b => b.onclick = () => { tab = b.dataset.t; render(); });
+$('#cls').onchange = render;
+$('#grade').onchange = () => { put(LS.grade, $('#grade').value || 'ALL'); $('#cls').value = ''; fillSelects(); render(); };
+$('#game').onchange = loadGame;
+$('#save').onclick = () => { put(LS.url, $('#url').value.trim()); put(LS.tok, $('#tok').value.trim()); $('#set').open = false; loadGames(); };
+$('#reload').onclick = () => { if ($('#game').value) loadGame(); else loadGames(); };
+$('#clr').onclick = () => { if (!confirm('確定清除這台電腦存的名單、網址和密碼嗎？')) return; [LS.url, LS.tok, LS.rost, LS.grade, LS.game, COMPAT.url, COMPAT.rost].forEach(k => { try { localStorage.removeItem(k); } catch (e) {} }); location.reload(); };
+
+$('#url').value = get(LS.url) || get(COMPAT.url); $('#tok').value = get(LS.tok);
+loadRoster(); build(); render();
+if ($('#url').value && $('#tok').value) loadGames(); else $('#set').open = true;
+</script>
+</body>
+</html>
