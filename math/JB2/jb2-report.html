@@ -60,6 +60,7 @@ td.sub{font-size:.75rem;opacity:.8}
 </div>
 
 <div class="bar">
+  <label>年級 <select id="grade"></select></label>
   <label>班級 <select id="cls"></select></label>
   <button class="b on" data-t="prog">班級進度表</button>
   <button class="b" data-t="weak">題型弱點</button>
@@ -79,7 +80,7 @@ td.sub{font-size:.75rem;opacity:.8}
 <script src="xlsx.full.min.js"></script>
 <script>
 const GC = window.GAME_CONFIG || {chapters: []};
-const LS = {url: 'jb2rep-url', tok: 'jb2rep-token', rost: 'jb2rep-roster'};
+const LS = {url: 'jb2rep-url', tok: 'jb2rep-token', rost: 'jb2rep-roster', grade: 'jb2rep-grade'};
 const DEFAULT_URL = '';
 const LAB = window.JB2_LABELS || {};
 const MODE = {easy: '練兵', real: '實戰', hard: '修羅', end: '無極限'};
@@ -138,12 +139,27 @@ async function loadData() {
 }
 
 /* ===== 組表 ===== */
+/* 年級：由班級名稱前兩個字判斷（初一孝→初一、高二忠→高二）；不是這種格式的歸「其他」；名單外的學號歸「名單外」 */
+const GORDER = ['初一', '初二', '初三', '高一', '高二', '高三'];
+const gradeOf = c => c === '名單外' ? '名單外' : (/^[初高][一二三]/.test(c) ? c.slice(0, 2) : '其他');
+const gRank = g => { const i = GORDER.indexOf(g); return i >= 0 ? i : g === '其他' ? 90 : 99; };
+let gradeInit = false;
+function fillSelects() {
+  const gs = [...new Set(ROWS.map(r => r.grade))].sort((a, b) => gRank(a) - gRank(b));
+  let g = $('#grade').value;
+  if (!gradeInit && ROWS.length) { gradeInit = true; const sv = get(LS.grade); g = sv === 'ALL' ? '' : gs.includes(sv) ? sv : (gs.includes('初一') ? '初一' : ''); }
+  $('#grade').innerHTML = '<option value="">全部年級</option>' + gs.map(x => `<option value="${esc(x)}">${esc(x)}</option>`).join('');
+  $('#grade').value = gs.includes(g) ? g : '';
+  const cur = $('#cls').value, cs = [...new Set(ROWS.filter(r => !$('#grade').value || r.grade === $('#grade').value).map(r => r.cls))];
+  $('#cls').innerHTML = '<option value="">' + (GORDER.includes($('#grade').value) ? '全' + $('#grade').value + '各班' : '全部班級') + '</option>' + cs.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join('');
+  $('#cls').value = cs.includes(cur) ? cur : '';
+}
 function mk(r, j) {
   const st = j ? j.stages || {} : {};
   let q = 0, ok = 0; Object.keys(st).forEach(k => { q += st[k].totalQ || 0; ok += st[k].totalOk || 0; });
   /* 「已玩」＝練習次數大於 0，或有作答過題目；只是登入過、什麼都沒做的人算「還沒玩」 */
   const plays = j ? (j.totalPlays || 0) : 0, played = !!j && (plays > 0 || q > 0 || Object.keys(st).some(k => (st[k].plays || 0) > 0));
-  return {cls: r.cls, seat: r.seat, no: r.no, name: r.name, hero: j ? (j.hero || '') : '', played, j, st,
+  return {cls: r.cls, grade: gradeOf(r.cls), seat: r.seat, no: r.no, name: r.name, hero: j ? (j.hero || '') : '', played, j, st,
     stars: j ? (j.totalStars || 0) : 0, plays: j ? (j.totalPlays || 0) : 0, secs: secsOf(j), acc: q ? ok / q : null, at: j ? (j._at || 0) : 0};
 }
 function build() {
@@ -152,11 +168,9 @@ function build() {
   Object.keys(DATA).forEach(no => { if (!seen.has(no)) rows.push(mk({cls: '名單外', seat: 0, no, name: ''}, DATA[no])); });
   rows.sort((a, b) => (a.cls > b.cls ? 1 : a.cls < b.cls ? -1 : 0) || a.seat - b.seat || (a.no > b.no ? 1 : -1));
   ROWS = rows;
-  const cs = [...new Set(rows.map(r => r.cls))], cur = $('#cls').value;
-  $('#cls').innerHTML = '<option value="">全部班級</option>' + cs.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join('');
-  if (cs.includes(cur)) $('#cls').value = cur;
+  fillSelects();
 }
-const list = () => ROWS.filter(r => !$('#cls').value || r.cls === $('#cls').value);
+const list = () => ROWS.filter(r => (!$('#grade').value || r.grade === $('#grade').value) && (!$('#cls').value || r.cls === $('#cls').value));
 
 /* ===== 班級進度表 ===== */
 function cell(r, s) {
@@ -166,13 +180,18 @@ function cell(r, s) {
   if (view === 'time') { const t = x ? x.pSecs || 0 : 0; return t ? `<td class="t${t < 300 ? 1 : t < 900 ? 2 : 3}" title="${fmtSecs(t)}">${fmtShort(t)}</td>` : '<td class="s0">—</td>'; }
   const p = x ? x.plays || 0 : 0; return p ? `<td class="t${p < 3 ? 1 : p < 6 ? 2 : 3}">${p}</td>` : '<td class="s0">—</td>';
 }
+function classChips(all) {
+  if (!$('#grade').value || $('#cls').value) return '';
+  const m = {}; all.forEach(r => { const o = m[r.cls] || (m[r.cls] = {n: 0, p: 0}); o.n++; if (r.played) o.p++; });
+  return Object.keys(m).map(c => `<span class="chip">${esc(c)} 已玩 <b>${m[c].p}</b>／${m[c].n}</span>`).join('');
+}
 function renderProg() {
   const L = list().filter(r => ($('#st') ? $('#st').value : '') === 'p' ? r.played : ($('#st') && $('#st').value === 'n' ? !r.played : true))
     .filter(r => { const q = ($('#q') ? $('#q').value.trim().toLowerCase() : ''); return !q || (r.name + r.no + r.hero).toLowerCase().includes(q); });
   const keep = {st: $('#st') ? $('#st').value : '', q: $('#q') ? $('#q').value : ''};
   const all = list(), played = all.filter(r => r.played), avg = played.length ? played.reduce((a, r) => a + r.stars, 0) / played.length : 0;
   if (!all.length) { $('#v-prog').innerHTML = '<p>還沒有資料。請先到上方「設定」填入網址與密碼、匯入名單，再按「儲存並載入」。</p>'; return; }
-  $('#v-prog').innerHTML = `<div class="chips"><span class="chip">共 <b>${all.length}</b> 位</span><span class="chip">已玩 <b>${played.length}</b></span><span class="chip">還沒玩 <b>${all.length - played.length}</b></span><span class="chip">已玩者平均 <b>${avg.toFixed(1)}</b> 顆星</span></div>
+  $('#v-prog').innerHTML = `<div class="chips"><span class="chip">共 <b>${all.length}</b> 位</span><span class="chip">已玩 <b>${played.length}</b></span><span class="chip">還沒玩 <b>${all.length - played.length}</b></span><span class="chip">已玩者平均 <b>${avg.toFixed(1)}</b> 顆星</span>${classChips(all)}</div>
   <div class="bar"><label>每格顯示 <select id="vw"><option value="stars">⭐ 星數</option><option value="acc">🎯 答對率</option><option value="time">⏱️ 練習時間</option><option value="plays">🔁 練習次數</option></select></label>
   <label>狀態 <select id="st"><option value="">全部</option><option value="p">已玩</option><option value="n">還沒玩</option></select></label>
   <input type="text" id="q" placeholder="搜尋姓名／學號／勇者名" style="flex:0 1 220px"><button class="b" id="e-prog">⬇️ 匯出 Excel（CSV）</button></div>
@@ -230,6 +249,7 @@ function render() {
 }
 document.querySelectorAll('[data-t]').forEach(b => b.onclick = () => { tab = b.dataset.t; render(); });
 $('#cls').onchange = render;
+$('#grade').onchange = () => { put(LS.grade, $('#grade').value || 'ALL'); $('#cls').value = ''; fillSelects(); render(); };
 $('#save').onclick = () => { put(LS.url, $('#url').value.trim()); put(LS.tok, $('#tok').value.trim()); $('#set').open = false; loadData(); };
 $('#reload').onclick = loadData;
 $('#clr').onclick = () => { if (!confirm('確定清除這台電腦存的名單、網址和密碼嗎？')) return; [LS.url, LS.tok, LS.rost].forEach(k => { try { localStorage.removeItem(k); } catch (e) {} }); location.reload(); };
