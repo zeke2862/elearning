@@ -649,6 +649,13 @@ let waveTimer = 0;
 let waveEnemyCount = 0;
 let spawnedThisWave = 0;
 let waveDone = false;
+// 波次／大軍（參考末日生存）：每關先是 45 秒一般波次，清完場上的怪後進入 10 秒「大軍」，
+// 大軍清完才算過關。
+let wavePhase = 'NORMAL';   // 'NORMAL' | 'HORDE'
+let phaseTimer = 45000;     // 這一段還剩幾毫秒可以出怪
+let introTimer = 0;         // 大軍來襲的過場（這段時間不出怪）
+let bannerText = '';
+let bannerTimer = 0;
 let frameCount = 0;
 let lastTime = 0;
 let nebulaCanvas = null;
@@ -681,13 +688,46 @@ function initStars() {
 }
 initStars();
 
+// ── 圖片（沿用華文生字射擊的勇者與衛兵）與特效 ──────────────
+const heroSprite = new Image(); heroSprite.src = 'assets/hero-pixel.png';
+const guardSprite = new Image(); guardSprite.src = 'assets/guard-pixel.png';
+const _tintCache = {};
+function tinted(img, color) {   // 把圖片染成單一顏色（受傷變紅、被打到閃白）
+  const k = color + '|' + img.src;
+  let c = _tintCache[k];
+  if (!c) {
+    c = document.createElement('canvas'); c.width = img.naturalWidth; c.height = img.naturalHeight;
+    const g = c.getContext('2d'); g.drawImage(img, 0, 0);
+    g.globalCompositeOperation = 'source-atop'; g.fillStyle = color; g.fillRect(0, 0, c.width, c.height);
+    _tintCache[k] = c;
+  }
+  return c;
+}
+const fxSlashes = [];   // 劍氣斬擊
+const fxDying = [];     // 倒下的衛兵
+let fxShake = 0, fxHurt = 0;   // 畫面震動、受傷紅光
+function sfx(n) { try { window.ZFX && ZFX.sfx(n); } catch (e) {} }
+function fxSlash(x, y) { fxSlashes.push({ x, y, life: 1, ang: -Math.PI / 2 + (Math.random() - 0.5) * 1.2 }); }
+function fxSpark(x, y, n) {
+  for (let i = 0; i < n; i++) {
+    const a = Math.random() * Math.PI * 2, sp = Math.random() * 3 + 1;
+    particles.push({ x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 1, life: 1, decay: 0.05, size: Math.random() * 2.5 + 1, color: '#ffd35a' });
+  }
+}
+function fxHurtHero() {
+  fxShake = 12; fxHurt = 1;
+  scoreFloaters.push({ x: ship.cx, y: ship.cy - 90, val: '-1 ❤', life: 1, rgb: '255,90,110' });
+  sfx('hurt');
+}
+
 // ── Player Ship ────────────────────────────────
 const ship = {
   x: 0, y: 0,
   w: 18, h: 26,
   thrustAnim: 0,
   shieldFlash: 0,
-  get cx() { return canvas.width / 2; },
+  attack: 0,
+  get cx() { return canvas.width / 2 - Math.min(200, canvas.width * 0.22); },   // 勇者站在輸入框左邊，不被擋住
   get cy() { return canvas.height - (showKeyboard ? 220 : 80); }
 };
 
@@ -706,6 +746,8 @@ class Enemy {
     this.wobbleSpeed = Math.random() * 0.02 + 0.008;
     this.id = Math.random();
     this.glowPulse = Math.random() * Math.PI * 2;
+    this.hit = 0;           // 被打到時閃白、晃動
+    this.spriteH = 72;      // 衛兵圖片高度
   }
 
   calcSpeed() {
@@ -735,51 +777,36 @@ class Enemy {
     const glow = this.isLocked ? 1 : 0.5 + 0.25 * Math.sin(this.glowPulse);
     const alpha = this.isLocked ? 1 : 0.85;
 
-    // Engine trail
-    for (let i = 0; i < 3; i++) {
-      const trail = this.size * (0.3 - i * 0.07);
-      const trailAlpha = (0.25 - i * 0.07) * alpha;
-      const grad = ctx.createRadialGradient(wx, wy + this.size * 0.5 + i * 6, 0, wx, wy + this.size * 0.5 + i * 6, trail * 3);
-      grad.addColorStop(0, `rgba(255, 80, 120, ${trailAlpha})`);
-      grad.addColorStop(1, 'transparent');
-      ctx.beginPath();
-      ctx.arc(wx, wy + this.size * 0.5 + i * 6, trail * 3, 0, Math.PI * 2);
-      ctx.fillStyle = grad;
-      ctx.fill();
-    }
+    const h = this.spriteH, w = h * 0.528;
+    this.hit = Math.max(0, this.hit - 0.08);
+    const walk = Math.sin(this.wobble * 6) * 2;                 // 走路上下晃
+    const shake = this.hit * (Math.random() - 0.5) * 7;         // 被打到時左右抖動
 
-    // Ship body glow
-    const bodyGlow = ctx.createRadialGradient(wx, wy, 0, wx, wy, this.size * 2.5 * glow);
-    bodyGlow.addColorStop(0, `rgba(255, 60, 100, ${0.3 * glow})`);
-    bodyGlow.addColorStop(1, 'transparent');
-    ctx.beginPath();
-    ctx.arc(wx, wy, this.size * 2.5, 0, Math.PI * 2);
-    ctx.fillStyle = bodyGlow;
-    ctx.fill();
-
-    // Ship body
+    // 腳下的光圈（鎖定目標時變金色）
     ctx.save();
-    ctx.translate(wx, wy);
+    ctx.globalAlpha = this.isLocked ? 0.95 : 0.3 + 0.18 * glow;
     ctx.beginPath();
-    ctx.moveTo(0, this.size);
-    ctx.lineTo(-this.size * 0.7, -this.size * 0.6);
-    ctx.lineTo(0, -this.size * 0.3);
-    ctx.lineTo(this.size * 0.7, -this.size * 0.6);
-    ctx.closePath();
-    const fillGrad = ctx.createLinearGradient(0, -this.size, 0, this.size);
-    fillGrad.addColorStop(0, `rgba(255,80,110,${0.95 * alpha})`);
-    fillGrad.addColorStop(1, `rgba(180,20,50,${0.7 * alpha})`);
-    ctx.fillStyle = fillGrad;
+    ctx.ellipse(wx, wy + h * 0.42, w * 0.58, 7, 0, 0, Math.PI * 2);
+    ctx.fillStyle = this.isLocked ? 'rgba(255,195,78,0.4)' : 'rgba(226,137,70,0.25)';
     ctx.fill();
-    ctx.strokeStyle = this.isLocked ? `rgba(255,200,200,0.9)` : `rgba(255,100,130,0.5)`;
-    ctx.lineWidth = this.isLocked ? 1.5 : 0.8;
-    ctx.stroke();
+    if (this.isLocked) {
+      ctx.beginPath(); ctx.arc(wx, wy, h * 0.58, 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(255,211,112,0.75)'; ctx.lineWidth = 2; ctx.stroke();
+    }
+    ctx.restore();
 
-    // Core dot
-    ctx.beginPath();
-    ctx.arc(0, 0, 3, 0, Math.PI * 2);
-    ctx.fillStyle = `rgba(255,200,200,${0.8 * alpha})`;
-    ctx.fill();
+    ctx.save();
+    if (guardSprite.complete && guardSprite.naturalWidth) {
+      ctx.imageSmoothingEnabled = false;
+      ctx.globalAlpha = this.isLocked ? 1 : 0.92;
+      ctx.drawImage(guardSprite, wx - w / 2 + shake, wy - h / 2 + walk, w, h);
+      if (this.hit > 0) {
+        ctx.globalAlpha = Math.min(1, this.hit * 0.85);
+        ctx.drawImage(tinted(guardSprite, '#ffffff'), wx - w / 2 + shake, wy - h / 2 + walk, w, h);
+      }
+    } else {
+      ctx.fillStyle = '#9a7550'; ctx.fillRect(wx - 14, wy - 18, 28, 36);
+    }
     ctx.restore();
 
     // Word label
@@ -792,7 +819,7 @@ class Enemy {
     ctx.font = `${this.isLocked ? '700' : '600'} ${fontSize}px 'Orbitron', monospace`;
     const totalW = ctx.measureText(this.word).width;
     const lx = wx - totalW / 2;
-    const ly = wy - this.size - 12;
+    const ly = wy - this.spriteH / 2 - 6;
 
     // Background pill
     const padX = 10;
@@ -838,7 +865,7 @@ class Enemy {
     const label = chineseDisplayLabel(this);
     const totalW = ctx.measureText(label).width;
     const lx = wx - totalW / 2;
-    const ly = wy - this.size - 12;
+    const ly = wy - this.spriteH / 2 - 6;
 
     const padX = 10, padY = 6;
     const bgW = totalW + padX * 2;
@@ -871,7 +898,7 @@ class Enemy {
 // ── Bullet Class ───────────────────────────────
 class Bullet {
   constructor(tx, ty) {
-    this.x = canvas.width / 2;
+    this.x = ship.cx;
     this.y = ship.cy;
     this.tx = tx;
     this.ty = ty;
@@ -882,6 +909,8 @@ class Bullet {
     this.vy = (dy / dist) * 14;
     this.life = 1;
     this.trail = [];
+    ship.attack = 1;      // 勇者揮劍
+    sfx('shoot');
   }
 
   update() {
@@ -899,12 +928,12 @@ class Bullet {
       const t = i / this.trail.length;
       ctx.beginPath();
       ctx.arc(this.trail[i].x, this.trail[i].y, 2 * t, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(0,245,255,${t * 0.6})`;
+      ctx.fillStyle = `rgba(255,205,80,${t * 0.7})`;
       ctx.fill();
     }
     const grad = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, 5);
     grad.addColorStop(0, '#ffffff');
-    grad.addColorStop(0.4, '#00f5ff');
+    grad.addColorStop(0.4, '#ffc94d');
     grad.addColorStop(1, 'transparent');
     ctx.beginPath();
     ctx.arc(this.x, this.y, 5, 0, Math.PI * 2);
@@ -983,78 +1012,95 @@ function updateParticles(dt) {
 
 // ── Ship Drawing ───────────────────────────────
 function drawShip() {
-  const cx = canvas.width / 2;
+  const cx = ship.cx;
   const cy = ship.cy;
-  ship.thrustAnim += 0.15;
+  ship.thrustAnim += 0.1;
+  const h = Math.max(84, Math.min(120, canvas.height * 0.14)), w = h * 0.879;
+  const bob = Math.sin(ship.thrustAnim) * 2;
+  const heroY = cy + 18 - h / 2;   // 勇者的腳踩在底線上（螢幕鍵盤不會擋到）
+  const atk = ship.attack = Math.max(0, (ship.attack || 0) - 0.1);
+  const hurt = Math.max(0, ship.shieldFlash);
 
-  // Engine glow
-  for (let i = 0; i < 3; i++) {
-    const glowR = (12 + Math.sin(ship.thrustAnim + i) * 5) * (1 - i * 0.25);
-    const g = ctx.createRadialGradient(cx, cy + 20 + i * 8, 0, cx, cy + 20 + i * 8, glowR * 2);
-    g.addColorStop(0, `rgba(0,180,255,${0.5 - i * 0.13})`);
-    g.addColorStop(1, 'transparent');
-    ctx.beginPath();
-    ctx.arc(cx, cy + 20 + i * 8, glowR * 2, 0, Math.PI * 2);
-    ctx.fillStyle = g;
-    ctx.fill();
-  }
+  // 腳下光圈：平常金色、受傷時變紅
+  ctx.save();
+  const gy = heroY + h * 0.42;
+  const glow = ctx.createRadialGradient(cx, gy, 3, cx, gy, w * 0.75);
+  glow.addColorStop(0, hurt > 0 ? `rgba(255,70,90,${0.2 + hurt * 0.35})` : `rgba(255,199,83,${0.14 + atk * 0.3})`);
+  glow.addColorStop(1, 'rgba(255,199,83,0)');
+  ctx.fillStyle = glow;
+  ctx.beginPath(); ctx.ellipse(cx, gy, w * 0.75, 16, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
 
   ctx.save();
-  ctx.translate(cx, cy);
+  ctx.translate(cx + hurt * (Math.random() - 0.5) * 12, heroY + bob - atk * 14);   // 攻擊時往前衝一下、受傷時抖動
+  ctx.scale(1 + atk * 0.1, 1 + atk * 0.1);
+  if (heroSprite.complete && heroSprite.naturalWidth) {
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(heroSprite, -w / 2, -h / 2, w, h);
+    if (hurt > 0) {
+      ctx.globalAlpha = Math.min(0.75, hurt * 0.8);
+      ctx.drawImage(tinted(heroSprite, '#ff2244'), -w / 2, -h / 2, w, h);
+    }
+  } else {
+    ctx.fillStyle = '#d9e4eb'; ctx.fillRect(-18, -30, 36, 60);
+  }
+  ctx.restore();
 
-  // Body
-  ctx.beginPath();
-  ctx.moveTo(0, -26);
-  ctx.lineTo(-12, 10);
-  ctx.lineTo(-5, 5);
-  ctx.lineTo(0, 14);
-  ctx.lineTo(5, 5);
-  ctx.lineTo(12, 10);
-  ctx.closePath();
-  const bodyGrad = ctx.createLinearGradient(0, -26, 0, 14);
-  bodyGrad.addColorStop(0, '#60e8ff');
-  bodyGrad.addColorStop(0.5, '#00a8d4');
-  bodyGrad.addColorStop(1, '#003a5c');
-  ctx.fillStyle = bodyGrad;
-  ctx.fill();
-  ctx.strokeStyle = 'rgba(0,245,255,0.6)';
-  ctx.lineWidth = 1;
-  ctx.stroke();
+  // 揮劍的弧光
+  if (atk > 0.2) {
+    ctx.save();
+    ctx.globalAlpha = atk * 0.8;
+    ctx.strokeStyle = '#ffe9a0'; ctx.lineWidth = 3 + atk * 3;
+    ctx.beginPath(); ctx.arc(cx - w * 0.15, heroY - h * 0.12, h * 0.5, -Math.PI * 0.95, -Math.PI * (0.95 - 0.6 * (1 - atk) * 2 - 0.2)); ctx.stroke();
+    ctx.restore();
+  }
 
-  // Cockpit
-  ctx.beginPath();
-  ctx.ellipse(0, -12, 4, 7, 0, 0, Math.PI * 2);
-  ctx.fillStyle = 'rgba(0,245,255,0.5)';
-  ctx.fill();
-
-  // Wings
-  ctx.beginPath();
-  ctx.moveTo(-12, 10);
-  ctx.lineTo(-22, 18);
-  ctx.lineTo(-14, 8);
-  ctx.closePath();
-  ctx.fillStyle = 'rgba(0,120,200,0.8)';
-  ctx.fill();
-
-  ctx.beginPath();
-  ctx.moveTo(12, 10);
-  ctx.lineTo(22, 18);
-  ctx.lineTo(14, 8);
-  ctx.closePath();
-  ctx.fillStyle = 'rgba(0,120,200,0.8)';
-  ctx.fill();
-
-  // Shield flash
+  // 受傷：紅色護盾圈
   if (ship.shieldFlash > 0) {
     ctx.beginPath();
-    ctx.arc(0, 0, 36, 0, Math.PI * 2);
+    ctx.arc(cx, heroY, h * 0.62, 0, Math.PI * 2);
     ctx.strokeStyle = `rgba(255, 80, 120, ${ship.shieldFlash})`;
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 3;
     ctx.stroke();
     ship.shieldFlash -= 0.06;
   }
+}
 
-  ctx.restore();
+// 其他特效：劍氣斬擊、倒下的衛兵、受傷時的紅色暈光
+function drawFx() {
+  for (let i = fxSlashes.length - 1; i >= 0; i--) {
+    const f = fxSlashes[i];
+    f.life -= 0.07;
+    if (f.life <= 0) { fxSlashes.splice(i, 1); continue; }
+    ctx.save();
+    ctx.globalAlpha = f.life; ctx.strokeStyle = '#fff3b0'; ctx.shadowColor = '#ffb62e'; ctx.shadowBlur = 12;
+    ctx.lineWidth = 5 * f.life + 1;
+    const r = 18 + (1 - f.life) * 26;
+    ctx.beginPath(); ctx.arc(f.x, f.y, r, f.ang - 1, f.ang + 1); ctx.stroke();
+    ctx.beginPath(); ctx.arc(f.x, f.y, r * 0.65, f.ang - 0.8, f.ang + 0.8); ctx.stroke();
+    ctx.restore();
+  }
+  for (let i = fxDying.length - 1; i >= 0; i--) {
+    const d = fxDying[i];
+    d.t += 0.045; d.y += 1.2 + d.t * 3; d.x += d.vx;
+    if (d.t >= 1) { fxDying.splice(i, 1); continue; }
+    const h = d.h, w = h * 0.528;
+    if (!(guardSprite.complete && guardSprite.naturalWidth)) continue;
+    ctx.save();
+    ctx.translate(d.x, d.y); ctx.rotate(d.rot * d.t);
+    ctx.imageSmoothingEnabled = false;
+    ctx.globalAlpha = 1 - d.t;
+    ctx.drawImage(guardSprite, -w / 2, -h / 2, w, h);
+    ctx.globalAlpha = (1 - d.t) * Math.min(1, 1.4 - d.t);
+    ctx.drawImage(tinted(guardSprite, '#ffffff'), -w / 2, -h / 2, w, h);
+    ctx.restore();
+  }
+  if (fxHurt > 0) {
+    const g = ctx.createRadialGradient(canvas.width / 2, canvas.height / 2, Math.min(canvas.width, canvas.height) * 0.35, canvas.width / 2, canvas.height / 2, Math.max(canvas.width, canvas.height) * 0.75);
+    g.addColorStop(0, 'rgba(255,0,40,0)'); g.addColorStop(1, `rgba(255,0,40,${fxHurt * 0.45})`);
+    ctx.fillStyle = g; ctx.fillRect(0, 0, canvas.width, canvas.height);
+    fxHurt -= 0.04;
+  }
 }
 
 // ── Background ─────────────────────────────────
@@ -1112,30 +1158,58 @@ function waveEnemyCount_(w) {
   return Math.min(4 + w * 2, 20);
 }
 
+function showBanner(text, ms) {
+  bannerText = text;
+  bannerTimer = ms;
+}
+
 function startWave() {
-  waveEnemyCount = waveEnemyCount_(wave);
+  wavePhase = 'NORMAL';
+  phaseTimer = 45000;
+  introTimer = 0;
+  waveEnemyCount = Infinity;      // 不再用「這關總共幾隻」，改用時間：45 秒一般 + 10 秒大軍
   spawnedThisWave = 0;
   waveTimer = 0;
   waveDone = false;
+  showBanner(`第 ${wave} 關`, 1800);
+  sfx('wave');
+  try { window.ZFX && ZFX.setIntense(false); } catch (e) {}
 }
 
+// 打得快要有好處（否則出怪速度固定，打得快的人只是比較早閒下來）：
+//  1. 場上沒有怪時，下一隻很快就出現（idleSpawnMs 毫秒內），打得快的人單位時間內能打更多怪
+//  2. 越早打掉怪（怪越靠近畫面上方）分數越高，最多多 bonusMax 倍
+// idleSpawnMs 設 0、bonusMax 設 0 就回到原本的算法。
+const SPEED_REWARD = { idleSpawnMs: 700, bonusMax: 0.5 };
+
 function getSpawnInterval() {
-  if (category === 'chinese' && mode === 'expert') {
-    // 中文專家模式：一開始敵人出現的間隔拉長（畫面上同時存在的敵人較少），
-    // 隨關卡數增加逐漸縮短間隔（同時出現的敵人變多）
-    const base = 3200;
-    return Math.max(base - wave * 180, 1000);
-  }
-  const base = mode === 'expert' ? 1500 : 2500;
-  return Math.max(base - wave * 120, mode === 'expert' ? 500 : 700);
+  // 出怪間隔：每過一關約快 8%（同末日生存），並設下限；大軍時再快 25%
+  let base, floor;
+  if (category === 'chinese' && mode === 'expert') { base = 3200; floor = 1000; }   // 中文專家：一開始間隔拉長
+  else if (mode === 'expert') { base = 1500; floor = 700; }
+  else { base = 2500; floor = 1000; }
+  const v = Math.max(base * Math.pow(0.92, wave - 1), floor);
+  return wavePhase === 'HORDE' ? v * 0.75 : v;
+}
+
+// 同時在場的怪物上限（參考末日生存）：一開始只有 2 隻，每過一關多 1 隻，最多 5 隻。
+// 以前只看「這一關總共要出幾隻」，玩家打得慢時，整關的怪會一次全部擠在畫面上。
+function getMaxConcurrent() {
+  return Math.min((wavePhase === 'HORDE' ? 3 : 2) + (wave - 1), 5);   // 大軍時上限多 1 隻
 }
 
 function trySpawn(dt) {
-  if (spawnedThisWave >= waveEnemyCount) return;
+  if (bannerTimer > 0) bannerTimer -= dt * 1000;
+  if (introTimer > 0) { introTimer -= dt * 1000; return; }   // 大軍來襲過場：先不出怪
+  if (phaseTimer <= 0) return;                                // 這一段時間到了：不再出怪，等場上清空
+  phaseTimer -= dt * 1000;
   waveTimer += dt * 1000;
+  if (SPEED_REWARD.idleSpawnMs > 0 && enemies.length === 0) {
+    waveTimer = Math.max(waveTimer, getSpawnInterval() - SPEED_REWARD.idleSpawnMs);   // 場上清空 → 很快再出怪
+  }
   if (waveTimer >= getSpawnInterval()) {
-    waveTimer -= getSpawnInterval();
-    spawnEnemy();
+    waveTimer = 0;                                   // 計時重來（不累積）
+    if (enemies.length < getMaxConcurrent()) spawnEnemy();   // 場上已滿就先等下一次
   }
 }
 
@@ -1260,6 +1334,7 @@ function demoInvincible() { return !!(window.KeyagentDemo && KeyagentDemo.opt('i
 function chineseWrongAnswer() {
   if (!demoInvincible()) lives--;
   ship.shieldFlash = 1;
+  fxHurtHero();
   updateHUD();
   if (lives <= 0) gameOver();
 }
@@ -1440,6 +1515,7 @@ window.addEventListener('keydown', e => {
       const ey = lockedTarget.y;
       bullets.push(new Bullet(ex, ey));
       spawnLetterPop(ex, ey - 25, ch);
+      lockedTarget.hit = 1; fxSpark(ex, ey, 6);   // 被打到：閃白＋火花
 
       if (lockedTarget.typed >= lockedTarget.word.length) {
         destroyEnemy(lockedTarget);
@@ -1455,6 +1531,7 @@ window.addEventListener('keydown', e => {
 });
 
 function wrongKey() {
+  sfx('wrong');
   ctx.fillStyle = 'rgba(255,0,50,0.08)';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 }
@@ -1462,10 +1539,15 @@ function wrongKey() {
 function destroyEnemy(en) {
   const ex = en.x + Math.sin(en.wobble) * en.wobbleAmp;
   const ey = en.y;
-  spawnExplosion(ex, ey, '#ff4466');
-  if (en.word.length > 8) spawnExplosion(ex, ey, '#ff9933');
+  spawnExplosion(ex, ey, '#ffb62e');
+  if (en.word.length > 8) spawnExplosion(ex, ey, '#ff7a3d');
+  fxSlash(ex, ey); fxSpark(ex, ey, 10); sfx('kill');
+  fxDying.push({ x: ex, y: ey, t: 0, vx: (Math.random() - 0.5) * 2, rot: (Math.random() - 0.5) * 1.4, h: en.spriteH || 72 });
 
-  let wordScore = en.word.length * 10 * wave;
+  // 越早打掉越高分：怪在畫面上方（還很遠）最多 +bonusMax，貼近底線時沒有加成
+  const bottomLine = ship.cy + 15;
+  const earlyFrac = Math.max(0, Math.min(1, 1 - en.y / bottomLine));
+  let wordScore = Math.round(en.word.length * 10 * wave * (1 + SPEED_REWARD.bonusMax * earlyFrac));
   // Keyboard hidden bonus: ×5 for all modes and categories.
   if (!showKeyboard) {
     wordScore = Math.round(wordScore * 5);
@@ -1490,8 +1572,8 @@ function drawFloaters() {
     f.life -= 0.025;
     if (f.life <= 0) { scoreFloaters.splice(i, 1); continue; }
     ctx.font = `bold 18px 'Orbitron', monospace`;
-    ctx.fillStyle = `rgba(255,215,0,${f.life})`;
-    ctx.shadowColor = 'rgba(255,215,0,0.7)';
+    ctx.fillStyle = `rgba(${f.rgb || '255,215,0'},${f.life})`;
+    ctx.shadowColor = `rgba(${f.rgb || '255,215,0'},0.7)`;
     ctx.shadowBlur = 8;
     ctx.fillText(f.val, f.x, f.y);
     ctx.shadowBlur = 0;
@@ -1502,7 +1584,8 @@ function drawFloaters() {
 function enemyReached(en) {
   if (!demoInvincible()) lives--;
   ship.shieldFlash = 1;
-  spawnExplosion(canvas.width / 2, ship.cy, '#ff0055');
+  fxHurtHero();
+  spawnExplosion(ship.cx, ship.cy, '#ff0055');
 
   enemies.splice(enemies.indexOf(en), 1);
   if (lockedTarget === en) { lockedTarget = null; typedSoFar = ''; }
@@ -1557,6 +1640,7 @@ function startGame(resume = false) {
   }
   resumeInfo = null;
   state = STATE.PLAYING;
+  try { fxSlashes.length = 0; fxDying.length = 0; fxShake = 0; fxHurt = 0; window.ZFX && (ZFX.unlock(), ZFX.bgmStart()); } catch (e) {}
   maxLives = category === 'chinese' ? 5 : 3;
   score = 0; wave = 1; lives = maxLives; killCount = 0;
   totalKeystrokes = 0; correctKeystrokes = 0;
@@ -1608,11 +1692,13 @@ function startGame(resume = false) {
 
 function pauseGame() {
   state = STATE.PAUSED;
+  try { window.ZFX && ZFX.bgmPause(); } catch (e) {}
   showScreen('pauseScreen');
 }
 
 function resumeGame() {
   state = STATE.PLAYING;
+  try { window.ZFX && ZFX.bgmResume(); } catch (e) {}
   hideAllScreens();
 }
 
@@ -1674,6 +1760,8 @@ function gameOver() {
   const restartBtn = document.getElementById('restartBtn');
   if (contBtn) contBtn.style.display = resumeInfo ? '' : 'none';
   if (restartBtn) restartBtn.textContent = resumeInfo ? '重頭開始' : '再玩一次';
+  try { window.ZFX && ZFX.bgmStop(); } catch (e) {}
+  sfx('over');
   const acc = totalKeystrokes > 0 ? Math.round((correctKeystrokes / totalKeystrokes) * 100) : 0;
   document.getElementById('finalScore').textContent = score.toLocaleString();
   document.getElementById('finalWave').textContent = wave;
@@ -1755,14 +1843,14 @@ function buildArticleList() {
   if (!container || typeof CHINESE_ARTICLES === 'undefined') return;
   container.innerHTML = '';
   for (const art of CHINESE_ARTICLES) {
-    selectedArticleIds.add(art.id); // 預設全選
+    // 文章類預設不勾選，讓學生自己選要練習的內容
 
     const label = document.createElement('label');
-    label.className = 'article-item checked';
+    label.className = 'article-item';
 
     const input = document.createElement('input');
     input.type = 'checkbox';
-    input.checked = true;
+    input.checked = false;
     input.addEventListener('change', () => {
       if (input.checked) selectedArticleIds.add(art.id);
       else selectedArticleIds.delete(art.id);
@@ -1833,14 +1921,44 @@ document.addEventListener('fullscreenchange', () => {
 
 // ── Wave completion ────────────────────────────
 function checkWaveComplete() {
-  if (!waveDone && spawnedThisWave >= waveEnemyCount && enemies.length === 0) {
+  if (waveDone || introTimer > 0 || phaseTimer > 0 || enemies.length > 0) return;
+  if (wavePhase === 'NORMAL') {
+    // 一般波次結束、場上清空 → 大軍來襲（10 秒，出怪更快、場上上限 +1）
+    wavePhase = 'HORDE';
+    phaseTimer = 10000;
+    introTimer = 2500;
+    waveTimer = Math.max(0, getSpawnInterval() - 300);
+    showBanner('大軍來襲！', 2400);
+    sfx('horde');
+    try { window.ZFX && ZFX.setIntense(true); } catch (e) {}
+  } else {
+    // 大軍清完 → 過關
     waveDone = true;
     wave++;
     updateHUD();
+    showBanner(`第 ${wave - 1} 關完成！`, 2800);
+    sfx('clear');
     setTimeout(() => {
       if (state === STATE.PLAYING) startWave();
-    }, 1500);
+    }, 3000);
   }
+}
+
+// 畫面上方顯示目前是「波次」還是「大軍」與剩餘秒數；換階段時顯示大字提示
+function drawPhaseHud() {
+  ctx.save();
+  ctx.textAlign = 'center';
+  ctx.font = 'bold 14px sans-serif';
+  ctx.fillStyle = wavePhase === 'HORDE' ? '#ff4757' : '#00d4ff';
+  const left = Math.max(0, Math.ceil(phaseTimer / 1000));
+  ctx.fillText(wavePhase === 'HORDE' ? `大軍 ${left} 秒` : `波次 ${left} 秒`, canvas.width / 2, 22);
+  if (bannerTimer > 0 && bannerText) {
+    ctx.globalAlpha = Math.min(1, bannerTimer / 400);
+    ctx.font = 'bold 44px sans-serif';
+    ctx.fillStyle = wavePhase === 'HORDE' ? '#ff4757' : '#2ed573';
+    ctx.fillText(bannerText, canvas.width / 2, canvas.height * 0.36);
+  }
+  ctx.restore();
 }
 
 // ── Grid / scanlines overlay ───────────────────
@@ -1880,6 +1998,8 @@ function gameLoop(timestamp) {
   lastTime = timestamp;
 
   drawBackground();
+  ctx.save();
+  if (fxShake > 0.3) { ctx.translate((Math.random() - 0.5) * fxShake, (Math.random() - 0.5) * fxShake); fxShake *= 0.88; } else fxShake = 0;
   drawGrid();
 
   const bottomLine = ship.cy + 15;
@@ -1909,7 +2029,9 @@ function gameLoop(timestamp) {
     drawTargetLine();
     drawShip();
     updateParticles(dt);
+    drawFx();
     drawFloaters();
+    drawPhaseHud();
   } else if (state === STATE.PAUSED || state === STATE.GAMEOVER) {
     for (const en of enemies) en.draw();
     drawShip();
@@ -1917,6 +2039,7 @@ function gameLoop(timestamp) {
     // MENU or CATEGORIES — draw animated demo ships
     drawMenuShips(dt);
   }
+  ctx.restore();
 }
 
 // ── Menu animated ships ────────────────────────

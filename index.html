@@ -169,6 +169,14 @@ input#codeInput:focus{outline:none;border-color:var(--accent);}
           <div class="ic">⚔️</div>
           <div><div class="lbl">打字修仙傳：五鍵飛升</div><div class="desc">武俠闖關・五大試煉＋魔王模式</div></div>
         </a>
+        <a class="hub-link" id="linkGodSimple" href="./God/index-simple.html">
+          <div class="ic">🗡️</div>
+          <div><div class="lbl">打字修仙傳（簡化版）</div><div class="desc">無 F/J 防禦、無大招，專心打字</div></div>
+        </a>
+        <a class="hub-link" id="linkMocc" href="./MOCC-home/index.html">
+          <div class="ic">📝</div>
+          <div><div class="lbl">MOCC 文書處理檢定</div><div class="desc">Word／Excel 檢定模擬・在家用自己的 Office 作答，網頁直接評分</div></div>
+        </a>
        <a class="hub-link" id="linkzombietyping" href="./COMPUTER/zombie/index.html">
           <div class="ic">⚔️</div>
           <div><div class="lbl">末日生存</div><div class="desc">中英文打字練習</div></div>
@@ -503,6 +511,8 @@ function showHub(identity) {
   document.getElementById("linkKbPractice").href = `${KB_PRACTICE_URL}?student=${suffix}`;
   document.getElementById("linkAdditionHero").href = `${ADDITION_HERO_URL}?student=${suffix}`;
   document.getElementById("linkGod").href = `${God_URL}?student=${suffix}`;
+  document.getElementById("linkGodSimple").href = `./God/index-simple.html?student=${suffix}`;
+  document.getElementById("linkMocc").href = `./MOCC-home/index.html?student=${suffix}`;
 
   // linkLookType 不再直接用 href 跳轉，改成先跳「練習/測驗」選擇視窗（見 openLookTypeChoice）
 

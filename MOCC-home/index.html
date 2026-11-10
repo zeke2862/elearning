@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MOCC 文書處理檢定（在家版）</title>
+<script src="data.js"></script>
+<script src="grader.js"></script>
+<style>
+:root{--void:#05070a;--panel:#0b1018;--panel2:#0f1622;--line:#1c2836;--text:#d7e4ee;--dim:#7d8fa2;--accent:#ffd23f;--ok:#4cd98a;--danger:#ff6b6b;--blue:#5aa9ff}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--void);color:var(--text);font-family:'Noto Sans TC','Microsoft JhengHei',sans-serif;min-height:100vh;line-height:1.6}
+a{color:var(--blue)}
+.wrap{max-width:980px;margin:0 auto;padding:56px 18px 60px}
+h1{font-size:22px}
+.sub{font-size:13px;color:var(--dim);margin:6px 0 16px}
+.bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px;font-size:13px;color:var(--dim)}
+.bar .sid{color:var(--accent)}
+.bar .warn{color:var(--danger)}
+button,.btn{font:inherit;cursor:pointer;border:1px solid var(--line);background:var(--panel2);color:var(--text);padding:8px 14px;text-decoration:none;display:inline-block}
+button:hover,.btn:hover{border-color:var(--accent)}
+button.pri{background:var(--accent);border-color:var(--accent);color:#05070a;font-weight:700}
+button.sm{padding:5px 10px;font-size:12px}
+button:disabled{opacity:.4;cursor:default}
+.tabs{display:flex;gap:8px;margin-bottom:12px}
+.tabs button.on{background:var(--accent);color:#05070a;border-color:var(--accent);font-weight:700}
+.panel{border:1px solid var(--line);background:var(--panel);padding:16px 18px;margin-bottom:14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px}
+.ex{border:1px solid var(--line);background:var(--panel2);padding:10px 12px;display:flex;flex-direction:column;gap:6px}
+.ex .id{font-weight:700;font-size:15px}
+.ex .ti{font-size:12px;color:var(--dim);min-height:36px}
+.ex .best{font-size:12px}
+.ex .best b{color:var(--ok)}
+.lv{display:inline-block;font-size:11px;padding:0 6px;border:1px solid var(--line);margin-left:6px;color:var(--dim)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{padding:7px 9px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{color:var(--dim);font-weight:400;font-size:12px}
+.cat td{background:#101a26;font-weight:700}
+.pass{color:var(--ok)}.fail{color:var(--danger)}
+td.n{text-align:right;white-space:nowrap}
+.timer{position:sticky;top:0;z-index:5;background:var(--panel);border:1px solid var(--line);padding:10px 14px;display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+.timer .t{font-size:26px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--accent)}
+.timer.low .t{color:var(--danger)}
+.timer .grow{flex:1}
+.q-cat{margin-top:12px;font-weight:700;color:var(--accent);font-size:14px}
+.q-item{display:flex;gap:10px;padding:5px 0;border-bottom:1px solid #131d2a;font-size:13.5px}
+.q-item .k{min-width:44px;color:var(--dim)}
+.q-item .s{margin-left:auto;color:var(--dim);white-space:nowrap}
+.step{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:10px}
+.big{font-size:42px;font-weight:700;color:var(--accent);text-align:center}
+.big small{font-size:16px;color:var(--dim)}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.72);display:none;align-items:flex-start;justify-content:center;overflow:auto;z-index:50;padding:30px 12px}
+.modal.on{display:flex}
+.modal .box{background:var(--panel);border:1px solid var(--line);max-width:900px;width:100%;padding:18px 20px}
+.modal img{max-width:100%;display:block;margin:6px 0 14px;background:#fff}
+.files{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;margin-top:10px}
+.files a{border:1px solid var(--line);background:var(--panel2);padding:8px;text-align:center;font-size:11.5px;word-break:break-all;color:var(--text);text-decoration:none}
+.files a:hover{border-color:var(--accent)}
+.files img{width:100%;height:70px;object-fit:contain;background:#fff;margin-bottom:4px}
+input[type=text],select{background:var(--panel2);border:1px solid var(--line);color:var(--text);font:inherit;padding:7px 9px}
+.note{font-size:12px;color:var(--dim);margin-top:8px}
+.hide{display:none!important}
+.lb{display:block;font-size:13px;color:var(--dim);margin:12px 0 5px}
+.rd{display:block;font-size:14px;margin:6px 0;cursor:pointer}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:0 18px}
+.two input{width:100%}
+@media(max-width:600px){.two{grid-template-columns:1fr}}
+@media(max-width:600px){.wrap{padding-top:60px}.timer .t{font-size:22px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ===== 1. 選科目、模式 ===== -->
+  <div id="vSetup">
+    <h1>👋 歡迎使用評分系統，請選擇考試模式！</h1>
+    <div class="sub">先選擇要練習或測驗的科目，再決定要用哪一種模式進行。（這裡輸入的資料只用來練習熟悉流程，不會上傳。）</div>
+    <div class="bar"><span id="sidBar"></span></div>
+    <div class="panel">
+      <label class="lb">科目</label>
+      <select id="sSubject"><option value="WD">Word2010</option><option value="EX">Excel2010</option></select>
+      <label class="lb" style="margin-top:16px">考試模式</label>
+      <label class="rd"><input type="radio" name="sMode" value="practice" checked> 練習：單機（可自己設定作答時間）</label>
+      <label class="rd"><input type="radio" name="sMode" value="exam"> 測驗：連線（作答時間固定 15 分鐘）</label>
+      <div class="note" id="setupMsg" style="color:var(--danger)"></div>
+      <div class="step"><button class="pri" id="btnSetupNext">下一步</button><button id="btnBack0">‹ 回電腦科</button></div>
+    </div>
+  </div>
+
+  <!-- ===== 2. 考生個人資料 ===== -->
+  <div id="vCand" class="hide">
+    <h1>📝 評分系統考生個人資料輸入</h1>
+    <div class="sub" id="candInfo"></div>
+    <div class="panel">
+      <div class="two">
+        <div><label class="lb">＊姓名</label><input type="text" id="cName"></div>
+        <div><label class="lb">英文姓名</label><input type="text" id="cEn" placeholder="例：Wu, Ting-hua"></div>
+        <div><label class="lb">＊出生日</label><input type="date" id="cBirth" value="2010-01-01"></div>
+        <div><label class="lb">＊性別</label><label class="rd" style="display:inline-block;margin-right:14px"><input type="radio" name="cGender" value="男" checked> 男</label><label class="rd" style="display:inline-block"><input type="radio" name="cGender" value="女"> 女</label></div>
+        <div><label class="lb">＊證件編號（學號或證件號碼）</label><input type="text" id="cId"></div>
+        <div id="cDurBox"><label class="lb">作答時間（分鐘）</label><input type="number" id="cDur" value="15" min="1" max="180"></div>
+        <div><label class="lb">電話</label><input type="text" id="cPhone"></div>
+        <div><label class="lb">Email</label><input type="text" id="cMail"></div>
+        <div><label class="lb">座號</label><input type="text" id="cSeat"></div>
+        <div><label class="lb">備註</label><input type="text" id="cNote"></div>
+      </div>
+      <div class="note" id="candMsg" style="color:var(--danger)"></div>
+      <div class="step"><button id="btnCandBack">上一步</button><button class="pri" id="btnCandNext">下一步</button></div>
+    </div>
+  </div>
+
+  <!-- ===== 2.5 連線設定（測驗模式，個人資料確認後）===== -->
+  <div id="vConn" class="hide">
+    <h1>🌐 連線設定</h1>
+    <div class="sub">請輸入考場伺服器位址（IP）。在家版不會真的連線，只是讓你練習輸入。</div>
+    <div class="panel">
+      <label class="lb">伺服器位址（IP）</label>
+      <input type="text" id="sIp" placeholder="例如：192.168.1.1" style="width:260px">
+      <div class="note" id="connMsg" style="color:var(--danger)"></div>
+      <div class="step"><button id="btnConnBack">上一步</button><button class="pri" id="btnConnGo">連線</button></div>
+    </div>
+  </div>
+
+  <!-- ===== 3. 題目列表 ===== -->
+  <div id="vHome" class="hide">
+    <h1>📝 MOCC 文書處理檢定（在家版）</h1>
+    <div class="sub">在家用自己電腦的 Word／Excel 作答：下載範本 → 作答存檔 → 上傳，瀏覽器直接評分（檔案不會傳到網路上，只有分數會記錄）。</div>
+    <div class="bar">
+      <b id="modeInfo" style="color:var(--text)"></b>
+      <button class="sm" id="btnRes">🗂️ 作答資源下載</button>
+      <button class="sm" id="btnHist">📋 我的作答紀錄</button>
+      <button class="sm" id="btnSetup">‹ 重新選擇科目／模式</button>
+      <button class="sm" id="btnBack">‹ 回電腦科</button>
+    </div>
+    <div class="panel">
+      <div class="grid" id="examGrid"></div>
+      <div class="note">題號後面的 A／B／C 是難度（A 基礎、B 進階、C 綜合）。每題 200 分；可以重複作答，成績會留在這台電腦的瀏覽器。<br>想讓 Word／Excel 自動開啟、交卷不用上傳？可下載 <a href="../MOCC/local-helper/dist/MoccHelper.exe" download>作答小工具 MoccHelper.exe</a>，考前雙擊執行一次（視窗不要關）。沒有小工具時，Chrome／Edge 會請你選一次存檔位置，之後交卷網頁直接讀回，不用再找檔案。</div>
+    </div>
+    <div class="panel hide" id="histPanel">
+      <h1 style="font-size:16px;margin-bottom:8px">我的作答紀錄</h1>
+      <div id="histBody"></div>
+    </div>
+  </div>
+
+  <!-- ===== 作答頁 ===== -->
+  <div id="vExam" class="hide">
+    <div class="timer" id="timerBar">
+      <span id="exTitle" style="font-weight:700"></span>
+      <span class="grow"></span>
+      <span>剩餘時間</span><span class="t" id="timerNum">--:--</span>
+    </div>
+    <div class="panel">
+      <div class="step">
+        <a class="btn pri" id="btnTpl" download>① 重新下載作答範本</a>
+        <button id="btnPrev">🖼️ 看解答示意圖</button>
+        <button id="btnRes2">🗂️ 作答資源</button>
+        <button id="btnGiveUp">放棄／回題目列表</button>
+      </div>
+      <div class="step">
+        <span id="stepMsg">② 用 Word／Excel 開啟範本，依下方題目作答後存檔。</span>
+      </div>
+      <div class="step">
+        <span id="upWrap"><label>③ 上傳作答檔 <span id="extHint"></span>：
+          <input type="file" id="fileIn">
+        </label></span>
+        <button class="pri" id="btnGrade">交卷評分</button>
+      </div>
+      <div class="note" id="gradeMsg"></div>
+    </div>
+    <div class="panel" id="qPanel"></div>
+  </div>
+
+  <!-- ===== 結果 ===== -->
+  <div id="vResult" class="hide">
+    <div class="panel">
+      <h1 id="rTitle" style="font-size:18px"></h1>
+      <div class="note" id="rMeta"></div>
+      <div class="big" id="rScore"></div>
+      <div class="step" style="justify-content:center">
+        <button class="pri" id="btnAgain">再做一次這題</button>
+        <button id="btnToList">回題目列表</button>
+      </div>
+    </div>
+    <div class="panel"><table id="rTable"></table></div>
+  </div>
+</div>
+
+<!-- 確認考生資料 -->
+<div class="modal" id="mConf"><div class="box" style="max-width:420px">
+  <b>編輯提示</b>
+  <p style="margin:8px 0">您確定要儲存：</p>
+  <div id="confBody" style="font-size:13px;line-height:1.9;background:var(--panel2);padding:10px 14px"></div>
+  <p style="margin:8px 0">的考生資料？</p>
+  <div class="step" style="justify-content:center"><button id="confNo">否(N)</button><button class="pri" id="confYes">是(Y)</button></div>
+</div></div>
+
+<!-- 解答示意圖 -->
+<div class="modal" id="mPrev"><div class="box">
+  <div style="display:flex;justify-content:space-between;align-items:center"><b>解答示意圖（僅供參考）</b><button class="sm" data-close="mPrev">✕ 關閉</button></div>
+  <div id="prevBody"></div>
+</div></div>
+
+<!-- 作答資源 -->
+<div class="modal" id="mRes"><div class="box">
+  <div style="display:flex;justify-content:space-between;align-items:center"><b>作答資源下載</b><button class="sm" data-close="mRes">✕ 關閉</button></div>
+  <div class="note">有些題目會要求插入指定的圖片或檔案（題目裡會寫檔名，例如 pic_WDXP01C.jpg），請下載對應檔案。</div>
+  <input type="text" id="resFilter" placeholder="輸入檔名關鍵字篩選..." style="width:100%;margin-top:8px">
+  <div class="files" id="resGrid"></div>
+</div></div>
+
+<script>
+(function () {
+  "use strict";
+  var RULES = window.MOCC_RULES, PREV = window.MOCC_PREVIEWS, TPL = window.MOCC_TEMPLATES, FILES = window.MOCC_FILES;
+  var HIST_KEY = "mocc_home_attempts_v1";
+  var $ = function (id) { return document.getElementById(id); };
+  var state = { mode: "practice", ip: "", cand: null, kind: "WD", rule: null, startedAt: 0, limitSec: 0, timer: null, last: null };
+
+  function sid() {
+    try { if (window.PlatformTrack) return PlatformTrack.studentNumber() || ""; } catch (e) {}
+    try { var id = JSON.parse(localStorage.getItem("keyagent_active_student") || "null"); if (id && id.studentNumber) return String(id.studentNumber); } catch (e) {}
+    return "";
+  }
+  function loadHist() { try { return JSON.parse(localStorage.getItem(HIST_KEY) || "[]"); } catch (e) { return []; } }
+  function saveHist(a) {
+    // 只保留最近 60 筆；較舊的只留分數，不留逐項明細，避免佔太多瀏覽器空間
+    a = a.slice(-60);
+    for (var i = 0; i < a.length - 15; i++) { if (a[i].result) delete a[i].result; }
+    try { localStorage.setItem(HIST_KEY, JSON.stringify(a)); } catch (e) {}
+  }
+  function mine() { var s = sid(); return loadHist().filter(function (a) { return (a.sid || "") === s; }); }
+  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  function show(v) { ["vSetup", "vCand", "vConn", "vHome", "vExam", "vResult"].forEach(function (x) { $(x).classList.toggle("hide", x !== v); }); window.scrollTo(0, 0); }
+  function fmt(sec) { sec = Math.max(0, Math.round(sec)); var m = Math.floor(sec / 60), s = sec % 60; return (m < 10 ? "0" : "") + m + ":" + (s < 10 ? "0" : "") + s; }
+  function level(id) { var m = /([ABC])$/.exec(id); return m ? m[1] : ""; }
+
+  // ---------- 首頁 ----------
+  function renderSid() {
+    var s = sid();
+    $("sidBar").innerHTML = s ? "學號 <span class='sid'>" + esc(s) + "</span>"
+      : "<span class='warn'>⚠ 尚未登入學號，成績只留在這台電腦，老師看不到。</span> <a href='../index.html'>回平台登入</a>";
+  }
+  function renderGrid() {
+    var ids = Object.keys(RULES).filter(function (id) { return id.indexOf("01_" + state.kind) === 0; }).sort();
+    var hist = mine(), best = {};
+    hist.forEach(function (a) { if (a.finished && (best[a.examId] == null || a.score > best[a.examId])) best[a.examId] = a.score; });
+    $("examGrid").innerHTML = ids.map(function (id) {
+      var r = RULES[id], b = best[id];
+      return "<div class='ex'><div><span class='id'>" + esc(id.replace("01_", "")) + "</span><span class='lv'>" + level(id) + "</span></div>" +
+        "<div class='ti'>" + esc(r.title) + "</div>" +
+        "<div class='best'>" + (b == null ? "尚未作答" : "最佳 <b>" + b + "</b> / " + r.totalScore) + "</div>" +
+        "<button class='pri sm' data-start='" + id + "'>開始作答</button></div>";
+    }).join("");
+  }
+  function renderHist() {
+    var h = mine().slice().reverse();
+    $("histBody").innerHTML = h.length ? "<table><tr><th>時間</th><th>題目</th><th>分數</th><th>用時</th><th></th></tr>" +
+      h.map(function (a, i) {
+        return "<tr><td>" + esc(a.at) + "</td><td>" + esc((a.examId || "").replace("01_", "")) + "</td><td>" + (a.finished ? a.score + " / " + a.total : "未交卷") +
+          "</td><td>" + fmt(a.timeSec || 0) + (a.overtime ? "（超時）" : "") + "</td><td>" + (a.result ? "<button class='sm' data-detail='" + a.id + "'>查看詳情</button>" : "") + "</td></tr>";
+      }).join("") + "</table>" : "<div class='note'>還沒有作答紀錄。</div>";
+  }
+  function goComputer() { location.href = "../index.html"; }
+  $("btnBack").onclick = $("btnBack0").onclick = goComputer;
+  $("btnSetup").onclick = function () { clearInterval(state.timer); show("vSetup"); };
+
+  // ---- 1. 選科目、模式 ----
+  function pickedMode() { return document.querySelector("input[name=sMode]:checked").value; }
+  $("btnSetupNext").onclick = function () {
+    var mode = pickedMode(), ip = "";
+    if (false) {
+      var m = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})(:\d{1,5})?$/.exec(ip);
+      if (!m || [m[1], m[2], m[3], m[4]].some(function (n) { return +n > 255; })) { $("setupMsg").textContent = "請輸入伺服器位址（IP），例如 192.168.1.1"; return; }
+    }
+    $("setupMsg").textContent = "";
+    state.kind = $("sSubject").value; state.mode = mode; state.ip = ip;
+    $("candInfo").innerHTML = "科目：<b>" + (state.kind === "WD" ? "Word2010" : "Excel2010") + "</b>　模式：<b>" + (mode === "exam" ? "測驗（連線）" : "練習（單機）") + "</b>";
+    $("cDurBox").classList.toggle("hide", mode === "exam");
+    if (!$("cNote").value && sid()) $("cNote").value = "學號 " + sid();
+    show("vCand");
+  };
+
+  // ---- 2. 考生個人資料（只留在這個頁面的記憶體，不存、不上傳）----
+  $("btnCandBack").onclick = function () { show("vSetup"); };
+  $("btnCandNext").onclick = function () {
+    var g = function (id) { return $(id).value.trim(); };
+    if (!g("cName") || !g("cBirth") || !g("cId")) { $("candMsg").textContent = "姓名、出生日、證件編號為必填。"; return; }
+    var dur = parseInt($("cDur").value, 10);
+    if (state.mode === "practice" && !(dur >= 1 && dur <= 180)) { $("candMsg").textContent = "作答時間請輸入 1～180 分鐘。"; return; }
+    $("candMsg").textContent = "";
+    state.cand = { name: g("cName"), en: g("cEn"), birth: g("cBirth"), gender: document.querySelector("input[name=cGender]:checked").value, id: g("cId"),
+      phone: g("cPhone"), mail: g("cMail"), seat: g("cSeat"), note: g("cNote"), duration: state.mode === "exam" ? 15 : dur };
+    var c = state.cand;
+    $("confBody").innerHTML = "姓名：<b>" + esc(c.name) + "</b><br>外文名字：" + esc(c.en || "（未填）") + "<br>生日：" + esc(c.birth) + "<br>證件號碼：" + esc(c.id) +
+      "<br>性別：" + c.gender + "<br>電話：" + esc(c.phone || "（未填）") + "<br>座號：" + esc(c.seat || "（未填）") + "<br>Email：" + esc(c.mail || "（未填）") + "<br>備註：" + esc(c.note || "（未填）");
+    $("mConf").classList.add("on");
+  };
+  $("confNo").onclick = function () { $("mConf").classList.remove("on"); };
+  function enterList() {
+    $("modeInfo").textContent = (state.kind === "WD" ? "Word2010" : "Excel2010") + "｜" + (state.mode === "exam" ? "測驗（連線 " + state.ip + "，固定 15 分鐘）" : "練習（" + state.cand.duration + " 分鐘）") + "｜" + state.cand.name;
+    renderGrid(); renderHist(); show("vHome");
+  }
+  $("confYes").onclick = function () {
+    $("mConf").classList.remove("on");
+    if (state.mode === "exam") { $("connMsg").textContent = ""; show("vConn"); } else enterList();
+  };
+  $("btnConnBack").onclick = function () { show("vCand"); };
+  $("btnConnGo").onclick = function () {
+    var ip = $("sIp").value.trim();
+    var m = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})(:\d{1,5})?$/.exec(ip);
+    if (!m || [m[1], m[2], m[3], m[4]].some(function (n) { return +n > 255; })) { $("connMsg").textContent = "請輸入伺服器位址（IP），例如 192.168.1.1"; return; }
+    state.ip = ip; enterList();
+  };
+  $("btnHist").onclick = function () { var p = $("histPanel"); p.classList.toggle("hide"); if (!p.classList.contains("hide")) renderHist(); };
+  $("examGrid").onclick = function (e) { var id = e.target.getAttribute("data-start"); if (id) startExam(id); };
+  $("histBody").onclick = function (e) {
+    var id = e.target.getAttribute("data-detail"); if (!id) return;
+    var a = loadHist().filter(function (x) { return x.id === id; })[0];
+    if (a && a.result) showResult(a, false);
+  };
+
+  // ---------- 作答 ----------
+  function startExam(id) {
+    var rule = RULES[id]; if (!rule) return;
+    state.rule = rule; state.startedAt = Date.now();
+    var lim = (state.mode === "exam" ? 15 : state.cand.duration) * 60;
+    state.limitSec = lim;
+    $("exTitle").textContent = id.replace("01_", "") + "　" + rule.title;
+    var isX = rule.fileType === "xlsx";
+    $("extHint").textContent = isX ? "（.xlsx）" : "（.docx）";
+    $("fileIn").setAttribute("accept", isX ? ".xlsx" : ".docx");
+    $("fileIn").value = "";
+    var t = $("btnTpl");
+    if (TPL[id]) { t.href = TPL[id]; t.setAttribute("download", id.replace("01_", "") + "_作答範本" + (isX ? ".xlsx" : ".docx")); t.classList.remove("hide"); } else { t.classList.add("hide"); }
+    openTemplate(id, isX);
+    $("btnPrev").classList.toggle("hide", !(PREV[id] && PREV[id].length));
+    $("gradeMsg").textContent = "計時 " + Math.round(lim / 60) + " 分鐘（超過時間仍可交卷，成績會標示超時）。";
+    var html = "";
+    rule.categories.forEach(function (c) {
+      html += "<div class='q-cat'>" + esc(c.name) + "</div>";
+      c.items.forEach(function (it) { html += "<div class='q-item'><span class='k'>" + esc(it.key) + "</span><span>" + esc(it.desc) + "</span><span class='s'>" + it.score + " 分</span></div>"; });
+    });
+    $("qPanel").innerHTML = "<b>題目（共 " + rule.totalScore + " 分）</b>" + html;
+    show("vExam");
+    clearInterval(state.timer);
+    tick(); state.timer = setInterval(tick, 500);
+    try { window.PlatformTrack && PlatformTrack.flush(); } catch (e) {}
+  }
+  function tick() {
+    var used = (Date.now() - state.startedAt) / 1000, left = state.limitSec - used;
+    $("timerNum").textContent = left >= 0 ? fmt(left) : "超時 " + fmt(-left);
+    $("timerBar").classList.toggle("low", left <= 60);
+  }
+  $("btnGiveUp").onclick = function () { clearInterval(state.timer); show("vHome"); renderGrid(); };
+  $("btnPrev").onclick = function () {
+    var arr = PREV[state.rule.id] || [];
+    $("prevBody").innerHTML = arr.map(function (p) { return (p.name ? "<div class='note'>" + esc(p.name) + "</div>" : "") + "<img src='" + p.url + "' alt='解答示意圖'>"; }).join("");
+    $("mPrev").classList.add("on");
+  };
+  $("btnRes").onclick = $("btnRes2").onclick = function () { $("mRes").classList.add("on"); };
+  Array.prototype.forEach.call(document.querySelectorAll("[data-close]"), function (b) { b.onclick = function () { $(b.getAttribute("data-close")).classList.remove("on"); }; });
+  function renderRes() {
+    var q = ($("resFilter").value || "").toLowerCase();
+    $("resGrid").innerHTML = FILES.filter(function (f) { return f.toLowerCase().indexOf(q) >= 0; }).map(function (f) {
+      var u = "../MOCC/public/mocc-data/" + encodeURIComponent(f);
+      return "<a href='" + u + "' download='" + esc(f) + "'>" + (/\.(jpg|jpeg|png|gif|bmp)$/i.test(f) ? "<img src='" + u + "' loading='lazy'>" : "<div style='font-size:28px'>📄</div>") + esc(f) + "</a>";
+    }).join("");
+  }
+  $("resFilter").oninput = renderRes; renderRes();
+
+  // ---------- 作答檔怎麼拿到：小工具（自動開 Word）→ 選存檔位置（網頁直接讀回）→ 下載＋上傳 ----------
+  var HELPER = "http://localhost:5678";
+  function withTimeout(pr, ms) { return Promise.race([pr, new Promise(function (_, rj) { setTimeout(function () { rj(new Error("timeout")); }, ms); })]); }
+  function detectHelper() {
+    return withTimeout(fetch(HELPER + "/health"), 1200).then(function (r) { state.helperOk = !!r.ok; }).catch(function () { state.helperOk = false; });
+  }
+  detectHelper();
+
+  function setStep(txt) { $("stepMsg").textContent = txt; }
+  function openTemplate(id, isX) {
+    state.workId = null; state.fh = null;
+    var ext = isX ? ".xlsx" : ".docx", name = id.replace("01_", "") + "_作答範本" + ext, url = TPL[id];
+    $("upWrap").classList.remove("hide");
+    if (!url) { setStep("② 這題沒有範本檔，請自行建立文件後上傳。"); return; }
+    var abs = new URL(url, location.href).href;
+    function plainDownload(why) {
+      try { $("btnTpl").click(); } catch (e) {}
+      setStep("② " + (why || "") + "範本已下載（沒看到請按上面按鈕）；用 Word／Excel 開啟作答後存檔，再回來上傳。");
+    }
+    // 1) 有裝「作答小工具」：自動開啟 Word／Excel，交卷時自動收檔
+    if (state.helperOk) {
+      setStep("② 正在自動開啟範本…");
+      fetch(HELPER + "/launch", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ examId: id, templateUrl: abs, fileExt: ext }) })
+        .then(function (r) { return r.json().then(function (d) { if (!r.ok) throw new Error(d.error || "開啟失敗"); return d; }); })
+        .then(function (d) { state.workId = d.workId; $("upWrap").classList.add("hide"); setStep("② 已自動開啟範本，請在 Word／Excel 作答並存檔（Ctrl+S），完成後按「交卷評分」，不用上傳。"); })
+        .catch(function (e) { state.helperOk = false; plainDownload("小工具開啟失敗（" + e.message + "）。"); });
+      return;
+    }
+    // 2) Chrome／Edge：讓學生選一次存檔位置，網頁把範本寫進去；交卷時直接讀回，不用再找檔案
+    if (window.showSaveFilePicker) {
+      var types = isX ? { "Excel 活頁簿": [".xlsx"] } : { "Word 文件": [".docx"] };
+      var accept = {}; accept[isX ? "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" : "application/vnd.openxmlformats-officedocument.wordprocessingml.document"] = [ext];
+      window.showSaveFilePicker({ suggestedName: name, startIn: "desktop", types: [{ description: isX ? "Excel 活頁簿" : "Word 文件", accept: accept }] })
+        .then(function (fh) {
+          return fetch(url).then(function (r) { return r.arrayBuffer(); }).then(function (buf) {
+            return fh.createWritable().then(function (w) { return w.write(buf).then(function () { return w.close(); }); });
+          }).then(function () {
+            state.fh = fh; $("upWrap").classList.add("hide");
+            setStep("② 範本已存成「" + fh.name + "」。請在剛才選的位置雙擊開啟，用 Word／Excel 作答並存檔（Ctrl+S），完成後回到這裡按「交卷評分」，不用再上傳。");
+          });
+        })
+        .catch(function (e) { plainDownload(e && e.name === "AbortError" ? "（沒有選存檔位置，改用一般下載。）" : "（無法直接存檔，改用一般下載。）"); });
+      return;
+    }
+    // 3) 其他瀏覽器：一般下載＋上傳
+    plainDownload("");
+  }
+
+  function readHelperFile() {
+    return fetch(HELPER + "/collect", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ workId: state.workId }) })
+      .then(function (r) { return r.json().then(function (d) { if (!r.ok) throw new Error(d.error || "收檔失敗"); return d; }); })
+      .then(function (d) {
+        var bin = atob(d.fileBase64), u = new Uint8Array(bin.length);
+        for (var i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
+        return { bytes: u, name: d.fileName };
+      });
+  }
+  function readHandleFile() {
+    return state.fh.getFile().then(function (f) { return f.arrayBuffer().then(function (b) { return { bytes: new Uint8Array(b), name: f.name }; }); })
+      .catch(function (e) { throw new Error("讀不到作答檔，請先在 Word／Excel 存檔（Ctrl+S）；如果還是不行，請關閉該檔案後再按一次（" + e.name + "）"); });
+  }
+  function readPickedFile() {
+    var f = $("fileIn").files[0], ext = state.rule.fileType === "xlsx" ? ".xlsx" : ".docx";
+    if (!f) return Promise.reject(new Error("請先選擇要上傳的作答檔。"));
+    if (f.name.toLowerCase().slice(-ext.length) !== ext) return Promise.reject(new Error("這題要上傳 " + ext + " 檔案（你選的是 " + f.name + "）。"));
+    if (f.size > 20 * 1024 * 1024) return Promise.reject(new Error("檔案太大（上限 20MB）。"));
+    return new Promise(function (ok, no) {
+      var rd = new FileReader(); rd.onerror = function () { no(new Error("讀取檔案失敗，請重新選擇。")); };
+      rd.onload = function () { ok({ bytes: new Uint8Array(rd.result), name: f.name }); }; rd.readAsArrayBuffer(f);
+    });
+  }
+
+  $("btnGrade").onclick = function () {
+    var msg = $("gradeMsg"), rule = state.rule, ext = rule.fileType === "xlsx" ? ".xlsx" : ".docx";
+    msg.textContent = "讀取並評分中…";
+    var getter = ($("fileIn").files[0] && !state.workId && !state.fh) ? readPickedFile : (state.workId ? readHelperFile : (state.fh ? readHandleFile : readPickedFile));
+    getter().then(function (got) {
+      var result;
+      try { result = MoccGrader.gradeSubmission(rule, got.bytes); }
+      catch (err) { throw new Error("評分失敗：這個檔案無法解析（" + err.message + "）。請確認是用 Word／Excel 存成的 " + ext + "。"); }
+      clearInterval(state.timer);
+      var timeSec = Math.round((Date.now() - state.startedAt) / 1000);
+      var passed = result.results.filter(function (r) { return r.passed; }).length;
+      var att = {
+        id: "a" + Date.now().toString(36), sid: sid(), examId: rule.id, at: new Date().toLocaleString("zh-TW", { hour12: false }),
+        finished: true, score: result.totalScore, total: result.totalPossible, passed: passed, items: result.results.length,
+        timeSec: timeSec, overtime: timeSec > state.limitSec, fileName: got.name, result: result
+      };
+      var h = loadHist(); h.push(att); saveHist(h);
+      // 送進練習統計（和其他遊戲一樣：有登入學號才會記錄）
+      try {
+        window.PlatformTrack && PlatformTrack.result({
+          correct: passed, total: result.results.length, accuracy: result.results.length ? passed / result.results.length : 0,
+          score: result.totalScore, qtype: rule.fileType === "xlsx" ? "Excel" : "Word", difficulty: level(rule.id), timeSec: timeSec
+        });
+        PlatformTrack.flush();
+      } catch (e) {}
+      showResult(att, true);
+    }).catch(function (e) { msg.textContent = e.message; });
+  };
+
+  function showResult(a, fresh) {
+    var rule = RULES[a.examId], res = a.result; state.last = a;
+    $("rTitle").textContent = (a.examId || "").replace("01_", "") + "　" + (rule ? rule.title : "");
+    $("rMeta").textContent = "檔案：" + a.fileName + "　評分時間：" + a.at + "　用時 " + fmt(a.timeSec || 0) + (a.overtime ? "（超時）" : "");
+    $("rScore").innerHTML = a.score + " <small>/ " + a.total + "</small>";
+    var html = "<tr><th style='width:44px'>結果</th><th>檢驗項目</th><th style='text-align:right'>得分</th></tr>", last = null;
+    res.results.forEach(function (r) {
+      if (r.categoryName !== last) { last = r.categoryName; html += "<tr class='cat'><td colspan='3'>" + esc(last) + "</td></tr>"; }
+      html += "<tr><td>" + (r.passed ? "✅" : "❌") + "</td><td class='" + (r.passed ? "pass" : "fail") + "'>" + esc(r.key) + "　" + esc(r.desc) + "</td><td class='n'>" + r.score + " / " + r.fullScore + "</td></tr>";
+    });
+    $("rTable").innerHTML = html;
+    show("vResult");
+  }
+  $("btnAgain").onclick = function () { if (state.last) startExam(state.last.examId); };
+  $("btnToList").onclick = function () { show("vHome"); renderGrid(); renderHist(); };
+
+  renderSid(); show("vSetup");
+})();
+</script>
+</body>
+</html>
