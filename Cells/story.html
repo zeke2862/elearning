@@ -491,8 +491,8 @@ function render(){
   else if(STATE.view === "story") renderStory();
 }
 
-// 章節徽章圖檔（img/ch1~5 是 Canva 產生的 webp，6~9 先用 svg；之後直接放同名 webp 並改下面的副檔名即可）
-const EMBLEM_EXT = {1:"webp",2:"webp",3:"webp",4:"webp",5:"webp",6:"svg",7:"svg",8:"svg",9:"svg"};
+// 章節徽章圖檔：img/ch1~9 全部是 Canva 產生的 webp（192x192）
+const EMBLEM_EXT = {1:"webp",2:"webp",3:"webp",4:"webp",5:"webp",6:"webp",7:"webp",8:"webp",9:"webp"};
 function emblemSrc(id){ return EMBLEM_EXT[id] ? `./img/ch${id}.${EMBLEM_EXT[id]}` : ""; }
 
 function renderChapters(){
