@@ -7,7 +7,7 @@
 #matrix-rain{
   position:fixed;inset:0;width:100vw;height:100vh;
   pointer-events:none;z-index:9990;
-  opacity:.16;mix-blend-mode:screen;
+  opacity:.13;mix-blend-mode:screen;
   transition:opacity .4s ease;
 }
 html.fx-off #matrix-rain,
