@@ -381,6 +381,9 @@ button{
 .mob.type-basic .mob-icon{border-color:var(--ch1);color:var(--ch1);}
 .mob.type-flying .mob-icon{border-color:var(--ch2);color:var(--ch2);}
 .mob.type-worm .mob-icon{border-color:var(--ch3);color:var(--ch3);}
+.mob-icon svg{width:27px;height:27px;display:block;filter:drop-shadow(0 0 3px currentColor);}
+.mob.type-ghost .mob-icon{border-color:#8aa0b4;color:#d7e4ee;}
+.mob.type-boss .mob-icon{border-color:#ff2e6c;color:#ff2e6c;}
 .mob-hint{position:absolute;top:-14px;font-size:9px;color:var(--danger);letter-spacing:.1em;}
 
 .floater{
@@ -658,6 +661,7 @@ html[data-font-size="xlarge"] body{ zoom:1.36; }
 #screen-compendium{padding:0;overflow:hidden;}
 </style>
 <link rel="stylesheet" href="./hacker-theme.css">
+<script src="./monster-art.js"></script>
 </head>
 <body>
 <div id="app">
@@ -1177,9 +1181,17 @@ let MOB_TYPES = {
   split:  { icon:"⬡", cls:"type-worm",   label:"分裂軟泥怪",   chapter:5, desc:"被消滅後可能一分為二！別讓小心被分裂了的個體趁亂逃脫。", atk:6,  def:0,  hp:70,  hitsToKill:1, speedMult:1 },
   fog:    { icon:"▓", cls:"type-flying", label:"干擾霧怪",     chapter:6, desc:"全身籠罩干擾霧氣，遮蔽字詞視線。使用 SCAN 技能可暫時驅散迷霧。", atk:11, def:3,  hp:110, hitsToKill:1, speedMult:1.1 },
   golem:  { icon:"◆", cls:"type-worm",   label:"符號魔像",     chapter:7, desc:"身披符號護盾，必須按正確順序敲完所有符號才能破防擊殺。打錯順序重來。", atk:16, def:8,  hp:160, hitsToKill:2, speedMult:0.8 },
-  ghost:  { icon:"◐", cls:"type-basic",  label:"雙色幽靈怪",   chapter:8, desc:"紅色形態只吃大寫攻擊，藍色形態只吃小寫攻擊。打錯顏色反而幫它補血！", atk:12, def:5,  hp:120, hitsToKill:1, speedMult:1 },
-  boss:   { icon:"☠", cls:"type-worm",   label:"毀滅者·Omega", chapter:9, desc:"終極病毒本體，生命值極高。速度緩慢，但只有完整句子才能對它造成傷害。", atk:30, def:15, hp:500, hitsToKill:3, speedMult:0.6 }
+  ghost:  { icon:"◐", cls:"type-ghost",  label:"雙色幽靈怪",   chapter:8, desc:"紅色形態只吃大寫攻擊，藍色形態只吃小寫攻擊。打錯顏色反而幫它補血！", atk:12, def:5,  hp:120, hitsToKill:1, speedMult:1 },
+  boss:   { icon:"☠", cls:"type-boss",   label:"毀滅者·Omega", chapter:9, desc:"終極病毒本體，生命值極高。速度緩慢，但只有完整句子才能對它造成傷害。", atk:30, def:15, hp:500, hitsToKill:3, speedMult:0.6 }
 };
+
+// 怪物圖示：有向量圖（monster-art.js）就用向量圖；從 Excel 設定檔改過圖示的怪物則維持文字符號
+function mobIconHTML(key, mt){
+  try{
+    if(window.MONSTER_SVG && window.MONSTER_SVG[key] && !(mt && mt.iconCustom)) return window.MONSTER_SVG[key];
+  }catch(e){}
+  return mt ? mt.icon : "⚠";
+}
 
 /* Tower stat schema (extended):
      name/key/chapter/unlockLevelId/cost/type/desc/lore — unchanged/display
@@ -1567,7 +1579,9 @@ function applyConfigOverride(parsed){
       if(!row.key) return;
       const existing = MOB_TYPES[row.key];
       const numM = (v, fallback)=> (v!==undefined && v!=="") ? Number(v) : fallback;
+      const iconChanged = row.icon!==undefined && (!existing || String(row.icon)!==existing.icon);
       const merged = Object.assign({}, existing || {cls:"type-basic"}, {
+        iconCustom: iconChanged || !!(existing && existing.iconCustom),
         icon: row.icon!==undefined ? String(row.icon) : (existing?existing.icon:"⚠"),
         label: row.label!==undefined ? String(row.label) : (existing?existing.label:row.key),
         chapter: numM(row.chapter, existing?existing.chapter:1),
@@ -2435,7 +2449,7 @@ const Game = {
   renderMob(mob){
     const def = MOB_TYPES[mob.mobType] || MOB_TYPES.basic;
     const el = document.createElement("div");
-    el.className = `mob type-${mob.mobType==='flying'?'flying':(mob.mobType==='worm'||mob.mobType==='boss'?'worm':'basic')}`;
+    el.className = `mob ${def.cls || 'type-basic'}`;
     el.style.left = mob.x+"px";
     el.style.top = mob.laneY+"%";
     el.style.transform = "translateY(-50%)";
@@ -2445,7 +2459,7 @@ const Game = {
     el.innerHTML = `
       ${mob.isDelay?'<div class="mob-hint">2秒內打完！</div>':''}
       <div class="mob-word"><span class="typed"></span><span class="untyped">${escapeHtml(mob.word)}</span></div>
-      <div class="mob-icon">${def.icon}</div>
+      <div class="mob-icon">${mobIconHTML(mob.mobType, def)}</div>
     `;
     this.fieldEl.appendChild(el);
     mob.el = el;
@@ -3802,6 +3816,8 @@ function openStandalonePage(title, innerHtml){
   .card p{margin:0;font-size:11px;color:var(--dim);line-height:1.5;}
   .tag{font-size:9px;color:var(--dim);letter-spacing:.1em;text-transform:uppercase;}
   .icon{font-size:22px;}
+  .icon svg{width:34px;height:34px;display:block;}
+  .card.type-basic .icon{color:#39ff9d;} .card.type-flying .icon{color:#4fc3ff;} .card.type-worm .icon{color:#b06bff;} .card.type-ghost .icon{color:#d7e4ee;} .card.type-boss .icon{color:#ff2e6c;}
 </style></head><body>
 <h1>${title}</h1>
 <div class="grid">${innerHtml}</div>
@@ -3816,8 +3832,8 @@ function buildCompendiumStandaloneHtml(){
   let mobCards = Object.entries(MOB_TYPES).map(([key, mt])=>{
     const ch = mt.chapter||1;
     const unlocked = cleared >= ch;
-    return `<div class="card ${unlocked?"":"locked"}">
-      <div class="icon">${unlocked? mt.icon : "🔒"}</div>
+    return `<div class="card ${unlocked?"":"locked"} ${mt.cls||""}">
+      <div class="icon">${unlocked? mobIconHTML(key, mt) : "🔒"}</div>
       <div class="tag">第 ${ch} 章 · ${unlocked?"已解鎖":"待解鎖"}</div>
       <h4>${unlocked? mt.label : "???"}</h4>
       <p>${unlocked? mt.desc : "通關對應章節後解鎖圖鑑資料。"}</p>
@@ -4616,7 +4632,7 @@ const UI = {
       mobs: Object.entries(MOB_TYPES).map(([key, mt])=>{
         const ch = mt.chapter||1;
         return {
-          key, icon:mt.icon, label:mt.label, chapter:ch, desc:mt.desc, unlocked: cleared>=ch,
+          key, icon:mobIconHTML(key, mt), cls:mt.cls||"", label:mt.label, chapter:ch, desc:mt.desc, unlocked: cleared>=ch,
           atk:mt.atk||0, def:mt.def||0, hp:mt.hp||100, hitsToKill:mt.hitsToKill||1, speedMult:mt.speedMult||1
         };
       }),
