@@ -25,7 +25,7 @@ table{border-collapse:collapse;width:100%;font-size:.9rem}
 th,td{border:1px solid var(--line);padding:6px 8px;text-align:center;white-space:nowrap}
 th{background:#252c56;position:sticky;top:0}
 td.l,th.l{text-align:left}
-.s0{color:#6b7090}.s1{background:#5a4a1e}.s2{background:#33553d}.s3{background:#2f7a5b;font-weight:700}.s4{background:#2a6f8f;font-weight:700}.s5{background:#8a6d1c;font-weight:700;color:#fff3c4}
+.s0{color:#6b7090}.s00{background:#5a2f2a;color:#f3b9b0}.s1{background:#5a4a1e}.s2{background:#33553d}.s3{background:#2f7a5b;font-weight:700}.s4{background:#2a6f8f;font-weight:700}.s5{background:#8a6d1c;font-weight:700;color:#fff3c4}
 .a0{color:#6b7090}.alo{background:#6a2a22;font-weight:700}.amid{background:#5a4a1e}.ahi{background:#2f7a5b}
 .t1{background:#2a3a66}.t2{background:#2a4f7a}.t3{background:#2a6f8f;font-weight:700}
 .acc{display:inline-block;height:10px;border-radius:5px;background:var(--jade);vertical-align:middle}
@@ -141,7 +141,9 @@ async function loadData() {
 function mk(r, j) {
   const st = j ? j.stages || {} : {};
   let q = 0, ok = 0; Object.keys(st).forEach(k => { q += st[k].totalQ || 0; ok += st[k].totalOk || 0; });
-  return {cls: r.cls, seat: r.seat, no: r.no, name: r.name, hero: j ? (j.hero || '') : '', played: !!j, j, st,
+  /* 「已玩」＝練習次數大於 0，或有作答過題目；只是登入過、什麼都沒做的人算「還沒玩」 */
+  const plays = j ? (j.totalPlays || 0) : 0, played = !!j && (plays > 0 || q > 0 || Object.keys(st).some(k => (st[k].plays || 0) > 0));
+  return {cls: r.cls, seat: r.seat, no: r.no, name: r.name, hero: j ? (j.hero || '') : '', played, j, st,
     stars: j ? (j.totalStars || 0) : 0, plays: j ? (j.totalPlays || 0) : 0, secs: secsOf(j), acc: q ? ok / q : null, at: j ? (j._at || 0) : 0};
 }
 function build() {
@@ -159,7 +161,7 @@ const list = () => ROWS.filter(r => !$('#cls').value || r.cls === $('#cls').valu
 /* ===== 班級進度表 ===== */
 function cell(r, s) {
   const x = r.st[s.id];
-  if (view === 'stars') { const n = x ? x.bestStars || 0 : 0; return n ? `<td class="s${n}">${'★'.repeat(n)}</td>` : '<td class="s0">—</td>'; }
+  if (view === 'stars') { const n = x ? x.bestStars || 0 : 0; return n ? `<td class="s${n}">${'★'.repeat(n)}</td>` : (x ? '<td class="s00" title="有玩，但還沒拿到星">0★</td>' : '<td class="s0">—</td>'); }
   if (view === 'acc') { const a = stageAcc(x); return a == null ? '<td class="a0">—</td>' : `<td class="${accCls(a)}" title="答對 ${x.totalOk} 題／作答 ${x.totalQ} 題">${Math.round(a * 100)}%<div class="sm">${x.totalOk}/${x.totalQ}</div></td>`; }
   if (view === 'time') { const t = x ? x.pSecs || 0 : 0; return t ? `<td class="t${t < 300 ? 1 : t < 900 ? 2 : 3}" title="${fmtSecs(t)}">${fmtShort(t)}</td>` : '<td class="s0">—</td>'; }
   const p = x ? x.plays || 0 : 0; return p ? `<td class="t${p < 3 ? 1 : p < 6 ? 2 : 3}">${p}</td>` : '<td class="s0">—</td>';
@@ -207,12 +209,12 @@ function renderOne() {
   if (!L.length) { $('#v-one').innerHTML = '<p>還沒有資料。</p>'; return; }
   let i = L.findIndex(r => r.no === oneNo); if (i < 0) i = 0; const r = L[i]; oneNo = r.no; const j = r.j;
   let h = `<div class="bar"><label>學生 <select id="who">${L.map((s, k) => `<option value="${k}" ${k === i ? 'selected' : ''}>${esc(s.cls)} ${s.seat || ''} ${esc(s.name || s.no)}${s.played ? '' : '（還沒玩）'}</option>`).join('')}</select></label>`;
-  if (!j) return $('#v-one').innerHTML = h + '</div><p>這位同學還沒有任何 JB2 紀錄。</p>', bindWho(L);
+  if (!r.played) return $('#v-one').innerHTML = h + '</div><p>這位同學' + (j ? '只有登入過 JB2，還沒有做過任何題目。' : '還沒有任何 JB2 紀錄。') + '</p>', bindWho(L);
   h += `<b>${r.stars} 顆星｜練習 ${r.plays} 次｜共 ${fmtSecs(r.secs)}｜整體答對率 ${r.acc == null ? '—' : Math.round(r.acc * 100) + '%'}</b></div>`;
   h += `<p>勇者名：${esc(j.hero) || '—'}　學號：${esc(r.no)}　最後一關：${j.lastId ? esc(j.lastId + ' ' + (j.lastName || '')) + `（${esc(MODE[j.lastMode] || '')} 本次 ${j.lastStars == null ? '—' : j.lastStars + '★'}／最高 ${j.lastBest || 0}★）` : '—'}　最後更新：${fmtAt(j._at)}</p>`;
   h += '<p><b>各關狀況</b></p><div class="tw"><table><tr><th class="l">關卡</th><th>最高星</th><th>練習次數</th><th>答對率</th><th>練習時間</th><th>最近一次</th></tr>';
   STAGES.forEach(s => { const x = r.st[s.id]; if (!x) { h += `<tr><td class="l s0">${s.id} ${esc(s.name)}</td><td class="s0">—</td><td class="s0">—</td><td class="s0">—</td><td class="s0">—</td><td class="s0">—</td></tr>`; return; }
-    const a = stageAcc(x); h += `<tr><td class="l">${s.id} ${esc(s.name)}</td>${(x.bestStars || 0) ? `<td class="s${x.bestStars}">${'★'.repeat(x.bestStars)}</td>` : '<td class="s0">—</td>'}<td>${x.plays || 0}</td><td class="${accCls(a)}">${a == null ? '—' : Math.round(a * 100) + '%（' + x.totalOk + '/' + x.totalQ + '）'}</td><td>${(x.pSecs || 0) ? fmtSecs(x.pSecs) : '—'}</td><td>${x.lastStars == null ? '—' : x.lastStars + '★'} ${esc(MODE[x.lastMode] || '')}</td></tr>`; });
+    const a = stageAcc(x); h += `<tr><td class="l">${s.id} ${esc(s.name)}</td>${(x.bestStars || 0) ? `<td class="s${x.bestStars}">${'★'.repeat(x.bestStars)}</td>` : '<td class="s00">0★</td>'}<td>${x.plays || 0}</td><td class="${accCls(a)}">${a == null ? '—' : Math.round(a * 100) + '%（' + x.totalOk + '/' + x.totalQ + '）'}</td><td>${(x.pSecs || 0) ? fmtSecs(x.pSecs) : '—'}</td><td>${x.lastStars == null ? '—' : x.lastStars + '★'} ${esc(MODE[x.lastMode] || '')}</td></tr>`; });
   h += '</table></div>';
   const wr = weakRows(Object.keys(j.q || {}).map(k => ({k, label: qLabel(k), n: j.q[k].n, ok: j.q[k].ok, acc: j.q[k].ok / j.q[k].n})), 3).slice(0, 8);
   h += '<p><b>最需要加強的題型（作答 3 次以上）：</b></p>' + (wr.length ? `<div class="tw"><table><tr><th class="l">關卡與題型</th><th>作答次數</th><th class="l">答對率</th></tr>${wr.map(x => `<tr><td class="l">${esc(x.label)}</td><td>${x.n}</td><td class="l">${bar(x.acc)}</td></tr>`).join('')}</table></div>` : '<p>這位同學的作答資料還不夠。</p>');
