@@ -85,7 +85,7 @@ const MODE = {easy: '練兵', real: '實戰', hard: '修羅', end: '無極限'};
 const STAGES = GC.chapters.flatMap(c => c.stages.map(s => ({id: s[0], name: s[1], boss: !!s[2], ch: c.n})));
 const SNAME = {}; STAGES.forEach(s => SNAME[s.id] = s.name);
 
-let ROSTER = [], DATA = {}, ROWS = [], tab = 'prog', view = 'stars', oneNo = '', loaded = false;
+let ROSTER = [], DATA = {}, ROWS = [], tab = 'prog', view = 'acc', oneNo = '', loaded = false;
 const $ = s => document.querySelector(s);
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const get = k => { try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } };
@@ -163,16 +163,21 @@ function cell(r, s) {
   if (view === 'time') { const t = x ? x.pSecs || 0 : 0; return t ? `<td class="t${t < 300 ? 1 : t < 900 ? 2 : 3}" title="${fmtSecs(t)}">${fmtShort(t)}</td>` : '<td class="s0">—</td>'; }
   const p = x ? x.plays || 0 : 0; return p ? `<td class="t${p < 3 ? 1 : p < 6 ? 2 : 3}">${p}</td>` : '<td class="s0">—</td>';
 }
-function footer(L) {
-  const played = L.filter(r => r.played);
+/* 最下面兩列：各關「累積作答總題數」的答對率（所有人、所有次數的題目加總）＋總題數；再依目前顯示補一列（時間／次數） */
+function footAcc(L) {
+  return STAGES.map(s => { let q = 0, ok = 0; L.forEach(r => { const x = r.st[s.id]; if (x) { q += x.totalQ || 0; ok += x.totalOk || 0; } });
+    return q ? `<th class="${accCls(ok / q)}" title="${ok}/${q} 題">${Math.round(ok / q * 100)}%</th>` : '<th class="a0">—</th>'; }).join('');
+}
+function footQ(L) {
+  return STAGES.map(s => { let q = 0; L.forEach(r => { const x = r.st[s.id]; if (x) q += x.totalQ || 0; }); return `<th>${q || '—'}</th>`; }).join('');
+}
+function footExtra(L) {
   return STAGES.map(s => {
-    if (view === 'stars') { const c = played.filter(r => r.st[s.id] && r.st[s.id].bestStars > 0).length; return `<th>${L.length ? Math.round(c / L.length * 100) : 0}%</th>`; }
-    if (view === 'acc') { let q = 0, ok = 0; played.forEach(r => { const x = r.st[s.id]; if (x) { q += x.totalQ || 0; ok += x.totalOk || 0; } }); return `<th>${q ? Math.round(ok / q * 100) + '%' : '—'}</th>`; }
-    if (view === 'time') { const ts = played.map(r => (r.st[s.id] || {}).pSecs || 0).filter(Boolean); return `<th>${ts.length ? fmtShort(ts.reduce((a, b) => a + b, 0) / ts.length) : '—'}</th>`; }
-    return `<th>${played.reduce((a, r) => a + ((r.st[s.id] || {}).plays || 0), 0) || '—'}</th>`;
+    if (view === 'time') { const ts = L.map(r => (r.st[s.id] || {}).pSecs || 0).filter(Boolean); return `<th>${ts.length ? fmtShort(ts.reduce((a, b) => a + b, 0) / ts.length) : '—'}</th>`; }
+    return `<th>${L.reduce((a, r) => a + ((r.st[s.id] || {}).plays || 0), 0) || '—'}</th>`;
   }).join('');
 }
-const FOOT_NAME = {stars: '通關率（有星的比例）', acc: '全班答對率', time: '平均練習時間（有練的人）', plays: '練習次數合計'};
+const FOOT_EXTRA = {time: '平均練習時間（有練的人）', plays: '練習次數合計'};
 function renderProg() {
   const L = list().filter(r => ($('#st') ? $('#st').value : '') === 'p' ? r.played : ($('#st') && $('#st').value === 'n' ? !r.played : true))
     .filter(r => { const q = ($('#q') ? $('#q').value.trim().toLowerCase() : ''); return !q || (r.name + r.no + r.hero).toLowerCase().includes(q); });
@@ -185,7 +190,7 @@ function renderProg() {
   <input type="text" id="q" placeholder="搜尋姓名／學號／勇者名" style="flex:0 1 220px"><button class="b" id="e-prog">⬇️ 匯出 Excel（CSV）</button></div>
   <div class="tw"><table><tr><th class="l">班級</th><th>座號</th><th class="l">姓名</th><th>總星數</th><th>練習次數</th><th>練習時間</th><th>整體答對率</th>${STAGES.map(s => `<th title="${esc(s.id + ' ' + s.name)}">${s.id}${s.boss ? '👹' : ''}</th>`).join('')}</tr>` +
     L.map(r => `<tr class="rw" data-no="${esc(r.no)}"><td class="l">${esc(r.cls)}</td><td>${r.seat || ''}</td><td class="l">${esc(r.name || '（' + r.no + '）')}</td><td>${r.played ? r.stars : '—'}</td><td>${r.played ? r.plays : '—'}</td><td>${r.played ? fmtShort(r.secs) : '—'}</td><td>${r.acc == null ? '—' : Math.round(r.acc * 100) + '%'}</td>${STAGES.map(s => cell(r, s)).join('')}</tr>`).join('') +
-    `<tr><th class="l" colspan="7">${FOOT_NAME[view]}</th>${footer(all)}</tr></table></div>`;
+    `<tr><th class="l" colspan="7">各關累積答對率（全班所有作答題目）</th>${footAcc(played)}</tr><tr><th class="l" colspan="7">各關累積作答總題數</th>${footQ(played)}</tr>${FOOT_EXTRA[view] ? `<tr><th class="l" colspan="7">${FOOT_EXTRA[view]}</th>${footExtra(played)}</tr>` : ''}</table></div>`;
   $('#vw').value = view; $('#st').value = keep.st; $('#q').value = keep.q;
   $('#vw').onchange = () => { view = $('#vw').value; renderProg(); };
   $('#st').onchange = renderProg; $('#q').oninput = () => { renderProg(); const q = $('#q'); q.focus(); q.setSelectionRange(q.value.length, q.value.length); };
