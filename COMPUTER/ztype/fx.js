@@ -1,4 +1,4 @@
-/* ZFX：中文看打內容練習的音效與背景音樂（全部用 WebAudio 合成，不需要音檔）
+/* ZFX：看打射擊練習的音效與背景音樂（全部用 WebAudio 合成，不需要音檔）
  * 用法：ZFX.sfx('hit'|'shoot'|'kill'|'wrong'|'hurt'|'wave'|'horde'|'clear'|'over')
  *       ZFX.bgmStart() / ZFX.bgmStop() / ZFX.bgmPause() / ZFX.bgmResume() / ZFX.setIntense(true|false)
  *       右上角有 🔊/🔇 按鈕可以開關（記在 localStorage ztype_sound_v1）
