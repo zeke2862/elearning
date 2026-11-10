@@ -136,6 +136,8 @@ table.w td,table.w th{border-bottom:1px solid var(--line);padding:5px 6px;text-a
 <div class="ov" id="pnlOv"><div class="pbox" id="pbox"></div></div>
 
 <script src="game-config.js"></script>
+<script src="../../sync-client.js"></script>
+<script src="jb2-sync.js"></script>
 <script src="audio/bgm.js"></script>
 <script src="relax-break.bundle.js"></script>
 <script src="vol2-monsters.js"></script>
@@ -693,6 +695,7 @@ function saveWho(){
   if(!nm){toast('請先幫自己取個勇者名');return}
   if(isBad(nm)){toast('這個名字不適合，請換一個');return}
   H.who={cls:'',no,name:nm};H.renaming=false;
+  try{JB2Sync.setNo(no)}catch(e){}
   for(let n=1;n<=NCH;n++){const d=readCh(n);d._who={cls:'',no,sid:no,name:nm};writeCh(n,d)}
   save();toast('資料已儲存並同步到各章');panelRender&&panelRender();reportNow(true);
 }
@@ -788,6 +791,7 @@ function reportPayload(){
   return{v:1,no:H.who.no,hero:H.who.name,at:new Date().toISOString(),stars:totalStars(),ch,stages,weak:rows,gold:H.gold,earned:H.stat.earned,spent:H.stat.spent,streak:H.streak.n};
 }
 function reportNow(force){
+  try{JB2Sync.push()}catch(e){}
   try{if(window.Report&&GC.report&&GC.report.enabled&&H.who.no)window.Report.send(GC.report,reportPayload(),!!force)}catch(e){}
 }
 
@@ -957,7 +961,7 @@ function init(){
 window.addEventListener('resize',()=>{fit();centerOnHero(false)});
 window.addEventListener('pageshow',ev=>{if(ev.persisted){load();refreshAll(false);centerOnHero(false)}});
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&ready){load();calcStats();sync(false);drawMap();refreshHUD();reportNow(false)}});
-init();
+try{JB2Sync.gate(function(){init()})}catch(e){init()}
 })();
 </script>
 <script>

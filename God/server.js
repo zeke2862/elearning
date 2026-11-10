@@ -1633,7 +1633,7 @@ function summarizeKeyagentSave(save) {
     gbit: save.gbit || 0, core: save.core || 0,
     endless: save.endless || null,
     lastPlayed: save.lastPlayed || 0,
-    zombie: og.zombie || null, ztype: og.ztype || null
+    zombie: og.zombie || null, ztype: og.ztype || null, jb2: og.jb2 || null
   };
 }
 app.get('/keyagent-progress', (req, res) => {

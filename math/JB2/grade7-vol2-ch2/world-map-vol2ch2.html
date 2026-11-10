@@ -193,6 +193,8 @@ button:focus-visible{outline:3px solid var(--bronze);outline-offset:2px}
 </div>
 
 <script src="../game-config.js"></script>
+<script src="../../../sync-client.js"></script>
+<script src="../jb2-sync.js"></script>
 <script>
 /*LOGIC（與舊版相同：關卡資料、解鎖規則、星數、經驗值）*/
 const CHX=[
@@ -211,7 +213,9 @@ const CARDS=[
 ];
 const KEY='monster-ch2-progress-v1',PERSTAGE=5; // 每關最多 5 星（練兵3 + 實戰4 + 修羅5）
 const EXP_CORRECT=10,EXP_WRONG=4,LEVEL_STEP=50; // 答對每次+10、答錯每次+4，每50經驗升一級
-let P={};
+let P={};let T0=0;
+function addSecs(){if(!T0||!cur)return;const s=Math.min(3600,Math.round((Date.now()-T0)/1000));T0=0;if(s<=0)return;const o=P[cur]||{stars:0,best:0};P[cur]={...o,secs:(o.secs|0)+s};P._last={id:cur,at:Date.now()};save();try{JB2Sync.push()}catch(e){}}
+addEventListener('pagehide',addSecs);
 const idsOf=ci=>CHX[ci].st.map(s=>s[0]);
 const flatAll=CHX.flatMap((c,i)=>idsOf(i));
 const MAXSTAR=flatAll.length*PERSTAGE;
@@ -365,7 +369,7 @@ function stageURL(url,id,endless,mode){
   let cf='';for(const k in K)if(G[K[k]]!==undefined)cf+='&'+k+'='+encodeURIComponent(G[K[k]]);
   return url+(url.includes('?')?'&':'?')+'stars='+st(id)+'&eb='+ebOf(id)+(endless?'&endless=1':(mode?'&mode='+mode:''))+cf+(window.__extra||'');
 }
-function openStage(id,endless,mode){const s=STAGES.find(x=>x.id===id);cur=id;closePeek();$('#fr').src=stageURL(s.url,id,endless,mode);$('#ov').classList.remove('hide');}
+function openStage(id,endless,mode){const s=STAGES.find(x=>x.id===id);cur=id;T0=Date.now();closePeek();$('#fr').src=stageURL(s.url,id,endless,mode);$('#ov').classList.remove('hide');}
 const toPxY=i=>toPx(layout(STAGES.length,VIEW.T)[i])[1];
 function closePeek(){$('#peek').classList.add('hide')}
 function openPeek(i){
@@ -413,11 +417,13 @@ $('#cm-close').onclick=closeCard;
 $('#cm-main').onclick=e=>{const id=e.currentTarget.dataset.id;if(id)toggleMain(id);};
 $('#card-modal').onclick=e=>{if(e.target.id==='card-modal')closeCard();};
 addEventListener('keydown',e=>{if(e.key==='Escape'){closeCard();closePeek();sideOpen(false)}});
-function closeStage(){$('#ov').classList.add('hide');$('#fr').src='about:blank';render()}
+function closeStage(){addSecs();$('#ov').classList.add('hide');$('#fr').src='about:blank';render()}
 $('#x').onclick=closeStage;
 addEventListener('message',e=>{
   if(e.source!==$('#fr').contentWindow)return;
   const d=e.data||{};
+  if(d.type=='stage-result'&&d.id==cur){const o0=P[d.id]||{stars:0,best:0};P[d.id]={...o0,tries:(o0.tries|0)+1,lastMode:d.mode||'',lastStars:d.fail?0:(d.stars|0)};P._last={id:d.id,at:Date.now()};save();try{JB2Sync.push()}catch(e){}}
+  if(d.type=='endless-result'&&d.id==cur){const o0=P[d.id]||{stars:0,best:0};P[d.id]={...o0,tries:(o0.tries|0)+1,lastMode:'end',lastStars:o0.stars|0};P._last={id:d.id,at:Date.now()};save();try{JB2Sync.push()}catch(e){}}
   if(d.type=='stage-result'&&!d.fail&&d.id==cur){
     const r0=rankOf(total())[1],c0=owned().length,old=P[d.id]||{stars:0,best:0},done0=chDone();
     P[d.id]={...old,stars:Math.max(old.stars,d.stars),best:Math.max(old.best,d.score)};save();
@@ -447,7 +453,7 @@ addEventListener('message',e=>{
 $('#reset').onclick=()=>{if(confirm('確定要清除所有星星與圖鑑嗎？這個動作無法復原。')){P={};save();render()}};
 addEventListener('resize',()=>{clearTimeout(window._rz);window._rz=setTimeout(renderMap,120)});
 matchMedia('(max-aspect-ratio:1/1)').addEventListener('change',renderMap);
-load();render();
+try{JB2Sync.gate(function(){load();render();JB2Sync.push()})}catch(e){load();render()}
 /* 主城「每日挑戰／錯題練習」帶進來：?practice=daily|weak&sid=關卡&types=題型,題型 */
 (function(){try{const q=new URLSearchParams(location.search),p=q.get('practice'),sid=q.get('sid');if(!p||!sid||!/^(daily|weak)$/.test(p))return;
  const s=STAGES.find(x=>x.id===sid);if(!s||lockCh(s.ci,s.k))return;
