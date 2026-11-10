@@ -1,0 +1,119 @@
+/* ============================================================
+   鍵位特工：駭客終端機美編層（疊在原本樣式上，不改遊戲邏輯）
+   由 hacker-fx.js 控制開關：<html class="fx-off"> 時全部特效關閉
+   ============================================================ */
+
+/* ---------- 程式碼雨（背景） ---------- */
+#matrix-rain{
+  position:fixed;inset:0;width:100vw;height:100vh;
+  pointer-events:none;z-index:9990;
+  opacity:.13;mix-blend-mode:screen;
+  transition:opacity .4s ease;
+}
+html.fx-off #matrix-rain,
+html.fx-quiet #matrix-rain{display:none;}
+
+/* ---------- 終端機提示字元 ---------- */
+.eyebrow::before{
+  content:"root@keyagent:~$ ";
+  color:var(--ch1);letter-spacing:.05em;text-transform:none;
+  text-shadow:0 0 6px rgba(57,255,157,.6);
+}
+.eyebrow::after{
+  content:"_";color:var(--ch1);margin-left:2px;
+  animation:hk-blink 1s step-end infinite;
+}
+@keyframes hk-blink{50%{opacity:0;}}
+html.fx-off .eyebrow::after{animation:none;}
+
+/* ---------- 標題：發光 + 故障閃爍 ---------- */
+.game-logo{
+  position:relative;
+  text-shadow:0 0 10px rgba(57,255,157,.7), 0 0 30px rgba(57,255,157,.35);
+}
+.game-logo[data-text]::before,
+.game-logo[data-text]::after{
+  content:attr(data-text);
+  position:absolute;left:0;top:0;width:100%;
+  overflow:hidden;opacity:0;pointer-events:none;
+}
+.game-logo[data-text]::before{color:#ff2e6c;text-shadow:none;}
+.game-logo[data-text]::after{color:#4fc3ff;text-shadow:none;}
+html:not(.fx-off) .game-logo[data-text]::before{animation:hk-glitch-a 5.5s infinite;}
+html:not(.fx-off) .game-logo[data-text]::after{animation:hk-glitch-b 5.5s infinite;}
+@keyframes hk-glitch-a{
+  0%,90%,100%{opacity:0;transform:none;clip-path:inset(0 0 0 0);}
+  91%{opacity:.85;transform:translate(-4px,1px);clip-path:inset(10% 0 55% 0);}
+  93%{opacity:.85;transform:translate(3px,-1px);clip-path:inset(60% 0 8% 0);}
+  95%{opacity:0;}
+}
+@keyframes hk-glitch-b{
+  0%,90%,100%{opacity:0;transform:none;clip-path:inset(0 0 0 0);}
+  92%{opacity:.85;transform:translate(4px,-1px);clip-path:inset(45% 0 20% 0);}
+  94%{opacity:.85;transform:translate(-3px,1px);clip-path:inset(5% 0 70% 0);}
+  96%{opacity:0;}
+}
+
+/* ---------- 選單卡片：模組感 ---------- */
+.menu-card{position:relative;}
+.menu-card::before{
+  content:"";position:absolute;left:0;top:0;width:100%;height:3px;
+  background:linear-gradient(90deg,var(--accent),transparent 70%);
+  opacity:.55;
+}
+.menu-card h3::before{content:"> ";color:var(--ch1);}
+.menu-card:hover:not(.locked) h3{
+  color:var(--ch1);text-shadow:0 0 10px rgba(57,255,157,.7);
+}
+.menu-card:hover:not(.locked) .mc-icon{filter:drop-shadow(0 0 8px var(--ch1));}
+.menu-card .mc-tag::before{content:"[ ";}
+.menu-card .mc-tag::after{content:" ]";}
+
+/* ---------- 按鈕：終端機風 ---------- */
+.btn{text-shadow:0 0 8px currentColor;}
+.btn:hover{text-shadow:none;}
+.btn.big::before{content:"$ ";opacity:.8;}
+
+/* ---------- 開機畫面 ---------- */
+.boot-lines{
+  height:auto;min-height:150px;
+  font-size:12px;opacity:.9;
+  text-shadow:0 0 6px rgba(57,255,157,.5);
+}
+.boot-lines .line.warn{color:#ffd23f;}
+.boot-lines .line.bad{color:#ff5f6d;}
+.boot-lines .line.ok{color:#39ff9d;}
+.boot-lines .line.granted{
+  color:#05070a;background:var(--ch1);display:inline-block;
+  padding:2px 10px;margin-top:6px;font-weight:700;letter-spacing:.2em;
+  text-shadow:none;box-shadow:0 0 18px var(--ch1);
+}
+
+/* ---------- 輸入框 / 選取 / 捲軸 ---------- */
+input[type="text"],input[type="password"],input[type="number"]{caret-color:var(--ch1);}
+input[type="text"]:focus,input[type="password"]:focus,input[type="number"]:focus{
+  border-color:var(--ch1)!important;
+  box-shadow:0 0 0 1px var(--ch1),0 0 16px rgba(57,255,157,.25);
+}
+::selection{background:var(--ch1);color:#05070a;}
+*{scrollbar-width:thin;scrollbar-color:#1f6b47 #05070a;}
+::-webkit-scrollbar{width:8px;height:8px;}
+::-webkit-scrollbar-track{background:#05070a;}
+::-webkit-scrollbar-thumb{background:#1f6b47;border-radius:4px;}
+
+/* ---------- FX 開關按鈕 ---------- */
+#fx-toggle{
+  position:fixed;left:12px;bottom:12px;z-index:10001;
+  font-family:var(--mono);font-size:11px;letter-spacing:.08em;
+  color:var(--ch1);border:1px solid #1f6b47;background:rgba(5,7,10,.75);
+  padding:5px 10px;cursor:pointer;opacity:.7;
+}
+#fx-toggle:hover{opacity:1;box-shadow:0 0 12px rgba(57,255,157,.4);}
+html.fx-quiet #fx-toggle{display:none;}
+
+/* ---------- 無障礙：偏好減少動態時關閉動畫 ---------- */
+@media (prefers-reduced-motion: reduce){
+  #matrix-rain{display:none;}
+  .game-logo[data-text]::before,.game-logo[data-text]::after{animation:none!important;}
+  .eyebrow::after{animation:none;}
+}

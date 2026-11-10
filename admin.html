@@ -145,6 +145,7 @@
       <button class="main" style="background-color:#6f42c1;" onclick="openLookTypeLeaderboard()">英文看打排行榜</button>
       <button class="main" style="background-color:#d29922;" onclick="openRaceLeaderboard()">🏎️ 打字賽車排行榜</button>
       <button class="main" style="background-color:#8e44ad;" onclick="openGodLeaderboard()">⚔️ 打字修仙傳排行榜</button>
+      <button class="main" style="background-color:#198754;" onclick="window.open('/keyagent-progress.html' + (typeof activeClass !== 'undefined' && activeClass && activeClass.className ? '?year=' + encodeURIComponent(activeClass.year) + '&className=' + encodeURIComponent(activeClass.className) : ''), '_blank')">🎮 遊戲進度報表（鍵位特工／末日／ZType）</button>
     </div>
   </div>
 
@@ -159,6 +160,51 @@
       <button class="ghost" onclick="testIp()">查詢</button>
     </div>
     <div id="ipTestResult" class="hint"></div>
+  </div>
+
+  <hr>
+
+  <!-- 示範帳號（老師用） -->
+  <div class="section">
+    <h3>🧪 示範帳號（老師教學／展示用）</h3>
+    <p class="hint">
+      用示範帳號的學號登入首頁（要在學校內網、由主機認證），進入「鍵位特工、末日生存、ZType」時左下角會出現
+      「示範模式」面板：無敵不扣血、金錢無限、可跳過題目／跳過這波／直接通關、過關自動下一關，
+      鍵位特工的全部關卡也會直接解鎖。一般學生用不到，學生在家用同一個學號登入也不會啟用。
+    </p>
+    <div class="flex-row">
+      <input type="text" id="demoCodeInput" placeholder="自訂學號（可不填，會自動產生）" style="padding:8px;min-width:240px;">
+      <button class="main" style="background-color:#7c3aed;" onclick="createDemoAccount()">建立示範帳號</button>
+      <button class="main" style="background-color:#6c757d;" onclick="refreshDemoAccounts()">查看目前的示範帳號</button>
+    </div>
+    <div id="demoAccountResult" class="hint" style="white-space:pre-wrap;"></div>
+    <script>
+      async function refreshDemoAccounts() {
+        const box = document.getElementById('demoAccountResult');
+        try {
+          const res = await fetch('/admin/demo-accounts');
+          const data = await res.json();
+          box.innerHTML = data.codes.length
+            ? '目前的示範帳號學號：' + data.codes.map(c => `<b>${c}</b> <a href="#" onclick="removeDemoAccount('${c}');return false;">[刪除]</a>`).join('　')
+            : '目前沒有示範帳號。';
+        } catch (err) { box.innerText = '❌ 讀取失敗：' + err.message + '（server.js 需要更新到新版）'; }
+      }
+      async function createDemoAccount() {
+        const code = document.getElementById('demoCodeInput').value.trim();
+        const box = document.getElementById('demoAccountResult');
+        try {
+          const res = await fetch('/admin/create-demo-account', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code }) });
+          const data = await res.json();
+          if (!data.success) { box.innerText = '❌ ' + data.message; return; }
+          box.innerHTML = `✅ 示範帳號已建立，請到首頁用學號 <b style="font-size:20px">${data.code}</b> 登入。`;
+        } catch (err) { box.innerText = '❌ 建立失敗：' + err.message; }
+      }
+      async function removeDemoAccount(code) {
+        if (!confirm('確定要刪除示範帳號 ' + code + ' 嗎？')) return;
+        await fetch('/admin/remove-demo-account', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code }) });
+        refreshDemoAccounts();
+      }
+    </script>
   </div>
 
   <hr>

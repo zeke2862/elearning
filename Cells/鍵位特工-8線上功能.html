@@ -365,6 +365,13 @@ button{
 /* 正在被玩家打的怪物永遠疊在最上層，不會被其他怪物（尤其是「同時出現」
    的那幾隻）擋住文字，用 !important 蓋掉 JS 依出場順序設的 inline z-index。 */
 .mob.active{z-index:100001 !important;}
+/* 怪物圖示輕微上下漂浮：只動 transform（GPU 合成），每隻怪各自錯開節奏；凍結時停住 */
+@keyframes mobBob{0%,100%{transform:translateY(0);}50%{transform:translateY(-3px);}}
+.mob .mob-icon{animation:mobBob 1.3s ease-in-out infinite;}
+.mob:nth-child(2n) .mob-icon{animation-duration:1.7s;animation-delay:-.4s;}
+.mob:nth-child(3n) .mob-icon{animation-duration:1.1s;animation-delay:-.8s;}
+.mob.frozen .mob-icon{animation-play-state:paused;}
+@media (prefers-reduced-motion: reduce){ .mob .mob-icon{animation:none !important;} }
 .mob-icon{
   width:34px;height:34px;border-radius:3px;
   display:flex;align-items:center;justify-content:center;
@@ -650,6 +657,7 @@ html[data-font-size="xlarge"] body{ zoom:1.36; }
 /* Codex UI/CSS moved to codex.html (embedded via iframe, same pattern as shop.html) */
 #screen-compendium{padding:0;overflow:hidden;}
 </style>
+<link rel="stylesheet" href="./hacker-theme.css">
 </head>
 <body>
 <div id="app">
@@ -1081,6 +1089,8 @@ import { getStageDefinition, randomSequence, randomVocabWord, randomSentence, TO
 window.WordBank = { getStageDefinition, randomSequence, randomVocabWord, randomSentence, TOWER_DEFENSE_STAGE_ORDER };
 </script>
 
+<script src="../sync-client.js"></script>
+<script src="../demo-mode.js"></script>
 <script>
 /* ==========================================================================
    data.js
@@ -1133,7 +1143,17 @@ const DRILL_REAL_WORDS = [
   "ad","as","ah","ha","ash","ask","all","ads","gas","has","lag","gal",
   "sad","fad","dad","add","fads","dads","adds","hall","half","hash",
   "dash","lash","slag","flag","glad","salad","alas","salsa","sash",
-  "flask","glass","fall","falls","flags","flasks","halls","shall","jag"
+  "flask","glass","fall","falls","flags","flasks","halls","shall","jag",
+  // 上列真字（Q W E R T Y U I O P）
+  "we","to","up","it","or","tie","toe","too","top","pot","pie","wet","yet","you",
+  "our","out","the","pet","rip","rot","tip","try","pure","quit","type","tree","true",
+  "tower","power","write","quiet","pity","pipe","wipe","your","trip","tire","pretty",
+  // 左手真字（Q W E R T A S D F G Z X C V B）
+  "bad","bag","bat","bed","bet","cab","car","cat","dig","dew","far","fast","fear","get",
+  "gray","great","raft","star","start","water","draw","west","vest","zest","zebra","extra",
+  // 右手真字（Y U I O P H J K L ; N M , . /）
+  "hi","hill","hook","hum","hump","jump","kin","lily","limp","link","lip","loop","mill",
+  "milk","mom","mop","nun","oil","pink","plum","poll","pony","pool","yolk","unit","union"
 ];
 
 
@@ -1325,13 +1345,18 @@ let CHAPTERS = [
   bonusLevel: {
     id: "1-bonus",
     name: "番外篇：中列極速檢定",
+    keys: "ETP 測驗・中列",
     fixedLines: [
       "shdgs kflg; kh;hl kl;dd jajdj gssal gffa; jfahk",
       "ghfld akhgl jhjkj hdaka sgf;d ;jsf; l;slf gsdka",
       "sdakf kldkg ;sf;a lhsjl ;hggj ;sfgj hfddh ajlak",
       "fh;jf gsdkl ksgsf hd;;j lkada kfhgg ;slad jalhj"
     ],
-    timeLimitSec: 150,
+    timeLimitSec: 180,
+    // 💡 星級制：準確度 ≥ minAccuracy 才給星；3 分鐘內 1 星、2 分半內 2 星、2 分鐘內 3 星，
+    // 2 星以上（passStars）才算通過、才能進入下一章。
+    starTimes: { three: 120, two: 150, one: 180 },
+    passStars: 2,
     minAccuracy: 90
   }
 }
@@ -1717,9 +1742,67 @@ function postToStory(msg){
   const frame = document.getElementById("storyFrame");
   if(frame && frame.contentWindow) frame.contentWindow.postMessage(msg, "*");
 }
+// 示範帳號：全部關卡視為已通關（3 星）、章節全開、GBit 無限，方便老師隨時展示任何一關。
+function demoPrepareSave(){
+  if(!(window.KeyagentDemo && KeyagentDemo.isActive())) return;
+  KeyagentDemo.ensureWallet();
+  CHAPTERS.forEach(ch=>{
+    const cp = getChapterProgress(ch.id);
+    const mark = id=>{
+      const r = cp.levels[id] || (cp.levels[id] = { stars:0, bestWpm:0, bestAcc:0, bestCombo:0, cleared:false, plays:0 });
+      r.cleared = true; r.stars = Math.max(r.stars||0, 3);
+    };
+    ch.levels.forEach(lv=>mark(lv.id));
+    if(ch.bonusLevel) mark(ch.bonusLevel.id);
+  });
+  SAVE.storyClearedChapter = MAX_CHAPTER_ID;
+  SAVE.storyUnlockedChapter = MAX_CHAPTER_ID;
+  if(KeyagentDemo.opt("money")){
+    SAVE.gbitEarnedLifetime = 999999999; SAVE.gbitSpentLifetime = 0; SAVE.gbit = 999999999;
+  }
+  persistSave();
+}
+// 示範面板的三個動作（跳過這題／跳過這波／直接通關），只在塔防進行中有效
+const DemoActions = {
+  skipWord(){
+    if(!Game.running) return;
+    const mob = Game.activeMob || Game.mobs[0];
+    if(!mob) return;
+    const hits = (MOB_TYPES[mob.mobType]||{}).hitsToKill || 1;
+    mob.hitsTaken = hits;           // 下一次 killMob 一定會真的擊殺
+    Game.killMob(mob);
+    Game.activeMob = null;
+    const input = document.getElementById("typingInput");
+    if(input) input.value = "";
+  },
+  skipWave(){
+    if(!Game.running || Game.isEndless || Game.waveBreak) return;
+    Game.mobsSpawnedThisWave = Game.mobsPerWave;      // 這波不再出新怪
+    const list = [...Game.mobs];
+    Game.mobsKilledThisWave = Game.mobsPerWave - list.length;
+    Game.activeMob = null;
+    const input = document.getElementById("typingInput");
+    if(input) input.value = "";
+    if(list.length === 0){ Game.nextWave(); return; }
+    list.forEach(m=>{                                  // 走一般「擊殺」流程，最後一隻會自動換波
+      m.hitsTaken = (MOB_TYPES[m.mobType]||{}).hitsToKill || 1;
+      Game.killMob(m);
+    });
+  },
+  winLevel(){
+    if(!Game.running || Game.isEndless) return;
+    Game.onVictory();
+  }
+};
 function maybeRunBootSequence(){
   if(BOOTED || !SAVE_READY || !CHAPTERS_MERGED) return;
   BOOTED = true;
+  demoPrepareSave();
+  if(window.KeyagentDemo) KeyagentDemo.mountBar([
+    { label:"跳過這題", key:"F2", fn:()=>DemoActions.skipWord() },
+    { label:"跳過這波", key:"F3", fn:()=>DemoActions.skipWave() },
+    { label:"直接通關", key:"F4", fn:()=>DemoActions.winLevel() }
+  ]);
   UI.runBootSequence();
 }
 let _importSaveCb = null;
@@ -1734,6 +1817,9 @@ function saveSysPost(msg){
 function persistSave(){
   SAVE.lastPlayed = Date.now();
   saveSysPost({type:"savesys:persistSave", save: SAVE});
+  // 💡 登入過學號的話，存檔後 2 秒自動同步（學校內網直接送學校主機，在家走雲端中繼站），
+  //    換座位、換電腦用學號登入就能接續；離開頁面時另外補送一次（見 sync-client.js）
+  if(typeof keyagentSchedulePush === "function") keyagentSchedulePush(2000);
 }
 
 function hasExistingSave(){ return SAVE_EXISTED_ON_BOOT; }
@@ -2024,6 +2110,7 @@ const Game = {
     this._criticalSince = null;
     const baseStartBit = 50 + (sh.starter_bit||0) * 30;
     this.bit = baseStartBit;
+    if(window.KeyagentDemo && KeyagentDemo.opt("money")) this.bit = 99999;   // 示範帳號：金錢無限
     this.bitBonus = (sh.bit_boost||0) * 2;   // extra Bit per kill
     this.towerDiscount = (sh.tower_discount||0) >= 1 ? 0.85 : 1; // cost multiplier
     this.towerResearch = Object.assign({}, SAVE.towerResearch||{}); // permanent per-tower research levels
@@ -2473,8 +2560,10 @@ const Game = {
       this.activeEffects.shieldCharges--;
       if(window.UI) UI.toast("🛡 數據閘門抵擋了一次漏怪傷害");
     } else {
-      this.hp = Math.max(0, this.hp - 12);
-      this.flashDanger();
+      if(!(window.KeyagentDemo && KeyagentDemo.opt("invincible"))){   // 示範帳號：無敵不扣血
+        this.hp = Math.max(0, this.hp - 12);
+        this.flashDanger();
+      }
     }
     if(this.activeMob && this.activeMob.id === mob.id){
       this.activeMob = null;
@@ -3276,8 +3365,11 @@ const EtpTest = {
     this.timeLimitSec = minigame.timeLimitSec || null;
     clearInterval(this.tickTimer);
     document.getElementById("etpTitle").textContent = minigame.name;
+    const stT = minigame.starTimes;
     document.getElementById("etpTarget").textContent = this.timeLimitSec
-      ? `限時 ${formatTime(this.timeLimitSec)} 內打完，正確率 ≥ ${minigame.minAccuracy}%`
+      ? (stT
+          ? `正確率 ≥ ${minigame.minAccuracy}% 才有星：${formatTime(stT.one)} 內 ★　${formatTime(stT.two)} 內 ★★　${formatTime(stT.three)} 內 ★★★（${minigame.passStars||2}★以上過關）`
+          : `限時 ${formatTime(this.timeLimitSec)} 內打完，正確率 ≥ ${minigame.minAccuracy}%`)
       : `WPM > ${minigame.minWpm}，正確率 ≥ ${minigame.minAccuracy}%`;
     const timeWrap = document.getElementById("etpTimeLeftWrap");
     if(timeWrap) timeWrap.style.display = this.timeLimitSec ? "" : "none";
@@ -3455,9 +3547,27 @@ const EtpTest = {
     let passed, titleText;
     if(this.mode === "chapterBonus"){
       // 限時版本：能跑到這裡代表已經在時限內把全部內容打完了，只再看正確率。
-      passed = acc >= this.minigame.minAccuracy;
-      titleText = passed ? "✅ 檢定通過！第二章已解鎖！" : `正確率 ${acc}%，未達 ${this.minigame.minAccuracy}% 標準，再試一次！`;
-      recordLevelResult(this.chapterId, this.minigame.id, { wpm, acc, combo:0, stars: passed?3:0, cleared: passed });
+      // 星級：正確率達標才給星；依完成時間 3 分鐘內 1 星、2.5 分鐘內 2 星、2 分鐘內 3 星。
+      const st = this.minigame.starTimes || { three:120, two:150, one:180 };
+      const need = this.minigame.passStars || 2;
+      let stars = 0;
+      if(acc >= this.minigame.minAccuracy){
+        if(elapsed <= st.three) stars = 3;
+        else if(elapsed <= st.two) stars = 2;
+        else if(elapsed <= st.one) stars = 1;
+      }
+      passed = stars >= need;
+      const starText = "★".repeat(stars) + "☆".repeat(3-stars);
+      if(acc < this.minigame.minAccuracy){
+        titleText = `正確率 ${acc}%，未達 ${this.minigame.minAccuracy}%，拿不到星星，再試一次！`;
+      } else if(!passed){
+        titleText = `${starText} 只有 ${stars} 星，要 ${need} 星以上（${formatTime(st.two)} 內打完）才能過關，再試一次！`;
+      } else {
+        const ch0 = CHAPTERS.find(c=>c.id===this.chapterId);
+        const hasNext = ch0 && ch0.id < MAX_CHAPTER_ID;
+        titleText = `✅ 檢定通過！${starText}${hasNext ? "　下一章已解鎖！" : ""}`;
+      }
+      recordLevelResult(this.chapterId, this.minigame.id, { wpm, acc, combo:0, stars, cleared: passed });
       if(passed){
         const ch = CHAPTERS.find(c=>c.id===this.chapterId);
         if(ch && isChapterReadyForNextChapter(ch)) advanceStoryProgress(ch.id);
@@ -3967,19 +4077,23 @@ const UI = {
 
   runBootSequence(){
     const lines = [
-      "> INITIALIZING KEY-AGENT PROTOCOL...",
-      "> CONNECTING TO ETHER MAINFRAME...",
-      "> WARNING: FIREWALL INTEGRITY 4%",
-      "> LOADING HOME ROW DEFENSE MODULE...",
-      "> AGENT LINK ESTABLISHED."
+      ["> INITIALIZING KEY-AGENT PROTOCOL...", ""],
+      ["> ROUTING THROUGH PROXY CHAIN [3/3] ........ OK", "ok"],
+      ["> BYPASSING PERIMETER SCAN 0x7F3A ........ OK", "ok"],
+      ["> CONNECTING TO ETHER MAINFRAME...", ""],
+      ["> WARNING: FIREWALL INTEGRITY 4%", "warn"],
+      ["> ALERT: 病毒入侵中，防線即將失守！", "bad"],
+      ["> LOADING HOME ROW DEFENSE MODULE... [##########] 100%", "ok"],
+      ["> AGENT LINK ESTABLISHED.", ""],
+      ["[ ACCESS GRANTED ]", "granted"]
     ];
     const wrap = document.getElementById("bootLines");
     wrap.innerHTML = "";
     lines.forEach((l,i)=>{
       const d = document.createElement("div");
-      d.className = "line";
-      d.style.animationDelay = (i*0.35)+"s";
-      d.textContent = l;
+      d.className = "line" + (l[1] ? " " + l[1] : "");
+      d.style.animationDelay = (i*0.28)+"s";
+      d.textContent = l[0];
       wrap.appendChild(d);
     });
     const cursor = document.createElement("span");
@@ -3991,7 +4105,7 @@ const UI = {
       if(hasExistingSave()){
         document.getElementById("btnContinue").style.display = "block";
       }
-    }, lines.length*350 + 300);
+    }, lines.length*280 + 300);
   },
 
   enterMainMenu(){
@@ -4081,6 +4195,9 @@ const UI = {
             id: ch.bonusLevel.id, name: ch.bonusLevel.name,
             minAccuracy: ch.bonusLevel.minAccuracy,
             timeLimitSec: ch.bonusLevel.timeLimitSec,
+            starTimes: ch.bonusLevel.starTimes || null,
+            passStars: ch.bonusLevel.passStars || 2,
+            keys: ch.bonusLevel.keys || "",
             unlocked: isChapterFullyCleared(ch.id, ch.levels),
             rec: getLevelRecord(ch.id, ch.bonusLevel.id)
           };
@@ -4090,7 +4207,7 @@ const UI = {
     if(view==="story"){
       const src = extra.endless ? ENDLESS : CHAPTERS.find(c=>c.id===extra.chapterId);
       if(src){
-        payload.storyData = { short:src.short, title:src.story.title, body:src.story.body, quote:src.story.quote, color:src.color };
+        payload.storyData = { short:src.short, title:src.story.title, body:src.story.body, quote:src.story.quote, color:src.color, chapterId: extra.endless ? null : src.id };
       }
     }
     this._pendingStoryPayload = payload;
@@ -4325,7 +4442,7 @@ const UI = {
       : (victory
           ? `${Game.level.id} ${Game.level.name} 通關！`
             + (chapterFullyCleared && this.currentChapterObj.bonusLevel && !getLevelRecord(this.currentChapterObj.id, this.currentChapterObj.bonusLevel.id).cleared
-                ? `　還需通過「${this.currentChapterObj.bonusLevel.name}」（正確率 ${this.currentChapterObj.bonusLevel.minAccuracy||90}% 以上）才能解鎖下一章！`
+                ? `　還需通過「${this.currentChapterObj.bonusLevel.name}」（正確率 ${this.currentChapterObj.bonusLevel.minAccuracy||90}% 以上、拿到 ${this.currentChapterObj.bonusLevel.passStars||2} 星以上）才能解鎖下一章！`
                 : "")
           : "基準防線被突破了…再試一次！");
     document.getElementById("resWpm").textContent = wpm;
@@ -4345,6 +4462,10 @@ const UI = {
 
     document.getElementById("btnNextLevel").style.display = (isEndless || !victory) ? "none" : "inline-block";
     document.getElementById("overlayResult").classList.add("active");
+    // 示範帳號：過關後自動進下一關
+    if(victory && !isEndless && window.KeyagentDemo && KeyagentDemo.opt("autoNext")){
+      setTimeout(()=>{ if(document.getElementById("overlayResult").classList.contains("active")) UI.goNextAfterResult(); }, 1500);
+    }
 
     if(newAch.length>0){
       setTimeout(()=>{
@@ -4653,6 +4774,8 @@ function gradeRank(g){ return {B:1,A:2,S:3}[g]||0; }
     }
   });
 
+if(typeof keyagentInstallPageHideSync === "function") keyagentInstallPageHideSync();
+
 document.addEventListener("DOMContentLoaded", ()=>{
   // UI.runBootSequence() is kicked off from the "savesys:init" handler below,
   // once the hidden save/config iframe reports back the loaded save (and any
@@ -4820,5 +4943,6 @@ document.addEventListener("DOMContentLoaded", ()=>{
   });
 });
 </script>
+<script src="./hacker-fx.js"></script>
 </body>
 </html>

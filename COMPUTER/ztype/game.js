@@ -18,26 +18,423 @@ const SYMBOL_CHARS = '!@#$%^&*()-_=+[]{};:\'",./<>?\\|`~'.split('');
 const ALPHA = 'abcdefghijklmnopqrstuvwxyz'.split('');
 
 // ── Word Bank (for "words" category) ───────────
+// 單字取自 English_Look_Subject 42 篇英文文章（easy 3-4 字母、medium 5-7、hard 8-13）
 const WORD_BANK = {
   easy: [
-    'cat','dog','sun','run','fly','sky','war','aim','hit','cup',
-    'fire','jump','left','zero','code','dark','star','fast','cool','ship',
-    'moon','blue','void','nova','beam','wave','icon','bold','type','lock',
-    'red','box','pen','map','win','key','top','net','fog','gem'
+    'able','acid','acts','adam','add','adds','aec','age','aged','ages',
+    'ago','aid','aidc','aim','aims','air','all','ally','also','and',
+    'anti','any','aoki','are','area','aria','arm','arms','army','art',
+    'asia','ask','ate','auto','avis','away','baby','bach','back','bad',
+    'bag','ball','bank','bar','bars','base','bath','bay','bear','beat',
+    'been','beer','beg','bell','bend','benz','best','bid','big','bike',
+    'bill','bind','bird','bit','blow','blue','boat','body','bold','bomb',
+    'bond','book','boom','born','boss','both','bow','box','boy','bus',
+    'bush','busy','but','buy','cake','call','calm','came','camp','can',
+    'cap','car','card','care','cars','cart','case','cash','cast','cave',
+    'cell','cent','cerf','chan','chao','chen','chi','chin','cho','chu',
+    'city','cla','club','clue','coal','coat','code','coin','coke','cold',
+    'come','cook','cool','copy','core','corp','cost','cows','crew','cry',
+    'cup','curb','cut','dame','dare','dark','data','date','day','days',
+    'dead','deal','dear','debt','deep','deer','deny','desk','did','didn',
+    'die','died','does','dome','don','done','door','down','drop','drug',
+    'due','duty','dyes','each','ear','earn','ease','east','easy','eat',
+    'edge','egg','eggs','eign','else','end','era','etc','even','ever',
+    'eye','eyes','face','fact','fail','fair','fall','fan','far','farm',
+    'fast','fat','fate','fear','feed','feel','fees','feet','fell','felt',
+    'feng','few','fiji','file','fill','film','find','fine','fire','firm',
+    'fish','fit','five','fix','flow','fly','fold','food','fool','foot',
+    'for','fore','form','four','free','from','fuel','full','fun','fund',
+    'gain','game','gap','gas','gate','gave','gaza','get','gift','gin',
+    'girl','give','glad','goal','god','goes','gold','gone','good','got',
+    'grew','grow','guy','had','hair','half','hall','hand','hang','hard',
+    'harm','has','hasn','hau','have','haze','head','hear','heat','held',
+    'hell','help','her','here','hide','high','hill','him','his','hit',
+    'hold','hole','holy','home','hong','hope','host','hot','hour','how',
+    'hsu','huge','hung','hunt','hurt','hwa','ice','idb','idea','ill',
+    'inch','into','iron','isn','its','jail','jane','jeou','job','jobs',
+    'joe','john','join','joke','joy','july','jump','june','just','kat',
+    'keep','kept','key','kick','kill','kind','king','kit','knew','know',
+    'kong','kuo','lack','lady','lai','lake','lam','land','lane','last',
+    'late','lava','law','lawn','laws','lay','lead','leaf','lean','led',
+    'lee','left','leg','less','let','lie','lien','lies','life','lift',
+    'like','lin','line','ling','lion','list','live','load','long','look',
+    'lord','los','lose','loss','lost','lot','lots','love','low','luck',
+    'macy','made','mail','main','make','male','man','many','map','mark',
+    'mass','may','mean','meat','meet','men','menu','mere','met','mid',
+    'milk','mind','mine','ming','miss','moo','mood','moon','more','most',
+    'move','much','must','name','navy','near','need','net','new','news',
+    'next','nice','nine','non','none','noon','nor','norm','nose','not',
+    'note','now','off','oil','old','once','one','ones','only','onto',
+    'open','ostp','oung','our','ous','out','oven','over','own','pace',
+    'page','paid','pain','pair','pale','pan','park','part','pass','past',
+    'path','paul','pay','peak','pei','per','pick','ping','pisa','plan',
+    'play','plus','poem','poet','pole','pond','pool','poor','port','pose',
+    'post','pot','pour','pull','pure','push','put','puts','qian','quit',
+    'race','rage','rain','ran','rank','rare','rate','ray','rays','read',
+    'real','red','rely','rest','rica','rich','ride','ring','rise','risk',
+    'road','roc','rock','role','roll','rome','roof','room','rose','row',
+    'ruin','rule','run','runs','rush','sad','safe','said','sail','sake',
+    'sale','salt','same','san','sand','save','saw','say','says','sea',
+    'seas','seat','sec','see','seed','seek','seem','seen','sef','self',
+    'sell','send','sent','set','shan','she','shi','shin','ship','shoe',
+    'shop','shot','show','shu','shui','shut','shy','sick','side','sign',
+    'silk','sing','sink','sir','sit','site','six','size','sky','slow',
+    'smog','soap','soft','soil','sold','solo','some','son','song','sons',
+    'soon','sort','soul','span','spot','star','stay','step','stop','such',
+    'suit','sun','sure','swim','take','tale','talk','tall','tank','tape',
+    'tar','task','tax','tea','team','tech','teh','tell','ten','tend',
+    'teng','term','test','text','thai','than','that','the','them','then',
+    'they','thin','this','thus','tide','tied','ties','till','tim','time',
+    'tiny','tip','told','tom','tons','too','took','tool','top','tops',
+    'tour','town','tree','trip','true','try','tube','turn','two','type',
+    'ugly','unit','upon','urge','use','used','user','uses','vain','van',
+    'vast','very','vice','view','vote','wag','wage','wake','walk','wall',
+    'walt','wang','want','war','ward','warm','was','wash','wasn','wave',
+    'wax','way','ways','weak','week','well','wen','went','were','west',
+    'wet','what','when','who','whom','why','wide','wife','wild','will',
+    'win','wind','wish','with','woke','won','wood','word','work','yard',
+    'year','yeh','yes','yet','ying','york','you','your','yuan','yung',
+    'zone'
   ],
   medium: [
-    'laser','space','pilot','orbit','pulse','blast','shield','enemy','radar','storm',
-    'comet','forge','power','speed','angle','sniper','target','sector','command','signal',
-    'weapon','strike','battle','galaxy','nebula','photon','vector','missile','fighter','captain',
-    'planet','engine','turret','breach','defend','attack','launch','deploy','module','system'
+    'abandon','abbey','ability','aboard','about','above','abraham','abroad','abuse','abused',
+    'accept','access','account','accused','achieve','acquire','across','acting','action','active',
+    'actor','actors','actual','added','addicts','adding','address','admire','adopt','advance',
+    'advice','affair','affairs','affect','afford','afraid','africa','african','after','again',
+    'against','agency','agenda','agent','agree','agreed','ahead','aides','aimed','airline',
+    'airport','alive','alleged','allied','allow','allowed','allows','almost','alone','along',
+    'already','always','amadeus','amazed','amazing','america','amoco','among','amount','amounts',
+    'ample','analyze','ancient','andrew','angeles','anger','angry','animal','animals','annie',
+    'annual','another','answer','antique','anxiety','anyone','apart','appeal','appear','appears',
+    'apple','applied','apply','april','arats','areas','arena','argue','argued','arose',
+    'around','aroused','arrange','arrival','arrive','arrived','arrows','article','artist','artists',
+    'asian','asians','aside','asked','asking','asleep','aspect','assist','assure','atolls',
+    'attack','attempt','attend','attract','august','austria','author','average','avoid','award',
+    'aware','awful','babies','bagmati','bahal','balance','bamford','banker','bankers','banking',
+    'banks','banquet','barely','baroque','barrels','based','bases','basic','basin','basis',
+    'baskets','batch','battle','baumer','beach','beaches','beasts','beauty','became','because',
+    'become','becomes','before','began','begin','begun','behind','beijing','being','belfast',
+    'belief','believe','bellow','belong','below','beneath','benefit','benson','bering','besides',
+    'better','between','beyond','bicycle','bidding','bigger','biggest','billion','bills','birds',
+    'birth','black','blame','blanket','bless','blind','blinds','block','board','boating',
+    'boats','bodies','boise','bonds','bones','bonuses','books','boost','border','bottle',
+    'bottom','bound','bourse','boyish','branch','brand','brave','bread','break','breath',
+    'breathe','bribery','bridge','brief','bright','bring','british','broad','broaden','broke',
+    'broken','brokers','bronze','brother','brought','brown','buddha','budget','build','built',
+    'bullet','burden','bureau','burma','burning','burst','buses','buyer','buyers','buying',
+    'buyout','buyouts','bytes','cabin','cable','cables','called','calls','campus','canada',
+    'cancer','cannot','capital','captain','cards','cared','career','carried','carry','carson',
+    'carved','cases','casual','catalog','catch','cattle','caught','cause','caused','causes',
+    'causing','ceiling','center','central','centre','century','certain','chain','chains','chance',
+    'chances','chang','change','changed','changes','channel','chapter','charge','charged','charges',
+    'charity','charter','cheap','cheaply','check','checked','checks','cheng','chest','chiang',
+    'chicago','chief','child','china','chinese','choice','choose','chorus','chosen','chung',
+    'circle','cited','cites','cities','citizen','claimed','claims','class','clavier','clean',
+    'clear','clearly','clement','clerk','client','clients','climate','climbed','clock','clone',
+    'cloning','close','closed','closely','clothes','cloud','clubs','coast','cocaine','coffee',
+    'coined','coins','collar','collect','college','color','colour','comes','comfort','coming',
+    'command','comment','commit','common','company','compass','complex','compose','concern','contact',
+    'contain','content','contest','context','control','cooked','cooking','copper','coral','cordell',
+    'corner','correct','corrupt','costa','costs','cotton','could','couldn','council','count',
+    'country','county','couple','course','courses','court','courts','cousin','cover','crack',
+    'craft','crafts','crammed','crazy','create','created','creates','credit','cried','cries',
+    'crime','crimes','crisis','crowd','crowded','crowds','crucial','cruise','crust','culture',
+    'curious','current','curse','custody','custom','cutting','cycle','daily','damage','damaged',
+    'dance','danger','dangers','daring','dated','deals','death','debate','decade','decades',
+    'decent','decide','decided','declare','decline','deeply','defend','defense','define','defined',
+    'degree','deities','delay','deliver','demand','demands','deming','denied','depend','depends',
+    'depth','depths','deputy','derived','desert','design','despair','despite','destiny','destroy',
+    'detail','details','detect','deter','develop','devote','dgbas','diesel','dined','dinner',
+    'direct','dirty','discuss','disease','dismiss','disney','dispute','divide','divided','divine',
+    'doctor','doctors','doing','dollar','dollars','donated','doors','double','doubled','doubt',
+    'draft','dragged','dragon','dragons','drama','dramas','drawing','drawn','dream','dress',
+    'dressed','drink','drive','driven','driver','drivers','drives','dropped','drove','drugs',
+    'dunkel','durbar','during','duties','dwell','dying','dynasty','eager','eagle','earlier',
+    'early','earth','easier','easily','eastern','echoing','ecology','economy','editor','educate',
+    'effect','effects','effort','efforts','eight','either','elderly','elders','elect','elected',
+    'element','embassy','emilia','emperor','empire','employ','empty','enable','enables','enclose',
+    'endless','endorse','enemy','energy','england','english','enjoy','enjoyed','enough','enrich',
+    'ensure','enter','entered','enters','entire','entry','equally','equator','error','escape',
+    'essay','ethnic','europe','evening','event','events','every','evident','evoked','evons',
+    'examine','example','except','excuse','exhaust','exist','existed','expand','expect','expense',
+    'experts','explain','export','exports','expose','express','extend','extinct','extra','fabrics',
+    'faced','facing','factor','factors','factory','failed','fairly','fallen','false','family',
+    'famous','farmer','farmers','farming','farms','fashion','faster','fastest','father','favor',
+    'feature','feeling','fellow','female','fewer','fiction','field','fields','fifty','fight',
+    'figure','figures','filled','final','finally','finance','finding','fines','finest','finger',
+    'finish','fires','firms','first','fishing','flash','flesh','flight','floor','floors',
+    'flower','flute','flying','focus','follow','foods','foolish','force','forced','forces',
+    'foreign','forest','forget','formal','formed','former','forming','forms','formula','forth',
+    'fortune','forty','forward','found','founder','fourth','frame','fraud','freed','freedom',
+    'french','fresh','friday','friend','friends','fright','front','fruit','fujian','fully',
+    'funded','funds','funny','further','future','galera','games','garbage','garden','gates',
+    'gather','general','genetic','gentle','genuine','german','germany','getting','giant','giants',
+    'given','giving','glass','global','goddess','going','golden','goods','grant','grass',
+    'great','greater','greatly','greek','green','gross','ground','group','groups','growing',
+    'grown','growth','guard','guess','guest','guide','habit','habits','halfway','halls',
+    'handle','hands','hangs','hanuman','happen','happy','harbour','harder','hardly','harmful',
+    'harsh','having','hawaii','haydn','heading','health','healthy','heard','heart','hearty',
+    'heated','heating','heavy','height','helped','helpful','helping','helps','herself','hidden',
+    'hides','higher','highest','highly','himself','hindu','hippies','hiring','history','holbert',
+    'holding','holiday','homes','honesty','honor','hoped','hopeful','hopes','hoping','hormone',
+    'horror','horse','horses','hosted','hotel','hotels','hours','house','houses','housing',
+    'howard','however','hualien','hualon','huang','human','humor','hundred','hungry','hunted',
+    'hunters','hurried','husband','ideal','ideas','illegal','image','images','imagine','import',
+    'imports','imposed','improve','inches','include','income','indeed','index','india','indian',
+    'indians','induce','inflows','initial','injured','insect','insects','inside','insider','insists',
+    'inspect','instead','insulin','intel','intend','intra','invent','invest','invite','invited',
+    'involve','ireland','irish','island','islands','israel','issue','issues','issuing','italian',
+    'items','itself','jacket','japan','jewels','johore','joined','joining','jojoba','jolted',
+    'jordan','joseph','journey','judge','judges','jungle','junior','justice','keeping','keeps',
+    'killed','killing','kindly','kinds','kingdom','kings','kitchen','knife','knight','known',
+    'knows','korea','kuala','kumari','kwong','labor','labour','lading','lakes','landed',
+    'lanes','lanyu','large','larger','largest','later','latest','latter','launch','lawyer',
+    'lawyers','layer','leader','leaders','leading','leads','leaning','learn','learned','least',
+    'leave','leaving','legal','legend','lennon','leopold','lesser','lesson','letter','level',
+    'levels','liberty','library','license','lifted','light','lights','likely','limited','lincoln',
+    'lined','lines','listen','little','lives','living','local','locate','located','london',
+    'lonely','longer','looked','looking','looks','lotus','louis','loved','lovely','lower',
+    'lowers','lowest','lucky','lumpur','lunch','lying','lyrical','machine','magic','magnate',
+    'mainly','major','makers','makes','making','makoto','malay','malcolm','malla','manage',
+    'manager','mandela','mankind','manner','march','marina','marinas','marked','market','markets',
+    'marks','marred','married','marry','masses','massive','master','masters','match','matter',
+    'matters','mature','maybe','mayor','meaning','means','measure','medal','media','medical',
+    'medium','meeting','meets','member','members','memory','mental','mention','mercy','merely',
+    'merit','message','metal','metals','meters','method','methods','metre','michael','mickey',
+    'middle','midst','might','miles','million','minds','minimum','minor','minute','minutes',
+    'mirror','mission','mixed','mixture','mobile','model','models','modern','modest','moment',
+    'monday','money','monitor','month','monthly','months','moral','morning','mortal','mother',
+    'motor','mount','mounted','mouse','mouth','moved','moves','movie','moving','mozart',
+    'multi','murder','muscles','museum','music','musical','mutual','muzium','myself','mystery',
+    'named','names','narrow','natasha','nation','nations','native','natural','nature','nearby',
+    'nearly','needed','needs','needy','negara','neikirk','neither','nepal','nerve','nervous',
+    'network','never','night','nights','ninety','noble','nobody','noise','normal','north',
+    'notable','noted','notes','nothing','noticed','novel','number','numbers','object','objects',
+    'obtain','obvious','occur','ocean','oceania','oceanic','oceans','october','offer','offered',
+    'offers','office','officer','offices','often','older','olympic','ongoing','opened','opera',
+    'operas','operate','opinion','oppose','opposed','option','orchid','order','ordered','orders',
+    'organic','origin','osaka','other','others','ought','outdoor','output','outside','ovens',
+    'overall','owned','owner','owners','oxygen','pacific','package','packed','pages','pagoda',
+    'painted','palace','panic','paper','parent','parents','parks','parties','partner','parts',
+    'party','passed','passes','passing','patan','patient','pattern','payment','peace','pearl',
+    'peitsun','pentium','people','peoples','percent','perfect','perform','perhaps','period','periods',
+    'permit','permits','person','persons','peter','phase','phone','phrase','phuket','piano',
+    'picked','picture','piece','pieces','pierre','pilot','place','placed','places','plain',
+    'plane','planned','plans','plant','plants','played','playing','plays','please','pleased',
+    'plenty','pocket','poetry','point','pointed','points','poison','police','policy','polling',
+    'polls','popular','possess','potato','pound','pounds','poverty','powder','power','powered',
+    'precise','prefer','premier','prepare','present','press','pressed','pretend','pretty','prevent',
+    'price','prices','pride','priests','primary','prime','prince','print','printed','prison',
+    'private','prize','problem','proceed','process','prodigy','produce','product','profit','profits',
+    'program','project','promise','promote','prone','proof','proper','propose','protect','protest',
+    'prove','proverb','provide','public','puerto','pulled','punish','purpose','purse','pursuit',
+    'pushed','pushing','putting','qiandao','quake','quakes','quality','quarter','quick','quickly',
+    'quiet','quietly','quite','quotas','quote','quoted','rabbit','races','radical','radio',
+    'raiders','railway','raise','raised','rally','random','range','raped','rapid','rapidly',
+    'rapids','rarely','rates','rather','rating','reach','reached','reaches','react','reading',
+    'ready','reality','realize','really','realm','reason','reasons','rebuild','rebuked','recall',
+    'receive','recent','record','records','recover','reduce','reefs','reflect','reform','refuse',
+    'refused','regard','regards','regatta','region','regret','regular','reject','rejects','relax',
+    'release','remain','remains','remarks','remind','remote','remove','repeat','replace','reply',
+    'report','reports','request','requiem','require','rescue','resist','respect','respite','respond',
+    'result','results','retire','return','returns','review','richard','richter','riders','ridge',
+    'right','rights','rising','risks','rival','river','rivers','robes','robots','rocks',
+    'roman','romance','ropes','rough','roughly','round','rounds','route','routes','royal',
+    'rucken','ruled','rules','ruling','running','rural','rushed','sacred','saens','safer',
+    'safety','sailed','sailing','sailors','sails','saint','salary','sales','salieri','samoa',
+    'samples','sandy','santa','satisfy','saved','saying','scale','scarcer','scene','scenes',
+    'schive','scholar','school','schools','science','score','screen','script','search','season',
+    'seats','seavey','second','seconds','secret','section','sector','sedan','sedans','seeing',
+    'seeking','seemed','seems','seize','seldom','select','seller','selling','sells','sending',
+    'sends','senior','sense','serious','serve','service','session','setting','settle','settled',
+    'seven','several','severe','sewage','shade','shadow','shaffer','shake','shaking','shall',
+    'shallow','shape','shaped','share','sharing','sharp','sharply','shaykin','shelf','shelley',
+    'shelter','shewart','shifts','ships','shirt','shirts','shiva','shook','shoot','shore',
+    'short','should','shouted','showed','showing','shown','shows','sides','sight','signals',
+    'signed','signing','silence','silent','silver','similar','simple','simply','since','singer',
+    'singers','single','sister','sitting','sixties','sized','skill','skilled','skills','slash',
+    'slave','slavery','slaves','sleep','slide','slight','slowly','small','smaller','smell',
+    'smile','smith','smoke','soared','social','society','soldier','solid','solve','somehow',
+    'someone','songs','sought','sound','source','sources','south','soviet','space','spanish',
+    'speak','speaker','special','species','speech','speed','spencer','spend','spends','spent',
+    'spice','spire','spirit','spirits','spite','split','spoken','sport','sports','spray',
+    'sprayed','spread','spring','square','stable','staff','staffs','stage','stages','stance',
+    'stand','stands','stare','stars','start','started','state','states','station','statue',
+    'statues','status','steady','steal','steam','steel','steep','stencil','stepped','steps',
+    'stereo','stick','sticky','still','stock','stocks','stomach','stone','stones','stood',
+    'stopped','storage','store','stored','stores','stories','storm','story','strait','straits',
+    'strange','strauss','stream','streams','street','streets','stress','stretch','strict','strike',
+    'string','strip','strive','strong','struck','stuck','student','studied','studies','studio',
+    'study','stupa','style','subject','subway','succeed','success','suffer','suggest','suited',
+    'sulphur','sumatra','summer','summit','sunday','sundays','supply','support','suppose','surface',
+    'surplus','survive','sweat','sweet','swept','switch','symbol','system','systems','table',
+    'tahan','taipei','taiwan','taken','takes','taking','tales','talked','talking','tallest',
+    'taman','tanker','tariffs','taste','taught','taxes','teach','teacher','tears','telling',
+    'temple','tenders','tends','terms','terror','tested','texas','textile','thank','theater',
+    'their','theme','theory','there','these','thick','thing','things','think','third',
+    'thirty','those','though','thought','threat','three','through','throw','thrown','thumb',
+    'tibet','tibetan','ticket','tiger','times','tired','title','today','tokyo','tonga',
+    'tongue','tonight','tools','topic','total','totally','touch','tough','tourism','tourist',
+    'toward','towards','tower','towers','track','trade','trading','traffic','tragedy','trails',
+    'train','transit','travel','treat','treated','trees','tremble','trend','trends','trendy',
+    'trial','tried','trips','tropic','trouble','truck','truly','trust','truth','trying',
+    'tuesday','tuition','tunnel','turkey','turned','turning','turns','tween','twelve','twenty',
+    'twice','types','typical','unable','uncle','under','unfair','unified','uniform','union',
+    'unions','unique','united','units','unknown','unless','unlike','until','unusual','upper',
+    'upset','upward','urban','urged','useful','users','using','usual','usually','valley',
+    'value','values','vantage','variety','various','venues','verdict','version','victim','victims',
+    'victory','vienna','vietnam','viewed','views','villa','village','violent','virgin','virtue',
+    'vishnu','vision','visit','visited','visitor','visual','voice','volume','votes','voting',
+    'vowed','voyage','wages','waiters','waiting','walked','walking','walks','walls','walter',
+    'wanted','wants','warming','warned','warning','waste','wastes','watch','watched','water',
+    'waters','waves','wealth','wealthy','weapons','wearing','weather','weeks','weighed','weight',
+    'welcome','welfare','western','whale','whalers','whales','whaling','wheat','where','whereas',
+    'whether','which','while','white','whitney','whole','wholly','whose','widely','william',
+    'willing','wills','window','windows','winning','winter','wisdom','wishes','witch','within',
+    'without','woman','women','wooden','words','worked','workers','working','workmen','works',
+    'world','worried','worries','worry','worse','worst','worth','would','wouldn','wound',
+    'wounded','write','writers','writing','written','wrong','wrote','yacht','yachts','years',
+    'yeasts','yield','young','younger','youth','zaide','zealand'
   ],
   hard: [
-    'asteroid','hyperdrive','destroyer','satellite','intergalactic','annihilate',
-    'invincible','commander','obliterate','supernova','cybernetic','interceptor',
-    'detonation','spaceship','trajectory','mothership','calibration','bombardment',
-    'navigation','coordinate','holographic','teleporter','acceleration','antimatter'
+    'abandoned','abbreviation','academic','accelerating','accepted','accessible','accessories','accident','accommodation','accomplished',
+    'according','accounting','accounts','accuracy','accurate','accurately','achieved','achievement','activities','activity',
+    'actually','addition','additional','adopting','advanced','advances','advantage','advantages','adventurer','adventurous',
+    'advertising','advisers','affected','afternoon','aggressive','agreement','agricultural','agriculture','airlines','airplane',
+    'airplanes','alarming','alienated','allegations','allowing','alternative','although','ambassador','ambitions','amendment',
+    'amendments','american','americans','amounted','analyses','analysis','analysts','announce','announced','announcement',
+    'annually','answered','anything','apartment','apparatus','apparently','appealed','appeared','appearing','application',
+    'applications','applying','appreciation','appropriate','approval','approved','approximately','architect','architects','architecture',
+    'aristocrats','arrangements','articles','artifacts','artillery','artistic','assembly','associated','association','astronomical',
+    'atmosphere','attached','attempting','attendant','attendants','attended','attention','attitude','attitudes','attorney',
+    'attraction','audience','australia','australian','authorities','automated','automation','automobiles','available','background',
+    'bacteria','badminton','balanced','baldridge','barriers','basketball','beatrice','beautiful','becoming','beethoven',
+    'beginning','behavior','believed','believes','bhaktapur','billionaire','biotechnology','birthday','blessing','blocking',
+    'bodhnath','boundaries','boundary','breaking','briefings','bringing','broadway','buddhist','building','buildings',
+    'bureaucratic','business','businesses','businessman','calculations','calendar','california','campaign','campaigns','canadian',
+    'candidates','capacity','capricorn','carefully','caribbean','carrying','centuries','ceremonies','ceremony','certainly',
+    'chairman','challenge','challenges','championed','changing','character','characters','chartered','chemical','chemicals',
+    'childhood','children','choosing','christmas','citizens','classical','classroom','cleaning','climates','collection',
+    'colonists','coloured','colouring','combination','comfortable','commander','commented','comments','commerce','commercial',
+    'commission','commissioned','commissions','committee','commonwealth','communicate','communication','communist','communists','community',
+    'commuter','companies','compared','competition','competitions','competitive','competitors','complete','completed','completely',
+    'completion','complicated','components','composed','composer','composing','compression','computation','computer','computers',
+    'concepts','concerned','concerto','concerts','conclude','conclusion','concrete','condition','conditions','conference',
+    'confession','confidence','confident','conflict','conflicts','connections','consequence','consequently','consider','considerable',
+    'considerably','consideration','considered','considering','consignment','consistent','consists','constantly','constitute','constitution',
+    'constructed','construction','consumer','consumers','consumption','contains','contamination','contemplating','continental','continue',
+    'continued','continuing','continuous','contract','contracts','contribute','contributing','controlled','controls','controversial',
+    'controversy','convenience','convenient','conveniently','cooperation','coordination','corporate','corporation','cosmetics','councilors',
+    'councils','counterpart','countries','coverage','cracking','crawling','creating','creation','creative','creativity',
+    'creatures','criminal','critical','criticisms','crossing','cruising','crystals','cultural','culturally','currently',
+    'customer','customers','damaging','dangerous','dangerously','daughter','december','decision','declaration','declared',
+    'decrease','dedicated','delegates','delegation','deliberately','delightful','delivered','democracy','demonstrates','department',
+    'departments','departure','dependence','describe','described','description','deserted','designed','designer','designing',
+    'desirous','destination','destroyed','destroying','destroys','destruction','determine','determined','devastated','developed',
+    'developing','development','developments','difference','differences','different','differently','difficult','difficulties','difficulty',
+    'diligence','diplomatic','direction','directly','director','directors','disappear','disappearing','disaster','discharge',
+    'discovered','discussed','diseases','disorder','displaced','dissidents','distance','distinguished','distribution','district',
+    'disturbed','divination','division','divisions','document','domestic','dominated','downfall','dramatic','dropping',
+    'dyestuffs','earnings','earthquake','earthquakes','ebullience','ecological','economic','economical','economically','economies',
+    'editorial','editorials','education','educational','effective','efficient','efficiently','election','elections','electrical',
+    'electricity','electronic','elements','elephants','eleventh','eliminate','eloquent','embarrassed','emblazoned','emergency',
+    'emotional','emotionally','emphasize','employee','employees','employment','emptiness','enclosing','encounter','encourage',
+    'encouraged','encouragement','endangered','endorsed','enforced','engineered','engineering','engineers','enormous','enterprise',
+    'enterprises','entertain','enthusiastic','enthusiasts','entirely','entourage','entrance','entrepreneurs','environment','environmental',
+    'epipsyche','epipsychidion','episodes','equipment','equipped','especially','essential','establish','established','establishing',
+    'estimate','estimated','european','europeans','evaluation','evaluations','eventually','everlasting','everybody','everyone',
+    'everything','everywhere','evidence','evolution','evolving','examples','excellent','exception','exchange','excitement',
+    'executive','executives','exercise','exhibition','exhibitions','exhibits','existence','expanded','expanding','expected',
+    'expensive','experience','experienced','experiences','experimental','explained','explanation','exported','exporter','expressed',
+    'facilities','facility','factional','factions','factories','familiar','families','fascinated','fastened','favorite',
+    'favourite','feathers','featured','february','feelings','festival','financial','financing','fingernails','finished',
+    'fishermen','followed','following','foothold','foreigners','foremost','forgotten','foundation','fountain','francisco',
+    'freebase','frequently','friendly','friendship','frightened','fundamental','furnished','furniture','furthermore','futuristic',
+    'gasoline','gathering','generally','generated','generating','generation','generous','genetically','geography','geomancy',
+    'gettysburg','giovanni','government','governments','governor','graceful','graduate','grateful','greatest','greenery',
+    'guaranteed','handicapped','handling','handsome','hangzhou','happened','happening','happiness','hardships','hardware',
+    'hawaiian','headquarters','hemisphere','heritage','hesitate','highlights','hijacked','hijackers','hijacking','hijackings',
+    'hinterland','historic','historical','holidays','homeless','horoscopes','horrible','hospital','household','humblest',
+    'hundreds','hydrocarbons','illiteracy','illiterate','imagination','imaginative','immediate','immediately','immigration','immortal',
+    'impatient','imperial','implication','importance','important','importation','imported','importer','importers','impossible',
+    'impression','impressive','improved','improvement','improvements','improving','inauguration','incentives','incinerators','included',
+    'includes','including','incorporated','increase','increased','increasing','increasingly','incredible','indicate','indicated',
+    'indicates','individual','individuals','indonesia','industrial','industries','industry','influence','influenced','information',
+    'informed','innocent','inscription','insecticide','inspections','inspiration','inspired','installed','instance','instinct',
+    'institute','institutional','institutions','instructions','instrument','instruments','insufficient','insultingly','insurance','integration',
+    'intelligently','intensive','intention','interest','interested','interesting','interfere','interior','intermediates','internal',
+    'international','internet','interview','interviews','introduced','introduction','invariably','invention','investigation','investment',
+    'investments','investors','inviting','involved','involves','ironically','irritated','islandwide','isolated','japanese',
+    'jhochhen','judgment','judicial','kalabhairab','kaohsiung','kasthamandap','katczinsky','kathmandu','kilometers','kilowatts',
+    'kiribati','knowledge','kuomintang','laborers','lachrimosa','langkawi','language','languages','lawmakers','learning',
+    'licensed','lilliput','limestone','lingering','listened','listening','literally','literature','location','lucrative',
+    'luddites','machines','magazine','magnificent','mainland','maintain','maintained','maintains','majority','malaysia',
+    'malaysian','management','managerial','managers','manifestation','manipulate','manufacture','manufactured','manufacturers','manufactures',
+    'manufacturing','margarine','marketing','marshall','marvelous','masterpiece','material','materials','meanwhile','measured',
+    'measuring','mediaeval','medicine','meetings','megatrends','melanesia','melanesians','mentioned','mercedes','metaphor',
+    'michelangelo','michener','micronesia','microwave','microwaves','midnight','migration','mildendo','military','millionaire',
+    'millions','minister','ministry','minsheng','miserable','misgivings','missionaries','missionary','monument','monuments',
+    'mountain','mountainous','mountains','movement','movements','musically','mutually','mysticism','naisbitt','national',
+    'naturally','necessary','necessity','neglected','negotiations','negotiators','neighbors','nepalese','neumarkt','nevertheless',
+    'newspaper','newspapers','nobility','northern','northwestern','november','nowadays','numerous','observers','observes',
+    'obstacles','obtaining','occupation','occupied','occurred','offenders','offenses','officers','official','officially',
+    'officials','offspring','operates','operating','operation','operations','operators','opportunity','opposite','optimism',
+    'orchestra','organization','oriented','original','ourselves','overcrowded','overnight','overseas','ownership','pakistan',
+    'palestinian','pantheon','paradise','parallel','parliaments','participate','participation','particular','particularly','partners',
+    'passengers','payments','peaceful','pedestrians','penetration','pennsylvania','perfomers','performance','performances','performed',
+    'performers','performing','permanent','permanently','permission','personal','personality','personally','persuade','persuaded',
+    'pervasive','pessimistic','philharmonic','philippine','philippines','philosophy','physical','physician','physicians','picaresque',
+    'plankton','platform','plausible','pleasant','pleasure','poisoned','policeman','political','politics','polluted',
+    'pollution','polynesia','polynesian','polynesians','population','portable','portables','position','positions','positive',
+    'possibilities','possibility','possible','possibly','potential','powerful','practical','practice','practices','practitioners',
+    'precious','precocious','predicted','predictions','preliminary','preparations','prepared','preparing','presence','presented',
+    'presently','president','presidential','pressure','pretoria','previous','previously','primarily','principal','principally',
+    'principles','priority','prisoners','probably','problems','procedure','procedures','processed','processes','processing',
+    'processor','processors','produced','producers','produces','producing','production','productive','productivity','products',
+    'profession','professional','programs','progress','projects','prominent','promised','promotional','prompted','pronunciation',
+    'property','proportion','proposal','proposed','prospect','prosperity','protected','protection','protects','provided',
+    'provides','providing','province','provinces','publication','publicly','published','publisher','punished','purchase',
+    'quantities','quarters','question','questioned','questions','radiation','rainforest','readings','realizes','reasonable',
+    'received','recently','recognition','recognize','recognized','recommend','reducing','reference','references','refineries',
+    'regarded','regional','register','regularly','regulations','reiterated','relations','relatively','relatives','released',
+    'releases','reliable','relieved','religion','religious','remained','remaining','remember','renaissance','renowned',
+    'repatriation','repeatedly','replaced','reported','reporter','reporters','represent','reproduce','republic','reputation',
+    'requested','required','requirements','requires','requisite','research','researchers','reserves','residents','resources',
+    'response','responsible','restrictions','restructuring','resulted','retailer','retailing','returned','reunification','revisions',
+    'revolution','roosevelt','sacrifice','salaries','satellite','satisfaction','satisfied','saturday','scenario','scheduled',
+    'schwartz','scientific','scientist','scientists','sculpture','secretary','securities','security','selection','semiskilled',
+    'sentence','separate','separated','seriously','servants','services','settlement','shakespeare','shelters','shipment',
+    'shopping','shortage','sighting','significant','similarly','simplified','singapore','situated','situation','smilingly',
+    'societies','software','soldiers','somebody','something','sometimes','somewhat','somewhere','southeast','southeastern',
+    'southern','southwestern','sovereign','speakers','speaking','specialize','specialized','specific','specification','spending',
+    'spiritual','splinter','spokesman','squarely','standard','standards','standing','starting','statement','stations',
+    'statistical','statistics','stimulated','stirring','stopping','straight','strategic','strategy','strength','strengthen',
+    'strongly','structure','structures','struggle','students','studying','subdivided','subjects','submitted','subsequently',
+    'subsidence','subsidiaries','subsidies','substance','substances','substantial','substitution','successful','successfully','successive',
+    'suddenly','suffered','suffering','sufficient','suggested','suitable','supervisors','supplied','suppliers','supplies',
+    'supported','supports','supposed','surprise','surprised','surrounding','survival','surviving','suspects','suspension',
+    'suspicious','sustained','swayambhunath','sweeping','swimming','symbolism','sympathy','symphony','synthetic','taichung',
+    'taiwanese','talented','teachers','teaching','technical','technique','techniques','technological','technologies','technology',
+    'telegraphic','telephone','temperature','temporary','terminal','terrible','terrifying','testified','textiles','thailand',
+    'thanksgiving','themselves','thereafter','therefore','thoughts','thousand','thousands','threatened','threatening','thriving',
+    'throughout','throwing','thursday','tibetans','together','tomorrow','tourists','tradition','traditional','traditions',
+    'training','transaction','transfer','transferred','travails','traveled','travelers','traveling','tropical','turnover',
+    'twentieth','ultimately','umbrella','understand','understanding','understands','understood','undertaken','unemployment','unexpected',
+    'unforgettable','unification','universe','universities','university','unlikely','unnatural','unskilled','upcoming','upgrading',
+    'vacation','vacations','valuable','variations','vegetable','vegetables','villages','violence','violently','virtually',
+    'visiting','visitors','vocabulary','volcanic','volcanism','volcanoes','washington','watanabe','watchdog','watching',
+    'wednesday','whatever','widespread','wildlife','wonderful','workforce','workplace','workshop','yachting','yachtsmen',
+    'yesterday','youngest','yourself'
   ]
 };
+// 字庫依字母排序，這裡洗牌，讓後面 slice() 取到的是隨機的一批字
+Object.keys(WORD_BANK).forEach(k => {
+  const arr = WORD_BANK[k];
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+});
 
 // ── Generate text for a given category ─────────
 function generateText(category, wave) {
@@ -144,15 +541,45 @@ function extractSpan(article, len, requireHanziStart = true) {
 
 // 一般模式：單一「國字」，顯示拼音，玩家用點選的方式作答
 // 專家模式：單一「文字」（可能是國字，也可能是標點符號），玩家自己打字輸入作答
+// 💡 依文章「出現的先後次序」一個字一個字出（學生可以默默把文章背下來）。
+// seqCursor 指向下一個要出的字（第幾篇、第幾個字），到全部文章尾端就從頭循環。
+let seqCursor = { a: 0, i: 0 };
+let resumeInfo = null;   // 死掉時記下的接續位置 { key, a, i }
+
+function seqKey() {
+  return getSelectedArticles().map(a => a.id).join(',') + '|' + mode;
+}
+
 function pickChineseTarget(isExpert) {
   const articles = getSelectedArticles();
   if (articles.length === 0) return null;
-  for (let attempt = 0; attempt < 10; attempt++) {
-    const article = articles[Math.floor(Math.random() * articles.length)];
-    const target = extractSpan(article, 1, !isExpert);
-    if (target) return target;
+  let guard = 0;
+  const maxSteps = articles.reduce((n, a) => n + (a.chain ? a.chain.length : 0), 0) + 2;
+  while (guard++ <= maxSteps) {
+    if (seqCursor.a >= articles.length) seqCursor = { a: 0, i: 0 };
+    const chain = articles[seqCursor.a].chain || [];
+    if (seqCursor.i >= chain.length) { seqCursor = { a: seqCursor.a + 1, i: 0 }; continue; }
+    const c = chain[seqCursor.i];
+    const pos = { a: seqCursor.a, i: seqCursor.i };
+    seqCursor.i++;
+    if (/^\s*$/.test(c[0])) continue;              // 空白不用打
+    if (!isExpert && c[1] === null) continue;         // 一般模式：標點跳過，只出有拼音的國字
+    return { hanzi: c[0], pinyinDisplay: c[1] || c[0], pos };
   }
   return null;
+}
+
+// 死掉時：從「場上最早還沒打掉的字」開始接續（沒有就從下一個字）
+function recordResume() {
+  if (category !== 'chinese') { resumeInfo = null; return; }
+  const alive = enemies.filter(e => e.seqPos).map(e => e.seqPos);
+  let best = alive.length ? alive[0] : { a: seqCursor.a, i: seqCursor.i };
+  alive.forEach(p => { if (p.a < best.a || (p.a === best.a && p.i < best.i)) best = p; });
+  // n：這是整份選取文章裡的第幾個字（只用來顯示「背到第幾字」）
+  const arts = getSelectedArticles();
+  let n = best.i + 1;
+  for (let k = 0; k < best.a && k < arts.length; k++) n += (arts[k].chain || []).length;
+  resumeInfo = { key: seqKey(), a: best.a, i: best.i, n };
 }
 
 // 產生選字按鈕候選（1 個正確答案 + 其餘干擾選項）——僅一般模式使用
@@ -722,6 +1149,7 @@ function spawnEnemy() {
     if (!target) return; // 文章資料不足時安全略過
     const en = new Enemy(target.hanzi, x);
     en.isChinese = true;
+    en.seqPos = target.pos;
     en.pinyinLabel = target.pinyinDisplay;
     en.pinyinInput = normalizePinyin(target.pinyinDisplay);
     en.choices = null;
@@ -828,8 +1256,9 @@ function submitChineseTyping(val) {
 }
 
 // 中文模式答錯：扣一條命（僅一般模式選錯會用到）
+function demoInvincible() { return !!(window.KeyagentDemo && KeyagentDemo.opt('invincible')); }   // 示範帳號：無敵
 function chineseWrongAnswer() {
-  lives--;
+  if (!demoInvincible()) lives--;
   ship.shieldFlash = 1;
   updateHUD();
   if (lives <= 0) gameOver();
@@ -1071,7 +1500,7 @@ function drawFloaters() {
 
 // ── Enemy reaches bottom ───────────────────────
 function enemyReached(en) {
-  lives--;
+  if (!demoInvincible()) lives--;
   ship.shieldFlash = 1;
   spawnExplosion(canvas.width / 2, ship.cy, '#ff0055');
 
@@ -1119,7 +1548,14 @@ function goToMenu() {
   initMenuShips();
 }
 
-function startGame() {
+function startGame(resume = false) {
+  // 中文：依文章次序出字；「接續」只在同一組文章＋同一模式時有效，否則從頭
+  if (resume === true && resumeInfo && resumeInfo.key === seqKey()) {
+    seqCursor = { a: resumeInfo.a, i: resumeInfo.i };
+  } else {
+    seqCursor = { a: 0, i: 0 };
+  }
+  resumeInfo = null;
   state = STATE.PLAYING;
   maxLives = category === 'chinese' ? 5 : 3;
   score = 0; wave = 1; lives = maxLives; killCount = 0;
@@ -1180,8 +1616,64 @@ function resumeGame() {
   hideAllScreens();
 }
 
+if (typeof keyagentInstallPageHideSync === 'function') keyagentInstallPageHideSync();
+
+// 示範帳號：左下角「示範模式」面板（跳過這題／跳過這波）
+if (window.KeyagentDemo && KeyagentDemo.isActive()) {
+  KeyagentDemo.mountBar([
+    { label: '跳過這題', key: 'F2', fn: () => {
+      if (state !== STATE.PLAYING || !enemies.length) return;
+      const en = enemies.reduce((a, b) => (b.y > a.y ? b : a));   // 最靠近飛船的那隻
+      destroyEnemy(en);
+    } },
+    { label: '跳過這波', key: 'F3', fn: () => {
+      if (state !== STATE.PLAYING) return;
+      spawnedThisWave = waveEnemyCount;
+      enemies.slice().forEach(destroyEnemy);
+    } }
+  ]);
+}
+
+// ── 學號登入後的戰績與「背到哪裡」會記在學生的雲端存檔裡（sync-client.js），換電腦、換座位也能接續 ──
+function storedResume() {
+  if (typeof keyagentGetOtherGames !== 'function') return null;
+  const og = keyagentGetOtherGames();
+  return (og && og.ztype && og.ztype.resume) || null;
+}
+function refreshStoredResumeBtn() {
+  const btn = document.getElementById('startResumeBtn');
+  if (!btn) return;
+  const r = storedResume();
+  const ok = category === 'chinese' && r && r.key === seqKey();
+  btn.style.display = ok ? '' : 'none';
+  if (ok) btn.textContent = '接續上次進度（第 ' + (r.n || '?') + ' 字）';
+}
+function saveOtherRecord() {
+  if (typeof keyagentUpdateOtherGame !== 'function') return;
+  keyagentUpdateOtherGame('ztype', old => {
+    const patch = {
+      plays: (old.plays || 0) + 1,
+      bestScore: Math.max(old.bestScore || 0, score),
+      bestWave: Math.max(old.bestWave || 0, wave),
+      bestKills: Math.max(old.bestKills || 0, killCount),
+      totalKills: (old.totalKills || 0) + killCount,
+      lastScore: score, lastWave: wave, lastCategory: category, lastMode: mode
+    };
+    if (category === 'chinese' && resumeInfo) {
+      patch.resume = { key: resumeInfo.key, a: resumeInfo.a, i: resumeInfo.i, n: resumeInfo.n };
+    }
+    return patch;
+  });
+}
+
 function gameOver() {
+  recordResume();
+  saveOtherRecord();
   state = STATE.GAMEOVER;
+  const contBtn = document.getElementById('continueBtn');
+  const restartBtn = document.getElementById('restartBtn');
+  if (contBtn) contBtn.style.display = resumeInfo ? '' : 'none';
+  if (restartBtn) restartBtn.textContent = resumeInfo ? '重頭開始' : '再玩一次';
   const acc = totalKeystrokes > 0 ? Math.round((correctKeystrokes / totalKeystrokes) * 100) : 0;
   document.getElementById('finalScore').textContent = score.toLocaleString();
   document.getElementById('finalWave').textContent = wave;
@@ -1215,6 +1707,7 @@ document.querySelectorAll('.mode-btn').forEach(btn => {
     document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     mode = btn.dataset.mode;
+    refreshStoredResumeBtn();
   });
 });
 
@@ -1229,12 +1722,23 @@ document.querySelectorAll('.cat-btn').forEach(btn => {
     category = btn.dataset.cat;
     const panel = document.getElementById('chinesePanel');
     if (panel) panel.style.display = category === 'chinese' ? 'block' : 'none';
+    refreshStoredResumeBtn();
   });
 });
 
 document.getElementById('backToMode').addEventListener('click', () => {
   state = STATE.MENU;
   showScreen('startScreen');
+});
+
+document.getElementById('startResumeBtn').addEventListener('click', () => {
+  const r = storedResume();
+  if (r && r.key === seqKey()) {
+    resumeInfo = r;
+    startGame(true);
+  } else {
+    startGame(false);
+  }
 });
 
 document.getElementById('startGameBtn').addEventListener('click', () => {
@@ -1263,6 +1767,7 @@ function buildArticleList() {
       if (input.checked) selectedArticleIds.add(art.id);
       else selectedArticleIds.delete(art.id);
       label.classList.toggle('checked', input.checked);
+      refreshStoredResumeBtn();
     });
 
     const span = document.createElement('span');
@@ -1292,7 +1797,8 @@ document.getElementById('resumeBtn').addEventListener('click', resumeGame);
 document.getElementById('pauseMenuBtn').addEventListener('click', goToMenu);
 
 // Game over screen
-document.getElementById('restartBtn').addEventListener('click', startGame);
+document.getElementById('restartBtn').addEventListener('click', () => startGame(false));
+document.getElementById('continueBtn').addEventListener('click', () => startGame(true));
 document.getElementById('overMenuBtn').addEventListener('click', goToMenu);
 
 // Keyboard toggle

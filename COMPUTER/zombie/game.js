@@ -4,173 +4,408 @@
 // ============================================================
 
 // ── Word List ────────────────────────────────────────────────
-const WORD_LIST = [
-  "abandon","ability","able","about","above","absent","absorb","abstract","abuse","accept",
-  "access","accident","account","accurate","accuse","achieve","acid","acquire","across","action",
-  "active","activity","actor","actual","adapt","add","address","adjust","admin","admit",
-  "adopt","adult","advance","advice","advise","affair","affect","afford","afraid","after",
-  "again","against","age","agency","agenda","agent","agree","ahead","aid","aim","air",
-  "aircraft","airport","album","alcohol","alive","all","allow","ally","almost","alone",
-  "along","already","also","alter","always","amazing","among","amount","analyst","analyze",
-  "ancient","anger","angle","angry","animal","announce","annual","another","answer","anxiety",
-  "any","anybody","anyone","anything","anyway","apart","appeal","appear","apple","apply",
-  "appoint","approach","approve","area","argue","arise","arm","army","around","arrange",
-  "arrest","arrive","art","article","artist","as","aside","ask","asleep","aspect",
-  "assault","assert","assess","asset","assign","assist","assume","assure","at","athlete",
-  "attach","attack","attempt","attend","attitude","attract","audience","author","auto","avoid",
-  "award","aware","away","awful","baby","back","bad","badly","bag","bake","balance","ball",
-  "ban","band","bank","bar","barely","barrel","barrier","base","basic","basis","basket",
-  "battle","be","beach","bean","bear","beat","beauty","because","become","bed","beer",
-  "before","begin","behavior","behind","being","belief","believe","bell","belong","below",
-  "belt","bench","bend","benefit","best","bet","better","between","beyond","big","bike",
-  "bill","bind","bird","birth","bit","bite","black","blade","blame","blank","blast",
-  "blaze","bleed","blend","bless","blind","block","blood","blow","blue","board","boat",
-  "body","bomb","bond","bone","book","boom","boot","border","boss","both","bother","bottle",
-  "bottom","bowl","box","boy","brain","branch","brand","brave","bread","break","breath",
-  "breathe","brick","bridge","brief","bright","bring","broad","broken","brother","brown",
-  "brush","buck","budget","bug","build","bullet","bunch","burden","burn","burst","bury",
-  "bus","butter","button","buy","cabin","cable","cage","cake","call","calm","came","camera",
-  "camp","campus","can","cancel","cancer","cap","capable","capture","car","carbon","card",
-  "care","career","careful","carry","case","cash","cast","cat","catch","cause","cell",
-  "center","central","century","chain","chair","chamber","champion","chance","change","channel",
-  "chapter","charge","charity","chart","chase","cheap","check","cheek","cheese","chef","chest",
-  "chief","child","chip","choice","choose","church","circle","citizen","city","civil","claim",
-  "class","classic","clean","clear","click","client","climb","clock","clone","close","cloth",
-  "cloud","club","clue","coach","coast","coat","code","coffee","cold","collect","color",
-  "column","combine","come","comfort","command","comment","commit","common","company","compare",
-  "complex","compute","concern","conduct","confirm","connect","consist","contact","contain",
-  "content","contest","context","control","convert","cook","cool","copy","core","corner",
-  "correct","cost","couch","could","council","count","country","county","couple","courage",
-  "course","court","cousin","cover","crack","craft","crash","crazy","cream","create","credit",
-  "crew","crime","crisis","cross","crowd","cruel","crush","cry","cup","cure","current",
-  "curve","custom","cut","cycle","dad","damage","dance","danger","dare","dark","data",
-  "date","dawn","day","dead","deal","dear","death","debate","debt","decade","decent",
-  "decide","deck","declare","decline","deep","deer","defeat","defend","define","degree",
-  "delay","deliver","demand","deny","depart","depend","deploy","depth","derive","desert",
-  "design","desk","detail","detect","develop","device","devote","dialog","die","diet",
-  "differ","dig","digital","dinner","direct","dirty","discover","disease","dish","dismiss",
-  "display","distance","divide","doctor","dog","dollar","domain","door","double","doubt",
-  "down","dozen","draft","drag","dragon","drama","draw","dream","dress","drink","drive",
-  "drop","drug","drum","dry","duck","due","dump","during","dust","duty","each","eagle",
-  "ear","early","earn","earth","ease","east","easy","eat","echo","edge","edit","editor",
-  "effect","effort","egg","eight","either","elect","element","emerge","emotion","empire",
-  "employ","empty","enable","end","enemy","energy","engine","enjoy","enough","ensure","enter",
-  "entire","entry","equal","equip","era","error","escape","essay","even","event","ever",
-  "every","evil","exact","exam","example","exceed","except","exchange","excite","excuse",
-  "exist","exit","expand","expect","expense","expert","explain","explore","export","expose",
-  "extend","extra","extreme","eye","face","fact","factor","fade","fail","fair","faith",
-  "fall","false","family","famous","fan","fancy","far","farm","fast","fat","fate","father",
-  "fault","favor","fear","feature","federal","fee","feed","feel","female","fence","few",
-  "field","fight","figure","file","fill","film","final","finally","find","fine","finger",
-  "finish","fire","firm","first","fish","fit","five","fix","flag","flame","flash","flat",
-  "flavor","flee","flesh","flight","flip","float","flood","floor","flow","flower","fly",
-  "focus","fold","folk","follow","food","foot","for","force","forest","forget","form",
-  "formal","former","forth","fortune","forward","found","four","fox","frame","free","fresh",
-  "friend","front","fruit","fuel","full","fun","fund","funny","future","gain","game",
-  "gang","gap","garage","garden","gas","gate","gather","gave","gear","gender","general",
-  "gentle","ghost","giant","gift","girl","give","glad","glass","global","glory","goal",
-  "god","gold","golden","golf","gone","good","govern","grab","grace","grade","grain",
-  "grand","grant","grass","grave","gray","great","green","grew","ground","group","grow",
-  "growth","guard","guess","guest","guide","guilt","guitar","gun","guy","habit","hair",
-  "half","hall","hand","handle","hang","happen","happy","harbor","hard","harm","hat",
-  "hate","have","head","health","hear","heart","heat","heavy","height","held","hell",
-  "hello","help","her","here","hero","hide","high","hill","him","hip","hire","his",
-  "hit","hold","hole","holy","home","honest","honor","hook","hope","horror","horse",
-  "host","hot","hotel","hour","house","huge","human","humor","hunt","hurry","hurt","ice",
-  "idea","ignore","image","imagine","impact","import","impose","improve","inch","include",
-  "income","index","indian","indicate","indoor","initial","injury","inner","input","insect",
-  "inside","insist","install","instead","intend","interest","into","invest","invite","iron",
-  "island","issue","item","its","jacket","jail","jam","jet","job","join","joke","joy",
-  "judge","juice","jump","junior","jury","just","justice","keen","keep","key","kick","kid",
-  "kill","kind","king","kiss","kit","knee","knew","knife","knock","know","label","labor",
-  "lack","lady","lake","land","lane","large","last","late","later","laugh","launch","law",
-  "lawn","layer","lead","leader","leaf","league","lean","learn","least","leave","left",
-  "leg","legal","lemon","length","less","lesson","let","letter","level","liberty","library",
-  "lie","life","lift","light","like","likely","limit","line","link","lion","lip","list",
-  "listen","little","live","load","loan","local","locate","lock","long","look","loose",
-  "lord","lose","loss","lost","lot","loud","love","lovely","low","lower","luck","lunch",
-  "lung","machine","mad","magic","mail","main","major","make","male","mall","man","manage",
-  "manner","many","map","march","mark","market","marry","mask","mass","master","match",
-  "matter","may","maybe","mayor","me","meal","mean","measure","meat","media","medical",
-  "meet","member","memory","mental","mention","menu","mercy","mere","mess","message","metal",
-  "method","middle","might","mile","milk","million","mind","mine","minor","minute","mirror",
-  "miss","mission","mix","mode","model","modern","mom","moment","money","month","mood",
-  "moon","moral","more","morning","most","mother","motion","motor","mount","mouse","mouth",
-  "move","movie","much","murder","muscle","music","must","mutual","myself","mystery","myth",
-  "name","narrow","nation","native","nature","near","nearly","neck","need","nerve","net",
-  "never","new","news","next","nice","night","nine","noble","nod","noise","none","nor",
-  "normal","north","nose","not","note","nothing","notice","novel","now","number","nurse",
-  "object","observe","obtain","obvious","occur","ocean","odd","off","offense","offer",
-  "office","often","oil","old","once","one","online","only","onto","open","operate",
-  "opinion","oppose","option","orange","order","organ","origin","other","ought","our","out",
-  "outcome","output","outside","over","overall","own","owner","pace","pack","page","paid",
-  "pain","paint","pair","palace","pale","palm","pan","panel","panic","paper","parent",
-  "park","part","partner","party","pass","passage","past","patch","path","patient","pattern",
-  "pause","pay","peace","peak","peer","pen","people","perfect","perform","perhaps","period",
-  "permit","person","phase","phone","photo","phrase","pick","picture","piece","pilot","pin",
-  "pink","pipe","pitch","place","plain","plan","plane","planet","plant","plate","play",
-  "player","please","plenty","plot","plus","pocket","poem","poet","point","poison","pole",
-  "police","policy","poll","pool","poor","pop","popular","port","pose","position","positive",
-  "possess","possible","post","pot","potato","pound","pour","poverty","powder","power",
-  "powerful","practice","prayer","predict","prefer","prepare","present","press","pressure",
-  "pretend","pretty","prevent","price","pride","primary","prince","print","prior","prison",
-  "private","prize","probably","problem","proceed","process","produce","product","profile",
-  "profit","program","project","promise","promote","proof","proper","propose","protect",
-  "protest","proud","prove","provide","public","pull","punch","pure","purpose","push","put",
-  "qualify","quarter","queen","question","quick","quiet","quit","quite","quote","race","radio",
-  "rage","rain","raise","range","rank","rapid","rare","rate","rather","raw","reach","react",
-  "read","ready","real","reality","realize","really","reason","recall","receive","recent",
-  "record","recover","red","reduce","reflect","reform","regard","regime","region","register",
-  "regret","reject","relate","release","relief","religion","rely","remain","remark","remember",
-  "remind","remote","remove","repeat","replace","reply","report","represent","request","require",
-  "rescue","research","resource","respond","rest","restore","result","retain","retire","return",
-  "reveal","revenue","review","rich","ride","rifle","right","ring","rise","risk","river",
-  "road","robot","rock","role","roll","roof","room","root","rope","rose","rough","round",
-  "route","row","royal","rub","ruin","rule","run","rural","rush","sacred","sad","safe",
-  "saint","sake","salary","sale","salt","same","sample","sand","satisfy","save","say","scale",
-  "scene","school","science","score","screen","sea","search","season","seat","second","secret",
-  "section","secure","see","seed","seek","seem","segment","seize","select","self","sell",
-  "senate","send","senior","sense","sentence","separate","series","serious","serve","service",
-  "session","set","settle","seven","severe","shade","shadow","shake","shall","shame","shape",
-  "share","sharp","she","sheet","shelf","shell","shelter","shift","shine","ship","shirt",
-  "shock","shoe","shoot","shop","shore","short","shot","should","shoulder","shout","show",
-  "shower","shut","sick","side","sight","sign","signal","silence","silver","similar","simple",
-  "simply","since","sing","sir","sister","sit","site","six","size","skill","skin","sky",
-  "slave","sleep","slice","slide","slight","slip","slow","small","smart","smell","smile",
-  "smoke","smooth","snap","snow","so","soccer","social","soft","soil","solar","soldier",
-  "solid","solution","solve","some","somebody","somehow","someone","song","soon","sorry",
-  "sort","soul","sound","source","south","space","speak","special","speech","speed","spend",
-  "sphere","spirit","split","sport","spot","spread","spring","square","stable","staff","stage",
-  "stake","stand","star","stare","start","state","status","stay","steady","steal","steam",
-  "steel","steep","step","stick","stiff","still","stock","stone","stop","store","storm",
-  "story","straight","strange","strategy","stream","street","strength","stress","stretch",
-  "strike","string","strip","stroke","strong","structure","struggle","student","studio","study",
-  "stuff","stupid","style","subject","submit","succeed","success","such","sudden","suffer",
-  "sugar","summer","sun","super","supply","support","suppose","sure","surface","surprise",
-  "survive","suspect","sweet","swim","swing","switch","symbol","system","table","tail","take",
-  "tale","talent","talk","tall","tank","tape","target","task","taste","tax","tea","teach",
-  "teacher","team","tear","tell","temple","ten","tend","term","terror","test","text","than",
-  "thank","that","the","their","them","theme","then","theory","there","these","they","thick",
-  "thin","thing","think","third","this","those","though","thought","threat","three","throat",
-  "through","throw","thus","ticket","tide","tie","tight","till","time","tiny","tip","tire",
-  "title","to","today","toe","together","tomorrow","tone","tongue","tonight","too","tool",
-  "top","topic","toss","total","touch","tough","tour","toward","tower","town","trace","track",
-  "trade","train","transfer","transform","travel","treat","tree","trend","trial","tribe",
-  "trick","trip","triumph","troop","trouble","truck","true","truly","trust","truth","try",
-  "tube","tunnel","turn","twice","twin","twist","two","type","typical","ugly","uncle","under",
-  "undergo","understand","union","unique","unit","unite","universe","unknown","unless","unlike",
-  "until","unusual","up","upon","upper","upset","urban","urge","us","use","used","useful",
-  "user","usual","valley","value","van","variety","various","vast","vehicle","version","very",
-  "victim","victory","video","view","village","violence","virtue","visible","vision","visit",
-  "visual","vital","voice","volume","vote","wage","wait","wake","walk","wall","want","war",
-  "warn","wash","waste","watch","water","wave","way","we","weak","wealth","weapon","wear",
-  "weather","web","week","weigh","weight","welcome","well","west","western","wet","what",
-  "wheel","when","where","whether","which","while","whisper","white","who","whole","whom",
-  "whose","why","wide","wife","wild","will","win","wind","window","wine","wing","winner",
-  "winter","wire","wisdom","wise","wish","with","within","without","witness","woman","wonder",
-  "wood","word","work","worker","world","worry","worse","worst","worth","would","wound",
-  "wrap","write","writer","wrong","yard","yeah","year","yellow","yes","yesterday","yet",
-  "yield","you","young","your","youth","zero","zone"
+const WORD_LIST = [   // 單字取自 English_Look_Subject 42 篇文章
+  "abandon","abandoned","abbey","abbreviation","ability","able","aboard","about","above","abraham",
+  "abroad","abuse","abused","academic","accelerating","accept","accepted","access","accessible","accessories",
+  "accident","accommodation","accomplished","according","account","accounting","accounts","accuracy","accurate","accurately",
+  "accused","achieve","achieved","achievement","acid","acquire","across","acting","action","active",
+  "activities","activity","actor","actors","acts","actual","actually","adam","add","added",
+  "addicts","adding","addition","additional","address","adds","admire","adopt","adopting","advance",
+  "advanced","advances","advantage","advantages","adventurer","adventurous","advertising","advice","advisers","aec",
+  "affair","affairs","affect","affected","afford","afraid","africa","african","after","afternoon",
+  "again","against","age","aged","agency","agenda","agent","ages","aggressive","ago",
+  "agree","agreed","agreement","agricultural","agriculture","ahead","aid","aidc","aides","aim",
+  "aimed","aims","air","airline","airlines","airplane","airplanes","airport","alarming","alienated",
+  "alive","all","allegations","alleged","allied","allow","allowed","allowing","allows","ally",
+  "almost","alone","along","already","also","alternative","although","always","am","amadeus",
+  "amazed","amazing","ambassador","ambitions","amendment","amendments","america","american","americans","amoco",
+  "among","amount","amounted","amounts","ample","an","analyses","analysis","analysts","analyze",
+  "ancient","and","andrew","angeles","anger","angry","animal","animals","annie","announce",
+  "announced","announcement","annual","annually","another","answer","answered","anti","antique","anxiety",
+  "any","anyone","anything","aoki","apart","apartment","apparatus","apparently","appeal","appealed",
+  "appear","appeared","appearing","appears","apple","application","applications","applied","apply","applying",
+  "appreciation","appropriate","approval","approved","approximately","april","arats","architect","architects","architecture",
+  "are","area","areas","arena","argue","argued","aria","aristocrats","arm","arms",
+  "army","arose","around","aroused","arrange","arrangements","arrival","arrive","arrived","arrows",
+  "art","article","articles","artifacts","artillery","artist","artistic","artists","as","asia",
+  "asian","asians","aside","ask","asked","asking","asleep","aspect","assembly","assist",
+  "associated","association","assure","astronomical","at","ate","atmosphere","atolls","attached","attack",
+  "attempt","attempting","attend","attendant","attendants","attended","attention","attitude","attitudes","attorney",
+  "attract","attraction","audience","august","australia","australian","austria","author","authorities","auto",
+  "automated","automation","automobiles","available","average","avis","avoid","award","aware","away",
+  "awful","babies","baby","bach","back","background","bacteria","bad","badminton","bag",
+  "bagmati","bahal","balance","balanced","baldridge","ball","bamford","bank","banker","bankers",
+  "banking","banks","banquet","bar","barely","baroque","barrels","barriers","bars","base",
+  "based","bases","basic","basin","basis","basketball","baskets","batch","bath","battle",
+  "baumer","bay","be","beach","beaches","bear","beasts","beat","beatrice","beautiful",
+  "beauty","became","because","become","becomes","becoming","been","beer","beethoven","before",
+  "beg","began","begin","beginning","begun","behavior","behind","beijing","being","belfast",
+  "belief","believe","believed","believes","bell","bellow","belong","below","bend","beneath",
+  "benefit","benson","benz","bering","besides","best","better","between","beyond","bhaktapur",
+  "bicycle","bid","bidding","big","bigger","biggest","bike","bill","billion","billionaire",
+  "bills","bind","biotechnology","bird","birds","birth","birthday","bit","black","blame",
+  "blanket","bless","blessing","blind","blinds","block","blocking","blow","blue","board",
+  "boat","boating","boats","bodhnath","bodies","body","boise","bold","bomb","bond",
+  "bonds","bones","bonuses","book","books","boom","boost","border","born","boss",
+  "both","bottle","bottom","bound","boundaries","boundary","bourse","bow","box","boy",
+  "boyish","branch","brand","brave","bread","break","breaking","breath","breathe","bribery",
+  "bridge","brief","briefings","bright","bring","bringing","british","broad","broaden","broadway",
+  "broke","broken","brokers","bronze","brother","brought","brown","buddha","buddhist","budget",
+  "build","building","buildings","built","bullet","burden","bureau","bureaucratic","burma","burning",
+  "burst","bus","buses","bush","business","businesses","businessman","busy","but","buy",
+  "buyer","buyers","buying","buyout","buyouts","by","bytes","cabin","cable","cables",
+  "cake","calculations","calendar","california","call","called","calls","calm","came","camp",
+  "campaign","campaigns","campus","can","canada","canadian","cancer","candidates","cannot","cap",
+  "capacity","capital","capricorn","captain","car","card","cards","care","cared","career",
+  "carefully","caribbean","carried","carry","carrying","cars","carson","cart","carved","case",
+  "cases","cash","cast","casual","catalog","catch","cattle","caught","cause","caused",
+  "causes","causing","cave","ceiling","cell","cent","center","central","centre","centuries",
+  "century","ceremonies","ceremony","cerf","certain","certainly","chain","chains","chairman","challenge",
+  "challenges","championed","chan","chance","chances","chang","change","changed","changes","changing",
+  "channel","chao","chapter","character","characters","charge","charged","charges","charity","charter",
+  "chartered","cheap","cheaply","check","checked","checks","chemical","chemicals","chen","cheng",
+  "chest","chi","chiang","chicago","chief","child","childhood","children","chin","china",
+  "chinese","cho","choice","choose","choosing","chorus","chosen","christmas","chu","chung",
+  "circle","cited","cites","cities","citizen","citizens","city","cla","claimed","claims",
+  "class","classical","classroom","clavier","clean","cleaning","clear","clearly","clement","clerk",
+  "client","clients","climate","climates","climbed","clock","clone","cloning","close","closed",
+  "closely","clothes","cloud","club","clubs","clue","coal","coast","coat","cocaine",
+  "code","coffee","coin","coined","coins","coke","cold","collar","collect","collection",
+  "college","colonists","color","colour","coloured","colouring","combination","come","comes","comfort",
+  "comfortable","coming","command","commander","comment","commented","comments","commerce","commercial","commission",
+  "commissioned","commissions","commit","committee","common","commonwealth","communicate","communication","communist","communists",
+  "community","commuter","companies","company","compared","compass","competition","competitions","competitive","competitors",
+  "complete","completed","completely","completion","complex","complicated","components","compose","composed","composer",
+  "composing","compression","computation","computer","computers","concepts","concern","concerned","concerto","concerts",
+  "conclude","conclusion","concrete","condition","conditions","conference","confession","confidence","confident","conflict",
+  "conflicts","connections","consequence","consequently","consider","considerable","considerably","consideration","considered","considering",
+  "consignment","consistent","consists","constantly","constitute","constitution","constructed","construction","consumer","consumers",
+  "consumption","contact","contain","contains","contamination","contemplating","content","contest","context","continental",
+  "continue","continued","continuing","continuous","contract","contracts","contribute","contributing","control","controlled",
+  "controls","controversial","controversy","convenience","convenient","conveniently","cook","cooked","cooking","cool",
+  "cooperation","coordination","copper","copy","coral","cordell","core","corner","corp","corporate",
+  "corporation","correct","corrupt","cosmetics","cost","costa","costs","cotton","could","couldn",
+  "council","councilors","councils","count","counterpart","countries","country","county","couple","course",
+  "courses","court","courts","cousin","cover","coverage","cows","crack","cracking","craft",
+  "crafts","crammed","crawling","crazy","create","created","creates","creating","creation","creative",
+  "creativity","creatures","credit","crew","cried","cries","crime","crimes","criminal","crisis",
+  "critical","criticisms","crossing","crowd","crowded","crowds","crucial","cruise","cruising","crust",
+  "cry","crystals","cultural","culturally","culture","cup","curb","curious","current","currently",
+  "curse","custody","custom","customer","customers","cut","cutting","cycle","daily","damage",
+  "damaged","damaging","dame","dance","danger","dangerous","dangerously","dangers","dare","daring",
+  "dark","data","date","dated","daughter","day","days","dead","deal","deals",
+  "dear","death","debate","debt","decade","decades","december","decent","decide","decided",
+  "decision","declaration","declare","declared","decline","decrease","dedicated","deep","deeply","deer",
+  "defend","defense","define","defined","degree","deities","delay","delegates","delegation","deliberately",
+  "delightful","deliver","delivered","demand","demands","deming","democracy","demonstrates","denied","deny",
+  "department","departments","departure","depend","dependence","depends","depth","depths","deputy","derived",
+  "describe","described","description","desert","deserted","design","designed","designer","designing","desirous",
+  "desk","despair","despite","destination","destiny","destroy","destroyed","destroying","destroys","destruction",
+  "detail","details","detect","deter","determine","determined","devastated","develop","developed","developing",
+  "development","developments","devote","dgbas","did","didn","die","died","diesel","difference",
+  "differences","different","differently","difficult","difficulties","difficulty","diligence","dined","dinner","diplomatic",
+  "direct","direction","directly","director","directors","dirty","disappear","disappearing","disaster","discharge",
+  "discovered","discuss","discussed","disease","diseases","dismiss","disney","disorder","displaced","dispute",
+  "dissidents","distance","distinguished","distribution","district","disturbed","divide","divided","divination","divine",
+  "division","divisions","do","doctor","doctors","document","does","doing","dollar","dollars",
+  "dome","domestic","dominated","don","donated","done","door","doors","double","doubled",
+  "doubt","down","downfall","draft","dragged","dragon","dragons","drama","dramas","dramatic",
+  "drawing","drawn","dream","dress","dressed","drink","drive","driven","driver","drivers",
+  "drives","drop","dropped","dropping","drove","drug","drugs","due","dunkel","durbar",
+  "during","duties","duty","dwell","dyes","dyestuffs","dying","dynasty","each","eager",
+  "eagle","ear","earlier","early","earn","earnings","earth","earthquake","earthquakes","ease",
+  "easier","easily","east","eastern","easy","eat","ebullience","echoing","ecological","ecology",
+  "economic","economical","economically","economies","economy","edge","editor","editorial","editorials","educate",
+  "education","educational","effect","effective","effects","efficient","efficiently","effort","efforts","egg",
+  "eggs","eight","eign","either","elderly","elders","elect","elected","election","elections",
+  "electrical","electricity","electronic","element","elements","elephants","eleventh","eliminate","eloquent","else",
+  "embarrassed","embassy","emblazoned","emergency","emilia","emotional","emotionally","emperor","emphasize","empire",
+  "employ","employee","employees","employment","emptiness","empty","enable","enables","enclose","enclosing",
+  "encounter","encourage","encouraged","encouragement","end","endangered","endless","endorse","endorsed","enemy",
+  "energy","enforced","engineered","engineering","engineers","england","english","enjoy","enjoyed","enormous",
+  "enough","enrich","ensure","enter","entered","enterprise","enterprises","enters","entertain","enthusiastic",
+  "enthusiasts","entire","entirely","entourage","entrance","entrepreneurs","entry","environment","environmental","epipsyche",
+  "epipsychidion","episodes","equally","equator","equipment","equipped","era","error","escape","especially",
+  "essay","essential","establish","established","establishing","estimate","estimated","etc","ethnic","europe",
+  "european","europeans","evaluation","evaluations","even","evening","event","events","eventually","ever",
+  "everlasting","every","everybody","everyone","everything","everywhere","evidence","evident","evoked","evolution",
+  "evolving","evons","examine","example","examples","excellent","except","exception","exchange","excitement",
+  "excuse","executive","executives","exercise","exhaust","exhibition","exhibitions","exhibits","exist","existed",
+  "existence","expand","expanded","expanding","expect","expected","expense","expensive","experience","experienced",
+  "experiences","experimental","experts","explain","explained","explanation","export","exported","exporter","exports",
+  "expose","express","expressed","extend","extinct","extra","eye","eyes","fabrics","face",
+  "faced","facilities","facility","facing","fact","factional","factions","factor","factories","factors",
+  "factory","fail","failed","fair","fairly","fall","fallen","false","familiar","families",
+  "family","famous","fan","far","farm","farmer","farmers","farming","farms","fascinated",
+  "fashion","fast","fastened","faster","fastest","fat","fate","father","favor","favorite",
+  "favourite","fear","feathers","feature","featured","february","feed","feel","feeling","feelings",
+  "fees","feet","fell","fellow","felt","female","feng","festival","few","fewer",
+  "fiction","field","fields","fifty","fight","figure","figures","fiji","file","fill",
+  "filled","film","final","finally","finance","financial","financing","find","finding","fine",
+  "fines","finest","finger","fingernails","finish","finished","fire","fires","firm","firms",
+  "first","fish","fishermen","fishing","fit","five","fix","flash","flesh","flight",
+  "floor","floors","flow","flower","flute","fly","flying","focus","fold","follow",
+  "followed","following","food","foods","fool","foolish","foot","foothold","for","force",
+  "forced","forces","fore","foreign","foreigners","foremost","forest","forget","forgotten","form",
+  "formal","formed","former","forming","forms","formula","forth","fortune","forty","forward",
+  "found","foundation","founder","fountain","four","fourth","frame","francisco","fraud","free",
+  "freebase","freed","freedom","french","frequently","fresh","friday","friend","friendly","friends",
+  "friendship","fright","frightened","from","front","fruit","fuel","fujian","full","fully",
+  "fun","fund","fundamental","funded","funds","funny","furnished","furniture","further","furthermore",
+  "future","futuristic","gain","galera","game","games","gap","garbage","garden","gas",
+  "gasoline","gate","gates","gather","gathering","gave","gaza","general","generally","generated",
+  "generating","generation","generous","genetic","genetically","gentle","genuine","geography","geomancy","german",
+  "germany","get","getting","gettysburg","giant","giants","gift","gin","giovanni","girl",
+  "give","given","giving","glad","glass","global","go","goal","god","goddess",
+  "goes","going","gold","golden","gone","good","goods","got","government","governments",
+  "governor","graceful","graduate","grant","grass","grateful","great","greater","greatest","greatly",
+  "greek","green","greenery","grew","gross","ground","group","groups","grow","growing",
+  "grown","growth","guaranteed","guard","guess","guest","guide","guy","habit","habits",
+  "had","hair","half","halfway","hall","halls","hand","handicapped","handle","handling",
+  "hands","handsome","hang","hangs","hangzhou","hanuman","happen","happened","happening","happiness",
+  "happy","harbour","hard","harder","hardly","hardships","hardware","harm","harmful","harsh",
+  "has","hasn","hau","have","having","hawaii","hawaiian","haydn","haze","he",
+  "head","heading","headquarters","health","healthy","hear","heard","heart","hearty","heat",
+  "heated","heating","heavy","height","held","hell","help","helped","helpful","helping",
+  "helps","hemisphere","her","here","heritage","herself","hesitate","hidden","hide","hides",
+  "high","higher","highest","highlights","highly","hijacked","hijackers","hijacking","hijackings","hill",
+  "him","himself","hindu","hinterland","hippies","hiring","his","historic","historical","history",
+  "hit","holbert","hold","holding","hole","holiday","holidays","holy","home","homeless",
+  "homes","honesty","hong","honor","hope","hoped","hopeful","hopes","hoping","hormone",
+  "horoscopes","horrible","horror","horse","horses","hospital","host","hosted","hot","hotel",
+  "hotels","hour","hours","house","household","houses","housing","how","howard","however",
+  "hsu","hualien","hualon","huang","huge","human","humblest","humor","hundred","hundreds",
+  "hung","hungry","hunt","hunted","hunters","hurried","hurt","husband","hwa","hydrocarbons",
+  "ice","idb","idea","ideal","ideas","if","ill","illegal","illiteracy","illiterate",
+  "image","images","imagination","imaginative","imagine","immediate","immediately","immigration","immortal","impatient",
+  "imperial","implication","import","importance","important","importation","imported","importer","importers","imports",
+  "imposed","impossible","impression","impressive","improve","improved","improvement","improvements","improving","in",
+  "inauguration","incentives","inch","inches","incinerators","include","included","includes","including","income",
+  "incorporated","increase","increased","increasing","increasingly","incredible","indeed","index","india","indian",
+  "indians","indicate","indicated","indicates","individual","individuals","indonesia","induce","industrial","industries",
+  "industry","inflows","influence","influenced","information","informed","initial","injured","innocent","inscription",
+  "insect","insecticide","insects","inside","insider","insists","inspect","inspections","inspiration","inspired",
+  "installed","instance","instead","instinct","institute","institutional","institutions","instructions","instrument","instruments",
+  "insufficient","insulin","insultingly","insurance","integration","intel","intelligently","intend","intensive","intention",
+  "interest","interested","interesting","interfere","interior","intermediates","internal","international","internet","interview",
+  "interviews","into","intra","introduced","introduction","invariably","invent","invention","invest","investigation",
+  "investment","investments","investors","invite","invited","inviting","involve","involved","involves","ireland",
+  "irish","iron","ironically","irritated","is","island","islands","islandwide","isn","isolated",
+  "israel","issue","issues","issuing","it","italian","items","its","itself","jacket",
+  "jail","jane","japan","japanese","jeou","jewels","jhochhen","job","jobs","joe",
+  "john","johore","join","joined","joining","jojoba","joke","jolted","jordan","joseph",
+  "journey","joy","judge","judges","judgment","judicial","july","jump","june","jungle",
+  "junior","just","justice","kalabhairab","kaohsiung","kasthamandap","kat","katczinsky","kathmandu","keep",
+  "keeping","keeps","kept","key","kick","kill","killed","killing","kilometers","kilowatts",
+  "kind","kindly","kinds","king","kingdom","kings","kiribati","kit","kitchen","knew",
+  "knife","knight","know","knowledge","known","knows","kong","korea","kuala","kumari",
+  "kuo","kuomintang","kwong","labor","laborers","labour","lachrimosa","lack","lading","lady",
+  "lai","lake","lakes","lam","land","landed","lane","lanes","langkawi","language",
+  "languages","lanyu","large","larger","largest","last","late","later","latest","latter",
+  "launch","lava","law","lawmakers","lawn","laws","lawyer","lawyers","lay","layer",
+  "lead","leader","leaders","leading","leads","leaf","lean","leaning","learn","learned",
+  "learning","least","leave","leaving","led","lee","left","leg","legal","legend",
+  "lennon","leopold","less","lesser","lesson","let","letter","level","levels","liberty",
+  "library","license","licensed","lie","lien","lies","life","lift","lifted","light",
+  "lights","like","likely","lilliput","limestone","limited","lin","lincoln","line","lined",
+  "lines","ling","lingering","lion","list","listen","listened","listening","literally","literature",
+  "little","live","lives","living","load","local","locate","located","location","london",
+  "lonely","long","longer","look","looked","looking","looks","lord","los","lose",
+  "loss","lost","lot","lots","lotus","louis","love","loved","lovely","low",
+  "lower","lowers","lowest","luck","lucky","lucrative","luddites","lumpur","lunch","lying",
+  "lyrical","machine","machines","macy","made","magazine","magic","magnate","magnificent","mail",
+  "main","mainland","mainly","maintain","maintained","maintains","major","majority","make","makers",
+  "makes","making","makoto","malay","malaysia","malaysian","malcolm","male","malla","man",
+  "manage","management","manager","managerial","managers","mandela","manifestation","manipulate","mankind","manner",
+  "manufacture","manufactured","manufacturers","manufactures","manufacturing","many","map","march","margarine","marina",
+  "marinas","mark","marked","market","marketing","markets","marks","marred","married","marry",
+  "marshall","marvelous","mass","masses","massive","master","masterpiece","masters","match","material",
+  "materials","matter","matters","mature","may","maybe","mayor","me","mean","meaning",
+  "means","meanwhile","measure","measured","measuring","meat","medal","media","mediaeval","medical",
+  "medicine","medium","meet","meeting","meetings","meets","megatrends","melanesia","melanesians","member",
+  "members","memory","men","mental","mention","mentioned","menu","mercedes","mercy","mere",
+  "merely","merit","message","met","metal","metals","metaphor","meters","method","methods",
+  "metre","michael","michelangelo","michener","mickey","micronesia","microwave","microwaves","mid","middle",
+  "midnight","midst","might","migration","mildendo","miles","military","milk","million","millionaire",
+  "millions","mind","minds","mine","ming","minimum","minister","ministry","minor","minsheng",
+  "minute","minutes","mirror","miserable","misgivings","miss","mission","missionaries","missionary","mixed",
+  "mixture","mobile","model","models","modern","modest","moment","monday","money","monitor",
+  "month","monthly","months","monument","monuments","moo","mood","moon","moral","more",
+  "morning","mortal","most","mother","motor","mount","mountain","mountainous","mountains","mounted",
+  "mouse","mouth","move","moved","movement","movements","moves","movie","moving","mozart",
+  "much","multi","murder","muscles","museum","music","musical","musically","must","mutual",
+  "mutually","muzium","my","myself","mystery","mysticism","naisbitt","name","named","names",
+  "narrow","natasha","nation","national","nations","native","natural","naturally","nature","navy",
+  "near","nearby","nearly","necessary","necessity","need","needed","needs","needy","negara",
+  "neglected","negotiations","negotiators","neighbors","neikirk","neither","nepal","nepalese","nerve","nervous",
+  "net","network","neumarkt","never","nevertheless","new","news","newspaper","newspapers","next",
+  "nice","night","nights","nine","ninety","no","nobility","noble","nobody","noise",
+  "non","none","noon","nor","norm","normal","north","northern","northwestern","nose",
+  "not","notable","note","noted","notes","nothing","noticed","novel","november","now",
+  "nowadays","number","numbers","numerous","object","objects","observers","observes","obstacles","obtain",
+  "obtaining","obvious","occupation","occupied","occur","occurred","ocean","oceania","oceanic","oceans",
+  "october","of","off","offenders","offenses","offer","offered","offers","office","officer",
+  "officers","offices","official","officially","officials","offspring","often","oh","oil","old",
+  "older","olympic","on","once","one","ones","ongoing","only","onto","open",
+  "opened","opera","operas","operate","operates","operating","operation","operations","operators","opinion",
+  "opportunity","oppose","opposed","opposite","optimism","option","or","orchestra","orchid","order",
+  "ordered","orders","organic","organization","oriented","origin","original","osaka","ostp","other",
+  "others","ought","oung","our","ourselves","ous","out","outdoor","output","outside",
+  "oven","ovens","over","overall","overcrowded","overnight","overseas","own","owned","owner",
+  "owners","ownership","oxygen","pace","pacific","package","packed","page","pages","pagoda",
+  "paid","pain","painted","pair","pakistan","palace","pale","palestinian","pan","panic",
+  "pantheon","paper","paradise","parallel","parent","parents","park","parks","parliaments","part",
+  "participate","participation","particular","particularly","parties","partner","partners","parts","party","pass",
+  "passed","passengers","passes","passing","past","patan","path","patient","pattern","paul",
+  "pay","payment","payments","peace","peaceful","peak","pearl","pedestrians","pei","peitsun",
+  "penetration","pennsylvania","pentium","people","peoples","per","percent","perfect","perfomers","perform",
+  "performance","performances","performed","performers","performing","perhaps","period","periods","permanent","permanently",
+  "permission","permit","permits","person","personal","personality","personally","persons","persuade","persuaded",
+  "pervasive","pessimistic","peter","phase","philharmonic","philippine","philippines","philosophy","phone","phrase",
+  "phuket","physical","physician","physicians","piano","picaresque","pick","picked","picture","piece",
+  "pieces","pierre","pilot","ping","pisa","place","placed","places","plain","plan",
+  "plane","plankton","planned","plans","plant","plants","platform","plausible","play","played",
+  "playing","plays","pleasant","please","pleased","pleasure","plenty","plus","pocket","poem",
+  "poet","poetry","point","pointed","points","poison","poisoned","pole","police","policeman",
+  "policy","political","politics","polling","polls","polluted","pollution","polynesia","polynesian","polynesians",
+  "pond","pool","poor","popular","population","port","portable","portables","pose","position",
+  "positions","positive","possess","possibilities","possibility","possible","possibly","post","pot","potato",
+  "potential","pound","pounds","pour","poverty","powder","power","powered","powerful","practical",
+  "practice","practices","practitioners","precious","precise","precocious","predicted","predictions","prefer","preliminary",
+  "premier","preparations","prepare","prepared","preparing","presence","present","presented","presently","president",
+  "presidential","press","pressed","pressure","pretend","pretoria","pretty","prevent","previous","previously",
+  "price","prices","pride","priests","primarily","primary","prime","prince","principal","principally",
+  "principles","print","printed","priority","prison","prisoners","private","prize","probably","problem",
+  "problems","procedure","procedures","proceed","process","processed","processes","processing","processor","processors",
+  "prodigy","produce","produced","producers","produces","producing","product","production","productive","productivity",
+  "products","profession","professional","profit","profits","program","programs","progress","project","projects",
+  "prominent","promise","promised","promote","promotional","prompted","prone","pronunciation","proof","proper",
+  "property","proportion","proposal","propose","proposed","prospect","prosperity","protect","protected","protection",
+  "protects","protest","prove","proverb","provide","provided","provides","providing","province","provinces",
+  "public","publication","publicly","published","publisher","puerto","pull","pulled","punish","punished",
+  "purchase","pure","purpose","purse","pursuit","push","pushed","pushing","put","puts",
+  "putting","qian","qiandao","quake","quakes","quality","quantities","quarter","quarters","question",
+  "questioned","questions","quick","quickly","quiet","quietly","quit","quite","quotas","quote",
+  "quoted","rabbit","race","races","radiation","radical","radio","rage","raiders","railway",
+  "rain","rainforest","raise","raised","rally","ran","random","range","rank","raped",
+  "rapid","rapidly","rapids","rare","rarely","rate","rates","rather","rating","ray",
+  "rays","reach","reached","reaches","react","read","reading","readings","ready","real",
+  "reality","realize","realizes","really","realm","reason","reasonable","reasons","rebuild","rebuked",
+  "recall","receive","received","recent","recently","recognition","recognize","recognized","recommend","record",
+  "records","recover","red","reduce","reducing","reefs","reference","references","refineries","reflect",
+  "reform","refuse","refused","regard","regarded","regards","regatta","region","regional","register",
+  "regret","regular","regularly","regulations","reiterated","reject","rejects","relations","relatively","relatives",
+  "relax","release","released","releases","reliable","relieved","religion","religious","rely","remain",
+  "remained","remaining","remains","remarks","remember","remind","remote","remove","renaissance","renowned",
+  "repatriation","repeat","repeatedly","replace","replaced","reply","report","reported","reporter","reporters",
+  "reports","represent","reproduce","republic","reputation","request","requested","requiem","require","required",
+  "requirements","requires","requisite","rescue","research","researchers","reserves","residents","resist","resources",
+  "respect","respite","respond","response","responsible","rest","restrictions","restructuring","result","resulted",
+  "results","retailer","retailing","retire","return","returned","returns","reunification","review","revisions",
+  "revolution","rica","rich","richard","richter","ride","riders","ridge","right","rights",
+  "ring","rise","rising","risk","risks","rival","river","rivers","road","robes",
+  "robots","roc","rock","rocks","role","roll","roman","romance","rome","roof",
+  "room","roosevelt","ropes","rose","rough","roughly","round","rounds","route","routes",
+  "row","royal","rucken","ruin","rule","ruled","rules","ruling","run","running",
+  "runs","rural","rush","rushed","sacred","sacrifice","sad","saens","safe","safer",
+  "safety","said","sail","sailed","sailing","sailors","sails","saint","sake","salaries",
+  "salary","sale","sales","salieri","salt","same","samoa","samples","san","sand",
+  "sandy","santa","satellite","satisfaction","satisfied","satisfy","saturday","save","saved","saw",
+  "say","saying","says","scale","scarcer","scenario","scene","scenes","scheduled","schive",
+  "scholar","school","schools","schwartz","science","scientific","scientist","scientists","score","screen",
+  "script","sculpture","sea","search","seas","season","seat","seats","seavey","sec",
+  "second","seconds","secret","secretary","section","sector","securities","security","sedan","sedans",
+  "see","seed","seeing","seek","seeking","seem","seemed","seems","seen","sef",
+  "seize","seldom","select","selection","self","sell","seller","selling","sells","semiskilled",
+  "send","sending","sends","senior","sense","sent","sentence","separate","separated","serious",
+  "seriously","servants","serve","service","services","session","set","setting","settle","settled",
+  "settlement","seven","several","severe","sewage","shade","shadow","shaffer","shake","shakespeare",
+  "shaking","shall","shallow","shan","shape","shaped","share","sharing","sharp","sharply",
+  "shaykin","she","shelf","shelley","shelter","shelters","shewart","shi","shifts","shin",
+  "ship","shipment","ships","shirt","shirts","shiva","shoe","shook","shoot","shop",
+  "shopping","shore","short","shortage","shot","should","shouted","show","showed","showing",
+  "shown","shows","shu","shui","shut","shy","sick","side","sides","sight",
+  "sighting","sign","signals","signed","significant","signing","silence","silent","silk","silver",
+  "similar","similarly","simple","simplified","simply","since","sing","singapore","singer","singers",
+  "single","sink","sir","sister","sit","site","sitting","situated","situation","six",
+  "sixties","size","sized","skill","skilled","skills","sky","slash","slave","slavery",
+  "slaves","sleep","slide","slight","slow","slowly","small","smaller","smell","smile",
+  "smilingly","smith","smog","smoke","so","soap","soared","social","societies","society",
+  "soft","software","soil","sold","soldier","soldiers","solid","solo","solve","some",
+  "somebody","somehow","someone","something","sometimes","somewhat","somewhere","son","song","songs",
+  "sons","soon","sort","sought","soul","sound","source","sources","south","southeast",
+  "southeastern","southern","southwestern","sovereign","soviet","space","span","spanish","speak","speaker",
+  "speakers","speaking","special","specialize","specialized","species","specific","specification","speech","speed",
+  "spencer","spend","spending","spends","spent","spice","spire","spirit","spirits","spiritual",
+  "spite","splinter","split","spoken","spokesman","sport","sports","spot","spray","sprayed",
+  "spread","spring","square","squarely","stable","staff","staffs","stage","stages","stance",
+  "stand","standard","standards","standing","stands","star","stare","stars","start","started",
+  "starting","state","statement","states","station","stations","statistical","statistics","statue","statues",
+  "status","stay","steady","steal","steam","steel","steep","stencil","step","stepped",
+  "steps","stereo","stick","sticky","still","stimulated","stirring","stock","stocks","stomach",
+  "stone","stones","stood","stop","stopped","stopping","storage","store","stored","stores",
+  "stories","storm","story","straight","strait","straits","strange","strategic","strategy","strauss",
+  "stream","streams","street","streets","strength","strengthen","stress","stretch","strict","strike",
+  "string","strip","strive","strong","strongly","struck","structure","structures","struggle","stuck",
+  "student","students","studied","studies","studio","study","studying","stupa","style","subdivided",
+  "subject","subjects","submitted","subsequently","subsidence","subsidiaries","subsidies","substance","substances","substantial",
+  "substitution","subway","succeed","success","successful","successfully","successive","such","suddenly","suffer",
+  "suffered","suffering","sufficient","suggest","suggested","suit","suitable","suited","sulphur","sumatra",
+  "summer","summit","sun","sunday","sundays","supervisors","supplied","suppliers","supplies","supply",
+  "support","supported","supports","suppose","supposed","sure","surface","surplus","surprise","surprised",
+  "surrounding","survival","survive","surviving","suspects","suspension","suspicious","sustained","swayambhunath","sweat",
+  "sweeping","sweet","swept","swim","swimming","switch","symbol","symbolism","sympathy","symphony",
+  "synthetic","system","systems","table","tahan","taichung","taipei","taiwan","taiwanese","take",
+  "taken","takes","taking","tale","talented","tales","talk","talked","talking","tall",
+  "tallest","taman","tank","tanker","tape","tar","tariffs","task","taste","taught",
+  "tax","taxes","tea","teach","teacher","teachers","teaching","team","tears","tech",
+  "technical","technique","techniques","technological","technologies","technology","teh","telegraphic","telephone","tell",
+  "telling","temperature","temple","temporary","ten","tend","tenders","tends","teng","term",
+  "terminal","terms","terrible","terrifying","terror","test","tested","testified","texas","text",
+  "textile","textiles","thai","thailand","than","thank","thanksgiving","that","the","theater",
+  "their","them","theme","themselves","then","theory","there","thereafter","therefore","these",
+  "they","thick","thin","thing","things","think","third","thirty","this","those",
+  "though","thought","thoughts","thousand","thousands","threat","threatened","threatening","three","thriving",
+  "through","throughout","throw","throwing","thrown","thumb","thursday","thus","tibet","tibetan",
+  "tibetans","ticket","tide","tied","ties","tiger","till","tim","time","times",
+  "tiny","tip","tired","title","to","today","together","tokyo","told","tom",
+  "tomorrow","tonga","tongue","tonight","tons","too","took","tool","tools","top",
+  "topic","tops","total","totally","touch","tough","tour","tourism","tourist","tourists",
+  "toward","towards","tower","towers","town","track","trade","trading","tradition","traditional",
+  "traditions","traffic","tragedy","trails","train","training","transaction","transfer","transferred","transit",
+  "travails","travel","traveled","travelers","traveling","treat","treated","tree","trees","tremble",
+  "trend","trends","trendy","trial","tried","trip","trips","tropic","tropical","trouble",
+  "truck","true","truly","trust","truth","try","trying","tube","tuesday","tuition",
+  "tunnel","turkey","turn","turned","turning","turnover","turns","tween","twelve","twentieth",
+  "twenty","twice","two","type","types","typical","ugly","ultimately","umbrella","unable",
+  "uncle","under","understand","understanding","understands","understood","undertaken","unemployment","unexpected","unfair",
+  "unforgettable","unification","unified","uniform","union","unions","unique","unit","united","units",
+  "universe","universities","university","unknown","unless","unlike","unlikely","unnatural","unskilled","until",
+  "unusual","up","upcoming","upgrading","upon","upper","upset","upward","urban","urge",
+  "urged","us","use","used","useful","user","users","uses","using","usual",
+  "usually","vacation","vacations","vain","valley","valuable","value","values","van","vantage",
+  "variations","variety","various","vast","vegetable","vegetables","venues","verdict","version","very",
+  "vice","victim","victims","victory","vienna","vietnam","view","viewed","views","villa",
+  "village","villages","violence","violent","violently","virgin","virtually","virtue","vishnu","vision",
+  "visit","visited","visiting","visitor","visitors","visual","vocabulary","voice","volcanic","volcanism",
+  "volcanoes","volume","vote","votes","voting","vowed","voyage","wag","wage","wages",
+  "waiters","waiting","wake","walk","walked","walking","walks","wall","walls","walt",
+  "walter","wang","want","wanted","wants","war","ward","warm","warming","warned",
+  "warning","was","wash","washington","wasn","waste","wastes","watanabe","watch","watchdog",
+  "watched","watching","water","waters","wave","waves","wax","way","ways","we",
+  "weak","wealth","wealthy","weapons","wearing","weather","wednesday","week","weeks","weighed",
+  "weight","welcome","welfare","well","wen","went","were","west","western","wet",
+  "whale","whalers","whales","whaling","what","whatever","wheat","when","where","whereas",
+  "whether","which","while","white","whitney","who","whole","wholly","whom","whose",
+  "why","wide","widely","widespread","wife","wild","wildlife","will","william","willing",
+  "wills","win","wind","window","windows","winning","winter","wisdom","wish","wishes",
+  "witch","with","within","without","woke","woman","women","won","wonderful","wood",
+  "wooden","word","words","work","worked","workers","workforce","working","workmen","workplace",
+  "works","workshop","world","worried","worries","worry","worse","worst","worth","would",
+  "wouldn","wound","wounded","write","writers","writing","written","wrong","wrote","yacht",
+  "yachting","yachts","yachtsmen","yard","year","years","yeasts","yeh","yes","yesterday",
+  "yet","yield","ying","york","you","young","younger","youngest","your","yourself",
+  "youth","yuan","yung","zaide","zealand","zone"
 ];
 
 // ── Chinese Character Database (Top 500 Most Frequent Characters) ──
@@ -476,6 +711,41 @@ function buildArticlePools(articles) {
   return pools;
 }
 
+// ── 中文-文章：依文章「出現的先後次序」排好的題目（讓學生有機會默默背下文章）──
+// Easy：文章裡的每個國字，照順序一個一個出（重複的字也照出）
+// Medium：每段連續中文字依序切成 3~5 字的片段（不跨標點）
+// Hard：句子（至少10字），跟原本一樣的斷句方式，但照文章順序出、不去重
+// 這裡只存「字串」，真正的拼音單位等到出怪時才算（見 _nextArticleItem），所以載入不會變慢。
+function buildArticleSequences(articles) {
+  const seq = { Easy: [], Medium: [], Hard: [] };
+  (articles || []).forEach(a => {
+    const content = String(a.content || '');
+    for (const ch of content) if (isHanzi(ch)) seq.Easy.push(ch);
+
+    (content.match(/[\u4e00-\u9fff]+/g) || []).forEach(run => {
+      let n = run.length, pos = 0;
+      if (n < 3) return;
+      while (n > 0) {
+        let take = n <= 5 ? n : 4;
+        if (n > 5 && n - 4 < 3) take = 3;   // 避免剩下 1~2 個字的零碎片段
+        seq.Medium.push(run.slice(pos, pos + take));
+        pos += take; n -= take;
+      }
+    });
+
+    const raw = content.replace(/\r?\n/g, '');
+    const sentences = raw.split(/(?<=[。！？；，、：])/).map(x => x.trim()).filter(Boolean)
+      .flatMap(x => (x.match(/[\u4e00-\u9fff]/g) || []).length > 16 ? (x.match(/.{1,12}/g) || [x]) : [x]);
+    let buffer = '', cnt = 0;
+    sentences.forEach(x => {
+      buffer += x;
+      cnt += (x.match(/[\u4e00-\u9fff]/g) || []).length;
+      if (cnt >= 10) { seq.Hard.push(buffer); buffer = ''; cnt = 0; }
+    });
+  });
+  return seq;
+}
+
 // ── 上傳的 .txt 文章自動判斷編碼 ──
 // 很多老師電腦裡的舊 .txt 檔案其實是「Big5」編碼（Windows 繁體中文的舊格式），
 // 不是 UTF-8。如果整篇檔案硬要用 UTF-8 解碼，中文字會整段變亂碼，導致遊戲抽
@@ -514,8 +784,11 @@ class ArticleManager {
   //   → 一樣會把內建文章用正確內容補上/更新，不會被舊資料卡住
   // 老師自己額外上傳、或刪除「非內建」文章的狀態，都不會被這裡影響。
   _seedBuiltinArticles() {
-    const builtin = window.BUILTIN_ARTICLES;
-    if (!Array.isArray(builtin) || builtin.length === 0) return;
+    const builtin = [].concat(
+      Array.isArray(window.BUILTIN_ARTICLES) ? window.BUILTIN_ARTICLES : [],
+      Array.isArray(window.BUILTIN_ENGLISH_ARTICLES) ? window.BUILTIN_ENGLISH_ARTICLES : []   // 英文-文章 模式用
+    );
+    if (builtin.length === 0) return;
     let changed = false;
     builtin.forEach(a => {
       const content = String(a.content || '').trim();
@@ -611,8 +884,12 @@ class ArticleManager {
     this.renderList();
   }
 
-  getSelectedArticles() {
-    return this.articles.filter(a => this.selectedIds.includes(a.id));
+  // kind: 'zh' 只取中文文章、'en' 只取英文文章；不給就全部
+  getSelectedArticles(kind) {
+    const list = this.articles.filter(a => this.selectedIds.includes(a.id));
+    if (kind === 'zh') return list.filter(a => /[\u4e00-\u9fff]/.test(a.content));
+    if (kind === 'en') return list.filter(a => !/[\u4e00-\u9fff]/.test(a.content));
+    return list;
   }
 
   renderList() {
@@ -656,7 +933,31 @@ function entityWork(item) {
   return Math.max(0.5, len / 4);
 }
 
+// 英文-文章：從勾選的英文文章裡取單字，依長度分 Easy(3-4字母) / Medium(5-7) / Hard(8-13)
+function buildEnglishPools(articles) {
+  const pools = { Easy: [], Medium: [], Hard: [] };
+  const seen = new Set();
+  (articles || []).forEach(a => {
+    const text = String(a.content || '').replace(/-\s*\n\s*/g, '');
+    (text.match(/[A-Za-z]+/g) || []).forEach(w => {
+      w = w.toLowerCase();
+      if (seen.has(w) || w.length < 3 || w.length > 13 || !/[aeiouy]/.test(w)) return;
+      seen.add(w);
+      const item = { word: w, isChinese: false };
+      if (w.length <= 4) pools.Easy.push(item);
+      else if (w.length <= 7) pools.Medium.push(item);
+      else pools.Hard.push(item);
+    });
+  });
+  return pools;
+}
+
 function getWordForCategory(category, difficulty = 'Medium', extra = {}) {
+  if (category === 'english_article') {
+    const pool = (extra.englishPools || {})[difficulty];
+    if (!pool || pool.length === 0) return getWordForCategory('easy_words', difficulty);
+    return pool[Math.floor(Math.random() * pool.length)];
+  }
   if (category === 'chinese_article') {
     const pools = extra.articlePools || {};
     const pool = pools[difficulty];
@@ -1208,6 +1509,7 @@ class TommyQGame {
     this.sprites = new SpriteManager();
     this.sprites.connectUI();
     this.audio = new SoundEngine();
+    this._initDemo();
 
     this.state = 'MENU'; // MENU | PLAYING | PAUSED | GAME_OVER | WAVE_COMPLETE | HORDE_INTRO
     this.menuSelection = {
@@ -1225,11 +1527,20 @@ class TommyQGame {
       { id: 'bottom_row', label: '下列' },
       { id: 'chinese', label: '中文拼音' },
       { id: 'chinese_article', label: '中文-文章' },
+      { id: 'english_article', label: '英文-文章' },
     ];
 
     // 中文-文章 mode: word pools built from the selected uploaded articles
     this.articlePools = { Easy: [], Medium: [], Hard: [] };
     this._articlePoolsKey = null;
+    this.englishPools = { Easy: [], Medium: [], Hard: [] };   // 英文-文章 mode
+    this._englishPoolsKey = null;
+    // 中文-文章：依文章次序出字。seqIdx＝下一個要出的題目編號；死掉時記下「最早沒打掉的那題」，可選擇接續
+    this.articleSeq = null;
+    this._articleSeqKey = null;
+    this.seqIdx = 0;
+    this._seqUnitCache = new Map();
+    this._resume = null;   // { key, idx }
     this.menuWarning = '';
     this.menuWarningTimer = 0;
 
@@ -1342,6 +1653,12 @@ class TommyQGame {
       }
 
       if (this.state === 'MENU') {
+        // 中文-文章：按 C 從上次背到的地方接續（紀錄在學生存檔裡，換電腦也有）
+        if ((e.key === 'c' || e.key === 'C') && this._storedResume()) {
+          this._resume = this._storedResume();
+          this._startGame(true);
+          return;
+        }
         this._handleMenuInput(e);
       } else if (this.state === 'PLAYING') {
         this._handleGameInput(e);
@@ -1506,12 +1823,16 @@ class TommyQGame {
         this.returnToMenu();
       }
     } else if (this.state === 'GAME_OVER') {
-      // Play Again button
+      const canResume = !!this._resume;
+      // 中文-文章：上面「接續上次進度」、下面「重頭開始」；其他模式維持原本「再玩一次」
       if (mx > W/2 - 130 && mx < W/2 + 130 && my > 310 && my < 360) {
-        this._startGame();
+        this._startGame(canResume);
       }
-      // Menu button
-      if (mx > W/2 - 130 && mx < W/2 + 130 && my > 370 && my < 410) {
+      if (canResume && mx > W/2 - 130 && mx < W/2 + 130 && my > 365 && my < 405) {
+        this._startGame(false);
+      }
+      const menuTop = canResume ? 412 : 370;
+      if (mx > W/2 - 130 && mx < W/2 + 130 && my > menuTop && my < menuTop + 40) {
         this.returnToMenu();
       }
     } else if (this.state === 'PLAYING') {
@@ -1562,9 +1883,26 @@ class TommyQGame {
   }
 
   // ── Game Start / Reset ───────────────────────────────────
-  _startGame() {
+  _startGame(resume = false) {
+    if (this.menuSelection.category === 'english_article') {
+      const selected = window.articleManager ? window.articleManager.getSelectedArticles('en') : [];
+      if (selected.length === 0) {
+        this._flashMenuWarning('請先點右下角 📚 選擇至少一篇「英文」文章');
+        return;
+      }
+      const key = selected.map(a => a.id).sort().join(',');
+      if (this._englishPoolsKey !== key) {
+        this.englishPools = buildEnglishPools(selected);
+        this._englishPoolsKey = key;
+      }
+      const total = this.englishPools.Easy.length + this.englishPools.Medium.length + this.englishPools.Hard.length;
+      if (total === 0) {
+        this._flashMenuWarning('文章內容太少，請多選幾篇文章再試');
+        return;
+      }
+    }
     if (this.menuSelection.category === 'chinese_article') {
-      const selected = window.articleManager ? window.articleManager.getSelectedArticles() : [];
+      const selected = window.articleManager ? window.articleManager.getSelectedArticles('zh') : [];
       if (selected.length === 0) {
         this._flashMenuWarning('請先點右下角 📚 選擇至少一篇文章');
         return;
@@ -1583,6 +1921,15 @@ class TommyQGame {
         this._flashMenuWarning('文章內容太少，請上傳更多文字再試');
         return;
       }
+      // 依文章次序出題；「接續」只在同一組文章＋同一難度時有效，否則從頭開始
+      const seqKey = key + '|' + this.menuSelection.difficulty;
+      if (this._articleSeqKey !== key) {
+        this.articleSeq = buildArticleSequences(selected);
+        this._articleSeqKey = key;
+        this._seqUnitCache = new Map();
+      }
+      this.seqIdx = (resume && this._resume && this._resume.key === seqKey) ? this._resume.idx : 0;
+      this._resume = null;
     }
 
     const isChineseCat = this.menuSelection.category === 'chinese' || this.menuSelection.category === 'chinese_article';
@@ -2131,7 +2478,7 @@ class TommyQGame {
     const lane = Math.floor(Math.random() * 5) + 1;
     const fromRight = Math.random() > 0.5;
     const type = Math.floor(Math.random() * 5) + 1;
-    const wordItem = this._getUniqueWord();
+    const wordItem = this._getUniqueWord(true);
     let speed = (0.3 + Math.random() * 0.2) * (1 + (this.stats.level - 1) * 0.08);
     // 字量越多，走到柵欄的時間要越長（普通版／挑戰版）：
     // 一個「字量單位」＝ 1 個中文字（含選字）或 4 個英文字母。
@@ -2150,6 +2497,7 @@ class TommyQGame {
       y: LANE_Y(lane),
       lane, fromRight, type,
       word: wordItem.word,
+      seqIdx: wordItem.seqIdx,
       char: wordItem.char || null,
       pinyin: wordItem.pinyin || null,
       units: wordItem.units || null,
@@ -2201,12 +2549,86 @@ class TommyQGame {
     });
   }
 
-  _getUniqueWord() {
+  // 示範帳號：左下角「示範模式」面板（無敵由 update 裡判斷；這裡只放跳過題目／跳過這波）
+  _initDemo() {
+    if (!window.KeyagentDemo || !KeyagentDemo.isActive()) return;
+    KeyagentDemo.mountBar([
+      { label: '跳過這題', key: 'F2', fn: () => {
+        if (this.state !== 'PLAYING') return;
+        const list = this.enemies.filter(e => !e.dead && !e.isPowerup);
+        if (!list.length) return;
+        const dist = e => e.fromRight ? e.x - BARRICADE_RIGHT_X : BARRICADE_LEFT_X - e.x;
+        list.sort((a, b) => dist(a) - dist(b));
+        this._killEnemy(list[0]);
+      } },
+      { label: '跳過這波', key: 'F3', fn: () => { if (this.state === 'PLAYING') this.waveTimer = 1; } }
+    ]);
+  }
+
+  // 中文-文章：照文章次序取下一題（到尾巴就從頭循環）
+  _nextArticleItem() {
+    const list = this.articleSeq && this.articleSeq[this.menuSelection.difficulty];
+    if (!list || list.length === 0) return null;
+    const abs = this.seqIdx++;
+    const str = list[abs % list.length];
+    let item = this._seqUnitCache.get(str);
+    if (!item) {
+      item = buildChineseUnits(str);
+      if (!item) return null;
+      this._seqUnitCache.set(str, item);
+    }
+    return Object.assign({}, item, { seqIdx: abs });
+  }
+
+  // 死掉時記下接續位置：場上最早還沒打掉的那一題；沒有就從下一題開始
+  _recordResume() {
+    if (this.menuSelection.category !== 'chinese_article' || !this.articleSeq) { this._resume = null; }
+    else {
+      const alive = this.enemies.filter(e => !e.dead && e.seqIdx !== undefined).map(e => e.seqIdx);
+      const idx = alive.length ? Math.min(...alive) : this.seqIdx;
+      this._resume = { key: this._articleSeqKey + '|' + this.menuSelection.difficulty, idx };
+    }
+    this._saveOtherRecord();
+  }
+
+  // ── 學號登入後，戰績與「背到哪裡」記在學生的雲端存檔裡（sync-client.js）：換電腦、換座位也能接續 ──
+  _saveOtherRecord() {
+    if (typeof keyagentUpdateOtherGame !== 'function') return;
+    const st = this.stats;
+    const cat = this.menuSelection.category;
+    keyagentUpdateOtherGame('zombie', old => {
+      const patch = {
+        plays: (old.plays || 0) + 1,
+        bestScore: Math.max(old.bestScore || 0, st.score),
+        bestKills: Math.max(old.bestKills || 0, st.kills),
+        bestLevel: Math.max(old.bestLevel || 0, st.level),
+        totalKills: (old.totalKills || 0) + st.kills,
+        lastScore: st.score, lastCategory: cat, lastDifficulty: this.menuSelection.difficulty
+      };
+      if (cat === 'chinese_article' && this._resume) patch.resume = { key: this._resume.key, idx: this._resume.idx };
+      return patch;
+    });
+  }
+  _storedResume() {
+    if (typeof keyagentGetOtherGames !== 'function') return null;
+    const og = keyagentGetOtherGames();
+    const r = og && og.zombie && og.zombie.resume;
+    if (!r || this.menuSelection.category !== 'chinese_article') return null;
+    const sel = window.articleManager ? window.articleManager.getSelectedArticles('zh') : [];
+    const key = sel.map(a => a.id).sort().join(',') + '|' + this.menuSelection.difficulty;
+    return r.key === key ? r : null;   // 選的文章或難度和上次不同就不提供接續
+  }
+
+  _getUniqueWord(sequential) {
+    if (sequential && this.menuSelection.category === 'chinese_article' && this.articleSeq) {
+      const it = this._nextArticleItem();
+      if (it) return it;
+    }
     const usedWords = [...this.enemies, ...this.powerupItems].map(e => e.word);
     let item;
     let attempts = 0;
     do {
-      item = getWordForCategory(this.menuSelection.category, this.menuSelection.difficulty, { articlePools: this.articlePools });
+      item = getWordForCategory(this.menuSelection.category, this.menuSelection.difficulty, { articlePools: this.articlePools, englishPools: this.englishPools });
       attempts++;
     } while (usedWords.includes(item.word) && attempts < 50);
     return item;
@@ -2326,10 +2748,11 @@ class TommyQGame {
         e.x += (e.fromRight ? -1 : 1) * e.speed * (dt / 16);
       } else {
         // Attack barricade for this specific lane
-        b.hp -= 0.03 * (dt / 16);
+        if (!(window.KeyagentDemo && KeyagentDemo.opt('invincible'))) b.hp -= 0.03 * (dt / 16);   // 示範帳號：無敵
         if (b.hp <= 0) {
           b.hp = 0;
           this.player.dead = true;
+          this._recordResume();
           this.state = 'GAME_OVER';
           return;
         }
@@ -3235,16 +3658,27 @@ class TommyQGame {
       ctx.fill();
       ctx.fillStyle = '#000';
       ctx.font = `bold 22px ${UI_FONT}`;
-      ctx.fillText('再玩一次', W / 2, 341);
+      ctx.fillText(this._resume ? '接續上次進度' : '再玩一次', W / 2, 341);
+
+      if (this._resume) {
+        ctx.fillStyle = '#ffa502';
+        ctx.beginPath();
+        ctx.roundRect(W/2 - 130, 365, 260, 40, 8);
+        ctx.fill();
+        ctx.fillStyle = '#000';
+        ctx.font = `bold 20px ${UI_FONT}`;
+        ctx.fillText('重頭開始', W / 2, 392);
+      }
 
       // Menu
+      const menuTop = this._resume ? 412 : 370;
       ctx.fillStyle = '#6c63ff';
       ctx.beginPath();
-      ctx.roundRect(W/2 - 130, 370, 260, 40, 8);
+      ctx.roundRect(W/2 - 130, menuTop, 260, 40, 8);
       ctx.fill();
       ctx.fillStyle = '#fff';
       ctx.font = `bold 20px ${UI_FONT}`;
-      ctx.fillText('回主選單', W / 2, 397);
+      ctx.fillText('回主選單', W / 2, menuTop + 27);
 
       ctx.textAlign = 'start';
       ctx.restore();
@@ -3333,11 +3767,18 @@ class TommyQGame {
 
     // 提示列（已選文章數 ／ 警告）
     const noteY = 292 + 2 * 40 + 8 + 24;
-    if (this.menuSelection.category === 'chinese_article') {
-      const n = window.articleManager ? window.articleManager.getSelectedArticles().length : 0;
+    if (this.menuSelection.category === 'chinese_article' || this.menuSelection.category === 'english_article') {
+      const kind = this.menuSelection.category === 'english_article' ? 'en' : 'zh';
+      const n = window.articleManager ? window.articleManager.getSelectedArticles(kind).length : 0;
       ctx.fillStyle = n > 0 ? '#2ed573' : '#ffa502';
       ctx.font = `bold 16px ${UI_FONT}`;
       ctx.fillText(n > 0 ? `已選 ${n} 篇文章 ✓` : '尚未選擇文章，請點右下角 📚', W / 2, noteY);
+      const sr = kind === 'zh' ? this._storedResume() : null;
+      if (sr) {
+        ctx.fillStyle = '#ffd700';
+        ctx.font = `bold 15px ${UI_FONT}`;
+        ctx.fillText(`上次背到第 ${sr.idx + 1} 題　按 C 接續，或按「開始遊戲」從頭開始`, W / 2, noteY + 22);
+      }
     }
     if (this.menuWarningTimer > 0) {
       ctx.fillStyle = '#ff4757';
@@ -3431,3 +3872,5 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 500);
   }
 });
+
+if (typeof keyagentInstallPageHideSync === 'function') keyagentInstallPageHideSync();
