@@ -9,7 +9,15 @@ const chardet = require('chardet');   // 自動偵測編碼
 const db = require('./database');     // 資料庫連線
 
 const app = express();
-app.use(express.json());
+app.use(express.json({ limit: '5mb' }));
+// 💡 離開頁面時用 sendBeacon 送的同步資料是 text/plain（避免 CORS 預檢），這裡轉回物件
+app.use(express.text({ type: 'text/plain', limit: '5mb' }));
+app.use((req, res, next) => {
+  if (typeof req.body === 'string') {
+    try { req.body = JSON.parse(req.body); } catch (e) { req.body = {}; }
+  }
+  next();
+});
 app.use(cors());
 
 
@@ -1045,6 +1053,51 @@ app.get('/seat-overrides', (req, res) => {
 // =========================================================================
 
 // body: { code }  -- code 是學號
+// =========================================================================
+// 💡 示範帳號（老師用）：登入後，鍵位特工／末日生存／ZType 會出現「示範模式」面板
+//    （無敵、金錢無限、跳過題目、過關自動下一關）。哪些學號是示範帳號只記在這台學校主機的
+//    demo-accounts.json，不在網頁程式碼裡；學生在家（連不到主機）用同一個學號登入也不會啟用。
+// =========================================================================
+const DEMO_FILE = path.join(__dirname, 'demo-accounts.json');
+function loadDemoCodes() {
+  try { return JSON.parse(fs.readFileSync(DEMO_FILE, 'utf8')).codes || []; } catch (e) { return []; }
+}
+function saveDemoCodes(codes) { fs.writeFileSync(DEMO_FILE, JSON.stringify({ codes })); }
+
+// body: { code? }（不給就自動產生，例如 demo482）
+app.post('/admin/create-demo-account', (req, res) => {
+  try {
+    let code = String((req.body && req.body.code) || '').trim();
+    if (!code) code = 'demo' + Math.floor(100 + Math.random() * 900);
+    const exists = db.prepare('SELECT * FROM students WHERE student_number = ?').get(code);
+    if (exists && !loadDemoCodes().includes(code)) {
+      return res.status(409).json({ success: false, message: `學號 ${code} 已經是一般學生在用了，請換一個` });
+    }
+    if (!exists) {
+      const year = activeSession ? activeSession.year : String(new Date().getFullYear() - 1911);
+      db.prepare(`INSERT INTO students (year, class, student_number, name, seat_number, ip_address)
+                  VALUES (?, ?, ?, ?, ?, ?)`).run(year, '示範', code, '示範帳號', '99', 'demo-' + code);
+    }
+    const codes = loadDemoCodes();
+    if (!codes.includes(code)) { codes.push(code); saveDemoCodes(codes); }
+    res.json({ success: true, code, codes });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+app.get('/admin/demo-accounts', (req, res) => res.json({ success: true, codes: loadDemoCodes() }));
+app.post('/admin/remove-demo-account', (req, res) => {
+  try {
+    const code = String((req.body && req.body.code) || '').trim();
+    const codes = loadDemoCodes().filter(c => c !== code);
+    saveDemoCodes(codes);
+    db.prepare("DELETE FROM students WHERE student_number = ? AND class = '示範'").run(code);
+    res.json({ success: true, codes });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 app.post('/login-code', (req, res) => {
   const { code } = req.body;
   if (!code || !String(code).trim()) {
@@ -1067,8 +1120,10 @@ app.post('/login-code', (req, res) => {
     return res.status(404).json({ success: false, message: '找不到這個學號，請確認輸入是否正確' });
   }
 
+  const isDemo = loadDemoCodes().includes(String(student.student_number));
+
   // 這台電腦（IP）目前登記／臨時代表的是誰（沿用既有的 findStudentByIp，含 seatOverrides 判斷）
-  const seatStudent = findStudentByIp(req.ip);
+  const seatStudent = isDemo ? null : findStudentByIp(req.ip);   // 示範帳號不受座位限制（任何電腦都能登入）
 
   if (seatStudent && seatStudent.id !== student.id) {
     // 座位登記的是別人，擋下來。這裡不直接動資料，讓老師用下面的修正權限處理
@@ -1093,7 +1148,8 @@ app.post('/login-code', (req, res) => {
       studentNumber: student.student_number,
       seatNumber: student.seat_number,
       class: student.class,
-      year: student.year
+      year: student.year,
+      isDemo
     },
     warning
   });
@@ -1348,9 +1404,127 @@ function getStudentForSubmission(req) {
 // body: 雲端佇列裡的其中一筆，格式跟 sync-client.js 送出去的一致：
 //   { studentNumber, save, pendingAttempts: [{type, data, queuedAt}] }
 // admin.html「六、雲端同步」的匯入工具，會對雲端佇列裡每一筆資料各呼叫一次這支。
+// ===== keyagentMergeProgress：兩份「鍵位特工」存檔的安全合併（本機 ↔ 雲端／學校資料庫）=====
+// 原則：進度只增不減。關卡星數／最佳成績取較大值、通關狀態取「任一邊通關就算通關」，
+// 可消耗品（代幣）取較新那份、GBit 用「終身賺取／花費」各取大值重算餘額。
+// ⚠️ 這段程式在 sync-client.js（學生端）和 God/server.js（學校主機）各有一份一模一樣的副本，
+//    改規則時兩邊要一起改。
+function keyagentIsObj(v){ return v && typeof v === "object" && !Array.isArray(v); }
+function keyagentMaxNum(a, b){ return Math.max(Number(a) || 0, Number(b) || 0); }
+function keyagentMergeNumMax(a, b){
+  const out = {};
+  const keys = new Set([...Object.keys(a || {}), ...Object.keys(b || {})]);
+  keys.forEach(k => {
+    const x = (a || {})[k], y = (b || {})[k];
+    if (typeof x === "number" || typeof y === "number") out[k] = keyagentMaxNum(x, y);
+    else out[k] = (y !== undefined ? y : x);
+  });
+  return out;
+}
+function keyagentMergeLevels(a, b){
+  const out = {};
+  const ids = new Set([...Object.keys(a || {}), ...Object.keys(b || {})]);
+  ids.forEach(id => {
+    const x = (a || {})[id] || {}, y = (b || {})[id] || {};
+    out[id] = Object.assign({}, x, y, {
+      stars: keyagentMaxNum(x.stars, y.stars),
+      bestWpm: keyagentMaxNum(x.bestWpm, y.bestWpm),
+      bestAcc: keyagentMaxNum(x.bestAcc, y.bestAcc),
+      bestCombo: keyagentMaxNum(x.bestCombo, y.bestCombo),
+      plays: keyagentMaxNum(x.plays, y.plays),
+      cleared: !!(x.cleared || y.cleared)
+    });
+  });
+  return out;
+}
+// 其他遊戲（末日生存、ZType…）的紀錄：數字取大；其餘欄位（例如文章接續位置）取 updatedAt 較新的那份
+function keyagentMergeOther(a, b, newerIsA){
+  if (!keyagentIsObj(a)) return b;
+  if (!keyagentIsObj(b)) return a;
+  const out = {};
+  const keys = new Set([...Object.keys(a), ...Object.keys(b)]);
+  keys.forEach(k => {
+    const x = a[k], y = b[k];
+    if (x === undefined) out[k] = y;
+    else if (y === undefined) out[k] = x;
+    // 「最佳／累計」類數字（best*、total*、plays、updatedAt）取大值；其餘（例如接續位置、最近一次分數）取較新那份
+    else if (typeof x === "number" && typeof y === "number") out[k] = /^(best|total|max)|^(plays|updatedAt)$/.test(k) ? Math.max(x, y) : (newerIsA ? x : y);
+    else if (keyagentIsObj(x) && keyagentIsObj(y)) {
+      const hasTs = x.updatedAt !== undefined || y.updatedAt !== undefined;   // 自己有時間戳就用自己的，沒有就沿用上一層的判斷
+      const nA = hasTs ? (Number(x.updatedAt) || 0) >= (Number(y.updatedAt) || 0) : newerIsA;
+      out[k] = keyagentMergeOther(x, y, nA);
+    }
+    else out[k] = newerIsA ? x : y;
+  });
+  return out;
+}
+function keyagentMergeProgress(local, cloud){
+  local = local || {}; cloud = cloud || {};
+  const lp = Number(local.lastPlayed) || 0, cp = Number(cloud.lastPlayed) || 0;
+  const newer = lp >= cp ? local : cloud, older = lp >= cp ? cloud : local;
+  const out = Object.assign({}, older, newer);          // 其他沒特別處理的欄位：較新的那份優先
+  if (!out.playerName) out.playerName = local.playerName || cloud.playerName || "";
+  out.createdAt = Math.min(Number(local.createdAt) || Infinity, Number(cloud.createdAt) || Infinity);
+  if (!isFinite(out.createdAt)) out.createdAt = Date.now();
+  out.lastPlayed = Math.max(lp, cp);
+
+  // 劇情進度
+  out.storyUnlockedChapter = Math.max(Number(local.storyUnlockedChapter) || 1, Number(cloud.storyUnlockedChapter) || 1);
+  out.storyClearedChapter = keyagentMaxNum(local.storyClearedChapter, cloud.storyClearedChapter);
+
+  // 各章各關
+  const chapters = {};
+  const cids = new Set([...Object.keys(local.chapters || {}), ...Object.keys(cloud.chapters || {})]);
+  cids.forEach(cid => {
+    const a = (local.chapters || {})[cid] || {}, b = (cloud.chapters || {})[cid] || {};
+    chapters[cid] = Object.assign({}, a, b, { levels: keyagentMergeLevels(a.levels, b.levels) });
+  });
+  out.chapters = chapters;
+
+  // 小遊戲、無盡模式
+  out.minigames = keyagentMergeLevels(local.minigames, cloud.minigames);
+  const le = local.endless || {}, ce = cloud.endless || {};
+  const best = (Number(le.bestScore) || 0) >= (Number(ce.bestScore) || 0) ? le : ce;
+  out.endless = Object.assign({}, ce, le, {
+    bestTime: keyagentMaxNum(le.bestTime, ce.bestTime), bestScore: keyagentMaxNum(le.bestScore, ce.bestScore),
+    bestGrade: best.bestGrade || le.bestGrade || ce.bestGrade || null, plays: keyagentMaxNum(le.plays, ce.plays)
+  });
+
+  // 成就、統計、防禦塔研究、商店
+  out.achievements = Object.assign({}, cloud.achievements || {}, local.achievements || {});
+  out.stats = keyagentMergeNumMax(local.stats, cloud.stats);
+  out.towerResearch = keyagentMergeNumMax(local.towerResearch, cloud.towerResearch);
+  const shop = keyagentMergeNumMax(local.shop, cloud.shop);
+  Object.keys(shop).forEach(k => { if (/_tokens$/.test(k)) shop[k] = Number((newer.shop || {})[k]) || 0; });  // 消耗品取較新那份
+  out.shop = shop;
+
+  // 核心、GBit：核心取較新；GBit 用終身賺取／花費各取大值重算餘額
+  out.core = Number(newer.core) || 0;
+  const earned = keyagentMaxNum(local.gbitEarnedLifetime, cloud.gbitEarnedLifetime);
+  const spent = keyagentMaxNum(local.gbitSpentLifetime, cloud.gbitSpentLifetime);
+  out.gbitEarnedLifetime = earned; out.gbitSpentLifetime = spent;
+  out.gbit = Math.max(0, earned - spent);
+
+  // 其他遊戲
+  if (local.otherGames || cloud.otherGames) {
+    out.otherGames = keyagentMergeOther(local.otherGames, cloud.otherGames, (Number((local.otherGames || {}).updatedAt) || 0) >= (Number((cloud.otherGames || {}).updatedAt) || 0));
+  }
+  return out;
+}
+// ===== /keyagentMergeProgress =====
+
+// 確保存檔表存在（正式環境本來就有，這裡只是保險）
+db.exec(`CREATE TABLE IF NOT EXISTS game_saves (
+  student_id INTEGER PRIMARY KEY,
+  save_json TEXT NOT NULL,
+  updated_at TEXT
+)`);
+
+// 💡 學生端（sync-client.js）把「目前存檔 + 其他遊戲紀錄 + 待補送成績」送來：
+//    學校電腦登入後在遊戲裡過關、離開頁面前，都會直接送到這裡；在家的資料則經雲端中繼站由老師匯入。
 app.post('/sync-import', (req, res) => {
   try {
-    const { studentNumber, save, pendingAttempts } = req.body;
+    const { studentNumber, save, other, pendingAttempts } = req.body;
     if (!studentNumber) return res.status(400).json({ success: false, message: '缺少學號' });
 
     // 找學生：邏輯比照 /login-code，先在目前上課班級裡找，找不到再退回全表比對
@@ -1368,15 +1542,16 @@ app.post('/sync-import', (req, res) => {
 
     // 1) 合併存檔（GBit 等）。用「終身賺取/花費」各自取較大值、重新算出餘額，
     //    避免同一筆進度因為多次同步、或跟學校電腦上的舊存檔合併而被重複計算。
-    if (save) {
+    if (save || other) {
       const existingRow = db.prepare('SELECT save_json FROM game_saves WHERE student_id = ?').get(student.id);
       const existing = existingRow ? JSON.parse(existingRow.save_json) : {};
-      const merged = Object.assign({}, save, existing);
-      const earned = Math.max(existing.gbitEarnedLifetime || 0, save.gbitEarnedLifetime || 0);
-      const spent = Math.max(existing.gbitSpentLifetime || 0, save.gbitSpentLifetime || 0);
-      merged.gbitEarnedLifetime = earned;
-      merged.gbitSpentLifetime = spent;
-      merged.gbit = Math.max(0, earned - spent);
+      // 💡 關卡進度／星數／最佳成績「只增不減」地合併（舊版是舊資料整個蓋掉新資料，新進度會被忽略）
+      let merged = save ? keyagentMergeProgress(existing, save) : existing;
+      if (other) {
+        const exOther = merged.otherGames || {};
+        const exNewer = (Number(exOther.updatedAt) || 0) >= (Number(other.updatedAt) || 0);
+        merged.otherGames = keyagentMergeOther(exOther, other, exNewer);
+      }
 
       db.prepare(`
         INSERT INTO game_saves (student_id, save_json, updated_at) VALUES (?, ?, ?)
@@ -1425,6 +1600,63 @@ app.get('/get-save', (req, res) => {
     const row = db.prepare('SELECT save_json FROM game_saves WHERE student_id = ?').get(studentId);
     if (!row) return res.json({ success: true, save: null });
     res.json({ success: true, save: JSON.parse(row.save_json) });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// =========================================================================
+// 💡 老師端「鍵位特工／其他遊戲進度報表」：每位學生一列的摘要（keyagent-progress.html 使用）
+// query: ?year=&className=（都不給就列出全部學生）
+// =========================================================================
+function summarizeKeyagentSave(save) {
+  if (!save) return null;
+  const chapters = save.chapters || {};
+  let levelsCleared = 0, totalStars = 0, lastLevel = '';
+  const perChapter = {};
+  Object.keys(chapters).sort((a, b) => Number(a) - Number(b)).forEach(cid => {
+    const lv = (chapters[cid] || {}).levels || {};
+    let cleared = 0, stars = 0, bonus = null;
+    Object.keys(lv).forEach(id => {
+      const r = lv[id] || {};
+      if (/-bonus$/.test(id)) { bonus = { cleared: !!r.cleared, stars: r.stars || 0, bestAcc: r.bestAcc || 0, bestWpm: r.bestWpm || 0 }; return; }
+      if (r.cleared) { cleared++; stars += r.stars || 0; lastLevel = id; }
+    });
+    levelsCleared += cleared; totalStars += stars;
+    perChapter[cid] = { cleared, stars, bonus };
+  });
+  const og = save.otherGames || {};
+  return {
+    playerName: save.playerName || '', difficulty: save.difficulty || '',
+    storyClearedChapter: save.storyClearedChapter || 0,
+    levelsCleared, totalStars, lastLevel, perChapter,
+    gbit: save.gbit || 0, core: save.core || 0,
+    endless: save.endless || null,
+    lastPlayed: save.lastPlayed || 0,
+    zombie: og.zombie || null, ztype: og.ztype || null
+  };
+}
+app.get('/keyagent-progress', (req, res) => {
+  try {
+    const { year, className } = req.query;
+    let students;
+    if (year && className) {
+      students = db.prepare('SELECT * FROM students WHERE year = ? AND class = ? ORDER BY seat_number').all(year, className);
+    } else {
+      students = db.prepare('SELECT * FROM students ORDER BY year, class, seat_number').all();
+    }
+    const rows = students.map(st => {
+      const row = db.prepare('SELECT save_json, updated_at FROM game_saves WHERE student_id = ?').get(st.id);
+      let save = null;
+      try { save = row ? JSON.parse(row.save_json) : null; } catch (e) { save = null; }
+      return {
+        id: st.id, studentNumber: st.student_number, name: st.name, seatNumber: st.seat_number,
+        class: st.class, year: st.year,
+        syncedAt: row ? row.updated_at : null,
+        progress: summarizeKeyagentSave(save)
+      };
+    });
+    res.json({ success: true, students: rows });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
