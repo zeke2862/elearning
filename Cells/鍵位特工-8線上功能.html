@@ -365,6 +365,13 @@ button{
 /* 正在被玩家打的怪物永遠疊在最上層，不會被其他怪物（尤其是「同時出現」
    的那幾隻）擋住文字，用 !important 蓋掉 JS 依出場順序設的 inline z-index。 */
 .mob.active{z-index:100001 !important;}
+/* 怪物圖示輕微上下漂浮：只動 transform（GPU 合成），每隻怪各自錯開節奏；凍結時停住 */
+@keyframes mobBob{0%,100%{transform:translateY(0);}50%{transform:translateY(-3px);}}
+.mob .mob-icon{animation:mobBob 1.3s ease-in-out infinite;}
+.mob:nth-child(2n) .mob-icon{animation-duration:1.7s;animation-delay:-.4s;}
+.mob:nth-child(3n) .mob-icon{animation-duration:1.1s;animation-delay:-.8s;}
+.mob.frozen .mob-icon{animation-play-state:paused;}
+@media (prefers-reduced-motion: reduce){ .mob .mob-icon{animation:none !important;} }
 .mob-icon{
   width:34px;height:34px;border-radius:3px;
   display:flex;align-items:center;justify-content:center;
@@ -4195,7 +4202,7 @@ const UI = {
     if(view==="story"){
       const src = extra.endless ? ENDLESS : CHAPTERS.find(c=>c.id===extra.chapterId);
       if(src){
-        payload.storyData = { short:src.short, title:src.story.title, body:src.story.body, quote:src.story.quote, color:src.color };
+        payload.storyData = { short:src.short, title:src.story.title, body:src.story.body, quote:src.story.quote, color:src.color, chapterId: extra.endless ? null : src.id };
       }
     }
     this._pendingStoryPayload = payload;

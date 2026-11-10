@@ -56,6 +56,21 @@ button{font-family:var(--mono);cursor:pointer;background:none;border:none;color:
 .chapter-card:not(.locked){cursor:pointer;}
 .chapter-card:not(.locked):hover{border-color:var(--cc);box-shadow:0 0 22px color-mix(in srgb, var(--cc) 30%, transparent);}
 .chapter-card.locked{opacity:.35;}
+/* 章節徽章：只用 transform／opacity 動畫（GPU 合成，不吃效能）；圖檔很小（約 10KB），lazy 載入 */
+.chapter-emblem{width:64px;height:64px;border-radius:50%;object-fit:cover;align-self:flex-start;
+  box-shadow:0 0 12px color-mix(in srgb, var(--cc) 45%, transparent);transition:transform .25s ease;}
+.chapter-card:not(.locked) .chapter-emblem{animation:emblemFloat 4s ease-in-out infinite;}
+.chapter-card:not(.locked):hover .chapter-emblem{transform:scale(1.12) rotate(-4deg);animation-play-state:paused;}
+.chapter-card.locked .chapter-emblem{filter:grayscale(1) brightness(.6);}
+@keyframes emblemFloat{0%,100%{transform:translateY(0);}50%{transform:translateY(-4px);}}
+.story-emblem-wrap{position:relative;width:132px;height:132px;margin:0 auto 14px;}
+.story-emblem-wrap::before{content:"";position:absolute;inset:-14px;border-radius:50%;
+  background:radial-gradient(circle,var(--accent) 0%,transparent 68%);opacity:.35;animation:emblemGlow 3s ease-in-out infinite;}
+.story-emblem{position:relative;width:132px;height:132px;border-radius:50%;object-fit:cover;animation:emblemFloat 5s ease-in-out infinite;}
+@keyframes emblemGlow{0%,100%{transform:scale(.92);opacity:.25;}50%{transform:scale(1.08);opacity:.5;}}
+@media (prefers-reduced-motion: reduce){
+  .chapter-emblem,.story-emblem,.story-emblem-wrap::before{animation:none !important;}
+}
 .chapter-num{font-size:11px;color:var(--cc);letter-spacing:.2em;text-transform:uppercase;}
 .chapter-title{font-family:var(--disp);font-size:16px;}
 .chapter-desc{font-size:11px;color:var(--text-dim);line-height:1.5;flex:1;}
@@ -144,6 +159,7 @@ button{font-family:var(--mono);cursor:pointer;background:none;border:none;color:
 <!-- STORY -->
 <div class="view" id="viewStory">
   <div class="story-box">
+    <div class="story-emblem-wrap" id="storyEmblemWrap" style="display:none;"><img class="story-emblem" id="storyEmblem" alt="" decoding="async"></div>
     <div class="story-chapter-tag" id="storyTag">第一章</div>
     <div class="story-title disp" id="storyTitle">中列 - 核心機房重啟</div>
     <div class="story-body" id="storyBody"></div>
@@ -475,6 +491,10 @@ function render(){
   else if(STATE.view === "story") renderStory();
 }
 
+// 章節徽章圖檔（img/ch1~5 是 Canva 產生的 webp，6~9 先用 svg；之後直接放同名 webp 並改下面的副檔名即可）
+const EMBLEM_EXT = {1:"webp",2:"webp",3:"webp",4:"webp",5:"webp",6:"svg",7:"svg",8:"svg",9:"svg"};
+function emblemSrc(id){ return EMBLEM_EXT[id] ? `./img/ch${id}.${EMBLEM_EXT[id]}` : ""; }
+
 function renderChapters(){
   document.getElementById("coreDisplay").textContent = STATE.core;
   const grid = document.getElementById("chapterGrid");
@@ -485,6 +505,7 @@ function renderChapters(){
     div.className = "chapter-card"+(unlocked?"":" locked");
     div.style.setProperty("--cc", ch.color);
     div.innerHTML = `
+      <img class="chapter-emblem" src="${emblemSrc(ch.id)}" alt="" width="64" height="64" loading="lazy" decoding="async" onerror="this.style.display='none'">
       <div class="chapter-num">${ch.short}</div>
       <div class="chapter-title">${unlocked? ch.name : "🔒 未解鎖"}</div>
       <div class="chapter-desc">${unlocked? ch.keysFocus : "完成前一章劇情以解鎖"}</div>
@@ -564,6 +585,10 @@ function renderLevels(){
 function renderStory(){
   const sd = STATE.storyData;
   if(!sd) return;
+  const emWrap = document.getElementById("storyEmblemWrap");
+  const emImg = document.getElementById("storyEmblem");
+  const emSrc = sd.chapterId ? emblemSrc(sd.chapterId) : "";
+  if(emSrc){ emImg.src = emSrc; emWrap.style.display = ""; } else { emWrap.style.display = "none"; }
   document.getElementById("storyTag").textContent = sd.short;
   document.getElementById("storyTitle").textContent = sd.title;
   document.getElementById("storyBody").textContent = sd.body;
