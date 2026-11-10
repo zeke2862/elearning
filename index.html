@@ -152,9 +152,13 @@ input#codeInput:focus{outline:none;border-color:var(--accent);}
           <div class="ic">🛡️</div>
           <div><div class="lbl">鍵位特工：最後的防火牆</div><div class="desc">塔防遊戲・自主練習</div></div>
         </a>
+        <a class="hub-link" id="linkKbPractice" href="#">
+          <div class="ic">⌨️</div>
+          <div><div class="lbl">鍵盤輸入法練習</div><div class="desc">單人自主修煉・雙人合作／競爭</div></div>
+        </a>
         <a class="hub-link" id="linkEtp" href="#">
           <div class="ic">🎯</div>
-          <div><div class="lbl">ETP 檢定</div><div class="desc">4 篇固定文章・正式評分</div></div>
+          <div><div class="lbl">ETP 檢定</div><div class="desc">4 篇固定文章・正式評分（直接選範圍）</div></div>
         </a>
         <a class="hub-link" id="linkLookType" href="#" onclick="return openLookTypeChoice(event);">
           <div class="ic">⌨️</div>
@@ -322,6 +326,7 @@ const PING_TIMEOUT_MS = 2000;
 const test_URL = "./COMPUTER/sysfix_hub.html";
 const TOWER_DEFENSE_URL = "./Cells/鍵位特工-8線上功能.html";
 const ETP_URL = "./英打測試36線上功能.html";
+const KB_PRACTICE_URL = "./鍵盤輸入法練習.html";
 const LOOK_TYPE_URL = "./look-type.html";
 const CLOOK_TYPE_URL = "./chinese-look-type.html";
 const God_URL = "./God/index.html";
@@ -489,6 +494,7 @@ function showHub(identity) {
   const suffix = encodeURIComponent(identity.studentNumber);
   document.getElementById("linkTower").href = `${TOWER_DEFENSE_URL}?student=${suffix}`;
   document.getElementById("linkEtp").href = `${ETP_URL}?student=${suffix}`;
+  document.getElementById("linkKbPractice").href = `${KB_PRACTICE_URL}?student=${suffix}`;
   document.getElementById("linkAdditionHero").href = `${ADDITION_HERO_URL}?student=${suffix}`;
   document.getElementById("linkGod").href = `${God_URL}?student=${suffix}`;
 
