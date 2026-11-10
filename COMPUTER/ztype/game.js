@@ -575,7 +575,11 @@ function recordResume() {
   const alive = enemies.filter(e => e.seqPos).map(e => e.seqPos);
   let best = alive.length ? alive[0] : { a: seqCursor.a, i: seqCursor.i };
   alive.forEach(p => { if (p.a < best.a || (p.a === best.a && p.i < best.i)) best = p; });
-  resumeInfo = { key: seqKey(), a: best.a, i: best.i };
+  // n：這是整份選取文章裡的第幾個字（只用來顯示「背到第幾字」）
+  const arts = getSelectedArticles();
+  let n = best.i + 1;
+  for (let k = 0; k < best.a && k < arts.length; k++) n += (arts[k].chain || []).length;
+  resumeInfo = { key: seqKey(), a: best.a, i: best.i, n };
 }
 
 // 產生選字按鈕候選（1 個正確答案 + 其餘干擾選項）——僅一般模式使用
@@ -1611,8 +1615,43 @@ function resumeGame() {
   hideAllScreens();
 }
 
+if (typeof keyagentInstallPageHideSync === 'function') keyagentInstallPageHideSync();
+
+// ── 學號登入後的戰績與「背到哪裡」會記在學生的雲端存檔裡（sync-client.js），換電腦、換座位也能接續 ──
+function storedResume() {
+  if (typeof keyagentGetOtherGames !== 'function') return null;
+  const og = keyagentGetOtherGames();
+  return (og && og.ztype && og.ztype.resume) || null;
+}
+function refreshStoredResumeBtn() {
+  const btn = document.getElementById('startResumeBtn');
+  if (!btn) return;
+  const r = storedResume();
+  const ok = category === 'chinese' && r && r.key === seqKey();
+  btn.style.display = ok ? '' : 'none';
+  if (ok) btn.textContent = '接續上次進度（第 ' + (r.n || '?') + ' 字）';
+}
+function saveOtherRecord() {
+  if (typeof keyagentUpdateOtherGame !== 'function') return;
+  keyagentUpdateOtherGame('ztype', old => {
+    const patch = {
+      plays: (old.plays || 0) + 1,
+      bestScore: Math.max(old.bestScore || 0, score),
+      bestWave: Math.max(old.bestWave || 0, wave),
+      bestKills: Math.max(old.bestKills || 0, killCount),
+      totalKills: (old.totalKills || 0) + killCount,
+      lastScore: score, lastWave: wave, lastCategory: category, lastMode: mode
+    };
+    if (category === 'chinese' && resumeInfo) {
+      patch.resume = { key: resumeInfo.key, a: resumeInfo.a, i: resumeInfo.i, n: resumeInfo.n };
+    }
+    return patch;
+  });
+}
+
 function gameOver() {
   recordResume();
+  saveOtherRecord();
   state = STATE.GAMEOVER;
   const contBtn = document.getElementById('continueBtn');
   const restartBtn = document.getElementById('restartBtn');
@@ -1651,6 +1690,7 @@ document.querySelectorAll('.mode-btn').forEach(btn => {
     document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     mode = btn.dataset.mode;
+    refreshStoredResumeBtn();
   });
 });
 
@@ -1665,12 +1705,23 @@ document.querySelectorAll('.cat-btn').forEach(btn => {
     category = btn.dataset.cat;
     const panel = document.getElementById('chinesePanel');
     if (panel) panel.style.display = category === 'chinese' ? 'block' : 'none';
+    refreshStoredResumeBtn();
   });
 });
 
 document.getElementById('backToMode').addEventListener('click', () => {
   state = STATE.MENU;
   showScreen('startScreen');
+});
+
+document.getElementById('startResumeBtn').addEventListener('click', () => {
+  const r = storedResume();
+  if (r && r.key === seqKey()) {
+    resumeInfo = r;
+    startGame(true);
+  } else {
+    startGame(false);
+  }
 });
 
 document.getElementById('startGameBtn').addEventListener('click', () => {
@@ -1699,6 +1750,7 @@ function buildArticleList() {
       if (input.checked) selectedArticleIds.add(art.id);
       else selectedArticleIds.delete(art.id);
       label.classList.toggle('checked', input.checked);
+      refreshStoredResumeBtn();
     });
 
     const span = document.createElement('span');

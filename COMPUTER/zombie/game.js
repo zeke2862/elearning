@@ -1652,6 +1652,12 @@ class TommyQGame {
       }
 
       if (this.state === 'MENU') {
+        // 中文-文章：按 C 從上次背到的地方接續（紀錄在學生存檔裡，換電腦也有）
+        if ((e.key === 'c' || e.key === 'C') && this._storedResume()) {
+          this._resume = this._storedResume();
+          this._startGame(true);
+          return;
+        }
         this._handleMenuInput(e);
       } else if (this.state === 'PLAYING') {
         this._handleGameInput(e);
@@ -2559,10 +2565,41 @@ class TommyQGame {
 
   // 死掉時記下接續位置：場上最早還沒打掉的那一題；沒有就從下一題開始
   _recordResume() {
-    if (this.menuSelection.category !== 'chinese_article' || !this.articleSeq) { this._resume = null; return; }
-    const alive = this.enemies.filter(e => !e.dead && e.seqIdx !== undefined).map(e => e.seqIdx);
-    const idx = alive.length ? Math.min(...alive) : this.seqIdx;
-    this._resume = { key: this._articleSeqKey + '|' + this.menuSelection.difficulty, idx };
+    if (this.menuSelection.category !== 'chinese_article' || !this.articleSeq) { this._resume = null; }
+    else {
+      const alive = this.enemies.filter(e => !e.dead && e.seqIdx !== undefined).map(e => e.seqIdx);
+      const idx = alive.length ? Math.min(...alive) : this.seqIdx;
+      this._resume = { key: this._articleSeqKey + '|' + this.menuSelection.difficulty, idx };
+    }
+    this._saveOtherRecord();
+  }
+
+  // ── 學號登入後，戰績與「背到哪裡」記在學生的雲端存檔裡（sync-client.js）：換電腦、換座位也能接續 ──
+  _saveOtherRecord() {
+    if (typeof keyagentUpdateOtherGame !== 'function') return;
+    const st = this.stats;
+    const cat = this.menuSelection.category;
+    keyagentUpdateOtherGame('zombie', old => {
+      const patch = {
+        plays: (old.plays || 0) + 1,
+        bestScore: Math.max(old.bestScore || 0, st.score),
+        bestKills: Math.max(old.bestKills || 0, st.kills),
+        bestLevel: Math.max(old.bestLevel || 0, st.level),
+        totalKills: (old.totalKills || 0) + st.kills,
+        lastScore: st.score, lastCategory: cat, lastDifficulty: this.menuSelection.difficulty
+      };
+      if (cat === 'chinese_article' && this._resume) patch.resume = { key: this._resume.key, idx: this._resume.idx };
+      return patch;
+    });
+  }
+  _storedResume() {
+    if (typeof keyagentGetOtherGames !== 'function') return null;
+    const og = keyagentGetOtherGames();
+    const r = og && og.zombie && og.zombie.resume;
+    if (!r || this.menuSelection.category !== 'chinese_article') return null;
+    const sel = window.articleManager ? window.articleManager.getSelectedArticles('zh') : [];
+    const key = sel.map(a => a.id).sort().join(',') + '|' + this.menuSelection.difficulty;
+    return r.key === key ? r : null;   // 選的文章或難度和上次不同就不提供接續
   }
 
   _getUniqueWord(sequential) {
@@ -3719,6 +3756,12 @@ class TommyQGame {
       ctx.fillStyle = n > 0 ? '#2ed573' : '#ffa502';
       ctx.font = `bold 16px ${UI_FONT}`;
       ctx.fillText(n > 0 ? `已選 ${n} 篇文章 ✓` : '尚未選擇文章，請點右下角 📚', W / 2, noteY);
+      const sr = kind === 'zh' ? this._storedResume() : null;
+      if (sr) {
+        ctx.fillStyle = '#ffd700';
+        ctx.font = `bold 15px ${UI_FONT}`;
+        ctx.fillText(`上次背到第 ${sr.idx + 1} 題　按 C 接續，或按「開始遊戲」從頭開始`, W / 2, noteY + 22);
+      }
     }
     if (this.menuWarningTimer > 0) {
       ctx.fillStyle = '#ff4757';
@@ -3812,3 +3855,5 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 500);
   }
 });
+
+if (typeof keyagentInstallPageHideSync === 'function') keyagentInstallPageHideSync();

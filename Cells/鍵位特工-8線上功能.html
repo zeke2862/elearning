@@ -1081,6 +1081,7 @@ import { getStageDefinition, randomSequence, randomVocabWord, randomSentence, TO
 window.WordBank = { getStageDefinition, randomSequence, randomVocabWord, randomSentence, TOWER_DEFENSE_STAGE_ORDER };
 </script>
 
+<script src="../sync-client.js"></script>
 <script>
 /* ==========================================================================
    data.js
@@ -1749,6 +1750,9 @@ function saveSysPost(msg){
 function persistSave(){
   SAVE.lastPlayed = Date.now();
   saveSysPost({type:"savesys:persistSave", save: SAVE});
+  // 💡 登入過學號的話，存檔後 2 秒自動同步（學校內網直接送學校主機，在家走雲端中繼站），
+  //    換座位、換電腦用學號登入就能接續；離開頁面時另外補送一次（見 sync-client.js）
+  if(typeof keyagentSchedulePush === "function") keyagentSchedulePush(2000);
 }
 
 function hasExistingSave(){ return SAVE_EXISTED_ON_BOOT; }
@@ -4691,6 +4695,8 @@ function gradeRank(g){ return {B:1,A:2,S:3}[g]||0; }
         break;
     }
   });
+
+if(typeof keyagentInstallPageHideSync === "function") keyagentInstallPageHideSync();
 
 document.addEventListener("DOMContentLoaded", ()=>{
   // UI.runBootSequence() is kicked off from the "savesys:init" handler below,

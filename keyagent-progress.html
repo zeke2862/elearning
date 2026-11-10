@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>遊戲進度報表</title>
+<style>
+*{box-sizing:border-box;font-family:"Microsoft JhengHei",sans-serif;}
+body{margin:20px;background:#f3f5f7;color:#222;}
+h1{text-align:center;margin:0 0 6px;}
+.sub{text-align:center;color:#666;margin-bottom:18px;font-size:14px;}
+.bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:center;margin-bottom:16px;}
+.bar input,.bar button{padding:8px 12px;font-size:15px;border-radius:6px;border:1px solid #bbb;}
+.bar button{background:#2d7ff9;color:#fff;border:none;cursor:pointer;}
+.bar button.gray{background:#6c757d;}
+.wrap{background:#fff;border-radius:10px;box-shadow:0 2px 6px rgba(0,0,0,.15);overflow:auto;}
+table{border-collapse:collapse;width:100%;min-width:980px;font-size:14px;}
+th,td{border-bottom:1px solid #e5e8eb;padding:8px 10px;text-align:center;white-space:nowrap;}
+th{background:#eef2f6;position:sticky;top:0;cursor:pointer;user-select:none;}
+tr:hover td{background:#f7fbff;}
+td.left{text-align:left;}
+.star{color:#e0a800;}
+.dim{color:#999;}
+.ok{color:#198754;font-weight:bold;}
+.chip{display:inline-block;padding:1px 7px;border-radius:10px;background:#eef2f6;margin:1px;font-size:12px;}
+.chip.done{background:#d1f0dc;color:#146c43;}
+.chip.part{background:#fff3cd;color:#8a6d00;}
+.detail td{background:#fafcff;text-align:left;white-space:normal;}
+#msg{text-align:center;padding:30px;color:#666;}
+</style>
+</head>
+<body>
+<h1>🎮 遊戲進度報表</h1>
+<div class="sub">鍵位特工關卡與星數、番外篇成績，以及末日生存、ZType 的戰績與「文章背到哪裡」。資料來自學生的雲端存檔。</div>
+
+<div class="bar">
+  年度 <input id="year" size="6" placeholder="全部">
+  班級 <input id="className" size="8" placeholder="全部">
+  <input id="search" placeholder="搜尋姓名／學號" size="14">
+  <label><input type="checkbox" id="onlyPlayed"> 只看有進度的學生</label>
+  <button onclick="load()">重新載入</button>
+  <button class="gray" onclick="downloadCsv()">下載 CSV</button>
+</div>
+
+<div class="wrap">
+  <table>
+    <thead>
+      <tr>
+        <th data-k="seat">座號</th>
+        <th data-k="num">學號</th>
+        <th data-k="name">姓名</th>
+        <th data-k="cleared">鍵位特工<br>通關數 / 69</th>
+        <th data-k="stars">總星數</th>
+        <th data-k="chapter">已通關章節</th>
+        <th data-k="bonus">番外篇</th>
+        <th data-k="zbest">末日生存<br>最高分 / 次數</th>
+        <th data-k="tbest">ZType<br>最高分 / 次數</th>
+        <th data-k="synced">最後同步</th>
+      </tr>
+    </thead>
+    <tbody id="rows"></tbody>
+  </table>
+  <div id="msg">載入中…</div>
+</div>
+
+<script>
+const CH_NAMES = {1:'中列',2:'上列',3:'下列',4:'中上列',5:'中下列',6:'全鍵盤',7:'符號',8:'大小寫',9:'句子'};
+const CH_TOTAL = {1:10,2:10,3:10,4:7,5:7,6:7,7:5,8:5,9:8};
+const BONUS_CH = [1,2,3,6,7,8];
+let DATA = [], sortKey = 'seat', sortDir = 1;
+
+function stars(n){ return '<span class="star">'+'★'.repeat(n)+'</span><span class="dim">'+'☆'.repeat(3-n)+'</span>'; }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+function rowInfo(st){
+  const p = st.progress;
+  const pc = (p && p.perChapter) || {};
+  const doneCh = Object.keys(CH_TOTAL).filter(c => pc[c] && pc[c].cleared >= CH_TOTAL[c]).length;
+  const bonusDone = BONUS_CH.filter(c => pc[c] && pc[c].bonus && pc[c].bonus.cleared).length;
+  const z = p && p.zombie, t = p && p.ztype;
+  return {
+    seat: Number(st.seatNumber)||0, num: st.studentNumber||'', name: st.name||'',
+    cleared: p ? p.levelsCleared : -1, stars: p ? p.totalStars : -1,
+    chapter: doneCh, bonus: bonusDone,
+    zbest: z ? (z.bestScore||0) : -1, tbest: t ? (t.bestScore||0) : -1,
+    synced: st.syncedAt || '', played: !!(p && (p.levelsCleared>0 || z || t))
+  };
+}
+
+function render(){
+  const q = document.getElementById('search').value.trim();
+  const onlyPlayed = document.getElementById('onlyPlayed').checked;
+  let list = DATA.map(st => ({st, i: rowInfo(st)}));
+  if(q) list = list.filter(x => (x.i.name+x.i.num).includes(q));
+  if(onlyPlayed) list = list.filter(x => x.i.played);
+  list.sort((a,b)=>{ const x=a.i[sortKey], y=b.i[sortKey]; return (x>y?1:x<y?-1:0)*sortDir; });
+  const tb = document.getElementById('rows');
+  tb.innerHTML = '';
+  list.forEach(({st,i})=>{
+    const p = st.progress, pc = (p&&p.perChapter)||{};
+    const z = p && p.zombie, t = p && p.ztype;
+    const chapChips = Object.keys(CH_TOTAL).map(c=>{
+      const cl = pc[c] ? pc[c].cleared : 0, tot = CH_TOTAL[c];
+      return `<span class="chip ${cl>=tot?'done':cl>0?'part':''}">${CH_NAMES[c]} ${cl}/${tot}</span>`;
+    }).join('');
+    const bonusChips = BONUS_CH.map(c=>{
+      const b = pc[c] && pc[c].bonus;
+      return `<span class="chip ${b&&b.cleared?'done':b&&b.stars>0?'part':''}">${CH_NAMES[c]} ${b?stars(b.stars||0):'<span class="dim">—</span>'}</span>`;
+    }).join('');
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${esc(st.seatNumber)}</td><td>${esc(st.studentNumber)}</td><td class="left">${esc(st.name)}</td>
+      <td>${p ? `<b>${p.levelsCleared}</b> / 69` : '<span class="dim">尚無紀錄</span>'}</td>
+      <td>${p ? `<span class="star">★</span> ${p.totalStars}` : '<span class="dim">—</span>'}</td>
+      <td class="left">${p ? (i.chapter + ' 章　<span class="dim">（' + (p.lastLevel? '最近通關 '+esc(p.lastLevel) : '—') + '）</span>') : '<span class="dim">—</span>'}</td>
+      <td>${p ? `<span class="${i.bonus? 'ok':'dim'}">${i.bonus} / ${BONUS_CH.length}</span>` : '<span class="dim">—</span>'}</td>
+      <td>${z ? `${z.bestScore||0} / ${z.plays||0}次${z.resume?'<br><span class="dim">背到第 '+((z.resume.idx||0)+1)+' 題</span>':''}` : '<span class="dim">—</span>'}</td>
+      <td>${t ? `${t.bestScore||0} / ${t.plays||0}次${t.resume?'<br><span class="dim">背到第 '+(t.resume.n||'?')+' 字</span>':''}` : '<span class="dim">—</span>'}</td>
+      <td class="dim">${st.syncedAt ? new Date(st.syncedAt).toLocaleString('zh-TW',{hour12:false}) : '—'}</td>`;
+    tr.style.cursor = 'pointer';
+    tr.addEventListener('click', ()=>{
+      const next = tr.nextElementSibling;
+      if(next && next.classList.contains('detail')){ next.remove(); return; }
+      const d = document.createElement('tr'); d.className = 'detail';
+      d.innerHTML = `<td colspan="10"><b>各章進度：</b>${chapChips}<br><b>番外篇（ETP 檢定）：</b>${bonusChips}
+        ${p ? `<br><b>其他：</b>GBit ${p.gbit}　核心 ${p.core}　難度 ${esc(p.difficulty)||'—'}　角色名 ${esc(p.playerName)||'—'}` : ''}
+        ${p && p.endless && p.endless.plays ? `　深淵模式最佳 ${Math.floor((p.endless.bestTime||0)/60)}分${(p.endless.bestTime||0)%60}秒` : ''}</td>`;
+      tr.after(d);
+    });
+    tb.appendChild(tr);
+  });
+  document.getElementById('msg').style.display = list.length ? 'none' : 'block';
+  document.getElementById('msg').textContent = DATA.length ? '沒有符合的學生' : '目前沒有學生資料';
+}
+
+async function load(){
+  const y = document.getElementById('year').value.trim(), c = document.getElementById('className').value.trim();
+  const q = (y && c) ? `?year=${encodeURIComponent(y)}&className=${encodeURIComponent(c)}` : '';
+  document.getElementById('msg').style.display = 'block';
+  document.getElementById('msg').textContent = '載入中…';
+  try{
+    const res = await fetch('/keyagent-progress' + q);
+    const data = await res.json();
+    if(!data.success) throw new Error(data.message || '伺服器回應錯誤');
+    DATA = data.students;
+    render();
+  }catch(err){
+    document.getElementById('msg').textContent = '❌ 讀取失敗：' + err.message + '（請確認 server.js 已更新，且是從學校主機開啟這個頁面）';
+  }
+}
+
+function downloadCsv(){
+  const head = ['年度','班級','座號','學號','姓名','通關數','總星數','已通關章節數','番外篇通過數','中列','上列','下列','中上列','中下列','全鍵盤','符號','大小寫','句子','末日最高分','末日次數','ZType最高分','ZType次數','最後同步'];
+  const rows = DATA.map(st=>{
+    const p = st.progress, pc = (p&&p.perChapter)||{}, i = rowInfo(st), z = p&&p.zombie, t = p&&p.ztype;
+    return [st.year,st.class,st.seatNumber,st.studentNumber,st.name, p?p.levelsCleared:'', p?p.totalStars:'', p?i.chapter:'', p?i.bonus:'',
+      ...Object.keys(CH_TOTAL).map(c=>pc[c]?pc[c].cleared+'/'+CH_TOTAL[c]:''),
+      z?z.bestScore:'', z?z.plays:'', t?t.bestScore:'', t?t.plays:'', st.syncedAt||''];
+  });
+  const csv = '﻿' + [head,...rows].map(r=>r.map(v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"').join(',')).join('\r\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
+  a.download = '遊戲進度報表.csv'; a.click();
+}
+
+document.querySelectorAll('th[data-k]').forEach(th=>th.addEventListener('click',()=>{
+  const k = th.dataset.k; if(sortKey===k) sortDir*=-1; else { sortKey=k; sortDir=(k==='seat'||k==='num'||k==='name')?1:-1; } render();
+}));
+document.getElementById('search').addEventListener('input', render);
+document.getElementById('onlyPlayed').addEventListener('change', render);
+
+const params = new URLSearchParams(location.search);
+document.getElementById('year').value = params.get('year') || '';
+document.getElementById('className').value = params.get('className') || '';
+load();
+</script>
+</body>
+</html>
