@@ -304,42 +304,62 @@ input#codeInput:focus{outline:none;border-color:var(--accent);}
           <div><div class="lbl">泰北版華文課本練習</div><div class="desc">複習課本內容</div></div>
         </a>
       </div>
-      <div class="hub-links" style="margin-top:10px;">
-        <a class="hub-link" href="#" onclick="return openSubPanel('panelChiWork');">
+    </div>
+
+    <!-- ====== 學生作業區（新科目）：同學自己製作的遊戲，依年級放在各自的作業區 ====== -->
+    <div class="subject-group">
+      <div class="subject-title"><span class="subject-ic">🎓</span>學生作業區</div>
+      <div class="hub-links">
+        <a class="hub-link" href="#" onclick="return openSubPanel('panelWorkG8');">
           <div class="ic">🎓</div>
-          <div><div class="lbl">學生作業區</div><div class="desc">中二・中三・高一・高三 同學製作的華文遊戲</div></div>
+          <div><div class="lbl">中二作業區</div><div class="desc">國中二年級同學製作的遊戲</div></div>
+        </a>
+        <a class="hub-link" href="#" onclick="return openSubPanel('panelWorkG9');">
+          <div class="ic">🎓</div>
+          <div><div class="lbl">中三作業區</div><div class="desc">國中三年級同學製作的遊戲</div></div>
+        </a>
+        <a class="hub-link" href="#" onclick="return openSubPanel('panelWorkG10');">
+          <div class="ic">🎓</div>
+          <div><div class="lbl">高一作業區</div><div class="desc">高中一年級同學製作的遊戲</div></div>
+        </a>
+        <a class="hub-link" href="#" onclick="return openSubPanel('panelWorkG12');">
+          <div class="ic">🎓</div>
+          <div><div class="lbl">高三作業區</div><div class="desc">高中三年級同學製作的遊戲</div></div>
         </a>
       </div>
     </div>
 
-    <!-- ====== 華文・學生作業區子選單（按下上面按鈕才顯示）。新作品放進對應年級的 hub-links 裡，並刪掉那個年級的「作品陸續上線」那行 ====== -->
-    <div class="sub-panel" id="panelChiWork">
-      <div class="subject-title"><span class="subject-ic">🎓</span>華文・學生作業區</div>
-
-      <div class="sub-title">國中二年級（中二）</div>
-      <div class="hub-links" id="chiWorkG8">
-        <!-- 作品放這裡，格式見上面其他 hub-link -->
+    <!-- ====== 學生作業區子選單（按下上面按鈕才顯示） ====== -->
+    <div class="sub-panel" id="panelWorkG8">
+      <div class="subject-title"><span class="subject-ic">🎓</span>學生作業區・中二作業區</div>
+      <div class="hub-links" id="workG8">
+        <!-- 作品放這裡：複製上面其他科目的 hub-link 格式；放進作品後，刪掉下面那行「作品陸續上線」 -->
         <div style="padding:6px 2px;font-size:12px;color:var(--text-dim);">作品陸續上線，敬請期待</div>
       </div>
-
-      <div class="sub-title">國中三年級（中三）</div>
-      <div class="hub-links" id="chiWorkG9">
-        <!-- 作品放這裡 -->
+      <button class="btn-switch" onclick="closeSubPanel()">← 回上一頁</button>
+    </div>
+    <div class="sub-panel" id="panelWorkG9">
+      <div class="subject-title"><span class="subject-ic">🎓</span>學生作業區・中三作業區</div>
+      <div class="hub-links" id="workG9">
+        <!-- 作品放這裡：複製上面其他科目的 hub-link 格式；放進作品後，刪掉下面那行「作品陸續上線」 -->
         <div style="padding:6px 2px;font-size:12px;color:var(--text-dim);">作品陸續上線，敬請期待</div>
       </div>
-
-      <div class="sub-title">高中一年級（高一）</div>
-      <div class="hub-links" id="chiWorkG10">
-        <!-- 作品放這裡 -->
+      <button class="btn-switch" onclick="closeSubPanel()">← 回上一頁</button>
+    </div>
+    <div class="sub-panel" id="panelWorkG10">
+      <div class="subject-title"><span class="subject-ic">🎓</span>學生作業區・高一作業區</div>
+      <div class="hub-links" id="workG10">
+        <!-- 作品放這裡：複製上面其他科目的 hub-link 格式；放進作品後，刪掉下面那行「作品陸續上線」 -->
         <div style="padding:6px 2px;font-size:12px;color:var(--text-dim);">作品陸續上線，敬請期待</div>
       </div>
-
-      <div class="sub-title">高中三年級（高三）</div>
-      <div class="hub-links" id="chiWorkG12">
-        <!-- 作品放這裡 -->
+      <button class="btn-switch" onclick="closeSubPanel()">← 回上一頁</button>
+    </div>
+    <div class="sub-panel" id="panelWorkG12">
+      <div class="subject-title"><span class="subject-ic">🎓</span>學生作業區・高三作業區</div>
+      <div class="hub-links" id="workG12">
+        <!-- 作品放這裡：複製上面其他科目的 hub-link 格式；放進作品後，刪掉下面那行「作品陸續上線」 -->
         <div style="padding:6px 2px;font-size:12px;color:var(--text-dim);">作品陸續上線，敬請期待</div>
       </div>
-
       <button class="btn-switch" onclick="closeSubPanel()">← 回上一頁</button>
     </div>
 
