@@ -650,6 +650,7 @@ html[data-font-size="xlarge"] body{ zoom:1.36; }
 /* Codex UI/CSS moved to codex.html (embedded via iframe, same pattern as shop.html) */
 #screen-compendium{padding:0;overflow:hidden;}
 </style>
+<link rel="stylesheet" href="./hacker-theme.css">
 </head>
 <body>
 <div id="app">
@@ -3967,19 +3968,23 @@ const UI = {
 
   runBootSequence(){
     const lines = [
-      "> INITIALIZING KEY-AGENT PROTOCOL...",
-      "> CONNECTING TO ETHER MAINFRAME...",
-      "> WARNING: FIREWALL INTEGRITY 4%",
-      "> LOADING HOME ROW DEFENSE MODULE...",
-      "> AGENT LINK ESTABLISHED."
+      ["> INITIALIZING KEY-AGENT PROTOCOL...", ""],
+      ["> ROUTING THROUGH PROXY CHAIN [3/3] ........ OK", "ok"],
+      ["> BYPASSING PERIMETER SCAN 0x7F3A ........ OK", "ok"],
+      ["> CONNECTING TO ETHER MAINFRAME...", ""],
+      ["> WARNING: FIREWALL INTEGRITY 4%", "warn"],
+      ["> ALERT: 病毒入侵中，防線即將失守！", "bad"],
+      ["> LOADING HOME ROW DEFENSE MODULE... [##########] 100%", "ok"],
+      ["> AGENT LINK ESTABLISHED.", ""],
+      ["[ ACCESS GRANTED ]", "granted"]
     ];
     const wrap = document.getElementById("bootLines");
     wrap.innerHTML = "";
     lines.forEach((l,i)=>{
       const d = document.createElement("div");
-      d.className = "line";
-      d.style.animationDelay = (i*0.35)+"s";
-      d.textContent = l;
+      d.className = "line" + (l[1] ? " " + l[1] : "");
+      d.style.animationDelay = (i*0.28)+"s";
+      d.textContent = l[0];
       wrap.appendChild(d);
     });
     const cursor = document.createElement("span");
@@ -3991,7 +3996,7 @@ const UI = {
       if(hasExistingSave()){
         document.getElementById("btnContinue").style.display = "block";
       }
-    }, lines.length*350 + 300);
+    }, lines.length*280 + 300);
   },
 
   enterMainMenu(){
@@ -4820,5 +4825,6 @@ document.addEventListener("DOMContentLoaded", ()=>{
   });
 });
 </script>
+<script src="./hacker-fx.js"></script>
 </body>
 </html>
