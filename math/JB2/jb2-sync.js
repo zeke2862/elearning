@@ -57,32 +57,37 @@
   }
 
   /* ===== 2. 整理資料 ===== */
+  // pSecs＝練習秒數（只算做完一次的時間，跳開／中途關閉不算）；totalQ／totalOk＝該關累計作答題數／答對題數
   function build() {
-    var stages = {}, weak = [], totalStars = 0, totalPlays = 0, totalSecs = 0, lastAt = 0, lastId = '';
+    var stages = {}, q = {}, weak = [], totalStars = 0, totalPlays = 0, pSecs = 0, lastAt = 0, lastId = '';
     var names = {};
     (GC.chapters || []).forEach(function (c) { (c.stages || []).forEach(function (s) { names[s[0]] = s[1]; }); });
     for (var n = 1; n <= NCH; n++) {
-      var d = rd(chKey(n));
+      var d = rd(chKey(n)), Q = d._q || {}, tq = {}, tok = {};
+      for (var qk in Q) {
+        var v = Q[qk]; if (!v || !(v.n > 0)) continue;
+        q[qk] = { n: v.n | 0, ok: v.ok | 0 };
+        if (v.n >= 3) weak.push({ k: qk, n: v.n | 0, ok: v.ok | 0 });
+        var sid = qk.split(':')[0]; tq[sid] = (tq[sid] || 0) + (v.n | 0); tok[sid] = (tok[sid] || 0) + (v.ok | 0);
+      }
       for (var k in d) {
         if (k[0] === '_') continue;
         var s = d[k]; if (!s || typeof s !== 'object') continue;
-        var st = s.stars | 0, tr = s.tries | 0, sc = Math.round(s.secs || 0);
-        if (!st && !tr && !sc) continue;
-        stages[k] = { n: names[k] || '', ch: n, bestStars: st, plays: tr, totalSecs: sc, lastStars: s.lastStars == null ? null : (s.lastStars | 0), lastMode: s.lastMode || '' };
-        totalStars += st; totalPlays += tr; totalSecs += sc;
+        var st = s.stars | 0, tr = s.tries | 0, sc = Math.round(s.psecs || 0);
+        if (!st && !tr && !sc && !tq[k]) continue;
+        stages[k] = { n: names[k] || '', ch: n, bestStars: st, plays: tr, pSecs: sc, totalQ: tq[k] || 0, totalOk: tok[k] || 0, lastStars: s.lastStars == null ? null : (s.lastStars | 0), lastMode: s.lastMode || '' };
+        totalStars += st; totalPlays += tr; pSecs += sc;
       }
       var L = d._last; if (L && L.at > lastAt && stages[L.id]) { lastAt = L.at; lastId = L.id; }
-      var Q = d._q || {};
-      for (var qk in Q) { var v = Q[qk]; if (v && v.n >= 3) weak.push({ k: qk, n: v.n, ok: v.ok | 0 }); }
     }
     weak.sort(function (a, b) { return (a.ok / a.n) - (b.ok / b.n) || b.n - a.n; });
     var ls = lastId ? stages[lastId] : null;
     var hw = rd(HUB).who || {};
     return {
-      hero: hw.name || '', totalStars: totalStars, totalPlays: totalPlays, totalSecs: totalSecs,
+      hero: hw.name || '', totalStars: totalStars, totalPlays: totalPlays, pSecs: pSecs,
       lastId: lastId, lastName: ls ? ls.n : '', lastAt: lastAt,
       lastStars: ls ? ls.lastStars : null, lastBest: ls ? ls.bestStars : null, lastMode: ls ? ls.lastMode : '',
-      stages: stages, weak: weak.slice(0, 8)
+      stages: stages, q: q, weak: weak.slice(0, 8)
     };
   }
 

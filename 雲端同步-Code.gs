@@ -109,7 +109,8 @@ function jb2Report_(e) {
   return jsonOut_({ success: true, generatedAt: new Date().getTime(), students: out });
 }
 
-// 同一位學生可能在多個裝置（手機＋電腦）玩過：關卡的最高星／次數／時間各取較大值，最後一關取較新那份。
+// 同一位學生可能在多個裝置（手機＋電腦）玩過：關卡的最高星／次數／練習秒數各取較大值，
+// 答對率的題數取「作答題數較多」那一份，最後一關取較新那份。
 function mergeJb2_(a, b, at) {
   b = JSON.parse(JSON.stringify(b)); b._at = at;
   if (!a) return b;
@@ -123,14 +124,23 @@ function mergeJb2_(a, b, at) {
   out.stages = {};
   var ts = 0, tp = 0, tt = 0;
   Object.keys(ids).forEach(function (k) {
-    var n = (newer.stages || {})[k], o = (older.stages || {})[k];
-    var base = JSON.parse(JSON.stringify(n || o));
-    base.bestStars = Math.max((n && n.bestStars) || 0, (o && o.bestStars) || 0);
-    base.plays = Math.max((n && n.plays) || 0, (o && o.plays) || 0);
-    base.totalSecs = Math.max((n && n.totalSecs) || 0, (o && o.totalSecs) || 0);
+    var n = (newer.stages || {})[k] || {}, o = (older.stages || {})[k] || {};
+    var base = JSON.parse(JSON.stringify(newer.stages && newer.stages[k] ? n : o));
+    base.bestStars = Math.max(n.bestStars || 0, o.bestStars || 0);
+    base.plays = Math.max(n.plays || 0, o.plays || 0);
+    base.pSecs = Math.max(n.pSecs || 0, o.pSecs || 0);
+    var qs = (n.totalQ || 0) >= (o.totalQ || 0) ? n : o;
+    base.totalQ = qs.totalQ || 0; base.totalOk = qs.totalOk || 0;
     out.stages[k] = base;
-    ts += base.bestStars; tp += base.plays; tt += base.totalSecs;
+    ts += base.bestStars; tp += base.plays; tt += base.pSecs;
   });
-  out.totalStars = ts; out.totalPlays = tp; out.totalSecs = tt;
+  // 各題型答對統計：同一題型取作答數較多的那一份
+  var qa = a.q || {}, qb = b.q || {}, qm = {};
+  Object.keys(qa).concat(Object.keys(qb)).forEach(function (k) {
+    var x = qa[k], y = qb[k];
+    qm[k] = (!y || (x && x.n >= y.n)) ? x : y;
+  });
+  out.q = qm;
+  out.totalStars = ts; out.totalPlays = tp; out.pSecs = tt;
   return out;
 }

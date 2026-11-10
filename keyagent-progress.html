@@ -84,9 +84,9 @@ function jb2Last(j){
 function jb2Detail(j){
   if(!j) return '';
   const ids = Object.keys(j.stages||{}).sort((a,b)=>a.localeCompare(b,'en',{numeric:true}));
-  let h = `<br><b>JB2 數靈召喚師</b>（勇者名 ${esc(j.hero)||'—'}）：總 ${j.totalStars||0}★／練習 ${j.totalPlays||0} 次／共 ${fmtSecs(j.totalSecs)}`;
+  let h = `<br><b>JB2 數靈召喚師</b>（勇者名 ${esc(j.hero)||'—'}）：總 ${j.totalStars||0}★／練習 ${j.totalPlays||0} 次／共 ${fmtSecs(j.pSecs)}`;
   h += '<table style="margin:6px 0;width:auto"><tr><th>關卡</th><th>最高星</th><th>練習次數</th><th>花的時間</th><th>最近一次</th></tr>';
-  ids.forEach(id=>{ const s=j.stages[id]; h += `<tr><td class="left">${esc(id)} ${esc(s.n)}</td><td>${s.bestStars}★</td><td>${s.plays}</td><td>${fmtSecs(s.totalSecs)}</td><td>${s.lastStars==null?'—':s.lastStars+'★'} ${esc(MODE_NAME[s.lastMode]||'')}</td></tr>`; });
+  ids.forEach(id=>{ const s=j.stages[id]; h += `<tr><td class="left">${esc(id)} ${esc(s.n)}</td><td>${s.bestStars}★</td><td>${s.plays}</td><td>${fmtSecs(s.pSecs)}</td><td>${s.lastStars==null?'—':s.lastStars+'★'} ${esc(MODE_NAME[s.lastMode]||'')}</td></tr>`; });
   h += '</table>';
   const w = j.weak||[];
   h += '<b>弱點題型：</b>' + (w.length ? w.map(r=>{ const [sid,ty]=String(r.k).split(':'); return `${esc(sid)} ${esc(ty||'')}（答對 ${Math.round(r.ok/r.n*100)}%，${r.ok}/${r.n}）`; }).join('、') : '<span class="dim">資料還不夠（同一題型要作答 3 題以上）</span>');
@@ -101,7 +101,7 @@ function rowInfo(st){
   const bonusDone = BONUS_CH.filter(c => pc[c] && pc[c].bonus && pc[c].bonus.cleared).length;
   const z = p && p.zombie, t = p && p.ztype, j = p && p.jb2;
   return {
-    jstars: j ? (j.totalStars||0) : -1, jlast: j ? (j.lastId||'') : '', jplays: j ? (j.totalPlays||0) : -1, jsecs: j ? (j.totalSecs||0) : -1,
+    jstars: j ? (j.totalStars||0) : -1, jlast: j ? (j.lastId||'') : '', jplays: j ? (j.totalPlays||0) : -1, jsecs: j ? (j.pSecs||0) : -1,
     seat: Number(st.seatNumber)||0, num: st.studentNumber||'', name: st.name||'',
     cleared: p ? p.levelsCleared : -1, stars: p ? p.totalStars : -1,
     chapter: doneCh, bonus: bonusDone,
@@ -142,7 +142,7 @@ function render(){
       <td>${p&&p.jb2 ? '<span class="star">★</span> '+(p.jb2.totalStars||0) : '<span class="dim">—</span>'}</td>
       <td class="left">${jb2Last(p&&p.jb2)}</td>
       <td>${p&&p.jb2 ? p.jb2.totalPlays||0 : '<span class="dim">—</span>'}</td>
-      <td>${p&&p.jb2 ? fmtSecs(p.jb2.totalSecs) : '<span class="dim">—</span>'}</td>
+      <td>${p&&p.jb2 ? fmtSecs(p.jb2.pSecs) : '<span class="dim">—</span>'}</td>
       <td class="dim">${st.syncedAt ? new Date(st.syncedAt).toLocaleString('zh-TW',{hour12:false}) : '—'}</td>`;
     tr.style.cursor = 'pointer';
     tr.addEventListener('click', ()=>{
@@ -184,7 +184,7 @@ function downloadCsv(){
     return [st.year,st.class,st.seatNumber,st.studentNumber,st.name, p?p.levelsCleared:'', p?p.totalStars:'', p?i.chapter:'', p?i.bonus:'',
       ...Object.keys(CH_TOTAL).map(c=>pc[c]?pc[c].cleared+'/'+CH_TOTAL[c]:''),
       z?z.bestScore:'', z?z.plays:'', t?t.bestScore:'', t?t.plays:'',
-      p&&p.jb2?p.jb2.totalStars:'', p&&p.jb2?p.jb2.lastId:'', p&&p.jb2&&p.jb2.lastStars!=null?p.jb2.lastStars:'', p&&p.jb2?p.jb2.lastBest:'', p&&p.jb2?p.jb2.totalPlays:'', p&&p.jb2?p.jb2.totalSecs:'',
+      p&&p.jb2?p.jb2.totalStars:'', p&&p.jb2?p.jb2.lastId:'', p&&p.jb2&&p.jb2.lastStars!=null?p.jb2.lastStars:'', p&&p.jb2?p.jb2.lastBest:'', p&&p.jb2?p.jb2.totalPlays:'', p&&p.jb2?p.jb2.pSecs:'',
       p&&p.jb2?(p.jb2.weak||[]).map(r=>r.k+' '+Math.round(r.ok/r.n*100)+'%').join(' / '):'', st.syncedAt||''];
   });
   const csv = '﻿' + [head,...rows].map(r=>r.map(v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"').join(',')).join('\r\n');
