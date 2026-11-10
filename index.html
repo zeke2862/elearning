@@ -82,6 +82,7 @@ input#codeInput:focus{outline:none;border-color:var(--accent);}
   display:flex;align-items:center;gap:6px;
 }
 .subject-title .subject-ic{font-size:14px;}
+.sub-title{font-size:12px;color:var(--accent);margin:14px 0 8px;letter-spacing:.08em;}
 
 .hub-links{display:flex;flex-direction:column;gap:10px;}
 .hub-link{
@@ -149,6 +150,13 @@ input#codeInput:focus{outline:none;border-color:var(--accent);}
           <div class="ic">🛡️</div>
           <div><div class="lbl">資訊概論</div><div class="desc">常識複習</div></div>
         </a>
+        <a class="hub-link" id="linkMocc" href="./MOCC-home/index.html">
+          <div class="ic">📝</div>
+          <div><div class="lbl">MOCC 文書處理檢定</div><div class="desc">Word／Excel 檢定模擬・在家用自己的 Office 作答，網頁直接評分</div></div>
+        </a>
+      </div>
+      <div class="sub-title">⌨️ 鍵位練習</div>
+      <div class="hub-links">
         <a class="hub-link" id="linkTower" href="#">
           <div class="ic">🛡️</div>
           <div><div class="lbl">鍵位特工：最後的防火牆</div><div class="desc">塔防遊戲・自主練習</div></div>
@@ -161,10 +169,6 @@ input#codeInput:focus{outline:none;border-color:var(--accent);}
           <div class="ic">🎯</div>
           <div><div class="lbl">ETP 檢定</div><div class="desc">4 篇固定文章・正式評分（直接選範圍）</div></div>
         </a>
-        <a class="hub-link" id="linkLookType" href="#" onclick="return openLookTypeChoice(event);">
-          <div class="ic">⌨️</div>
-          <div><div class="lbl">英文看打</div><div class="desc">選擇「練習」或「測驗」</div></div>
-        </a>
         <a class="hub-link" id="linkGod" href="./God/index.html">
           <div class="ic">⚔️</div>
           <div><div class="lbl">打字修仙傳：五鍵飛升</div><div class="desc">武俠闖關・五大試煉＋魔王模式</div></div>
@@ -173,17 +177,20 @@ input#codeInput:focus{outline:none;border-color:var(--accent);}
           <div class="ic">🗡️</div>
           <div><div class="lbl">打字修仙傳（簡化版）</div><div class="desc">無 F/J 防禦、無大招，專心打字</div></div>
         </a>
-        <a class="hub-link" id="linkMocc" href="./MOCC-home/index.html">
-          <div class="ic">📝</div>
-          <div><div class="lbl">MOCC 文書處理檢定</div><div class="desc">Word／Excel 檢定模擬・在家用自己的 Office 作答，網頁直接評分</div></div>
-        </a>
-       <a class="hub-link" id="linkzombietyping" href="./COMPUTER/zombie/index.html">
+        <a class="hub-link" id="linkzombietyping" href="./COMPUTER/zombie/index.html">
           <div class="ic">⚔️</div>
           <div><div class="lbl">末日生存</div><div class="desc">中英文打字練習</div></div>
         </a>
         <a class="hub-link" id="linkztyping" href="./COMPUTER/ztype/index.html">
-          <div class="ic">⚔️</div>
-          <div><div class="lbl">中文看打內容練習</div><div class="desc">中文看打認字練習</div></div>
+          <div class="ic">🔫</div>
+          <div><div class="lbl">中文看打內容練習</div><div class="desc">射擊遊戲・中文看打認字練習</div></div>
+        </a>
+      </div>
+      <div class="sub-title">📝 輸入法檢定</div>
+      <div class="hub-links">
+        <a class="hub-link" id="linkLookType" href="#" onclick="return openLookTypeChoice(event);">
+          <div class="ic">⌨️</div>
+          <div><div class="lbl">英文看打</div><div class="desc">選擇「練習」或「測驗」</div></div>
         </a>
         <a class="hub-link" id="linkCLook_Type" href="./chinese-look-type.html">
           <div class="ic">⌨️</div>
