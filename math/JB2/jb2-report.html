@@ -176,8 +176,8 @@ function renderProg() {
   <div class="bar"><label>每格顯示 <select id="vw"><option value="stars">⭐ 星數</option><option value="acc">🎯 答對率</option><option value="time">⏱️ 練習時間</option><option value="plays">🔁 練習次數</option></select></label>
   <label>狀態 <select id="st"><option value="">全部</option><option value="p">已玩</option><option value="n">還沒玩</option></select></label>
   <input type="text" id="q" placeholder="搜尋姓名／學號／勇者名" style="flex:0 1 220px"><button class="b" id="e-prog">⬇️ 匯出 Excel（CSV）</button></div>
-  <div class="tw"><table><tr><th class="l">班級</th><th>座號</th><th class="l">姓名</th><th>總星數</th><th>練習次數</th><th>練習時間</th><th>整體答對率</th>${STAGES.map(s => `<th title="${esc(s.id + ' ' + s.name)}">${s.id}${s.boss ? '👹' : ''}</th>`).join('')}</tr>` +
-    L.map(r => `<tr class="rw" data-no="${esc(r.no)}"><td class="l">${esc(r.cls)}</td><td>${r.seat || ''}</td><td class="l">${esc(r.name || '（' + r.no + '）')}</td><td>${r.played ? r.stars : '—'}</td><td>${r.played ? r.plays : '—'}</td><td>${r.played ? fmtShort(r.secs) : '—'}</td><td>${r.acc == null ? '—' : Math.round(r.acc * 100) + '%'}</td>${STAGES.map(s => cell(r, s)).join('')}</tr>`).join('') + `</table></div>`;
+  <div class="tw"><table><tr><th class="l">班級</th><th>座號</th><th class="l">姓名</th><th>學號</th><th>勇者名</th><th>總星數</th><th>練習次數</th><th>練習時間</th><th>整體答對率</th>${STAGES.map(s => `<th title="${esc(s.id + ' ' + s.name)}">${s.id}${s.boss ? '👹' : ''}</th>`).join('')}</tr>` +
+    L.map(r => `<tr class="rw" data-no="${esc(r.no)}"><td class="l">${esc(r.cls)}</td><td>${r.seat || ''}</td><td class="l">${esc(r.name || '（名單外）')}</td><td>${esc(r.no)}</td><td>${r.hero ? esc(r.hero) : '<span class="s0">—</span>'}</td><td>${r.played ? r.stars : '—'}</td><td>${r.played ? r.plays : '—'}</td><td>${r.played ? fmtShort(r.secs) : '—'}</td><td>${r.acc == null ? '—' : Math.round(r.acc * 100) + '%'}</td>${STAGES.map(s => cell(r, s)).join('')}</tr>`).join('') + `</table></div>`;
   $('#vw').value = view; $('#st').value = keep.st; $('#q').value = keep.q;
   $('#vw').onchange = () => { view = $('#vw').value; renderProg(); };
   $('#st').onchange = renderProg; $('#q').oninput = () => { renderProg(); const q = $('#q'); q.focus(); q.setSelectionRange(q.value.length, q.value.length); };
@@ -208,7 +208,7 @@ function renderOne() {
   const L = list();
   if (!L.length) { $('#v-one').innerHTML = '<p>還沒有資料。</p>'; return; }
   let i = L.findIndex(r => r.no === oneNo); if (i < 0) i = 0; const r = L[i]; oneNo = r.no; const j = r.j;
-  let h = `<div class="bar"><label>學生 <select id="who">${L.map((s, k) => `<option value="${k}" ${k === i ? 'selected' : ''}>${esc(s.cls)} ${s.seat || ''} ${esc(s.name || s.no)}${s.played ? '' : '（還沒玩）'}</option>`).join('')}</select></label>`;
+  let h = `<div class="bar"><label>學生 <select id="who">${L.map((s, k) => `<option value="${k}" ${k === i ? 'selected' : ''}>${esc(s.cls)} ${s.seat || ''} ${esc(s.name || '名單外')}（${esc(s.no)}）${s.played ? '' : '（還沒玩）'}</option>`).join('')}</select></label>`;
   if (!r.played) return $('#v-one').innerHTML = h + '</div><p>這位同學' + (j ? '只有登入過 JB2，還沒有做過任何題目。' : '還沒有任何 JB2 紀錄。') + '</p>', bindWho(L);
   h += `<b>${r.stars} 顆星｜練習 ${r.plays} 次｜共 ${fmtSecs(r.secs)}｜整體答對率 ${r.acc == null ? '—' : Math.round(r.acc * 100) + '%'}</b></div>`;
   h += `<p>勇者名：${esc(j.hero) || '—'}　學號：${esc(r.no)}　最後一關：${j.lastId ? esc(j.lastId + ' ' + (j.lastName || '')) + `（${esc(MODE[j.lastMode] || '')} 本次 ${j.lastStars == null ? '—' : j.lastStars + '★'}／最高 ${j.lastBest || 0}★）` : '—'}　最後更新：${fmtAt(j._at)}</p>`;
