@@ -1053,6 +1053,51 @@ app.get('/seat-overrides', (req, res) => {
 // =========================================================================
 
 // body: { code }  -- code 是學號
+// =========================================================================
+// 💡 示範帳號（老師用）：登入後，鍵位特工／末日生存／ZType 會出現「示範模式」面板
+//    （無敵、金錢無限、跳過題目、過關自動下一關）。哪些學號是示範帳號只記在這台學校主機的
+//    demo-accounts.json，不在網頁程式碼裡；學生在家（連不到主機）用同一個學號登入也不會啟用。
+// =========================================================================
+const DEMO_FILE = path.join(__dirname, 'demo-accounts.json');
+function loadDemoCodes() {
+  try { return JSON.parse(fs.readFileSync(DEMO_FILE, 'utf8')).codes || []; } catch (e) { return []; }
+}
+function saveDemoCodes(codes) { fs.writeFileSync(DEMO_FILE, JSON.stringify({ codes })); }
+
+// body: { code? }（不給就自動產生，例如 demo482）
+app.post('/admin/create-demo-account', (req, res) => {
+  try {
+    let code = String((req.body && req.body.code) || '').trim();
+    if (!code) code = 'demo' + Math.floor(100 + Math.random() * 900);
+    const exists = db.prepare('SELECT * FROM students WHERE student_number = ?').get(code);
+    if (exists && !loadDemoCodes().includes(code)) {
+      return res.status(409).json({ success: false, message: `學號 ${code} 已經是一般學生在用了，請換一個` });
+    }
+    if (!exists) {
+      const year = activeSession ? activeSession.year : String(new Date().getFullYear() - 1911);
+      db.prepare(`INSERT INTO students (year, class, student_number, name, seat_number, ip_address)
+                  VALUES (?, ?, ?, ?, ?, ?)`).run(year, '示範', code, '示範帳號', '99', 'demo-' + code);
+    }
+    const codes = loadDemoCodes();
+    if (!codes.includes(code)) { codes.push(code); saveDemoCodes(codes); }
+    res.json({ success: true, code, codes });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+app.get('/admin/demo-accounts', (req, res) => res.json({ success: true, codes: loadDemoCodes() }));
+app.post('/admin/remove-demo-account', (req, res) => {
+  try {
+    const code = String((req.body && req.body.code) || '').trim();
+    const codes = loadDemoCodes().filter(c => c !== code);
+    saveDemoCodes(codes);
+    db.prepare("DELETE FROM students WHERE student_number = ? AND class = '示範'").run(code);
+    res.json({ success: true, codes });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 app.post('/login-code', (req, res) => {
   const { code } = req.body;
   if (!code || !String(code).trim()) {
@@ -1075,8 +1120,10 @@ app.post('/login-code', (req, res) => {
     return res.status(404).json({ success: false, message: '找不到這個學號，請確認輸入是否正確' });
   }
 
+  const isDemo = loadDemoCodes().includes(String(student.student_number));
+
   // 這台電腦（IP）目前登記／臨時代表的是誰（沿用既有的 findStudentByIp，含 seatOverrides 判斷）
-  const seatStudent = findStudentByIp(req.ip);
+  const seatStudent = isDemo ? null : findStudentByIp(req.ip);   // 示範帳號不受座位限制（任何電腦都能登入）
 
   if (seatStudent && seatStudent.id !== student.id) {
     // 座位登記的是別人，擋下來。這裡不直接動資料，讓老師用下面的修正權限處理
@@ -1101,7 +1148,8 @@ app.post('/login-code', (req, res) => {
       studentNumber: student.student_number,
       seatNumber: student.seat_number,
       class: student.class,
-      year: student.year
+      year: student.year,
+      isDemo
     },
     warning
   });

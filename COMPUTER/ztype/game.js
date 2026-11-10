@@ -1256,8 +1256,9 @@ function submitChineseTyping(val) {
 }
 
 // 中文模式答錯：扣一條命（僅一般模式選錯會用到）
+function demoInvincible() { return !!(window.KeyagentDemo && KeyagentDemo.opt('invincible')); }   // 示範帳號：無敵
 function chineseWrongAnswer() {
-  lives--;
+  if (!demoInvincible()) lives--;
   ship.shieldFlash = 1;
   updateHUD();
   if (lives <= 0) gameOver();
@@ -1499,7 +1500,7 @@ function drawFloaters() {
 
 // ── Enemy reaches bottom ───────────────────────
 function enemyReached(en) {
-  lives--;
+  if (!demoInvincible()) lives--;
   ship.shieldFlash = 1;
   spawnExplosion(canvas.width / 2, ship.cy, '#ff0055');
 
@@ -1616,6 +1617,22 @@ function resumeGame() {
 }
 
 if (typeof keyagentInstallPageHideSync === 'function') keyagentInstallPageHideSync();
+
+// 示範帳號：左下角「示範模式」面板（跳過這題／跳過這波）
+if (window.KeyagentDemo && KeyagentDemo.isActive()) {
+  KeyagentDemo.mountBar([
+    { label: '跳過這題', key: 'F2', fn: () => {
+      if (state !== STATE.PLAYING || !enemies.length) return;
+      const en = enemies.reduce((a, b) => (b.y > a.y ? b : a));   // 最靠近飛船的那隻
+      destroyEnemy(en);
+    } },
+    { label: '跳過這波', key: 'F3', fn: () => {
+      if (state !== STATE.PLAYING) return;
+      spawnedThisWave = waveEnemyCount;
+      enemies.slice().forEach(destroyEnemy);
+    } }
+  ]);
+}
 
 // ── 學號登入後的戰績與「背到哪裡」會記在學生的雲端存檔裡（sync-client.js），換電腦、換座位也能接續 ──
 function storedResume() {

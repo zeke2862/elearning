@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>學號登入</title>
 <script src="./sync-client.js"></script>
+<script src="./demo-mode.js"></script>
 <script src="./pet/pet-catalog-data.js"></script>
 <script src="./pet/pet-engine.js"></script>
 <style>
@@ -429,6 +430,7 @@ async function doLogin() {
             dbId: data.student.id,
             className: data.student.class,
             seatNumber: data.student.seatNumber,
+            isDemo: !!data.student.isDemo,   // 老師的示範帳號（由學校主機認證）
             loginAt: Date.now()
           };
           // 💡 先把身分存起來，這樣 keyagentPullCloudSave 合併存檔時才知道要合併到哪個
@@ -437,6 +439,7 @@ async function doLogin() {
           if (typeof keyagentPullCloudSave === "function") {
             await keyagentPullCloudSave(SCHOOL_HOST, data.student.id);
           }
+          if (identity.isDemo && window.KeyagentDemo) KeyagentDemo.ensureWallet();   // 示範帳號：金錢補滿
           showHub(identity);
           return;
         }
@@ -478,7 +481,10 @@ function showHub(identity) {
 
   document.getElementById("hubName").textContent = identity.name || `學號 ${identity.studentNumber}`;
   const tag = document.getElementById("hubTag");
-  if (identity.verified) {
+  if (identity.verified && identity.isDemo) {
+    tag.textContent = "🧪 示範帳號（進入遊戲會有「示範模式」面板：無敵、金錢無限、可跳過題目）";
+    tag.className = "tag verified";
+  } else if (identity.verified) {
     tag.textContent = `✅ 已核對座位（${identity.className || ""} 座號 ${identity.seatNumber || ""}）`;
     tag.className = "tag verified";
   } else {

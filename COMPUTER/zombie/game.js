@@ -1509,6 +1509,7 @@ class TommyQGame {
     this.sprites = new SpriteManager();
     this.sprites.connectUI();
     this.audio = new SoundEngine();
+    this._initDemo();
 
     this.state = 'MENU'; // MENU | PLAYING | PAUSED | GAME_OVER | WAVE_COMPLETE | HORDE_INTRO
     this.menuSelection = {
@@ -2548,6 +2549,22 @@ class TommyQGame {
     });
   }
 
+  // 示範帳號：左下角「示範模式」面板（無敵由 update 裡判斷；這裡只放跳過題目／跳過這波）
+  _initDemo() {
+    if (!window.KeyagentDemo || !KeyagentDemo.isActive()) return;
+    KeyagentDemo.mountBar([
+      { label: '跳過這題', key: 'F2', fn: () => {
+        if (this.state !== 'PLAYING') return;
+        const list = this.enemies.filter(e => !e.dead && !e.isPowerup);
+        if (!list.length) return;
+        const dist = e => e.fromRight ? e.x - BARRICADE_RIGHT_X : BARRICADE_LEFT_X - e.x;
+        list.sort((a, b) => dist(a) - dist(b));
+        this._killEnemy(list[0]);
+      } },
+      { label: '跳過這波', key: 'F3', fn: () => { if (this.state === 'PLAYING') this.waveTimer = 1; } }
+    ]);
+  }
+
   // 中文-文章：照文章次序取下一題（到尾巴就從頭循環）
   _nextArticleItem() {
     const list = this.articleSeq && this.articleSeq[this.menuSelection.difficulty];
@@ -2731,7 +2748,7 @@ class TommyQGame {
         e.x += (e.fromRight ? -1 : 1) * e.speed * (dt / 16);
       } else {
         // Attack barricade for this specific lane
-        b.hp -= 0.03 * (dt / 16);
+        if (!(window.KeyagentDemo && KeyagentDemo.opt('invincible'))) b.hp -= 0.03 * (dt / 16);   // 示範帳號：無敵
         if (b.hp <= 0) {
           b.hp = 0;
           this.player.dead = true;

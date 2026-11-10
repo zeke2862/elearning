@@ -1082,6 +1082,7 @@ window.WordBank = { getStageDefinition, randomSequence, randomVocabWord, randomS
 </script>
 
 <script src="../sync-client.js"></script>
+<script src="../demo-mode.js"></script>
 <script>
 /* ==========================================================================
    data.js
@@ -1733,9 +1734,67 @@ function postToStory(msg){
   const frame = document.getElementById("storyFrame");
   if(frame && frame.contentWindow) frame.contentWindow.postMessage(msg, "*");
 }
+// 示範帳號：全部關卡視為已通關（3 星）、章節全開、GBit 無限，方便老師隨時展示任何一關。
+function demoPrepareSave(){
+  if(!(window.KeyagentDemo && KeyagentDemo.isActive())) return;
+  KeyagentDemo.ensureWallet();
+  CHAPTERS.forEach(ch=>{
+    const cp = getChapterProgress(ch.id);
+    const mark = id=>{
+      const r = cp.levels[id] || (cp.levels[id] = { stars:0, bestWpm:0, bestAcc:0, bestCombo:0, cleared:false, plays:0 });
+      r.cleared = true; r.stars = Math.max(r.stars||0, 3);
+    };
+    ch.levels.forEach(lv=>mark(lv.id));
+    if(ch.bonusLevel) mark(ch.bonusLevel.id);
+  });
+  SAVE.storyClearedChapter = MAX_CHAPTER_ID;
+  SAVE.storyUnlockedChapter = MAX_CHAPTER_ID;
+  if(KeyagentDemo.opt("money")){
+    SAVE.gbitEarnedLifetime = 999999999; SAVE.gbitSpentLifetime = 0; SAVE.gbit = 999999999;
+  }
+  persistSave();
+}
+// 示範面板的三個動作（跳過這題／跳過這波／直接通關），只在塔防進行中有效
+const DemoActions = {
+  skipWord(){
+    if(!Game.running) return;
+    const mob = Game.activeMob || Game.mobs[0];
+    if(!mob) return;
+    const hits = (MOB_TYPES[mob.mobType]||{}).hitsToKill || 1;
+    mob.hitsTaken = hits;           // 下一次 killMob 一定會真的擊殺
+    Game.killMob(mob);
+    Game.activeMob = null;
+    const input = document.getElementById("typingInput");
+    if(input) input.value = "";
+  },
+  skipWave(){
+    if(!Game.running || Game.isEndless || Game.waveBreak) return;
+    Game.mobsSpawnedThisWave = Game.mobsPerWave;      // 這波不再出新怪
+    const list = [...Game.mobs];
+    Game.mobsKilledThisWave = Game.mobsPerWave - list.length;
+    Game.activeMob = null;
+    const input = document.getElementById("typingInput");
+    if(input) input.value = "";
+    if(list.length === 0){ Game.nextWave(); return; }
+    list.forEach(m=>{                                  // 走一般「擊殺」流程，最後一隻會自動換波
+      m.hitsTaken = (MOB_TYPES[m.mobType]||{}).hitsToKill || 1;
+      Game.killMob(m);
+    });
+  },
+  winLevel(){
+    if(!Game.running || Game.isEndless) return;
+    Game.onVictory();
+  }
+};
 function maybeRunBootSequence(){
   if(BOOTED || !SAVE_READY || !CHAPTERS_MERGED) return;
   BOOTED = true;
+  demoPrepareSave();
+  if(window.KeyagentDemo) KeyagentDemo.mountBar([
+    { label:"跳過這題", key:"F2", fn:()=>DemoActions.skipWord() },
+    { label:"跳過這波", key:"F3", fn:()=>DemoActions.skipWave() },
+    { label:"直接通關", key:"F4", fn:()=>DemoActions.winLevel() }
+  ]);
   UI.runBootSequence();
 }
 let _importSaveCb = null;
@@ -2043,6 +2102,7 @@ const Game = {
     this._criticalSince = null;
     const baseStartBit = 50 + (sh.starter_bit||0) * 30;
     this.bit = baseStartBit;
+    if(window.KeyagentDemo && KeyagentDemo.opt("money")) this.bit = 99999;   // 示範帳號：金錢無限
     this.bitBonus = (sh.bit_boost||0) * 2;   // extra Bit per kill
     this.towerDiscount = (sh.tower_discount||0) >= 1 ? 0.85 : 1; // cost multiplier
     this.towerResearch = Object.assign({}, SAVE.towerResearch||{}); // permanent per-tower research levels
@@ -2492,8 +2552,10 @@ const Game = {
       this.activeEffects.shieldCharges--;
       if(window.UI) UI.toast("🛡 數據閘門抵擋了一次漏怪傷害");
     } else {
-      this.hp = Math.max(0, this.hp - 12);
-      this.flashDanger();
+      if(!(window.KeyagentDemo && KeyagentDemo.opt("invincible"))){   // 示範帳號：無敵不扣血
+        this.hp = Math.max(0, this.hp - 12);
+        this.flashDanger();
+      }
     }
     if(this.activeMob && this.activeMob.id === mob.id){
       this.activeMob = null;
@@ -4388,6 +4450,10 @@ const UI = {
 
     document.getElementById("btnNextLevel").style.display = (isEndless || !victory) ? "none" : "inline-block";
     document.getElementById("overlayResult").classList.add("active");
+    // 示範帳號：過關後自動進下一關
+    if(victory && !isEndless && window.KeyagentDemo && KeyagentDemo.opt("autoNext")){
+      setTimeout(()=>{ if(document.getElementById("overlayResult").classList.contains("active")) UI.goNextAfterResult(); }, 1500);
+    }
 
     if(newAch.length>0){
       setTimeout(()=>{
