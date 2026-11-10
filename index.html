@@ -82,6 +82,9 @@ input#codeInput:focus{outline:none;border-color:var(--accent);}
   display:flex;align-items:center;gap:6px;
 }
 .subject-title .subject-ic{font-size:14px;}
+.sub-panel{display:none;}
+.hub.in-panel > *:not(.sub-panel){display:none !important;}
+.sub-panel.open{display:block;}
 .sub-title{font-size:12px;color:var(--accent);margin:14px 0 8px;letter-spacing:.08em;}
 
 .hub-links{display:flex;flex-direction:column;gap:10px;}
@@ -155,7 +158,21 @@ input#codeInput:focus{outline:none;border-color:var(--accent);}
           <div><div class="lbl">MOCC 文書處理檢定</div><div class="desc">Word／Excel 檢定模擬・在家用自己的 Office 作答，網頁直接評分</div></div>
         </a>
       </div>
-      <div class="sub-title">⌨️ 鍵位練習</div>
+      <div class="hub-links" style="margin-top:10px;">
+        <a class="hub-link" href="#" onclick="return openSubPanel('panelKeys');">
+          <div class="ic">⌨️</div>
+          <div><div class="lbl">鍵位練習</div><div class="desc">鍵位特工・輸入法練習・ETP・修仙・末日・射擊遊戲</div></div>
+        </a>
+        <a class="hub-link" href="#" onclick="return openSubPanel('panelTests');">
+          <div class="ic">📝</div>
+          <div><div class="lbl">輸入法檢定</div><div class="desc">英文看打・中文看打</div></div>
+        </a>
+      </div>
+    </div>
+
+    <!-- ====== 電腦科子選單（按下上面按鈕才顯示） ====== -->
+    <div class="sub-panel" id="panelKeys">
+      <div class="subject-title"><span class="subject-ic">⌨️</span>鍵位練習</div>
       <div class="hub-links">
         <a class="hub-link" id="linkTower" href="#">
           <div class="ic">🛡️</div>
@@ -186,7 +203,10 @@ input#codeInput:focus{outline:none;border-color:var(--accent);}
           <div><div class="lbl">中文看打內容練習</div><div class="desc">射擊遊戲・中文看打認字練習</div></div>
         </a>
       </div>
-      <div class="sub-title">📝 輸入法檢定</div>
+      <button class="btn-switch" onclick="closeSubPanel()">← 回上一頁</button>
+    </div>
+    <div class="sub-panel" id="panelTests">
+      <div class="subject-title"><span class="subject-ic">📝</span>輸入法檢定</div>
       <div class="hub-links">
         <a class="hub-link" id="linkLookType" href="#" onclick="return openLookTypeChoice(event);">
           <div class="ic">⌨️</div>
@@ -197,6 +217,7 @@ input#codeInput:focus{outline:none;border-color:var(--accent);}
           <div><div class="lbl">中文看打</div><div class="desc">選擇「練習」或「測驗」</div></div>
         </a>
       </div>
+      <button class="btn-switch" onclick="closeSubPanel()">← 回上一頁</button>
     </div>
 
     <!-- ====== 數學科 ====== -->
@@ -594,6 +615,15 @@ function launchRace(mode) {
 }
 
 
+function openSubPanel(id) {
+  document.getElementById("hubView").classList.add("in-panel");
+  document.getElementById(id).classList.add("open");
+  return false;
+}
+function closeSubPanel() {
+  document.getElementById("hubView").classList.remove("in-panel");
+  document.querySelectorAll(".sub-panel.open").forEach(e => e.classList.remove("open"));
+}
 function showLoginForm() {
   document.getElementById("hubView").classList.remove("active");
   document.getElementById("loginView").style.display = "block";
