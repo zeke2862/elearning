@@ -199,6 +199,9 @@ function mergeOther_(a, b, newerIsA) {
       var hasTs = x.updatedAt !== undefined || y.updatedAt !== undefined;
       var nA = hasTs ? (Number(x.updatedAt) || 0) >= (Number(y.updatedAt) || 0) : newerIsA;
       out[k] = mergeOther_(x, y, nA);
+    } else if (k === "hist" && Array.isArray(x) && Array.isArray(y)) {   // 每次作答紀錄：兩邊合併、依時間排序、保留最近 30 筆
+      var u = {}; x.concat(y).forEach(function (e) { if (e) u[e.at] = e; });
+      out[k] = Object.keys(u).map(function (t) { return u[t]; }).sort(function (p, q) { return p.at - q.at; }).slice(-30);
     } else out[k] = newerIsA ? x : y;
   });
   return out;

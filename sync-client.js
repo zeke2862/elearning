@@ -286,6 +286,10 @@ function keyagentMergeOther(a, b, newerIsA){
       const nA = hasTs ? (Number(x.updatedAt) || 0) >= (Number(y.updatedAt) || 0) : newerIsA;
       out[k] = keyagentMergeOther(x, y, nA);
     }
+    else if (k === "hist" && Array.isArray(x) && Array.isArray(y)) {   // 每次作答紀錄：兩邊合併、依時間排序、保留最近 30 筆
+      const u = {}; x.concat(y).forEach(e => { if (e) u[e.at] = e; });
+      out[k] = Object.values(u).sort((p, q) => p.at - q.at).slice(-30);
+    }
     else out[k] = newerIsA ? x : y;
   });
   return out;

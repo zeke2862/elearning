@@ -76,6 +76,7 @@
         var st = s.stars | 0, tr = s.tries | 0, sc = Math.round(s.psecs || 0);
         if (!st && !tr && !sc && !tq[k]) continue;
         stages[k] = { n: names[k] || '', ch: n, bestStars: st, plays: tr, pSecs: sc, totalQ: tq[k] || 0, totalOk: tok[k] || 0, lastStars: s.lastStars == null ? null : (s.lastStars | 0), lastMode: s.lastMode || '' };
+        if (s.hist && s.hist.length) stages[k].hist = s.hist;   // 每一次作答：at 時間、q 題數、ok 答對、s 秒數、st 星、m 模式
         totalStars += st; totalPlays += tr; pSecs += sc;
       }
       var L = d._last; if (L && L.at > lastAt && stages[L.id]) { lastAt = L.at; lastId = L.id; }

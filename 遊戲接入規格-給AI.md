@@ -154,6 +154,7 @@ function finishRound(r) {
       bestStars: Math.max(s.bestStars || 0, r.stars || 0),
       bestScore: Math.max(s.bestScore || 0, r.score || 0),
       plays: (s.plays || 0) + 1,
+      hist: (s.hist || []).concat([{ at: Date.now(), q: r.total || 0, ok: r.right || 0, s: secs, st: r.stars || 0 }]).slice(-30),   // 每一次的結果（後台點答對率可看）
       totalSecs: (s.totalSecs || 0) + secs,
       totalQ: (s.totalQ || 0) + (r.total || 0),
       totalOk: (s.totalOk || 0) + (r.right || 0)
