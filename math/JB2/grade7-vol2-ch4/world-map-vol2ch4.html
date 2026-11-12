@@ -215,7 +215,8 @@ const KEY='monster-ch4-progress-v1',PERSTAGE=5; // 每關最多 5 星（練兵3 
 const EXP_CORRECT=10,EXP_WRONG=4,LEVEL_STEP=50; // 答對每次+10、答錯每次+4，每50經驗升一級
 let P={};
 /* 練習時間：只算「做完一次（有收到結果）」的時間；頁面不在前景（跳開）的時間不算；中途關閉的那一次整次不算。單次最多 30 分鐘。 */
-let T0=0,ACC=0;
+let T0=0,ACC=0,HS=0,AT={n:0,ok:0};
+function addHist(h,secs,stars,mode){h=Array.isArray(h)?h.slice():[];h.push({at:Date.now(),q:AT.n,ok:AT.ok,s:secs,st:stars,m:mode||''});AT={n:0,ok:0};return h.slice(-30)}
 const ovOpen=()=>!$('#ov').classList.contains('hide');
 function tPause(){if(T0){ACC+=Date.now()-T0;T0=0}}
 function tResume(){if(!T0&&!document.hidden&&ovOpen())T0=Date.now()}
@@ -375,7 +376,7 @@ function stageURL(url,id,endless,mode){
   let cf='';for(const k in K)if(G[K[k]]!==undefined)cf+='&'+k+'='+encodeURIComponent(G[K[k]]);
   return url+(url.includes('?')?'&':'?')+'stars='+st(id)+'&eb='+ebOf(id)+(endless?'&endless=1':(mode?'&mode='+mode:''))+cf+(window.__extra||'');
 }
-function openStage(id,endless,mode){const s=STAGES.find(x=>x.id===id);cur=id;ACC=0;T0=Date.now();closePeek();$('#fr').src=stageURL(s.url,id,endless,mode);$('#ov').classList.remove('hide');}
+function openStage(id,endless,mode){const s=STAGES.find(x=>x.id===id);cur=id;AT={n:0,ok:0};ACC=0;T0=Date.now();closePeek();$('#fr').src=stageURL(s.url,id,endless,mode);$('#ov').classList.remove('hide');}
 const toPxY=i=>toPx(layout(STAGES.length,VIEW.T)[i])[1];
 function closePeek(){$('#peek').classList.add('hide')}
 function openPeek(i){
@@ -428,8 +429,8 @@ $('#x').onclick=closeStage;
 addEventListener('message',e=>{
   if(e.source!==$('#fr').contentWindow)return;
   const d=e.data||{};
-  if(d.type=='stage-result'&&d.id==cur){const o0=P[d.id]||{stars:0,best:0};P[d.id]={...o0,tries:(o0.tries|0)+1,psecs:(o0.psecs||0)+tTake(),lastMode:d.mode||'',lastStars:d.fail?0:(d.stars|0)};P._last={id:d.id,at:Date.now()};save();try{JB2Sync.push()}catch(e){}}
-  if(d.type=='endless-result'&&d.id==cur){const o0=P[d.id]||{stars:0,best:0};P[d.id]={...o0,tries:(o0.tries|0)+1,psecs:(o0.psecs||0)+tTake(),lastMode:'end',lastStars:o0.stars|0};P._last={id:d.id,at:Date.now()};save();try{JB2Sync.push()}catch(e){}}
+  if(d.type=='stage-result'&&d.id==cur){const o0=P[d.id]||{stars:0,best:0};P[d.id]={...o0,tries:(o0.tries|0)+1,psecs:(o0.psecs||0)+(HS=tTake()),hist:addHist(o0.hist,HS,d.fail?0:(d.stars|0),d.mode),lastMode:d.mode||'',lastStars:d.fail?0:(d.stars|0)};P._last={id:d.id,at:Date.now()};save();try{JB2Sync.push()}catch(e){}}
+  if(d.type=='endless-result'&&d.id==cur){const o0=P[d.id]||{stars:0,best:0};P[d.id]={...o0,tries:(o0.tries|0)+1,psecs:(o0.psecs||0)+(HS=tTake()),hist:addHist(o0.hist,HS,o0.stars|0,'end'),lastMode:'end',lastStars:o0.stars|0};P._last={id:d.id,at:Date.now()};save();try{JB2Sync.push()}catch(e){}}
   if(d.type=='stage-result'&&!d.fail&&d.id==cur){
     const r0=rankOf(total())[1],c0=owned().length,old=P[d.id]||{stars:0,best:0},done0=chDone();
     P[d.id]={...old,stars:Math.max(old.stars,d.stars),best:Math.max(old.best,d.score)};save();
@@ -442,7 +443,7 @@ addEventListener('message',e=>{
     if(msg.length)toast(msg.join('<br>'));
   }
   if(d.type=='wave-log'&&typeof d.id=='string'&&typeof d.qtype=='string'){
-    const key=d.id+':'+d.qtype;P._q=P._q||{};const r=P._q[key]||{n:0,ok:0};r.n++;if(d.ok)r.ok++;P._q[key]=r;
+    const key=d.id+':'+d.qtype;P._q=P._q||{};const r=P._q[key]||{n:0,ok:0};r.n++;if(d.ok)r.ok++;P._q[key]=r;if(d.id==cur){AT.n++;if(d.ok)AT.ok++}
     const tid=mainOf()||d.id;
     const old=P[tid]||{stars:0,best:0,exp:0};
     const oldLv=lvOf(old.exp||0);
