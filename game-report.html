@@ -167,7 +167,7 @@ function mk(r, rec) {
   const played = !!rec && (plays > 0 || q > 0);
   return {cls: r.cls, grade: gradeOf(r.cls), seat: r.seat, no: r.no, name: r.name, nick: rec ? String(rec.nick || rec.hero || '') : '', played, rec, st,
     plays, secs: rec ? Math.max(secsOf(rec), Object.keys(st).reduce((a, k) => a + st[k].secs, 0)) : 0, best: rec ? num(rec.bestScore) : 0,
-    acc: q ? ok / q : null, q, ok, at: rec ? (rec._at || num(rec.lastAt)) : 0};
+    acc: q ? ok / q : null, q, ok, flags: rec && Array.isArray(rec._flags) ? rec._flags : [], at: rec ? (rec._at || num(rec.lastAt)) : 0};
 }
 function build() {
   const seen = new Set(), rows = [];
@@ -211,6 +211,7 @@ const stageHead = s => `<th title="${esc((s.ch ? s.ch + '・' : '') + s.id + ' '
 const stageName = id => { const s = STAGES.find(x => x.id === id); return s ? (s.n || id) : id; };
 
 /* ===== 每一次的答對情形（點答對率打開） ===== */
+const flagMark = r => r.flags.length ? ` <span title="${esc(r.flags.slice(0, 8).map(f => stageName(f.sid) + '：' + f.msg).join('\n'))}" style="color:#c0392b">⚠️${r.flags.length}</span>` : '';
 const fmtDay = t => { if (!t) return '—'; const d = new Date(t); return fmtAt(t) + '（週' + '日一二三四五六'[d.getDay()] + '）'; };
 const pct = h => h.q > 0 ? Math.round(h.ok / h.q * 100) : null;
 function histMini(x) {   // 格子裡的小字：每次答對率，例如 25→50→75
@@ -229,7 +230,8 @@ function showHist(no, sid) {
     const ps = hs.map(pct).filter(v => v != null);
     if (ps.length >= 2) h += `<p><b>趨勢：</b>${ps.map(v => v + '%').join(' → ')} ${ps[ps.length - 1] > ps[0] ? '📈 越來越進步' : ps[ps.length - 1] < ps[0] ? '📉 後面比較低' : '➡️ 持平'}</p>`;
     h += '<div class="tw"><table><tr><th>第幾次</th><th>玩的時間（完成當下）</th><th class="l">答對率</th><th>答對／題數</th><th>星</th><th>花費</th></tr>' +
-      hs.map((q, i) => `<tr><td>${i + 1}</td><td>${fmtDay(q.at)}</td><td class="l">${q.q > 0 ? bar(q.ok / q.q) : '—'}</td><td>${q.q > 0 ? q.ok + '/' + q.q : '—'}</td><td>${q.st ? '★'.repeat(Math.min(5, q.st)) : '—'}</td><td>${q.s ? fmtSecs(q.s) : '—'}</td></tr>`).join('') + '</table></div>';
+      hs.map((q, i) => `<tr${q.f ? ' style="background:#fdecea"' : ''} title="${esc((q.f || []).join('、'))}"><td>${i + 1}${q.f ? ' ⚠️' : ''}</td><td>${fmtDay(q.at)}</td><td class="l">${q.q > 0 ? bar(q.ok / q.q) : '—'}</td><td>${q.q > 0 ? q.ok + '/' + q.q : '—'}</td><td>${q.st ? '★'.repeat(Math.min(5, q.st)) : '—'}</td><td>${q.s ? fmtSecs(q.s) : '—'}</td></tr>`).join('') + '</table></div>';
+    if (hs.some(q => q.f)) h += '<p style="color:#c0392b">⚠️ 紅底的是系統覺得不太合理的紀錄（滑鼠移上去看原因），可能是資料被改過，也可能是亂按或程式問題，請老師再確認。</p>';
     if (hs.length < x.plays) h += `<p class="s0">※ 累計玩了 ${x.plays} 次，但逐次紀錄只有 ${hs.length} 筆（更新前的、或超過最近 30 次的不在內）。</p>`;
   }
   $('#hbody').innerHTML = h; $('#hmodal').classList.remove('hide');
@@ -253,7 +255,7 @@ function renderProg() {
   <label>狀態 <select id="st"><option value="">全部</option><option value="p">已玩</option><option value="n">還沒玩</option></select></label>
   <input type="text" id="q" placeholder="搜尋姓名／學號／遊戲內名稱" style="flex:0 1 220px"><button class="b" id="e-prog">⬇️ 匯出 Excel（CSV）</button></div>
   <div class="tw"><table><tr><th class="l">班級</th><th>座號</th><th class="l">姓名</th><th>學號</th><th>遊戲內名稱</th><th>練習次數</th><th>練習時間</th>${anyBest ? '<th>最高分</th>' : ''}<th>整體答對率</th><th>最後更新</th>${STAGES.map(stageHead).join('')}</tr>` +
-    L.map(r => `<tr class="rw" data-no="${esc(r.no)}"><td class="l">${esc(r.cls)}</td><td>${r.seat || ''}</td><td class="l">${esc(r.name || '—')}</td><td>${esc(r.no)}</td><td>${r.nick ? esc(r.nick) : '<span class="s0">—</span>'}</td><td>${r.played ? r.plays : '—'}</td><td>${r.played && r.secs ? fmtShort(r.secs) : '—'}</td>${anyBest ? `<td>${r.best || '—'}</td>` : ''}<td>${r.acc == null ? '—' : Math.round(r.acc * 100) + '%'}</td><td class="s0">${fmtAt(r.at)}</td>${STAGES.map(s => cell(r, s)).join('')}</tr>`).join('') + '</table></div>';
+    L.map(r => `<tr class="rw" data-no="${esc(r.no)}"><td class="l">${esc(r.cls)}</td><td>${r.seat || ''}</td><td class="l">${esc(r.name || '—')}${flagMark(r)}</td><td>${esc(r.no)}</td><td>${r.nick ? esc(r.nick) : '<span class="s0">—</span>'}</td><td>${r.played ? r.plays : '—'}</td><td>${r.played && r.secs ? fmtShort(r.secs) : '—'}</td>${anyBest ? `<td>${r.best || '—'}</td>` : ''}<td>${r.acc == null ? '—' : Math.round(r.acc * 100) + '%'}</td><td class="s0">${fmtAt(r.at)}</td>${STAGES.map(s => cell(r, s)).join('')}</tr>`).join('') + '</table></div>';
   if ($('#vw')) { $('#vw').value = view; $('#vw').onchange = () => { view = $('#vw').value; renderProg(); }; }
   $('#st').value = keep.st; $('#q').value = keep.q;
   $('#st').onchange = renderProg; $('#q').oninput = () => { renderProg(); const q = $('#q'); q.focus(); q.setSelectionRange(q.value.length, q.value.length); };
@@ -286,6 +288,7 @@ function renderOne() {
   let h = `<div class="bar"><label>學生 <select id="who">${L.map((s, k) => `<option value="${k}" ${k === i ? 'selected' : ''}>${esc(s.cls)} ${s.seat || ''} ${esc(s.name || '')}（${esc(s.no)}）${s.played ? '' : '（還沒玩）'}</option>`).join('')}</select></label>`;
   if (!r.played) return $('#v-one').innerHTML = h + '</div><p>這位同學' + (rec ? '只有登入過，還沒有做過任何題目。' : '還沒有任何紀錄。') + '</p>', bindWho(L);
   h += `<b>練習 ${r.plays} 次｜共 ${r.secs ? fmtSecs(r.secs) : '—'}${r.best ? '｜最高分 ' + r.best : ''}｜整體答對率 ${r.acc == null ? '—' : Math.round(r.acc * 100) + '%（' + r.ok + '/' + r.q + '）'}</b></div>`;
+  if (r.flags.length) h += `<p style="color:#c0392b">⚠️ 資料檢查發現 ${r.flags.length} 筆可疑：${esc(r.flags.slice(0, 6).map(f => stageName(f.sid) + '：' + f.msg).join('；'))}</p>`;
   h += `<p>遊戲內名稱：${esc(r.nick) || '—'}　學號：${esc(r.no)}　最後更新：${fmtAt(r.at)}</p>`;
   const sIds = Object.keys(r.st);
   if (STAGES.length) {

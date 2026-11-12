@@ -248,12 +248,42 @@ function gamesReport_(e) {
   return jsonOut_({ success: true, games: games });
 }
 
+// 資料檢查：只「標記」可疑的紀錄（不刪、不改學生的資料），讓後台顯示 ⚠️。
+// 規則：答對題數不可多於題數／一次超過 30 分鐘／時間在未來／兩次作答間隔不到 5 秒／
+//       拿到星卻平均每題不到 1.5 秒／星數超過 5／逐次紀錄比總次數多。
+// 每筆可疑的逐次紀錄會加上 f（原因陣列）；整份紀錄加上 _flags（[{sid, msg}]）。
+function checkRec_(rec) {
+  var now = new Date().getTime(), flags = [];
+  var stages = (rec && rec.stages) || {};
+  Object.keys(stages).forEach(function (sid) {
+    var st = stages[sid] || {};
+    if ((st.totalOk || 0) > (st.totalQ || 0)) flags.push({ sid: sid, msg: "累計答對題數多於作答題數" });
+    if ((st.bestStars || 0) > 5) flags.push({ sid: sid, msg: "星數超過 5" });
+    var hist = Array.isArray(st.hist) ? st.hist : [];
+    if (hist.length > (st.plays || 0) && (st.plays || 0) > 0) flags.push({ sid: sid, msg: "逐次紀錄筆數比總次數多" });
+    var prev = null;
+    hist.forEach(function (h) {
+      if (!h || typeof h !== "object") return;
+      var f = [];
+      if ((h.ok || 0) > (h.q || 0)) f.push("答對題數多於題數");
+      if ((h.s || 0) > 1800) f.push("單次超過 30 分鐘");
+      if ((h.at || 0) > now + 3600000) f.push("時間在未來");
+      if ((h.st || 0) > 5) f.push("星數超過 5");
+      if ((h.st || 0) > 0 && (h.q || 0) >= 5 && (h.s || 0) < (h.q || 0) * 1.5) f.push("拿到星但太快（平均每題不到 1.5 秒）");
+      if (prev && (h.at || 0) - (prev.at || 0) < 5000) f.push("和上一次相隔不到 5 秒");
+      if (f.length) { h.f = f; f.forEach(function (m) { flags.push({ sid: sid, msg: m }); }); }
+      prev = h;
+    });
+  });
+  if (flags.length) rec._flags = flags;
+}
+
 // ?action=game&game=遊戲代號&token=…  → 這款遊戲每位學生「合併後」的最新紀錄
 function gameReport_(e) {
   var scope = tokenScope_(e.parameter.token);
   var g = String(e.parameter.game || "");
   if (!scope || !scopeAllows_(scope, g)) return jsonOut_({ success: false, message: "forbidden" });
   var byNo = (collectGames_(scope, g)[g]) || {};
-  var students = Object.keys(byNo).map(function (no) { return { studentNumber: no, rec: byNo[no] }; });
+  var students = Object.keys(byNo).map(function (no) { checkRec_(byNo[no]); return { studentNumber: no, rec: byNo[no] }; });
   return jsonOut_({ success: true, game: g, generatedAt: new Date().getTime(), students: students });
 }
