@@ -211,6 +211,7 @@ const stageHead = s => `<th title="${esc((s.ch ? s.ch + '・' : '') + s.id + ' '
 const stageName = id => { const s = STAGES.find(x => x.id === id); return s ? (s.n || id) : id; };
 
 /* ===== 每一次的答對情形（點答對率打開） ===== */
+const fmtDay = t => { if (!t) return '—'; const d = new Date(t); return fmtAt(t) + '（週' + '日一二三四五六'[d.getDay()] + '）'; };
 const pct = h => h.q > 0 ? Math.round(h.ok / h.q * 100) : null;
 function histMini(x) {   // 格子裡的小字：每次答對率，例如 25→50→75
   const hs = (x.hist || []).filter(h => h.q > 0); if (!hs.length) return '';
@@ -227,8 +228,8 @@ function showHist(no, sid) {
   else {
     const ps = hs.map(pct).filter(v => v != null);
     if (ps.length >= 2) h += `<p><b>趨勢：</b>${ps.map(v => v + '%').join(' → ')} ${ps[ps.length - 1] > ps[0] ? '📈 越來越進步' : ps[ps.length - 1] < ps[0] ? '📉 後面比較低' : '➡️ 持平'}</p>`;
-    h += '<div class="tw"><table><tr><th>第幾次</th><th>時間</th><th class="l">答對率</th><th>答對／題數</th><th>星</th><th>花費</th></tr>' +
-      hs.map((q, i) => `<tr><td>${i + 1}</td><td class="s0">${fmtAt(q.at)}</td><td class="l">${q.q > 0 ? bar(q.ok / q.q) : '—'}</td><td>${q.q > 0 ? q.ok + '/' + q.q : '—'}</td><td>${q.st ? '★'.repeat(Math.min(5, q.st)) : '—'}</td><td>${q.s ? fmtSecs(q.s) : '—'}</td></tr>`).join('') + '</table></div>';
+    h += '<div class="tw"><table><tr><th>第幾次</th><th>玩的時間（完成當下）</th><th class="l">答對率</th><th>答對／題數</th><th>星</th><th>花費</th></tr>' +
+      hs.map((q, i) => `<tr><td>${i + 1}</td><td>${fmtDay(q.at)}</td><td class="l">${q.q > 0 ? bar(q.ok / q.q) : '—'}</td><td>${q.q > 0 ? q.ok + '/' + q.q : '—'}</td><td>${q.st ? '★'.repeat(Math.min(5, q.st)) : '—'}</td><td>${q.s ? fmtSecs(q.s) : '—'}</td></tr>`).join('') + '</table></div>';
     if (hs.length < x.plays) h += `<p class="s0">※ 累計玩了 ${x.plays} 次，但逐次紀錄只有 ${hs.length} 筆（更新前的、或超過最近 30 次的不在內）。</p>`;
   }
   $('#hbody').innerHTML = h; $('#hmodal').classList.remove('hide');
