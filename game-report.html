@@ -258,8 +258,8 @@ function renderProg() {
   $('#st').onchange = renderProg; $('#q').oninput = () => { renderProg(); const q = $('#q'); q.focus(); q.setSelectionRange(q.value.length, q.value.length); };
   $('#v-prog').querySelectorAll('tr.rw').forEach(tr => tr.onclick = () => { oneNo = tr.dataset.no; tab = 'one'; render(); });
   bindHist('#v-prog');
-  $('#e-prog').onclick = () => download(($('#game').value || '遊戲') + '_班級進度表.csv', toCSV([['班級', '座號', '學號', '姓名', '遊戲內名稱', '練習次數', '練習秒數', '最高分', '整體答對率(%)', '最後更新'].concat(...STAGES.map(s => [stageName(s.id) + ' 星', stageName(s.id) + ' 最高分', stageName(s.id) + ' 次數', stageName(s.id) + ' 答對率(%)', stageName(s.id) + ' 練習秒數'])),
-    ...L.map(r => [r.cls, r.seat || '', r.no, r.name, r.nick, r.played ? r.plays : '', r.played ? r.secs : '', r.best || '', r.acc == null ? '' : Math.round(r.acc * 100), r.at ? new Date(r.at).toLocaleString('zh-TW', {hour12: false}) : ''].concat(...STAGES.map(s => { const x = r.st[s.id]; return x ? [x.bestStars || '', x.bestScore || '', x.plays || '', x.q ? Math.round(x.ok / x.q * 100) : '', x.secs || ''] : ['', '', '', '', '']; })))]));
+  $('#e-prog').onclick = () => download(($('#game').value || '遊戲') + '_班級進度表.csv', toCSV([['班級', '座號', '學號', '姓名', '遊戲內名稱', '練習次數', '練習秒數', '最高分', '整體答對率(%)', '最後更新'].concat(...STAGES.map(s => [stageName(s.id) + ' 星', stageName(s.id) + ' 最高分', stageName(s.id) + ' 次數', stageName(s.id) + ' 答對率(%)', stageName(s.id) + ' 練習秒數', stageName(s.id) + ' 每次答對率'])),
+    ...L.map(r => [r.cls, r.seat || '', r.no, r.name, r.nick, r.played ? r.plays : '', r.played ? r.secs : '', r.best || '', r.acc == null ? '' : Math.round(r.acc * 100), r.at ? new Date(r.at).toLocaleString('zh-TW', {hour12: false}) : ''].concat(...STAGES.map(s => { const x = r.st[s.id]; return x ? [x.bestStars || '', x.bestScore || '', x.plays || '', x.q ? Math.round(x.ok / x.q * 100) : '', x.secs || '', (x.hist || []).filter(h => h.q > 0).map(h => pct(h) + '%').join(' → ')] : ['', '', '', '', '', '']; })))]));
 }
 
 /* ===== 題型弱點（有 q 欄位的遊戲才有） ===== */
