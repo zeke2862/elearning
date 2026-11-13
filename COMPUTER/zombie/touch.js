@@ -7,7 +7,7 @@
 (function () {
   'use strict';
 
-  const W = 916, H = 500;                       // 遊戲畫面的原始大小（跟 game.js 一致）
+  const dim = () => { const c = $('gameCanvas'); return { W: (c && c.width) || 916, H: (c && c.height) || 500 }; };   // 畫面大小（精簡版會變矮）
   const LS_KEY = 'zombieTyping_touchMode';      // 'on' | 'off'：使用者手動選的觸控版面
   const KB_ROWS = ['qwertyuiop[]', 'asdfghjkl;', 'zxcvbnm,./'];
   const ROW_HINT = { home_row: 'asdfghjkl;', top_row: 'qwertyuiop[]', bottom_row: 'zxcvbnm,./' };
@@ -152,11 +152,11 @@
       w = sw;
     } else {
       const sh = slot.clientHeight - padY;
-      w = Math.min(sw, sh * W / H);
+      const d = dim(); w = Math.min(sw, sh * d.W / d.H);
     }
     w = Math.max(120, Math.floor(w));
     wrap.style.width = w + 'px';
-    wrap.style.height = Math.floor(w * H / W) + 'px';
+    { const d = dim(); wrap.style.height = Math.floor(w * d.H / d.W) + 'px'; }
     fitPad();
   }
 
@@ -306,6 +306,13 @@
     if (!g) return;
 
     // 觸控版面是開的 → 同步畫面；沒開 → 全部收起來
+    // 手機：玩的時候用「2 道精簡版」，回到主選單就恢復（畫面比較大）
+    const wantCompact = touchOn && g.state !== 'MENU';
+    if (!!g.compact !== wantCompact) g.setCompact(wantCompact);
+    if (body.classList.contains('tc-compact') !== !!g.compact) {
+      body.classList.toggle('tc-compact', !!g.compact);
+      fit();
+    }
     const cat = g.menuSelection.category;
     const article = cat === 'chinese_article';
     const portrait = isPortrait();

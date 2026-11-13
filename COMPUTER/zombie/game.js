@@ -1364,9 +1364,9 @@ class SpriteManager {
 }
 
 // ── Constants ────────────────────────────────────────────────
-const W = 916, H = 500;
-const LANE_COUNT = 5;
-const LANE_Y = (lane) => 120 + (lane - 1) * 72;
+let W = 916, H = 500;   // H 在手機精簡版會變小（見 setCompact）
+let LANE_COUNT = 5, LANE_BASE = 120, LANE_STEP = 72;
+const LANE_Y = (lane) => LANE_BASE + (lane - 1) * LANE_STEP;
 const BARRICADE_LEFT_X = 200;
 const BARRICADE_RIGHT_X = 716;
 // 怪物出現的節奏：起步比較慢（一隻一隻慢慢來），過關後才會逐漸加快
@@ -1581,7 +1581,7 @@ class TommyQGame {
     for (let i = 0; i < 8; i++) {
       this.menuBgZombies.push({
         x: Math.random() * W,
-        y: LANE_Y(Math.floor(Math.random() * 5) + 1),
+        y: LANE_Y(Math.floor(Math.random() * LANE_COUNT) + 1),
         type: Math.floor(Math.random() * 5) + 1,
         speed: (Math.random() * 0.3 + 0.2) * (Math.random() > 0.5 ? 1 : -1),
         bob: Math.random() * Math.PI * 2,
@@ -1626,6 +1626,18 @@ class TommyQGame {
       localStorage.setItem('zombieTyping_kbVisible', this.kbVisible ? '1' : '0');
       localStorage.setItem('zombieTyping_kbScale', String(this.kbScale));
     } catch (e) { /* storage unavailable — ignore */ }
+  }
+
+  // 手機精簡版：只剩 2 道、畫面變矮，這樣整個畫面可以放大（只能在主選單切換）
+  setCompact(on) {
+    if (!!on === !!this.compact) return false;
+    LANE_COUNT = on ? 2 : 5;
+    LANE_BASE = on ? 118 : 120;
+    LANE_STEP = on ? 96 : 72;
+    H = on ? 330 : 500;
+    this.canvas.height = H;
+    this.compact = !!on;
+    return true;
   }
 
   // ── Input ────────────────────────────────────────────────
@@ -1746,7 +1758,7 @@ class TommyQGame {
     if (e.key === 'ArrowUp' && p.lane > 1) {
       p.lane--;
       this.targetedEnemies = [];
-    } else if (e.key === 'ArrowDown' && p.lane < 5) {
+    } else if (e.key === 'ArrowDown' && p.lane < LANE_COUNT) {
       p.lane++;
       this.targetedEnemies = [];
     } else if (e.key === 'ArrowLeft' && p.dir > 0) {
@@ -1884,6 +1896,7 @@ class TommyQGame {
 
   // ── Game Start / Reset ───────────────────────────────────
   _startGame(resume = false) {
+    this.setCompact(document.body.classList.contains('touch-mode'));   // 手機：2 道精簡版
     if (this.menuSelection.category === 'english_article') {
       const selected = window.articleManager ? window.articleManager.getSelectedArticles('en') : [];
       if (selected.length === 0) {
@@ -1950,7 +1963,7 @@ class TommyQGame {
     this.candidatePage = 0;
     this.audio.init();
     this.state = 'PLAYING';
-    this.player = { lane: 3, dir: 1, dead: false, shootAnim: 0 };
+    this.player = { lane: Math.ceil(LANE_COUNT / 2), dir: 1, dead: false, shootAnim: 0 };
     this.enemies = [];
     this.powerupItems = [];
     this.projectiles = [];
@@ -2475,7 +2488,7 @@ class TommyQGame {
 
   // ── Spawn ────────────────────────────────────────────────
   _spawnZombie() {
-    const lane = Math.floor(Math.random() * 5) + 1;
+    const lane = Math.floor(Math.random() * LANE_COUNT) + 1;
     const fromRight = Math.random() > 0.5;
     const type = Math.floor(Math.random() * 5) + 1;
     const wordItem = this._getUniqueWord(true);
@@ -2512,7 +2525,7 @@ class TommyQGame {
   }
 
   _spawnPowerup() {
-    const lane = Math.floor(Math.random() * 5) + 1;
+    const lane = Math.floor(Math.random() * LANE_COUNT) + 1;
     const fromRight = Math.random() > 0.5;
     const types = ['ice', 'bomb', 'book'];
     const powerType = types[Math.floor(Math.random() * types.length)];
@@ -2926,7 +2939,7 @@ class TommyQGame {
   }
 
   _drawLanes(ctx) {
-    for (let i = 1; i <= 5; i++) {
+    for (let i = 1; i <= LANE_COUNT; i++) {
       const y = LANE_Y(i);
       ctx.fillStyle = i % 2 === 0 ? 'rgba(255,255,255,0.015)' : 'rgba(0,0,0,0.02)';
       ctx.fillRect(0, y - 36, W, 72);
@@ -3023,7 +3036,7 @@ class TommyQGame {
     ctx.fillStyle = 'rgba(255,255,255,0.4)';
     ctx.font = '10px sans-serif';
     if (p.lane > 1) ctx.fillText('▲', px + 35 * p.dir, py - 20);
-    if (p.lane < 5) ctx.fillText('▼', px + 35 * p.dir, py + 15);
+    if (p.lane < LANE_COUNT) ctx.fillText('▼', px + 35 * p.dir, py + 15);
     ctx.restore();
   }
 

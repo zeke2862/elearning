@@ -89,5 +89,28 @@
     });
     document.addEventListener('focusout', function () { setTimeout(function () { if (!/^(INPUT|TEXTAREA)$/.test((document.activeElement || {}).tagName || '')) btn.style.display = ''; }, 50); });
   }
-  if (document.body) build(); else document.addEventListener('DOMContentLoaded', build);
+  /* ===== 全螢幕：手機上第一次點畫面就自動全螢幕＋橫放；右下角也有「⛶ 全螢幕」按鈕 ===== */
+  function isFull() { return !!(document.fullscreenElement || document.webkitFullscreenElement); }
+  function goFull() {
+    var el = document.documentElement, p = null;
+    try {
+      if (el.requestFullscreen) p = el.requestFullscreen({ navigationUI: 'hide' });
+      else if (el.webkitRequestFullscreen) p = el.webkitRequestFullscreen();
+    } catch (e) {}
+    function lock() { try { if (screen.orientation && screen.orientation.lock) screen.orientation.lock('landscape').catch(function () {}); } catch (e) {} }
+    if (p && p.then) p.then(lock, function () {}); else lock();
+  }
+  function exitFull() { try { (document.exitFullscreen || document.webkitExitFullscreen).call(document); } catch (e) {} }
+  var autoDone = false;
+  function buildFull() {
+    var fb = document.createElement('button');
+    fb.type = 'button'; fb.id = 'mobileFullBtn'; fb.textContent = '⛶ 全螢幕';
+    fb.style.cssText = 'position:fixed;right:10px;bottom:62px;z-index:2147483001;padding:10px 14px;font-size:16px;font-weight:700;border-radius:999px;border:2px solid #fff;background:rgba(20,20,40,.88);color:#fff;touch-action:manipulation;';
+    fb.addEventListener('pointerdown', function (e) { e.preventDefault(); if (isFull()) exitFull(); else goFull(); });
+    document.body.appendChild(fb);
+    function sync() { fb.textContent = isFull() ? '✕ 離開全螢幕' : '⛶ 全螢幕'; }
+    document.addEventListener('fullscreenchange', sync); document.addEventListener('webkitfullscreenchange', sync);
+    document.addEventListener('pointerup', function () { if (!autoDone && !isFull()) { autoDone = true; goFull(); } }, true);
+  }
+  if (document.body) { build(); buildFull(); } else document.addEventListener('DOMContentLoaded', function () { build(); buildFull(); });
 })();

@@ -728,7 +728,7 @@ const ship = {
   shieldFlash: 0,
   attack: 0,
   get cx() { return canvas.width / 2 - Math.min(200, canvas.width * 0.22); },   // 勇者站在輸入框左邊，不被擋住
-  get cy() { return canvas.height - (showKeyboard ? 220 : 80); }
+  get cy() { return canvas.height - (showKeyboard ? (IS_TOUCH && KB_H ? KB_H + 16 : 220) : 80); }
 };
 
 // ── Enemy Class ────────────────────────────────
@@ -1385,9 +1385,12 @@ function buildKeyboard() {
   const container = document.getElementById('onscreenKB');
   container.innerHTML = '';
 
-  for (const row of KB_LAYOUT) {
+  KB_LAYOUT.forEach((row, ri) => {
+    if (IS_TOUCH && ri === 0 && !['symbols', 'mixed'].includes(category)) return;   // 手機：不用數字時，省掉最上面那排，畫面比較大
     const rowDiv = document.createElement('div');
     rowDiv.className = 'kb-row';
+    const addAct = (label, act) => { const k = document.createElement('div'); k.className = 'kb-key wide kb-act'; k.dataset.act = act; k.textContent = label; rowDiv.appendChild(k); return k; };
+    if (IS_TOUCH && row.keys[0] === 'Space') addAct('⇧', 'Shift');
     for (let i = 0; i < row.keys.length; i++) {
       const key = row.keys[i];
       const finger = row.fingers[i];
@@ -1409,9 +1412,50 @@ function buildKeyboard() {
 
       rowDiv.appendChild(keyEl);
     }
+    if (IS_TOUCH && row.keys[0] === 'Space') { addAct('⌫', 'Backspace'); addAct('↵', 'Enter'); }
     container.appendChild(rowDiv);
-  }
+  });
+  updateKbMetrics();
 }
+
+// 小鍵盤實際高度：讓打字列、答題區、玩家位置都避開它
+let KB_H = 0;
+function updateKbMetrics() {
+  const kb = document.getElementById('onscreenKB');
+  KB_H = (kb && kb.style.display !== 'none') ? kb.offsetHeight : 0;
+  document.documentElement.style.setProperty('--kbh', KB_H + 'px');
+}
+window.addEventListener('resize', () => setTimeout(updateKbMetrics, 100));
+
+// ── 手機：直接點「提示小鍵盤」就能打字，不需要再叫出手機的鍵盤 ──
+const IS_TOUCH = (() => { try { return matchMedia('(pointer: coarse)').matches || (matchMedia('(hover: none)').matches && navigator.maxTouchPoints > 0); } catch (e) { return false; } })();
+let touchShift = false;
+const SHIFT_MAP = { '`':'~','1':'!','2':'@','3':'#','4':'$','5':'%','6':'^','7':'&','8':'*','9':'(','0':')','-':'_','=':'+','[':'{',']':'}','\\':'|',';':':',"'":'"',',':'<','.':'>','/':'?' };
+function tapKeyToGame(keyEl) {
+  const act = keyEl.dataset.act;
+  if (act === 'Shift') { touchShift = !touchShift; keyEl.classList.toggle('shift-on', touchShift); return; }
+  let key = act || keyEl.dataset.key;
+  if (!act) {
+    if (key === 'Space') key = ' ';
+    else if (/^[A-Za-z]$/.test(key)) key = touchShift ? key.toUpperCase() : key.toLowerCase();
+    else if (touchShift && SHIFT_MAP[key]) key = SHIFT_MAP[key];
+    if (touchShift) { touchShift = false; document.querySelectorAll('.kb-act.shift-on').forEach(k => k.classList.remove('shift-on')); }
+  }
+  window.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true }));
+}
+(function bindTouchKeyboard() {
+  const kb = document.getElementById('onscreenKB');
+  if (!kb || !IS_TOUCH) return;
+  kb.addEventListener('pointerdown', e => {
+    const k = e.target.closest('.kb-key');
+    if (!k) return;
+    e.preventDefault();
+    k.classList.add('tap');
+    setTimeout(() => k.classList.remove('tap'), 120);
+    tapKeyToGame(k);
+  });
+  ['mousedown', 'touchstart'].forEach(t => kb.addEventListener(t, e => { if (e.target.closest('.kb-key')) e.preventDefault(); }, { passive: false }));
+})();
 
 function isKeyInCategory(key) {
   const set = CAT_KEYS[category];
@@ -1443,6 +1487,7 @@ function setKeyboardVisible(visible) {
   kb.style.display = visible ? 'flex' : 'none';
   btn.classList.toggle('active', visible);
   document.body.classList.toggle('kb-visible', visible);
+  updateKbMetrics();
 }
 
 // ── Typing Logic ───────────────────────────────
@@ -1682,6 +1727,10 @@ function startGame(resume = false) {
       kbBtn.style.display = 'block';
       buildKeyboard();
       // Start with keyboard visible for beginners by default
+      setKeyboardVisible(true);
+    } else if (IS_TOUCH) {          // 手機：進階模式也要有小鍵盤可以點
+      kbBtn.style.display = 'block';
+      buildKeyboard();
       setKeyboardVisible(true);
     } else {
       kbBtn.style.display = 'none';
