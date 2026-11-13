@@ -219,7 +219,7 @@ const EXP_CORRECT=10,EXP_WRONG=4,LEVEL_STEP=50; // 答對每次+10、答錯每�
 let P={};
 /* 練習時間：只算「做完一次（有收到結果）」的時間；頁面不在前景（跳開）的時間不算；中途關閉的那一次整次不算。單次最多 30 分鐘。 */
 let T0=0,ACC=0,HS=0,AT={n:0,ok:0};
-function addHist(h,secs,stars,mode,d){h=Array.isArray(h)?h.slice():[];const hasT=d&&Number.isFinite(d.total)&&d.total>0;h.push({at:Date.now(),q:hasT?d.total:AT.n,ok:hasT?(d.right|0):AT.ok,s:secs,st:stars,m:mode||''});AT={n:0,ok:0};return h.slice(-30)}
+function addHist(h,secs,stars,mode,d){h=Array.isArray(h)?h.slice():[];const hasT=d&&Number.isFinite(d.total)&&d.total>0&&!(d.fail&&AT.n>0);   /* 失敗的那一局：用實際作答的題數 */h.push({at:Date.now(),q:hasT?d.total:AT.n,ok:hasT?(d.right|0):AT.ok,s:secs,st:stars,m:mode||''});AT={n:0,ok:0};return h.slice(-30)}
 const ovOpen=()=>!$('#ov').classList.contains('hide');
 function tPause(){if(T0){ACC+=Date.now()-T0;T0=0}}
 function tResume(){if(!T0&&!document.hidden&&ovOpen())T0=Date.now()}
@@ -427,7 +427,10 @@ $('#cm-close').onclick=closeCard;
 $('#cm-main').onclick=e=>{const id=e.currentTarget.dataset.id;if(id)toggleMain(id);};
 $('#card-modal').onclick=e=>{if(e.target.id==='card-modal')closeCard();};
 addEventListener('keydown',e=>{if(e.key==='Escape'){closeCard();closePeek();sideOpen(false)}});
-function closeStage(){tDrop();$('#ov').classList.add('hide');$('#fr').src='about:blank';render()}
+/* 中途離開：已經答了題目的那一局，也算 1 次練習、時間照算（標記為 part） */
+function commitPartial(){if(!cur||!AT.n||$('#ov').classList.contains('hide'))return;const o0=P[cur]||{stars:0,best:0};HS=tTake();P[cur]={...o0,tries:(o0.tries|0)+1,psecs:(o0.psecs||0)+HS,hist:addHist(o0.hist,HS,0,'part',{}),lastMode:'part',lastStars:o0.lastStars==null?0:o0.lastStars};P._last={id:cur,at:Date.now()};save();try{JB2Sync.push()}catch(e){}}
+addEventListener('pagehide',commitPartial);
+function closeStage(){commitPartial();tDrop();$('#ov').classList.add('hide');$('#fr').src='about:blank';render()}
 $('#x').onclick=closeStage;
 addEventListener('message',e=>{
   if(e.source!==$('#fr').contentWindow)return;
