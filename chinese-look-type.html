@@ -1285,6 +1285,20 @@ function onLineKeydown(e) {
     focusLine(idx + 1);
     return;
   }
+  // Tab＝段落開頭的縮排：在游標處打入全形空格（原文開頭是幾個就補幾個，沒有就預設 2 個），
+  // 不讓瀏覽器把游標跳去下一行。
+  if (e.key === 'Tab') {
+    e.preventDefault();
+    if (e.shiftKey) return;
+    const el = e.target, v = el.value, pos = el.selectionStart;
+    const need = ((originalLines[idx] || '').match(/^　+/) || ['　　'])[0];
+    const have = (v.match(/^　*/) || [''])[0].length;
+    const add = (pos <= have) ? need.slice(0, Math.max(0, need.length - have)) || '' : '　　';
+    if (!add) return;
+    el.setRangeText(add, pos, el.selectionEnd, 'end');
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+    return;
+  }
   // 自動跳行之後，學生常會想退回上一行看看：在行首按 Backspace 就把游標移回上一行行尾
   // （只移動游標，不會刪掉上一行的字，避免誤刪整行）
   if (e.key === 'Backspace' && idx > 0 && e.target.selectionStart === 0 && e.target.selectionEnd === 0) {
