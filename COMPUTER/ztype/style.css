@@ -826,3 +826,26 @@ body.kb-visible .kb-toggle-btn {
   }
   body.kb-visible .kb-toggle-btn { bottom: 162px; }
 }
+
+/* 手機：提示小鍵盤可以直接點 */
+body .kb-key { touch-action: manipulation; user-select: none; -webkit-user-select: none; }
+@media (pointer: coarse) {
+  .kb-key { cursor: pointer; height: 38px; font-size: 16px; color: rgba(225,238,250,.95); }
+  .kb-key.tap { background: rgba(0,245,255,.45); color: #001; }
+  .kb-key.shift-on { background: #ffd34d; color: #111; }
+  .kb-act { min-width: 80px; }
+}
+@media (pointer: coarse) and (max-height: 650px) {
+  .kb-key { height: 27px; min-width: 34px; font-size: 13px; }
+  .kb-act { min-width: 56px; }
+  .onscreen-kb { padding: 3px 0 4px; gap: 2px; }
+}
+@media (pointer: coarse) {
+  .kb-toggle-btn { display: none !important; }   /* 手機：小鍵盤一直在，不需要開關鈕（它還會蓋到按鍵） */
+  body.kb-visible #typingBar { bottom: calc(var(--kbh, 200px) + 96px); }
+  body.kb-visible .answer-panel { bottom: calc(var(--kbh, 200px) + 8px); }
+  .kb-key { height: 36px; }
+}
+@media (pointer: coarse) and (max-height: 650px) {
+  .kb-key { height: 27px; }
+}
