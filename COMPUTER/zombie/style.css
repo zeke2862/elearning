@@ -738,8 +738,8 @@ body.touch-mode .tc-keyboard {
     padding: 4px 4px 6px;
     width: 100%;
 }
-.tc-krow-zh { display: none; }
-body.tc-zh .tc-krow-zh { display: flex; }
+.tc-krow.tc-krow-zh { display: none; }
+body.tc-zh .tc-krow.tc-krow-zh { display: flex; }
 .tc-krow { display: flex; gap: 4px; justify-content: center; }
 .tc-krow1 { padding: 0 3%; }
 .tc-krow2 { padding: 0 8%; }
@@ -943,3 +943,18 @@ body.tc-landscape .tc-opt { min-height: 46px; font-size: 1.15rem; }
 body.tc-landscape .tc-play { height: 52px; font-size: 1.4rem; }
 body.tc-landscape .tc-mini { min-height: 38px; font-size: 0.9rem; }
 body.tc-landscape .tc-menu-note { font-size: 0.95rem; }
+
+/* ===== 手機橫放：2 道精簡版，畫面放最大，按鍵半透明浮在上面 ===== */
+body.touch-mode.tc-landscape.tc-compact .canvas-slot { position: fixed; inset: 0; padding: 0; z-index: 1; }
+body.touch-mode.tc-landscape.tc-compact .canvas-wrapper { border-radius: 0; }
+body.touch-mode.tc-landscape.tc-compact .tc-keyboard {
+    position: fixed; left: 50%; bottom: 2px; transform: translateX(-50%);
+    width: min(62vw, 640px); z-index: 6; gap: 3px; padding: 3px;
+    --key-h: clamp(22px, 6.6vh, 32px);
+    background: rgba(8, 8, 24, 0.38); border-radius: 10px;
+}
+body.touch-mode.tc-landscape.tc-compact .tc-keyboard .tc-key { background: rgba(255, 255, 255, 0.16); border-color: rgba(255, 255, 255, 0.3); }
+body.touch-mode.tc-landscape.tc-compact .tc-side { position: fixed; z-index: 6; bottom: 4px; padding: 0; }
+body.touch-mode.tc-landscape.tc-compact .tc-left  { right: 6px; left: auto; --pad: clamp(28px, 9vh, 40px); }
+body.touch-mode.tc-landscape.tc-compact .tc-right { left: 6px; right: auto; width: clamp(110px, 17vw, 160px); }
+body.touch-mode.tc-landscape.tc-compact .tc-action { height: clamp(34px, 10vh, 46px); }
