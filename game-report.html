@@ -74,7 +74,7 @@ td.hh{cursor:pointer;text-decoration:underline dotted}td.hh:hover{outline:2px so
 <section id="v-prog" class="card"></section>
 <section id="v-weak" class="card hide"></section>
 <section id="v-one" class="card hide"></section>
-<p class="msg">「已玩」＝練習次數大於 0，或有作答過題目。「練習時間」由各遊戲自己計算（建議只算玩完一局的時間）。「答對率」是該學生在這一關累積作答的答對題數 ÷ 作答題數。表格會依各遊戲實際送來的欄位自動調整，沒有的欄位不會顯示。</p>
+<p class="msg">「已玩」＝練習次數大於 0，或有作答過題目。「練習時間」由各遊戲自己計算（數學 JB2：玩完一局、或答了題目才中途離開，都算 1 次，時間照算；一題都沒答就離開不算）。「答對率」是該學生在這一關累積作答的答對題數 ÷ 作答題數。表格會依各遊戲實際送來的欄位自動調整，沒有的欄位不會顯示。</p>
 </main>
 
 <div id="hmodal" class="hide" style="position:fixed;inset:0;background:#0007;z-index:50;display:flex;align-items:center;justify-content:center;padding:16px" onclick="if(event.target===this)this.classList.add('hide')"><div style="background:#fff;color:#222;max-width:640px;width:100%;max-height:85vh;overflow:auto;border-radius:12px;padding:16px"><button class="b" style="float:right" onclick="document.getElementById('hmodal').classList.add('hide')">✖ 關閉</button><div id="hbody"></div></div></div>
@@ -230,7 +230,7 @@ function showHist(no, sid) {
     const ps = hs.map(pct).filter(v => v != null);
     if (ps.length >= 2) h += `<p><b>趨勢：</b>${ps.map(v => v + '%').join(' → ')} ${ps[ps.length - 1] > ps[0] ? '📈 越來越進步' : ps[ps.length - 1] < ps[0] ? '📉 後面比較低' : '➡️ 持平'}</p>`;
     h += '<div class="tw"><table><tr><th>第幾次</th><th>玩的時間（完成當下）</th><th class="l">答對率</th><th>答對／題數</th><th>星</th><th>花費</th></tr>' +
-      hs.map((q, i) => `<tr${q.f ? ' style="background:#fdecea"' : ''} title="${esc((q.f || []).join('、'))}"><td>${i + 1}${q.f ? ' ⚠️' : ''}</td><td>${fmtDay(q.at)}</td><td class="l">${q.q > 0 ? bar(q.ok / q.q) : '—'}</td><td>${q.q > 0 ? q.ok + '/' + q.q : '—'}</td><td>${q.st ? '★'.repeat(Math.min(5, q.st)) : '—'}</td><td>${q.s ? fmtSecs(q.s) : '—'}</td></tr>`).join('') + '</table></div>';
+      hs.map((q, i) => `<tr${q.f ? ' style="background:#fdecea"' : ''} title="${esc((q.f || []).join('、'))}"><td>${i + 1}${q.f ? ' ⚠️' : ''}</td><td>${fmtDay(q.at)}</td><td class="l">${q.q > 0 ? bar(q.ok / q.q) : '—'}</td><td>${q.q > 0 ? q.ok + '/' + q.q : '—'}</td><td>${q.m === 'part' ? '中途離開' : q.st ? '★'.repeat(Math.min(5, q.st)) : '—'}</td><td>${q.s ? fmtSecs(q.s) : '—'}</td></tr>`).join('') + '</table></div>';
     if (hs.some(q => q.f)) h += '<p style="color:#c0392b">⚠️ 紅底的是系統覺得不太合理的紀錄（滑鼠移上去看原因），可能是資料被改過，也可能是亂按或程式問題，請老師再確認。</p>';
     if (hs.length < x.plays) h += `<p class="s0">※ 累計玩了 ${x.plays} 次，但逐次紀錄只有 ${hs.length} 筆（更新前的、或超過最近 30 次的不在內）。</p>`;
   }

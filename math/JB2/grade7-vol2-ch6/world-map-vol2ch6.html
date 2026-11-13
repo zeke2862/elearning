@@ -419,7 +419,10 @@ $('#cm-close').onclick=closeCard;
 $('#cm-main').onclick=e=>{const id=e.currentTarget.dataset.id;if(id)toggleMain(id);};
 $('#card-modal').onclick=e=>{if(e.target.id==='card-modal')closeCard();};
 addEventListener('keydown',e=>{if(e.key==='Escape'){closeCard();closePeek();sideOpen(false)}});
-function closeStage(){tDrop();$('#ov').classList.add('hide');$('#fr').src='about:blank';render()}
+/* 中途離開：已經答了題目的那一局，也算 1 次練習、時間照算（標記為 part） */
+function commitPartial(){if(!cur||!AT.n||$('#ov').classList.contains('hide'))return;const o0=P[cur]||{stars:0,best:0};HS=tTake();P[cur]={...o0,tries:(o0.tries|0)+1,psecs:(o0.psecs||0)+HS,hist:addHist(o0.hist,HS,0,'part',{}),lastMode:'part',lastStars:o0.lastStars==null?0:o0.lastStars};P._last={id:cur,at:Date.now()};save();try{JB2Sync.push()}catch(e){}}
+addEventListener('pagehide',commitPartial);
+function closeStage(){commitPartial();tDrop();$('#ov').classList.add('hide');$('#fr').src='about:blank';render()}
 $('#x').onclick=closeStage;
 addEventListener('message',e=>{
   if(e.source!==$('#fr').contentWindow)return;
