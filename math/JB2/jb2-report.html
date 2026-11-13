@@ -20,10 +20,16 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid 
 select,input[type=number],input[type=text],input[type=password]{background:var(--ink2);border:2px solid var(--line);border-radius:8px;padding:7px 10px}
 input[type=text],input[type=password]{flex:1 1 260px;min-width:0}
 .card{background:var(--ink2);border:2px solid var(--line);border-radius:12px;padding:14px;margin-top:12px}
-.tw{overflow-x:auto}
-table{border-collapse:collapse;width:100%;font-size:.9rem}
-th,td{border:1px solid var(--line);padding:6px 8px;text-align:center;white-space:nowrap}
-th{background:#252c56;position:sticky;top:0}
+.tw{overflow:auto;max-height:78vh}
+table{border-collapse:separate;border-spacing:0;width:100%;font-size:.9rem;border-top:1px solid var(--line);border-left:1px solid var(--line)}
+th,td{border:0;border-right:1px solid var(--line);border-bottom:1px solid var(--line);padding:6px 8px;text-align:center;white-space:nowrap}
+th{background:#252c56;position:sticky;top:0;z-index:2}
+/* 凍結：最上面的標題列＋班級進度表左邊的「班級／座號／姓名」三欄，捲動時不會被蓋住 */
+#v-prog th:nth-child(-n+3),#v-prog td:nth-child(-n+3){position:sticky;z-index:1;background:var(--ink);overflow:hidden;text-overflow:ellipsis}
+#v-prog th:nth-child(-n+3){background:#252c56;z-index:3}
+#v-prog th:nth-child(1),#v-prog td:nth-child(1){left:0;min-width:5.5em;max-width:5.5em}
+#v-prog th:nth-child(2),#v-prog td:nth-child(2){left:5.5em;min-width:3.2em;max-width:3.2em}
+#v-prog th:nth-child(3),#v-prog td:nth-child(3){left:8.7em;min-width:6.5em;max-width:6.5em;box-shadow:3px 0 4px -2px #000a}
 td.l,th.l{text-align:left}
 .s0{color:#6b7090}.s00{background:#5a2f2a;color:#f3b9b0}.s1{background:#5a4a1e}.s2{background:#33553d}.s3{background:#2f7a5b;font-weight:700}.s4{background:#2a6f8f;font-weight:700}.s5{background:#8a6d1c;font-weight:700;color:#fff3c4}
 .a0{color:#6b7090}.alo{background:#6a2a22;font-weight:700}.amid{background:#5a4a1e}.ahi{background:#2f7a5b}
