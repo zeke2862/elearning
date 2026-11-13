@@ -738,7 +738,8 @@ body.touch-mode .tc-keyboard {
     padding: 4px 4px 6px;
     width: 100%;
 }
-body.touch-mode.tc-article .tc-keyboard { display: none; }
+.tc-krow-zh { display: none; }
+body.tc-zh .tc-krow-zh { display: flex; }
 .tc-krow { display: flex; gap: 4px; justify-content: center; }
 .tc-krow1 { padding: 0 3%; }
 .tc-krow2 { padding: 0 8%; }
