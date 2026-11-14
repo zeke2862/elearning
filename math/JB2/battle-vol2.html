@@ -209,7 +209,7 @@ const GCB=(window.GAME_CONFIG&&window.GAME_CONFIG.battle)||null;          // 來
 const CUR_ICON=(window.GAME_CONFIG&&window.GAME_CONFIG.currency&&window.GAME_CONFIG.currency.icon)||'💰';
 const $=s=>document.querySelector(s);
 let tt=0;
-function toast(h){const t=$('#toast');t.innerHTML=h;t.classList.remove('hide');clearTimeout(tt);tt=setTimeout(()=>t.classList.add('hide'),3800);}
+function toast(h,ms){const t=$('#toast');t.innerHTML=h;t.classList.remove('hide');clearTimeout(tt);tt=setTimeout(()=>t.classList.add('hide'),ms||3800);}
 // ---- 數值基準（跟 JB1 角色同一組，怪物再依規則調整：血量一半、其他 2 倍）----
 const STATKEYS=['hp','mp','atk','matk','def','mdef','spd'];
 const BASE=Object.assign({hp:1000,mp:300,atk:50,matk:50,spd:100,def:20,mdef:20},(GCB&&GCB.statBase)||{},{hp:(GCB&&GCB.baseHp)||1000});
@@ -324,7 +324,7 @@ function ghostSide(){
   return makeSide('ghost_ai',GHOST_NAMES[rint(0,GHOST_NAMES.length-1)],ids.map(id=>({id,level:Math.max(1,avg+rint(-1,1))})));
 }
 function challengeGhost(reason){
-  if(!mySpec().length)return toast(NO_TEAM_MSG);if(!mySide().team.length)return toast(DOWN_MSG);
+  if(!mySpec().length)return noTeam();if(!mySide().team.length)return toast(DOWN_MSG);
   if(!mySide().team.length)return toast(DOWN_MSG);
   const a=mySide(),b=ghostSide();
   const room={a,b,turn:null,over:false,winner:null,log:[`👻 ${reason||'找不到對手'}，幽靈「${b.name}」出現了！`]};
@@ -579,7 +579,7 @@ async function showPendingInvite(battleId){
 // ---- 模式一：即時對戰（雙方都要在線）----
 async function challengeSync(osid){
   const sid=mySid();
-  const specs=mySpec();if(!specs.length)return toast(NO_TEAM_MSG);if(!mySide().team.length)return toast(DOWN_MSG);
+  const specs=mySpec();if(!specs.length)return noTeam();if(!mySide().team.length)return toast(DOWN_MSG);
   const {data:opUser,error:opErr}=await sb.from('duel_users').select('*').eq('student_number',osid).maybeSingle();
   if(opErr){console.warn('查詢對手失敗',opErr);return offerGhost('連線雲端失敗');}
   if(!opUser)return offerGhost('找不到這位同學的資料');
@@ -594,7 +594,7 @@ async function challengeSync(osid){
 }
 async function acceptSyncChallenge(battleId){
   const sid=mySid();
-  if(!mySpec().length)return toast(NO_TEAM_MSG);if(!mySide().team.length)return toast(DOWN_MSG);
+  if(!mySpec().length)return noTeam();if(!mySide().team.length)return toast(DOWN_MSG);
   const {data:room}=await sb.from('duel_battles').select('*').eq('id',battleId).maybeSingle();
   if(!room||room.b)return toast('這場對戰已經結束或已經開始了');
   if(!room.a||!room.a.team)return toast('對方用的是舊版對戰，請他重新發起挑戰');
@@ -663,7 +663,7 @@ async function sendSyncAction(kind,arg){
 // ---- 模式二：單挑雲端幽靈（對方不用在線，抓他存在雲端的出戰名單，由簡單 AI 操作）----
 async function challengeAsync(osid){
   const sid=mySid();
-  if(!mySpec().length)return toast(NO_TEAM_MSG);if(!mySide().team.length)return toast(DOWN_MSG);
+  if(!mySpec().length)return noTeam();if(!mySide().team.length)return toast(DOWN_MSG);
   const {data:opUser,error:opErr}=await sb.from('duel_users').select('*').eq('student_number',osid).maybeSingle();
   if(opErr){console.warn('查詢對手失敗',opErr);return offerGhost('連線雲端失敗');}
   if(!opUser)return offerGhost('找不到這位同學的資料');
@@ -990,6 +990,15 @@ function exitBattle(){
 
 // ---- 🐾 出戰編隊面板（六章主力培養怪、出戰順序）----
 const NO_TEAM_MSG='❗ 你還沒有主力培養怪！先把國一下某一章「全部通關」，再到該章圖鑑挑一隻設為主力培養怪。';
+// 沒有主力培養怪時：提示＋按鈕，直接帶去「該去的地方」
+//  有某章已全部通關、但還沒挑主力 → 直接去那一章，並自動打開圖鑑；還沒通關任何一章 → 回數理大陸總地圖
+function noTeam(){
+  const BTN='display:inline-block;margin-top:8px;background:#2a1d05;color:#ffe9b0;padding:8px 16px;border-radius:8px;text-decoration:none';
+  let ci=-1;
+  VOL2.forEach((c,i)=>{if(ci>=0)return;const Pc=readV2(i);if(c.mons.every(x=>Pc[x.id]&&Pc[x.id].stars>0))ci=i;});
+  if(ci>=0)return toast(`❗ 你還沒有挑選「主力培養怪」！<br>第 ${ci+1} 章已經通關了，到圖鑑挑一隻吧～<br><a href="grade7-vol2-ch${ci+1}/world-map-vol2ch${ci+1}.html?pickmain=1" style="${BTN}">👉 前往第 ${ci+1} 章圖鑑，挑選主力培養怪</a>`,15000);
+  return toast(`${NO_TEAM_MSG}<br><a href="world-map-vol2-all.html" style="${BTN}">👉 回數理大陸，繼續通關</a>`,15000);
+}
 function moveOrder(id,dir){
   const cur=mySpec().map(x=>x.id),i=cur.indexOf(id),j=i+dir;
   if(i<0||j<0||j>=cur.length)return;
