@@ -1820,10 +1820,10 @@ var MS_CAT_URL = (function () { try { return new URL('../images/home/catnest.png
   }
   function exprWhy(o, p1, p2, diff) {
     var n = norm(o);
-    if (n.indexOf('+') >= 0 && diff) return '「多花多少」是兩個人的花費「相減」，不是相加。';
+    if (n.indexOf('+') >= 0 && diff) return '「比誰多（少）多少」是兩個數「相減」，不是相加。';
     if (n.charAt(0) === '(') return '要先算各自的花費（單價×數量）再合起來，不能把單價先加起來。';
     if (!diff && n.indexOf('-') >= 0) return '「總共」是兩種東西的花費「相加」，不是相減。';
-    if (diff && n === norm(p2 + 'y-' + p1 + 'x')) return '順序反了：是「比較多的人」減「比較少的人」，題目問誰比誰多，誰就放前面。';
+    if (diff && ((CURQ && CURQ.meta && n === norm(CURQ.meta.rev)) || n === norm(p2 + 'y-' + p1 + 'x'))) return '順序反了：是「比較多的」減「比較少的」，要先想清楚誰比較多，比較多的放前面。';
     return '單價和數量配錯了：x 的單價是 ' + p1 + '，y 的單價是 ' + p2 + '。';
   }
   addPlanner('expr', function (t) {
@@ -1834,11 +1834,16 @@ var MS_CAT_URL = (function () { try { return new URL('../images/home/catnest.png
     return { steps: [sA, sB, sC], final: String(CURQ.ans) };
   });
   addPlanner('exprDiff', function (t) {
-    var p = exprCommon(t); var nm = /。\s*(\S+?)比(\S+?)多花/.exec(t) || /，\s*(\S+?)比(\S+?)多花/.exec(t); if (!p || !nm) return null;
-    var sA = stp(nm[1] + '：x 個、每個 <b>' + p[0] + ' 元</b>，花費是多少元？', '花費 = 單價 × 數量。', txOpts(p[0] + 'x', [[p[1] + 'x', p[1] + ' 是另一個人買的東西的單價。'], [p[0] + ' + x', '單價和數量要「相乘」，不是相加。'], ['x ÷ ' + p[0], '單價和數量要「相乘」，不是相除。']]), nm[1] + '花 ' + p[0] + 'x 元');
-    var sB = stp(nm[2] + '：y 個、每個 <b>' + p[1] + ' 元</b>，花費是多少元？', '花費 = 單價 × 數量。', txOpts(p[1] + 'y', [[p[0] + 'y', p[0] + ' 是另一個人買的東西的單價。'], [p[1] + ' + y', '單價和數量要「相乘」，不是相加。'], ['y ÷ ' + p[1], '單價和數量要「相乘」，不是相除。']]), nm[2] + '花 ' + p[1] + 'y 元');
-    var sC = stp('「' + nm[1] + '比' + nm[2] + '多花多少」要怎麼算？', '想想看：比較多的減掉比較少的，就是多出來的部分。', txOpts('「' + nm[1] + '的花費」減去「' + nm[2] + '的花費」', [['「' + nm[1] + '的花費」加上「' + nm[2] + '的花費」', '加起來是「一共」，題目問的是「多多少」。'], ['「' + nm[2] + '的花費」減去「' + nm[1] + '的花費」', '順序反了：是' + nm[1] + '比' + nm[2] + '多，所以' + nm[1] + '放前面。']]), '多花 = ' + nm[1] + ' − ' + nm[2]);
-    var sD = stp('把 <b>' + p[0] + 'x</b> 和 <b>' + p[1] + 'y</b> 照剛剛的算法列成式子：', '前面是' + nm[1] + '的花費，後面是' + nm[2] + '的花費，中間用減號。', fOpts(function (o) { return exprWhy(o, p[0], p[1], true); }), String(CURQ.ans));
+    var p = exprCommon(t), M = CURQ && CURQ.meta;
+    var nm = M ? [null, M.S, M.O] : (/。\s*(\S+?)比(\S+?)多花/.exec(t) || /，\s*(\S+?)比(\S+?)多花/.exec(t));
+    if (!p || !nm) return null;
+    var nx = M ? M.nameX : nm[1], ny = M ? M.nameY : nm[2], noun = M ? M.noun : '花費', more = M ? M.more : true;
+    var S = nm[1], O = nm[2], big = more ? S : O, small = more ? O : S, word = more ? '多' : '少';
+    var ask = M ? M.ask : (S + '比' + O + '多花多少');
+    var sA = stp(nx + '：x 個、每個 <b>' + p[0] + ' 元</b>，' + noun + '是多少元？', noun + ' = 單價 × 數量。', txOpts(p[0] + 'x', [[p[1] + 'x', p[1] + ' 是另一種東西的單價。'], [p[0] + ' + x', '單價和數量要「相乘」，不是相加。'], ['x ÷ ' + p[0], '單價和數量要「相乘」，不是相除。']]), nx + '的' + noun + '是 ' + p[0] + 'x 元');
+    var sB = stp(ny + '：y 個、每個 <b>' + p[1] + ' 元</b>，' + noun + '是多少元？', noun + ' = 單價 × 數量。', txOpts(p[1] + 'y', [[p[0] + 'y', p[0] + ' 是另一種東西的單價。'], [p[1] + ' + y', '單價和數量要「相乘」，不是相加。'], ['y ÷ ' + p[1], '單價和數量要「相乘」，不是相除。']]), ny + '的' + noun + '是 ' + p[1] + 'y 元');
+    var sC = stp('「' + ask + '」要怎麼算？', '想想看：比較多的減掉比較少的，就是差多少。先判斷誰比較多。', txOpts('「' + big + '的' + noun + '」減去「' + small + '的' + noun + '」', [['「' + big + '的' + noun + '」加上「' + small + '的' + noun + '」', '加起來是「一共」，題目問的是「差多少」。'], ['「' + small + '的' + noun + '」減去「' + big + '的' + noun + '」', '順序反了：' + S + '比' + O + word + '，所以比較多的是' + big + '，' + big + '放前面。']]), '差 = ' + big + ' − ' + small);
+    var sD = stp('把 <b>' + p[0] + 'x</b> 和 <b>' + p[1] + 'y</b> 照剛剛的算法列成式子：', '前面是' + big + '的' + noun + '，後面是' + small + '的' + noun + '，中間用減號。', fOpts(function (o) { return exprWhy(o, p[0], p[1], true); }), String(CURQ.ans));
     return { steps: [sA, sB, sC, sD], final: String(CURQ.ans) };
   });
 

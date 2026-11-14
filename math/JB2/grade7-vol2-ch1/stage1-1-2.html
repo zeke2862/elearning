@@ -171,10 +171,12 @@ function fracStr(f){return f.d===1?String(f.n):`${f.n}/${f.d}`;}
 function fracAdd(a,b){return mkFrac(a.n*b.d+b.n*a.d,a.d*b.d);}
 function fracMulInt(f,k){return mkFrac(f.n*k,f.d);}
 function genIsFrac(M){
-  const a=R(1,4),b=pick([1,2,3,4]);
-  const d=pick([2,3,4]);
-  const mkT=()=>mkFrac(R(1,d-1)*pick([1,-1]),d);
-  const x0=mkT(),y0=mkT();
+  // 依模式放大分母與係數的範圍；x、y 的分子一定不一樣（不會再出現 (1/2, 1/2) 這種）
+  const F={easy:{ds:[2,3,4],ab:3},real:{ds:[2,3,4,5,6],ab:5},hard:{ds:[3,4,5,6,7,8],ab:8}}[mode]||{ds:[2,3,4],ab:3};
+  const a=R(1,F.ab),b=R(1,F.ab);
+  const mkT=d=>mkFrac(R(1,d-1)*pick([1,-1]),d);
+  let x0,y0,g=0;
+  do{x0=mkT(pick(F.ds));y0=mkT(pick(F.ds));g++;}while(g<300&&Math.abs(x0.n)===Math.abs(y0.n));
   const c=fracAdd(fracMulInt(x0,a),fracMulInt(y0,b));
   const text0=`${a===1?'x':a+'x'} + ${b===1?'y':b+'y'} = ${fracStr(c)}`;
   const text=`方程式 ${text0}（分數解）有下列四組數對，哪一組是它的解？`;
@@ -188,12 +190,16 @@ function genIsFrac(M){
   return {text,ans,options:ensure4(ans,cands),hint:`把 x、y 分別代入方程式左邊，通分後算出來要等於 ${fracStr(c)}。`,explain:steps};
 }
 function genIsDec(M){
-  const a=R(1,4),b=pick([1,2,3,4]);
-  const mkT=()=>{let t;do{t=R(1,20);}while(t%10===0);return (Math.random()<0.5?-t:t);};
-  const x0t=mkT(),y0t=mkT();
+  // 依模式放大小數的範圍與係數；x、y 的數字一定不一樣
+  const F={easy:{tmax:20,ab:3},real:{tmax:30,ab:5},hard:{tmax:40,ab:8}}[mode]||{tmax:20,ab:3};
+  const a=R(1,F.ab),b=R(1,F.ab);
+  const mkT=()=>{let t;do{t=R(1,F.tmax);}while(t%10===0);return (Math.random()<0.5?-t:t);};
+  let x0t,y0t,g=0;
+  do{x0t=mkT();y0t=mkT();g++;}while(g<300&&Math.abs(x0t)===Math.abs(y0t));
   const decStr=t=>{const neg=t<0;const tt=Math.abs(t);const ip=Math.floor(tt/10),dp=tt%10;return (neg?'-':'')+ip+'.'+dp;};
   const realC=(a*x0t+b*y0t)/10;
-  const text0=`${a===1?'x':a+'x'} + ${b===1?'y':b+'y'} = ${realC.toFixed(1)}`;
+  const cStr=Math.abs(realC-Math.round(realC))<1e-9?String(Math.round(realC)):realC.toFixed(1); // 整數就不要寫成 0.0
+  const text0=`${a===1?'x':a+'x'} + ${b===1?'y':b+'y'} = ${cStr}`;
   const text=`方程式 ${text0}（小數解）有下列四組數對，哪一組是它的解？`;
   const ans=`(${decStr(x0t)}, ${decStr(y0t)})`;
   const cands=[(a===b?'':`(${decStr(y0t)}, ${decStr(x0t)})`),`(${decStr(-x0t)}, ${decStr(y0t)})`,`(${decStr(x0t)}, ${decStr(-y0t)})`,`(${decStr(x0t+pick([-10,10]))}, ${decStr(y0t)})`,`(${decStr(x0t)}, ${decStr(y0t+pick([-10,10]))})`];
@@ -202,8 +208,8 @@ function genIsDec(M){
   const steps=`代入 x=${decStr(x0t)}, y=${decStr(y0t)}：<br>`
     +`${a}×(${decStr(x0t)}) + ${b}×(${decStr(y0t)})<br>`
     +`= ${t1v<0?'－ ':''}${dec1(t1v)} ${t2v<0?'－':'＋'} ${dec1(t2v)}<br>`
-    +`= ${realC.toFixed(1)}　✅ 等式成立，所以是解。`;
-  return {text,ans,options:ensure4(ans,cands),hint:`把 x、y 分別代入方程式左邊算算看，結果要等於 ${realC.toFixed(1)}。`,explain:steps};
+    +`= ${cStr}　✅ 等式成立，所以是解。`;
+  return {text,ans,options:ensure4(ans,cands),hint:`把 x、y 分別代入方程式左邊算算看，結果要等於 ${cStr}。`,explain:steps};
 }
 function genSolve(M){
   const a=R(1,M.max);

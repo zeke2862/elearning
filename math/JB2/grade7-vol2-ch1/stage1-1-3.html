@@ -124,10 +124,11 @@ const $=s=>document.querySelector(s);
 const R=(a,b)=>Math.floor(Math.random()*(b-a+1))+a;
 const pick=a=>a[R(0,a.length-1)];
 const sh=a=>a.map(v=>[Math.random(),v]).sort((x,y)=>x[0]-y[0]).map(x=>x[1]);
-const MODES={easy:{t:0,nmax:3},real:{t:20,nmax:4},hard:{t:14,nmax:4}};
+const MODES={easy:{t:0,nmax:3,pmax:7},real:{t:20,nmax:4,pmax:8},hard:{t:14,nmin:5,nmax:6,pmax:8}};
 const PLAN=['countsol','find','countsol','find','countsol','find','countsol','find','countsol','find'];
 function gcdInt(a,b){return b?gcdInt(b,a%b):a}
-const PAIRS=[[2,3],[2,5],[3,4],[3,5],[2,7],[4,5],[3,7],[5,6]];
+// 兩種面額：2～pmax 之間「互質」的所有搭配（不再只有固定 8 組，也不是都一奇一偶）
+function pairsFor(M){const o=[];for(let a=2;a<=M.pmax;a++)for(let b=a+1;b<=M.pmax;b++)if(gcdInt(a,b)===1)o.push([a,b]);return o;}
 function ensure4(ans,cands){
   const s=new Set([ans]);
   for(const c of cands){const cs=String(c);if(s.size<4&&cs!==ans&&cs.trim()!=='')s.add(cs);}
@@ -150,9 +151,9 @@ const COUNTSOL_SCENES=[
   (a,b)=>`園遊會有兩種代幣券，面額分別是 ${a} 元與 ${b} 元。`,
 ];
 function genCountsol(M){
-  let [a,b]=pick(PAIRS);
+  let [a,b]=pick(pairsFor(M));
   if(Math.random()<0.5)[a,b]=[b,a];
-  const N=R(2,M.nmax);
+  const N=R(M.nmin||2,M.nmax);
   const r=R(0,b-1);
   const X0=(N-1)*b+r;
   const c=a*X0;
@@ -165,10 +166,11 @@ function genCountsol(M){
   return {text,ans,options:opts,hint:`x 每減少 ${b}，y 就增加 ${a}，從 x=${X0}, y=0 開始一直列到 x 變成負數為止。`,explain:`所有非負整數解：${list}共 ${N} 組。`};
 }
 function genFind(M){
-  let [a,b]=pick(PAIRS);
+  let [a,b]=pick(pairsFor(M));
   if(Math.random()<0.5)[a,b]=[b,a];
   const askX=Math.random()<0.5;
-  const x0=R(1,M.nmax+2),y0=R(1,M.nmax+1);
+  const fm=Math.min(M.nmax,4);                     // 已知／所求的範圍維持原本大小，不跟著組數放大
+  const x0=R(1,fm+2),y0=R(1,fm+1);
   const c=a*x0+b*y0;
   const known=askX?y0:x0,correct=askX?x0:y0;
   const knownName=askX?'y':'x',findName=askX?'x':'y';
