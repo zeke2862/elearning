@@ -39,6 +39,21 @@
     if (bad) { e.preventDefault(); e.stopPropagation(); return false; }
   }, true);
 
+  /* ---------- 從地圖選好模式進來：一開始就把關卡自己的「模式選單」藏起來，避免閃一下／手機卡住 ----------
+   * （原本要等頁面底部的 mode-system.js 跑完才會藏；網路慢時會先畫出選單。只在關卡頁啟用） */
+  if (LEAVE) {
+    try {
+      var q = new URLSearchParams(location.search), md = q.get('mode');
+      if (q.get('endless') === '1' || q.get('practice') || ['easy', 'real', 'hard'].indexOf(md) >= 0) {
+        var hs = document.createElement('style');
+        hs.textContent = 'html.jb-pre #s-start{visibility:hidden}html.jb-pre #s-start #ms-lesson-holder{visibility:visible}';
+        (document.head || document.documentElement).appendChild(hs);
+        document.documentElement.classList.add('jb-pre');
+        setTimeout(function () { document.documentElement.classList.remove('jb-pre'); }, 6000); // 保險：6 秒後一定放行
+      }
+    } catch (e) {}
+  }
+
   /* ---------- B. 離開頁面 = 直接關閉這一局（只在關卡頁啟用） ---------- */
   if (!LEAVE) return;
   var fired = false;
