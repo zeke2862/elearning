@@ -9,7 +9,7 @@ window.GAME_CONFIG = {
  "urls": {
   "battle": "battle-vol2.html",
   "chapter": "grade7-vol2-ch{n}/world-map-vol2ch{n}.html",
-  "cardImg": "grade7-vol2-ch{n}/images/cards/{id}.png"
+  "cardImg": "grade7-vol2-ch{n}/images/cards/{id}.webp"
  },
  "economy": {
   "dailyBase": 200,
@@ -101,7 +101,7 @@ window.GAME_CONFIG = {
  "map": {
   "w": 2000,
   "h": 1600,
-  "art": "images/map/world-map-hex.jpg",
+  "art": "images/map/world-map-hex.webp",
   "iconsOnArt": true,
   "walkSpeed": 650,
   "heroScale": 1.5,
@@ -119,7 +119,7 @@ window.GAME_CONFIG = {
     "y": 47,
     "label": "我的小屋",
     "emoji": "🏠",
-    "img": "images/map/bld-home.png",
+    "img": "images/map/bld-home.webp",
     "size": 96
    },
    {
@@ -128,7 +128,7 @@ window.GAME_CONFIG = {
     "y": 43.5,
     "label": "鬥技場",
     "emoji": "🏟️",
-    "img": "images/map/bld-arena.png",
+    "img": "images/map/bld-arena.webp",
     "size": 84,
     "labelPos": "top"
    },
@@ -138,7 +138,7 @@ window.GAME_CONFIG = {
     "y": 47,
     "label": "商店",
     "emoji": "🏪",
-    "img": "images/map/bld-shop.png",
+    "img": "images/map/bld-shop.webp",
     "size": 96
    }
   ],
@@ -776,7 +776,7 @@ window.GAME_CONFIG = {
   }
  ],
  "home": {
-  "wallpaper": "images/home/wallpaper.jpg",
+  "wallpaper": "images/home/wallpaper.webp",
   "hero": {
    "x": 41,
    "y": 26,
@@ -808,7 +808,7 @@ window.GAME_CONFIG = {
     "h": 30,
     "emoji": "🏆",
     "label": "怪物圖鑑牆",
-    "img": "images/home/trophy.png",
+    "img": "images/home/trophy.webp",
     "rot": 0,
     "z": 3
    },
@@ -821,7 +821,7 @@ window.GAME_CONFIG = {
     "h": 36,
     "emoji": "🧥",
     "label": "衣櫃",
-    "img": "images/home/closet.png",
+    "img": "images/home/closet.webp",
     "rot": 0,
     "z": 3
    },
@@ -834,7 +834,7 @@ window.GAME_CONFIG = {
     "h": 30,
     "emoji": "🛏️",
     "label": "簽到・任務",
-    "img": "images/home/bed.png",
+    "img": "images/home/bed.webp",
     "rot": 0,
     "z": 3
    },
@@ -847,7 +847,7 @@ window.GAME_CONFIG = {
     "h": 30,
     "emoji": "🖥️",
     "label": "我的資料",
-    "img": "images/home/desk.png",
+    "img": "images/home/desk.webp",
     "rot": 0,
     "z": 3
    },
@@ -860,7 +860,7 @@ window.GAME_CONFIG = {
     "h": 16,
     "emoji": "🐱",
     "label": "智慧貓",
-    "img": "images/home/catnest.png",
+    "img": "images/home/catnest.webp",
     "rot": 0,
     "z": 3
    },
@@ -873,7 +873,7 @@ window.GAME_CONFIG = {
     "h": 18,
     "emoji": "📦",
     "label": "備份・存檔碼",
-    "img": "images/home/safe.png",
+    "img": "images/home/safe.webp",
     "rot": 0,
     "z": 3
    }
@@ -887,7 +887,7 @@ window.GAME_CONFIG = {
     "w": 36,
     "h": 22,
     "emoji": "",
-    "img": "images/home/furn_rug.png",
+    "img": "images/home/furn_rug.webp",
     "rot": 0,
     "z": 1
    },
@@ -899,7 +899,7 @@ window.GAME_CONFIG = {
     "w": 10,
     "h": 16,
     "emoji": "🐠",
-    "img": "images/home/furn_fish.png",
+    "img": "images/home/furn_fish.webp",
     "rot": 0,
     "z": 1
    },
@@ -911,7 +911,7 @@ window.GAME_CONFIG = {
     "w": 14,
     "h": 30,
     "emoji": "📚",
-    "img": "images/home/furn_shelf.png",
+    "img": "images/home/furn_shelf.webp",
     "rot": 0,
     "z": 1
    }
@@ -966,7 +966,7 @@ window.GAME_CONFIG = {
     "dark": "#27479a",
     "need": null,
     "effect": "外觀：換上後顯示在地圖與小屋",
-    "img": "images/shop/cloak_blue.png"
+    "img": "images/shop/cloak_blue.webp"
    },
    {
     "id": "cloak_red",
@@ -977,7 +977,7 @@ window.GAME_CONFIG = {
     "dark": "#8d2a1b",
     "need": null,
     "effect": "外觀：換上後顯示在地圖與小屋",
-    "img": "images/shop/cloak_red.png"
+    "img": "images/shop/cloak_red.webp"
    },
    {
     "id": "cloak_green",
@@ -988,7 +988,7 @@ window.GAME_CONFIG = {
     "dark": "#2a6d5d",
     "need": null,
     "effect": "外觀：換上後顯示在地圖與小屋",
-    "img": "images/shop/cloak_green.png"
+    "img": "images/shop/cloak_green.webp"
    },
    {
     "id": "cloak_purple",
@@ -1002,7 +1002,7 @@ window.GAME_CONFIG = {
      "min": 30
     },
     "effect": "外觀：換上後顯示在地圖與小屋",
-    "img": "images/shop/cloak_purple.png"
+    "img": "images/shop/cloak_purple.webp"
    },
    {
     "id": "cloak_gold",
@@ -1016,7 +1016,7 @@ window.GAME_CONFIG = {
      "min": 65
     },
     "effect": "外觀：換上後顯示在地圖與小屋",
-    "img": "images/shop/cloak_gold.png"
+    "img": "images/shop/cloak_gold.webp"
    },
    {
     "id": "hat_none",
@@ -1025,7 +1025,7 @@ window.GAME_CONFIG = {
     "days": 0,
     "need": null,
     "effect": "外觀",
-    "img": "images/shop/hat_none.png"
+    "img": "images/shop/hat_none.webp"
    },
    {
     "id": "hat_apprentice",
@@ -1034,7 +1034,7 @@ window.GAME_CONFIG = {
     "days": 1,
     "need": null,
     "effect": "外觀",
-    "img": "images/shop/hat_apprentice.png",
+    "img": "images/shop/hat_apprentice.webp",
     "color": "#6b4bb8",
     "lay": {
      "x": 1.01,
@@ -1052,7 +1052,7 @@ window.GAME_CONFIG = {
      "min": 30
     },
     "effect": "外觀",
-    "img": "images/shop/hat_star.png",
+    "img": "images/shop/hat_star.webp",
     "color": "#1f2f6b",
     "star": 1,
     "lay": {
@@ -1071,7 +1071,7 @@ window.GAME_CONFIG = {
      "min": 110
     },
     "effect": "外觀",
-    "img": "images/shop/hat_crown.png",
+    "img": "images/shop/hat_crown.webp",
     "lay": {
      "x": -0.03,
      "y": -33.68,
@@ -1085,7 +1085,7 @@ window.GAME_CONFIG = {
     "days": 0,
     "need": null,
     "effect": "外觀",
-    "img": "images/shop/staff_wood.png",
+    "img": "images/shop/staff_wood.webp",
     "shaft": "#8a5a2b",
     "orb": "#7fd1ff",
     "lay": {
@@ -1104,7 +1104,7 @@ window.GAME_CONFIG = {
      "min": 15
     },
     "effect": "外觀",
-    "img": "images/shop/staff_crystal.png",
+    "img": "images/shop/staff_crystal.webp",
     "shaft": "#6b7bd6",
     "orb": "#b388ff",
     "lay": {
@@ -1123,7 +1123,7 @@ window.GAME_CONFIG = {
      "min": 65
     },
     "effect": "外觀",
-    "img": "images/shop/staff_rainbow.png",
+    "img": "images/shop/staff_rainbow.webp",
     "shaft": "#f2c230",
     "orb": "#ff7ab8",
     "lay": {
@@ -1139,7 +1139,7 @@ window.GAME_CONFIG = {
     "days": 1.5,
     "need": null,
     "effect": "外觀：會跟著勇者走",
-    "img": "images/shop/pet_slime.png",
+    "img": "images/shop/pet_slime.webp",
     "icon": "🟢"
    },
    {
@@ -1153,7 +1153,7 @@ window.GAME_CONFIG = {
      "min": 3
     },
     "effect": "外觀：會跟著勇者走",
-    "img": "images/shop/pet_fox.png",
+    "img": "images/shop/pet_fox.webp",
     "icon": "🦊"
    },
    {
@@ -1166,7 +1166,7 @@ window.GAME_CONFIG = {
      "min": 20
     },
     "effect": "外觀：會跟著勇者走",
-    "img": "images/shop/pet_cat.png",
+    "img": "images/shop/pet_cat.webp",
     "icon": "🐱"
    },
    {
@@ -1180,7 +1180,7 @@ window.GAME_CONFIG = {
      "min": 10
     },
     "effect": "外觀：會跟著勇者走",
-    "img": "images/shop/pet_dragon.png",
+    "img": "images/shop/pet_dragon.webp",
     "icon": "🐲"
    },
    {
@@ -1190,7 +1190,7 @@ window.GAME_CONFIG = {
     "days": 1.5,
     "need": null,
     "effect": "小屋家具",
-    "img": "images/shop/furn_rug.png",
+    "img": "images/shop/furn_rug.webp",
     "icon": "🧶"
    },
    {
@@ -1203,7 +1203,7 @@ window.GAME_CONFIG = {
      "min": 10
     },
     "effect": "小屋家具",
-    "img": "images/shop/furn_shelf.png",
+    "img": "images/shop/furn_shelf.webp",
     "icon": "📚"
    },
    {
@@ -1216,7 +1216,7 @@ window.GAME_CONFIG = {
      "min": 30
     },
     "effect": "小屋家具",
-    "img": "images/shop/furn_fish.png",
+    "img": "images/shop/furn_fish.webp",
     "icon": "🐠"
    },
    {
@@ -1229,7 +1229,7 @@ window.GAME_CONFIG = {
      "min": 65
     },
     "effect": "小屋家具",
-    "img": "images/shop/furn_stars.png",
+    "img": "images/shop/furn_stars.webp",
     "icon": "🌌"
    },
    {
@@ -1243,7 +1243,7 @@ window.GAME_CONFIG = {
      "min": 6
     },
     "effect": "稱號：顯示在首頁頂端",
-    "img": "images/shop/title_1.png",
+    "img": "images/shop/title_1.webp",
     "icon": "🏷️"
    },
    {
@@ -1257,7 +1257,7 @@ window.GAME_CONFIG = {
      "min": 5
     },
     "effect": "稱號：顯示在首頁頂端",
-    "img": "images/shop/title_2.png",
+    "img": "images/shop/title_2.webp",
     "icon": "🏷️"
    },
    {
@@ -1271,7 +1271,7 @@ window.GAME_CONFIG = {
      "min": 5
     },
     "effect": "稱號：顯示在首頁頂端",
-    "img": "images/shop/title_3.png",
+    "img": "images/shop/title_3.webp",
     "icon": "🏷️"
    },
    {
@@ -1284,7 +1284,7 @@ window.GAME_CONFIG = {
      "min": 145
     },
     "effect": "稱號：終局目標",
-    "img": "images/shop/title_4.png",
+    "img": "images/shop/title_4.webp",
     "icon": "🏷️"
    },
    {
@@ -1294,7 +1294,7 @@ window.GAME_CONFIG = {
     "days": 0.3,
     "need": null,
     "effect": "當天的練習經驗換幣變 2 倍（每日上限不變）",
-    "img": "images/shop/boost.png",
+    "img": "images/shop/boost.webp",
     "icon": "🎟️",
     "cons": 1,
     "dailyLimit": 1,
@@ -1307,7 +1307,7 @@ window.GAME_CONFIG = {
     "days": 10,
     "need": null,
     "effect": "可以修改一次勇者名。名字是你的招牌，要改之前請想清楚！",
-    "img": "images/shop/rename.png",
+    "img": "images/shop/rename.webp",
     "icon": "🪪",
     "cons": 1,
     "maxOwn": 3
@@ -1322,7 +1322,7 @@ window.GAME_CONFIG = {
     "maxOwn": 10,
     "need": null,
     "effect": "補血：讓一隻怪物回復 30% 生命（地圖「隊伍」和戰鬥中都能用）",
-    "img": "images/shop/heal_s.png",
+    "img": "images/shop/heal_s.webp",
     "healPct": 30
    },
    {
@@ -1335,7 +1335,7 @@ window.GAME_CONFIG = {
     "maxOwn": 10,
     "need": null,
     "effect": "補血：讓一隻怪物回復 60% 生命（地圖「隊伍」和戰鬥中都能用）",
-    "img": "images/shop/heal_m.png",
+    "img": "images/shop/heal_m.webp",
     "healPct": 60
    },
    {
@@ -1348,7 +1348,7 @@ window.GAME_CONFIG = {
     "maxOwn": 10,
     "need": null,
     "effect": "補血：讓一隻怪物補滿生命（地圖「隊伍」和戰鬥中都能用）",
-    "img": "images/shop/heal_l.png",
+    "img": "images/shop/heal_l.webp",
     "healPct": 100
    },
    {
@@ -1361,7 +1361,7 @@ window.GAME_CONFIG = {
     "maxOwn": 10,
     "need": null,
     "effect": "補魔：戰鬥中讓一隻怪物回復 30% 魔力（只在戰鬥中使用）",
-    "img": "images/shop/mp_s.png",
+    "img": "images/shop/mp_s.webp",
     "mpPct": 30
    },
    {
@@ -1374,7 +1374,7 @@ window.GAME_CONFIG = {
     "maxOwn": 10,
     "need": null,
     "effect": "補魔：戰鬥中讓一隻怪物回復 60% 魔力（只在戰鬥中使用）",
-    "img": "images/shop/mp_m.png",
+    "img": "images/shop/mp_m.webp",
     "mpPct": 60
    },
    {
@@ -1387,7 +1387,7 @@ window.GAME_CONFIG = {
     "maxOwn": 10,
     "need": null,
     "effect": "補魔：戰鬥中讓一隻怪物補滿魔力（只在戰鬥中使用）",
-    "img": "images/shop/mp_l.png",
+    "img": "images/shop/mp_l.webp",
     "mpPct": 100
    },
    {
@@ -1400,7 +1400,7 @@ window.GAME_CONFIG = {
     "maxOwn": 10,
     "need": null,
     "effect": "復活：讓一隻倒下的怪物復活（恢復 50% 生命；地圖「隊伍」和戰鬥中都能用）",
-    "img": "images/shop/revive.png",
+    "img": "images/shop/revive.webp",
     "revivePct": 50
    }
   ]

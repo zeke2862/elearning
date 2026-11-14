@@ -15,8 +15,8 @@
    ?eb=N      這一關無極限的歷史最高題數
    ?endless=1 進入無極限挑戰
    ===================================================================== */
-/* 小貓圖示統一：把畫面上所有的 🐱 自動換成 images/home/catnest.png（智慧貓小圖）。想換圖只改 MS_CAT_URL。 */
-var MS_CAT_URL = (function () { try { return new URL('../images/home/catnest-s.png', document.currentScript.src).href; } catch (e) { return '../images/home/catnest-s.png'; } })();
+/* 小貓圖示統一：把畫面上所有的 🐱 自動換成 images/home/catnest.webp（智慧貓小圖）。想換圖只改 MS_CAT_URL。 */
+var MS_CAT_URL = (function () { try { return new URL('../images/home/catnest-s.webp', document.currentScript.src).href; } catch (e) { return '../images/home/catnest-s.webp'; } })();
 (function () {
   function mk() { var i = document.createElement('img'); i.src = MS_CAT_URL; i.alt = '智慧貓'; i.className = 'ms-catico'; i.style.cssText = 'height:1.25em;width:1.25em;object-fit:contain;vertical-align:-.3em'; return i; }
   var CAT = '🐱';
