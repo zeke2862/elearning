@@ -126,7 +126,6 @@ const pick=a=>a[R(0,a.length-1)];
 const sh=a=>a.map(v=>[Math.random(),v]).sort((x,y)=>x[0]-y[0]).map(x=>x[1]);
 const MODES={easy:{t:0,max:6},real:{t:15,max:9},hard:{t:10,max:12}};
 const PLAN=['identify','combine','fracCombine','dist','bracket','decCombine','combine','identify','expr','exprDiff'];
-const ITEMS=[['紅茶','綠茶','杯'],['原子筆','鉛筆','支'],['麵包','蛋糕','個'],['門票','套票','張']];
 
 function fmt(n,v){ // n*v項字串，n可能為負/0/1/-1
   if(n===0)return '';
@@ -257,7 +256,7 @@ function genFracCombine(){
     X=sumFracVar(terms,'x');Y=sumFracVar(terms,'y');tries++;
     var ones=terms.filter(t=>Math.abs(t.c.n)===t.c.d).length;
     var okAbs=f=>f.n!==0&&Math.abs(f.n)!==f.d;
-  }while(tries<300&&!(okAbs(X)&&okAbs(Y)&&ones===0));
+  }while(tries<300&&!(okAbs(X)&&okAbs(Y)&&ones===0&&Math.abs(X.n)!==Math.abs(Y.n)));
   let text='化簡（分數係數）：'+termText(terms,fracFirstFmt,fracFmt);
   const ans=combineFracExpr(X,Y);
   const swap=combineFracExpr(Y,X);
@@ -315,37 +314,65 @@ function genBracket(M){
     explain:`由內而外展開：先拆小括號 ( )，再拆中括號 [ ]，最後拆大括號 { } 並乘上 ${k3}，合併後 x 項為 ${X}、y 項為 ${Y}，答案是 ${ans}。`};
 }
 
-// 情境庫：買賣（買 x／y 個東西，求總價）、也支援不同角色與動詞，讓每次看到的故事不一樣，不是只有數字在變
-const EXPR_SCENES=[
-  (A,B,m,n,u)=>`買 x ${u}${A}（每${u} ${m} 元）與 y ${u}${B}（每${u} ${n} 元），總價要怎麼列式？`,
-  (A,B,m,n,u)=>`園遊會擺攤賣 x ${u}${A}（每${u} ${m} 元）與 y ${u}${B}（每${u} ${n} 元），這攤的收入要怎麼列式？`,
-  (A,B,m,n,u)=>`班費採購了 x ${u}${A}（每${u} ${m} 元）與 y ${u}${B}（每${u} ${n} 元），總花費要怎麼列式？`,
-  (A,B,m,n,u)=>`文具店裡，x ${u}${A}（每${u} ${m} 元）加上 y ${u}${B}（每${u} ${n} 元），總共要付多少錢？請列式。`,
+// 情境庫（列式題）：每一組自己帶合理的場所、品項與單位，避免「文具店賣紅茶」這種對不上的組合
+const BUNDLES=[
+  {A:'門票',B:'套票',u:'張',place:'園遊會的攤位',who:'這個攤位'},
+  {A:'紅茶',B:'綠茶',u:'杯',place:'飲料店',who:'這家店'},
+  {A:'原子筆',B:'鉛筆',u:'支',place:'文具店',who:'這家店'},
+  {A:'麵包',B:'蛋糕',u:'個',place:'麵包店',who:'這家店'},
+  {A:'漫畫',B:'小說',u:'本',place:'書店',who:'這家店'},
+  {A:'全票',B:'學生票',u:'張',place:'電影院',who:'電影院'},
+  {A:'蘋果',B:'橘子',u:'顆',place:'水果攤',who:'這個攤位'},
+  {A:'排骨飯',B:'素食飯',u:'份',place:'自助餐店',who:'這家店'},
+  {A:'飯糰',B:'三明治',u:'個',place:'便利商店',who:'這家店'},
+  {A:'籃球',B:'排球',u:'顆',place:'體育用品店',who:'這家店'},
 ];
+const BUYERS=['小明','小美','阿華','小傑','小玲','小安'];
+// 兩個單價：不再只出 5 的倍數（那樣永遠是一奇一偶），任何整數都可能，且兩個單價一定不同、不太接近
+function twoPrices(M){
+  let m,n;const hi=5*M.max;
+  do{m=R(3,hi);n=R(3,hi);}while(m===n||Math.abs(m-n)<2);
+  return [m,n];
+}
 function genExpr(M){
-  const [A,B,u]=pick(ITEMS);
-  let m=R(1,M.max)*5,n=R(1,M.max)*5;
-  while(m===n)n=R(1,M.max)*5;
-  const text=pick(EXPR_SCENES)(A,B,m,n,u);
+  const b=pick(BUNDLES),[m,n]=twoPrices(M),{A,B,u}=b;
+  const A1=`x ${u}${A}（每${u} ${m} 元）`,B1=`y ${u}${B}（每${u} ${n} 元）`;
+  const text=pick([
+    `${pick(BUYERS)}在${b.place}買了 ${A1}與 ${B1}，總共要付多少元？請列式。`,
+    `${b.place}賣出了 ${A1}與 ${B1}，${b.who}的收入要怎麼列式？`,
+    `班費採購了 ${A1}與 ${B1}，總花費要怎麼列式？`,
+    `${b.place}今天賣出 ${A1}，另外還賣出 ${B1}，營業額總共是多少元？請列式。`,
+  ]);
   const ans=`${m}x + ${n}y`;
   const opts=ensure4(ans,[`${n}x + ${m}y`,`${m}x - ${n}y`,`(${m}+${n})(x+y)`]);
   return {text,ans,options:opts,hint:'單價 × 數量，再把兩種東西的花費加起來。（代數裡 30x 就是 30 × x，乘號省略不寫。）',explain:`${A}共 ${m}x 元，${B}共 ${n}y 元，合起來是 ${ans} 元。`};
 }
-// 情境庫：比較兩人（或兩班）花費／收入的差，角色配對隨機挑選，句型也有兩種
-const DIFF_ROLES=[['哥哥','弟弟'],['姊姊','妹妹'],['一班','二班'],['隊長','隊員']];
-const EXPR_DIFF_SCENES=[
-  (P,Q,A,B,m,n,u)=>`${P}買 x ${u}${A}（每${u} ${m} 元），${Q}買 y ${u}${B}（每${u} ${n} 元）。${P}比${Q}多花多少錢？請列式。`,
-  (P,Q,A,B,m,n,u)=>`${P}訂了 x ${u}${A}（每${u} ${m} 元），${Q}訂了 y ${u}${B}（每${u} ${n} 元）。${P}比${Q}多花多少錢？請列式。`,
-];
+// 比較兩者的差：可以問兩個人誰多花（少花）、也可以問同一家店兩種東西的收入差；「A比B多」「B比A少」前後顛倒都會出
+const DIFF_ROLES=[['哥哥','弟弟'],['姊姊','妹妹'],['一班','二班'],['隊長','隊員'],['爸爸','媽媽'],['小明','小華']];
 function genExprDiff(M){
-  const [A,B,u]=pick(ITEMS);
-  const [P,Q]=pick(DIFF_ROLES);
-  let m=R(1,M.max)*5,n=R(1,M.max)*5;
-  while(m===n)n=R(1,M.max)*5;
-  const text=pick(EXPR_DIFF_SCENES)(P,Q,A,B,m,n,u);
-  const ans=`${m}x - ${n}y`;
-  const opts=ensure4(ans,[`${n}y - ${m}x`,`${m}x + ${n}y`,`${m}y - ${n}x`]);
-  return {text,ans,options:opts,hint:`「多花多少」就是兩者花費相減：${P}的花費 － ${Q}的花費。`,explain:`${P}花費 ${m}x 元，${Q}花費 ${n}y 元，多花的錢是 ${m}x - ${n}y 元。`};
+  const b=pick(BUNDLES),[m,n]=twoPrices(M),{A,B,u}=b;
+  const U=`${m}x`,V=`${n}y`,more=Math.random()<0.5;
+  let text,S,O,subjIsX,nameX,nameY,noun,ask;
+  if(Math.random()<0.5){
+    let [P,Q]=pick(DIFF_ROLES);if(Math.random()<0.5)[P,Q]=[Q,P];   // P 買 x 那種、Q 買 y 那種
+    const v=pick(['買了','訂了']);
+    subjIsX=Math.random()<0.5;S=subjIsX?P:Q;O=subjIsX?Q:P;nameX=P;nameY=Q;noun='花費';
+    ask=`${S}比${O}${more?'多':'少'}花多少`;
+    text=`${P}${v} x ${u}${A}（每${u} ${m} 元），${Q}${v} y ${u}${B}（每${u} ${n} 元）。${ask}元？請列式。`;
+  }else{
+    subjIsX=Math.random()<0.5;S=subjIsX?A:B;O=subjIsX?B:A;nameX=A;nameY=B;noun='收入';
+    ask=`${S}的收入比${O}的收入${more?'多':'少'}多少`;
+    text=`${b.place}賣出 x ${u}${A}（每${u} ${m} 元）與 y ${u}${B}（每${u} ${n} 元）。${ask}元？請列式。`;
+  }
+  const sSpend=subjIsX?U:V,oSpend=subjIsX?V:U;
+  const first=more?sSpend:oSpend,second=more?oSpend:sSpend;       // 大的減小的
+  const ans=`${first} - ${second}`,rev=`${second} - ${first}`;
+  const swap=first===U?`${m}y - ${n}x`:`${n}x - ${m}y`;            // 誘答：單價和字母配錯
+  const big=more?S:O,small=more?O:S;
+  return {text,ans,options:ensure4(ans,[rev,`${m}x + ${n}y`,swap]),
+    hint:`「${S}比${O}${more?'多':'少'}」要用「大的減小的」：${big}的${noun} － ${small}的${noun}。`,
+    explain:`${nameX}的${noun}是 ${U} 元，${nameY}的${noun}是 ${V} 元。${big}的比較多，所以用「${big}的${noun} − ${small}的${noun}」，列成 ${ans} 元。`,
+    meta:{S,O,more,nameX,nameY,noun,ask,rev}};
 }
 function gen(t){
   const M=MODES[mode];
