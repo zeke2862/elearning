@@ -89,8 +89,8 @@ table.w td,table.w th{border-bottom:1px solid var(--line);padding:5px 6px;text-a
 .win .hill{position:absolute;left:-10%;right:-10%;bottom:-20%;height:55%;border-radius:50%;background:#2f7d4a}
 .win .tm{position:absolute;left:6px;bottom:4px;font-size:calc(var(--u)*1.5);background:#0008;padding:0 6px;border-radius:6px;color:#fff}
 .win .cross{position:absolute;inset:0;background:linear-gradient(#5b3d1a,#5b3d1a) center/calc(var(--u)*.6) 100% no-repeat,linear-gradient(#5b3d1a,#5b3d1a) center/100% calc(var(--u)*.6) no-repeat}
-.win.art{border:calc(var(--u)*1.1) solid #7a4b22;border-image:url('images/home/win_wood.jpg') 36 round;border-radius:0;box-shadow:inset 0 0 calc(var(--u)*1.6) #3b230d99,0 calc(var(--u)*.4) calc(var(--u)*1) #0004}
-.win.art .cross{background:url('images/home/win_wood.jpg') center/auto 100% repeat;-webkit-mask:linear-gradient(#000,#000) center/calc(var(--u)*.7) 100% no-repeat,linear-gradient(#000,#000) center/100% calc(var(--u)*.7) no-repeat;mask:linear-gradient(#000,#000) center/calc(var(--u)*.7) 100% no-repeat,linear-gradient(#000,#000) center/100% calc(var(--u)*.7) no-repeat;filter:drop-shadow(0 1px 1px #0006)}
+.win.art{border:calc(var(--u)*1.1) solid #7a4b22;border-image:url('images/home/win_wood.webp') 36 round;border-radius:0;box-shadow:inset 0 0 calc(var(--u)*1.6) #3b230d99,0 calc(var(--u)*.4) calc(var(--u)*1) #0004}
+.win.art .cross{background:url('images/home/win_wood.webp') center/auto 100% repeat;-webkit-mask:linear-gradient(#000,#000) center/calc(var(--u)*.7) 100% no-repeat,linear-gradient(#000,#000) center/100% calc(var(--u)*.7) no-repeat;mask:linear-gradient(#000,#000) center/calc(var(--u)*.7) 100% no-repeat,linear-gradient(#000,#000) center/100% calc(var(--u)*.7) no-repeat;filter:drop-shadow(0 1px 1px #0006)}
 .win.art .tm{background:#4a2c1090;font-family:inherit}
 .fur{position:absolute;background:none;border:0;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0}
 .fur .e{font-size:calc(var(--u)*7);line-height:1;filter:drop-shadow(0 3px 3px #0008);display:flex;max-height:80%}
@@ -261,9 +261,9 @@ function heroParts(eq){
     if(h.star)s+=`<polygon points="32,6 33.8,10.6 38.8,10.8 34.9,13.9 36.3,18.7 32,15.9 27.7,18.7 29.1,13.9 25.2,10.8 30.2,10.6" fill="#ffd84d"/>`}
   return s;
 }
-const heroPath=eq=>`images/hero/${eq.cloak||'cloak_blue'}.png`;
+const heroPath=eq=>`images/hero/${eq.cloak||'cloak_blue'}.webp`;
 /* 分層換裝：身體(含服飾) + 法杖 + 帽子，疊在同一張 2:3 畫布上。三層都有圖才用分層；缺任何一層就退回整張圖／備用小人 */
-const LAYPATH={body:c=>`images/hero/body_${c}.png`,item:id=>`images/hero/${id}.png`};
+const LAYPATH={body:c=>`images/hero/body_${c}.webp`,item:id=>`images/hero/${id}.webp`};
 function heroLayers(eq){
   const c=ITEM[eq.cloak]||ITEM.cloak_blue,h=ITEM[eq.hat]||ITEM.hat_none,s=eq.staff?ITEM[eq.staff]:null;
   const b=OK[LAYPATH.body(c.id)];if(!b)return null;
@@ -317,7 +317,7 @@ function drawMap(){
       +T(x,by+75,`⭐ ${st.stars}/${c.max}　${esc(rankOf(c.ranks,st.stars))}`,20,'fill="#43a58f" font-weight="700"');
     {const L=c.stages,k=L.length,sw=84,bw=k*sw+14,bx=x-bw/2,ty=by-110;let nxt=-1;for(let q=0;q<k;q++){const pp=st.per[L[q][0]];if(!(pp&&pp.stars>0)){nxt=q;break}}
       s+=`<g><rect x="${bx}" y="${ty}" width="${bw}" height="104" rx="18" pointer-events="none" fill="#161a2e" opacity=".82" stroke="#d2a24c" stroke-width="2"/>`;
-      L.forEach((q,j)=>{const id=q[0],pp=st.per[id],ok=pp&&pp.stars>0,cx=bx+7+sw/2+j*sw,cy=ty+40,lk=locked(n),src=OK[`grade7-vol2-ch${n}/images/battle/${id}.png`];
+      L.forEach((q,j)=>{const id=q[0],pp=st.per[id],ok=pp&&pp.stars>0,cx=bx+7+sw/2+j*sw,cy=ty+40,lk=locked(n),src=OK[`grade7-vol2-ch${n}/images/battle/${id}.webp`];
         s+=`<clipPath id="tc${n}_${j}"><circle cx="${cx}" cy="${cy}" r="30"/></clipPath><circle cx="${cx}" cy="${cy}" r="34" fill="#f1e8d2" stroke="${ok?'#43a58f':q[2]?'#d24a33':'#d2a24c'}" stroke-width="${j===nxt&&!lk?5:3}"/>`
           +(src?`<image href="${esc(src)}" x="${cx-30}" y="${cy-30}" width="60" height="60" pointer-events="none" clip-path="url(#tc${n}_${j})" preserveAspectRatio="xMidYMid slice" opacity="${ok?1:.55}"/>`:T(cx,cy+1,q[2]?'👹':'🐾',38,`pointer-events="none" opacity="${ok?1:.5}"`))
           +`<circle class="sdot" data-n="${n}" data-sid="${id}" cx="${cx}" cy="${cy}" r="40"/>`+(ok?T(cx,ty+88,'★'.repeat(Math.min(pp.stars,5)>3?1:pp.stars)+(pp.stars>3?pp.stars:''),20,'pointer-events="none" fill="#ffd24a" font-weight="700"'):lk?'':T(cx,ty+88,j===nxt?'▲':'·',20,'pointer-events="none" fill="#f1e8d2"'))});
@@ -664,7 +664,7 @@ function renderHome(){
   const ceilStars=owned('furn_stars');
   let h=`<div class="ceil${ceilStars?' st':''}">${ceilStars?'✨ ⭐ ✨ ⭐ ✨ ⭐ ✨ ⭐ ✨ ⭐ ✨ ⭐ ✨ ⭐ ✨ ⭐ ✨':''}</div>`;
   const w=HM.window;
-  h+=`<div class="win art" style="left:${w.x}%;top:${w.y}%;width:${w.w}%;height:${w.h}%;background:url('images/home/win_${t}.jpg') center/cover,linear-gradient(${sky[0]},${sky[1]})"><div class="cross"></div><span class="tm">${pad(now.getHours())}:${pad(now.getMinutes())}</span></div>`;
+  h+=`<div class="win art" style="left:${w.x}%;top:${w.y}%;width:${w.w}%;height:${w.h}%;background:url('images/home/win_${t}.webp') center/cover,linear-gradient(${sky[0]},${sky[1]})"><div class="cross"></div><span class="tm">${pad(now.getHours())}:${pad(now.getMinutes())}</span></div>`;
   HM.furniture.forEach(f=>{if(!owned(f.id))return;const im=OK[f.img];h+=`<div class="deco ${im?'img':f.cls}" style="left:${f.x}%;top:${f.y}%;width:${f.w}%;height:${f.h}%;transform:rotate(${f.rot||0}deg);z-index:${f.z||1}">${im?`<img src="${esc(im)}" alt="">`:esc(f.emoji)}</div>`});
   HM.items.forEach(f=>{h+=`<button class="fur" aria-label="${esc(f.label)}" data-act="${esc(f.act)}" style="left:${f.x}%;top:${f.y}%;width:${f.w}%;height:${f.h}%;transform:rotate(${f.rot||0}deg);z-index:${f.z||3}"><span class="e">${imgOr(f.img,esc(f.emoji))}</span></button>`});
   h+=`<div class="heroSpot" style="left:${HM.hero.x}%;top:${HM.hero.y}%;width:${HM.hero.w}%;transform:rotate(${HM.hero.rot||0}deg);z-index:${HM.hero.z||4}">${heroSVG(H.eq,200).replace('width="200"','width="100%"').replace(/height="[\d.]+"/,'')}</div>`;
@@ -975,7 +975,7 @@ function init(){
   requestAnimationFrame(loop);
   if(!H.intro)setTimeout(intro,200);else setTimeout(()=>{try{loginGift()}catch(e){}},300);
   const T1=[M.art],
-    T2=[...CH.slice(1).flatMap((c,i)=>c.stages.map(q=>`grade7-vol2-ch${i+1}/images/battle/${q[0]}.png`)),...M.buildings.map(b=>b.img),heroPath(H.eq),LAYPATH.body((ITEM[H.eq.cloak]||ITEM.cloak_blue).id)].concat(['staff','hat'].map(s=>H.eq[s]&&!/_none$/.test(H.eq[s])?LAYPATH.item(H.eq[s]):null)),
+    T2=[...CH.slice(1).flatMap((c,i)=>c.stages.map(q=>`grade7-vol2-ch${i+1}/images/battle/${q[0]}.webp`)),...M.buildings.map(b=>b.img),heroPath(H.eq),LAYPATH.body((ITEM[H.eq.cloak]||ITEM.cloak_blue).id)].concat(['staff','hat'].map(s=>H.eq[s]&&!/_none$/.test(H.eq[s])?LAYPATH.item(H.eq[s]):null)),
     T3=[GC.home.wallpaper].concat(GC.home.items.map(i=>i.img),GC.home.furniture.map(i=>i.img),ITEMS.map(i=>i.img),ITEMS.filter(i=>i.slot==='cloak').map(i=>heroPath({cloak:i.id})),ITEMS.filter(i=>i.slot==='cloak').map(i=>LAYPATH.body(i.id)),ITEMS.filter(i=>(i.slot==='hat'||i.slot==='staff')&&!/_none$/.test(i.id)).map(i=>LAYPATH.item(i.id)));
   const idle=f=>window.requestIdleCallback?requestIdleCallback(f,{timeout:3000}):setTimeout(f,400);
   probe(T1,()=>{drawMap();document.body.classList.remove('mapwait');
@@ -989,8 +989,8 @@ try{JB2Sync.gate(function(){init()})}catch(e){init()}
 })();
 </script>
 <script>
-/* 小貓圖示統一：把畫面上所有的 🐱 自動換成 images/home/catnest.png（智慧貓小圖）。想換圖只改 MS_CAT_URL。 */
-var MS_CAT_URL = (function () { try { return 'images/home/catnest-s.png'; } catch (e) { return 'images/home/catnest-s.png'; } })();
+/* 小貓圖示統一：把畫面上所有的 🐱 自動換成 images/home/catnest.webp（智慧貓小圖）。想換圖只改 MS_CAT_URL。 */
+var MS_CAT_URL = (function () { try { return 'images/home/catnest-s.webp'; } catch (e) { return 'images/home/catnest-s.webp'; } })();
 (function () {
   function mk() { var i = document.createElement('img'); i.src = MS_CAT_URL; i.alt = '智慧貓'; i.className = 'ms-catico'; i.style.cssText = 'height:1.25em;width:1.25em;object-fit:contain;vertical-align:-.3em'; return i; }
   var busy = false;

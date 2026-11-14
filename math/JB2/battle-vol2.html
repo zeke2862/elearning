@@ -260,7 +260,7 @@ function monStatsAt(lv){
 }
 const MON_BY_ID={};
 VOL2.forEach((c,ci)=>c.mons.forEach(m=>{MON_BY_ID[m.id]={...m,ci};}));
-function monImg(id,kind){const i=MON_BY_ID[id];return i?`${V2_BASE}grade7-vol2-ch${i.ci+1}/images/${kind||'battle'}/${id}.png`:'';}
+function monImg(id,kind){const i=MON_BY_ID[id];return i?`${V2_BASE}grade7-vol2-ch${i.ci+1}/images/${kind||'battle'}/${id}.webp`:'';}
 
 // ---- 讀取 JB2 各章進度（跟 JB2 章節地圖用同一個瀏覽器儲存空間；JB1、JB2 要放在同一個網站底下）----
 function readV2(ci){try{return JSON.parse(localStorage.getItem(VOL2[ci].key))||{}}catch(e){return {}}}

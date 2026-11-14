@@ -31,7 +31,7 @@ button:focus-visible{outline:3px solid var(--bronze);outline-offset:2px}
 
 /* ===== 地圖 ===== */
 .stagearea{position:fixed;left:0;right:0;top:var(--bar);bottom:0;overflow:hidden;background:#9fcbe3}
-.mapwrap{position:absolute;inset:0;background:#9fcbe3 url(../images/map/ch4-bg.jpg) center/cover no-repeat}
+.mapwrap{position:absolute;inset:0;background:#9fcbe3 url(../images/map/ch4-bg.webp) center/cover no-repeat}
 .mapwrap::before{content:"";position:absolute;inset:0;background:#fff;opacity:.16;mix-blend-mode:soft-light;pointer-events:none;z-index:1}
 .mapwrap::after{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at center,transparent 75%,#0a1a2e1f 100%);pointer-events:none;z-index:1}
 .trail{position:absolute;left:0;top:0;width:100%;height:100%;z-index:2;pointer-events:none}
@@ -137,7 +137,7 @@ button:focus-visible{outline:3px solid var(--bronze);outline-offset:2px}
 
 /* 手機直式：地圖改成直的，路線由下往上 */
 @media (max-aspect-ratio:1/1){
-  .mapwrap{background-image:url(../images/map/ch4-bg-tall.jpg)}
+  .mapwrap{background-image:url(../images/map/ch4-bg-tall.webp)}
   .rk{display:none}
   .ttl small{display:none}
   .zone{font-size:.7rem}
@@ -276,7 +276,7 @@ function layout(n,T){
 const portrait=()=>window.matchMedia('(max-aspect-ratio:1/1)').matches;
 const STAGES=CHX.flatMap((c,ci)=>c.st.map((s,k)=>({id:s[0],name:s[1],url:s[2],topic:TOPIC[s[0]]||c.sub,ci,k,boss:/Boss/.test(s[1])})));
 const cardOf=id=>CARDS.find(c=>c[0]===id);
-function faceHTML(id,cls){const c=cardOf(id);return `<img class="${cls}" src="images/battle/${id}.png" alt="" onerror="this.outerHTML='<span class=&quot;emo&quot;>${c?c[3]:'❓'}</span>'">`}
+function faceHTML(id,cls){const c=cardOf(id);return `<img class="${cls}" src="images/battle/${id}.webp" alt="" onerror="this.outerHTML='<span class=&quot;emo&quot;>${c?c[3]:'❓'}</span>'">`}
 function hereIdx(){ // 勇者所在：第一個「已解鎖但還沒通關」的關卡；全通關就停在 Boss
   for(let i=0;i<STAGES.length;i++){const s=STAGES[i];if(!lockCh(s.ci,s.k)&&!st(s.id))return i}
   return STAGES.length-1;
@@ -332,7 +332,7 @@ function renderEndless(){
 }
 function renderCards(){
   $('#cards').innerHTML=CARDS.map(c=>st(c[0])>0?
-    `<div class="cd${mainOf()===c[0]?' ismain':''}" data-card="${c[0]}">${mainOf()===c[0]?'<span class="mainbadge">⭐ 主力</span>':''}<span class="lv">Lv.${lvOf(expOf(c[0]))}</span><img src="images/cards/${c[0]}.png" alt="${c[1]}" onerror="this.style.display='none';this.nextElementSibling.style.display='';"><div class="cd-emoji">${c[3]}</div><b>${c[1]}</b>${c[2]}</div>`
+    `<div class="cd${mainOf()===c[0]?' ismain':''}" data-card="${c[0]}">${mainOf()===c[0]?'<span class="mainbadge">⭐ 主力</span>':''}<span class="lv">Lv.${lvOf(expOf(c[0]))}</span><img src="images/cards/${c[0]}.webp" alt="${c[1]}" onerror="this.style.display='none';this.nextElementSibling.style.display='';"><div class="cd-emoji">${c[3]}</div><b>${c[1]}</b>${c[2]}</div>`
     :`<div class="cd lock"><b>？？？</b>通關 ${c[0]} 解鎖</div>`).join('');
   renderMain();
 }
@@ -352,7 +352,7 @@ function toggleMain(id){
 function openCard(id){
   const c=CARDS.find(x=>x[0]===id);if(!c)return;
   const exp=expOf(id),lv=lvOf(exp),cu=exp%LEVEL_STEP;
-  $('#cm-img').src='images/cards/'+id+'.png';$('#cm-img').alt=c[1];$('#cm-img').style.display='';
+  $('#cm-img').src='images/cards/'+id+'.webp';$('#cm-img').alt=c[1];$('#cm-img').style.display='';
   $('#cm-emoji').style.display='none';$('#cm-emoji').textContent=c[3];
   $('#cm-img').onerror=()=>{$('#cm-img').style.display='none';$('#cm-emoji').style.display='';};
   $('#cm-name').textContent=c[1];
@@ -386,7 +386,7 @@ function openPeek(i){
   const s=STAGES[i],n=st(s.id),c=cardOf(s.id);
   const ok=n>=3;
   const MB=[['easy','🛡️ 練兵','不限時，最高 3⭐。還有「老師教我」可以幫忙！',''],['real','⚔️ 實戰','限時作答，正確率 60%／80%／100% 拿 2／3／4⭐',''],['hard','🔥 修羅','更短時間，正確率 60%／80%／100% 拿 3／4／5⭐',''],['end','♾️ 無極限','題目一直出，5 顆心用完為止。'+(ok?'':'（這一關先拿到 3⭐ 才能挑戰，目前 '+n+'⭐）'),ok?'':' dis']];
-  $('#peek').innerHTML=`<button class="px" aria-label="關閉">✕</button><img src="images/battle/${s.id}.png" alt="" onerror="this.outerHTML='<div class=&quot;pe&quot;>${c[3]}</div>'"><div class="pt"><h3 class="serif">${s.id}｜${s.name}</h3><p class="pd">${DESC[s.id]||s.topic}</p><p><small style="opacity:.7">${CHX[s.ci].n}｜${s.topic}</small><br>${n?'⭐'.repeat(n)+'☆'.repeat(5-n):'尚未通關'}</p><div class="btns">${MB.map(m=>`<button class="mb${m[3]}" data-m="${m[0]}" data-id="${s.id}" data-tip="${m[2]}">${m[1]}</button>`).join('')}</div></div>`;
+  $('#peek').innerHTML=`<button class="px" aria-label="關閉">✕</button><img src="images/battle/${s.id}.webp" alt="" onerror="this.outerHTML='<div class=&quot;pe&quot;>${c[3]}</div>'"><div class="pt"><h3 class="serif">${s.id}｜${s.name}</h3><p class="pd">${DESC[s.id]||s.topic}</p><p><small style="opacity:.7">${CHX[s.ci].n}｜${s.topic}</small><br>${n?'⭐'.repeat(n)+'☆'.repeat(5-n):'尚未通關'}</p><div class="btns">${MB.map(m=>`<button class="mb${m[3]}" data-m="${m[0]}" data-id="${s.id}" data-tip="${m[2]}">${m[1]}</button>`).join('')}</div></div>`;
   $('#peek').classList.toggle("atop",toPxY(i)>($('#mapwrap').clientHeight*.52));$('#peek').classList.remove('hide');
 }
 $('#mapwrap').onclick=e=>{

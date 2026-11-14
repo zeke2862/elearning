@@ -45,16 +45,16 @@ table{border-collapse:collapse;background:#fff}td,th{border:1px solid #ccc;paddi
 <div class="note">選一件帽子或法杖，在右邊預覽上<b>用滑鼠拖曳</b>就能移動；用滑桿或輸入數字可精準調整位置與大小；滑鼠滾輪＝縮放。調好後按上方「💾 直接存進遊戲資料夾」。</div>
 <div id="hp" style="display:flex;gap:18px;flex-wrap:wrap;align-items:flex-start;margin:8px 0">
 <div id="hpCtl" style="min-width:260px;flex:1;max-width:420px"></div>
-<div id="hpPrev" style="position:relative;width:260px;height:390px;background:#f3ead7 url(images/home/wallpaper.jpg) center/cover;border:3px solid #5b3d1a;border-radius:10px;overflow:hidden;touch-action:none;cursor:grab;flex:none"></div>
+<div id="hpPrev" style="position:relative;width:260px;height:390px;background:#f3ead7 url(images/home/wallpaper.webp) center/cover;border:3px solid #5b3d1a;border-radius:10px;overflow:hidden;touch-action:none;cursor:grab;flex:none"></div>
 </div>
 <h2 style="margin-top:20px">🏠 小屋編排器（拖曳、縮放、旋轉）</h2>
-<div class="note">用滑鼠拖曳物件移動；右下紅點＝縮放；上方藍點＝旋轉；也可以選取後用方向鍵微調（Shift＝移動較多）。改完記得按上方「💾 直接存進遊戲資料夾」。背景用 images/home/wallpaper.jpg（沒有就是米色底）。</div>
+<div class="note">用滑鼠拖曳物件移動；右下紅點＝縮放；上方藍點＝旋轉；也可以選取後用方向鍵微調（Shift＝移動較多）。改完記得按上方「💾 直接存進遊戲資料夾」。背景用 images/home/wallpaper.webp（沒有就是米色底）。</div>
 <div class="hrow"><label><input type="radio" name="hv" value="pc" checked> 電腦畫面（16:10）</label><label><input type="radio" name="hv" value="phone"> 手機直向（4:5）</label>
 <label><input type="checkbox" id="hsnap" checked> 對齊 0.5%</label><button class="g" id="hreset">全部還原成載入時的位置</button></div>
 <div id="hstage" tabindex="0"></div>
 <div class="hrow" id="hpanel"><span class="note">點一個物件開始編輯</span></div>
 <h2 style="margin-top:20px">🗺️ 章節地圖編排器（拖曳各章怪物關卡的位置）</h2>
-<div class="note">選章節與版面（電腦橫式／手機直式各自獨立），用滑鼠拖曳關卡圓圈；也可選取後用方向鍵微調（Shift＝移動較多），或直接輸入 x、y（%）。背景就是遊戲裡用的 images/map/chN-bg.jpg（直式用 chN-bg-tall.jpg），所以換了新圖也能直接對位。白色虛線框＝其他比例的螢幕實際會看到的範圍（螢幕比圖窄／寬時邊緣會被裁掉，重要關卡請放在框內）。改完記得按上方「💾 直接存進遊戲資料夾」，再重新整理章節地圖就會套用。</div>
+<div class="note">選章節與版面（電腦橫式／手機直式各自獨立），用滑鼠拖曳關卡圓圈；也可選取後用方向鍵微調（Shift＝移動較多），或直接輸入 x、y（%）。背景就是遊戲裡用的 images/map/chN-bg.webp（直式用 chN-bg-tall.webp），所以換了新圖也能直接對位。白色虛線框＝其他比例的螢幕實際會看到的範圍（螢幕比圖窄／寬時邊緣會被裁掉，重要關卡請放在框內）。改完記得按上方「💾 直接存進遊戲資料夾」，再重新整理章節地圖就會套用。</div>
 <div class="hrow"><label>章節 <select id="cmch"></select></label><label><input type="radio" name="cmv" value="L" checked> 電腦橫式（16:9）</label><label><input type="radio" name="cmv" value="T"> 手機直式（9:16）</label>
 <label><input type="checkbox" id="cmsn" checked> 對齊 0.5%</label><label><input type="checkbox" id="cmfr" checked> 顯示其他螢幕的範圍</label><button class="g" id="cmreset">這一章這個版面：還原成預設路線</button></div>
 <div id="cmstage" tabindex="0"></div>
@@ -159,11 +159,11 @@ rerender();
     a.push({k:'window',label:'窗戶',o:H.window,kind:'win'});
     H.items.forEach(function(o){a.push({k:o.id,label:o.label,o:o,emoji:o.emoji,img:o.img})});
     H.furniture.forEach(function(o){a.push({k:o.id,label:'家具',o:o,emoji:o.emoji||'🧶',img:o.img})});
-    a.push({k:'hero',label:'勇者',o:H.hero,emoji:'🧙',img:'images/hero/cloak_blue.png',noH:true});
+    a.push({k:'hero',label:'勇者',o:H.hero,emoji:'🧙',img:'images/hero/cloak_blue.webp',noH:true});
     a.push({k:'pet',label:'寵物',o:H.pet,emoji:'🐱'});
     return a}
   function draw(){
-    stage.style.backgroundImage="url('images/home/wallpaper.jpg')";stage.innerHTML='';
+    stage.style.backgroundImage="url('images/home/wallpaper.webp')";stage.innerHTML='';
     var list=ents();
     list.forEach(function(e){var o=e.o,d=document.createElement('div');d.className='he'+(e.kind==='win'?' hwin':'')+(sel===e.k?' sel':'');d.dataset.k=e.k;
       d.style.left=o.x+'%';d.style.top=o.y+'%';d.style.width=(o.w||6)+'%';
@@ -224,12 +224,12 @@ rerender();
   function draw(){
     var n=+chs.value,T=isT(),P=arr(false),st=stages();
     stage.classList.toggle('phone',T);
-    stage.style.backgroundImage="url('images/map/ch"+n+(T?'-bg-tall':'-bg')+".jpg')";stage.innerHTML='';
+    stage.style.backgroundImage="url('images/map/ch"+n+(T?'-bg-tall':'-bg')+".webp')";stage.innerHTML='';
     stage.insertAdjacentHTML('beforeend','<svg viewBox="0 0 100 100" preserveAspectRatio="none"><path d="'+path(P,T)+'" fill="none" stroke="#fff" stroke-width="5" stroke-dasharray="1 10" stroke-linecap="round" vector-effect="non-scaling-stroke" opacity=".9"/></svg>');
     if($('#cmfr').checked){if(!T){stage.appendChild(frame(4/3,'4:3 平板',T));stage.appendChild(frame(21/9,'21:9 寬螢幕',T))}else{stage.appendChild(frame(3/4,'3:4 平板直立',T));stage.appendChild(frame(9/20,'9:20 長手機',T))}}
     st.forEach(function(s,i){var boss=/Boss/.test(s[1]),d=document.createElement('div');d.className='cmn'+(boss?' boss':'')+(sel===i?' sel':'');d.dataset.i=i;
       d.style.left=P[i][0]+'%';d.style.top=P[i][1]+'%';d.style.width=(T?(boss?20:15):(boss?10:7.6))+'%';
-      var im=document.createElement('img');im.src='grade7-vol2-ch'+n+'/images/battle/'+s[0]+'.png';im.onerror=function(){im.remove();var e=document.createElement('span');e.className='cem';e.textContent=boss?'👹':'⚔️';d.insertBefore(e,d.firstChild)};d.appendChild(im);
+      var im=document.createElement('img');im.src='grade7-vol2-ch'+n+'/images/battle/'+s[0]+'.webp';im.onerror=function(){im.remove();var e=document.createElement('span');e.className='cem';e.textContent=boss?'👹':'⚔️';d.insertBefore(e,d.firstChild)};d.appendChild(im);
       var t=document.createElement('span');t.className='cid';t.textContent=s[0];d.appendChild(t);stage.appendChild(d)});
     panel()}
   var drag=null;
@@ -301,8 +301,8 @@ function set(k,v,src){var it=find(sel.item),l=lay(it);l[k]=Math.round(v*100)/100
   $('#hpCtl').querySelectorAll('input').forEach(function(e){if(e!==src&&(e.dataset.k===k||e.dataset.r===k))e.value=l[k]});prev()}
 function layer(src,l){return '<img src="'+esc(src)+'" draggable="false" style="position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none;transform:translate('+l.x+'%,'+l.y+'%) scale('+l.s+')">'}
 function prev(){
-  var h=layer('images/hero/body_'+sel.cloak+'.png',{x:0,y:0,s:1});
-  [sel.other,sel.item].forEach(function(id){if(!id)return;var it=find(id);if(!it)return;var l=lay(it);h+=layer('images/hero/'+id+'.png',{x:+l.x||0,y:+l.y||0,s:+l.s||1})});
+  var h=layer('images/hero/body_'+sel.cloak+'.webp',{x:0,y:0,s:1});
+  [sel.other,sel.item].forEach(function(id){if(!id)return;var it=find(id);if(!it)return;var l=lay(it);h+=layer('images/hero/'+id+'.webp',{x:+l.x||0,y:+l.y||0,s:+l.s||1})});
   $('#hpPrev').innerHTML=h;
 }
 var drag=null,pv=$('#hpPrev');
