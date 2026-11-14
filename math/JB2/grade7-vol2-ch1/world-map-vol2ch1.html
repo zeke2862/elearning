@@ -473,6 +473,8 @@ try{JB2Sync.gate(function(){load();render();JB2Sync.push()})}catch(e){load();ren
 (function(){try{const q=new URLSearchParams(location.search),p=q.get('practice'),sid=q.get('sid');if(!p||!sid||!/^(daily|weak)$/.test(p))return;
  const s=STAGES.find(x=>x.id===sid);if(!s||lockCh(s.ci,s.k))return;
  window.__extra='&practice='+p+'&types='+encodeURIComponent(q.get('types')||'');openStage(sid,false,'');window.__extra='';}catch(e){}})();
+/* 對戰頁帶進來：?pickmain=1 → 直接打開圖鑑，讓學生挑主力培養怪 */
+(function(){try{if(new URLSearchParams(location.search).get('pickmain')==='1')sideOpen(true)}catch(e){}})();
 </script>
 <script src="../audio/bgm.js"></script>
 </body>
