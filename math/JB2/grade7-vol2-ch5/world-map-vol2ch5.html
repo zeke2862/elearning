@@ -145,6 +145,7 @@ button:focus-visible{outline:3px solid var(--bronze);outline-offset:2px}
 @media (max-width:520px){.ttl h1{font-size:.9rem}.backlink{padding:6px 9px;font-size:.8rem}.sbtn{padding:6px 9px;font-size:.8rem}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
+<script src="../stage-guard.js"></script>
 </head>
 <body>
 <header class="top">
@@ -422,6 +423,7 @@ addEventListener('keydown',e=>{if(e.key==='Escape'){closeCard();closePeek();side
 /* 中途離開：已經答了題目的那一局，也算 1 次練習、時間照算（標記為 part） */
 function commitPartial(){if(!cur||!AT.n||$('#ov').classList.contains('hide'))return;const o0=P[cur]||{stars:0,best:0};HS=tTake();P[cur]={...o0,tries:(o0.tries|0)+1,psecs:(o0.psecs||0)+HS,hist:addHist(o0.hist,HS,0,'part',{}),lastMode:'part',lastStars:o0.lastStars==null?0:o0.lastStars};P._last={id:cur,at:Date.now()};save();try{JB2Sync.push()}catch(e){}}
 addEventListener('pagehide',commitPartial);
+function leftNotice(){const f=()=>{if(!document.hidden){document.removeEventListener('visibilitychange',f);alert('⚠️ 偵測到你離開了遊戲頁面，這一局已被關閉！\n作答時請不要切換到其他網頁或程式喔。')}};document.hidden?document.addEventListener('visibilitychange',f):f()}
 function closeStage(){commitPartial();tDrop();$('#ov').classList.add('hide');$('#fr').src='about:blank';render()}
 $('#x').onclick=closeStage;
 addEventListener('message',e=>{
@@ -453,7 +455,7 @@ addEventListener('message',e=>{
     const old=P[d.id]||{stars:0,best:0},o=old.eb||0;
     if(d.count>o){P[d.id]={...old,eb:d.count};save();toast('🏆 '+d.id+' 無極限新紀錄：'+d.count+' 題！')}
   }
-  if(d.type=='stage-exit')closeStage();
+  if(d.type=='stage-exit'){closeStage();if(d.reason=='left')leftNotice()}
 });
 $('#reset').onclick=()=>{if(confirm('確定要清除所有星星與圖鑑嗎？這個動作無法復原。')){P={};save();render()}};
 addEventListener('resize',()=>{clearTimeout(window._rz);window._rz=setTimeout(renderMap,120)});

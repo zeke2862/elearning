@@ -61,6 +61,7 @@ button:focus-visible{outline:3px solid var(--bronze);outline-offset:2px}
 @media (max-width:480px){.opt{font-size:.95rem}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
+<script src="../stage-guard.js" data-leave="1"></script>
 </head>
 <body>
 <main>
@@ -346,9 +347,11 @@ function next(){
 }
 function startTimer(){
   const T=MODES[mode].t;left=T;frozenUntil=0;paint();if(!T)return;
+  let last=Date.now();
   tm=setInterval(()=>{
-    if(Date.now()<frozenUntil)return;
-    left-=0.1;paint();
+    const now=Date.now();
+    if(now<frozenUntil){last=now;return}
+    left-=(now-last)/1000;last=now;paint();
     if(left<=0){clearInterval(tm);miss(null)}
   },100);
 }
