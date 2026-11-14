@@ -16,7 +16,7 @@
    ?endless=1 進入無極限挑戰
    ===================================================================== */
 /* 小貓圖示統一：把畫面上所有的 🐱 自動換成 images/home/catnest.png（智慧貓小圖）。想換圖只改 MS_CAT_URL。 */
-var MS_CAT_URL = (function () { try { return new URL('../images/home/catnest.png', document.currentScript.src).href; } catch (e) { return '../images/home/catnest.png'; } })();
+var MS_CAT_URL = (function () { try { return new URL('../images/home/catnest-s.png', document.currentScript.src).href; } catch (e) { return '../images/home/catnest-s.png'; } })();
 (function () {
   function mk() { var i = document.createElement('img'); i.src = MS_CAT_URL; i.alt = '智慧貓'; i.className = 'ms-catico'; i.style.cssText = 'height:1.25em;width:1.25em;object-fit:contain;vertical-align:-.3em'; return i; }
   var CAT = '🐱';
@@ -2938,9 +2938,11 @@ var MS_CAT_URL = (function () { try { return new URL('../images/home/catnest.png
 (function () {
   'use strict';
   var me = document.currentScript, base = (me && me.src) ? me.src.replace(/[^\/]*$/, '') : '';
-  function loadSync(f) { try { document.write('<script src="' + base + '../' + f + '"><\/script>'); } catch (e) {} }
-  if (!window.GAME_CONFIG) loadSync('game-config.js');
-  loadSync('relax-break.bundle.js');
+  /* 背景載入（不卡住關卡頁）：這兩個檔只有「休息小遊戲」會用，頁面全部載完後才啟動；
+     以前用 document.write 同步載入，會讓 369KB 的小遊戲檔擋住整個遊戲主程式。 */
+  function loadBg(f) { try { var s = document.createElement('script'); s.src = base + '../' + f; s.async = true; document.head.appendChild(s); } catch (e) {} }
+  if (!window.GAME_CONFIG) loadBg('game-config.js');
+  loadBg('relax-break.bundle.js');
 
   var HUB = 'jb2-hub-v1';
   function hubRead() { try { return JSON.parse(localStorage.getItem(HUB)) || {}; } catch (e) { return {}; } }
