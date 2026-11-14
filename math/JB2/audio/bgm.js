@@ -58,8 +58,8 @@
   /* ---- 換頁前先淡出（連結點擊 + 主城的 location 跳轉） ---- */
   function leave(go) {
     if (leaving) return; leaving = true;
-    try { if (cur) { sessionStorage.setItem('jb2-bgm-pos', JSON.stringify({ name: curName, t: cur.currentTime, at: Date.now() + 450 })); fadeTo(cur, 0, 450); } } catch (e) {}
-    setTimeout(function () { leaving = false; go(); }, cur ? 470 : 0);
+    try { if (cur) { sessionStorage.setItem('jb2-bgm-pos', JSON.stringify({ name: curName, t: cur.currentTime, at: Date.now() + 150 })); fadeTo(cur, 0, 150); } } catch (e) {}
+    setTimeout(function () { leaving = false; go(); }, cur ? 160 : 0);
   }
   document.addEventListener('click', function (e) {
     var a = e.target.closest && e.target.closest('a[href]'); if (!a || e.defaultPrevented || a.target === '_blank') return;

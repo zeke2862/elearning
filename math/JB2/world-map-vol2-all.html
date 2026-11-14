@@ -959,6 +959,14 @@ function intro(){
   openPanel('🌍 歡迎來到數理大陸',`<div class="cat"><div class="av">🐱</div><div>我是導師智慧貓！古老的數理大陸被混沌黑霧籠罩，六大元素水晶失衡，各地的守護數靈因為「數學觀念混亂」而暴走了。<br><br>召喚師，請你帶著法杖，依序走訪六座島嶼，答對題目、封印數靈、收進圖鑑。<br><br>👉 點島嶼，勇者會走過去；點村莊的 🏠 回小屋休息、點 🏪 買裝備、點 🏟️ 去鬥技場。<br>👉 通關拿星星、練習拿經驗，都能換成 ${CUR} ${CN}喔！</div></div><button class="btn" data-act="closePanel">開始冒險！</button>`);
   H.intro=true;save();
 }
+/* 閒置時先把「關卡頁」會用到的腳本下載到快取（只預載已開啟的章節），學生點關卡時就不必再等 */
+function prefetchStages(){
+  try{
+    const u=['stage-guard.js','relax-break.bundle.js'];
+    for(let n=1;n<=NCH;n++){if(locked(n))continue;u.push(`grade7-vol2-ch${n}/mode-system.js`,`grade7-vol2-ch${n}/explain-th.js`,`grade7-vol2-ch${n}/${n===1?'lessons':'lessons'+n}.js`)}
+    u.forEach(h=>{const l=document.createElement('link');l.rel='prefetch';l.as='script';l.href=h;document.head.appendChild(l)});
+  }catch(e){}
+}
 function init(){
   document.body.classList.add('mapwait');setTimeout(()=>document.body.classList.remove('mapwait'),1500);
   load();buildStatic();calcStats();fit();drawMap();
@@ -971,7 +979,7 @@ function init(){
     T3=[GC.home.wallpaper].concat(GC.home.items.map(i=>i.img),GC.home.furniture.map(i=>i.img),ITEMS.map(i=>i.img),ITEMS.filter(i=>i.slot==='cloak').map(i=>heroPath({cloak:i.id})),ITEMS.filter(i=>i.slot==='cloak').map(i=>LAYPATH.body(i.id)),ITEMS.filter(i=>(i.slot==='hat'||i.slot==='staff')&&!/_none$/.test(i.id)).map(i=>LAYPATH.item(i.id)));
   const idle=f=>window.requestIdleCallback?requestIdleCallback(f,{timeout:3000}):setTimeout(f,400);
   probe(T1,()=>{drawMap();document.body.classList.remove('mapwait');
-    probe(T2,()=>{drawMap();renderHero();idle(()=>probe(T3,()=>{renderHero();if($('#home').classList.contains('on'))renderHome()},true))},true)});
+    probe(T2,()=>{drawMap();renderHero();idle(prefetchStages);idle(()=>probe(T3,()=>{renderHero();if($('#home').classList.contains('on'))renderHome()},true))},true)});
   reportNow(false);
 }
 window.addEventListener('resize',()=>{fit();centerOnHero(false)});
@@ -982,7 +990,7 @@ try{JB2Sync.gate(function(){init()})}catch(e){init()}
 </script>
 <script>
 /* 小貓圖示統一：把畫面上所有的 🐱 自動換成 images/home/catnest.png（智慧貓小圖）。想換圖只改 MS_CAT_URL。 */
-var MS_CAT_URL = (function () { try { return 'images/home/catnest.png'; } catch (e) { return 'images/home/catnest.png'; } })();
+var MS_CAT_URL = (function () { try { return 'images/home/catnest-s.png'; } catch (e) { return 'images/home/catnest-s.png'; } })();
 (function () {
   function mk() { var i = document.createElement('img'); i.src = MS_CAT_URL; i.alt = '智慧貓'; i.className = 'ms-catico'; i.style.cssText = 'height:1.25em;width:1.25em;object-fit:contain;vertical-align:-.3em'; return i; }
   var busy = false;
