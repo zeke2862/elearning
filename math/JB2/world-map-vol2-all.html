@@ -114,6 +114,7 @@ table.w td,table.w th{border-bottom:1px solid var(--line);padding:5px 6px;text-a
 @media (prefers-reduced-motion:reduce){#map .flow,#map .bigArrow{animation:none}}
 #map{transition:opacity .4s}body.mapwait #map{opacity:0}
 </style>
+<script src="jb2-seal.js?v=1"></script>
 <script src="stage-guard.js"></script>
 </head>
 <body>
@@ -194,8 +195,11 @@ function calcStats(){
 }
 const totalStars=()=>{let t=0;for(let n=1;n<=NCH;n++)t+=S[n].stars;return t};
 const needFor=i=>Math.ceil(CH[i-1].max*E.unlockRatio);
-const locked=i=>!(OPEN||i===1||S[i-1].stars>=needFor(i));
-const lockMsg=i=>`第 ${i} 章還沒開啟：要在第 ${i-1} 章拿到 ${needFor(i)} ⭐（目前 ${S[i-1].stars} ⭐）`;
+const bossOf=i=>{const L=CH[i].stages;return L[L.length-1]};   // 該章最後一關（Boss）
+const bossDone=i=>{const b=bossOf(i),p=S[i].per[b[0]];return !!(p&&p.stars>0)};
+/* 進下一座島：上一章的星星要夠，而且要通過上一章的最後一關 */
+const locked=i=>!(OPEN||i===1||(S[i-1].stars>=needFor(i)&&bossDone(i-1)));
+const lockMsg=i=>{const m=[];if(S[i-1].stars<needFor(i))m.push(`在第 ${i-1} 章拿到 ${needFor(i)} ⭐（目前 ${S[i-1].stars} ⭐）`);if(!bossDone(i-1))m.push(`通過第 ${i-1} 章的最後一關「${bossOf(i-1)[1]}」`);return `第 ${i} 章還沒開啟：要${m.join('，而且要')}`};
 
 /* ===== 工具 ===== */
 const $=s=>document.querySelector(s);
@@ -699,14 +703,15 @@ function useBoost(){
 function deskHTML(){
   const locked_=H.who.name&&!H.renaming;
   let h=`<p class="muted">只需要「學號」和「勇者名」，請不要填真名、電話或住址。班級由老師的對照表帶入。</p>
-  <div class="row2"><label>學號</label><input type="text" id="fNo" maxlength="12" value="${esc(H.who.no)}"></div>
+  <div class="row2"><label>學號</label><input type="text" id="fNo" maxlength="12" value="${esc(H.who.no)}" ${H.who.no?'disabled':''}></div>
   <div class="row2"><label>勇者名</label><input type="text" id="fName" maxlength="8" value="${esc(H.who.name)}" ${locked_?'disabled':''}></div>`;
   if(locked_)h+=`<p class="muted">勇者名取好之後，不能自己修改。想改名需要「改名卡」（商店有賣，你目前有 ${H.inv.rename||0} 張）。</p><button class="btn ghost" data-act="useRename" ${H.inv.rename?'':'disabled'}>使用改名卡</button> `;
   else h+=`<p class="muted">${H.renaming?'改名中：存檔之後這張改名卡就用掉了。':'第一次取名免費，但取好之後就<b>無法自己修改</b>，要改只能買改名卡，請想清楚喔！'}</p>`;
+  if(H.who.no)h+=`<p class="muted">學號設定後不能自己修改（避免冒用別人的學號）。如果填錯了，請找老師幫忙。</p>`;
   return h+`<button class="btn" data-act="saveWho">💾 儲存</button>`;
 }
 function saveWho(){
-  const no=$('#fNo').value.trim(),nm=$('#fName').disabled?H.who.name:$('#fName').value.trim();
+  const no=H.who.no||$('#fNo').value.trim(),nm=$('#fName').disabled?H.who.name:$('#fName').value.trim();
   if(!no){toast('請填學號（老師才知道是你）');return}
   if(!nm){toast('請先幫自己取個勇者名');return}
   if(isBad(nm)){toast('這個名字不適合，請換一個');return}
@@ -785,26 +790,35 @@ function safeHTML(){
 }
 function snapshot(){const o={v:1,hub:H,ch:{},at:new Date().toISOString()};for(let n=1;n<=NCH;n++)o.ch[n]=readCh(n);return o}
 function exportAll(){
-  const w=H.who,b=new Blob([JSON.stringify(snapshot())],{type:'application/json'}),a=document.createElement('a');
+  const w=H.who,b=new Blob([JSON.stringify(window.JB2Seal?JB2Seal.makeFile(snapshot()):snapshot())],{type:'application/json'}),a=document.createElement('a');
   a.href=URL.createObjectURL(b);a.download=`jb2-all-progress-${w.no||'x'}-${w.name||'x'}.json`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),2000);
 }
-function applyData(o){
+const SAVE_MSG={old:'這是舊版的存檔碼／存檔檔，已經不能使用了。請回到原本那台電腦，打開總地圖，重新產生新的存檔碼。',sig:'這個存檔被修改過或不完整，沒辦法還原。',bad:'存檔碼不正確，請確認有整段貼上'};
+function applyData(o){   // o 必須是已經通過簽章檢查的存檔
   if(!o||o.v!==1||!o.ch)throw 0;
+  const cur=String((window.JB2Sync&&JB2Sync.activeNo&&JB2Sync.activeNo())||H.who.no||''),who=String((o.hub&&o.hub.who&&o.hub.who.no)||'');
+  if(cur&&who&&cur!==who){toast('這份存檔是學號 '+esc(who)+' 的，不是你的，不能還原');return}
   if(!confirm('還原會覆蓋目前這台電腦上的進度，確定嗎？'))return;
   for(let n=1;n<=NCH;n++)if(o.ch[n])writeCh(n,o.ch[n]);
   if(o.hub)try{localStorage.setItem(KEY,JSON.stringify(o.hub))}catch(e){}
   location.reload();
 }
-function importAll(f){const r=new FileReader();r.onload=()=>{try{applyData(JSON.parse(r.result))}catch(e){toast('這個檔案不是正確的進度檔')}};r.readAsText(f)}
-function mkCode(){try{$('#codeBox').value='JB2-'+btoa(unescape(encodeURIComponent(JSON.stringify(snapshot()))));toast('存檔碼已產生，請整段複製存起來')}catch(e){toast('產生失敗，請改用匯出檔案')}}
-function useCode(){try{const s=$('#codeBox').value.trim();if(s.indexOf('JB2-')!==0)throw 0;applyData(JSON.parse(decodeURIComponent(escape(atob(s.slice(4))))))}catch(e){toast('存檔碼不正確，請確認有整段貼上')}}
+function restoreSave(x){
+  if(!window.JB2Seal){toast('防護程式沒有載入，暫時不能還原，請重新整理再試');return}
+  const r=JB2Seal.openSave(x);
+  if(!r.ok){toast(SAVE_MSG[r.why]||(/^data:/.test(r.why)?'存檔裡有不合理的數字，沒辦法還原':SAVE_MSG.bad));return}
+  applyData(r.snap);
+}
+function importAll(f){const r=new FileReader();r.onload=()=>{try{restoreSave(JSON.parse(r.result))}catch(e){toast('這個檔案不是正確的進度檔')}};r.readAsText(f)}
+function mkCode(){try{if(!window.JB2Seal)throw 0;$('#codeBox').value=JB2Seal.makeCode(snapshot());toast('存檔碼已產生，請整段複製存起來')}catch(e){toast('產生失敗，請改用匯出檔案')}}
+function useCode(){try{restoreSave($('#codeBox').value.trim())}catch(e){toast('存檔碼不正確，請確認有整段貼上')}}
 
 /* ===== 學習回報（學號必填才回報；不含真名） ===== */
 function reportPayload(){
   const ch={},stages={};
   for(let n=1;n<=NCH;n++){ch[n]={stars:S[n].stars,exp:S[n].exp};for(const k in S[n].per)stages[k]=S[n].per[k]}
   const rows=weakRows().slice(0,5).map(r=>({k:r.k,n:r.n,ok:r.ok}));
-  return{v:1,no:H.who.no,hero:H.who.name,at:new Date().toISOString(),stars:totalStars(),ch,stages,weak:rows,gold:H.gold,earned:H.stat.earned,spent:H.stat.spent,streak:H.streak.n};
+  return{v:1,no:H.who.no,hero:H.who.name,at:new Date().toISOString(),stars:totalStars(),ch,stages,weak:rows,gold:H.gold,earned:H.stat.earned,spent:H.stat.spent,streak:H.streak.n,tamper:(window.JB2Seal?JB2Seal.summary():null)};
 }
 function reportNow(force){
   try{JB2Sync.push()}catch(e){}
@@ -972,6 +986,7 @@ function init(){
   load();buildStatic();calcStats();fit();drawMap();
   heroNode=Math.min(NCH,Math.max(0,H.heroNode!=null?H.heroNode:H.last||0));heroXY={x:POS[heroNode][0],y:POS[heroNode][1]};
   sync(false);drawMap();renderHero();refreshHUD();centerOnHero(false);
+  try{const lk=+new URLSearchParams(location.search).get('locked');if(lk>=2&&lk<=NCH&&locked(lk))setTimeout(()=>toast(lockMsg(lk)),700)}catch(e){}   // 從章節地圖被擋回來
   requestAnimationFrame(loop);
   if(!H.intro)setTimeout(intro,200);else setTimeout(()=>{try{loginGift()}catch(e){}},300);
   const T1=[M.art],

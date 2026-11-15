@@ -34,7 +34,8 @@
   /* ===== 1. 強迫輸入學號 ===== */
   function gate(onDone) {
     var q = ''; try { q = new URLSearchParams(location.search).get('student') || ''; } catch (e) {}
-    var no = q || activeNo() || knownNo();
+    var cur = activeNo() || knownNo(), no = cur || q;   // 本機已經有學號就以它為準，網址上的 ?student= 不能覆蓋（避免冒用）
+    if (q && cur && q !== cur) { try { window.JB2Seal && JB2Seal.log('idChange', '', '網址學號 ' + q + ' 被忽略（本機是 ' + cur + '）'); } catch (e) {} }
     if (no) { setActive(no); onDone && onDone(no); return; }
     var ov = document.createElement('div');
     ov.style.cssText = 'position:fixed;inset:0;z-index:99999;background:#0b0f22f2;display:flex;align-items:center;justify-content:center;padding:16px;font-family:system-ui,"Noto Sans TC",sans-serif';
@@ -88,7 +89,8 @@
       hero: hw.name || '', totalStars: totalStars, totalPlays: totalPlays, pSecs: pSecs,
       lastId: lastId, lastName: ls ? ls.n : '', lastAt: lastAt,
       lastStars: ls ? ls.lastStars : null, lastBest: ls ? ls.bestStars : null, lastMode: ls ? ls.lastMode : '',
-      stages: stages, q: q, weak: weak.slice(0, 8)
+      stages: stages, q: q, weak: weak.slice(0, 8),
+      tamper: (function () { try { var t = window.JB2Seal && JB2Seal.summary(); return t && (t.wipe || t.soft || t.blocked || t.forged || t.idChange.length) ? t : null; } catch (e) { return null; } })()
     };
   }
 

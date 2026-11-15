@@ -2644,7 +2644,7 @@ var MS_CAT_URL = (function () { try { return new URL('../images/home/catnest-s.w
   function wrapGen() {
     if (typeof window.gen !== 'function' || window.gen.__ms) return;
     var og = window.gen;
-    var w = function () { var r = og.apply(this, arguments); try { shuffleOpts(r); } catch (e) {} return r; };
+    var w = function () { var r = og.apply(this, arguments); try { shuffleOpts(r); } catch (e) {} try { window.JB2Seal && window.JB2Seal.guardAns(r); } catch (e) {} return r; };
     w.__ms = 1; window.gen = w;
   }
 
