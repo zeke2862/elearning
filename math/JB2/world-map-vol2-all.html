@@ -976,7 +976,7 @@ function intro(){
 /* 閒置時先把「關卡頁」會用到的腳本下載到快取（只預載已開啟的章節），學生點關卡時就不必再等 */
 function prefetchStages(){
   try{
-    const u=['stage-guard.js','relax-break.bundle.js'];
+    const u=['jb2-seal.js','jb2-typed.js','stage-guard.js','relax-break.bundle.js'];
     for(let n=1;n<=NCH;n++){if(locked(n))continue;u.push(`grade7-vol2-ch${n}/mode-system.js`,`grade7-vol2-ch${n}/explain-th.js`,`grade7-vol2-ch${n}/${n===1?'lessons':'lessons'+n}.js`)}
     u.forEach(h=>{const l=document.createElement('link');l.rel='prefetch';l.as='script';l.href=h;document.head.appendChild(l)});
   }catch(e){}

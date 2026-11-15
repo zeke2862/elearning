@@ -61,6 +61,7 @@ button:focus-visible{outline:3px solid var(--bronze);outline-offset:2px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 <script src="../jb2-seal.js?v=1"></script>
+<script src="../jb2-typed.js?v=1"></script>
 <script src="../stage-guard.js" data-leave="1"></script>
 </head>
 <body>
@@ -203,7 +204,7 @@ function genElim(M){
         +`①：${a1}×(${x0}) ${b1<0?'－':'＋'} ${Math.abs(b1)}×(${y0}) = ${t1a} ${t1b<0?'－':'＋'} ${Math.abs(t1b)} = ${c1}　✅<br>`
         +`②：${a2}×(${x0}) ${b2<0?'－':'＋'} ${Math.abs(b2)}×(${y0}) = ${t2a} ${t2b<0?'－':'＋'} ${Math.abs(t2b)} = ${c2}　✅`;
     })();
-  return {text,ans,options:ensure4(ans,cands),hint,explain};
+  return bothAsk({text,ans,options:ensure4(ans,cands),hint,explain},x0,y0);
 }
 function genElimMix(M){
   const x0=R(M.neg?-M.max:0,M.max),y0=R(M.neg?-M.max:0,M.max);
@@ -252,7 +253,15 @@ function genElimMix(M){
   const correct=askX?x0:y0,other=askX?y0:x0;
   const ans=String(correct);
   const cands=[String(other),String(correct+pick([-2,-1,1,2])),String(-correct),String(correct+pick([-3,3]))];
-  return {text,ans,options:ensure4(ans,cands),hint,explain};
+  return bothAsk({text,ans,options:ensure4(ans,cands),hint,explain},x0,y0);
+}
+/* 修羅：有時兩個未知數都問（答案是 (x, y)，用兩格按出來） */
+function bothAsk(r,x0,y0){
+  if(mode!=='hard'||Math.random()>=0.4)return r;
+  const p=(a,b)=>`(${a}, ${b})`,ans=p(x0,y0),set=new Set([ans]);
+  [p(y0,x0),p(-x0,y0),p(x0,-y0),p(x0+pick([-2,-1,1,2]),y0),p(x0,y0+pick([-2,-1,1,2])),p(-x0,-y0)].forEach(c=>{if(set.size<4)set.add(c)});
+  let g=1;while(set.size<4){set.add(p(x0+g,y0+g));g++}
+  return Object.assign({},r,{text:r.text.replace(/求出 [xy] 的值。/,'求出 x、y 的值。'),ans,options:sh([...set]),labels:['x','y']});
 }
 function gen(t){
   const M=MODES[mode];

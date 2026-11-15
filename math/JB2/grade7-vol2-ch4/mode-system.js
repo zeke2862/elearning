@@ -2670,6 +2670,7 @@ var MS_CAT_URL = (function () { try { return new URL('../images/home/catnest-s.w
         });
       }
       wrapGen();
+      try { if (window.JB2Typed) window.JB2Typed.install(); } catch (e) {}   // 修羅：自己按出答案（jb2-typed.js）
       if (M && M.real && M.hard) S.orig = { real: M.real.t, hard: M.hard.t };
       injectStyle();
       var anchor = $('#modes');
