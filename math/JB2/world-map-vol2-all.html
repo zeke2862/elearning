@@ -442,7 +442,7 @@ function onNode(i){
   walkTo(i,()=>showCard(i));
 }
 const goTo=u=>{window.JB2Music&&JB2Music.leave?JB2Music.leave(()=>{location.href=u}):(location.href=u)};
-function enterStage(n,id){if(locked(n)){toast(lockMsg(n));return}H.last=n;H.heroNode=n;save();goTo(`grade7-vol2-ch${n}/stage${id}.html`)}
+function enterStage(n,id){if(locked(n)){toast(lockMsg(n));return}H.last=n;H.heroNode=n;save();goTo(`grade7-vol2-ch${n}/world-map-vol2ch${n}.html?open=${encodeURIComponent(id)}`)}   // 經由章節地圖開關卡：才會套用設定檔的限時與星等，成績也才會存進去
 function enter(n){H.last=n;H.heroNode=n;save();goTo(fill(GC.urls.chapter,{n}))}
 function openArena(){H.heroNode=0;save();goTo(GC.urls.battle)}
 
