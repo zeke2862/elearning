@@ -61,6 +61,7 @@ button:focus-visible{outline:3px solid var(--bronze);outline-offset:2px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 <script src="../jb2-seal.js?v=1"></script>
+<script src="../jb2-typed.js?v=1"></script>
 <script src="../stage-guard.js" data-leave="1"></script>
 </head>
 <body>
@@ -149,6 +150,14 @@ function ensure4(ans,cands){
   while(s.size<4){const v=(Number(ans)||0)+(g%2===0?g/2+5:-(Math.ceil(g/2)+4));const vs=String(v);if(!s.has(vs))s.add(vs);g++;}
   return sh([...s]);
 }
+/* 修羅：有時兩個未知數都問（答案是 (x, y)，用兩格按出來） */
+function bothAsk(r,x0,y0){
+  if(mode!=='hard'||Math.random()>=0.4)return r;
+  const p=(a,b)=>`(${a}, ${b})`,ans=p(x0,y0),set=new Set([ans]);
+  [p(y0,x0),p(-x0,y0),p(x0,-y0),p(x0+pick([-2,-1,1,2]),y0),p(x0,y0+pick([-2,-1,1,2])),p(-x0,-y0)].forEach(c=>{if(set.size<4)set.add(c)});
+  let g=1;while(set.size<4){set.add(p(x0+g,y0+g));g++}
+  return Object.assign({},r,{text:r.text.replace(/求出 [xy] 的值。/,'求出 x、y 的值。'),ans,options:sh([...set]),labels:['x','y']});
+}
 function gen(t){
   const M=MODES[mode];
   const subY=Math.random()<0.5; // true: ①式為 y=kx+m（代入消去y）；false: ①式為 x=ky+m（代入消去x）
@@ -170,7 +179,7 @@ function gen(t){
   const den=subY?(a+k):(k+b);
   const forget=den!==0?Math.round((d-m)/den):correct+3; // 誘答：代入時忘記把括號乘上外面的係數
   const cands=[String(other),String(forget),String(correct+pick([-2,-1,1,2])),String(-correct)];
-  return {text,ans,options:ensure4(ans,cands),hint:`把①式代入②式，消去 ${subY?'y':'x'}，先解出剩下的那個未知數；代入時記得把整個式子用括號框起來再乘開，別漏乘外面的係數。`,explain:`代入消去後解得 x = ${x0}, y = ${y0}。`};
+  return bothAsk({text,ans,options:ensure4(ans,cands),hint:`把①式代入②式，消去 ${subY?'y':'x'}，先解出剩下的那個未知數；代入時記得把整個式子用括號框起來再乘開，別漏乘外面的係數。`,explain:`代入消去後解得 x = ${x0}, y = ${y0}。`},x0,y0);
 }
 
 const EMB=window.parent!==window,SID='1-2-2';

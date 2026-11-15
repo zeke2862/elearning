@@ -61,6 +61,7 @@ button:focus-visible{outline:3px solid var(--bronze);outline-offset:2px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 <script src="../jb2-seal.js?v=1"></script>
+<script src="../jb2-typed.js?v=1"></script>
 <script src="../stage-guard.js" data-leave="1"></script>
 </head>
 <body>
@@ -132,26 +133,34 @@ const PLAN=['sumdiff','price','sumdiff','price','sumdiff','price','sumdiff','pri
 // 每個情境給 na（x 代表誰／什麼）、nb（y 代表誰／什麼）、unit（單位）跟一句題目敘述，
 // 這樣同樣是「和差題」，玩家每次看到的故事、單位都不一樣，不是只有數字在變。
 const SUMDIFF=[
-  (S,D,askA)=>({na:'姊姊',nb:'妹妹',unit:'歲',
+  (S,D,askA)=>({na:'姊姊',nb:'妹妹',unit:'歲',qb:'求姊姊與妹妹各幾歲？',
     text:`姊姊和妹妹的年齡和是 ${S} 歲，姊姊比妹妹大 ${D} 歲。求${askA?'姊姊':'妹妹'}幾歲？`}),
-  (S,D,askA)=>({na:'哥哥',nb:'弟弟',unit:'元',
+  (S,D,askA)=>({na:'哥哥',nb:'弟弟',unit:'元',qb:'求哥哥與弟弟這個月各領了多少零用錢？',
     text:`哥哥和弟弟這個月的零用錢合計 ${S} 元，哥哥比弟弟多 ${D} 元。求${askA?'哥哥':'弟弟'}這個月領了多少零用錢？`}),
-  (S,D,askA)=>({na:'一班',nb:'二班',unit:'人',
+  (S,D,askA)=>({na:'一班',nb:'二班',unit:'人',qb:'求一班與二班各有幾人參加擺攤？',
     text:`園遊會擺攤，一班和二班參加擺攤的人數共 ${S} 人，一班比二班多 ${D} 人。求${askA?'一班':'二班'}有幾人參加擺攤？`}),
-  (S,D,askA)=>({na:'男生',nb:'女生',unit:'人',
+  (S,D,askA)=>({na:'男生',nb:'女生',unit:'人',qb:'求報名的男生與女生各有幾人？',
     text:`班際籃球賽報名表上，男生比女生多報名 ${D} 人，男生、女生合計報名了 ${S} 人。求報名的${askA?'男生':'女生'}有幾人？`}),
-  (S,D,askA)=>({na:'第一天',nb:'第二天',unit:'人',
+  (S,D,askA)=>({na:'第一天',nb:'第二天',unit:'人',qb:'求第一天與第二天各參加了幾人？',
     text:`校外教學分兩天出遊，兩天參加的總人數是 ${S} 人，第一天比第二天多 ${D} 人。求${askA?'第一天':'第二天'}參加了幾人？`}),
 ];
+/* 修羅：有時兩個未知數都問（答案是 (x, y)，用兩格按出來） */
+function pairResult(sc,x0,y0,hint,explain){
+  const p=(a,b)=>`(${a}, ${b})`,ans=p(x0,y0),set=new Set([ans]);
+  [[y0,x0],[x0+pick([-2,-1,1,2]),y0],[x0,y0+pick([-2,-1,1,2])],[x0+1,y0-1],[x0-1,y0+1],[x0+2,y0-2]].forEach(c=>{if(set.size<4&&c[0]>=1&&c[1]>=1)set.add(p(c[0],c[1]))});   // 數量不可能是負的
+  let g=1;while(set.size<4){set.add(p(x0+g,y0+g));g++}
+  return {text:sc.text.replace(/求[^求]*$/,sc.qb),ans,options:sh([...set]),hint,explain,labels:[sc.na||sc.n1,sc.nb||sc.n2]};
+}
 function genSumdiff(M){
   const y0=R(5,M.max*2+4),D=R(1,M.max);
   const x0=y0+D,S=x0+y0;
   const askA=Math.random()<0.5;
   const sc=pick(SUMDIFF)(S,D,askA);
   const correct=askA?x0:y0,other=askA?y0:x0;
-  return mkResult(sc.text,correct,other,S,
-    `設${sc.na} x（${sc.unit}）、${sc.nb} y（${sc.unit}），列出①x+y=${S}　②x－y=${D}，兩式相加可消去 y，直接求出 x。`,
-    `①＋②消去 y：2x = ${S+D}，解得 x = ${x0}；代回①得 y = ${y0}。`);
+  const hint=`設${sc.na} x（${sc.unit}）、${sc.nb} y（${sc.unit}），列出①x+y=${S}　②x－y=${D}，兩式相加可消去 y，直接求出 x。`,
+    explain=`①＋②消去 y：2x = ${S+D}，解得 x = ${x0}；代回①得 y = ${y0}。`;
+  if(mode==='hard'&&Math.random()<0.4)return pairResult(sc,x0,y0,hint,explain);
+  return mkResult(sc.text,correct,other,S,hint,explain);
 }
 
 /* ---------- 結構二：總量＋總價問題（兩種東西各買多少、單價多少，給總數量與總花費）---------- */
@@ -159,19 +168,19 @@ function genSumdiff(M){
 // 涵蓋買東西、餐盤（自助餐）計價、活動人數計費等不同故事，數學架構相同但敘述方式不一樣。
 // 每個情境自己決定「數量」(cr) 與「單價」(pr) 的範圍：[最小值, 固定加成, 隨難度加成]；人數類的情境人數要像真的（不會出現「全年級共 5 人」）
 const PRICE=[
-  {cr:[8,2,1],pr:[3,3,1],f:(p1,p2,N,T,askX)=>({n1:'大人票',n2:'小孩票',
+  {cr:[8,2,1],pr:[3,3,1],f:(p1,p2,N,T,askX)=>({n1:'大人票',n2:'小孩票',qb:'求大人票與小孩票各買了幾張？',
     text:`園遊會門票：大人票每張 ${p1} 元、小孩票每張 ${p2} 元。某班師生共買了 ${N} 張門票，總共花費 ${T} 元。求買了 ${askX?'大人票':'小孩票'} 幾張？`})},
-  {cr:[10,2,1],pr:[3,3,1],f:(p1,p2,N,T,askX)=>({n1:'全票',n2:'學生票',
+  {cr:[10,2,1],pr:[3,3,1],f:(p1,p2,N,T,askX)=>({n1:'全票',n2:'學生票',qb:'求全票與學生票各賣出了幾張？',
     text:`電影院：全票每張 ${p1} 元、學生票每張 ${p2} 元。這場電影共賣出 ${N} 張票，票房收入 ${T} 元。求賣出了${askX?'全票':'學生票'}幾張？`})},
-  {cr:[2,2,1],pr:[3,4,2],f:(p1,p2,N,T,askX)=>({n1:'蘋果',n2:'橘子',
+  {cr:[2,2,1],pr:[3,4,2],f:(p1,p2,N,T,askX)=>({n1:'蘋果',n2:'橘子',qb:'求蘋果與橘子各買了幾公斤？',
     text:`水果攤：蘋果每公斤 ${p1} 元、橘子每公斤 ${p2} 元。小華共買了 ${N} 公斤水果，總共花費 ${T} 元。求買了${askX?'蘋果':'橘子'}幾公斤？`})},
-  {cr:[3,2,1],pr:[3,4,2],f:(p1,p2,N,T,askX)=>({n1:'原子筆',n2:'鉛筆',
+  {cr:[3,2,1],pr:[3,4,2],f:(p1,p2,N,T,askX)=>({n1:'原子筆',n2:'鉛筆',qb:'求原子筆與鉛筆各買了幾支？',
     text:`文具店：原子筆一支 ${p1} 元、鉛筆一支 ${p2} 元。老師一共買了 ${N} 支文具當獎品，總共花費 ${T} 元。求買了${askX?'原子筆':'鉛筆'}幾支？`})},
-  {cr:[10,2,1],pr:[3,3,1],f:(p1,p2,N,T,askX)=>({n1:'排骨飯',n2:'素食飯',
+  {cr:[10,2,1],pr:[3,3,1],f:(p1,p2,N,T,askX)=>({n1:'排骨飯',n2:'素食飯',qb:'求排骨飯與素食飯各訂了幾份？',
     text:`自助餐店：排骨飯一份 ${p1} 元、素食飯一份 ${p2} 元。全班訂了 ${N} 份餐盒當班遊午餐，總共花費 ${T} 元。求訂了${askX?'排骨飯':'素食飯'}幾份？`})},
-  {cr:[5,2,1],pr:[3,4,2],f:(p1,p2,N,T,askX)=>({n1:'大杯珍奶',n2:'小杯珍奶',
+  {cr:[5,2,1],pr:[3,4,2],f:(p1,p2,N,T,askX)=>({n1:'大杯珍奶',n2:'小杯珍奶',qb:'求大杯與小杯珍奶各買了幾杯？',
     text:`飲料店：大杯珍奶一杯 ${p1} 元、小杯珍奶一杯 ${p2} 元。班費採購了 ${N} 杯飲料當獎勵，總共花費 ${T} 元。求買了${askX?'大杯':'小杯'}珍奶幾杯？`})},
-  {cr:[12,2,1],pr:[3,3,1],f:(p1,p2,N,T,askX)=>({n1:'第一梯次',n2:'第二梯次',
+  {cr:[12,2,1],pr:[3,3,1],f:(p1,p2,N,T,askX)=>({n1:'第一梯次',n2:'第二梯次',qb:'求第一梯次與第二梯次各有幾人報名？',
     text:`校外教學分梯次報名：第一梯次每人 ${p1} 元、第二梯次每人 ${p2} 元。全年級共 ${N} 人報名，總收費 ${T} 元。求報名${askX?'第一':'第二'}梯次的有幾人？`})},
 ];
 function genPrice(M){
@@ -181,9 +190,10 @@ function genPrice(M){
   const askX=Math.random()<0.5;
   const sc=S.f(p1,p2,N,T,askX);
   const correct=askX?x0:y0,other=askX?y0:x0;
-  return mkResult(sc.text,correct,other,N,
-    `設${sc.n1} x、${sc.n2} y，列出①x+y=${N}　②${p1}x+${p2}y=${T}，用代入或加減消去法求解。`,
-    `由①得 y=${N}－x，代入②：${p1}x + ${p2}(${N}－x) = ${T}，解得 x = ${x0}，y = ${y0}。`);
+  const hint=`設${sc.n1} x、${sc.n2} y，列出①x+y=${N}　②${p1}x+${p2}y=${T}，用代入或加減消去法求解。`,
+    explain=`由①得 y=${N}－x，代入②：${p1}x + ${p2}(${N}－x) = ${T}，解得 x = ${x0}，y = ${y0}。`;
+  if(mode==='hard'&&Math.random()<0.4)return pairResult(sc,x0,y0,hint,explain);
+  return mkResult(sc.text,correct,other,N,hint,explain);
 }
 function ensure4(ans,cands){
   const s=new Set([ans]);

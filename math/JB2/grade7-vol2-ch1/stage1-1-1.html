@@ -61,6 +61,7 @@ button:focus-visible{outline:3px solid var(--bronze);outline-offset:2px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 <script src="../jb2-seal.js?v=1"></script>
+<script src="../jb2-typed.js?v=1"></script>
 <script src="../stage-guard.js" data-leave="1"></script>
 </head>
 <body>
@@ -375,16 +376,43 @@ function genExprDiff(M){
     explain:`${nameX}的${noun}是 ${U} 元，${nameY}的${noun}是 ${V} 元。${big}的比較多，所以用「${big}的${noun} − ${small}的${noun}」，列成 ${ans} 元。`,
     meta:{S,O,more,nameX,nameY,noun,ask,rev}};
 }
+/* 修羅：化簡類題目改成「問係數」——x 項的係數、y 項的係數各是多少（兩個數字，用按的）。
+   把化簡後的答案（例如 -4x/3 + 10y/3）拆成兩個係數；選項（誘答）也用同樣方式拆開。 */
+function coefPair(expr){
+  const s=String(expr).replace(/\s+/g,'').replace(/[−－]/g,'-');
+  if(s==='0')return ['0','0'];
+  const c={x:null,y:null},re=/([+-]?)(\d+(?:\.\d+)?)?([xy])(?:\/(\d+))?/g;let m,used='';
+  while((m=re.exec(s))!==null){
+    used+=m[0];
+    const num=m[2]||'1',sign=m[1]==='-'?'-':'';
+    c[m[3]]=sign+num+(m[4]?'/'+m[4]:'');
+  }
+  if(used!==s)return null;                     // 有看不懂的東西就不轉換
+  return [c.x==null?'0':c.x,c.y==null?'0':c.y];
+}
+const COEF_TYPES=['combine','fracCombine','dist','bracket','decCombine'];
+function coefAsk(r){
+  const a=coefPair(r.ans);if(!a)return r;
+  const P=p=>`(${p[0]}, ${p[1]})`,ans=P(a),set=new Set([ans]);
+  r.options.forEach(o=>{const p=coefPair(o);if(p)set.add(P(p))});
+  const negS=v=>v==='0'?'0':(v[0]==='-'?v.slice(1):'-'+v);
+  [[a[1],a[0]],[negS(a[0]),a[1]],[a[0],negS(a[1])],[negS(a[0]),negS(a[1])]].forEach(p=>{if(set.size<4)set.add(P(p))});
+  let g=1;while(set.size<4){set.add(P([String(Number(a[0].split('/')[0])+g),a[1]]));g++}
+  return Object.assign({},r,{text:`${r.text}　化簡之後，x 的係數與 y 的係數各是多少？`,ans,options:sh([...set]),labels:['x 的係數','y 的係數'],
+    explain:`${r.explain}<br>所以 x 的係數是 ${a[0]}、y 的係數是 ${a[1]}。`});
+}
 function gen(t){
   const M=MODES[mode];
-  if(t==='identify')return genIdentify(M);
-  if(t==='combine')return genCombine(M);
-  if(t==='fracCombine')return genFracCombine();
-  if(t==='decCombine')return genDecCombine();
-  if(t==='dist')return genDist(M);
-  if(t==='bracket')return genBracket(M);
-  if(t==='exprDiff')return genExprDiff(M);
-  return genExpr(M);
+  let r;
+  if(t==='identify')r=genIdentify(M);
+  else if(t==='combine')r=genCombine(M);
+  else if(t==='fracCombine')r=genFracCombine();
+  else if(t==='decCombine')r=genDecCombine();
+  else if(t==='dist')r=genDist(M);
+  else if(t==='bracket')r=genBracket(M);
+  else if(t==='exprDiff')r=genExprDiff(M);
+  else r=genExpr(M);
+  return (mode==='hard'&&COEF_TYPES.includes(t))?coefAsk(r):r;
 }
 function genDist(M){
   const k1=R(2,4),k2=R(2,4),op=pick(['+','-']);
