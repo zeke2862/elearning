@@ -365,7 +365,7 @@
 
   window.JB2Seal = {
     guardAns: guardQ, okMsg: okMsg, openSave: openSave, makeCode: makeCode, makeFile: makeFile,
-    checkSnapshot: checkSnapshot, summary: summary, log: log, check: check, gateChapter: gateChapter, chapterOpen: chapterOpen, makeDefCode: makeDefCode, makeDefFile: makeDefFile, openDef: openDef, _vDef: vDef, _vRec: vRec, _hmac: hmacHex
+    checkSnapshot: checkSnapshot, summary: summary, log: log, check: check, gateChapter: gateChapter, chapterOpen: chapterOpen, pinHash: function (p) { return hmacHex('pin\n' + String(p)); }, makeDefCode: makeDefCode, makeDefFile: makeDefFile, openDef: openDef, _vDef: vDef, _vRec: vRec, _hmac: hmacHex
   };
 
   /* ---------------- 啟動 ---------------- */

@@ -375,26 +375,31 @@
   };
 
   /* ---------- 家長專區（密碼） ---------- */
+  // 預設密碼：程式裡只放「雜湊值」（算出來跟它一樣才通過），學生看原始碼也看不出密碼是什麼。
+  // 家長在「設定」自己改過密碼（pinSet）之後，改用自己設的密碼。
+  const DEFAULT_PIN_LEN = 10, DEFAULT_PIN_HASH = "8a0118ecb675a6d6acf77c41c27e1022";
+  const pinLen = () => (G.S.rewards.pinSet ? String(G.S.rewards.pin).length : DEFAULT_PIN_LEN);
+  const pinOk = (c) => (G.S.rewards.pinSet ? c === G.S.rewards.pin : !!(window.JB2Seal && JB2Seal.pinHash && JB2Seal.pinHash(c) === DEFAULT_PIN_HASH));
   G.openParent = () => {
     let code = "";
     G.overlay((box) => {
-      const R = G.S.rewards;
-      const dots = h("div", { class: "pindots" }, "○○○○");
+      const R = G.S.rewards, LEN = pinLen();
+      const dots = h("div", { class: "pindots" }, "○".repeat(LEN));
       box.append(h("h2", { class: "center" }, "👪 家長專區"),
-        h("p", { class: "center muted", style: "font-weight:700" }, R.pinSet ? "請輸入 4 位數密碼" : "第一次使用：預設密碼是 0000，進去後請改掉"), dots);
+        h("p", { class: "center muted", style: "font-weight:700" }, "請輸入家長密碼"), dots);
       const pad = h("div", { class: "pinpad" });
       ["1", "2", "3", "4", "5", "6", "7", "8", "9", "⌫", "0", "✓"].forEach((k) => pad.append(h("button", { onclick: () => {
         G.sfx("click");
         if (k === "⌫") code = code.slice(0, -1);
         else if (k === "✓") return check();
-        else if (code.length < 4) code += k;
-        dots.textContent = "●".repeat(code.length) + "○".repeat(4 - code.length);
-        if (code.length === 4) check();
+        else if (code.length < LEN) code += k;
+        dots.textContent = "●".repeat(code.length) + "○".repeat(LEN - code.length);
+        if (code.length === LEN) check();
       } }, k)));
       box.append(pad);
       function check() {
-        if (code === R.pin) parentHome("redeem");
-        else { G.sfx("bad"); code = ""; dots.textContent = "○○○○"; G.toast("密碼不對"); }
+        if (pinOk(code)) parentHome("redeem");
+        else { G.sfx("bad"); code = ""; dots.textContent = "○".repeat(LEN); G.toast("密碼不對"); }
       }
     }, { onClose: () => G.refreshScreen() });
   };
@@ -405,7 +410,6 @@
       const tabs = { redeem: "兌換確認", rewards: "獎勵設定", learn: "學習紀錄", settings: "設定" };
       box.append(h("h2", {}, "👪 家長專區"),
         h("div", { class: "tabs" }, Object.entries(tabs).map(([k, v]) => h("button", { class: k === tab ? "on" : "", onclick: () => parentHome(k) }, v + (k === "redeem" && R.log.some((l) => l.status === "pending") ? " 🔴" : "")))));
-      if (!R.pinSet) box.append(h("div", { class: "buffbar", style: "background:#ffe1dc;margin-bottom:10px" }, "⚠️ 還在用預設密碼 0000，請到「設定」改掉，免得孩子自己確認兌換。"));
       if (tab === "redeem") {
         const pend = R.log.filter((l) => l.status === "pending");
         if (!pend.length) box.append(h("p", { class: "muted", style: "font-weight:700" }, "目前沒有等待確認的兌換。"));
@@ -469,7 +473,7 @@
         }
       }
       if (tab === "settings") {
-        const p1 = h("input", { class: "inp", type: "password", inputmode: "numeric", maxlength: 4, placeholder: "新密碼 4 位數" });
+        const p1 = h("input", { class: "inp", type: "password", inputmode: "numeric", maxlength: 10, placeholder: "新密碼（4～10 位數字）" });
         const adj = h("input", { class: "inp", type: "number", placeholder: "例如 100 或 -50", style: "width:180px" });
         const file = h("input", { type: "file", accept: ".json", style: "display:none" });
         file.addEventListener("change", () => {
@@ -482,7 +486,7 @@
         });
         box.append(
           h("h3", {}, "改密碼"), h("div", { class: "row" }, p1, h("button", { class: "btn", onclick: () => {
-            if (!/^\d{4}$/.test(p1.value)) return G.toast("請輸入 4 位數字");
+            if (!/^\d{4,10}$/.test(p1.value)) return G.toast("請輸入 4～10 位數字");
             R.pin = p1.value; R.pinSet = true; G.save(); G.toast("密碼已更新"); parentHome("settings");
           } }, "儲存")),
           h("h3", {}, `調整金幣（目前 🪙${S.coins}）`), h("div", { class: "row" }, adj, h("button", { class: "btn", onclick: () => {

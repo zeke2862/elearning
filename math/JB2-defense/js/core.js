@@ -62,7 +62,7 @@
     collectDone: {},
     titles: {}, // 集滿一整篇的卡片拿到的稱號：「科目|篇名」-> {name, at}
     rewards: {
-      pin: "0000",
+      pin: "",   // 預設密碼不放在程式裡（見 meta.js 的雜湊值）；家長在「設定」自己改密碼後才會存在這裡
       pinSet: false,
       items: [
         { id: "r1", name: "20 分鐘手機時間", cost: 3000 },
