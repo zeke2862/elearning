@@ -67,6 +67,15 @@
     setTimeout(push, 2500);                                          // 開啟遊戲時也送一次（補上之前沒送出的）
     var hub = G.openHub; if (typeof hub === 'function') G.openHub = function () { adoptNo(); var r = hub.apply(this, arguments); setTimeout(push, 1500); return r; };
   }
-  window.JB2Record = { install: install, _record: record, _adopt: adoptNo };
+  // 還原存檔失敗時，給學生看的說明
+  function msg(why) {
+    why = String(why || '');
+    if (why === 'old') return '這是舊版的存檔碼／存檔檔，已經不能使用了。請回到原本那台電腦，重新產生新的存檔碼（或匯出新的檔案）。';
+    if (why === 'sig') return '這個存檔被修改過或不完整，沒辦法還原。';
+    if (why.indexOf('owner:') === 0) return '這份存檔是學號 ' + why.slice(6) + ' 的，不是你的，不能還原。';
+    if (why.indexOf('data:') === 0) return '存檔裡有不合理的數字，沒辦法還原。';
+    return '存檔碼不對，請確認有整段貼上。';
+  }
+  window.JB2Record = { install: install, msg: msg, _record: record, _adopt: adoptNo };
   if (document.readyState === 'complete') install(); else window.addEventListener('load', install);
 })();

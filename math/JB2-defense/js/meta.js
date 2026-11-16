@@ -476,7 +476,7 @@
           const f = file.files[0];
           if (!f) return;
           f.text().then((txt) => {
-            try { const d = JSON.parse(txt); if (d.v !== 1) throw 0; localStorage.setItem(G.SAVE_KEY, txt); G.S = Object.assign(G.S, d); G.save(); G.toast("已匯入進度"); parentHome("settings"); }
+            try { const d = JSON.parse(txt); const r = window.JB2Seal ? JB2Seal.openDef(d) : { ok: d.v === 1, state: d, why: "bad" }; if (!r.ok) { G.toast(window.JB2Record ? JB2Record.msg(r.why) : "檔案格式不對"); return; } G.S = Object.assign(G.S, r.state); G.save(); G.toast("已匯入進度"); parentHome("settings"); }
             catch (e) { G.toast("檔案格式不對"); }
           });
         });
@@ -490,7 +490,7 @@
           } }, "套用")),
           h("h3", {}, "進度備份"), h("div", { class: "row" },
             h("button", { class: "btn", onclick: () => {
-              const a = h("a", { href: URL.createObjectURL(new Blob([JSON.stringify(G.S)], { type: "application/json" })), download: `數學保衛戰進度_${G.today()}.json` });
+              const a = h("a", { href: URL.createObjectURL(new Blob([JSON.stringify(window.JB2Seal ? JB2Seal.makeDefFile(G.S) : G.S)], { type: "application/json" })), download: `數學保衛戰進度_${G.today()}.json` });
               a.click();
             } }, "⬇ 匯出進度"),
             h("button", { class: "btn ghost", style: "color:var(--ink);box-shadow:inset 0 0 0 2px #b9821f", onclick: () => file.click() }, "⬆ 匯入進度"), file),
