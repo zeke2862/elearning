@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>數學保衛戰｜國一下第二冊</title>
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/style-share.css">
+<link rel="stylesheet" href="css/math.css">
+</head>
+<body>
+
+<section id="s-title" class="screen active">
+  <div class="title-box">
+    <h1 class="logo">數學保衛戰</h1>
+    <p class="logo-sub">宇宙語言 · 用數學打外星人<br>國一下・第二冊（第 1～6 章）</p>
+    <button class="btn big" id="btn-start">▶ 開始冒險</button>
+  </div>
+  <div class="title-foot"><button class="btn ghost" id="btn-title-parent">👪 家長</button>
+    <span class="credit">題目與數靈取自 JB2V2「數靈召喚師」・題目由程式產生，數字每次不同</span>
+  </div>
+</section>
+
+<section id="s-world" class="screen"></section>
+<section id="s-chapters" class="screen"></section>
+<section id="s-hub" class="screen"></section>
+
+<section id="s-map" class="screen generic">
+  <div class="sea-tex"></div>
+  <svg id="map-svg" preserveAspectRatio="xMidYMid slice" viewBox="0 0 1600 900"></svg>
+  <div class="hud">
+    <button class="btn ghost" id="btn-back-chapters">⬅ 大地圖</button>
+    <span class="pill"><span class="ic">🪙</span><span id="hud-coins">0</span></span>
+    <span class="pill"><span class="ic">🎟️</span><span id="hud-tickets">1</span></span>
+    <span class="pill" title="連續天數"><span class="ic">🔥</span><span id="hud-streak">0</span> 天</span>
+    <span class="spacer"></span>
+    <button class="icon-btn" id="btn-sound" title="音效">🔊</button>
+    <button class="icon-btn" id="btn-full" title="全螢幕">⛶</button>
+  </div>
+  <aside class="map-side">
+    <div class="parch chap-card">
+      <div class="muted" id="chap-sub"></div>
+      <h2 id="chap-title"></h2>
+      <span class="era" id="chap-era"></span>
+      <div class="progress"><i id="chap-prog" style="width: 0%;"></i></div>
+      <div class="muted" style="margin-top:6px;font-weight:900" id="chap-prog-txt">★ 0 / 0</div>
+    </div>
+    <div class="side-grid">
+      <button class="side-btn glow" id="btn-guide" style="display: none;"><span class="big-ic">📖</span>攻略本<small id="guide-hint"></small></button>
+      <button class="side-btn glow" id="btn-gacha"><span class="big-ic">🎴</span>抽卡<small>用抽卡券</small><span class="badge" id="badge-tickets">1</span></button>
+      <button class="side-btn" id="btn-cards"><span class="big-ic">🗂️</span>卡冊<small id="cards-hint"></small></button>
+      <button class="side-btn" id="btn-shop"><span class="big-ic">🏪</span>商店<small>裝備・獎勵</small></button>
+    </div>
+    <div class="parch daily" id="daily"></div>
+    <div class="row" style="justify-content:flex-end">
+      <button class="btn ghost" id="btn-map-parent">👪 家長</button>
+    </div>
+  </aside>
+</section>
+
+<section id="s-play" class="screen">
+  <div id="play-stage"></div>
+  <div class="play-top">
+    <button class="icon-btn" id="btn-quit" title="離開">✖</button>
+    <span class="ttl" id="play-title"></span>
+    <span class="hearts" id="play-hearts"></span>
+    <span class="shield-ic" id="play-shield"></span>
+  </div>
+</section>
+
+<div class="overlay" id="ov"><div class="modal parch" id="ov-box"></div></div>
+
+<div id="dialog">
+  <div class="shade"></div>
+  <img class="portrait speaker" src="assets/cat.webp" alt="">
+  <div class="box"><span class="who">智慧貓</span><span class="txt"></span><span class="next">點一下繼續 ▶</span></div>
+</div>
+
+<div id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script>window.MAPS = {};</script>
+<script src="js/catalog.js"></script>
+<script src="js/core.js"></script>
+<script src="js/map.js"></script>
+<script src="js/meta.js"></script>
+<script src="js/nav.js"></script>
+<script src="js/main.js"></script>
+<script src="js/math_core.js"></script>
+<script src="js/math_field.js"></script>
+<script src="js/math_scenes.js"></script>
+<script src="js/game-config.js"></script>
+<script src="js/jb2_explain_th.js"></script>
+<script src="js/jb2_gens.js"></script>
+<script src="js/jb2_tutor_core.js"></script>
+<script src="js/jb2_tutor_simplify.js"></script>
+<script src="js/relax-break.bundle.js"></script>
+<script src="js/jb2_adapter.js"></script>
+<script src="js/jb2_hub_config.js"></script>
+<script src="js/jb2_duel_config.js"></script>
+<script src="js/jb2_duel.js"></script>
+<script src="js/jb2_online.js"></script>
+<script src="js/jb2_hub.js"></script>
+<script src="js/report.js"></script>
+<script src="../../sync-client.js"></script>
+<script src="../JB2/jb2-sync.js"></script>
+<script src="js/jb2_record.js"></script>
+<script src="js/share.js"></script>
+</body>
+</html>

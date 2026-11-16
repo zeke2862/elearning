@@ -88,6 +88,7 @@ function jb2Detail(j){
   h += '<table style="margin:6px 0;width:auto"><tr><th>關卡</th><th>最高星</th><th>練習次數</th><th>花的時間</th><th>最近一次</th></tr>';
   ids.forEach(id=>{ const s=j.stages[id]; h += `<tr><td class="left">${esc(id)} ${esc(s.n)}</td><td>${s.bestStars}★</td><td>${s.plays}</td><td>${fmtSecs(s.pSecs)}</td><td>${s.lastStars==null?'—':s.lastStars+'★'} ${esc(MODE_NAME[s.lastMode]||'')}</td></tr>`; });
   h += '</table>';
+  if(j.defense&&j.defense.plays>0) h += `<div>🛡️ 這位學生也玩過<b>數學保衛戰</b>（另一種玩法，紀錄已併入上表）：${j.defense.plays} 次／${j.defense.stars||0}★／約 ${fmtSecs(j.defense.pSecs)}</div>`;
   const w = j.weak||[];
   h += '<b>弱點題型：</b>' + (w.length ? w.map(r=>{ const [sid,ty]=String(r.k).split(':'); return `${esc(sid)} ${esc(ty||'')}（答對 ${Math.round(r.ok/r.n*100)}%，${r.ok}/${r.n}）`; }).join('、') : '<span class="dim">資料還不夠（同一題型要作答 3 題以上）</span>');
   return h;

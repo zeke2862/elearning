@@ -85,13 +85,64 @@
     weak.sort(function (a, b) { return (a.ok / a.n) - (b.ok / b.n) || b.n - a.n; });
     var ls = lastId ? stages[lastId] : null;
     var hw = rd(HUB).who || {};
-    return {
+    var rec = {
       hero: hw.name || '', totalStars: totalStars, totalPlays: totalPlays, pSecs: pSecs,
       lastId: lastId, lastName: ls ? ls.n : '', lastAt: lastAt,
       lastStars: ls ? ls.lastStars : null, lastBest: ls ? ls.bestStars : null, lastMode: ls ? ls.lastMode : '',
       stages: stages, q: q, weak: weak.slice(0, 8),
       tamper: (function () { try { var t = window.JB2Seal && JB2Seal.summary(); return t && (t.wipe || t.soft || t.blocked || t.forged || t.idChange.length) ? t : null; } catch (e) { return null; } })()
     };
+    try { rec = mergeDefense(rec, names); } catch (e) {}
+    return rec;
+  }
+
+
+  /* ===== 2b. 併入「數學保衛戰」（math/JB2-defense）的紀錄 =====
+   * 保衛戰每玩完一關，會把結果記在 localStorage『md_jb2rec_v1』（格式跟這裡的 stages／q 一樣）。
+   * 這裡把兩邊合併成同一份交給老師：星星取最高、練習次數／秒數／題數累計、每次作答紀錄依時間合併（保衛戰的標 g:'d'）、
+   * 各題型對錯累計，並另外附 defense 摘要，報表可以標出「這位學生也玩過數學保衛戰」。 */
+  var DEF = 'md_jb2rec_v1';
+  function readDef() { try { var o = JSON.parse(localStorage.getItem(DEF)); return o && o.v === 1 ? o : null; } catch (e) { return null; } }
+  function mergeDefense(rec, names) {
+    var D = readDef(); if (!D || !D.stages) return rec;
+    var hasNames = false; for (var nm in (names || {})) { hasNames = true; break; }
+    var st = rec.stages, k, d, b, dPlays = 0, dSecs = 0, dStars = 0;
+    for (k in D.stages) {
+      d = D.stages[k]; if (!d || !/^[1-6]-[1-3]-[1-3]$/.test(k) || (hasNames && !names[k])) continue;   // 只收真的存在的關卡
+      /* 保衛戰的紀錄沒有簽章保護，這裡先擋掉不可能的數字，免得報表被亂填 */
+      d = { n: String(d.n || '').slice(0, 20), ch: d.ch, bestStars: Math.min(5, Math.max(0, d.bestStars | 0)), plays: Math.min(5000, Math.max(0, d.plays | 0)),
+            pSecs: Math.min(5000 * 1800, Math.max(0, +d.pSecs || 0)), totalQ: Math.min(200000, Math.max(0, d.totalQ | 0)), totalOk: 0, lastStars: d.lastStars == null ? null : Math.min(5, Math.max(0, d.lastStars | 0)),
+            lastMode: String(d.lastMode || '').slice(0, 6), lastAt: +d.lastAt || 0, hist: Array.isArray(d.hist) ? d.hist : [], _ok: d.totalOk | 0 };
+      d.totalOk = Math.min(d.totalQ, Math.max(0, d._ok));
+      b = st[k];
+      dPlays += d.plays | 0; dSecs += Math.round(d.pSecs || 0); dStars += d.bestStars | 0;
+      if (!b) { st[k] = b = { n: d.n || '', ch: d.ch || +k.charAt(0), bestStars: 0, plays: 0, pSecs: 0, totalQ: 0, totalOk: 0, lastStars: null, lastMode: '' }; }
+      else if (!b.n && d.n) b.n = d.n;
+      b.bestStars = Math.max(b.bestStars | 0, d.bestStars | 0);
+      b.plays = (b.plays | 0) + (d.plays | 0);
+      b.pSecs = (b.pSecs || 0) + Math.round(d.pSecs || 0);
+      b.totalQ = (b.totalQ | 0) + (d.totalQ | 0);
+      b.totalOk = (b.totalOk | 0) + (d.totalOk | 0);
+      var bLast = b.hist && b.hist.length ? b.hist[b.hist.length - 1].at : 0;   // JB2 這關最近一次作答的時間
+      if (d.lastAt && d.lastAt >= bLast) { b.lastStars = d.lastStars == null ? null : d.lastStars; b.lastMode = d.lastMode || ''; }
+      var h = (b.hist || []).concat((d.hist || []).map(function (e) { return { at: e.at, q: e.q, ok: e.ok, s: e.s, st: e.st, m: e.m, g: 'd' }; }));
+      if (h.length) { h.sort(function (p, q) { return p.at - q.at; }); b.hist = h.slice(-30); }
+    }
+    var q = rec.q, weak = [], qk, v, dq = D.q || {};
+    for (qk in dq) { v = dq[qk]; if (!v || !(v.n > 0) || v.n > 200000) continue; var c = q[qk] || (q[qk] = { n: 0, ok: 0 }); c.n += v.n | 0; c.ok += Math.min(v.n | 0, Math.max(0, v.ok | 0)); }
+    for (qk in q) if (q[qk].n >= 3) weak.push({ k: qk, n: q[qk].n, ok: q[qk].ok });
+    weak.sort(function (a, b2) { return (a.ok / a.n) - (b2.ok / b2.n) || b2.n - a.n; });
+    rec.weak = weak.slice(0, 8);
+    var ts = 0, tp = 0, ps = 0;
+    for (k in st) { ts += st[k].bestStars | 0; tp += st[k].plays | 0; ps += st[k].pSecs || 0; }
+    rec.totalStars = ts; rec.totalPlays = tp; rec.pSecs = ps;
+    if (D.lastAt && D.lastAt > (rec.lastAt || 0) && D.lastId && st[D.lastId]) {      // 最近玩的是保衛戰
+      var ls = st[D.lastId]; rec.lastId = D.lastId; rec.lastName = ls.n || ''; rec.lastAt = D.lastAt;
+      rec.lastStars = ls.lastStars == null ? null : ls.lastStars; rec.lastBest = ls.bestStars; rec.lastMode = ls.lastMode || '';
+    }
+    if (!rec.hero && D.hero) rec.hero = D.hero;
+    rec.defense = { plays: dPlays, pSecs: dSecs, stars: dStars, lastAt: D.lastAt || 0 };
+    return rec;
   }
 
   /* ===== 3. 送出（經 sync-client.js） ===== */
@@ -108,5 +159,5 @@
   }
   try { if (typeof keyagentInstallPageHideSync === 'function') keyagentInstallPageHideSync(); } catch (e) {}
 
-  window.JB2Sync = { setNo: setActive, gate: gate, push: push, build: build, activeNo: activeNo };
+  window.JB2Sync = { setNo: setActive, gate: gate, push: push, build: build, activeNo: activeNo, _merge: mergeDefense };
 })();
