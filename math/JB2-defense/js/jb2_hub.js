@@ -49,6 +49,7 @@
       h("span", { class: "spacer" }),
       h("button", { class: "btn ghost", onclick: () => G.openTeam() }, "🩹 隊伍"),
       window.RelaxBreak ? h("button", { class: "btn ghost", onclick: () => RelaxBreak.openZone() }, "🎮 遊戲區") : null,
+      h("a", { class: "btn ghost", href: "../JB2/world-map-vol2-all.html", title: "換成召喚師版（JB2）。兩個版本的學習紀錄都會交給老師" }, "🧙 召喚師版"),
       h("button", { class: "btn ghost", onclick: () => G.openParent() }, "👪 家長"),
       h("button", { class: "icon-btn", onclick: () => { S.settings.sound = !S.settings.sound; G.save(); G.renderHub(); } }, S.settings.sound ? "🔊" : "🔇"));
     const stage = h("div", { class: "hb-stage" });
@@ -293,13 +294,13 @@
         rows.length ? rows.map(([id, n]) => h("div", {}, `👾 ${n} 隻　${names[id] || id}`)) : h("div", {}, "目前沒有還沒記牢的題目，太厲害了！"));
     }
     function safeBody() {
-      const code = "MD1-" + btoa(unescape(encodeURIComponent(JSON.stringify(G.S))));
+      const code = window.JB2Seal ? JB2Seal.makeDefCode(G.S) : "MD1-" + btoa(unescape(encodeURIComponent(JSON.stringify(G.S))));   // MD2- 開頭＝有簽章，被改過就不能還原
       const ta = h("textarea", { class: "hb-code", rows: 5 }); ta.value = code;
       const inp = h("textarea", { class: "hb-code", rows: 3, placeholder: "貼上存檔碼" });
       return h("div", {}, h("p", { class: "muted" }, "進度存在這台裝置的瀏覽器裡。換電腦或清除資料前，先複製存檔碼，之後貼回來就能還原。"), ta,
         h("button", { class: "btn small", onclick: () => { ta.select(); try { document.execCommand("copy"); G.toast("已複製"); } catch (e) {} } }, "複製"),
         h("h3", {}, "還原"), inp,
-        h("button", { class: "btn small red", onclick: async () => { try { const s = inp.value.trim(); if (s.indexOf("MD1-") !== 0) throw 0; const o = JSON.parse(decodeURIComponent(escape(atob(s.slice(4))))); if (!(await G.confirm("要用這個存檔碼覆蓋目前的進度嗎？", "覆蓋"))) return; G.S = o; G.save(); location.reload(); } catch (e) { G.toast("存檔碼不對"); } } }, "還原"));
+        h("button", { class: "btn small red", onclick: async () => { try { const s = inp.value.trim(); const r = window.JB2Seal ? JB2Seal.openDef(s) : { ok: false, why: "bad" }; if (!r.ok) { G.toast(window.JB2Record ? JB2Record.msg(r.why) : "存檔碼不對"); return; } if (!(await G.confirm("要用這個存檔碼覆蓋目前的進度嗎？", "覆蓋"))) return; G.S = r.state; G.save(); location.reload(); } catch (e) { G.toast("存檔碼不對"); } } }, "還原"));
     }
   };
 

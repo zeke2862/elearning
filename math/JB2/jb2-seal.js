@@ -1,6 +1,6 @@
 /* jb2-seal.js — JB2 防竄改守衛（學生端每一頁都要最先載入）
  *
- * 做六件事：
+ * 做六件事（另外也保護「數學保衛戰」的存檔與紀錄、存檔碼／匯出檔）：
  *  1. 簽章：星星、經驗、數靈幣的存檔，每次由「遊戲自己」寫入時蓋一個章；下次打開對不上就知道被改過。
  *  2. 寫入保護：在網址列／主控台直接寫存檔會被擋下（只有遊戲程式本身能寫）。
  *  3. 竄改處理：一眼看出不可能的數字（星星 > 5、數靈幣與收支對不上…）→ 清掉被改的那一份，並記錄通報老師。
@@ -19,8 +19,10 @@
    *         true ＝ 只要簽章對不上就清掉那一份。全班都更新完（約一週後）建議改成 true。 */
   var STRICT = false;
 
+  // 前 7 個是 JB2 的；後 2 個是「數學保衛戰」（math/JB2-defense）：遊戲存檔、以及要併入老師報表的紀錄
   var KEYS = ['jb2-hub-v1', 'monster-ch1-progress-v1', 'monster-ch2-progress-v1', 'monster-ch3-progress-v1',
-              'monster-ch4-progress-v1', 'monster-ch5-progress-v1', 'monster-ch6-progress-v1'];
+              'monster-ch4-progress-v1', 'monster-ch5-progress-v1', 'monster-ch6-progress-v1',
+              'math_defense_jb2_v1', 'md_jb2rec_v1'];
   var ID_KEY = 'keyagent_active_student', SEAL_P = 'jb2-seal-v1:', TLOG = 'jb2-tamper-v1';
 
   var LS = null;
@@ -145,8 +147,43 @@
     var k; if (h.inv && typeof h.inv === 'object') for (k in h.inv) if (!isInt(h.inv[k]) || h.inv[k] < 0 || h.inv[k] > 999) return '道具數量不合理 ' + k;
     return '';
   }
+
+  // 保衛戰「併入報表的紀錄」（md_jb2rec_v1）：只擋不可能的數字
+  function vRec(o) {
+    if (!o || typeof o !== 'object' || o.v !== 1 || !o.stages || typeof o.stages !== 'object') return '資料格式';
+    var k, s, q, v;
+    for (k in o.stages) {
+      if (!/^[1-6]-[1-3]-[1-3]$/.test(k)) return '未知的關卡 ' + k;
+      s = o.stages[k]; if (!s || typeof s !== 'object') return '關卡資料格式 ' + k;
+      if (!(isInt(s.bestStars) && s.bestStars >= 0 && s.bestStars <= 5)) return '星數不合理 ' + k;
+      if (!(isInt(s.plays) && s.plays >= 0 && s.plays <= 5000)) return '練習次數不合理 ' + k;
+      if (!(typeof s.pSecs === 'number' && s.pSecs >= 0 && s.pSecs <= 5000 * 1800)) return '練習時間不合理 ' + k;
+      if (!(isInt(s.totalQ) && isInt(s.totalOk) && s.totalQ >= 0 && s.totalOk >= 0 && s.totalOk <= s.totalQ)) return '答題統計不合理 ' + k;
+    }
+    for (q in (o.q || {})) { v = o.q[q]; if (!v || !isInt(v.n) || !isInt(v.ok) || v.n < 0 || v.ok < 0 || v.ok > v.n) return '題型統計不合理'; }
+    return '';
+  }
+  // 保衛戰「遊戲存檔」（math_defense_jb2_v1）：金幣、抽卡券、每關星數等不可能的數字
+  function vDef(o) {
+    if (!o || typeof o !== 'object' || Array.isArray(o) || o.v !== 1) return '資料格式';
+    if (!isInt(o.coins) || o.coins < 0 || o.coins > 10000000) return '金幣不合理';
+    if (!isInt(o.tickets) || o.tickets < 0 || o.tickets > 100000) return '抽卡券不合理';
+    var k, s;
+    if (o.nodes && typeof o.nodes === 'object') for (k in o.nodes) {
+      s = o.nodes[k]; if (!/^jb2_\d_\d_\d$/.test(k)) return '未知的關卡 ' + k;
+      if (!s || typeof s !== 'object') return '關卡資料格式 ' + k;
+      if (s.stars != null && !(isInt(s.stars) && s.stars >= 0 && s.stars <= 5)) return '星數不合理 ' + k;
+      if (s.plays != null && !(isInt(s.plays) && s.plays >= 0 && s.plays <= 100000)) return '練習次數不合理 ' + k;
+      if (s.best != null && !(isInt(s.best) && s.best >= 0 && s.best <= 1000000)) return '分數不合理 ' + k;
+      if (s.endless != null && !(isInt(s.endless) && s.endless >= 0 && s.endless <= 5000)) return '無極限紀錄不合理 ' + k;
+    }
+    if (o.cards && typeof o.cards === 'object') for (k in o.cards) if (!isInt(o.cards[k]) || o.cards[k] < 0 || o.cards[k] > 9999) return '卡片數量不合理';
+    return '';
+  }
   function validate(key, raw, off) {
     var o; try { o = JSON.parse(raw); } catch (e) { return '無法讀取'; }
+    if (key === 'md_jb2rec_v1') return vRec(o);
+    if (key === 'math_defense_jb2_v1') return vDef(o);
     var m = /^monster-ch(\d)-progress-v1$/.exec(key);
     return m ? vCh(+m[1], o) : vHub(o, off);
   }
@@ -302,9 +339,33 @@
     } catch (e) {}
   }
 
+
+  /* ---------------- 保衛戰的存檔碼／匯出檔簽章（MD2-…／檔案內的 _sig） ---------------- */
+  function signDef(st) { return hmacHex('def\n' + JSON.stringify(st)); }
+  function makeDefCode(st) { return 'MD2-' + b64e(JSON.stringify({ d: st, s: signDef(st) })); }
+  function makeDefFile(st) { var o = JSON.parse(JSON.stringify(st)); o._sig = signDef(st); return o; }
+  // 回傳 { ok, state, why }：why＝old（舊版沒簽章）／sig（被改過）／data:原因／owner:學號／bad
+  function openDef(x) {
+    try {
+      var st, sg;
+      if (typeof x === 'string') {
+        x = x.trim();
+        if (/^MD1-/.test(x)) return { ok: false, why: 'old' };
+        if (!/^MD2-/.test(x)) return { ok: false, why: 'bad' };
+        var p = JSON.parse(b64d(x.slice(4))); st = p.d; sg = p.s;
+      } else { if (!x || !x._sig) return { ok: false, why: 'old' }; sg = x._sig; st = JSON.parse(JSON.stringify(x)); delete st._sig; }
+      if (!st || sg !== signDef(st)) return { ok: false, why: 'sig' };
+      var r = vDef(st); if (r) return { ok: false, why: 'data:' + r };
+      var cur = ''; try { cur = String((JSON.parse(LS.getItem(ID_KEY)) || {}).studentNumber || ''); } catch (e) {}
+      var who = String((st.hub && st.hub.sid) || '');
+      if (cur && who && cur !== who) return { ok: false, why: 'owner:' + who };         // 只能還原給同一個學號
+      return { ok: true, state: st };
+    } catch (e) { return { ok: false, why: 'bad' }; }
+  }
+
   window.JB2Seal = {
     guardAns: guardQ, okMsg: okMsg, openSave: openSave, makeCode: makeCode, makeFile: makeFile,
-    checkSnapshot: checkSnapshot, summary: summary, log: log, check: check, gateChapter: gateChapter, chapterOpen: chapterOpen, _hmac: hmacHex
+    checkSnapshot: checkSnapshot, summary: summary, log: log, check: check, gateChapter: gateChapter, chapterOpen: chapterOpen, pinHash: function (p) { return hmacHex('pin\n' + String(p)); }, makeDefCode: makeDefCode, makeDefFile: makeDefFile, openDef: openDef, _vDef: vDef, _vRec: vRec, _hmac: hmacHex
   };
 
   /* ---------------- 啟動 ---------------- */
