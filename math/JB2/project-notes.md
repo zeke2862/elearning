@@ -108,3 +108,11 @@
 - 新增兩種「修羅限定」題目：①1-1-1 化簡類（combine／fracCombine／dist／bracket／decCombine）改問「x 的係數與 y 的係數各是多少」；②聯立方程式（1-2-2、1-2-3、1-3-1）約 40% 兩個未知數都問，答案寫成 (x, y)。
 - 修羅每題限時沿用設定檔 `stage.hardTime`（目前 45 秒）；按鍵比點選項慢，如覺得太趕請到 config-editor.html 調整。
 - 檢查方式：Node 對 31 關 × 300 題 × 全題型逐題檢查「正解輸入通過、所有錯誤選項輸入不通過」；「問係數」與「兩個未知數」題目另外代回原式／原方程式獨立驗算。
+
+## 2026-11-16 收納「數學保衛戰」（math/JB2-defense）
+- 來源：獨立倉庫 zeke2862/MATHTESTJB2（JB2 的一種玩法，用數學保衛戰的引擎重做 31 關，有學生喜歡）。已複製進 `math/JB2-defense/`，圖片改 WebP（15.4MB → 3.2MB），原倉庫沒動。
+- 紀錄併入 JB2：遊戲每結算一關，`js/jb2_record.js` 寫入 localStorage `md_jb2rec_v1`（格式同 JB2 的 stages／q），並呼叫 `JB2Sync.push()`。`math/JB2/jb2-sync.js` 的 `build()` 在送出前呼叫 `mergeDefense()`：星星取最高、練習次數／秒數／題數／題型對錯累計、每次作答紀錄依時間合併（保衛戰的標 `g:'d'`），並附 `defense` 摘要（plays／pSecs／stars／lastAt）。老師的三個報表不用改就看得到；`jb2-report.html` 與 `keyagent-progress.html` 另外標出「🛡️ 也玩過數學保衛戰」。
+- 學號：兩個遊戲同一個網站、同一個學號（`keyagent_active_student`）。JB2 登記過 → 保衛戰直接沿用；只玩保衛戰 → 學號登記給 JB2。學號若跟 JB2 不同，保衛戰不會送紀錄（避免記到別人名下）。
+- 合併後的數字只存在「送給老師的那一份」，兩邊遊戲各自的進度互不影響（保衛戰的星星不會讓 JB2 的地圖解鎖，反之亦然）。
+- 限制：保衛戰沒有 `jb2-seal.js` 防竄改保護；合併時只擋不可能的數字。要補的話：把它的存檔／`md_jb2rec_v1` 也納入 jb2-seal 的 KEYS 並載入 jb2-seal.js（尚未做）。
+- 學生入口：目前沒有從 JB2 或首頁連過去的按鈕，學生要用新網址 `math/JB2-defense/index.html`（原本的 MATHTESTJB2 網址紀錄不會被收集）。需要的話可在總地圖「遊戲區」或首頁加連結。

@@ -163,6 +163,7 @@ function fillSelects() {
 /* ===== 疑似作弊標記（資料來自學生端 jb2-seal.js 的記錄） ===== */
 function tpText(t) { if (!t) return ''; const a = []; if (t.wipe) a.push('存檔被改、已重設 ' + t.wipe + ' 次'); if (t.forged) a.push('偽造成績訊息 ' + t.forged + ' 次'); if (t.blocked) a.push('主控台寫入存檔被擋 ' + t.blocked + ' 次'); if (t.soft) a.push('存檔簽章對不上 ' + t.soft + ' 次'); if (t.idChange && t.idChange.length) a.push('學號變動：' + t.idChange.slice(-3).join('、')); return a.join('；'); }
 function tpLvl(t) { if (!t) return 0; if (t.wipe || t.forged) return 3; if (t.blocked || (t.idChange && t.idChange.length)) return 2; if (t.soft) return 1; return 0; }
+const defMark = r => (r.j && r.j.defense && r.j.defense.plays > 0) ? ` <span title="也玩過數學保衛戰：${r.j.defense.plays} 次、${r.j.defense.stars || 0} 星（紀錄已併入）" style="cursor:help">🛡️</span>` : '';
 const tpMark = r => { const l = tpLvl(r.j && r.j.tamper); return l ? ` <span title="${esc(tpText(r.j.tamper))}" style="cursor:help">${['', '👀', '🚩', '⚠️'][l]}</span>` : ''; };
 function mk(r, j) {
   const st = j ? j.stages || {} : {};
@@ -201,12 +202,12 @@ function renderProg() {
   const keep = {st: $('#st') ? $('#st').value : '', q: $('#q') ? $('#q').value : ''};
   const all = list(), played = all.filter(r => r.played), avg = played.length ? played.reduce((a, r) => a + r.stars, 0) / played.length : 0;
   if (!all.length) { $('#v-prog').innerHTML = '<p>還沒有資料。請先到上方「設定」填入網址與密碼、匯入名單，再按「儲存並載入」。</p>'; return; }
-  $('#v-prog').innerHTML = `<div class="chips"><span class="chip">共 <b>${all.length}</b> 位</span><span class="chip">已玩 <b>${played.length}</b></span><span class="chip">還沒玩 <b>${all.length - played.length}</b></span><span class="chip" title="⚠️＝存檔被改／偽造成績；🚩＝主控台寫入被擋或學號變動；👀＝簽章對不上但內容合理（輕微）。滑鼠移到名字旁的符號可看細節">⚠️ 疑似作弊 <b>${all.filter(r => tpLvl(r.j && r.j.tamper) >= 2).length}</b></span><span class="chip">已玩者平均 <b>${avg.toFixed(1)}</b> 顆星</span>${classChips(all)}</div>
+  $('#v-prog').innerHTML = `<div class="chips"><span class="chip">共 <b>${all.length}</b> 位</span><span class="chip">已玩 <b>${played.length}</b></span><span class="chip">還沒玩 <b>${all.length - played.length}</b></span><span class="chip" title="滑鼠移到名字旁的 🛡️ 可看保衛戰次數">🛡️ 也玩保衛戰 <b>${all.filter(r => r.j && r.j.defense && r.j.defense.plays > 0).length}</b></span><span class="chip" title="⚠️＝存檔被改／偽造成績；🚩＝主控台寫入被擋或學號變動；👀＝簽章對不上但內容合理（輕微）。滑鼠移到名字旁的符號可看細節">⚠️ 疑似作弊 <b>${all.filter(r => tpLvl(r.j && r.j.tamper) >= 2).length}</b></span><span class="chip">已玩者平均 <b>${avg.toFixed(1)}</b> 顆星</span>${classChips(all)}</div>
   <div class="bar"><label>每格顯示 <select id="vw"><option value="stars">⭐ 星數</option><option value="acc">🎯 答對率</option><option value="time">⏱️ 練習時間</option><option value="plays">🔁 練習次數</option></select></label>
   <label>狀態 <select id="st"><option value="">全部</option><option value="p">已玩</option><option value="n">還沒玩</option></select></label>
   <input type="text" id="q" placeholder="搜尋姓名／學號／勇者名" style="flex:0 1 220px"><button class="b" id="e-prog">⬇️ 匯出 Excel（CSV）</button></div>
   <div class="tw"><table><tr><th class="l">班級</th><th>座號</th><th class="l">姓名</th><th>學號</th><th>勇者名</th><th>總星數</th><th>練習次數</th><th>練習時間</th><th>整體答對率</th>${STAGES.map(s => `<th title="${esc(s.id + ' ' + s.name)}">${s.id}${s.boss ? '👹' : ''}</th>`).join('')}</tr>` +
-    L.map(r => `<tr class="rw" data-no="${esc(r.no)}"><td class="l">${esc(r.cls)}</td><td>${r.seat || ''}</td><td class="l">${esc(r.name || '（名單外）')}${tpMark(r)}</td><td>${esc(r.no)}</td><td>${r.hero ? esc(r.hero) : '<span class="s0">—</span>'}</td><td>${r.played ? r.stars : '—'}</td><td>${r.played ? r.plays : '—'}</td><td>${r.played ? fmtShort(r.secs) : '—'}</td><td>${r.acc == null ? '—' : Math.round(r.acc * 100) + '%'}</td>${STAGES.map(s => cell(r, s)).join('')}</tr>`).join('') + `</table></div>`;
+    L.map(r => `<tr class="rw" data-no="${esc(r.no)}"><td class="l">${esc(r.cls)}</td><td>${r.seat || ''}</td><td class="l">${esc(r.name || '（名單外）')}${tpMark(r)}${defMark(r)}</td><td>${esc(r.no)}</td><td>${r.hero ? esc(r.hero) : '<span class="s0">—</span>'}</td><td>${r.played ? r.stars : '—'}</td><td>${r.played ? r.plays : '—'}</td><td>${r.played ? fmtShort(r.secs) : '—'}</td><td>${r.acc == null ? '—' : Math.round(r.acc * 100) + '%'}</td>${STAGES.map(s => cell(r, s)).join('')}</tr>`).join('') + `</table></div>`;
   $('#vw').value = view; $('#st').value = keep.st; $('#q').value = keep.q;
   $('#vw').onchange = () => { view = $('#vw').value; renderProg(); };
   $('#st').onchange = renderProg; $('#q').oninput = () => { renderProg(); const q = $('#q'); q.focus(); q.setSelectionRange(q.value.length, q.value.length); };

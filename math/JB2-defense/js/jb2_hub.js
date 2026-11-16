@@ -440,7 +440,7 @@
     const finish = () => { G._idAsking = false; G.save(); G.closeOverlay(); G.toast(`你好，${hub.name}！`); if (G.$("#s-hub").classList.contains("active")) G.renderHub(); if (G.online) G.online.start(); };
     const stepName = () => G.overlay((box) => {
       const inp = h("input", { type: "text", maxlength: 8, placeholder: "遊戲名稱（最多 8 個字）", style: "font-size:22px;padding:8px;width:100%;box-sizing:border-box" });
-      inp.value = hub.name || "";
+      inp.value = hub.name || (function () { try { return (JSON.parse(localStorage.getItem("jb2-hub-v1")) || {}).who.name || ""; } catch (e) { return ""; } })();   // 沿用 JB2 的勇者名
       box.append(h("h2", {}, "② 取一個遊戲名稱"), h("p", { class: "muted" }, "第一次取名免費，以後要改名需要「改名卡」。請不要用真名。"), inp,
         h("div", { class: "row", style: "justify-content:center;margin-top:12px" }, h("button", { class: "btn", onclick: () => { const v = inp.value.trim().slice(0, 8); if (!v) return G.toast("請輸入名字"); hub.name = v; finish(); } }, "開始冒險！")));
     }, { close: false });
@@ -452,9 +452,11 @@
           const v = inp.value.trim();
           if (!/^[A-Za-z0-9_-]{1,20}$/.test(v)) return G.toast("學號只能用英文字母、數字（1～20 個字）");
           if (!(await G.confirm(`你的學號是「${v}」，沒有打錯嗎？`, "沒錯"))) return stepSid();
-          hub.sid = v; G.save(); G.closeOverlay(); stepName();
+          hub.sid = v; G.save(); try { window.JB2Sync && JB2Sync.setNo(v); } catch (e) {} G.closeOverlay(); stepName();
         } }, "下一步")));
     }, { close: false });
+    // JB2 已經登記過學號 → 直接沿用，不再問（兩個遊戲是同一個人，老師的報表才對得起來）
+    if (!hub.sid && window.JB2Sync && JB2Sync.activeNo && JB2Sync.activeNo()) { hub.sid = String(JB2Sync.activeNo()); G.save(); }
     if (hub.sid) stepName(); else stepSid();
   }
   // 勇者名：第一次免費，之後要改名卡
