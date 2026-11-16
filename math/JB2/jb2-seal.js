@@ -19,7 +19,7 @@
    *         true ＝ 只要簽章對不上就清掉那一份。全班都更新完（約一週後）建議改成 true。 */
   var STRICT = false;
 
-  // 前 7 個是 JB2 的；後 2 個是「數學保衛戰」（math/JB2-defense）：遊戲存檔、以及要併入老師報表的紀錄
+  // 前 7 個是 JB2 的；後 2 個是「數學保衛戰」（若放在同一個網站才會用到；目前保衛戰是獨立網站，這兩個 key 不會出現，留著無害）
   var KEYS = ['jb2-hub-v1', 'monster-ch1-progress-v1', 'monster-ch2-progress-v1', 'monster-ch3-progress-v1',
               'monster-ch4-progress-v1', 'monster-ch5-progress-v1', 'monster-ch6-progress-v1',
               'math_defense_jb2_v1', 'md_jb2rec_v1'];
