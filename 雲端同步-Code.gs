@@ -144,6 +144,14 @@ function mergeJb2_(a, b, at) {
   });
   out.q = qm;
   out.totalStars = ts; out.totalPlays = tp; out.pSecs = tt;
+  // 「數學保衛戰」摘要：不管哪一份比較新，只要有一份標了就保留（各欄位取較大值），報表才標得出「🛡️ 也玩過數學保衛戰」
+  var da = a.defense, db = b.defense;
+  if (da || db) {
+    out.defense = {
+      plays: Math.max((da && da.plays) || 0, (db && db.plays) || 0), pSecs: Math.max((da && da.pSecs) || 0, (db && db.pSecs) || 0),
+      stars: Math.max((da && da.stars) || 0, (db && db.stars) || 0), lastAt: Math.max((da && da.lastAt) || 0, (db && db.lastAt) || 0)
+    };
+  } else { delete out.defense; }
   return out;
 }
 

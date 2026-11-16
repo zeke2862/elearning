@@ -130,7 +130,7 @@ table.w td,table.w th{border-bottom:1px solid var(--line);padding:5px 6px;text-a
   <button class="btn ghost small" data-act="dailyBtn">📅 每日</button>
   <button class="btn ghost small" data-act="arenaBtn">⚔️ 鬥技場</button>
   <button class="btn ghost small" data-act="zoneBtn">🎮 遊戲區</button>
-  <button class="btn ghost small" data-act="goDefense" title="換成數學保衛戰版（另一種玩法，學習紀錄都會交給老師）">🛡️ 保衛戰版</button>
+  <button class="btn ghost small" data-act="goDefense" title="換成數學保衛戰版（另一個網站、另一種玩法；第一次要在那邊輸入學號，學習紀錄一樣會交給老師）">🛡️ 保衛戰版</button>
   <button class="btn ghost small" data-act="findHero">📍 找勇者</button>
 </header>
 <main id="mapwrap"><svg id="map" xmlns="http://www.w3.org/2000/svg"></svg></main>
@@ -850,7 +850,7 @@ document.addEventListener('click',e=>{
     case'goWeak':goPractice('weak',stageCh(el.dataset.sid),el.dataset.sid,el.dataset.types);break;
     case'teamBtn':openTeam();break;
     case'zoneBtn':openZone();break;
-    case'goDefense':goTo('../JB2-defense/index.html');break;
+    case'goDefense':goTo('https://mathtestjb2.vercel.app/');break;   // 數學保衛戰是另一個網站（GitHub 倉庫 MATHTESTJB2），學生在那邊登記學號後，紀錄一樣會交給老師
     case'heal':healMon(el.dataset.sid,el.dataset.id);break;
     case'findHero':centerOnHero(true);break;
     case'closePanel':closePanel();break;
