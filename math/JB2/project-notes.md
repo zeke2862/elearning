@@ -123,3 +123,9 @@
 - 換版本：JB2 總地圖頂端「🛡️ 保衛戰版」（action `goDefense`）、保衛戰首頁「🧙 換成召喚師版（JB2）」與大地圖「🧙 召喚師版」、網站首頁新增「國中第二冊（保衛戰版）」。兩邊共用學號，學習紀錄都併入老師報表。
 - 測試環境注意：用 `file://` 開頁面做「重新整理」測試時，headless 瀏覽器可能還沒把 localStorage 寫入磁碟就重新整理，存檔會不見（連停用防護也會，約 5/6 機率），**不是程式問題**；做這類測試請用 `http://localhost`。
 - 仍未保護：保衛戰的題目答案（主控台讀得到）；保衛戰家長區可調整遊戲內金幣（只影響遊戲，不影響報表）；預設密碼由老師指定，程式裡只存雜湊值（meta.js 的 DEFAULT_PIN_HASH，用 JB2Seal.pinHash 算），要換預設密碼就重新計算這個值。
+
+## 2026-11-16 查「後台沒收到保衛戰紀錄」
+- 原因：學生玩的是 https://mathtestjb2.vercel.app（Vercel 專案 `mathtestjb2`，自動部署自 GitHub 倉庫 `zeke2862/MATHTESTJB2`）。那個遊戲**本身沒有任何送紀錄到後台的功能**；我先前做的紀錄併入是放在 `elearning/math/JB2-defense/` 這份複本，學生沒在玩它。
+- 另外：MATHTESTJB2 仍有別的工作階段持續更新（最新提交 e033703），`elearning/math/JB2-defense/` 這份複本是 633ad86 的快照，之後會越差越多。學生實際在玩的是 Vercel 那一份。
+- 修法：`math/JB2-defense/補丁/MATHTESTJB2-後台紀錄同步.patch`（新增 `js/jb2_record.js`、`js/sync-client.js`，index.html 多載入兩行）。因為這次工作階段沒有 MATHTESTJB2 的寫入權限，補丁需由有權限的人／工作階段套用到該倉庫 main。說明見 `補丁/說明.md`。
+- 後台合併機制：`雲端同步-Code.gs` 的 `jb2Report_`／`mergeJb2_` 會把同一學號、不同網站／裝置的 JB2 紀錄合併（每關最高星／次數／秒數取較大值），所以兩個網站各自送自己的紀錄即可，不必同網域。`mergeJb2_` 已補上保留 `defense` 摘要（需重新部署 Apps Script 才生效，選做）。
