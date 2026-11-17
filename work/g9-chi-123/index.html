@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="zh-Hant"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>國文123課-李鴻琴（花樹修行錄・中三國文闖關）</title>
+<style>
+:root{--bg:#f6f3ee;--card:#fff;--tx:#2b2a28;--mu:#6b675f;--ac:#d9608a;--ok:#2f9e63;--bad:#d64545;--bd:#e4ded3;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1d1b1a;--card:#2a2725;--tx:#f1ede6;--mu:#b3ada2;--bd:#3c3835;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#1d1b1a;--card:#2a2725;--tx:#f1ede6;--mu:#b3ada2;--bd:#3c3835;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;line-height:1.6}
+#app{max-width:560px;margin:0 auto;padding:16px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:14px;margin:10px 0}
+h1{font-size:22px;margin:6px 0}h2{font-size:18px;margin:4px 0}
+.mu{color:var(--mu);font-size:13px}
+.bar{height:10px;background:var(--bd);border-radius:6px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--ac)}
+button{font:inherit;color:var(--tx);background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:11px 14px;width:100%;text-align:left;margin:6px 0;cursor:pointer}
+button.p{background:var(--ac);color:#fff;border-color:var(--ac);text-align:center}
+button:disabled{opacity:.5;cursor:not-allowed}
+button.ok{border-color:var(--ok);background:rgba(47,158,99,.15)}
+button.no{border-color:var(--bad);background:rgba(214,69,69,.15)}
+.row{display:flex;gap:8px;justify-content:space-between;align-items:center}
+.tag{font-size:12px;border:1px solid var(--bd);border-radius:8px;padding:1px 8px;color:var(--mu)}
+.ex{border-left:4px solid var(--ac);padding:6px 10px;margin:8px 0;font-size:14px}
+.art{border-radius:10px;overflow:hidden;margin:6px 0}.art svg{width:100%;height:auto;display:block}
+</style></head><body><div id="app"></div>
+<script src="../../sync-client.js"></script>
+<script>
+/* ========== 接上教師後台的程式（整段複製，只改最上面的 GAME_KEY） ========== */
+const GAME_KEY = 'chi-g9-123';            // 遊戲代號：小寫英文／數字／-／_，建議「科目簡碼-遊戲名」
+
+/* 1) 學號：沒有就強迫輸入 */
+function ensureStudent(done) {
+  const no = keyagentGetActiveStudentNumber();
+  if (no) return done(no);
+  const v = (prompt('請輸入你的學號') || '').trim();
+  if (!/^[A-Za-z0-9_-]{2,12}$/.test(v)) return ensureStudent(done);
+  localStorage.setItem('keyagent_active_student', JSON.stringify({ studentNumber: v, verified: false }));
+  done(v);
+}
+
+/* 2) 練習時間：只算「玩完一局」的時間；切到別的分頁不算；中途關掉的那一局不算 */
+let T0 = 0, ACC = 0;
+function tStart()  { ACC = 0; T0 = Date.now(); }
+function tPause()  { if (T0) { ACC += Date.now() - T0; T0 = 0; } }
+function tResume() { if (!T0 && !document.hidden) T0 = Date.now(); }
+function tTake()   { tPause(); const s = Math.min(1800, Math.round(ACC / 1000)); ACC = 0; return s; }
+document.addEventListener('visibilitychange', () => (document.hidden ? tPause() : tResume()));
+
+/* 3) 一局結束時呼叫 finishRound({...})，會自動記錄並送到老師的後台 */
+function finishRound(r) {
+  // r = { stageId:'L1', stageName:'第一課 認字', score:80, right:8, total:10, stars:2(可省略), nick:'小勇者'(可省略),
+  //       types:[{ key:'read', label:'看字讀音', right:5, total:6 }, ...](可省略) }
+  const secs = tTake();
+  keyagentUpdateOtherGame(GAME_KEY, prev => {
+    const stages = Object.assign({}, prev.stages);
+    const s = stages[r.stageId] || {};
+    stages[r.stageId] = {
+      n: r.stageName || r.stageId,
+      bestStars: Math.max(s.bestStars || 0, r.stars || 0),
+      bestScore: Math.max(s.bestScore || 0, r.score || 0),
+      plays: (s.plays || 0) + 1,
+      hist: (s.hist || []).concat([{ at: Date.now(), q: r.total || 0, ok: r.right || 0, s: secs, st: r.stars || 0 }]).slice(-30),   // 每一次的結果（後台點答對率可看）
+      totalSecs: (s.totalSecs || 0) + secs,
+      totalQ: (s.totalQ || 0) + (r.total || 0),
+      totalOk: (s.totalOk || 0) + (r.right || 0)
+    };
+    const q = Object.assign({}, prev.q);
+    (r.types || []).forEach(t => {
+      const k = r.stageId + ':' + t.key, o = q[k] || { n: 0, ok: 0 };
+      q[k] = { n: o.n + (t.total || 0), ok: o.ok + (t.right || 0), label: t.label || t.key };
+    });
+    return {
+      nick: r.nick || prev.nick || '',
+      totalPlays: (prev.totalPlays || 0) + 1,
+      bestScore: Math.max(prev.bestScore || 0, r.score || 0),
+      totalSecs: (prev.totalSecs || 0) + secs,
+      totalQ: (prev.totalQ || 0) + (r.total || 0),
+      totalOk: (prev.totalOk || 0) + (r.right || 0),
+      lastScore: r.score || 0, lastId: r.stageId, lastName: r.stageName || r.stageId, lastAt: Date.now(),
+      stages, q
+    };
+  });
+}
+keyagentInstallPageHideSync();           // 4) 離開頁面時補寄一次
+/* ========== 以上整段不用改 ========== */
+</script>
+<script>
+const mk=(q,c,w,e,p)=>{const o=[c,...w].sort(()=>Math.random()-.5);return{q,o,a:o.indexOf(c),e,p}};
+const LV=[[0,"🌱 種子"],[100,"🌿 抽枝"],[250,"🌸 花苞綻放"],[450,"🌳 開花的樹"],[700,"🏮 席慕蓉的知音"]];
+const D=[
+{id:1,ico:"🌳",name:"第一課　一棵開花的樹",sub:"席慕蓉",stages:[
+{n:"🌱 萌芽",t:"字詞與注釋",qs:[
+{q:"「凋零」的「凋」，拼音為何？",o:["zhōu","tiáo","diāo","jiāo"],a:2,e:"凋，拼音 diāo，意思是凋謝落下；周（zhōu）、調（tiáo）是形近干擾。"},
+{q:"「求祂讓我們結一段塵緣」，「祂」指的是？",o:["心上人","那棵樹","作者本人","泛指神明，這裡指佛"],a:3,e:"「祂」是第三人稱代名詞，泛指一般神明，詩中指「佛」。"},
+{q:"「塵緣」的意思是？",o:["世俗的緣分","佛門的緣分","像塵土般卑微的緣分","前世的仇怨"],a:0,e:"塵緣，世俗的緣分。"},
+{q:"〈子衿〉「縱我不往，子寧不來」的「縱」，意思是？",o:["放縱","縱橫","即使","釋放"],a:2,e:"縱，拼音 zòng，即使。"}]},
+{n:"🌸 開花",t:"象徵與寫法",qs:[
+{q:"詩題「一棵開花的樹」，象徵的是？",o:["心上人","詩中的「我」（對情緣的期待）","佛","大自然的生命力"],a:1,e:"課本討論：一棵開花的樹象徵詩中的「我」。"},
+{q:"以「遇見」的短暫對照「求了五百年」的漫長，使用的修辭是？",o:["排比","層遞","映襯","設問"],a:2,e:"課文賞析：兩者相互映襯，凸顯女子無悔地等待。"},
+{q:"「落了一地的花」象徵什麼？",o:["等待的熱情","前世的盼望","佛的恩賜","失望、凋零的心"],a:3,e:"顫抖的葉＝等待的熱情；開滿了花＝前世的盼望；落花＝失望的心情。"},
+{q:"依課文賞析，全詩三節依序敘述什麼心情？",o:["祈求、等待、失落","等待、祈求、失落","祈求、失落、等待","失落、等待、祈求"],a:0,e:"第一節祈求，第二節等待，第三節被無視後的失落。"}]},
+{n:"👑 BOSS",t:"理解與對讀",qs:[
+{q:"課本討論：佛為什麼把主角化為一棵樹？",o:["樹最容易種植","樹靜止不動，不會錯過路人，又能在風中展現美麗","樹壽命最長","樹可以替主角說話"],a:1,e:"樹靜止不動，有花有葉，風來可搖擺，展現「最美麗的時刻」。"},
+{q:"為表示對畢業生的祝福，最適合作為畢業典禮舞臺布置的是？",o:["彩霞滿天的落日餘暉","形影不離的對對鴛鴦","振翅高飛的碩大鵬鳥","獨自綻放的寒梅"],a:2,e:"鵬鳥意寓「鵬程萬里」。"},
+{q:"〈子衿〉「縱我不往，子寧不嗣音」使用的修辭是？",o:["映襯","激問（答案在問題的背後）","排比","借代"],a:1,e:"激問，表達自身的思念與委屈。"},
+{q:"〈子衿〉與〈一棵開花的樹〉的比較，何者正確？",o:["兩者都以圓滿的結局收尾","前者委婉，後者積極坦率","前者態度較積極坦率，後者較委婉且結局不圓滿","前者主角優柔寡斷"],a:2,e:"課本：前者較積極坦率、結局保留想像空間；後者委婉、結局不圓滿。共通點是都傾訴等待與思慕。"}]}]},
+{id:2,ico:"🎣",art:"fish",name:"第二課　曲選",sub:"元曲・白樸・難度 ★★★★",stages:[
+{n:"📜 曲的體製",t:"曲牌、襯字、散曲與雜劇",qs:[
+{q:"關於「曲牌」與作品題目的關係，何者正確？",o:["曲牌決定作品內容，所以題目必與曲牌相同","曲牌規定字數、句數、平仄、用韻，但內容與曲牌名稱大多無關，故作者常另加題目或作序","曲牌只規定字數，平仄與用韻可隨意","曲牌是作者的別號"],a:1,e:"曲牌規定字數、句數、平仄、對仗、用韻；內容與曲牌多無關，因此作者在曲牌外另加題目或作序。"},
+{q:"關於「襯字」，何者正確？",o:["襯字是曲牌規定必須有的字","襯字只能放在句尾","在曲調允許的狀況下增加的字，可補足語氣、增加語義，可置於句首及句中","襯字是用來標明曲牌名稱的字"],a:2,e:"襯字是在曲調允許下增字，以補足語氣、增加語義，可置於句首及句中。"},
+{q:"下列關於元曲分類的說明，何者錯誤？",o:["散曲的性質與詞相近，可配樂歌唱","小令是單支曲子，必須一韻到底","散套又稱套曲、套數，用同宮調的若干小令組成","雜劇只有唱詞，沒有動作與對白"],a:3,e:"雜劇由曲（唱詞）、科（動作）、白（說白或對話）組成，能在舞臺上演出，可說是元代的歌劇。"},
+{q:"「用同一宮調的若干小令組成」的曲體，稱為？",o:["小令","散套","雜劇","詞"],a:1,e:"散套（套曲、套數）由同宮調的若干小令組成；小令則是單支曲子。"}]},
+{n:"🎣 沉醉東風・漁父詞",t:"題解與作者",qs:[
+{q:"〈沉醉東風・漁父詞〉中，「沉醉東風」與「漁父詞」分別是？",o:["題目、曲牌","曲牌、題目","作者、題目","曲牌、作者"],a:1,e:"沉醉東風是曲牌名，漁父詞是題目。"},
+{q:"本曲以「漁父」形象，比喻什麼人，反映作者什麼心情？",o:["努力追求功名的官員，反映積極進取","不受利祿羈絆的避世隱者，反映對自在生活的嚮往","漂泊天涯的遊子，反映思鄉","辛勤捕魚的貧民，反映同情"],a:1,e:"題解：以漁父形象比喻不受利祿羈絆的避世隱者，反映作者對自在生活的嚮往。"},
+{q:"關於白樸的生平，何者正確？",o:["生於金哀宗正大三年，幼時蒙古滅金與父母失散，由元好問教養數年","入元後出仕為官，終身顯達","字馬致遠，號東籬","生於太平盛世，從未經歷戰亂"],a:0,e:"白樸字仁甫，號蘭谷，入元之後終身不仕，晚年移居建康。"},
+{q:"下列何者是「元曲四大家」？",o:["關漢卿、馬致遠、元好問、白樸","關漢卿、鄭光祖、元好問、張岱","關漢卿、馬致遠、鄭光祖、白樸","馬致遠、白樸、張岱、鄭光祖"],a:2,e:"白樸與關漢卿、馬致遠、鄭光祖合稱元曲四大家。"},
+{q:"依自學引導，〈沉醉東風〉與〈天淨沙〉的差異是？",o:["兩者都寫親情","前者在景致中傳遞遊子的淒楚，後者表達個人心志","前者是詞，後者是雜劇","前者以寫景抒情表達個人心志，後者在景致中傳遞天涯遊子的淒楚與孤寂"],a:3,e:"自學引導：沉醉東風以寫景抒情表達個人心志；天淨沙在景致中傳遞天涯遊子的淒楚與孤寂。"}]}]},
+{id:3,ico:"🤝",art:"hand",name:"第三課　人間情分",sub:"張曼娟・難度 ★★★★",stages:[
+{n:"🏷️ 標題與內文",t:"小標題與三段經歷",qs:[
+{q:"依課前暖身，三個小標題的設計有什麼作用？",o:["增加文章字數","幫助讀者掌握故事的核心，增加對事件的印象","取代主篇名","說明作者的寫作年代"],a:1,e:"小標題幫助讀者擷取故事核心、增加印象；三則故事再由最末段的感性書寫統合，展現主篇名的深意。"},
+{q:"「不平凡的一雙手」所指為何？",o:["作者靈巧的手","書店女店員靈巧的手，以及體貼他人的心意","月臺上伸出援手的男子","公用電話的按鍵"],a:1,e:"課前暖身：指女店員靈巧的手，以及「體貼他人」的心意。"},
+{q:"「不平凡的一雙手」對應哪一件事？",o:["作者到大陸探親","作者影印講義","作者到澎湖旅遊","作者參加畢業典禮"],a:1,e:"題解：書店裡善意幫忙影印的女店員。"},
+{q:"依題解，三段經歷的配對何者正確？",o:["書店女店員——將軍嶼","將軍嶼——貼心的公用電話","月臺——善意影印的女店員","公用電話——月臺上伸出援手的男子"],a:1,e:"三段經歷：書店裡善意幫忙影印的女店員、將軍嶼上貼心的公用電話、月臺上伸出援手的男子。"}]},
+{n:"✍️ 作者與寫法",t:"作者、重點與手法",qs:[
+{q:"關於張曼娟，何者正確？",o:["生於民國五十年，為小說家，從未寫過散文","著有小說集《百年相思》《緣起不滅》","臺灣臺北人，東吳大學中國文學系博士，著有散文集《黃魚聽雷》","任教於臺灣大學中文系"],a:2,e:"《百年相思》《緣起不滅》《黃魚聽雷》為散文集；《海水正藍》《喜歡》為小說集。"},
+{q:"下列何者「不是」本課的學習重點？",o:["認識標題與內文之間的關係","練習從生活經驗中提取寫作素材，抒發感想","珍惜人與人之間美麗且可貴的情分","學習運用格律填寫曲牌"],a:3,e:"曲牌是第二課的內容。"},
+{q:"依自學引導，〈人間情分〉採用的手法是？",o:["象徵手法表現少女委婉情意","藉事抒情：由事及人、由人及情理","在景致中傳遞遊子的淒楚","以童話擬人說理"],a:1,e:"自學引導：〈人間情分〉由事及人、由人及情理的藉事抒情手法。"},
+{q:"最末段作者的感性書寫，主要作用是？",o:["重述第一個故事","批評前面三個故事","統合三則故事，展現主篇名「人間情分」的深意","介紹作者生平"],a:2,e:"課前暖身：三個故事統合在一起，又透過最末段的感性書寫，更能展現主篇名的深意。"}]}]},
+{id:4,ico:"❄️",art:"snow",name:"自學一　湖心亭看雪",sub:"張岱・難度 ★★★★★",stages:[
+{n:"🏔️ 文本理解",t:"句意與寫景手法",qs:[
+{q:"「大雪三日，湖中人鳥聲俱絕」寫出什麼景象？",o:["湖上熱鬧非凡","大雪三日，人與鳥都沒有聲音，天地一片寂靜","作者耳朵聽不見","人與鳥都離開了西湖"],a:1,e:"聲俱絕，以寂靜烘托雪後天地的清冷。"},
+{q:"「天與雲、與山、與水，上下一白」在描寫什麼？",o:["霧淞彌漫，天地渾然一片白茫茫","夜色深沉，一片漆黑","雲、山、水各有顏色","天空晴朗"],a:0,e:"霧淞沆碭，天、雲、山、水都成一白，寫雪景的廣闊混茫。"},
+{q:"「長堤一痕、湖心亭一點、余舟一芥、舟中人兩三粒」，這些量詞的作用是？",o:["說明長堤很短","以極小的量詞寫景物與人，烘托天地的廣闊、襯出人的渺小","計算舟中人數","說明湖面很窄"],a:1,e:"痕、點、芥、粒皆言其微小，以小襯大。"},
+{q:"「余強飲三大白而別」的「強」與「三大白」，意思是？",o:["強壯、三位長者","勉強、三大杯酒","強迫、三次告別","強大、三片白雪"],a:1,e:"強，勉強；大白，大酒杯。"},
+{q:"舟子說「莫說相公痴，更有痴似相公者」，作用是？",o:["批評張岱糊塗","舟子不想划船","借舟子之口，點出作者與亭中人同樣癡迷雪景，以人烘托雪景之美","說明作者受騙"],a:2,e:"自學引導：多留意如何藉人、事烘托美景。"}]},
+{n:"📖 作者與手法",t:"張岱與小品文",qs:[
+{q:"關於張岱，何者正確？",o:["字仁甫，號蘭谷，元曲四大家之一","清代人，終身為官","著有《百年相思》《黃魚聽雷》","字宗子，號陶庵，明代人，著有《陶庵夢憶》《西湖夢尋》"],a:3,e:"張岱字宗子，號陶庵，是晚明小品文的重要代表作家。"},
+{q:"依自學引導，本課的特色是？",o:["以小品文形式寫景抒情，從漫天飛雪帶到人情往來","以長篇論說說理","以雜劇形式演出","以童話擬人說理"],a:0,e:"自學引導：以小品文的形式寫景抒情，從漫天飛雪帶到人情往來。"},
+{q:"關於張岱的生平，何者正確？",o:["一生貧困，從未享受繁華","前半生享盡繁華，明亡後隱居避世，生活困頓，專心寫作","清朝時官至宰相","明初便已去世"],a:1,e:"前半生享盡人世繁華，明亡後隱居避世，專心從事寫作。"},
+{q:"亭中人說：「湖中焉得更有此人！」，表現他的什麼心情？",o:["責怪作者打擾","驚喜在雪夜竟遇到同好之人","嘲笑作者痴傻","害怕陌生人"],a:1,e:"見余，大喜，表現驚喜與知音之感。"}]}]},
+{id:5,ico:"🌹",art:"rose",name:"自學二　玫瑰樹根",sub:"哲理散文・難度 ★★★★",stages:[
+{n:"🌹 哲理故事",t:"寫法、寓意與拼音",qs:[
+{q:"〈玫瑰樹根〉屬於哪一種文體與寫法？",o:["哲理散文，以說童話故事的方式探討美與奉獻","記遊散文","雜劇","新詩"],a:0,e:"選文價值：本文為哲理散文，作者運用說童話故事的方式，探討美和奉獻的意涵。"},
+{q:"作者安排細流與樹根以什麼方式對話？",o:["擬人","譬喻","映襯","排比"],a:0,e:"以擬人方式對話，推論可看出文章所寓意的思想。"},
+{q:"透過其貌不揚的樹根與自以為是的細流，要凸顯什麼？",o:["樹根的自卑","細流的奉獻","樹根的自信和奉獻精神","玫瑰的美麗而已"],a:2,e:"凸顯樹根的自信和奉獻精神。"},
+{q:"下列何者「不是」本課學習的結尾書寫方式？",o:["首尾呼應法","揭示主旨法","出人意表法","排比遞進法"],a:3,e:"學習的結尾方式為：首尾呼應法、揭示主旨法、出人意表法。"},
+{q:"關於加夫列拉・米斯特拉爾，何者正確？",o:["阿根廷作家，一九六一年獲獎","智利女詩人，一九四五年獲諾貝爾文學獎，是拉丁美洲第一位獲此殊榮的詩人","西班牙小說家","墨西哥詩人，一九九〇年獲獎"],a:1,e:"課前提示：智利女詩人，一九四五年諾貝爾文學獎得主。"},
+{q:"下列拼音，何者正確？",o:["暗忖 cūn","魅力 měi","纖維 xiān","蠕蟲 nú"],a:2,e:"暗忖 cǔn、魅力 mèi、纖維 xiān、蠕蟲 rú；憎讀 zēng。"}]}]}];
+const ART={
+snow:'<svg viewBox="0 0 300 110"><rect width="300" height="110" fill="#e9eff4"/><path d="M0 74H300" stroke="#cfd8df" stroke-width="2"/><path d="M30 70H140" stroke="#8b98a4" stroke-width="3"/><path d="M158 58l5-8 5 8z" fill="#55616c"/><rect x="159" y="58" width="8" height="6" fill="#55616c"/><path d="M205 80q14 7 28 0z" fill="#6b5a4a"/><circle cx="219" cy="75" r="3" fill="#333"/><g fill="#fff"><circle cx="30" cy="20" r="3"/><circle cx="80" cy="40" r="2"/><circle cx="120" cy="15" r="3"/><circle cx="170" cy="30" r="2"/><circle cx="220" cy="18" r="3"/><circle cx="270" cy="42" r="2"/><circle cx="250" cy="66" r="2"/></g></svg>',
+fish:'<svg viewBox="0 0 300 110"><rect width="300" height="110" fill="#fbe7c8"/><circle cx="240" cy="30" r="16" fill="#f4a259"/><rect y="70" width="300" height="40" fill="#8fb8c9"/><g stroke="#6a8f5a" stroke-width="2"><path d="M20 70V45M28 70V40M36 70V48M270 70V46M278 70V42"/></g><path d="M110 82q20 10 40 0z" fill="#6b4f3a"/><path d="M130 78V62" stroke="#6b4f3a" stroke-width="2"/><circle cx="130" cy="58" r="4" fill="#333"/><path d="M134 60l32-28" stroke="#6b4f3a" stroke-width="1.5"/></svg>',
+hand:'<svg viewBox="0 0 300 110"><rect width="300" height="110" fill="#fdecdf"/><rect x="40" y="25" width="36" height="60" rx="4" fill="#5f8fb8"/><rect x="46" y="31" width="24" height="30" fill="#dbeaf5"/><rect y="85" width="300" height="25" fill="#b9b3a8"/><path d="M150 70c-30-18-12-38 0-26 12-12 30 8 0 26z" fill="#e0556f"/><circle cx="235" cy="50" r="7" fill="#f3f3f3"/><rect x="228" y="57" width="14" height="28" rx="6" fill="#f3f3f3"/></svg>',
+rose:'<svg viewBox="0 0 300 110"><rect width="300" height="110" fill="#f1ece0"/><rect y="55" width="300" height="55" fill="#b69a78"/><path d="M150 56V26" stroke="#4f7a3a" stroke-width="3"/><circle cx="150" cy="20" r="10" fill="#d6455d"/><circle cx="150" cy="20" r="4" fill="#a82b42"/><g stroke="#6b4a2b" stroke-width="3" fill="none"><path d="M150 56q-20 15-45 20M150 56q0 22-8 40M150 56q22 14 50 18"/></g><path d="M0 98q40-10 80 0t80 0 80 0 60 0" stroke="#7fb2d4" stroke-width="5" fill="none"/></svg>'};
+ART.petal='<svg viewBox="0 0 300 110"><rect width="300" height="110" fill="#fdeef2"/><path d="M0 20Q80 30 160 12" stroke="#7a5a45" stroke-width="5" fill="none"/><g fill="#f2a1b8"><ellipse cx="60" cy="30" rx="8" ry="5"/><ellipse cx="120" cy="22" rx="8" ry="5"/><ellipse cx="90" cy="60" rx="7" ry="4" transform="rotate(30 90 60)"/><ellipse cx="170" cy="75" rx="7" ry="4" transform="rotate(-20 170 75)"/><ellipse cx="230" cy="50" rx="7" ry="4"/><ellipse cx="40" cy="90" rx="7" ry="4"/></g><rect y="100" width="300" height="10" fill="#e6d3c3"/></svg>';
+ART.vine='<svg viewBox="0 0 300 110"><rect width="300" height="110" fill="#f3e6cf"/><circle cx="240" cy="55" r="18" fill="#e4572e"/><rect y="90" width="300" height="20" fill="#b8a07a"/><path d="M70 90V35" stroke="#5b4636" stroke-width="9"/><path d="M70 40q-25-10-35-25M70 50q22-8 32-22" stroke="#5b4636" stroke-width="4" fill="none"/><path d="M78 88q20-30 5-55t18-20" stroke="#6b8f4e" stroke-width="2" fill="none"/><circle cx="36" cy="12" r="3" fill="#222"/><path d="M30 14l6-3 6 3z" fill="#222"/></svg>';
+ART.autumn='<svg viewBox="0 0 300 110"><rect width="300" height="110" fill="#f6e3c4"/><g stroke="#cdb68e" stroke-width="2" fill="none"><path d="M10 30q60-10 120 0M60 55q70-12 140 0M20 80q60-10 110 0"/></g><g fill="#d9772b"><path d="M170 30q10-12 20 0q-10 12-20 0z"/><path d="M210 55q10-12 20 0q-10 12-20 0z"/><path d="M130 75q10-12 20 0q-10 12-20 0z"/><path d="M250 25q10-12 20 0q-10 12-20 0z"/></g><rect y="95" width="300" height="15" fill="#b8905a"/></svg>';
+D[0].stages.push(
+{n:"✏️ 習作・字詞練習",t:"字音與字形",art:"petal",qs:[
+mk("「花瓣」的「瓣」，拼音為何？","bàn",["bān","bǎn","pàn"],"瓣，音 bàn。","🌸"),
+mk("「塵緣」的「緣」，拼音為何？","yuán",["yuàn","yán","yuǎn"],"緣，音 yuán。","🙏"),
+mk("「顫抖」的「顫」，依課本標示，拼音為何？","zhàn",["zhān","zhǎn","jiàn"],"顫，課本標示音 zhàn。","🍃"),
+mk("「慎重」的「慎」，拼音為何？","shèn",["shēn","shén","chèn"],"慎，音 shèn，謹慎小心。","🤝"),
+mk("花「　」（bàn）：下列何字填入最恰當？","瓣",["辮","辨","辦"],"花瓣的「瓣」；辮是辮子，辨是分辨，辦是辦理。","🌺"),
+mk("塵「　」：下列何字填入，才是「世俗的緣分」？","緣",["綠","錄","源"],"緣分、塵緣皆用「緣」；綠是顏色。","💞"),
+mk("「　抖」（發抖的樣子）：下列何字書寫正確？","顫",["戰","顛","顏"],"顫抖，不寫作「戰抖」。","😨"),
+mk("「花瓣凋零」的「凋」，正確寫法是？","凋",["雕","週","調"],"凋零，凋謝零落；雕是雕刻。","🥀")]},
+{n:"🔍 習作・錯字訂正",t:"找出錯字並訂正",art:"petal",qs:[
+mk("「錯縱複雜的道路」，錯字應訂正為？","綜",["蹤","宗","總"],"錯綜複雜，綜指交織。","🛣️"),
+mk("「初來榨到」，錯字應訂正為？","乍",["炸","詐","咋"],"初來乍到，乍是剛剛、起初。","🧳"),
+mk("「不易分辦」，「分辦」應訂正為？","分辨",["分辯","分瓣","分辮"],"分辨＝區別；分辯是辯解，兩者不同。","🧭"),
+mk("「目第地」，應訂正為？","目的地",["目地地","目弟地","目底地"],"目的地，指要前往的地方。","📍"),
+mk("「許多信眾挾道歡迎」，錯字應訂正為？","夾",["俠","狹","峽"],"夾道歡迎，人們在道路兩旁迎接。","🎉"),
+mk("「膚誠的祈禱」，「膚誠」應訂正為？","虔誠",["處誠","乾誠","慮誠"],"虔誠，恭敬而誠懇。","🛐"),
+mk("「難已預測」，錯字應訂正為？","以",["己","巳","乙"],"難以預測。","🔮"),
+mk("「甚重對待彼此」，錯字應訂正為？","慎",["甚","順","審"],"慎重，小心謹慎。","🤲"),
+mk("「人生聚散的綠分」，錯字應訂正為？","緣",["綠","錄","線"],"緣分，與塵緣的「緣」同。","🌳"),
+mk("「錯縱複雜的道路，讓初來榨到的旅人不易分辦目第地的位置。」共有幾個錯字？","4 個",["2 個","3 個","5 個"],"縱→綜、榨→乍、辦→辨、第→的，共 4 個。","🔍")]});
+D[1].stages.push(
+{n:"🌿 習作・字詞練習",t:"字音與字形",art:"vine",qs:[
+mk("「紅蓼」的「蓼」，拼音為何？","liǎo",["liào","lǎo","liáo"],"蓼，音 liǎo，生長在水邊的植物。","🌾"),
+mk("「釣叟」的「叟」，拼音為何？","sǒu",["shǒu","sòu","suǒ"],"叟，音 sǒu，老人。","👴"),
+mk("「釣叟」的「釣」，拼音為何？","diào",["diāo","dào","tiào"],"釣，音 diào。","🎣"),
+mk("「刎頸」的「刎」，拼音為何？","wěn",["wèn","wén","wēn"],"刎，音 wěn，用刀割脖子。","🤝"),
+mk("「傲殺」的「傲」，拼音為何？","ào",["áo","āo","ǎo"],"傲，音 ào。","😎"),
+mk("枯「　」（téng）：下列何字書寫正確？","藤",["騰","謄","滕"],"枯藤，枯萎的藤蔓。","🌿"),
+mk("紅「　」（liǎo）：生長在水邊的植物，應寫作？","蓼",["寥","廖","嘹"],"紅蓼，水邊的紅色花草。","🌾")]},
+{n:"🔍 習作・錯字訂正",t:"找出錯字並訂正",art:"vine",qs:[
+mk("「初出茅蘆」，錯字應訂正為？","廬",["爐","驢","盧"],"初出茅廬，比喻剛踏入社會、缺乏經驗。","🏠"),
+mk("「口刎」，錯字應訂正為？","吻",["勿","紊","穩"],"口吻，說話的語氣。","🗣️"),
+mk("「驕敖自大」，錯字應訂正為？","傲",["熬","遨","獒"],"驕傲自大。","😤"),
+mk("「搜索哭腸」，錯字應訂正為？","枯",["苦","姑","古"],"搜索枯腸，形容費盡心思思索。","💡"),
+mk("「潛顯易懂」，錯字應訂正為？","淺",["錢","殘","賤"],"淺顯易懂。","📖"),
+mk("「初出茅蘆的小伙子……口刎驕敖自大」這一句，共有幾個錯字？","3 個",["1 個","2 個","4 個"],"蘆→廬、刎→吻、敖→傲，共 3 個。","🔍")]});
+D[2].stages.push(
+{n:"🍂 習作・字詞練習",t:"字音與字形",art:"autumn",qs:[
+mk("「寧謐」的「謐」，拼音為何？","mì",["mǐ","mí","bì"],"謐，音 mì，安靜。","🌙"),
+mk("「詫異」的「詫」，拼音為何？","chà",["zhà","chā","shà"],"詫，音 chà，驚訝。","😲"),
+mk("「亢奮」的「亢」，拼音為何？","kàng",["gāng","kāng","háng"],"亢，音 kàng，情緒高昂。","🔥"),
+mk("「芰荷」的「芰」，拼音為何？","jì",["zhì","qì","jǐ"],"芰，音 jì，菱角。","🌿"),
+mk("「丟盔棄甲」的「盔」，拼音為何？","kuī",["guī","kuí","huī"],"盔，音 kuī，頭盔。","⛑️"),
+mk("丟「　」棄甲：下列何字填入正確？","盔",["魁","虧","窺"],"丟盔棄甲，形容戰敗狼狽。","⛑️")]},
+{n:"🍂 習作・錯字訂正",t:"找出錯字並訂正",art:"autumn",qs:[
+mk("「恪鬥比賽」，錯字應訂正為？","格",["客","洛","烙"],"格鬥，搏擊。","🥊"),
+mk("「驚心動破」，錯字應訂正為？","魄",["迫","泊","珀"],"驚心動魄。","😱"),
+mk("「摒氣凝神」，錯字應訂正為？","屏",["餅","並","平"],"屏氣凝神，暫時抑制呼吸。","🤫"),
+mk("「秋風蕭塞」，錯字應訂正為？","瑟",["色","寒","澀"],"蕭瑟，形容秋風淒涼。","🍂"),
+mk("「花瓣雕零」，錯字應訂正為？","凋",["彫","週","調"],"凋零，凋謝零落。","🥀"),
+mk("「很講就」，錯字應訂正為？","究",["久","救","九"],"講究。","💄"),
+mk("「打玢完美」，錯字應訂正為？","扮",["份","紛","粉"],"打扮。","👗")]});
+const MIX={id:9,ico:"🎲",name:"全課混合挑戰",stages:[{n:"🎲 全課混合",t:"50 題",qs:[]}]};
+const dd=i=>i<0?MIX:D[i];
+function total(){let n=0;D.forEach(d=>d.stages&&d.stages.forEach(t=>n+=t.qs.length));return n}
+function mixBtn(){const st=S.done["9-0"];return `<button onclick="mix()">🎲 全課混合挑戰（從 ${total()} 題隨機抽 50 題）<br><span class="mu">血量 10・提示 4 次・通關 +50 XP・${st?"最佳 "+"⭐".repeat(st):"尚未通關"}</span></button>`}
+function mix(){const all=[];D.forEach(d=>d.stages&&d.stages.forEach(t=>t.qs.forEach(q=>{const c=q.o[q.a],o=[...q.o].sort(()=>Math.random()-.5);all.push({...q,o,a:o.indexOf(c),art:t.art||d.art})})));
+all.sort(()=>Math.random()-.5);MIX.stages[0].qs=all.slice(0,50);start(-1,0)}
+let S={xp:0,done:{},wrong:[]},G=null;
+try{const r=localStorage.getItem("ftg");if(r)S=JSON.parse(r)}catch(e){}
+const save=()=>{try{localStorage.setItem("ftg",JSON.stringify(S))}catch(e){}};
+const $=h=>document.getElementById("app").innerHTML=h;
+function lv(){let i=0;LV.forEach((l,k)=>{if(S.xp>=l[0])i=k});return i}
+function head(){const i=lv(),n=LV[i+1],p=n?(S.xp-LV[i][0])/(n[0]-LV[i][0])*100:100;
+return `<div class="card"><div class="row"><h1>🌸 花樹修行錄</h1><span class="tag">${LV[i][1]}</span></div><div class="mu">中三國文闖關・累計 ${S.xp} XP${n?"・距離下一段位 "+(n[0]-S.xp)+" XP":""}</div><div class="bar"><i style="width:${p}%"></i></div></div>`}
+function home(){G=null;let h=head()+"<h2>選擇副本</h2>";
+D.forEach((d,i)=>{h+=d.lock?`<button disabled>${d.ico} ${d.name}<br><span class="mu">${d.sub}</span></button>`:`<button onclick="dun(${i})">${d.ico} ${d.name}<br><span class="mu">${d.sub}・已通關 ${d.stages.filter((s,k)=>S.done[d.id+"-"+k]).length}/${d.stages.length}</span></button>`});
+h+=mixBtn()+`<button onclick="book()">📕 錯題本（${S.wrong.length}）</button><p class="mu">更多課文只要上傳給 Claude，就能加入新的副本。</p>`;$(h)}
+function dun(i){const d=D[i];let h=head()+`<button onclick="home()">← 返回</button><h2>${d.ico} ${d.name}</h2>${ART[d.art]?`<div class="art">${ART[d.art]}</div>`:""}`;
+d.stages.forEach((s,k)=>{const st=S.done[d.id+"-"+k];h+=`<button onclick="start(${i},${k})">${s.n}　${s.t}<br><span class="mu">${s.qs.length} 題・${st?"已通關 "+"⭐".repeat(st):"尚未通關"}</span></button>`});$(h)}
+function start(i,k){tStart();G={i,k,q:0,max:i<0?10:5,hp:i<0?10:5,combo:0,hint:i<0?4:2,gain:0,miss:0,used:0,lock:0};ask()}
+function ask(){const s=dd(G.i).stages[G.k],q=s.qs[G.q];G.lock=0;G.used=0;
+let h=`<div class="card"><div class="row"><b>${s.n}</b><span>${"🌸".repeat(G.hp)}${"🥀".repeat(G.max-G.hp)}</span></div><div class="mu">第 ${G.q+1}/${s.qs.length} 題・連擊 ${G.combo}・本關 +${G.gain} XP</div></div><div class="card">${ART[q.art||s.art||dd(G.i).art]?`<div class="art">${ART[q.art||s.art||dd(G.i).art]}</div>`:""}${q.p?`<div style="font-size:44px;text-align:center;line-height:1.3">${q.p}</div>`:""}<b>${q.q}</b>`;
+q.o.forEach((t,j)=>h+=`<button id="o${j}" onclick="pick(${j})">${"ABCD"[j]}. ${t}</button>`);
+h+=`<button id="hb" onclick="hint()" ${G.hint?"":"disabled"}>🌬️ 春風提示（剩 ${G.hint}，該題 XP 減半）</button><div id="fb"></div></div>`;$(h)}
+function hint(){if(G.lock||!G.hint)return;const q=dd(G.i).stages[G.k].qs[G.q];const w=q.o.map((_,j)=>j).filter(j=>j!=q.a&&!document.getElementById("o"+j).disabled);
+const j=w[Math.floor(Math.random()*w.length)];document.getElementById("o"+j).disabled=true;G.hint--;G.used=1;document.getElementById("hb").disabled=!G.hint;document.getElementById("hb").innerHTML="🌬️ 春風提示（剩 "+G.hint+"）"}
+function pick(j){if(G.lock)return;G.lock=1;const s=dd(G.i).stages[G.k],q=s.qs[G.q],ok=j==q.a;
+document.getElementById("o"+q.a).classList.add("ok");
+if(ok){G.combo++;let x=10+(G.combo>=3?5:0);if(G.used)x=Math.floor(x/2);G.gain+=x;S.xp+=x}
+else{document.getElementById("o"+j).classList.add("no");G.hp--;G.combo=0;G.miss++;if(!S.wrong.some(w=>w.q==q.q))S.wrong.push({q:q.q,a:q.o[q.a],e:q.e})}
+save();const last=G.q==s.qs.length-1||G.hp==0;
+document.getElementById("fb").innerHTML=`<div class="ex">${ok?"✅ 答對了！":"❌ 落了一片花瓣。"}${q.e}</div><button class="p" onclick="${last?"fin()":"nxt()"}">${last?"查看結果":"下一題 →"}</button>`}
+function nxt(){G.q++;ask()}
+function fin(){const d=dd(G.i),s=d.stages[G.k];let h=head();let bonus=0,starsEarned=0;
+if(G.hp<=0){h+=`<div class="card"><h2>🥀 落花了……</h2><p>花瓣用完，本關失敗。看看錯題本再來一次吧！</p></div>`}
+else{const mx=G.i<0,st=mx?(G.miss<=5?3:G.miss<=12?2:1):(G.miss<=1?3:G.miss<=3?2:1),key=d.id+"-"+G.k;let b=0;if(mx)b=50;else if(G.miss==0)b=30;bonus=b;starsEarned=st;S.xp+=b;S.done[key]=Math.max(S.done[key]||0,st);save();
+h+=`<div class="card"><h2>🎉 通關！${"⭐".repeat(st)}</h2><p>本關 +${G.gain} XP${b?"，全對獎勵 +"+b+" XP":""}<br>答錯 ${G.miss} 題，剩餘花瓣 ${G.hp}</p></div>`}
+{ // 送到教師後台：只在「玩完、拿到結果」時記一次
+  const ans=Math.min(G.q+1,s.qs.length),rt=Math.max(0,ans-G.miss),clean=x=>String(x||"").replace(/^[^\u4E00-\u9FFFA-Za-z0-9]+/,"");
+  const sid=G.i<0?"mix":d.id+"-"+G.k,sname=G.i<0?"全課混合":clean(d.name.split("　")[0])+" "+clean(s.n);
+  try{finishRound({stageId:sid,stageName:sname,score:G.gain+bonus,right:rt,total:ans,stars:starsEarned,types:[{key:"t"+sid,label:G.i<0?"全課混合":clean(d.name.split("　")[0])+"・"+s.t,right:rt,total:ans}]})}catch(e){}}
+h+=`<button class="p" onclick="${G.i<0?"mix()":"start("+G.i+","+G.k+")"}">再玩一次</button>${G.i<0?"":`<button onclick="dun(${G.i})">返回關卡</button>`}<button onclick="home()">回首頁</button>`;$(h)}
+function book(){let h=head()+`<button onclick="home()">← 返回</button><h2>📕 錯題本</h2>`;
+if(!S.wrong.length)h+=`<p class="mu">還沒有錯題，繼續保持！</p>`;
+S.wrong.forEach((w,i)=>h+=`<div class="card"><b>${w.q}</b><div class="ex">正解：${w.a}<br>${w.e}</div><button onclick="rm(${i})">✔ 我記住了，移除</button></div>`);$(h)}
+function rm(i){S.wrong.splice(i,1);save();book()}
+ensureStudent(()=>home());
+</script>
+<script src="../../home-fab.js"></script></body></html>
