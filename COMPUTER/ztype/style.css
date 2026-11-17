@@ -866,3 +866,13 @@ body .kb-key { touch-action: manipulation; user-select: none; -webkit-user-selec
     border-radius: 999px; opacity: 0.88;
   }
 }
+
+/* ===== 手機：小鍵盤依螢幕寬度自動縮放（窄螢幕不會左右被切掉）、音效鈕移到右上不壓住按鍵 ===== */
+@media (pointer: coarse) {
+  .onscreen-kb { padding-left: 2px; padding-right: 2px; }
+  .kb-row { width: 100%; gap: 3px; }
+  .kb-key { min-width: 0 !important; flex: 1 1 0; max-width: 46px; padding-left: 0; padding-right: 0; }
+  .kb-key.wide, .kb-act { flex: 1.7 1 0; max-width: none; min-width: 0 !important; }
+  .kb-key.space { flex: 5 1 0; max-width: none; min-width: 0 !important; }
+  #zfxBtn { bottom: auto !important; top: 118px !important; width: 32px !important; height: 32px !important; font-size: 16px !important; }
+}

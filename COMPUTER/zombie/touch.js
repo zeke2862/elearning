@@ -340,7 +340,7 @@
     // 手機：玩的時候用「2 道精簡版」，回到主選單就恢復（畫面比較大）
     if (g.state === 'MENU') {                       // 直放：用窄而高的畫面（只在主選單時切換）
       const wantNarrow = touchOn && isPortrait();
-      if (!!g.narrow !== wantNarrow && g.setNarrow(wantNarrow)) fit();
+      if (typeof g.setNarrow === 'function' && !!g.narrow !== wantNarrow && g.setNarrow(wantNarrow)) fit();
     }
     const wantCompact = touchOn && g.state !== 'MENU' && !g.narrow;   // 直放不用 2 道精簡版
     if (!!g.compact !== wantCompact) g.setCompact(wantCompact);

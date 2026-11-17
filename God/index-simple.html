@@ -2728,6 +2728,11 @@
             #ime-panel { top: 66px !important; bottom: auto !important; width: min(460px, calc(100% - 24px)) !important; z-index: 30 !important; }
             #ime-hint { display: none; }
             #ime-title { font-size: 12px; margin-bottom: 4px; }
+            /* 魔王逼近距離：縮成貼在戰鬥區最上緣的一條細線，不再壓到打字提示 */
+            #boss-distance-wrap { top: 0 !important; right: 0 !important; left: 0 !important; width: auto !important; border-radius: 0 0 10px 10px !important; padding: 2px 8px 3px !important; background: rgba(0, 0, 0, 0.45) !important; border: none !important; }
+            #boss-distance-wrap > div:first-child { display: none; }
+            #boss-distance-shell { height: 6px !important; margin-top: 0 !important; }
+            #boss-distance-wrap.active ~ #prompt-board { top: 14px !important; }
         }
         @media (max-width: 560px) {
             #hero-card .subtitle { display: none !important; }
@@ -3115,8 +3120,8 @@
         <div id="toast"></div>
     </div>
 
-    <script src="articles_data.js"></script>
-    <script src="english_articles_data.js"></script>
+    <script src="articles_data.js?v=20261118a"></script>
+    <script src="english_articles_data.js?v=20261118a"></script>
     <script>
         const $ = (selector) => document.querySelector(selector);
         const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
@@ -9295,8 +9300,8 @@
 
         bootstrap();
     </script>
-<script src="../mobile-input.js"></script>
-<script src="../home-fab.js"></script>
+<script src="../mobile-input.js?v=20261118a"></script>
+<script src="../home-fab.js?v=20261118a"></script>
 <script>
 /* 手機：量出頂端狀態列的真實高度給戰鬥區用；ℹ️ 按鈕開關「正確率／連擊／分數」小卡 */
 (function () {

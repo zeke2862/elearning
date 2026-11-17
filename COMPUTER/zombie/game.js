@@ -2304,7 +2304,7 @@ class TommyQGame {
       ctx.font = small;
       ctx.fillStyle = 'rgba(160,255,190,0.55)';
       ctx.textAlign = 'center';
-      if (!this.compact) ctx.fillText('小狼毫輸入引擎（朙月拼音）｜打拼音，空白鍵選第1個，1~5選字，Esc取消', W / 2, H - 10);
+      if (!(document.body.classList.contains('tc-compact'))) ctx.fillText('小狼毫輸入引擎（朙月拼音）｜打拼音，空白鍵選第1個，1~5選字，Esc取消', W / 2, H - 10);
       if (toast) {
         ctx.font = 'bold 14px "Outfit", "Microsoft JhengHei", sans-serif';
         ctx.fillStyle = '#ff6b81';
@@ -2335,7 +2335,8 @@ class TommyQGame {
     const boxH = rowH * 2 + pad;
     const x = Math.round(W / 2 - boxW / 2);
     // 手機橫放精簡版：浮動鍵盤會蓋住畫面下半部，選字框改放上面（HUD 下方），才看得到、點得到
-    const y = this.compact ? 56 : H - boxH - 26;
+    const floatKb = document.body.classList.contains('touch-mode') && document.body.classList.contains('tc-landscape') && document.body.classList.contains('tc-compact');
+    const y = floatKb ? 56 : H - boxH - 26;
 
     ctx.fillStyle = 'rgba(8, 14, 26, 0.95)';
     ctx.beginPath(); ctx.roundRect(x, y, boxW, boxH, 10); ctx.fill();
