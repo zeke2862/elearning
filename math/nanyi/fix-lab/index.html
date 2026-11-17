@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>數學故障修復局：重啟任務！</title>
+<meta name="description" content="把孩子常犯的數學錯誤變成一台台故障機器：找出錯在哪一步，再修好 5 題，機器就能重新啟動。">
+<link rel="stylesheet" href="style.css">
+<script src="../../../lockdown.js"></script>
+<script src="../../../sync-client.js"></script>
+<script src="../shared/platform.js"></script>
+</head>
+<body>
+<div class="stripes" aria-hidden="true"></div>
+<header class="top">
+  <a href="../index.html" style="color:#fff;font-weight:800;text-decoration:none;border:2px solid rgba(255,255,255,.6);border-radius:999px;padding:6px 14px;font-size:15px;white-space:nowrap">← 選年級</a>
+  <button type="button" class="logo" data-act="home" aria-label="回到修理工廠">
+    <span class="logo-bot" aria-hidden="true">🤖</span>
+    <span class="logo-t"><b>數學故障修復局</b><small>重啟任務！</small></span>
+  </button>
+  <button type="button" class="snd" data-act="mute" aria-label="音效開關">🔊</button>
+</header>
+<main id="app" aria-live="polite"></main>
+<div id="fx" aria-hidden="true"></div>
+<script src="../shared/pinyin-pro.js"></script>
+<script src="../shared/ruby-overrides.js"></script>
+<script src="../shared/ruby.js"></script>
+<script src="errors.js"></script>
+<script src="diagnose.js"></script>
+<script src="app.js"></script>
+<script src="../shared/float-dodge.js" defer></script>
+<script src="../shared/bgm.js" defer></script>
+</body>
+</html>

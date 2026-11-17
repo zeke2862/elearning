@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>南一版數學樂園</title>
+<style>
+:root{--ink:#4a3b5c;--muted:#8a7a99}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%}
+body{font-family:"Microsoft JhengHei","PingFang TC","Noto Sans TC",sans-serif;color:var(--ink);background:linear-gradient(180deg,#e2f3ff 0%,#f3f9ff 40%,#fff6e5 100%);background-attachment:fixed}
+main{max-width:980px;margin:0 auto;padding:36px 16px 60px}
+h1{text-align:center;font-size:clamp(30px,6vw,50px);font-weight:900;margin:0;letter-spacing:2px}
+.sub{text-align:center;color:var(--muted);font-weight:700;font-size:18px;margin:10px 0 24px}
+.set{max-width:640px;margin:0 auto 30px;background:#fff;border:3px solid #ffd9b8;border-radius:20px;padding:14px 18px;display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;justify-content:center}
+.set b{font-size:18px}
+.set small{flex-basis:100%;text-align:center;color:#8a7a99;font-size:14px}
+.nz-seg button{font:inherit;font-weight:800;font-size:17px;padding:8px 16px;border-radius:999px;border:3px solid #e2d4bd;background:#fff;color:#2b2b2b;cursor:pointer}
+.nz-seg button.on{background:#e8590c;border-color:#e8590c;color:#fff}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:22px}
+.card{background:#fff;border:4px solid var(--c);border-radius:26px;padding:16px;display:grid;gap:12px;box-shadow:0 6px 0 rgba(0,0,0,.08)}
+.head{display:flex;align-items:center;gap:12px}
+.icon{font-size:48px;line-height:1}
+.card h2{margin:0;font-size:28px;font-weight:900}
+.sem{display:grid;gap:8px;text-decoration:none;color:inherit;background:color-mix(in srgb,var(--c) 14%,#fff);border-radius:18px;padding:12px 14px;transition:transform .15s}
+.sem:hover{transform:translateY(-4px)}
+.st{justify-self:start;font-weight:900;font-size:15px;padding:3px 14px;border-radius:99px;background:#2b2b3a;color:#fff}
+.units{display:flex;flex-wrap:wrap;gap:5px}
+.units span{font-size:13px;font-weight:700;padding:2px 9px;border-radius:99px;background:#fff}
+.go{justify-self:end;font-weight:900;font-size:16px;padding:7px 18px;border-radius:14px;background:var(--c);color:#fff;box-shadow:0 4px 0 rgba(0,0,0,.18)}
+.fix{display:block;max-width:640px;margin:26px auto 0;padding:14px 18px;border-radius:18px;background:#2d3748;color:#fff;text-decoration:none;font-weight:800;font-size:18px;text-align:center}
+.foot{text-align:center;color:var(--muted);font-size:14px;margin-top:26px;line-height:1.7}
+</style>
+<script src="../../lockdown.js"></script>
+<script src="../../sync-client.js"></script>
+<script src="shared/platform.js"></script>
+</head>
+<body>
+<main>
+  <h1>🎒 南一版數學樂園</h1>
+  <p class="sub">國小一～六年級・南一版課本・選年級和學期開始玩</p>
+  <div class="set">
+    <b>國字加註</b><span class="nz-seg" id="nz"></span>
+    <small>打開後，畫面上的國字旁邊會出現注音或拼音；之後每個年級頁、每一關都會記住這個選擇。</small>
+  </div>
+  <div class="grid">
+    <section class="card" style="--c:#ff7eb3">
+      <div class="head"><span class="icon">🍎</span><h2>一年級</h2></div>
+      <a class="sem" href="grade1-1/index.html"><span class="st">上學期</span><span class="units"><span>數到 10</span><span>比長短</span><span>分與合</span><span>順序和多少</span><span>數到 30</span><span>加一加</span><span>認識形狀</span><span>減一減與加減應用</span><span>讀鐘錶</span></span><span class="go">開始玩 ➜</span></a>
+      <a class="sem" href="grade1-2/index.html"><span class="st">下學期</span><span class="units"><span>數到 100</span><span>18 以內的加法</span><span>長度</span><span>18 以內的減法</span><span>圖形和形體</span><span>幾月幾日</span><span>錢幣</span><span>二位數的加減</span><span>做紀錄</span></span><span class="go">開始玩 ➜</span></a>
+    </section>
+    <section class="card" style="--c:#3fcf9c">
+      <div class="head"><span class="icon">🐸</span><h2>二年級</h2></div>
+      <a class="sem" href="grade2-1/index.html"><span class="st">上學期</span><span class="units"><span>數到 300</span><span>二位數的加減</span><span>幾公分</span><span>加減的關係與應用</span><span>容量</span><span>兩步驟的加減</span><span>2、5、4、8 的乘法</span><span>幾時幾分</span><span>3、6、7、9 的乘法</span><span>平面圖形</span></span><span class="go">開始玩 ➜</span></a>
+      <a class="sem" href="grade2-2/index.html"><span class="st">下學期</span><span class="units"><span>數到 1000</span><span>加加減減</span><span>幾公尺</span><span>年月日</span><span>0、1、10 的乘法</span><span>重量</span><span>兩步驟的計算</span><span>分東西</span><span>單位分數</span><span>面的大小與立體</span></span><span class="go">開始玩 ➜</span></a>
+    </section>
+    <section class="card" style="--c:#5bb4ff">
+      <div class="head"><span class="icon">🌈</span><h2>三年級</h2></div>
+      <a class="sem" href="grade3-1/index.html"><span class="st">上學期</span><span class="units"><span>數到 10000</span><span>四位數的加減</span><span>乘法</span><span>幾毫米</span><span>角、正方形和長方形</span><span>除法</span><span>公升和毫升</span><span>分數</span><span>圓</span></span><span class="go">開始玩 ➜</span></a>
+      <a class="sem" href="grade3-2/index.html"><span class="st">下學期</span><span class="units"><span>除法</span><span>找規律</span><span>時間</span><span>兩步驟的計算</span><span>面積</span><span>公斤和公克</span><span>分數的加減</span><span>乘除的應用</span><span>小數</span><span>報讀表格</span></span><span class="go">開始玩 ➜</span></a>
+    </section>
+    <section class="card" style="--c:#ff9a4d">
+      <div class="head"><span class="icon">🚀</span><h2>四年級</h2></div>
+      <a class="sem" href="grade4-1/index.html"><span class="st">上學期</span><span class="units"><span>一億以內的數</span><span>乘法</span><span>角度</span><span>除法</span><span>三角形</span><span>分數</span><span>數量關係</span><span>整數四則</span><span>小數</span><span>長度</span></span><span class="go">開始玩 ➜</span></a>
+      <a class="sem" href="grade4-2/index.html"><span class="st">下學期</span><span class="units"><span>多位數的乘與除</span><span>四邊形</span><span>分數的加減和整數倍</span><span>概數</span><span>統計圖表</span><span>小數乘以整數</span><span>周長和面積</span><span>等值分數</span><span>時間的加減</span><span>立方公分</span></span><span class="go">開始玩 ➜</span></a>
+    </section>
+    <section class="card" style="--c:#a98bff">
+      <div class="head"><span class="icon">🔭</span><h2>五年級</h2></div>
+      <a class="sem" href="grade5-1/index.html"><span class="st">上學期</span><span class="units"><span>折線圖</span><span>因數和倍數</span><span>多邊形</span><span>擴分、約分和通分</span><span>線對稱圖形</span><span>異分母分數的加減</span><span>整數四則計算</span><span>平行四邊形、三角形和梯形的面積</span><span>時間的乘除</span><span>正方體和長方體</span></span><span class="go">開始玩 ➜</span></a>
+      <a class="sem" href="grade5-2/index.html"><span class="st">下學期</span><span class="units"><span>分數的計算</span><span>數的十進位結構</span><span>小數的乘法</span><span>扇形</span><span>體積</span><span>整數、小數除以整數</span><span>生活中的大單位</span><span>比率和百分率</span><span>容積和容量</span><span>柱體、錐體和球體</span></span><span class="go">開始玩 ➜</span></a>
+    </section>
+    <section class="card" style="--c:#ffc93c">
+      <div class="head"><span class="icon">🏆</span><h2>六年級</h2></div>
+      <a class="sem" href="grade6-1/index.html"><span class="st">上學期</span><span class="units"><span>質因數分解和短除法</span><span>分數的除法</span><span>小數的除法</span><span>圓周長和圓面積</span><span>比和比值</span><span>扇形的周長和面積</span><span>速率</span><span>數量關係</span></span><span class="go">開始玩 ➜</span></a>
+      <a class="sem" href="grade6-2/index.html"><span class="st">下學期</span><span class="units"><span>四則混合運算</span><span>圓形圖</span><span>基準量和比較量</span><span>放大圖、縮圖和比例尺</span><span>怎樣解題</span><span>柱體的體積和表面積</span></span><span class="go">開始玩 ➜</span></a>
+    </section>
+  </div>
+  <a class="fix" href="fix-lab/index.html">🔧 數學故障修復局：把常犯的錯誤修好</a>
+  <p class="foot">學習進度（星星）只存在這台裝置的瀏覽器裡，不會上傳。<br>全部檔案都在本機執行，不需要網路。</p>
+</main>
+<script src="shared/pinyin-pro.js"></script>
+<script src="shared/ruby-overrides.js"></script>
+<script src="shared/ruby.js"></script>
+<script>NanyiRuby.picker(document.getElementById('nz'));</script>
+<script src="shared/bgm.js" defer></script>
+</body>
+</html>

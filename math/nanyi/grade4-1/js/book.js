@@ -1,0 +1,17 @@
+'use strict';
+/* 南一版 四年級上學期：單元與關卡對照，給 nanyi.js（KGVer）用。
+   levels＝遊戲內部單元代號，names＝卡片裡關卡小標題用的名稱，bankUnits＝exam-bank.js 裡對應的 unit 名稱。 */
+(function () {
+  const B = {
+    u1: '第 1 單元 一億以內的數', u2: '第 2 單元 乘法', u3: '第 3 單元 角度', u4: '第 4 單元 除法', u5: '第 5 單元 三角形',
+    u6: '第 6 單元 分數', u7: '第 7 單元 數量關係', u8: '第 8 單元 整數四則', u9: '第 9 單元 小數', u10: '第 10 單元 長度'
+  };
+  const U = (no, title, levels, names) => ({ no, title, levels, bankUnits: levels.map(l => B[l]), names });
+  window.BOOK = {
+    subject: 'math', grade: 4, sem: '上', defaultVersion: 'nani',
+    versions: {
+      nani: [U(1, '一億以內的數', ['u1']), U(2, '乘法', ['u2']), U(3, '角度', ['u3']), U(4, '除法', ['u4']), U(5, '三角形', ['u5']),
+        U(6, '分數', ['u6']), U(7, '數量關係', ['u7']), U(8, '整數四則', ['u8']), U(9, '小數', ['u9']), U(10, '長度', ['u10'])],
+    }
+  };
+})();
