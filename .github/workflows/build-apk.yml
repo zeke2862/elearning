@@ -6,7 +6,7 @@ on:
       app_url:
         description: 'App 要開啟的網址（學生真正在玩的 JB2 網址）'
         required: false
-        default: 'https://school-sigma-nine.vercel.app/math/JB2/world-map-vol2-all.html'
+        default: 'https://zeke2862.github.io/elearning/math/JB2/world-map-vol2-all.html'
   push:
     paths:
       - 'android-app/**'
@@ -16,7 +16,7 @@ jobs:
   apk:
     runs-on: ubuntu-latest
     env:
-      APP_URL: ${{ github.event.inputs.app_url || 'https://school-sigma-nine.vercel.app/math/JB2/world-map-vol2-all.html' }}
+      APP_URL: ${{ github.event.inputs.app_url || 'https://zeke2862.github.io/elearning/math/JB2/world-map-vol2-all.html' }}
     defaults:
       run:
         working-directory: android-app
@@ -37,7 +37,7 @@ jobs:
           const u=new URL(process.env.APP_URL);
           const cfg={appId:'tw.school.jb2',appName:'JB2 數靈召喚師',webDir:'www',
             server:{url:process.env.APP_URL,cleartext:false,
-              allowNavigation:[u.hostname,'*.vercel.app','script.google.com','*.googleusercontent.com','*.google.com']},
+              allowNavigation:[u.hostname,'*.github.io','*.vercel.app','script.google.com','*.googleusercontent.com','*.google.com']},
             android:{allowMixedContent:false}};
           require('fs').writeFileSync('capacitor.config.json',JSON.stringify(cfg,null,2));"
       - name: 建立 Android 專案並加上禁止截圖
