@@ -39,6 +39,46 @@
     if (bad) { e.preventDefault(); e.stopPropagation(); return false; }
   }, true);
 
+  /* ---------- D. 防截圖（網頁版的極限做法，無法像銀行 App 那樣「完全」擋住）----------
+   * 做得到的：偵測 PrintScreen／Mac ⌘⇧3/4/5／Win ⇧S 截圖鍵 → 畫面立刻蓋黑 2 秒並清空剪貼簿；
+   *           切到別的視窗／工作切換器／截圖工具搶走焦點時 → 畫面先蓋黑，回來才還原；
+   *           關掉列印、右鍵、拖曳存圖（上面 C 已做）。
+   * 做不到的：手機「電源鍵＋音量鍵」截圖、拿另一支手機翻拍——網頁收不到這些訊號。
+   *           要真正禁止，必須包成 Android App 並開 FLAG_SECURE（見交付說明）。 */
+  var shield = null, shieldTimer = 0;
+  function showShield(ms) {
+    try {
+      if (!shield) {
+        shield = document.createElement('div');
+        shield.style.cssText = 'position:fixed;inset:0;z-index:2147483646;background:#000;color:#f1e8d2;display:none;' +
+          'align-items:center;justify-content:center;text-align:center;font:700 18px/1.6 sans-serif;padding:24px';
+        shield.textContent = '🔒 本遊戲禁止截圖／錄影';
+        (document.body || document.documentElement).appendChild(shield);
+      }
+      shield.style.display = 'flex';
+      clearTimeout(shieldTimer);
+      if (ms) shieldTimer = setTimeout(hideShield, ms);
+    } catch (e) {}
+  }
+  function hideShield() { if (shield) shield.style.display = 'none'; }
+  function wipeClip() { try { navigator.clipboard && navigator.clipboard.writeText && navigator.clipboard.writeText(' ').catch(function () {}); } catch (e) {} }
+  function shotKey(e) {
+    var k = e.code || '', key = e.key || '';
+    if (key === 'PrintScreen' || key === 'Snapshot' || k === 'PrintScreen') return true;
+    if (e.metaKey && e.shiftKey && /^(Digit[345]|Key[S])$/.test(k)) return true; // Mac ⌘⇧3/4/5、Win ⊞⇧S
+    return false;
+  }
+  ['keydown', 'keyup'].forEach(function (n) {
+    document.addEventListener(n, function (e) {
+      if (shotKey(e)) { showShield(2000); wipeClip(); try { e.preventDefault(); } catch (x) {} }
+    }, true);
+  });
+  document.addEventListener('visibilitychange', function () { if (document.hidden) showShield(0); else setTimeout(hideShield, 120); });
+  window.addEventListener('blur', function () {
+    setTimeout(function () { if (!(document.hasFocus && document.hasFocus())) showShield(0); }, 80); // 焦點只是移進裡面的 iframe 不算
+  });
+  window.addEventListener('focus', function () { setTimeout(hideShield, 120); });
+
   /* ---------- 從地圖選好模式進來：一開始就把關卡自己的「模式選單」藏起來，避免閃一下／手機卡住 ----------
    * （原本要等頁面底部的 mode-system.js 跑完才會藏；網路慢時會先畫出選單。只在關卡頁啟用） */
   if (LEAVE) {
