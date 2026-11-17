@@ -153,3 +153,11 @@
 - 驗證：JB2 31 關全題型，每題「正解輸入通過、所有錯誤選項輸入不通過」0 例外。
 - 保衛戰：只在極限（lv 3）啟用；`jb2_adapter.js` convert() 產生 `q.txt`，`math_scenes.js` ask() 新增輸入框分支。
 - 時間：JB2 地圖拿掉「切到背景就暫停計時」；保衛戰整局結算與中途離開都用牆上時間。注意：手機黑屏時 stage-guard 會關閉這一局，時間算到黑屏那一刻；電腦只關螢幕但瀏覽器沒切走，時間照跑（單局上限 30 分鐘）。
+
+## 2026-11-17 Google 登入・雲端存檔（只做 JB2；jb2-cloud.js）
+- 只做 JB2（保衛戰不動）。學生用個人 Google 帳號。總地圖有「☁️ 雲端」按鈕＋第一次進入的提醒（「以後再說」7 天不再問）；章節地圖載入同一支（`data-quiet="1"`）只做背景存檔。
+- 後端：Supabase 專案 `math`（qkejjznejmxcfiyxviid）新增資料表 `jb2_cloud_saves`＋函式 `jb2_cloud_load`／`jb2_cloud_save`（SQL 備份在 `雲端存檔-supabase.sql`）。學生端沒有資料表寫入權限，只能呼叫函式；函式做伺服器端檢查（格式／星數／經驗／數靈幣／存檔速率上限），可疑的拒絕並記 `flags`；一帳號一學號、一學號一帳號；每次存檔保留上一版 `prev`。已用模擬使用者實測：正常存、暴增被擋、亂改星數被擋、學號衝突、未登入都符合預期。
+- 載入雲端存檔：先過 `JB2Seal.checkSnapshot`，再用「存檔碼還原」同一條路寫入並重新整理（實測無觸發 wipe）。
+- **開關 `ENABLED`（jb2-cloud.js 最上方）預設 false**：Google 授權（Google Cloud OAuth＋Supabase 開 Google provider）設定好才改 true，步驟見 `Google登入設定說明.md`。
+- 限制：第一次上傳無法分辨真假（只擋不可能的數字）；學號是學生自填，可能被搶先綁定→老師用 SQL 解除。
+- 注意：同專案的 duel_* 四張資料表（對戰）RLS 未啟用，任何人拿公開金鑰都能讀寫（Supabase 安全檢查列為 critical）；另有 3 個函式 search_path 未固定。未動，建議之後另外處理。

@@ -131,6 +131,7 @@ table.w td,table.w th{border-bottom:1px solid var(--line);padding:5px 6px;text-a
   <button class="btn ghost small" data-act="arenaBtn">⚔️ 鬥技場</button>
   <button class="btn ghost small" data-act="zoneBtn">🎮 遊戲區</button>
   <button class="btn ghost small" data-act="goDefense" title="換成數學保衛戰版（另一個網站、另一種玩法；第一次要在那邊輸入學號，學習紀錄一樣會交給老師）">🛡️ 保衛戰版</button>
+  <button class="btn ghost small" id="jbCloudBtn" data-act="cloud" title="用 Google 登入，進度自動存雲端，換電腦也能接著玩">☁️ 雲端</button>
   <button class="btn ghost small" data-act="findHero">📍 找勇者</button>
 </header>
 <main id="mapwrap"><svg id="map" xmlns="http://www.w3.org/2000/svg"></svg></main>
@@ -143,6 +144,7 @@ table.w td,table.w th{border-bottom:1px solid var(--line);padding:5px 6px;text-a
 <script src="game-config.js"></script>
 <script src="../../sync-client.js"></script>
 <script src="jb2-sync.js"></script>
+<script src="jb2-cloud.js?v=1"></script>
 <script src="audio/bgm.js"></script>
 <script src="relax-break.bundle.js"></script>
 <script src="vol2-monsters.js"></script>
@@ -785,6 +787,7 @@ function safeHTML(){
   return `<p class="muted">進度只存在這台電腦的這個瀏覽器裡。換電腦或清除瀏覽資料之前，請先產生存檔碼或匯出備份。</p>
   <div class="row2"><button class="btn" data-act="exportAll">📤 匯出全部進度</button><button class="btn ghost" data-act="importAll">📥 匯入進度檔</button></div>
   <input type="file" id="impF" accept=".json,application/json" style="display:none">
+  <div class="row2"><button class="btn small" data-act="cloud">☁️ Google 雲端存檔（自動保存・換電腦接著玩）</button></div>
   <div class="row2"><button class="btn small" data-act="mkCode">🔑 產生存檔碼</button><button class="btn small ghost" data-act="useCode">用存檔碼還原</button></div>
   <textarea id="codeBox" rows="3" style="width:100%;background:#0b0f22;color:#e9e4d4;border:1px solid #3a4270;border-radius:8px;padding:6px;font:12px monospace" placeholder="存檔碼會出現在這裡；要還原就把存檔碼整段貼在這裡"></textarea>
   ${empty?'<p class="muted" style="color:#ffb38a">⚠️ 目前是直接用電腦開啟檔案（file://），部分瀏覽器不同網頁之間不共用存檔，所以星星可能顯示 0。請放到網站空間，或用本機伺服器開啟。</p>':''}`;
@@ -852,6 +855,7 @@ document.addEventListener('click',e=>{
     case'zoneBtn':openZone();break;
     case'goDefense':goTo('https://mathtestjb2.vercel.app/');break;   // 數學保衛戰是另一個網站（GitHub 倉庫 MATHTESTJB2），學生在那邊登記學號後，紀錄一樣會交給老師
     case'heal':healMon(el.dataset.sid,el.dataset.id);break;
+    case'cloud':try{JB2Cloud.open()}catch(e){toast('雲端功能沒有載入，請重新整理')}break;
     case'findHero':centerOnHero(true);break;
     case'closePanel':closePanel();break;
     case'skills':openSkills(el.dataset.sid||el.dataset.id);break;
@@ -998,6 +1002,7 @@ function init(){
   probe(T1,()=>{drawMap();document.body.classList.remove('mapwait');
     probe(T2,()=>{drawMap();renderHero();idle(prefetchStages);idle(()=>probe(T3,()=>{renderHero();if($('#home').classList.contains('on'))renderHome()},true))},true)});
   reportNow(false);
+  try{JB2Cloud.init({snapshot:snapshot})}catch(e){}   // Google 登入的雲端存檔（jb2-cloud.js）
 }
 window.addEventListener('resize',()=>{fit();centerOnHero(false)});
 window.addEventListener('pageshow',ev=>{if(ev.persisted){load();refreshAll(false);centerOnHero(false)}});
