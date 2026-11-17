@@ -186,6 +186,12 @@ function mergeJb2_(a, b, at) {
     out.guess = { s: Math.max((ga && ga.s) || 0, (gb && gb.s) || 0), n: Math.max((ga && ga.n) || 0, (gb && gb.n) || 0),
       lastAt: Math.max((ga && ga.lastAt) || 0, (gb && gb.lastAt) || 0), until: Math.max((ga && ga.until) || 0, (gb && gb.until) || 0), log: lg };
   } else { delete out.guess; }
+  // 「離開遊戲畫面」記錄（保衛戰：縮小、切 App、分割畫面超過 3 秒）：次數、秒數取大
+  var la = a.leave, lb = b.leave;
+  if (la || lb) {
+    out.leave = { n: Math.max((la && la.n) || 0, (lb && lb.n) || 0), secs: Math.max((la && la.secs) || 0, (lb && lb.secs) || 0),
+      lastAt: Math.max((la && la.lastAt) || 0, (lb && lb.lastAt) || 0) };
+  } else { delete out.leave; }
   return out;
 }
 
