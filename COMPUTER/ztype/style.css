@@ -849,3 +849,20 @@ body .kb-key { touch-action: manipulation; user-select: none; -webkit-user-selec
 @media (pointer: coarse) and (max-height: 650px) {
   .kb-key { height: 27px; }
 }
+
+/* ===== 手機：HUD 縮小、輸入框縮成小膠囊貼在鍵盤上緣右側（不再蓋住玩家與敵艦）===== */
+@media (pointer: coarse) {
+  #hud { padding: 6px 12px; }
+  .hud-left, .hud-center, .hud-right { gap: 1px; }
+  .hud-label { font-size: 10px; letter-spacing: 2px; }
+  .hud-value { font-size: 20px; min-width: 56px; }
+  .lives-icons { min-height: 16px; gap: 5px; }
+  .life-icon { width: 13px; height: 13px; }
+  .fullscreen-btn { margin-top: 2px; padding: 3px 8px; font-size: 11px; }
+  body #typingBar, body.kb-visible #typingBar {
+    left: auto; right: 8px; transform: none;
+    bottom: calc(var(--kbh, 200px) + 6px);
+    min-width: 84px; padding: 2px 14px; font-size: 20px; letter-spacing: 3px;
+    border-radius: 999px; opacity: 0.88;
+  }
+}

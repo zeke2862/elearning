@@ -124,6 +124,22 @@
     root.addEventListener('contextmenu', (e) => e.preventDefault());
   }
 
+  // ── ☰ 功能表：暫停／回選單／全螢幕…收在左上角的小按鈕裡，要用再點開 ──
+  function buildToolsToggle() {
+    if ($('tcToolsToggle')) return;
+    const b = el('button', 'tc-tools-toggle', '☰');
+    b.id = 'tcToolsToggle'; b.type = 'button'; b.setAttribute('aria-label', '功能表');
+    b.addEventListener('pointerdown', (e) => e.preventDefault());
+    b.addEventListener('click', (e) => { e.stopPropagation(); body.classList.toggle('tc-tools-open'); });
+    document.addEventListener('click', (e) => {
+      if (!body.classList.contains('tc-tools-open')) return;
+      const slot = $('tcToolbarSlot');
+      if (slot && slot.contains(e.target)) { setTimeout(() => body.classList.remove('tc-tools-open'), 120); return; }
+      body.classList.remove('tc-tools-open');
+    });
+    document.body.appendChild(b);
+  }
+
   // ── 工具列：手機搬到右邊，電腦搬回原位 ───────────────────
   function placeToolbar(on) {
     const bar = document.querySelector('.top-controls-bar');
@@ -131,6 +147,7 @@
     const home = $('bottomBarRow');
     if (!bar || !slot || !home) return;
     (on ? slot : home).appendChild(bar);
+    if (on) buildToolsToggle();
   }
 
   // ── 畫面大小：直放用整個寬度，橫放放進中間的格子 ────────────
@@ -157,6 +174,20 @@
     w = Math.max(120, Math.floor(w));
     wrap.style.width = w + 'px';
     { const d = dim(); wrap.style.height = Math.floor(w * d.H / d.W) + 'px'; }
+    // ☰ 功能表按鈕：直放時放在遊戲畫面正下方（不蓋到分數）；橫放時放左邊中間
+    if (body.classList.contains('tc-portrait')) {
+      const r = wrap.getBoundingClientRect();
+      body.style.setProperty('--tools-top', Math.round(r.bottom + 6) + 'px');
+    } else {
+      body.style.setProperty('--tools-top', '50%');
+    }
+    // 橫放精簡版：「選字／拼音」那一條放在鍵盤正上方（不然會被浮在畫面上的鍵盤蓋住）
+    const kb = document.querySelector('.tc-keyboard');
+    if (kb && body.classList.contains('tc-landscape') && body.classList.contains('tc-compact')) {
+      const vh = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+      const kr = kb.getBoundingClientRect();
+      if (kr.height > 0) body.style.setProperty('--zh-bottom', Math.max(2, Math.round(vh - kr.top + 4)) + 'px');
+    }
     fitPad();
   }
 
@@ -307,7 +338,11 @@
 
     // 觸控版面是開的 → 同步畫面；沒開 → 全部收起來
     // 手機：玩的時候用「2 道精簡版」，回到主選單就恢復（畫面比較大）
-    const wantCompact = touchOn && g.state !== 'MENU';
+    if (g.state === 'MENU') {                       // 直放：用窄而高的畫面（只在主選單時切換）
+      const wantNarrow = touchOn && isPortrait();
+      if (!!g.narrow !== wantNarrow && g.setNarrow(wantNarrow)) fit();
+    }
+    const wantCompact = touchOn && g.state !== 'MENU' && !g.narrow;   // 直放不用 2 道精簡版
     if (!!g.compact !== wantCompact) g.setCompact(wantCompact);
     if (body.classList.contains('tc-compact') !== !!g.compact) {
       body.classList.toggle('tc-compact', !!g.compact);
