@@ -678,6 +678,15 @@ var MS_CAT_URL = (function () { try { return new URL('../images/home/catnest-s.w
     var $o = function (q2) { return ov.querySelector(q2); };
     function fb(h, kind) {
       var f = $o('#st-fb'); f.className = 'st-fb' + (kind === 'hint' ? ' hint' : ''); f.innerHTML = h; f.style.display = 'block';
+      /* 泰文說明：點錯步驟／要提示時，旁邊多一顆可點的 🌐 ไทย，按下去換成泰文，再按換回中文 */
+      if (window.JB2TH && JB2TH.step) {
+        var zh = h, th = '', on = false, tx = document.createElement('span'), bt = document.createElement('button');
+        tx.innerHTML = zh; f.innerHTML = ''; f.appendChild(tx);
+        bt.type = 'button'; bt.textContent = '🌐 ไทย'; bt.setAttribute('aria-label', 'แปลเป็นภาษาไทย / 切換成泰文說明');
+        bt.style.cssText = 'margin-left:8px;padding:2px 12px;font-size:.85rem;border:1px solid #b06a5a;border-radius:999px;background:#fff;color:#3a1a12;cursor:pointer;vertical-align:middle;font-weight:700';
+        bt.onclick = function (ev) { if (ev) ev.stopPropagation(); if (!th) th = JB2TH.step(zh); on = !on; tx.innerHTML = on ? th : zh; bt.textContent = on ? '🌐 中文' : '🌐 ไทย'; };
+        f.appendChild(bt);
+      }
       f.style.animation = 'none'; void f.offsetWidth; f.style.animation = '';
     }
     function gloss(h) {

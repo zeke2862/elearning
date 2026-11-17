@@ -6,7 +6,7 @@ on:
       app_url:
         description: 'App 要開啟的網址（學生真正在玩的 JB2 網址）'
         required: false
-        default: 'https://zeke2862.github.io/elearning/math/JB2/world-map-vol2-all.html'
+        default: 'https://zeke2862.github.io/elearning/index.html'
   push:
     paths:
       - 'android-app/**'
@@ -16,7 +16,7 @@ jobs:
   apk:
     runs-on: ubuntu-latest
     env:
-      APP_URL: ${{ github.event.inputs.app_url || 'https://zeke2862.github.io/elearning/math/JB2/world-map-vol2-all.html' }}
+      APP_URL: ${{ github.event.inputs.app_url || 'https://zeke2862.github.io/elearning/index.html' }}
     defaults:
       run:
         working-directory: android-app
