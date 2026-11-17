@@ -1945,15 +1945,19 @@ document.getElementById('kbToggleBtn').addEventListener('click', () => {
 
 // Fullscreen toggle
 function toggleFullscreen() {
-  if (!document.fullscreenElement) {
-    document.documentElement.requestFullscreen().catch(err => {
-      console.warn('Fullscreen request failed:', err);
-    });
-  } else {
-    if (document.exitFullscreen) {
-      document.exitFullscreen();
-    }
+  var de = document.documentElement;
+  var isFs = document.fullscreenElement || document.webkitFullscreenElement;
+  function tip() {
+    var t = document.createElement('div');
+    t.textContent = /iP(hone|ad|od)/.test(navigator.userAgent) ? 'iPhone 不能直接全螢幕：點「分享」→「加入主畫面」，從主畫面圖示開啟就是全螢幕。' : '這個瀏覽器不能全螢幕。請改用 Chrome，或安裝學校的 App。';
+    t.style.cssText = 'position:fixed;left:50%;top:14px;transform:translateX(-50%);max-width:88vw;z-index:2147483002;padding:8px 14px;border-radius:12px;background:rgba(0,0,0,.88);color:#fff;font:14px/1.5 sans-serif;text-align:center;';
+    document.body.appendChild(t); setTimeout(function () { if (t.parentNode) t.parentNode.removeChild(t); }, 4000);
   }
+  if (isFs) { try { (document.exitFullscreen || document.webkitExitFullscreen).call(document); } catch (e) {} return; }
+  var fn = de.requestFullscreen || de.webkitRequestFullscreen;
+  if (!fn) { tip(); return; }                          // 沒有全螢幕功能（例如 iPhone）：說明怎麼辦，不要默默沒反應
+  try { var r = fn.call(de, { navigationUI: 'hide' }); if (r && r.catch) r.catch(tip); } catch (e) { tip(); return; }
+  setTimeout(function () { if (!(document.fullscreenElement || document.webkitFullscreenElement)) tip(); }, 800);
 }
 
 const fsBtn = document.getElementById('fullscreenBtn');
@@ -1961,12 +1965,14 @@ if (fsBtn) {
   fsBtn.addEventListener('click', toggleFullscreen);
 }
 
-document.addEventListener('fullscreenchange', () => {
+function onFsChange() {
   if (fsBtn) {
-    fsBtn.textContent = document.fullscreenElement ? '🗗 視窗化' : '⛶ 全螢幕';
+    fsBtn.textContent = (document.fullscreenElement || document.webkitFullscreenElement) ? '🗗 視窗化' : '⛶ 全螢幕';
   }
   resize();
-});
+}
+document.addEventListener('fullscreenchange', onFsChange);
+document.addEventListener('webkitfullscreenchange', onFsChange);
 
 // ── Wave completion ────────────────────────────
 function checkWaveComplete() {

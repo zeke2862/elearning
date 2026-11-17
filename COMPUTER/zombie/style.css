@@ -958,3 +958,28 @@ body.touch-mode.tc-landscape.tc-compact .tc-side { position: fixed; z-index: 6; 
 body.touch-mode.tc-landscape.tc-compact .tc-left  { right: 6px; left: auto; --pad: clamp(28px, 9vh, 40px); }
 body.touch-mode.tc-landscape.tc-compact .tc-right { left: 6px; right: auto; width: clamp(110px, 17vw, 160px); }
 body.touch-mode.tc-landscape.tc-compact .tc-action { height: clamp(34px, 10vh, 46px); }
+
+/* ===== 手機：功能表（暫停／回選單／全螢幕…）收進左上角的 ☰，要用再點開，畫面讓給遊戲 ===== */
+.tc-tools-toggle { display: none; }
+body.touch-mode .tc-tools-toggle {
+    display: block; position: fixed; z-index: 40;
+    top: var(--tools-top, 50%); left: max(6px, env(safe-area-inset-left));
+    width: 34px; height: 34px; padding: 0; border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.6); background: rgba(10, 10, 30, 0.55); color: #fff;
+    font-size: 18px; line-height: 1; opacity: 0.75; touch-action: manipulation;
+}
+body.touch-mode #tcToolbarSlot { display: none; }
+body.touch-mode.tc-tools-open #tcToolbarSlot {
+    display: block; position: fixed; z-index: 41;
+    top: calc(var(--tools-top, 50%) + 40px); left: max(6px, env(safe-area-inset-left));
+    max-width: min(260px, 80vw); padding: 8px; border-radius: 12px;
+    background: rgba(10, 10, 30, 0.94); border: 1px solid rgba(255, 255, 255, 0.3);
+}
+body.touch-mode.tc-tools-open #tcToolbarSlot .top-controls-bar { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+
+/* 橫放精簡版：選字／拼音那一條浮在鍵盤正上方（位置由 touch.js 量出來放在 --zh-bottom） */
+body.touch-mode.tc-landscape.tc-compact .bottom-bar-row {
+    position: fixed; left: 50%; transform: translateX(-50%);
+    bottom: var(--zh-bottom, 150px); width: min(62vw, 640px); z-index: 8; padding: 0; margin: 0;
+}
+body.touch-mode.tc-landscape.tc-compact .zh-typing-bar { background: rgba(8, 8, 24, 0.88); border-radius: 10px; }

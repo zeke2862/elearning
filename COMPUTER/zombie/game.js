@@ -1367,8 +1367,8 @@ class SpriteManager {
 let W = 916, H = 500;   // H 在手機精簡版會變小（見 setCompact）
 let LANE_COUNT = 5, LANE_BASE = 120, LANE_STEP = 72;
 const LANE_Y = (lane) => LANE_BASE + (lane - 1) * LANE_STEP;
-const BARRICADE_LEFT_X = 200;
-const BARRICADE_RIGHT_X = 716;
+let BARRICADE_LEFT_X = 200;      // 窄畫面（手機直放）時會改（見 setNarrow）
+let BARRICADE_RIGHT_X = 716;
 // 怪物出現的節奏：起步比較慢（一隻一隻慢慢來），過關後才會逐漸加快
 // （見下面的升級加速與同時在場數量上限）。
 const DIFFICULTY_DELAYS = { Easy: 10000, Medium: 8000, Hard: 5500 };
@@ -1629,6 +1629,17 @@ class TommyQGame {
   }
 
   // 手機精簡版：只剩 2 道、畫面變矮，這樣整個畫面可以放大（只能在主選單切換）
+  // 手機直放：畫面窄（480）而高，縮放到螢幕寬度後字會比 916 寬的版本大得多（只在主選單時切換，玩到一半不動）
+  setNarrow(on) {
+    if (!!on === !!this.narrow) return false;
+    W = on ? 480 : 916;
+    BARRICADE_LEFT_X = on ? 90 : 200;
+    BARRICADE_RIGHT_X = on ? W - 90 : 716;
+    this.canvas.width = W;
+    this.canvas.height = H;
+    this.narrow = !!on;
+    return true;
+  }
   setCompact(on) {
     if (!!on === !!this.compact) return false;
     LANE_COUNT = on ? 2 : 5;
@@ -2293,7 +2304,7 @@ class TommyQGame {
       ctx.font = small;
       ctx.fillStyle = 'rgba(160,255,190,0.55)';
       ctx.textAlign = 'center';
-      ctx.fillText('小狼毫輸入引擎（朙月拼音）｜打拼音，空白鍵選第1個，1~5選字，Esc取消', W / 2, H - 10);
+      if (!this.compact) ctx.fillText('小狼毫輸入引擎（朙月拼音）｜打拼音，空白鍵選第1個，1~5選字，Esc取消', W / 2, H - 10);
       if (toast) {
         ctx.font = 'bold 14px "Outfit", "Microsoft JhengHei", sans-serif';
         ctx.fillStyle = '#ff6b81';
@@ -2323,7 +2334,8 @@ class TommyQGame {
     const boxW = Math.max(candW + pagerW, preW) + pad * 2;
     const boxH = rowH * 2 + pad;
     const x = Math.round(W / 2 - boxW / 2);
-    const y = H - boxH - 26;
+    // 手機橫放精簡版：浮動鍵盤會蓋住畫面下半部，選字框改放上面（HUD 下方），才看得到、點得到
+    const y = this.compact ? 56 : H - boxH - 26;
 
     ctx.fillStyle = 'rgba(8, 14, 26, 0.95)';
     ctx.beginPath(); ctx.roundRect(x, y, boxW, boxH, 10); ctx.fill();
@@ -2966,6 +2978,7 @@ class TommyQGame {
       // Draw planks and separate HP bar for each lane
       for (let i = 0; i < LANE_COUNT; i++) {
         const laneBarricade = list[i];
+        if (!laneBarricade) continue;      // 切換精簡版／窄畫面時，路數和路障數量可能暫時對不上
         const hpRatio = Math.max(0, laneBarricade.hp) / laneBarricade.maxHp;
         const py = LANE_Y(i + 1);
 

@@ -43,6 +43,22 @@
     if (!inp.__comp && cur.length > 0) reset();
   }
 
+
+  /* 右側邊緣的小按鈕列（鍵盤／全螢幕／回主選單共用，半透明小圓鈕，不擋遊戲畫面） */
+  function getDock() {
+    var d = document.getElementById('mobileDock');
+    if (d) return d;
+    d = document.createElement('div'); d.id = 'mobileDock';
+    d.style.cssText = 'position:fixed;right:max(4px,env(safe-area-inset-right));top:50%;transform:translateY(-50%);z-index:2147483001;display:flex;flex-direction:column;gap:8px;pointer-events:none;';
+    document.body.appendChild(d); return d;
+  }
+  function dockBtn(id, icon, label) {
+    var b = document.createElement('button');
+    b.type = 'button'; b.id = id; b.textContent = icon; b.setAttribute('aria-label', label); b.title = label;
+    b.style.cssText = 'pointer-events:auto;width:38px;height:38px;padding:0;font-size:18px;line-height:1;border-radius:50%;border:1px solid rgba(255,255,255,.7);background:rgba(20,20,40,.55);color:#fff;touch-action:manipulation;opacity:.7;';
+    getDock().appendChild(b); return b;
+  }
+
   function build() {
     inp = document.createElement('input');
     inp.type = 'text'; inp.id = 'mobileKbdBridge';
@@ -61,19 +77,16 @@
       else if (e.key === 'Escape') { e.preventDefault(); send('Escape', 'Escape'); }
       else if (e.key === 'Tab') { e.preventDefault(); send('Tab', 'Tab'); }
     });
-    inp.addEventListener('focus', function () { reset(); btn.textContent = '⌨️ 收起'; });
-    inp.addEventListener('blur', function () { btn.textContent = '⌨️ 鍵盤'; });
+    inp.addEventListener('focus', function () { reset(); btn.textContent = '⌄'; });
+    inp.addEventListener('blur', function () { btn.textContent = '⌨️'; });
     document.body.appendChild(inp);
 
-    btn = document.createElement('button');
-    btn.type = 'button'; btn.id = 'mobileKbdBtn'; btn.textContent = '⌨️ 鍵盤';
-    btn.style.cssText = 'position:fixed;right:10px;bottom:10px;z-index:2147483001;padding:10px 14px;font-size:16px;font-weight:700;border-radius:999px;border:2px solid #fff;background:rgba(20,20,40,.88);color:#fff;touch-action:manipulation;';
+    btn = dockBtn('mobileKbdBtn', '⌨️', '鍵盤');
     // 用 pointerdown 而且不搶焦點，鍵盤才不會一閃就收起來
     btn.addEventListener('pointerdown', function (e) {
       e.preventDefault();
       if (document.activeElement === inp) inp.blur(); else inp.focus();
     });
-    document.body.appendChild(btn);
 
     // 點遊戲畫面（canvas）也會叫出鍵盤；點到按鈕、連結、遊戲自己的輸入框則不理
     document.addEventListener('pointerup', function (e) {
@@ -101,14 +114,26 @@
     if (p && p.then) p.then(lock, function () {}); else lock();
   }
   function exitFull() { try { (document.exitFullscreen || document.webkitExitFullscreen).call(document); } catch (e) {} }
+
+  function fullTip() {
+    var t = document.createElement('div');
+    t.textContent = /iP(hone|ad|od)/.test(navigator.userAgent) ? 'iPhone 不能直接全螢幕：點「分享」→「加入主畫面」，從主畫面圖示開啟就是全螢幕。' : '這個瀏覽器不支援全螢幕。請改用 Chrome，或安裝學校的 App。';
+    t.style.cssText = 'position:fixed;left:50%;top:14px;transform:translateX(-50%);max-width:88vw;z-index:2147483002;padding:8px 14px;border-radius:12px;background:rgba(0,0,0,.85);color:#fff;font:14px/1.5 sans-serif;text-align:center;';
+    document.body.appendChild(t); setTimeout(function () { if (t.parentNode) t.parentNode.removeChild(t); }, 4000);
+  }
   var autoDone = false;
   function buildFull() {
-    var fb = document.createElement('button');
-    fb.type = 'button'; fb.id = 'mobileFullBtn'; fb.textContent = '⛶ 全螢幕';
-    fb.style.cssText = 'position:fixed;right:10px;bottom:62px;z-index:2147483001;padding:10px 14px;font-size:16px;font-weight:700;border-radius:999px;border:2px solid #fff;background:rgba(20,20,40,.88);color:#fff;touch-action:manipulation;';
-    fb.addEventListener('pointerdown', function (e) { e.preventDefault(); if (isFull()) exitFull(); else goFull(); });
-    document.body.appendChild(fb);
-    function sync() { fb.textContent = isFull() ? '✕ 離開全螢幕' : '⛶ 全螢幕'; }
+    var fb = dockBtn('mobileFullBtn', '⛶', '全螢幕');
+    /* 手機瀏覽器「手指按下(pointerdown)」不算有效的使用者操作，全螢幕會被擋掉；要用「點擊(click)」。
+       按下時仍先擋掉預設行為，避免搶走遊戲的焦點。 */
+    fb.addEventListener('pointerdown', function (e) { e.preventDefault(); });
+    fb.addEventListener('click', function (e) {
+      e.preventDefault();
+      if (isFull()) { exitFull(); return; }
+      goFull();
+      setTimeout(function () { if (!isFull()) fullTip(); }, 600);
+    });
+    function sync() { fb.textContent = isFull() ? '✕' : '⛶'; }
     document.addEventListener('fullscreenchange', sync); document.addEventListener('webkitfullscreenchange', sync);
     document.addEventListener('pointerup', function () { if (!autoDone && !isFull()) { autoDone = true; goFull(); } }, true);
   }

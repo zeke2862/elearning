@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content">
     <title>打字修仙傳：五鍵飛升（簡化版：無 F/J 防禦、無大招）</title>
     <style>
         @font-face {
@@ -2690,6 +2690,73 @@
         #learning-panel { margin-top: 0 !important; background: rgba(6, 12, 22, 0.84) !important; pointer-events: auto; }
     </style>
     <style>
+        #btn-info { display: none; }
+        /* ===== 手機版（直式／橫式）：頂端狀態列縮成一條，戰鬥畫面與打字提示不被擋住 =====
+           - 狀態列只留血量／進度條，「正確率、最高連擊…」收進右上角 ℹ️，要看再點
+           - 戰鬥區的位置由程式量出狀態列的真實高度（--hud-h），不再用固定數字
+           - 虛擬鍵盤跳出來時，整個畫面用 dvh 跟著縮，「中打選字框」改放到戰鬥區上方，不會被鍵盤遮住 */
+        @media (max-width: 1080px), (pointer: coarse) {
+            #app { height: 100vh; height: 100dvh; }
+            #top-hud { grid-template-columns: auto minmax(0, 1fr) auto auto !important; align-items: center !important; height: auto !important; min-height: 0 !important;
+                top: 4px !important; left: 4px !important; right: 4px !important; padding: 4px 8px !important; gap: 8px !important; border-radius: 12px !important; }
+            #hero-card { grid-template-columns: 34px auto !important; gap: 6px !important; padding: 0 !important; background: none !important; }
+            #hero-card .portrait { width: 34px !important; height: 34px !important; border-width: 1px !important; }
+            #hero-card .title { display: none; }
+            #hero-card .subtitle { font-size: 12px !important; margin: 0 !important; white-space: nowrap; }
+            #companion-row { display: none !important; }
+            #bar-stack { flex-direction: row !important; gap: 8px !important; min-width: 0; }
+            #bar-stack .bar-item { flex: 1 1 0; min-width: 0; display: flex; align-items: center; gap: 4px; }
+            #bar-stack .bar-item img { width: 16px !important; height: 16px !important; }
+            #bar-stack .bar-item .bar-shell { flex: 1 1 auto; min-width: 28px; height: 10px !important; }
+            #bar-stack .bar-item > div:last-child { font-size: 11px !important; white-space: nowrap; min-width: 0; }
+            #metric-card { display: none !important; }
+            #metric-card.open { display: grid !important; position: fixed; top: calc(var(--hud-h, 50px) + 4px); left: 8px; right: 8px; z-index: 90; background: rgba(6, 12, 22, 0.94); border-radius: 12px; padding: 8px; min-height: 0 !important; }
+            #btn-pause { min-width: 0 !important; padding: 5px 9px !important; font-size: 12px !important; align-self: center !important; }
+            #btn-info { display: inline-block; }
+            #arena { top: calc(var(--hud-h, 50px) + 8px) !important; bottom: 6px !important; left: 4px !important; right: 4px !important; }
+            #prompt-board { top: 8px !important; min-width: min(500px, 92%) !important; padding: 5px 10px !important; }
+            #prompt-main { font-size: clamp(20px, 5.4vw, 32px) !important; min-height: 30px !important; }
+            #monster-rail { display: none !important; }
+            #hero-wrap, #enemy-wrap { width: clamp(84px, 18vh, 150px) !important; height: clamp(84px, 18vh, 150px) !important; bottom: 40px !important; }
+            #hero-sprite { width: clamp(76px, 16vh, 132px) !important; height: clamp(76px, 16vh, 132px) !important; }
+            #enemy-sprite { width: clamp(100px, 22vh, 190px) !important; height: clamp(100px, 22vh, 190px) !important; }
+            #hit-line { bottom: 38px !important; }
+            #bottom-hud.glass { bottom: 8px !important; width: min(420px, calc(100% - 16px)) !important; }
+            #learning-panel { padding: 4px 8px !important; font-size: 11px !important; }
+            #learning-title { display: none !important; }
+            #coach-strip { bottom: 70px !important; font-size: 10px !important; }
+            #ime-panel { top: 66px !important; bottom: auto !important; width: min(460px, calc(100% - 24px)) !important; z-index: 30 !important; }
+            #ime-hint { display: none; }
+            #ime-title { font-size: 12px; margin-bottom: 4px; }
+        }
+        @media (max-width: 560px) {
+            #hero-card .subtitle { display: none !important; }
+            #top-hud { grid-template-columns: auto minmax(0, 1fr) auto auto !important; gap: 6px !important; }
+            #bar-stack { gap: 6px !important; }
+            #bar-stack .bar-item img { display: none !important; }
+            #bar-stack .bar-item > div:last-child { font-size: 10px !important; }
+            #btn-info, #btn-pause { padding: 4px 7px !important; }
+        }
+        /* 橫放（高度很矮）：再縮一輪，把空間讓給戰鬥畫面 */
+        @media (max-height: 520px) and (orientation: landscape) {
+            #hero-card .portrait { width: 26px !important; height: 26px !important; }
+            #hero-card { grid-template-columns: 26px auto !important; }
+            #top-hud { padding: 2px 6px !important; }
+            #arena { top: calc(var(--hud-h, 36px) + 6px) !important; }
+            #prompt-board { top: 4px !important; padding: 3px 10px !important; }
+            #prompt-main { font-size: clamp(18px, 4.2vh, 26px) !important; min-height: 22px !important; }
+            #prompt-stage, #prompt-sub { font-size: 11px !important; }
+            #hero-wrap, #enemy-wrap { width: clamp(64px, 24vh, 110px) !important; height: clamp(64px, 24vh, 110px) !important; bottom: 26px !important; }
+            #hero-sprite { width: clamp(58px, 21vh, 96px) !important; height: clamp(58px, 21vh, 96px) !important; }
+            #enemy-sprite { width: clamp(76px, 28vh, 130px) !important; height: clamp(76px, 28vh, 130px) !important; }
+            #hit-line { bottom: 24px !important; }
+            #bottom-hud.glass { display: none !important; }
+            #coach-strip { display: none !important; }
+            #ime-panel { top: 52px !important; padding: 4px 8px !important; }
+            #ime-title { display: none; }
+        }
+    </style>
+    <style>
         /* 魔王模式：選擇輸入方式 */
         #boss-mode-pick { position: fixed; inset: 0; z-index: 150; display: none !important; place-items: center; text-align: center; padding: 20px; background: rgba(3, 7, 14, 0.78); }
         #boss-mode-pick.show { display: grid !important; animation: fade-in 0.3s ease; }
@@ -2753,6 +2820,7 @@
                     <div class="metric-cell">總鍵數<br><span class="metric-val" id="metric-typed">0</span></div>
                 </div>
             </div>
+            <button id="btn-info" class="wood-btn" type="button" aria-label="戰況資訊">ℹ️</button>
             <button id="btn-pause" class="wood-btn">暫停 Esc</button>
         </div>
 
@@ -9228,5 +9296,20 @@
         bootstrap();
     </script>
 <script src="../mobile-input.js"></script>
+<script src="../home-fab.js"></script>
+<script>
+/* 手機：量出頂端狀態列的真實高度給戰鬥區用；ℹ️ 按鈕開關「正確率／連擊／分數」小卡 */
+(function () {
+    var hud = document.getElementById('top-hud'), info = document.getElementById('btn-info'), card = document.getElementById('metric-card');
+    function fit() { if (hud) document.documentElement.style.setProperty('--hud-h', (hud.offsetHeight + 8) + 'px'); }
+    fit(); window.addEventListener('resize', fit); window.addEventListener('orientationchange', function () { setTimeout(fit, 250); });
+    if (window.ResizeObserver && hud) new ResizeObserver(fit).observe(hud);
+    if (info && card) {
+        info.addEventListener('click', function (e) { e.stopPropagation(); card.classList.toggle('open'); });
+        document.addEventListener('click', function () { card.classList.remove('open'); });
+    }
+})();
+</script>
+
 </body>
 </html>
