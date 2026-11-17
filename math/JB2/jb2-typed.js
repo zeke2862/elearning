@@ -45,6 +45,8 @@
     if (!Q) return null;
     var a = String(Q.ans == null ? '' : Q.ans).trim(), t = plain(Q.text), m;
     if ((m = /^第([一二三四])象限$/.exec(a))) return { k: 'quad', v: QUAD[m[1]] };
+    var sp = window.JB2Text && JB2Text.specOf(a, t);                    // 算式／方程式／對錯：用手機內建輸入法寫出來（jb2-textans.js）
+    if (sp) return { k: 'txt', spec: sp };
     if (ASK.test(t)) return null;
     if ((m = /^(\d+)\s*[:：]\s*(\d+)$/.exec(a))) {                     // 最簡整數比：前項、後項各按一個數字
       return { k: 'pair', a: pn(m[1]), b: pn(m[2]), labels: ['前項', '後項'], coord: false, ratio: true };
@@ -93,6 +95,12 @@
       '#ms-typed .mt-key.go{background:var(--bronze,#d2a24c);color:#2a1d05;font-size:1.05rem}' +
       '#ms-typed .mt-key.wide{grid-column:1 / -1;height:44px;font-size:1rem}' +
       '#ms-typed .mt-msg{min-height:22px;text-align:center;color:#ffb38a;font-size:.95rem;margin-top:6px}' +
+      '#ms-typed .mt-in{display:block;box-sizing:border-box;width:100%;max-width:420px;margin:8px auto 0;height:54px;padding:0 14px;border:2px solid var(--bronze,#d2a24c);border-radius:12px;background:#0b0f22;color:#fff;font-size:1.5rem;text-align:center;user-select:text;-webkit-user-select:text}' +
+      '#ms-typed .mt-hint{text-align:center;color:#b9b3a0;font-size:.85rem;margin-top:6px}' +
+      '#ms-typed .mt-sym{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:8px auto 0;max-width:420px}' +
+      '#ms-typed .mt-sym .mt-key{height:42px;width:42px;font-size:1.1rem;padding:0}' +
+      '#ms-typed .mt-pad.one{display:block;max-width:420px;margin:8px auto 0}#ms-typed .mt-pad.one .mt-key{width:100%}' +
+      '#ms-typed.done .mt-in{opacity:.6}' +
       '#ms-typed.done .mt-key{opacity:.45;pointer-events:none}' +
       '#ms-typed.done.good .mt-box{border-color:#43a58f;background:#12362f}' +
       '#ms-typed.done.bad .mt-box{border-color:#d24a33;background:#3a1612}';
@@ -104,7 +112,7 @@
     return { pre: '', post: kind.unit || '', labs: [''] };
   }
   function draw() {
-    if (!panel || !S) return;
+    if (!panel || !S || S.kind.k === 'txt') return;
     var L = labelsOf(S.kind), h = '<div class="mt-boxes">';
     for (var i = 0; i < S.vals.length; i++) {
       if (L.labs[i]) h += '<span class="mt-lab">' + L.labs[i] + '</span>';
@@ -124,13 +132,30 @@
       h += '<button type="button" class="mt-key' + (fn ? ' fn' : '') + (go ? ' go' : '') + '" data-k="' + k + '" aria-label="' + (lab[k] || k) + '">' + (lab[k] || k) + '</button>';
     });
     if (kind.k === 'pair') h += '<button type="button" class="mt-key fn wide" data-k="next">換到下一格</button>';
-    d.innerHTML = h + '</div>';
+    if (kind.k === 'txt') {                                            // 寫的：一個輸入框（手機內建鍵盤／手寫都可以）＋常用符號
+      h = '<div class="mt-show"></div><div class="mt-msg" aria-live="polite"></div>' +
+        '<input class="mt-in" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="done" aria-label="寫出答案" placeholder="在這裡寫答案">' +
+        '<div class="mt-hint">' + JB2Text.hint(kind.spec) + '</div>';
+      if (kind.spec.t === 'alg') {
+        h += '<div class="mt-sym">';
+        ['x', 'y', '+', '-', '×', '÷', '=', '(', ')', '^'].forEach(function (c) { h += '<button type="button" class="mt-key fn" data-k="ins:' + c + '">' + c + '</button>'; });
+        h += '</div>';
+      }
+      h += '<div class="mt-pad one"><button type="button" class="mt-key go wide" data-k="ok">確定</button></div>';
+    } else h += '</div>';
+    d.innerHTML = h;
     return d;
   }
   function msg(t) { var m = panel && panel.querySelector('.mt-msg'); if (m) m.textContent = t || ''; }
 
   function press(k) {
     if (!S || S.done) return;
+    if (S.kind.k === 'txt') {
+      var inp = panel.querySelector('.mt-in'); msg('');
+      if (k === 'ok') { submit(); return; }
+      if (/^ins:/.test(k) && inp) { var c = k.slice(4), a0 = inp.selectionStart == null ? inp.value.length : inp.selectionStart, b0 = inp.selectionEnd == null ? a0 : inp.selectionEnd; inp.value = inp.value.slice(0, a0) + c + inp.value.slice(b0); inp.focus(); try { inp.setSelectionRange(a0 + c.length, a0 + c.length); } catch (e) {} }
+      return;
+    }
     var v = S.vals[S.cur] || '';
     msg('');
     if (/^\d$/.test(k)) { if (v.replace('-', '').length < 9) v += k; }
@@ -145,9 +170,17 @@
   }
   function submit() {
     if (!S || S.done) return;
-    if (!complete(S.kind, S.vals)) { msg(S.kind.k === 'quad' ? '請輸入 1、2、3、4 其中一個數字' : S.vals.length > 1 ? '兩格都要填完整的數字喔' : '數字還沒按完整喔'); return; }
+    var ok;
+    if (S.kind.k === 'txt') {
+      var iv = (panel.querySelector('.mt-in').value || '').trim();
+      if (!iv) { msg('還沒寫答案喔'); return; }
+      var jr = JB2Text.judge(S.kind.spec, iv);
+      if (jr === 'invalid') { msg('這樣我看不懂，請再檢查一下格式'); return; }
+      if (jr === 'simplify') { msg('值是對的，但還可以再化簡！'); return; }
+      ok = jr === 'ok'; S.vals = [iv];
+    } else if (!complete(S.kind, S.vals)) { msg(S.kind.k === 'quad' ? '請輸入 1、2、3、4 其中一個數字' : S.vals.length > 1 ? '兩格都要填完整的數字喔' : '數字還沒按完整喔'); return; }
     var Q; try { Q = q; } catch (e) { return; }
-    var ok = check(S.kind, S.vals);
+    if (S.kind.k !== 'txt') ok = check(S.kind, S.vals);
     S.done = true; panel.className = 'done ' + (ok ? 'good' : 'bad'); draw();
     var opts = [].slice.call(document.querySelectorAll('#opts button')), ans = Q.ans;
     try {
@@ -155,7 +188,7 @@
       else answer('⌨' + S.vals.join(','), opts.filter(function (b) { return b.dataset.v !== ans; })[0] || opts[0]);
     } catch (e) {}
   }
-  function lockPanel() { if (S && !S.done) { S.done = true; if (panel) { panel.className = 'done bad'; draw(); } } }
+  function lockPanel() { if (S && !S.done) { S.done = true; if (panel) { panel.className = 'done bad'; var i0 = panel.querySelector('.mt-in'); if (i0) i0.disabled = true; draw(); } } }
 
   function reset() {
     if (panel && panel.parentNode) panel.parentNode.removeChild(panel);
@@ -175,6 +208,7 @@
     panel = build(kind); o.parentNode.insertBefore(panel, o.nextSibling);
     S = { kind: kind, vals: kind.k === 'pair' ? ['', ''] : [''], cur: 0, done: false };
     draw();
+    if (kind.k === 'txt') { var ti = panel.querySelector('.mt-in'); ti.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); submit(); } }); setTimeout(function () { try { ti.focus(); } catch (e) {} }, 60); }
     panel.addEventListener('click', function (e) {
       var b = e.target.closest && e.target.closest('.mt-key'); if (b) { press(b.dataset.k); return; }
       var x = e.target.closest && e.target.closest('.mt-box'); if (x && S && !S.done) { S.cur = +x.dataset.i; draw(); }

@@ -219,10 +219,10 @@ let T0=0,ACC=0,HS=0,AT={n:0,ok:0};
 function addHist(h,secs,stars,mode,d){h=Array.isArray(h)?h.slice():[];const hasT=d&&Number.isFinite(d.total)&&d.total>0&&!(d.fail&&AT.n>0);   /* 失敗的那一局：用實際作答的題數 */h.push({at:Date.now(),q:hasT?d.total:AT.n,ok:hasT?(d.right|0):AT.ok,s:secs,st:stars,m:mode||''});AT={n:0,ok:0};return h.slice(-30)}
 const ovOpen=()=>!$('#ov').classList.contains('hide');
 function tPause(){if(T0){ACC+=Date.now()-T0;T0=0}}
-function tResume(){if(!T0&&!document.hidden&&ovOpen())T0=Date.now()}
+function tResume(){if(!T0&&ovOpen())T0=Date.now()}
 function tTake(){tPause();const s=Math.min(1800,Math.round(ACC/1000));ACC=0;tResume();return s}
 function tDrop(){T0=0;ACC=0}
-document.addEventListener('visibilitychange',()=>{document.hidden?tPause():tResume()});
+/* 時間照真實時間計算：待機／黑屏／切到別的視窗都不暫停（老師要求 2026-11-17） */
 const idsOf=ci=>CHX[ci].st.map(s=>s[0]);
 const flatAll=CHX.flatMap((c,i)=>idsOf(i));
 const MAXSTAR=flatAll.length*PERSTAGE;
