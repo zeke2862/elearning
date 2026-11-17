@@ -93,6 +93,7 @@
       tamper: (function () { try { var t = window.JB2Seal && JB2Seal.summary(); return t && (t.wipe || t.soft || t.blocked || t.forged || t.idChange.length) ? t : null; } catch (e) { return null; } })()
     };
     try { rec = mergeDefense(rec, names); } catch (e) {}
+    try { var lv = JSON.parse(localStorage.getItem('jb2-leave-v1')); if (lv && lv.n > 0) rec.leave = { n: lv.n | 0, secs: lv.secs | 0, lastAt: lv.lastAt | 0 }; } catch (e) {}   // 離開遊戲畫面的累計次數（老師報表標 🚪）
     try { var gs = window.JB2Guess && JB2Guess.summary(); if (gs) rec.guess = gs; } catch (e) {}   // 「答錯馬上重開、秒答亂猜」的違規／鎖定記錄
     return rec;
   }

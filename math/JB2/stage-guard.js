@@ -58,27 +58,69 @@
   if (!LEAVE) return;
   var fired = false;
 
-  function cover() {
+  function cover(msg) {
     try {
       var d = document.createElement('div');
       d.style.cssText = 'position:fixed;inset:0;z-index:2147483647;background:#161a2e;color:#f1e8d2;' +
         'display:flex;align-items:center;justify-content:center;text-align:center;font:700 20px/1.6 sans-serif;padding:24px';
-      d.textContent = '⚠️ 偵測到離開遊戲頁面，這一局已關閉';
+      d.style.whiteSpace = 'pre-line'; d.textContent = msg || '⚠️ 偵測到離開遊戲頁面，這一局已關閉';
       document.body.appendChild(d);
     } catch (e) {}
   }
 
-  function leave() {
-    if (fired) return;
-    fired = true;
-    cover();
+  /* ---------- 離開次數：同一關累計 3 次 → 這關判定失敗、鎖 10 分鐘（存在這台裝置；累計次數也送給老師後台） ---------- */
+  var LK = 'jb2-leave-v1', MAX = 3, LOCK_MS = 600000, AWAY_MS = 3000;
+  var SKEY = (location.pathname.match(/(stage[\d-]+)/) || [])[1] || location.pathname;
+  function ld() { try { var o = JSON.parse(localStorage.getItem(LK)); if (o && typeof o === 'object') return o; } catch (e) {} return { n: 0, secs: 0, lastAt: 0, stages: {} }; }
+  function sv(o) { try { localStorage.setItem(LK, JSON.stringify(o)); } catch (e) {} }
+  function lockLeft() {
+    var s = (ld().stages || {})[SKEY];
+    return s && s.until > Date.now() ? Math.min(s.until - Date.now(), LOCK_MS) : 0;
+  }
+  function note(secs) {                          // 記一次離開；回傳這一關目前累計幾次
+    var o = ld(), now = Date.now(), s = (o.stages = o.stages || {})[SKEY] || (o.stages[SKEY] = { n: 0, lastAt: 0, until: 0 });
+    if (now - (s.lastAt || 0) > 1800000) s.n = 0;          // 超過 30 分鐘沒再離開，重新算
+    s.n += 1; s.lastAt = now;
+    o.n = (o.n | 0) + 1; o.secs = (o.secs | 0) + (secs | 0); o.lastAt = now;
+    if (s.n >= MAX) { s.until = now + LOCK_MS; s.n = 0; sv(o); return MAX; }
+    sv(o); return s.n;
+  }
+  function exitTo(reason, msg) {
+    cover(msg);
     if (window.parent !== window) {
-      try { window.parent.postMessage({ type: 'stage-exit', reason: 'left' }, '*'); } catch (e) {}
+      try { window.parent.postMessage({ type: 'stage-exit', reason: reason, msg: msg }, '*'); } catch (e) {}
     } else {                                   // 單獨開啟關卡（沒有被地圖包著）→ 直接回該章地圖
       var m = location.pathname.match(/stage(\d)-/);
-      location.replace('world-map-vol2ch' + (m ? m[1] : '1') + '.html');
+      setTimeout(function () { location.replace('world-map-vol2ch' + (m ? m[1] : '1') + '.html'); }, 1500);
     }
   }
+  var LOCKMSG = function (ms) { return '🚫 這一關你已離開遊戲畫面 ' + MAX + ' 次，這關判定失敗！\n請等 ' + Math.ceil(ms / 60000) + ' 分鐘後再挑戰（已記錄給老師）。'; };
 
-  document.addEventListener('visibilitychange', function () { if (document.hidden) leave(); });
+  function leave(secs) {
+    if (fired) return;
+    fired = true;
+    var n = note(secs);
+    if (n >= MAX) return exitTo('leave3', LOCKMSG(LOCK_MS));
+    exitTo('left', '⚠️ 偵測到你離開了遊戲頁面，這一局已被關閉！（這關已離開 ' + n + ' / ' + MAX + ' 次，滿 ' + MAX + ' 次這關判定失敗）\n作答時請不要切換到其他網頁或程式喔。');
+  }
+
+  /* 一進關卡就檢查：這關還在鎖定中就直接退出 */
+  var lk = lockLeft();
+  if (lk > 0) { fired = true; var _go = function () { exitTo('locked', LOCKMSG(lk)); }; if (document.body) _go(); else document.addEventListener('DOMContentLoaded', _go); return; }
+
+  /* 切到別的分頁／App（頁面被藏起來）→ 立刻關閉這一局 */
+  document.addEventListener('visibilitychange', function () { if (document.hidden) leave(0); });
+  /* 縮成小視窗、分割畫面、懸浮視窗（頁面沒被藏起來，只是失去焦點）→ 離開超過 3 秒，回來時關閉這一局 */
+  var since = 0, okSeen = false;
+  function tick() {
+    var bad = document.hidden || (document.hasFocus && !document.hasFocus());
+    if (bad) { if (okSeen && !since) since = Date.now(); return; }
+    okSeen = true;
+    if (!since) return;
+    var ms = Date.now() - since; since = 0;
+    if (ms >= AWAY_MS) leave(Math.round(ms / 1000));
+  }
+  window.addEventListener('blur', function () { setTimeout(tick, 60); });
+  window.addEventListener('focus', function () { setTimeout(tick, 60); });
+  setInterval(tick, 500);
 })();
