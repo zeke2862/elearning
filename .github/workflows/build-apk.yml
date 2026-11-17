@@ -1,0 +1,54 @@
+name: 打包 JB2 測試 APK
+
+on:
+  workflow_dispatch:
+    inputs:
+      app_url:
+        description: 'App 要開啟的網址（學生真正在玩的 JB2 網址）'
+        required: false
+        default: 'https://school-sigma-nine.vercel.app/math/JB2/world-map-vol2-all.html'
+  push:
+    paths:
+      - 'android-app/**'
+      - '.github/workflows/build-apk.yml'
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    env:
+      APP_URL: ${{ github.event.inputs.app_url || 'https://school-sigma-nine.vercel.app/math/JB2/world-map-vol2-all.html' }}
+    defaults:
+      run:
+        working-directory: android-app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - name: 安裝 Capacitor
+        run: npm install
+      - name: 寫入設定（網址、允許的網站）
+        run: |
+          node -e "
+          const u=new URL(process.env.APP_URL);
+          const cfg={appId:'tw.school.jb2',appName:'JB2 數靈召喚師',webDir:'www',
+            server:{url:process.env.APP_URL,cleartext:false,
+              allowNavigation:[u.hostname,'*.vercel.app','script.google.com','*.googleusercontent.com','*.google.com']},
+            android:{allowMixedContent:false}};
+          require('fs').writeFileSync('capacitor.config.json',JSON.stringify(cfg,null,2));"
+      - name: 建立 Android 專案並加上禁止截圖
+        run: |
+          npx cap add android
+          ./patch-android.sh
+          npx cap sync android
+      - name: 打包 APK
+        working-directory: android-app/android
+        run: ./gradlew assembleDebug --no-daemon
+      - uses: actions/upload-artifact@v4
+        with:
+          name: JB2-test-apk
+          path: android-app/android/app/build/outputs/apk/debug/app-debug.apk
