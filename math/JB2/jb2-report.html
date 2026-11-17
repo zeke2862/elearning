@@ -173,7 +173,7 @@ function mk(r, j) {
   /* 「已玩」＝練習次數大於 0，或有作答過題目；只是登入過、什麼都沒做的人算「還沒玩」 */
   const plays = j ? (j.totalPlays || 0) : 0, played = !!j && (plays > 0 || q > 0 || Object.keys(st).some(k => (st[k].plays || 0) > 0));
   return {cls: r.cls, grade: gradeOf(r.cls), seat: r.seat, no: r.no, name: r.name, hero: j ? (j.hero || '') : '', played, j, st,
-    stars: j ? (j.totalStars || 0) : 0, plays: j ? (j.totalPlays || 0) : 0, secs: secsOf(j), acc: q ? ok / q : null, at: j ? (j._at || 0) : 0};
+    stars: j ? (j.totalStars || 0) : 0, plays: j ? (j.totalPlays || 0) : 0, secs: secsOf(j), acc: q ? ok / q : null, ok, q, at: j ? (j._at || 0) : 0};
 }
 function build() {
   const seen = new Set(), rows = [];
@@ -188,7 +188,7 @@ const list = () => ROWS.filter(r => (!$('#grade').value || r.grade === $('#grade
 /* ===== 班級進度表 ===== */
 function cell(r, s) {
   const x = r.st[s.id];
-  if (view === 'stars') { const n = x ? x.bestStars || 0 : 0; return n ? `<td class="s${n}">${'★'.repeat(n)}</td>` : (x ? '<td class="s00" title="有玩，但還沒拿到星">0★</td>' : '<td class="s0">—</td>'); }
+  if (view === 'stars') { const n = x ? x.bestStars || 0 : 0; const sub = x && x.totalQ ? `<div class="sm" title="答對 ${x.totalOk} 題／作答 ${x.totalQ} 題">${x.totalOk}/${x.totalQ}</div>` : ''; return n ? `<td class="s${n}">${'★'.repeat(n)}${sub}</td>` : (x ? `<td class="s00" title="有玩，但還沒拿到星">0★${sub}</td>` : '<td class="s0">—</td>'); }
   if (view === 'acc') { const a = stageAcc(x); return a == null ? '<td class="a0">—</td>' : `<td class="${accCls(a)}" title="答對 ${x.totalOk} 題／作答 ${x.totalQ} 題">${Math.round(a * 100)}%<div class="sm">${x.totalOk}/${x.totalQ}</div></td>`; }
   if (view === 'time') { const t = x ? x.pSecs || 0 : 0; return t ? `<td class="t${t < 300 ? 1 : t < 900 ? 2 : 3}" title="${fmtSecs(t)}">${fmtShort(t)}</td>` : '<td class="s0">—</td>'; }
   const p = x ? x.plays || 0 : 0; return p ? `<td class="t${p < 3 ? 1 : p < 6 ? 2 : 3}">${p}</td>` : '<td class="s0">—</td>';
@@ -208,14 +208,14 @@ function renderProg() {
   <div class="bar"><label>每格顯示 <select id="vw"><option value="stars">⭐ 星數</option><option value="acc">🎯 答對率</option><option value="time">⏱️ 練習時間</option><option value="plays">🔁 練習次數</option></select></label>
   <label>狀態 <select id="st"><option value="">全部</option><option value="p">已玩</option><option value="n">還沒玩</option></select></label>
   <input type="text" id="q" placeholder="搜尋姓名／學號／勇者名" style="flex:0 1 220px"><button class="b" id="e-prog">⬇️ 匯出 Excel（CSV）</button></div>
-  <div class="tw"><table><tr><th class="l">班級</th><th>座號</th><th class="l">姓名</th><th>學號</th><th>勇者名</th><th>總星數</th><th>練習次數</th><th>練習時間</th><th>整體答對率</th>${STAGES.map(s => `<th title="${esc(s.id + ' ' + s.name)}">${s.id}${s.boss ? '👹' : ''}</th>`).join('')}</tr>` +
-    L.map(r => `<tr class="rw" data-no="${esc(r.no)}"><td class="l">${esc(r.cls)}</td><td>${r.seat || ''}</td><td class="l">${esc(r.name || '（名單外）')}${tpMark(r)}${gsMark(r)}${lvMark(r)}${defMark(r)}</td><td>${esc(r.no)}</td><td>${r.hero ? esc(r.hero) : '<span class="s0">—</span>'}</td><td>${r.played ? r.stars : '—'}</td><td>${r.played ? r.plays : '—'}</td><td>${r.played ? fmtShort(r.secs) : '—'}</td><td>${r.acc == null ? '—' : Math.round(r.acc * 100) + '%'}</td>${STAGES.map(s => cell(r, s)).join('')}</tr>`).join('') + `</table></div>`;
+  <div class="tw"><table><tr><th class="l">班級</th><th>座號</th><th class="l">姓名</th><th>學號</th><th>勇者名</th><th title="星數下方小字＝答對題數／總練習題數">總星數<div class="sm">答對/練習</div></th><th>練習次數</th><th>練習時間</th><th>整體答對率</th>${STAGES.map(s => `<th title="${esc(s.id + ' ' + s.name)}">${s.id}${s.boss ? '👹' : ''}</th>`).join('')}</tr>` +
+    L.map(r => `<tr class="rw" data-no="${esc(r.no)}"><td class="l">${esc(r.cls)}</td><td>${r.seat || ''}</td><td class="l">${esc(r.name || '（名單外）')}${tpMark(r)}${gsMark(r)}${lvMark(r)}${defMark(r)}</td><td>${esc(r.no)}</td><td>${r.hero ? esc(r.hero) : '<span class="s0">—</span>'}</td><td>${r.played ? r.stars + (r.q ? `<div class="sm" title="答對 ${r.ok} 題／總練習 ${r.q} 題">${r.ok}/${r.q}</div>` : '') : '—'}</td><td>${r.played ? r.plays : '—'}</td><td>${r.played ? fmtShort(r.secs) : '—'}</td><td>${r.acc == null ? '—' : Math.round(r.acc * 100) + '%'}</td>${STAGES.map(s => cell(r, s)).join('')}</tr>`).join('') + `</table></div>`;
   $('#vw').value = view; $('#st').value = keep.st; $('#q').value = keep.q;
   $('#vw').onchange = () => { view = $('#vw').value; renderProg(); };
   $('#st').onchange = renderProg; $('#q').oninput = () => { renderProg(); const q = $('#q'); q.focus(); q.setSelectionRange(q.value.length, q.value.length); };
   $('#v-prog').querySelectorAll('tr.rw').forEach(tr => tr.onclick = () => { oneNo = tr.dataset.no; tab = 'one'; render(); });
-  $('#e-prog').onclick = () => download('JB2班級進度表.csv', toCSV([['班級', '座號', '學號', '姓名', '勇者名', '總星數', '練習次數', '練習秒數', '整體答對率(%)', '最後一關', '最後更新', '疑似作弊記錄'].concat(...STAGES.map(s => [s.id + ' 星', s.id + ' 次數', s.id + ' 答對率(%)', s.id + ' 練習秒數'])),
-    ...L.map(r => [r.cls, r.seat || '', r.no, r.name, r.hero, r.played ? r.stars : '', r.played ? r.plays : '', r.played ? r.secs : '', r.acc == null ? '' : Math.round(r.acc * 100), r.j ? (r.j.lastId || '') + ' ' + (r.j.lastName || '') : '', r.at ? new Date(r.at).toLocaleString('zh-TW', {hour12: false}) : '', tpText(r.j && r.j.tamper)].concat(...STAGES.map(s => { const x = r.st[s.id]; const a = stageAcc(x); return x ? [x.bestStars || 0, x.plays || 0, a == null ? '' : Math.round(a * 100), x.pSecs || 0] : ['', '', '', '']; })))]));
+  $('#e-prog').onclick = () => download('JB2班級進度表.csv', toCSV([['班級', '座號', '學號', '姓名', '勇者名', '總星數', '答對題數', '總練習題數', '練習次數', '練習秒數', '整體答對率(%)', '最後一關', '最後更新', '疑似作弊記錄'].concat(...STAGES.map(s => [s.id + ' 星', s.id + ' 次數', s.id + ' 答對率(%)', s.id + ' 練習秒數'])),
+    ...L.map(r => [r.cls, r.seat || '', r.no, r.name, r.hero, r.played ? r.stars : '', r.played ? r.ok : '', r.played ? r.q : '', r.played ? r.plays : '', r.played ? r.secs : '', r.acc == null ? '' : Math.round(r.acc * 100), r.j ? (r.j.lastId || '') + ' ' + (r.j.lastName || '') : '', r.at ? new Date(r.at).toLocaleString('zh-TW', {hour12: false}) : '', tpText(r.j && r.j.tamper)].concat(...STAGES.map(s => { const x = r.st[s.id]; const a = stageAcc(x); return x ? [x.bestStars || 0, x.plays || 0, a == null ? '' : Math.round(a * 100), x.pSecs || 0] : ['', '', '', '']; })))]));
 }
 
 /* ===== 題型弱點（全班） ===== */
@@ -242,7 +242,7 @@ function renderOne() {
   let i = L.findIndex(r => r.no === oneNo); if (i < 0) i = 0; const r = L[i]; oneNo = r.no; const j = r.j;
   let h = `<div class="bar"><label>學生 <select id="who">${L.map((s, k) => `<option value="${k}" ${k === i ? 'selected' : ''}>${esc(s.cls)} ${s.seat || ''} ${esc(s.name || '名單外')}（${esc(s.no)}）${s.played ? '' : '（還沒玩）'}</option>`).join('')}</select></label>`;
   if (!r.played) return $('#v-one').innerHTML = h + '</div><p>這位同學' + (j ? '只有登入過 JB2，還沒有做過任何題目。' : '還沒有任何 JB2 紀錄。') + '</p>', bindWho(L);
-  h += `<b>${r.stars} 顆星｜練習 ${r.plays} 次｜共 ${fmtSecs(r.secs)}｜整體答對率 ${r.acc == null ? '—' : Math.round(r.acc * 100) + '%'}</b></div>`;
+  h += `<b>${r.stars} 顆星｜答對 ${r.ok}／練習 ${r.q} 題｜練習 ${r.plays} 次｜共 ${fmtSecs(r.secs)}｜整體答對率 ${r.acc == null ? '—' : Math.round(r.acc * 100) + '%'}</b></div>`;
   h += `<p>勇者名：${esc(j.hero) || '—'}　學號：${esc(r.no)}　最後一關：${j.lastId ? esc(j.lastId + ' ' + (j.lastName || '')) + `（${esc(MODE[j.lastMode] || '')} 本次 ${j.lastStars == null ? '—' : j.lastStars + '★'}／最高 ${j.lastBest || 0}★）` : '—'}　最後更新：${fmtAt(j._at)}</p>`;
   h += '<p><b>各關狀況</b></p><div class="tw"><table><tr><th class="l">關卡</th><th>最高星</th><th>練習次數</th><th>答對率</th><th>練習時間</th><th>最近一次</th></tr>';
   STAGES.forEach(s => { const x = r.st[s.id]; if (!x) { h += `<tr><td class="l s0">${s.id} ${esc(s.name)}</td><td class="s0">—</td><td class="s0">—</td><td class="s0">—</td><td class="s0">—</td><td class="s0">—</td></tr>`; return; }
