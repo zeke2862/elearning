@@ -28,6 +28,8 @@ function doPost(e) {
       return jsonOut_({ success: true });
     }
 
+    try { notifyGuess_(data); } catch (e0) {}   // 學生被「亂猜重開」鎖定時，寄通知給老師（失敗不影響收件）
+
     // 預設情況：這是學生端送來的一筆同步資料
     sheet.appendRow([
       new Date(),                  // A 收到時間
@@ -65,6 +67,31 @@ function doGet(e) {
   } catch (err) {
     return jsonOut_({ success: false, message: String(err) });
   }
+}
+
+// ============================================================
+// 「答錯馬上關掉重開、秒答亂猜」鎖定通知
+// 學生端（jb2-guess.js）鎖定時，會把 rec.guess = {s,n,lastAt,log} 放進 JB2 紀錄一起送來。
+// 這裡每個學號只在「有新的鎖定」（guess.lastAt 比上次通知晚）時通知一次：
+//   1. 在試算表另開 guess_log 工作表記一列（後台隨時可看）
+//   2. 寄信給 指令碼屬性 NOTIFY_EMAIL（沒設就寄給部署這支程式的人）
+// 第一次使用要在 Apps Script 編輯器手動執行一次任何函式並「授權寄信」，然後重新部署。
+// ============================================================
+function notifyGuess_(data) {
+  var j = data && data.other && data.other.jb2, g = j && j.guess;
+  if (!g || !(g.n > 0) || !(g.lastAt > 0)) return;
+  var no = String(data.studentNumber || "").trim(); if (!no) return;
+  var props = PropertiesService.getScriptProperties(), key = "guessAt_" + no;
+  if ((Number(props.getProperty(key)) || 0) >= g.lastAt) return;
+  props.setProperty(key, String(g.lastAt));
+  var ss = SpreadsheetApp.getActiveSpreadsheet(), sh = ss.getSheetByName("guess_log");
+  if (!sh) { sh = ss.insertSheet("guess_log"); sh.appendRow(["通知時間", "學號", "勇者名", "累計鎖定次數", "累計違規次數", "鎖定時間", "來源"]); }
+  var src = (j.defense || (j.stages && JSON.stringify(j.stages).indexOf('"g":"d"') >= 0)) ? "保衛戰/JB2" : "JB2";
+  sh.appendRow([new Date(), no, j.hero || "", g.n, g.s, new Date(g.lastAt), src]);
+  var to = props.getProperty("NOTIFY_EMAIL") || Session.getEffectiveUser().getEmail();
+  if (to) MailApp.sendEmail(to, "【數學練習】學號 " + no + " 因「答錯就重開、秒答亂猜」被鎖定 5 分鐘",
+    "學號：" + no + (j.hero ? "（勇者名：" + j.hero + "）" : "") + "\n累計鎖定 " + g.n + " 次、違規 " + g.s + " 次\n鎖定時間：" +
+    new Date(g.lastAt) + "\n\n系統發現他答錯後很快就關掉遊戲重開、快速亂猜，已自動鎖定 5 分鐘並提醒他確實作答。\n詳細請看試算表的 guess_log 工作表，或 JB2 老師報表名字旁的 🔒。");
 }
 
 function jsonOut_(obj) {
@@ -152,6 +179,13 @@ function mergeJb2_(a, b, at) {
       stars: Math.max((da && da.stars) || 0, (db && db.stars) || 0), lastAt: Math.max((da && da.lastAt) || 0, (db && db.lastAt) || 0)
     };
   } else { delete out.defense; }
+  // 「亂猜重開」記錄：不管哪份較新都保留（次數取大、log 依時間合併）
+  var ga = a.guess, gb = b.guess;
+  if (ga || gb) {
+    var lg = ((ga && ga.log) || []).concat((gb && gb.log) || []).sort(function (p, q) { return (p.at || 0) - (q.at || 0); }).slice(-8);
+    out.guess = { s: Math.max((ga && ga.s) || 0, (gb && gb.s) || 0), n: Math.max((ga && ga.n) || 0, (gb && gb.n) || 0),
+      lastAt: Math.max((ga && ga.lastAt) || 0, (gb && gb.lastAt) || 0), until: Math.max((ga && ga.until) || 0, (gb && gb.until) || 0), log: lg };
+  } else { delete out.guess; }
   return out;
 }
 
