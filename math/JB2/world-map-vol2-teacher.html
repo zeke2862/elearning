@@ -121,6 +121,7 @@ table.w td,table.w th{border-bottom:1px solid var(--line);padding:5px 6px;text-a
   <span class="sp"></span>
   <span class="badge" id="teachB" style="display:none">教師版：全章開放</span>
   <button class="btn ghost small" data-act="homeBtn">🏠 小屋</button>
+  <button class="btn ghost small" data-fa="open" id="friendB">👥 好友</button>
   <button class="btn ghost small" data-act="shopBtn">🏪 商店</button>
   <button class="btn ghost small" data-act="teamBtn" id="teamB">🩹 隊伍</button>
   <button class="btn ghost small" data-act="dailyBtn">📅 每日</button>
@@ -136,10 +137,14 @@ table.w td,table.w th{border-bottom:1px solid var(--line);padding:5px 6px;text-a
 <div class="ov" id="pnlOv"><div class="pbox" id="pbox"></div></div>
 
 <script src="game-config.js"></script>
+<script src="jb2-decor.js?v=2"></script>
 <script src="audio/bgm.js"></script>
 <script src="relax-break.bundle.js"></script>
 <script src="vol2-monsters.js"></script>
 <script src="report.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="jb2-home.js?v=2"></script>
+<script src="jb2-friends.js?v=2"></script>
 <script>
 (()=>{'use strict';
 const GC=window.GAME_CONFIG;
@@ -222,7 +227,7 @@ function softRedraw(){if(rdT)return;rdT=setTimeout(()=>{rdT=0;drawMap();renderHe
 function probe(list,done,live){
   list=list.filter(p=>p&&!TRIED[p]&&(TRIED[p]=1));let n=list.length;if(!n){done&&done();return}
   const raw=[M.art,GC.home.wallpaper],q=[],fin=()=>{--n||(done&&done())};let busy=false;
-  const pump=()=>{if(busy||!q.length)return;busy=true;const[p,i]=q.shift();setTimeout(()=>{OK[p]=raw.includes(p)?p:(cutout(i)||p);busy=false;live&&softRedraw();fin();pump()},0)};
+  const pump=()=>{if(busy||!q.length)return;busy=true;const[p,i]=q.shift();setTimeout(()=>{OK[p]=(raw.includes(p)||p.indexOf('/wall_')>0)?p:(cutout(i)||p);busy=false;live&&softRedraw();fin();pump()},0)};
   list.forEach(p=>{const i=new Image();i.decoding='async';i.onload=()=>{q.push([p,i]);pump()};i.onerror=fin;i.src=p})}
 const addGold=g=>{H.gold+=g;if(g>0)H.stat.earned+=g};
 
@@ -512,7 +517,7 @@ function shopHTML(){
       const have=H.inv[it.id]||0,full=it.maxOwn&&have>=it.maxOwn,lim=it.dailyLimit&&todayBought(it.id)>=it.dailyLimit;
       btn=`<button class="btn small" data-act="buy" data-id="${it.id}" ${(H.gold<pr||full||lim||!needOk(it))?'disabled':''}>${full?'已達持有上限':lim?'今天買過了':'買 '+CUR+pr}</button><small>持有：${have} 張${it.maxOwn?'（上限 '+it.maxOwn+'）':''}</small>`;
     }else if(owned(it.id)){
-      if(it.slot==='furn')btn='<button class="btn small" disabled>已擺放</button>';
+      if(['furn','deco','wall','perm'].includes(it.slot))btn=`<button class="btn small" disabled>${it.slot==='perm'?'✔ 已開通':'已擁有'}</button>`;
       else{const on=H.eq[it.slot]===it.id;btn=`<button class="btn small ${on?'':'ghost'}" data-act="equip" data-id="${it.id}" ${on?'disabled':''}>${on?'使用中':'裝備'}</button>`}
     }else if(!needOk(it))btn=`<button class="btn small" disabled>🔒 ${CUR}${pr}</button><small>${esc(needText(it))}</small>`;
     else btn=`<button class="btn small" data-act="buy" data-id="${it.id}" ${H.gold<pr?'disabled':''}>${H.gold<pr?CN+'不足':'買'} ${CUR}${pr}</button>`;
@@ -640,23 +645,24 @@ function buyTech(tid,mid){
 }
 
 /* ---- 小屋 ---- */
-function openHome(){hideCard();renderHome();$('#home').classList.add('on')}
-function closeHome(){$('#home').classList.remove('on')}
+function openHome(){hideCard();renderHome();$('#home').classList.add('on');try{JB2Home.onOpen()}catch(e){}}
+function closeHome(){try{JB2Home.exitHome()}catch(e){}$('#home').classList.remove('on')}
 const imgOr=(src,fb)=>OK[src]?`<img src="${esc(OK[src])}" alt="">`:fb;
 function renderHome(){
   const HM=GC.home,t=tod(),sky={day:['#7ec8ff','#cfeeff','☀️'],dawn:['#ffb88c','#ffe0b0','🌅'],dusk:['#ff8f6b','#6a4c93','🌇'],night:['#0b1030','#1b2a5e','🌙']}[t];
   const now=new Date(),nm={day:'白天',dawn:'清晨',dusk:'傍晚',night:'夜晚'}[t],art=!!OK[HM.wallpaper];
+  const VIS=window.JB2Home&&JB2Home.ready?JB2Home.vis:null;
   const room=$('#room');room.className='room'+(art?' art':'');room.style.backgroundImage=art?`url("${HM.wallpaper}")`:'';
-  const ceilStars=owned('furn_stars');
-  let h=`<div class="ceil${ceilStars?' st':''}">${ceilStars?'✨ ⭐ ✨ ⭐ ✨ ⭐ ✨ ⭐ ✨ ⭐ ✨ ⭐ ✨ ⭐ ✨ ⭐ ✨':''}</div>`;
+  const ceilStars=window.JB2Home&&JB2Home.ready?JB2Home.hasStars():owned('furn_stars');
+  let h=(window.JB2Home&&JB2Home.ready?JB2Home.wallHTML():'')+`<div class="ceil${ceilStars?' st':''}">${ceilStars?'✨ ⭐ ✨ ⭐ ✨ ⭐ ✨ ⭐ ✨ ⭐ ✨ ⭐ ✨ ⭐ ✨ ⭐ ✨':''}</div>`;
   const w=HM.window;
   h+=`<div class="win art" style="left:${w.x}%;top:${w.y}%;width:${w.w}%;height:${w.h}%;background:url('images/home/win_${t}.webp') center/cover,linear-gradient(${sky[0]},${sky[1]})"><div class="cross"></div><span class="tm">${pad(now.getHours())}:${pad(now.getMinutes())}</span></div>`;
-  HM.furniture.forEach(f=>{if(!owned(f.id))return;const im=OK[f.img];h+=`<div class="deco ${im?'img':f.cls}" style="left:${f.x}%;top:${f.y}%;width:${f.w}%;height:${f.h}%;transform:rotate(${f.rot||0}deg);z-index:${f.z||1}">${im?`<img src="${esc(im)}" alt="">`:esc(f.emoji)}</div>`});
-  HM.items.forEach(f=>{h+=`<button class="fur" aria-label="${esc(f.label)}" data-act="${esc(f.act)}" style="left:${f.x}%;top:${f.y}%;width:${f.w}%;height:${f.h}%;transform:rotate(${f.rot||0}deg);z-index:${f.z||3}"><span class="e">${imgOr(f.img,esc(f.emoji))}</span></button>`});
-  h+=`<div class="heroSpot" style="left:${HM.hero.x}%;top:${HM.hero.y}%;width:${HM.hero.w}%;transform:rotate(${HM.hero.rot||0}deg);z-index:${HM.hero.z||4}">${heroSVG(H.eq,200).replace('width="200"','width="100%"').replace(/height="[\d.]+"/,'')}</div>`;
-  if(H.eq.pet&&ITEM[H.eq.pet]){const P=HM.pet,pw=P.w||P.size||6,pi=ITEM[H.eq.pet],pim=OK[pi.img];h+=`<div class="petSpot" style="left:${P.x}%;top:${P.y}%;width:${pw}%;${P.h?`height:${P.h}%;`:''}font-size:calc(var(--u)*${pw*.85});transform:rotate(${P.rot||0}deg);z-index:${P.z||5};display:flex;align-items:center;justify-content:center;line-height:1">${pim?`<img src="${esc(pim)}" alt="" style="max-width:100%;max-height:100%">`:pi.icon}</div>`;}
-  h+=`<div class="homeBar"><button class="btn" data-act="exitHome">🚪 出門</button></div>`;
-  room.innerHTML=h;refreshHUD();
+  if(window.JB2Home&&JB2Home.ready)h+=JB2Home.objsHTML();else HM.furniture.forEach(f=>{if(!owned(f.id))return;const im=OK[f.img];h+=`<div class="deco ${im?'img':f.cls}" style="left:${f.x}%;top:${f.y}%;width:${f.w}%;height:${f.h}%;transform:rotate(${f.rot||0}deg);z-index:${f.z||1}">${im?`<img src="${esc(im)}" alt="">`:esc(f.emoji)}</div>`});
+  if(!VIS)HM.items.forEach(f=>{h+=`<button class="fur" aria-label="${esc(f.label)}" data-act="${esc(f.act)}" style="left:${f.x}%;top:${f.y}%;width:${f.w}%;height:${f.h}%;transform:rotate(${f.rot||0}deg);z-index:${f.z||3}"><span class="e">${imgOr(f.img,esc(f.emoji))}</span></button>`});
+  h+=`<div class="heroSpot" style="left:${HM.hero.x}%;top:${HM.hero.y}%;width:${HM.hero.w}%;transform:rotate(${HM.hero.rot||0}deg);z-index:${HM.hero.z||4}">${heroSVG(VIS?VIS.eq:H.eq,200).replace('width="200"','width="100%"').replace(/height="[\d.]+"/,'')}</div>`;
+  if(window.JB2Home&&JB2Home.ready)h+=JB2Home.petHTML();else if(H.eq.pet&&ITEM[H.eq.pet]){const P=HM.pet,pw=P.w||P.size||6,pi=ITEM[H.eq.pet],pim=OK[pi.img];h+=`<div class="petSpot" style="left:${P.x}%;top:${P.y}%;width:${pw}%;${P.h?`height:${P.h}%;`:''}font-size:calc(var(--u)*${pw*.85});transform:rotate(${P.rot||0}deg);z-index:${P.z||5};display:flex;align-items:center;justify-content:center;line-height:1">${pim?`<img src="${esc(pim)}" alt="" style="max-width:100%;max-height:100%">`:pi.icon}</div>`;}
+  h+=window.JB2Home&&JB2Home.ready?JB2Home.homeBarHTML():`<div class="homeBar"><button class="btn" data-act="exitHome">🚪 出門</button></div>`;
+  room.innerHTML=h;if(window.JB2Home&&JB2Home.ready)JB2Home.afterRoom(room);refreshHUD();
 }
 function bedHTML(){
   const t=ymd(new Date()),done=H.streak.last===t,d=H.daily,C=E.checkin;
@@ -943,11 +949,17 @@ function intro(){
   openPanel('🌍 歡迎來到數理大陸',`<div class="cat"><div class="av">🐱</div><div>我是導師智慧貓！古老的數理大陸被混沌黑霧籠罩，六大元素水晶失衡，各地的守護數靈因為「數學觀念混亂」而暴走了。<br><br>召喚師，請你帶著法杖，依序走訪六座島嶼，答對題目、封印數靈、收進圖鑑。<br><br>👉 點島嶼，勇者會走過去；點村莊的 🏠 回小屋休息、點 🏪 買裝備、點 🏟️ 去鬥技場。<br>👉 通關拿星星、練習拿經驗，都能換成 ${CUR} ${CN}喔！</div></div><button class="btn" data-act="closePanel">開始冒險！</button>`);
   H.intro=true;save();
 }
+/* 小屋編輯器／好友功能的接口（程式在 jb2-home.js、jb2-friends.js） */
+function initExt(){
+  const HUB={get H(){return H},save,toast,esc,CUR,CN,ITEM,ITEMS,OK,owned,GC,renderHome:()=>renderHome(),openHome:()=>openHome(),closeHome:()=>closeHome(),openPanel:(t,h,w)=>openPanel(t,h,w),closePanel:()=>closePanel(),setPanel:f=>{panelRender=f;f()},openShop:t=>{if(t)shopTab=t;openShop()}};
+  JB2Home.init(HUB);JB2Friends.init(HUB);
+}
 function init(){
   document.body.classList.add('mapwait');setTimeout(()=>document.body.classList.remove('mapwait'),1500);
   load();buildStatic();calcStats();fit();drawMap();
   heroNode=Math.min(NCH,Math.max(0,H.heroNode!=null?H.heroNode:H.last||0));heroXY={x:POS[heroNode][0],y:POS[heroNode][1]};
   sync(false);drawMap();renderHero();refreshHUD();centerOnHero(false);
+  try{initExt()}catch(e){console.warn('小屋／好友功能初始化失敗',e)}
   requestAnimationFrame(loop);
   if(!H.intro)setTimeout(intro,200);else setTimeout(()=>{try{loginGift()}catch(e){}},300);
   const T1=[M.art],
