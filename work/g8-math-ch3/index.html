@@ -1,0 +1,1149 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>第三章-劉泰斗（二次函數大冒險）</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=JetBrains+Mono:wght@500;700&family=Noto+Sans+Thai:wght@400;700&display=swap">
+<style>
+/* Layout: dark-first quest log. Hero status bar on top, four dungeon cards with stage nodes, battle screen with arena + question card, result sheet. */
+:root {
+  --bg: #0d1224;
+  --panel: #161d3a;
+  --panel2: #1d2650;
+  --line: #2e3a70;
+  --fg: #e9edfc;
+  --muted: #98a5cf;
+  --accent: #7f8cff;
+  --accent-fg: #0d1224;
+  --gold: #f5b83d;
+  --xp: #4fd1b2;
+  --hp: #ee5d6c;
+  --ok: #4cd08a;
+  --bad: #ff6b6b;
+  --d0: #4fc3f7;
+  --d1: #b07cff;
+  --d2: #6fd36f;
+  --d3: #ff8a5c;
+  --shadow: rgba(0, 0, 0, .35);
+  --font-sans: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", system-ui, sans-serif;
+  --font-num: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bg: #eef1fb; --panel: #ffffff; --panel2: #e6ebfa; --line: #c8d0ea; --fg: #171d3a; --muted: #5a6690;
+    --accent: #4a58e0; --accent-fg: #ffffff; --gold: #b7790a; --xp: #0f9b7f; --hp: #d93d4e; --ok: #13804d; --bad: #d33b3b;
+    --d0: #0a8fc4; --d1: #7a45d6; --d2: #3a9a3a; --d3: #d4561f; --shadow: rgba(30, 40, 90, .18); color-scheme: light;
+  }
+}
+:root[data-theme="light"] {
+  --bg: #eef1fb; --panel: #ffffff; --panel2: #e6ebfa; --line: #c8d0ea; --fg: #171d3a; --muted: #5a6690;
+  --accent: #4a58e0; --accent-fg: #ffffff; --gold: #b7790a; --xp: #0f9b7f; --hp: #d93d4e; --ok: #13804d; --bad: #d33b3b;
+  --d0: #0a8fc4; --d1: #7a45d6; --d2: #3a9a3a; --d3: #d4561f; --shadow: rgba(30, 40, 90, .18); color-scheme: light;
+}
+* { box-sizing: border-box; }
+html, body { min-height: 100%; }
+body {
+  background: var(--bg); color: var(--fg); font-family: var(--font-sans); font-size: 15px; line-height: 1.7;
+  padding-block: 14px 36px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  -webkit-tap-highlight-color: transparent;
+}
+.app { max-width: 480px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px; }
+h1, h2, h3, p { margin: 0; }
+sup { font-size: .7em; line-height: 0; }
+.m { font-family: var(--font-num); font-weight: 500; font-variant-numeric: tabular-nums; }
+button { font: inherit; color: inherit; cursor: pointer; }
+button:disabled { cursor: not-allowed; }
+button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+/* hero bar */
+.hero { display: flex; gap: 12px; align-items: center; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; }
+.avatar { flex: none; width: 52px; height: 62px; }
+.avatar svg { width: 100%; height: 100%; display: block; }
+.hinfo { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.hrow { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.hrow b { font-weight: 900; font-size: 16px; }
+.lv { font-family: var(--font-num); color: var(--gold); font-weight: 700; }
+.hsmall { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); font-family: var(--font-num); }
+.bar { height: 10px; border-radius: 99px; background: var(--panel2); border: 1px solid var(--line); overflow: hidden; }
+.bar i { display: block; height: 100%; width: 0; transition: width .35s ease; }
+.bar.xp i { background: var(--xp); }
+.bar.hp i { background: var(--hp); }
+.coin { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--gold); margin-right: 4px; }
+
+/* map */
+.title h1 { font-size: 26px; font-weight: 900; letter-spacing: .04em; line-height: 1.3; }
+.title p { color: var(--muted); font-size: 13px; margin-top: 2px; }
+.dg { background: var(--panel); border: 1px solid var(--line); border-left: 6px solid var(--dc); border-radius: 12px; padding: 12px 14px 12px; display: flex; flex-direction: column; gap: 10px; }
+.dg.lock { opacity: .55; }
+.dgh { display: flex; flex-direction: column; }
+.dgno { font-size: 11px; letter-spacing: .18em; color: var(--dc); font-weight: 700; }
+.dg h2 { font-size: 18px; font-weight: 900; }
+.dgh p { font-size: 13px; color: var(--muted); }
+.nodes { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+.node { background: var(--panel2); border: 2px solid var(--line); border-radius: 10px; padding: 6px 0 4px; display: flex; flex-direction: column; align-items: center; gap: 0; min-width: 0; line-height: 1.3; }
+.node .nn { font-family: var(--font-num); font-weight: 700; font-size: 17px; }
+.node .ns { font-size: 11px; color: var(--gold); letter-spacing: .05em; }
+.node:not(:disabled) { border-color: var(--dc); }
+.node:not(:disabled):active { transform: translateY(1px); }
+.node.done { background: color-mix(in srgb, var(--dc) 18%, var(--panel2)); }
+.node.boss .nn { color: var(--dc); font-family: var(--font-sans); font-weight: 900; }
+.node:disabled { opacity: .45; }
+.dgf { font-size: 12px; color: var(--muted); font-family: var(--font-num); }
+details { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; }
+summary { cursor: pointer; font-weight: 700; }
+.note { margin-top: 8px; display: flex; flex-direction: column; gap: 8px; font-size: 14px; }
+.tbl { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th, td { border: 1px solid var(--line); padding: 4px 8px; text-align: center; white-space: nowrap; }
+th { background: var(--panel2); }
+.ghost { background: transparent; border: 1px solid var(--line); border-radius: 8px; padding: 6px 12px; font-size: 13px; color: var(--muted); }
+.ghost:disabled { opacity: .45; }
+.primary { background: var(--accent); color: var(--accent-fg); border: 0; border-radius: 10px; padding: 11px 20px; font-weight: 900; font-size: 16px; letter-spacing: .06em; }
+.foot { display: flex; justify-content: center; }
+
+/* battle */
+.btop { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.btitle { display: flex; flex-direction: column; align-items: center; line-height: 1.3; min-width: 0; }
+.btitle span { font-size: 12px; color: var(--dc); letter-spacing: .1em; font-weight: 700; }
+.btitle b { font-size: 15px; font-weight: 900; }
+.combo { font-family: var(--font-num); color: var(--gold); font-weight: 700; font-size: 14px; min-width: 70px; text-align: right; }
+.arena { position: relative; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 12px; border: 1px solid var(--line); border-radius: 12px; background: linear-gradient(var(--panel), var(--panel2)); overflow: hidden; }
+.side { display: flex; flex-direction: column; gap: 4px; align-items: stretch; min-width: 0; }
+.side .nm { font-weight: 700; font-size: 13px; display: flex; justify-content: space-between; gap: 6px; }
+.side .nm span:last-child { font-family: var(--font-num); color: var(--muted); font-size: 12px; }
+.sprite { height: 118px; display: flex; align-items: flex-end; justify-content: center; }
+.sprite svg { height: 100%; max-width: 100%; display: block; }
+.sprite.big svg { transform: scale(1.12); transform-origin: bottom center; }
+.floats { position: absolute; inset: 0; pointer-events: none; }
+.fl { position: absolute; top: 44%; font-family: var(--font-num); font-weight: 700; font-size: 24px; text-shadow: 0 2px 0 var(--shadow); animation: rise .9s ease-out forwards; }
+.fl.dmg { color: var(--gold); right: 22%; }
+.fl.hurt { color: var(--hp); left: 22%; }
+@keyframes rise { from { transform: translateY(0); opacity: 1; } to { transform: translateY(-40px); opacity: 0; } }
+@keyframes shake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-7px); } 75% { transform: translateX(7px); } }
+.shake { animation: shake .3s; }
+.qcard { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; }
+.qmeta { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); font-family: var(--font-num); }
+.qtext { font-size: 16px; line-height: 1.8; }
+.opts { display: flex; flex-direction: column; gap: 8px; }
+.opt { display: flex; align-items: center; gap: 10px; text-align: left; background: var(--panel2); border: 2px solid var(--line); border-radius: 10px; padding: 9px 12px; min-width: 0; }
+.opt b { flex: none; width: 26px; height: 26px; border-radius: 50%; background: var(--accent); color: var(--accent-fg); font-family: var(--font-num); font-size: 13px; display: inline-flex; align-items: center; justify-content: center; }
+.opt span { min-width: 0; overflow-wrap: anywhere; font-size: 15px; }
+.opt:not(:disabled):active { transform: translateY(1px); }
+.opt.correct { border-color: var(--ok); background: color-mix(in srgb, var(--ok) 20%, var(--panel2)); }
+.opt.wrong { border-color: var(--bad); background: color-mix(in srgb, var(--bad) 20%, var(--panel2)); }
+.opt.gone { opacity: .3; }
+.explain { background: var(--panel); border: 1px solid var(--line); border-left: 6px solid var(--ok); border-radius: 12px; padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; font-size: 14px; line-height: 1.8; }
+.explain.bad { border-left-color: var(--bad); }
+.explain .hd { font-weight: 900; font-size: 15px; }
+.explain .hd.g { color: var(--ok); }
+.explain .hd.b { color: var(--bad); }
+
+.sndbtn { flex: none; align-self: flex-start; padding: 5px 9px; font-size: 12px; white-space: nowrap; }
+.sndbtn[aria-pressed="true"] { color: var(--gold); border-color: var(--gold); }
+/* easy mode */
+.modes { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.mode { text-align: left; background: var(--panel); border: 2px solid var(--line); border-radius: 12px; padding: 8px 12px; display: flex; flex-direction: column; line-height: 1.4; min-width: 0; }
+.mode b { font-size: 15px; font-weight: 900; }
+.mode span { font-size: 12px; color: var(--muted); }
+.mode[aria-pressed="true"] { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 16%, var(--panel)); }
+.tutor { display: flex; gap: 12px; align-items: flex-start; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; }
+.tface { flex: none; width: 62px; }
+.tface svg { width: 100%; display: block; }
+.tsay { position: relative; flex: 1; min-width: 0; background: color-mix(in srgb, var(--gold) 14%, var(--panel2)); border: 1px solid var(--gold); border-radius: 12px; padding: 8px 12px; font-size: 14px; line-height: 1.75; }
+.tsay::before { content: ""; position: absolute; left: -7px; top: 20px; width: 12px; height: 12px; background: inherit; border-left: 1px solid var(--gold); border-bottom: 1px solid var(--gold); transform: rotate(45deg); }
+.tsay b { display: block; font-weight: 900; }
+.tstep { margin: 6px 0 0; }
+.tnext { margin-top: 8px; background: var(--accent); color: var(--accent-fg); border: 0; border-radius: 8px; padding: 6px 12px; font-size: 13px; font-weight: 700; }
+.tsay li + li { margin-top: 2px; }
+
+/* result */
+.modal { position: fixed; inset: 0; z-index: 20; background: color-mix(in srgb, var(--bg) 82%, transparent); display: flex; align-items: center; justify-content: center;
+  padding-top: max(16px, env(safe-area-inset-top, 0px)); padding-bottom: max(16px, env(safe-area-inset-bottom, 0px));
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); overflow-y: auto; }
+.sheet { width: 100%; max-width: 420px; background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 20px 18px; display: flex; flex-direction: column; gap: 12px; align-items: center; text-align: center; }
+.sheet h2 { font-size: 26px; font-weight: 900; letter-spacing: .08em; }
+.optcard { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
+.optlbl { font-size: 12px; color: var(--muted); letter-spacing: .1em; }
+.explain p { margin: 0; }
+.th { display: block; margin-top: 2px; color: var(--muted); font-family: "Noto Sans Thai", "Sarabun", "Leelawadee UI", system-ui, sans-serif; font-size: 13px; line-height: 1.8; }
+#exTxt p + p { margin-top: 6px; }
+.modal { align-items: flex-start; }
+.sheet { margin: auto; }
+.wrongs { width: 100%; text-align: left; display: flex; flex-direction: column; gap: 8px; font-size: 13px; line-height: 1.7; max-height: 36vh; overflow-y: auto; }
+.wtitle { font-weight: 900; font-size: 14px; color: var(--bad); }
+.wrong-item { background: var(--panel2); border: 1px solid var(--line); border-left: 4px solid var(--bad); border-radius: 8px; padding: 8px 10px; display: flex; flex-direction: column; gap: 2px; }
+.stars { font-size: 34px; color: var(--gold); letter-spacing: .1em; line-height: 1.2; }
+.rlist { list-style: none; margin: 0; padding: 0; width: 100%; display: flex; flex-direction: column; gap: 4px; font-size: 15px; }
+.rlist li { display: flex; justify-content: space-between; gap: 12px; border-bottom: 1px dashed var(--line); padding-bottom: 4px; }
+.rlist li b { font-family: var(--font-num); }
+.lvup { width: 100%; background: color-mix(in srgb, var(--gold) 16%, var(--panel2)); border: 1px solid var(--gold); border-radius: 10px; padding: 8px 10px; font-size: 14px; }
+.lvup b { color: var(--gold); font-size: 17px; }
+.acts { display: flex; flex-direction: column; gap: 8px; width: 100%; }
+.acts .ghost { padding: 10px 12px; font-size: 14px; }
+@media (prefers-reduced-motion: reduce) { .shake, .fl { animation: none; } .bar i { transition: none; } }
+
+/* login + teacher backend */
+.login { max-width: 420px; margin: 0 auto; width: 100%; display: flex; flex-direction: column; gap: 14px; padding-top: 18px; }
+.login .box { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+.login label { display: flex; flex-direction: column; gap: 5px; font-size: 13px; font-weight: 700; color: var(--muted); }
+.login input, .adm input { background: var(--panel2); color: var(--fg); border: 1px solid var(--line); border-radius: 10px; padding: 11px 12px; font: inherit; font-size: 16px; min-width: 0; }
+.login input:focus, .adm input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+.lerr { color: var(--bad); font-size: 13px; min-height: 1.4em; }
+.lnote { font-size: 12px; color: var(--muted); }
+.syncnote { font-size: 12px; color: var(--muted); text-align: center; }
+.adm { display: flex; flex-direction: column; gap: 12px; }
+.adm .top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.adm h2 { margin: 0; font-size: 18px; }
+.tblwrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); }
+.adm table { border-collapse: collapse; width: 100%; font-size: 14px; }
+.adm th, .adm td { padding: 8px 10px; text-align: left; white-space: nowrap; border-bottom: 1px solid var(--line); }
+.adm th { color: var(--muted); font-size: 12px; letter-spacing: .06em; background: var(--panel2); }
+.adm td.n { font-family: var(--font-num); }
+.adm .stat { font-size: 13px; color: var(--muted); }
+.foot { gap: 8px; flex-wrap: wrap; }
+</style>
+
+<div class="app">
+  <header class="hero" id="hero" hidden>
+    <div class="avatar" id="avatar"></div>
+    <div class="hinfo">
+      <div class="hrow"><b id="hName">見習數學家</b><span class="lv">Lv <span id="hLv">1</span></span></div>
+      <div class="bar xp"><i id="xpFill"></i></div>
+      <div class="hsmall"><span id="xpTxt">0 / 60 EXP</span><span><i class="coin"></i><span id="hGold">30</span></span></div>
+    </div>
+    <button class="ghost sndbtn" id="sndBtn" type="button" aria-pressed="true">音效:開</button>
+  </header>
+
+  <section id="login" class="login">
+    <div class="title">
+      <h1>二次函數大冒險</h1>
+      <p>數學 3 下 · 第 1 章 二次函數及其圖形</p>
+    </div>
+    <form class="box" id="loginForm" autocomplete="off">
+      <label>學號<input id="inSid" maxlength="20" inputmode="text" autocapitalize="characters" placeholder="例如 12 或 3A05" required></label>
+      <label>名字<input id="inName" maxlength="20" placeholder="你的名字或暱稱" required></label>
+      <div class="lerr" id="loginErr" role="alert"></div>
+      <button class="primary" type="submit">進入遊戲</button>
+      <div class="lnote">老師可以在後台看到你的學號和名字。請輸入真實學號,每次都用同一個學號,進度才會接上。</div>
+    </form>
+  </section>
+
+  <section id="admin" class="adm" hidden>
+    <div class="top"><h2>教師後台 · 玩家名單</h2><button class="ghost" id="admBack" type="button">返回</button></div>
+    <input id="admQ" type="search" placeholder="搜尋學號或名字" aria-label="搜尋">
+    <div class="stat" id="admStat">載入中…</div>
+    <div class="tblwrap"><table><thead><tr><th>學號</th><th>名字</th><th>等級</th><th>EXP</th><th>星數</th><th>最後上線</th></tr></thead><tbody id="admBody"></tbody></table></div>
+  </section>
+
+  <main id="map" hidden style="display:none;flex-direction:column;gap:14px">
+    <div class="title">
+      <h1>二次函數大冒險</h1>
+      <p>數學 3 下 · 第 1 章 二次函數及其圖形</p>
+    </div>
+    <div class="modes" id="modes">
+      <button class="mode" type="button" data-m="easy" aria-pressed="true"><b>輕鬆版</b><span>阿方博士教你解題 · 怪物較弱</span></button>
+      <button class="mode" type="button" data-m="hard" aria-pressed="false"><b>挑戰版</b><span>沒有教學 · 怪物更強</span></button>
+    </div>
+    <div id="dungeons" style="display:flex;flex-direction:column;gap:14px"></div>
+    <details>
+      <summary>冒險筆記(課本重點)</summary>
+      <div class="note">
+        <p>二次函數:<span class="m">y = ax<sup>2</sup> + bx + c</span>,其中 <span class="m">a ≠ 0</span>。</p>
+        <p><span class="m">a &gt; 0</span> 開口向上,頂點是最低點;<span class="m">a &lt; 0</span> 開口向下,頂點是最高點;<span class="m">|a|</span> 愈大,開口愈小。</p>
+        <div class="tbl">
+          <table>
+            <tr><th>二次函數</th><th>對稱軸</th><th>頂點</th></tr>
+            <tr><td class="m">y = ax<sup>2</sup></td><td class="m">x = 0</td><td class="m">(0, 0)</td></tr>
+            <tr><td class="m">y = ax<sup>2</sup> + k</td><td class="m">x = 0</td><td class="m">(0, k)</td></tr>
+            <tr><td class="m">y = a(x − h)<sup>2</sup></td><td class="m">x = h</td><td class="m">(h, 0)</td></tr>
+            <tr><td class="m">y = a(x − h)<sup>2</sup> + k</td><td class="m">x = h</td><td class="m">(h, k)</td></tr>
+          </table>
+        </div>
+        <p>平移:<span class="m">y = ax<sup>2</sup></span> 向右平移 h、向上平移 k,得到 <span class="m">y = a(x − h)<sup>2</sup> + k</span>。向左或向下時,h、k 取負數。</p>
+        <p>已知頂點 <span class="m">(h, k)</span>:先設 <span class="m">y = a(x − h)<sup>2</sup> + k</span>,再代入另一點求 a。</p>
+      </div>
+    </details>
+    <div class="syncnote" id="syncNote"></div>
+    <div class="foot"><button class="ghost" id="admBtn" type="button" hidden>教師後台</button><button class="ghost" id="logoutBtn" type="button">登出換人</button><button class="ghost" id="resetBtn" type="button">重置進度</button></div>
+  </main>
+
+  <section id="battle" hidden style="display:flex;flex-direction:column;gap:12px">
+    <div class="btop">
+      <button class="ghost" id="retreat" type="button">撤退</button>
+      <div class="btitle"><span id="bPlace"></span><b id="bStage"></b></div>
+      <div class="combo" id="combo">連擊 ×0</div>
+    </div>
+    <div class="arena" id="arena">
+      <div class="side">
+        <div class="nm"><span>你</span><span id="pHpTxt"></span></div>
+        <div class="bar hp"><i id="pHpFill"></i></div>
+        <div class="sprite" id="heroSprite"></div>
+      </div>
+      <div class="side">
+        <div class="nm"><span id="mName"></span><span id="mHpTxt"></span></div>
+        <div class="bar hp"><i id="mHpFill"></i></div>
+        <div class="sprite" id="monSprite"></div>
+      </div>
+      <div class="floats" id="floats"></div>
+    </div>
+    <div class="qcard">
+      <div class="qmeta"><span id="qNo"></span><button class="ghost" id="hintBtn" type="button">提示 · 15 金幣</button></div>
+      <p class="qtext" id="qText"></p>
+    </div>
+    <div class="tutor" id="tutor" hidden>
+      <div class="tface" id="tutorFace"></div>
+      <div class="tsay" id="tutorSay"></div>
+    </div>
+    <div class="optcard">
+      <div class="optlbl">選出你的答案</div>
+      <div class="opts" id="opts"></div>
+    </div>
+    <div class="explain" id="explain" hidden>
+      <div class="hd" id="exHd"></div>
+      <div id="exTxt"></div>
+      <button class="primary" id="nextBtn" type="button">下一題</button>
+    </div>
+  </section>
+
+  <div class="modal" id="result" hidden>
+    <div class="sheet">
+      <h2 id="rTitle"></h2>
+      <div class="stars" id="rStars"></div>
+      <ul class="rlist" id="rList"></ul>
+      <div class="lvup" id="rLevel" hidden></div>
+      <div class="wrongs" id="rWrongs" hidden></div>
+      <div class="acts">
+        <button class="primary" id="rNext" type="button">下一關</button>
+        <button class="ghost" id="rRetry" type="button">再戰一次</button>
+        <button class="ghost" id="rMap" type="button">回地圖</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="../../sync-client.js"></script>
+<script>
+/* ========== 接上教師後台的程式（整段複製，只改最上面的 GAME_KEY） ========== */
+const GAME_KEY = 'math-g8-ch3';            // 遊戲代號：小寫英文／數字／-／_，建議「科目簡碼-遊戲名」
+
+/* 1) 學號：沒有就強迫輸入 */
+function ensureStudent(done) {
+  const no = keyagentGetActiveStudentNumber();
+  if (no) return done(no);
+  const v = (prompt('請輸入你的學號') || '').trim();
+  if (!/^[A-Za-z0-9_-]{2,12}$/.test(v)) return ensureStudent(done);
+  localStorage.setItem('keyagent_active_student', JSON.stringify({ studentNumber: v, verified: false }));
+  done(v);
+}
+
+/* 2) 練習時間：只算「玩完一局」的時間；切到別的分頁不算；中途關掉的那一局不算 */
+let T0 = 0, ACC = 0;
+function tStart()  { ACC = 0; T0 = Date.now(); }
+function tPause()  { if (T0) { ACC += Date.now() - T0; T0 = 0; } }
+function tResume() { if (!T0 && !document.hidden) T0 = Date.now(); }
+function tTake()   { tPause(); const s = Math.min(1800, Math.round(ACC / 1000)); ACC = 0; return s; }
+document.addEventListener('visibilitychange', () => (document.hidden ? tPause() : tResume()));
+
+/* 3) 一局結束時呼叫 finishRound({...})，會自動記錄並送到老師的後台 */
+function finishRound(r) {
+  // r = { stageId:'L1', stageName:'第一課 認字', score:80, right:8, total:10, stars:2(可省略), nick:'小勇者'(可省略),
+  //       types:[{ key:'read', label:'看字讀音', right:5, total:6 }, ...](可省略) }
+  const secs = tTake();
+  keyagentUpdateOtherGame(GAME_KEY, prev => {
+    const stages = Object.assign({}, prev.stages);
+    const s = stages[r.stageId] || {};
+    stages[r.stageId] = {
+      n: r.stageName || r.stageId,
+      bestStars: Math.max(s.bestStars || 0, r.stars || 0),
+      bestScore: Math.max(s.bestScore || 0, r.score || 0),
+      plays: (s.plays || 0) + 1,
+      hist: (s.hist || []).concat([{ at: Date.now(), q: r.total || 0, ok: r.right || 0, s: secs, st: r.stars || 0 }]).slice(-30),   // 每一次的結果（後台點答對率可看）
+      totalSecs: (s.totalSecs || 0) + secs,
+      totalQ: (s.totalQ || 0) + (r.total || 0),
+      totalOk: (s.totalOk || 0) + (r.right || 0)
+    };
+    const q = Object.assign({}, prev.q);
+    (r.types || []).forEach(t => {
+      const k = r.stageId + ':' + t.key, o = q[k] || { n: 0, ok: 0 };
+      q[k] = { n: o.n + (t.total || 0), ok: o.ok + (t.right || 0), label: t.label || t.key };
+    });
+    return {
+      nick: r.nick || prev.nick || '',
+      totalPlays: (prev.totalPlays || 0) + 1,
+      bestScore: Math.max(prev.bestScore || 0, r.score || 0),
+      totalSecs: (prev.totalSecs || 0) + secs,
+      totalQ: (prev.totalQ || 0) + (r.total || 0),
+      totalOk: (prev.totalOk || 0) + (r.right || 0),
+      lastScore: r.score || 0, lastId: r.stageId, lastName: r.stageName || r.stageId, lastAt: Date.now(),
+      stages, q
+    };
+  });
+}
+keyagentInstallPageHideSync();           // 4) 離開頁面時補寄一次
+/* ========== 以上整段不用改 ========== */
+</script>
+<script>
+/* GEN START */
+function ri(a, b) { return a + Math.floor(Math.random() * (b - a + 1)); }
+function pick(arr) { return arr[ri(0, arr.length - 1)]; }
+function shuffle(arr) {
+  var a = arr.slice();
+  for (var i = a.length - 1; i > 0; i--) { var j = ri(0, i), t = a[i]; a[i] = a[j]; a[j] = t; }
+  return a;
+}
+function nz(a, b) { var v = 0; while (v === 0) v = ri(a, b); return v; }
+function r1(x) { return Math.round(x * 10) / 10; }
+function n(v) { return v < 0 ? "−" + (-v) : String(v); }
+function pn(v) { return v < 0 ? "(" + n(v) + ")" : String(v); }
+function pt(h, k) { return "(" + n(h) + ", " + n(k) + ")"; }
+function M(s) { return "<span class='m'>" + s + "</span>"; }
+function poly(terms) {
+  var out = "";
+  terms.forEach(function (t) {
+    var c = t[0], p = t[1];
+    if (c === 0) return;
+    var ab = Math.abs(c);
+    var body = p === 0 ? String(ab) : (ab === 1 ? "" : ab) + "x" + (p > 1 ? "<sup>" + p + "</sup>" : "");
+    out += out === "" ? (c < 0 ? "−" : "") + body : (c < 0 ? " − " : " + ") + body;
+  });
+  return "y = " + (out || "0");
+}
+function quad(a, h, k) {
+  var ab = Math.abs(a), coef = (a < 0 ? "−" : "") + (ab === 1 ? "" : ab);
+  var base = h === 0 ? "x" : "(x " + (h > 0 ? "−" : "+") + " " + Math.abs(h) + ")";
+  var c = k === 0 ? "" : (k > 0 ? " + " : " − ") + Math.abs(k);
+  return "y = " + coef + base + "<sup>2</sup>" + c;
+}
+function hword(h) { if (h === 0) return "x"; return "x " + (h > 0 ? "−" : "+") + " " + Math.abs(h); }
+function ks(k) { return k === 0 ? "" : (k > 0 ? "+ " + k : "− " + (-k)); }
+function xsub(x, h) { return n(x) + (h > 0 ? " − " + h : h < 0 ? " + " + (-h) : ""); }
+function uniqOthers(ans, cands) {
+  var seen = {}, out = [];
+  seen[ans] = 1;
+  shuffle(cands.map(String)).forEach(function (c) { if (!seen[c]) { seen[c] = 1; out.push(c); } });
+  return out.slice(0, 3);
+}
+var AV = [-5, -3, -2, -1, -0.5, 0.5, 1, 2, 3, 5];
+var NZ = [-3, -2, -1, 1, 2, 3];
+
+/* dungeon 0: meaning of quadratic functions */
+function gIsQuad() {
+  var a = nz(-3, 3), b = ri(-4, 4), c = ri(-5, 5), p = nz(-5, 5), q = ri(-5, 5), r = ri(2, 9);
+  var ans = poly(shuffle([[a, 2], [b, 1], [c, 0]]));
+  var o = [ans, poly([[p, 1], [q, 0]]), poly([[q, 0], [p, 3]]), "y = " + r + " ÷ x" + (q === 0 ? "" : (q > 0 ? " + " : " − ") + Math.abs(q))];
+  return { rs: ["這個式子最高次是 x 的一次方,是一次函數,不是二次函數。", "這個式子最高次是 x 的三次方。二次函數的最高次必須剛好是 2。", "這個式子的 x 在分母,不是 x 的多項式,所以不是二次函數。"], whyTh: "ฟังก์ชันกำลังสองมีรูปแบบ " + M("y = ax<sup>2</sup> + bx + c") + " โดย a ≠ 0 คือพจน์กำลังสูงสุดต้องเป็น x ยกกำลังสอง ตัวเลือกอื่นมีกำลังสูงสุดเป็นหนึ่งหรือสาม หรือมี x อยู่ในตัวส่วน จึงไม่ใช่ฟังก์ชันกำลังสอง", rsTh: ["สมการนี้มี x ยกกำลังสูงสุดเป็นกำลังหนึ่ง จึงเป็นฟังก์ชันเชิงเส้น ไม่ใช่ฟังก์ชันกำลังสอง", "สมการนี้มี x ยกกำลังสูงสุดเป็นกำลังสาม ฟังก์ชันกำลังสองต้องมีกำลังสูงสุดเป็น 2 พอดี", "สมการนี้มี x อยู่ในตัวส่วน จึงไม่ใช่พหุนามของ x จึงไม่ใช่ฟังก์ชันกำลังสอง"], coach: ["第 1 步:二次函數的公式是 " + M("y = ax<sup>2</sup> + bx + c") + ",其中 a ≠ 0。", "第 2 步:所以 x 的最高次方必須剛好是 2。x 在分母,或最高次是 1、3,都不是二次函數。", "換你!逐一檢查四個選項,最高次方是 2 的就是答案。"], q: "下列哪一個關係式中,y 是 x 的二次函數?", opts: o, ans: ans,
+    why: "二次函數的形式是 " + M("y = ax<sup>2</sup> + bx + c") + ",且 " + M("a ≠ 0") + ",也就是最高次項必須是 x 的二次項。其他選項最高次是一次或三次,或是 x 在分母,都不是二次函數。" };
+}
+function gEvalY() {
+  var a = nz(-3, 3), b = ri(-4, 4), c = ri(-6, 6), t = nz(-3, 3), y = a * t * t + b * t + c;
+  var ans = n(y);
+  var o = [ans].concat(uniqOthers(ans, [-a * t * t + b * t + c, a * t + b * t + c, a * t * t - b * t + c, y + ri(1, 4), y - ri(1, 4), y + ri(5, 9)].map(n)));
+  var step = pn(a) + " × " + pn(t) + "<sup>2</sup>" + (b ? " + " + pn(b) + " × " + pn(t) : "") + (c ? " + " + pn(c) : "");
+  return { diag: function (o) {
+    if (o === n(-a * t * t + b * t + c)) return "平方的符號錯了:" + M(pn(t) + "<sup>2</sup> = " + (t * t)) + "(平方一定是正的),所以 " + M(pn(a) + " × " + (t * t)) + " 的正負號要跟著 a 走。";
+    if (o === n(a * t + b * t + c)) return "你忘了把 x 平方,直接用 " + n(t) + " 乘係數了。二次項要先算 " + M(pn(t) + "<sup>2</sup> = " + (t * t)) + "。";
+    if (o === n(a * t * t - b * t + c)) return "一次項的正負號錯了:" + M(pn(b) + " × " + pn(t)) + " 要照 b 的符號算,不能變號。";
+    var v = +String(o).replace(/−/g, "-");
+    return "計算中有一步算錯了(你的答案和正確答案差 " + Math.abs(v - y) + ")。照順序檢查:先平方,再乘係數,最後加減。";
+  }, whyTh: "แทน x = " + n(t) + ": " + M(step + " = " + n(y)) + " ระวัง " + M(pn(t) + "<sup>2</sup>") + " ต้องยกกำลังสองก่อน จำนวนลบยกกำลังสองแล้วเป็นบวก", diagTh: function (o) {
+    if (o === n(-a * t * t + b * t + c)) return "เครื่องหมายของกำลังสองผิด: " + M(pn(t) + "<sup>2</sup> = " + (t * t)) + " (กำลังสองเป็นบวกเสมอ) ดังนั้นเครื่องหมายของ " + M(pn(a) + " × " + (t * t)) + " ต้องตาม a";
+    if (o === n(a * t + b * t + c)) return "คุณลืมยกกำลังสองของ x และเอา " + n(t) + " คูณสัมประสิทธิ์ตรง ๆ ต้องคำนวณ " + M(pn(t) + "<sup>2</sup> = " + (t * t)) + " ก่อน";
+    if (o === n(a * t * t - b * t + c)) return "เครื่องหมายของพจน์ x ผิด: " + M(pn(b) + " × " + pn(t)) + " ต้องคิดตามเครื่องหมายของ b ห้ามเปลี่ยน";
+    var v = +String(o).replace(/−/g, "-");
+    return "คำนวณผิดไปหนึ่งขั้นตอน (คำตอบของคุณต่างจากคำตอบที่ถูก " + Math.abs(v - y) + ") ตรวจตามลำดับ: ยกกำลังสอง คูณสัมประสิทธิ์ แล้วบวกลบ";
+  }, coach: ["第 1 步:先寫出題目的函數:" + M(poly([[a, 2], [b, 1], [c, 0]])) + ",要求 x = " + n(t) + " 時的 y。", "第 2 步:把每個 x 換成 " + pn(t) + ":" + M("y = " + step) + "。", "第 3 步:先算平方 " + M(pn(t) + "<sup>2</sup> = " + (t * t)) + ",式子變成 " + M("y = " + pn(a) + " × " + (t * t) + (b ? " + " + pn(b) + " × " + pn(t) : "") + (c ? " + " + pn(c) : "")) + "。", "換你!做乘法,再從左到右加減,算出 y。"], q: "二次函數 " + M(poly([[a, 2], [b, 1], [c, 0]])) + ",當 x = " + n(t) + " 時,y 的值為何?", opts: o, ans: ans,
+    why: "把 x = " + n(t) + " 代入:" + M(step + " = " + n(y)) + "。注意 " + M(pn(t) + "<sup>2</sup>") + " 要先平方,負數平方後變正數。" };
+}
+function gArea() {
+  if (Math.random() < .5) {
+    var ans = "y = x<sup>2</sup>";
+    return { rs: ["y = 2x 是邊長的 2 倍,不是面積。面積是邊長乘邊長。", "y = 4x 是正方形的周長(4 條邊),不是面積。", "面積 y 是由邊長 x 決定的,要寫成 y = ...;而且面積是 x 的平方。"], whyTh: "พื้นที่ = ด้าน × ด้าน = x × x = " + M("x<sup>2</sup>") + " จึงได้ " + M("y = x<sup>2</sup>") + " เป็นฟังก์ชันกำลังสอง ส่วน " + M("4x") + " คือความยาวรอบรูป", rsTh: ["y = 2x คือสองเท่าของความยาวด้าน ไม่ใช่พื้นที่ พื้นที่คือด้านคูณด้าน", "y = 4x คือความยาวรอบรูปของสี่เหลี่ยมจัตุรัส (4 ด้าน) ไม่ใช่พื้นที่", "พื้นที่ y ขึ้นกับความยาวด้าน x ต้องเขียนเป็น y = ... และพื้นที่คือ x ยกกำลังสอง"], coach: ["第 1 步:正方形的面積公式:面積 = 邊長 × 邊長。", "第 2 步:邊長是 x 公分,面積是 y 平方公分,代入得 " + M("y = x × x") + "。", "換你!x × x 用次方寫成什麼?選出對應的選項。"], q: "邊長為 x 公分的正方形,面積為 y 平方公分,x 與 y 的關係式為何?", opts: [ans, "y = 2x", "y = 4x", "x = y<sup>2</sup>"], ans: ans,
+      why: "面積 = 邊長 × 邊長 = x × x = " + M("x<sup>2</sup>") + ",所以 " + M(ans) + ",是二次函數。" + M("4x") + " 是周長。" };
+  }
+  var p = ri(1, 6), ans2 = poly([[1, 2], [-p, 1]]);
+  return { rs: ["這是周長(長加寬,再乘 2),不是面積。面積 = 長 × 寬。", "寬是 x − " + p + ",不是 x + " + p + "。展開 x(x − " + p + ") 時,x 項是 −" + p + "x。", "展開 x(x − " + p + ") 時,要把 " + p + " 乘上 x,得 " + p + "x,不是只剩常數 " + p + "。"], whyTh: "ความกว้าง = x − " + p + " พื้นที่ = ยาว × กว้าง = " + M("x(x − " + p + ") = " + ans2.replace("y = ", "")) + " ส่วน " + M(poly([[4, 1], [-2 * p, 0]])) + " คือความยาวรอบรูป ไม่ใช่พื้นที่", rsTh: ["นี่คือความยาวรอบรูป (ยาว + กว้าง แล้วคูณ 2) ไม่ใช่พื้นที่ พื้นที่ = ยาว × กว้าง", "ความกว้างคือ x − " + p + " ไม่ใช่ x + " + p + " เมื่อกระจาย x(x − " + p + ") พจน์ x คือ −" + p + "x", "เมื่อกระจาย x(x − " + p + ") ต้องเอา " + p + " คูณ x ได้ " + p + "x ไม่ใช่เหลือแค่ค่าคงที่ " + p], coach: ["第 1 步:長方形的面積公式:面積 = 長 × 寬。", "第 2 步:長是 x,寬是 " + M("x − " + p) + ",代入得 " + M("y = x × (x − " + p + ")") + "。", "第 3 步:用分配律展開括號:" + M("x × (x − " + p + ") = x × x − x × " + p) + "。", "換你!整理成 x 的二次式,找出對應的選項。"], q: "長方形的長為 x 公分,寬比長少 " + p + " 公分,面積為 y 平方公分,關係式為何?", opts: [ans2, poly([[4, 1], [-2 * p, 0]]), poly([[1, 2], [p, 1]]), poly([[1, 2], [-p, 0]])], ans: ans2,
+    why: "寬 = x − " + p + ",面積 = 長 × 寬 = " + M("x(x − " + p + ") = " + ans2.replace("y = ", "")) + "。" + M(poly([[4, 1], [-2 * p, 0]])) + " 是周長,不是面積。" };
+}
+function gFall() {
+  var H = pick([50, 100, 200, 508]), t = pick([1, 2, 3]), y = r1(H - 4.9 * t * t), ans = n(y);
+  var o = [ans].concat(uniqOthers(ans, [r1(H + 4.9 * t * t), r1(H - 4.9 * t), r1(H - 9.8 * t * t), r1(H - 4.9), r1(H - 2.45 * t * t)].map(n)));
+  return { diag: function (o) {
+    if (o === n(r1(H + 4.9 * t * t))) return "你把負號弄丟了:式子是 " + M("−4.9x<sup>2</sup>") + ",要用 " + H + " 減掉 4.9 × " + (t * t) + ",不是加上去。";
+    if (o === n(r1(H - 4.9 * t))) return "你沒有把 x 平方:要先算 " + M(t + "<sup>2</sup> = " + (t * t)) + ",再乘 4.9。";
+    if (o === n(r1(H - 9.8 * t * t))) return "4.9 不用再乘 2。算 4.9 × " + (t * t) + " 就好。";
+    if (o === n(r1(H - 4.9))) return "你漏了乘平方:要算 4.9 × " + M(t + "<sup>2</sup>") + " = 4.9 × " + (t * t) + "。";
+    if (o === n(r1(H - 2.45 * t * t))) return "係數是 4.9,不是 2.45(那只有一半)。";
+    return null;
+  }, whyTh: "แทน x = " + t + ": " + M("−4.9 × " + t + "<sup>2</sup> + " + H + " = " + n(y)) + " คำนวณกำลังสองของ " + t + " ก่อน แล้วค่อยคูณ 4.9", diagTh: function (o) {
+    if (o === n(r1(H + 4.9 * t * t))) return "คุณลืมเครื่องหมายลบ สมการคือ " + M("−4.9x<sup>2</sup>") + " ต้องเอา " + H + " ลบ 4.9 × " + (t * t) + " ไม่ใช่บวก";
+    if (o === n(r1(H - 4.9 * t))) return "คุณยังไม่ได้ยกกำลังสอง x ต้องคำนวณ " + M(t + "<sup>2</sup> = " + (t * t)) + " ก่อน แล้วค่อยคูณ 4.9";
+    if (o === n(r1(H - 9.8 * t * t))) return "4.9 ไม่ต้องคูณ 2 อีก คำนวณ 4.9 × " + (t * t) + " ก็พอ";
+    if (o === n(r1(H - 4.9))) return "คุณลืมคูณกำลังสอง ต้องคำนวณ 4.9 × " + M(t + "<sup>2</sup>") + " = 4.9 × " + (t * t);
+    if (o === n(r1(H - 2.45 * t * t))) return "สัมประสิทธิ์คือ 4.9 ไม่ใช่ 2.45 (นั่นคือครึ่งเดียว)";
+    return null;
+  }, coach: ["第 1 步:寫出公式 " + M("y = −4.9x<sup>2</sup> + " + H) + ",x 是落下的秒數。", "第 2 步:把 x = " + t + " 代進去:" + M("y = −4.9 × " + t + "<sup>2</sup> + " + H) + "。", "第 3 步:先算平方 " + M(t + "<sup>2</sup> = " + (t * t)) + ",式子變成 " + M("y = −4.9 × " + (t * t) + " + " + H) + "。", "換你!算出 4.9 × " + (t * t) + ",再用 " + H + " 減掉它,就是離地高度。"], q: "物體從 " + H + " 公尺高處自由落下,落下 x 秒時離地高度為 y 公尺,關係式為 " + M("y = −4.9x<sup>2</sup> + " + H) + "。落下 " + t + " 秒時,離地幾公尺?", opts: o, ans: ans,
+    why: "代入 x = " + t + ":" + M("−4.9 × " + t + "<sup>2</sup> + " + H + " = " + n(y)) + "。先算 " + t + " 的平方,再乘 4.9。" };
+}
+
+/* dungeon 1: y = ax^2 */
+function gOpenDir() {
+  var a = pick(AV), up = a > 0;
+  function lab(u, top) { return "開口向" + (u ? "上" : "下") + ",有" + (top ? "最高點" : "最低點") + " (0, 0)"; }
+  var ans = lab(up, !up);
+  return { diag: function (o) {
+    var dirUp = o.indexOf("向上") >= 0;
+    if (dirUp !== (a > 0)) return "開口方向看反了:a = " + n(a) + (a > 0 ? " > 0,要開口向上。" : " < 0,要開口向下。");
+    return "開口方向對了,但頂點配錯:開口向上時頂點是最低點,開口向下時頂點是最高點。";
+  }, whyTh: "ในข้อนี้ a = " + n(a) + (up ? " > 0 กราฟหงายขึ้น จุดยอด (0, 0) เป็นจุดต่ำสุด" : " < 0 กราฟคว่ำลง จุดยอด (0, 0) เป็นจุดสูงสุด"), diagTh: function (o) {
+    var dirUp = o.indexOf("向上") >= 0;
+    if (dirUp !== (a > 0)) return "ทิศทางการเปิดผิด: a = " + n(a) + (a > 0 ? " > 0 กราฟต้องหงายขึ้น" : " < 0 กราฟต้องคว่ำลง");
+    return "ทิศทางถูกแล้ว แต่จับคู่จุดยอดผิด: กราฟหงายขึ้นจุดยอดคือจุดต่ำสุด กราฟคว่ำลงจุดยอดคือจุดสูงสุด";
+  }, coach: ["第 1 步:公式是 " + M("y = ax<sup>2</sup>") + "。把題目 " + M(quad(a, 0, 0)) + " 對照公式,可得 a = " + n(a) + "。", "第 2 步:規則:a > 0,開口向上,頂點是最低點;a < 0,開口向下,頂點是最高點。", "第 3 步:" + M("y = ax<sup>2</sup>") + " 的頂點在 " + M("(0, 0)") + "。", "換你!a = " + n(a) + " 是正數還是負數?再配對選項。"], q: "關於二次函數 " + M(quad(a, 0, 0)) + " 的圖形,下列敘述何者正確?", opts: [lab(true, false), lab(true, true), lab(false, false), lab(false, true)], ans: ans,
+    why: "這裡 a = " + n(a) + (up ? " > 0,開口向上,頂點 (0, 0) 是最低點。" : " < 0,開口向下,頂點 (0, 0) 是最高點。") };
+}
+function gWidest() {
+  var abs = shuffle([0.1, 0.5, 1, 2, 3, 4, 5]).slice(0, 4);
+  var vals = abs.map(function (v) { return Math.random() < .5 ? -v : v; });
+  var big = Math.random() < .5, target = big ? Math.min.apply(null, abs) : Math.max.apply(null, abs);
+  var ansA = vals[abs.indexOf(target)];
+  return { diag: function (o) {
+    for (var i = 0; i < vals.length; i++) if (quad(vals[i], 0, 0) === o) return "你選的 |a| = " + abs[i] + "。這題要找開口" + (big ? "最大" : "最小") + ",也就是 |a| 最" + (big ? "小" : "大") + "的,|a| = " + target + "。開口大小只看 |a|,正負號不影響。";
+    return null;
+  }, whyTh: M("|a|") + " ยิ่งน้อย กราฟยิ่งกว้าง " + M("|a|") + " ยิ่งมาก กราฟยิ่งแคบ ค่า |a| ของทั้งสี่สมการคือ " + abs.join(", ") + " กราฟที่" + (big ? "กว้างที่สุด" : "แคบที่สุด") + "คือ " + M(quad(ansA, 0, 0)), diagTh: function (o) {
+    for (var i = 0; i < vals.length; i++) if (quad(vals[i], 0, 0) === o) return "ตัวเลือกที่คุณเลือกมี |a| = " + abs[i] + " ข้อนี้ต้องหากราฟที่" + (big ? "กว้างที่สุด" : "แคบที่สุด") + " คือ |a| " + (big ? "น้อย" : "มาก") + "ที่สุด คือ |a| = " + target + " ความกว้างของกราฟดูแค่ |a| เครื่องหมายไม่มีผล";
+    return null;
+  }, coach: ["第 1 步:公式是 " + M("y = ax<sup>2</sup>") + ",開口大小只看 " + M("|a|") + "(去掉正負號後的大小)。", "第 2 步:規則:" + M("|a|") + " 愈小,開口愈大;" + M("|a|") + " 愈大,開口愈小。", "第 3 步:把四個式子的 a 都去掉正負號,寫成 " + M("|a|") + "。這題要找 " + M("|a|") + " 最" + (big ? "小" : "大") + "的。", "換你!比一比大小,選出答案。"], q: "下列二次函數的圖形,哪一個的開口" + (big ? "最大" : "最小") + "?", opts: vals.map(function (v) { return quad(v, 0, 0); }), ans: quad(ansA, 0, 0),
+    why: M("|a|") + " 愈小,開口愈大;" + M("|a|") + " 愈大,開口愈小。四個式子的 " + M("|a|") + " 分別是 " + abs.join("、") + ",開口" + (big ? "最大" : "最小") + "的是 " + M(quad(ansA, 0, 0)) + "。" };
+}
+function gMirror() {
+  var a = pick(AV), ans = quad(-a, 0, 0);
+  return { rs: ["這就是原本的函數,沒有對摺。沿 x 軸對摺,a 要變號。", "對摺只會改變正負號,|a| 的大小不變,不會變成兩倍。", "雖然變號了,但 |a| 不會變成兩倍。對摺只改變正負號。"], whyTh: "เมื่อพับตามแกน x จุด (x, y) กลายเป็น (x, −y) ดังนั้นสัมประสิทธิ์ของพจน์กำลังสองเปลี่ยนเครื่องหมาย: " + M(n(a) + " → " + n(-a)) + " ได้ " + M(ans), rsTh: ["ตัวเลือกนี้คือฟังก์ชันเดิม ยังไม่ได้พับ เมื่อพับตามแกน x ค่า a ต้องเปลี่ยนเครื่องหมาย", "การพับเปลี่ยนแค่เครื่องหมาย ขนาดของ |a| ไม่เปลี่ยน และไม่เพิ่มเป็นสองเท่า", "เปลี่ยนเครื่องหมายแล้วก็จริง แต่ |a| ไม่เพิ่มเป็นสองเท่า การพับเปลี่ยนแค่เครื่องหมาย"], coach: ["第 1 步:規則:沿 x 軸對摺,圖形上的點 " + M("(x, y)") + " 會變成 " + M("(x, −y)") + "。", "第 2 步:把原式 " + M(quad(a, 0, 0)) + " 裡的 y 換成 −y,得 " + M("−y = " + quad(a, 0, 0).slice(4)) + "。", "換你!兩邊同乘 −1,把 −y 變回 y,寫出新的式子,再找選項。"], q: "將 " + M(quad(a, 0, 0)) + " 的圖形沿 x 軸對摺,會與下列哪一個函數的圖形完全疊合?", opts: [ans, quad(a, 0, 0), quad(2 * a, 0, 0), quad(-2 * a, 0, 0)], ans: ans,
+    why: "沿 x 軸對摺時,點 (x, y) 變成 (x, −y),所以二次項係數變號:" + M(n(a) + " → " + n(-a)) + ",得 " + M(ans) + "。" };
+}
+function gPointA() {
+  var a = nz(-3, 3), p = nz(-3, 3), q = a * p * p, ans = n(a);
+  var o = [ans].concat(uniqOthers(ans, [-a, a * p, q, a + 1, a - 1, 2 * a].map(n)));
+  return { diag: function (o) {
+    if (o === n(-a)) return "正負號錯了:" + M(n(q) + " = " + (p * p) + "a") + ",兩邊同除以 " + (p * p) + ",a 的正負號跟 " + n(q) + " 一樣。";
+    if (o === n(a * p)) return "你沒有把 x 平方:要代入 " + M(pn(p) + "<sup>2</sup> = " + (p * p)) + ",不是只用 " + n(p) + "。";
+    if (o === n(q)) return "你把 y 當成答案了。a 是係數,要用 y ÷ x²:" + M(n(q) + " ÷ " + (p * p)) + "。";
+    var v = +String(o).replace(/−/g, "-");
+    return "把你選的 a 代回去檢查:a × " + (p * p) + " 應該等於 " + n(q) + ",但 " + o + " × " + (p * p) + " = " + n(v * p * p) + "。";
+  }, whyTh: "แทน x = " + n(p) + ", y = " + n(q) + ": " + M(n(q) + " = a × " + pn(p) + "<sup>2</sup> = " + (p * p) + "a") + " ดังนั้น a = " + n(a), diagTh: function (o) {
+    if (o === n(-a)) return "เครื่องหมายผิด: " + M(n(q) + " = " + (p * p) + "a") + " หารทั้งสองข้างด้วย " + (p * p) + " เครื่องหมายของ a จะเหมือน " + n(q);
+    if (o === n(a * p)) return "คุณยังไม่ได้ยกกำลังสอง x ต้องแทน " + M(pn(p) + "<sup>2</sup> = " + (p * p)) + " ไม่ใช่ใช้ " + n(p) + " เฉย ๆ";
+    if (o === n(q)) return "คุณเอา y มาเป็นคำตอบ a คือสัมประสิทธิ์ ต้องใช้ y ÷ x²: " + M(n(q) + " ÷ " + (p * p));
+    var v = +String(o).replace(/−/g, "-");
+    return "ลองแทนค่า a ที่เลือกกลับไปตรวจ: a × " + (p * p) + " ควรได้ " + n(q) + " แต่ " + o + " × " + (p * p) + " = " + n(v * p * p);
+  }, coach: ["第 1 步:公式是 " + M("y = ax<sup>2</sup>") + "。圖形通過 " + M(pt(p, q)) + ",代表 x = " + n(p) + " 時 y = " + n(q) + "。", "第 2 步:代入公式:" + M(n(q) + " = a × " + pn(p) + "<sup>2</sup>") + "。", "第 3 步:先算平方 " + M(pn(p) + "<sup>2</sup> = " + (p * p)) + ",式子變成 " + M(n(q) + " = " + (p * p) + "a") + "。", "換你!兩邊同除以 " + (p * p) + ",求出 a。"], q: "二次函數 " + M("y = ax<sup>2</sup>") + " 的圖形通過點 " + M(pt(p, q)) + ",求 a。", opts: o, ans: ans,
+    why: "代入 x = " + n(p) + "、y = " + n(q) + ":" + M(n(q) + " = a × " + pn(p) + "<sup>2</sup> = " + (p * p) + "a") + ",所以 a = " + n(a) + "。" };
+}
+function gSymPoint() {
+  var a = nz(-3, 3), p = nz(-3, 3), q = a * p * p, ans = pt(-p, q);
+  return { rs: ["這是對 x 軸對稱(y 變相反數)。這題以 y 軸為對稱軸:y 不變,x 變相反數。", "x、y 都變相反數,是對原點對稱,不是對 y 軸對稱。", "對稱的兩點高度一樣,y 坐標不能改。x 坐標才要變成相反數。"], whyTh: "เมื่อสมมาตรกับแกน y จุดสมมาตรมีพิกัด y เท่ากัน พิกัด x เปลี่ยนเป็นค่าตรงข้าม: " + M(pt(p, q) + " ↔ " + ans), rsTh: ["นี่คือสมมาตรกับแกน x (y เปลี่ยนเป็นค่าตรงข้าม) แต่ข้อนี้สมมาตรกับแกน y: y คงเดิม x เปลี่ยนเป็นค่าตรงข้าม", "ถ้า x และ y เปลี่ยนเป็นค่าตรงข้ามทั้งคู่ จะเป็นสมมาตรกับจุดกำเนิด ไม่ใช่สมมาตรกับแกน y", "จุดสมมาตรสองจุดมีความสูงเท่ากัน พิกัด y ห้ามเปลี่ยน มีแค่พิกัด x ที่เปลี่ยนเป็นค่าตรงข้าม"], coach: ["第 1 步:" + M("y = ax<sup>2</sup>") + " 的對稱軸是 y 軸(直線 x = 0)。", "第 2 步:規則:以 y 軸對稱的兩點,y 坐標相同,x 坐標互為相反數:" + M("(x, y) ↔ (−x, y)") + "。", "第 3 步:已知的點是 " + M(pt(p, q)) + ",也就是 x = " + n(p) + "、y = " + n(q) + "。", "換你!把 x 換成它的相反數,y 不變,寫出對稱點。"], q: M(quad(a, 0, 0)) + " 的圖形以 y 軸為對稱軸。若點 " + M(pt(p, q)) + " 在圖形上,下列哪一點也一定在圖形上?", opts: [ans, pt(p, -q), pt(-p, -q), pt(p, q + 1)], ans: ans,
+    why: "以 y 軸為對稱軸時,對稱點的 y 坐標相同,x 坐標變成相反數:" + M(pt(p, q) + " ↔ " + ans) + "。" };
+}
+
+/* dungeon 2: translations */
+function gShiftUD() {
+  var a = pick(NZ), q = ri(1, 7), up = Math.random() < .5, k = up ? q : -q, ans = quad(a, 0, k);
+  return { rs: ["方向反了:向上平移要加、向下平移要減。", "上下平移改的是最後面的常數,不是括號裡的 x。括號裡是左右平移。", "上下平移改的是最後面的常數,不是括號裡的 x;方向也反了。"], whyTh: "การเลื่อนขึ้นลงเปลี่ยนที่ค่าคงที่ท้ายสมการ: เลื่อนขึ้นบวก เลื่อนลงลบ ได้ " + M(ans) + " ถ้าไปบวกลบในวงเล็บ จะกลายเป็นการเลื่อนซ้ายขวา", rsTh: ["ทิศทางผิด: เลื่อนขึ้นให้บวก เลื่อนลงให้ลบ", "การเลื่อนขึ้นลงเปลี่ยนที่ค่าคงที่ท้ายสมการ ไม่ใช่ x ในวงเล็บ (วงเล็บคือการเลื่อนซ้ายขวา)", "การเลื่อนขึ้นลงเปลี่ยนที่ค่าคงที่ท้ายสมการ ไม่ใช่ x ในวงเล็บ และทิศทางก็ผิดด้วย"], coach: ["第 1 步:公式是 " + M("y = ax<sup>2</sup> + k") + ",k 就是上下平移的量:向上平移 k 為正,向下平移 k 為負。", "第 2 步:這題向" + (up ? "上" : "下") + "平移 " + q + " 個單位,所以 k 取" + (up ? "正" : "負") + "數,大小是 " + q + "。", "第 3 步:把原式 " + M(quad(a, 0, 0)) + " 的最後面加上 k。", "換你!寫出新的式子,再找選項。"], q: "將 " + M(quad(a, 0, 0)) + " 的圖形向" + (up ? "上" : "下") + "平移 " + q + " 個單位,得到的二次函數為何?", opts: [ans, quad(a, 0, -k), quad(a, k, 0), quad(a, -k, 0)], ans: ans,
+    why: "上下平移改變的是常數項:向上加、向下減,得 " + M(ans) + "。如果加減放在括號裡面,那就變成左右平移了。" };
+}
+function gVertexK() {
+  var a = pick(NZ), k = nz(-6, 6), ans = pt(0, k);
+  return { rs: ["x、y 坐標放反了。頂點是 (0, k):x 坐標是 0,k 放在 y 坐標。", "正負號變了。k 是最後面的常數,正負號照抄,k = " + n(k) + "。", "x、y 坐標放反了,正負號也變了。頂點是 (0, k)。"], whyTh: M("y = ax<sup>2</sup> + k") + " มีแกนสมมาตรคือแกน y จุดยอดคือ " + M("(0, k)") + " ข้อนี้ k = " + n(k) + " จุดยอดคือ " + M(ans), rsTh: ["พิกัด x กับ y สลับกัน จุดยอดคือ (0, k): พิกัด x เป็น 0 ส่วน k อยู่ที่พิกัด y", "เครื่องหมายเปลี่ยนไป k คือค่าคงที่ท้ายสมการ เครื่องหมายคัดลอกตามเดิม k = " + n(k), "พิกัด x กับ y สลับกัน และเครื่องหมายก็เปลี่ยนไปด้วย จุดยอดคือ (0, k)"], coach: ["第 1 步:公式 " + M("y = ax<sup>2</sup> + k") + " 的頂點是 " + M("(0, k)") + "。", "第 2 步:把題目 " + M(quad(a, 0, k)) + " 對照公式,最後面的常數就是 k,正負號要一起看。", "換你!找出 k,把它放進 " + M("(0, k)") + ",再找選項。"], q: "二次函數 " + M(quad(a, 0, k)) + " 的圖形,頂點坐標為何?", opts: [ans, pt(k, 0), pt(0, -k), pt(-k, 0)], ans: ans,
+    why: M("y = ax<sup>2</sup> + k") + " 的對稱軸是 y 軸,頂點是 " + M("(0, k)") + "。這題 k = " + n(k) + ",頂點為 " + M(ans) + "。" };
+}
+function gShiftLR() {
+  var a = pick(NZ), p = ri(1, 7), right = Math.random() < .5, h = right ? p : -p, ans = quad(a, h, 0);
+  return { rs: ["方向反了。向右平移是 (x − h),向左平移是 (x + h)。", "左右平移改的是括號裡的 x,不是最後面的常數。", "左右平移改的是括號裡的 x,不是最後面的常數;方向也反了。"], whyTh: "เลื่อนไปทางขวา h หน่วย x เปลี่ยนเป็น " + M("(x − h)") + " เลื่อนไปทางซ้ายเปลี่ยนเป็น " + M("(x + h)") + " ข้อนี้เลื่อนไปทาง" + (right ? "ขวา" : "ซ้าย") + " " + p + " หน่วย ได้ " + M(ans), rsTh: ["ทิศทางผิด เลื่อนไปทางขวาเป็น (x − h) เลื่อนไปทางซ้ายเป็น (x + h)", "การเลื่อนซ้ายขวาเปลี่ยนที่ x ในวงเล็บ ไม่ใช่ค่าคงที่ท้ายสมการ", "การเลื่อนซ้ายขวาเปลี่ยนที่ x ในวงเล็บ ไม่ใช่ค่าคงที่ท้ายสมการ และทิศทางก็ผิดด้วย"], coach: ["第 1 步:公式:向右平移 h 個單位,得 " + M("y = a(x − h)<sup>2</sup>") + ";向左平移 h 個單位,得 " + M("y = a(x + h)<sup>2</sup>") + "。", "第 2 步:這題是向" + (right ? "右" : "左") + "平移 " + p + " 個單位,所以用 " + M(right ? "y = a(x − h)<sup>2</sup>" : "y = a(x + h)<sup>2</sup>") + ",其中 h = " + p + "、a = " + n(a) + "。", "換你!把 a 和 h 代進去,寫出新的式子,再找選項。"], q: "將 " + M(quad(a, 0, 0)) + " 的圖形向" + (right ? "右" : "左") + "平移 " + p + " 個單位,得到的二次函數為何?", opts: [ans, quad(a, -h, 0), quad(a, 0, h), quad(a, 0, -h)], ans: ans,
+    why: "向右平移 h 個單位,x 換成 " + M("(x − h)") + ";向左平移則換成 " + M("(x + h)") + "。這題向" + (right ? "右" : "左") + " " + p + ",得 " + M(ans) + "。" };
+}
+function gVertexH() {
+  var a = pick(NZ), h = nz(-6, 6), ans = pt(h, 0);
+  return { rs: ["h 的正負號看反了。括號裡是 " + M(hword(h)) + ",寫成 x − ( ? ) 後 h = " + n(h) + "。", "x、y 坐標放反了。" + M("y = a(x − h)<sup>2</sup>") + " 的頂點是 (h, 0),h 放在 x 坐標。", "x、y 坐標放反了,正負號也看反了。頂點是 (h, 0),h = " + n(h) + "。"], whyTh: M("y = a(x − h)<sup>2</sup>") + " มีจุดยอดคือ " + M("(h, 0)") + " ในวงเล็บคือ " + M(hword(h)) + " ดังนั้น h = " + n(h) + " จุดยอดคือ " + M(ans), rsTh: ["อ่านเครื่องหมายของ h กลับด้าน ในวงเล็บคือ " + M(hword(h)) + " เขียนเป็น x − ( ? ) จะได้ h = " + n(h), "พิกัด x กับ y สลับกัน จุดยอดของ " + M("y = a(x − h)<sup>2</sup>") + " คือ (h, 0) โดย h อยู่ที่พิกัด x", "พิกัด x กับ y สลับกัน และอ่านเครื่องหมายกลับด้านด้วย จุดยอดคือ (h, 0) โดย h = " + n(h)], coach: ["第 1 步:公式 " + M("y = a(x − h)<sup>2</sup>") + " 的頂點是 " + M("(h, 0)") + "。", "第 2 步:題目 " + M(quad(a, h, 0)) + " 的括號裡是 " + M(hword(h)) + "。把它寫成公式的樣子:" + M(hword(h) + " = x − ( ? )") + "。", "換你!填出 ? 就是 h,再寫出頂點 " + M("(h, 0)") + "。"], q: "二次函數 " + M(quad(a, h, 0)) + " 的圖形,頂點坐標為何?", opts: [ans, pt(-h, 0), pt(0, h), pt(0, -h)], ans: ans,
+    why: M("y = a(x − h)<sup>2</sup>") + " 的頂點是 " + M("(h, 0)") + "。括號內是 " + M(hword(h)) + ",所以 h = " + n(h) + ",頂點為 " + M(ans) + "。" };
+}
+function gAxisH() {
+  var a = pick(NZ), h = nz(-6, 6), ans = "x = " + n(h);
+  return { rs: ["h 的正負號看反了。括號裡是 " + M(hword(h)) + ",h = " + n(h) + "。", "y = ○ 是水平線。對稱軸是鉛直線,要寫成 x = h。", "對稱軸要寫成 x = h(鉛直線),而且 h 的正負號也看反了。h = " + n(h) + "。"], whyTh: "แกนสมมาตรคือเส้นแนวตั้งที่ผ่านจุดยอด x = h ในวงเล็บคือ " + M(hword(h)) + " ดังนั้น h = " + n(h) + " แกนสมมาตรคือ " + M(ans), rsTh: ["อ่านเครื่องหมายของ h กลับด้าน ในวงเล็บคือ " + M(hword(h)) + " ได้ h = " + n(h), "y = ○ เป็นเส้นแนวนอน แกนสมมาตรเป็นเส้นแนวตั้ง ต้องเขียนเป็น x = h", "แกนสมมาตรต้องเขียนเป็น x = h (เส้นแนวตั้ง) และอ่านเครื่องหมายของ h กลับด้านด้วย h = " + n(h)], coach: ["第 1 步:公式 " + M("y = a(x − h)<sup>2</sup>") + " 的對稱軸是通過頂點的鉛直線 " + M("x = h") + "。", "第 2 步:題目 " + M(quad(a, h, 0)) + " 的括號裡是 " + M(hword(h)) + "。把它寫成公式的樣子:" + M(hword(h) + " = x − ( ? )") + "。", "換你!填出 ? 就是 h,再寫成 " + M("x = h") + "。"], q: "二次函數 " + M(quad(a, h, 0)) + " 的圖形,對稱軸為何?", opts: [ans, "x = " + n(-h), "y = " + n(h), "y = " + n(-h)], ans: ans,
+    why: "對稱軸是通過頂點的鉛直線 " + M("x = h") + "。括號內是 " + M(hword(h)) + ",所以 h = " + n(h) + ",對稱軸為 " + M(ans) + "。" };
+}
+
+/* dungeon 3: y = a(x-h)^2 + k */
+function gVertex() {
+  var h = nz(-4, 4), k = nz(-5, 5), a = pick(NZ), ans = pt(h, k);
+  return { rs: ["h 的正負號看反了。括號裡是 " + M(hword(h)) + ",h = " + n(h) + "。", "k 的正負號不能改。括號外面的常數正負號照抄,k = " + n(k) + "。", "x、y 坐標放反了。頂點是 (h, k):h 在前,k 在後。"], whyTh: "สมการอยู่ในรูป " + M("y = a(x − h)<sup>2</sup> + k") + " ในวงเล็บคือ " + M(hword(h)) + " ดังนั้น h = " + n(h) + " ค่าคงที่ท้ายสมการคือ " + n(k) + " ดังนั้น k = " + n(k) + " จุดยอดคือ " + M(ans), rsTh: ["อ่านเครื่องหมายของ h กลับด้าน ในวงเล็บคือ " + M(hword(h)) + " ได้ h = " + n(h), "เครื่องหมายของ k ห้ามเปลี่ยน ค่าคงที่นอกวงเล็บให้คัดลอกเครื่องหมายตามเดิม k = " + n(k), "พิกัด x กับ y สลับกัน จุดยอดคือ (h, k): h มาก่อน k ตามหลัง"], coach: ["第 1 步:公式 " + M("y = a(x − h)<sup>2</sup> + k") + " 的頂點是 " + M("(h, k)") + "。", "第 2 步:先求 h。題目 " + M(quad(a, h, k)) + " 的括號裡是 " + M(hword(h)) + ",把它寫成公式的樣子:" + M(hword(h) + " = x − ( ? )") + ",? 就是 h。", "第 3 步:再求 k。括號外面的常數就是 k,正負號照抄,所以 k = " + n(k) + "。", "換你!填出 h,把 h、k 寫成頂點 " + M("(h, k)") + ",再找選項。"], q: "二次函數 " + M(quad(a, h, k)) + " 的圖形,頂點坐標為何?", opts: [ans, pt(-h, k), pt(h, -k), pt(k, h)], ans: ans,
+    why: "式子是 " + M("y = a(x − h)<sup>2</sup> + k") + " 的形式。括號內是 " + M(hword(h)) + ",所以 h = " + n(h) + ";常數項是 " + n(k) + ",所以 k = " + n(k) + "。頂點為 " + M(ans) + "。" };
+}
+function gAxis() {
+  var h = nz(-5, 5), k = nz(-5, 5), a = pick(NZ), ans = "x = " + n(h);
+  return { rs: ["h 的正負號看反了。括號裡是 " + M(hword(h)) + ",h = " + n(h) + "。", "y = ○ 是水平線,而且 k 跟對稱軸無關。對稱軸是鉛直線 x = h。", "k 跟對稱軸無關。對稱軸要寫成 x = h,h = " + n(h) + "。"], whyTh: "แกนสมมาตรคือ x = h ในวงเล็บคือ " + M(hword(h)) + " ดังนั้น h = " + n(h) + " แกนสมมาตรคือ " + M(ans), rsTh: ["อ่านเครื่องหมายของ h กลับด้าน ในวงเล็บคือ " + M(hword(h)) + " ได้ h = " + n(h), "y = ○ เป็นเส้นแนวนอน และ k ไม่เกี่ยวกับแกนสมมาตร แกนสมมาตรเป็นเส้นแนวตั้ง x = h", "k ไม่เกี่ยวกับแกนสมมาตร ต้องเขียนเป็น x = h โดย h = " + n(h)], coach: ["第 1 步:公式 " + M("y = a(x − h)<sup>2</sup> + k") + " 的對稱軸是 " + M("x = h") + ",和 k 沒有關係。", "第 2 步:題目 " + M(quad(a, h, k)) + " 的括號裡是 " + M(hword(h)) + ",把它寫成公式的樣子:" + M(hword(h) + " = x − ( ? )") + "。", "換你!填出 ? 就是 h,再寫成 " + M("x = h") + ",再找選項。"], q: "二次函數 " + M(quad(a, h, k)) + " 的圖形,對稱軸為何?", opts: [ans, "x = " + n(-h), "y = " + n(k), "y = " + n(-k)], ans: ans,
+    why: "對稱軸是 " + M("x = h") + "。括號內是 " + M(hword(h)) + ",所以 h = " + n(h) + ",對稱軸為 " + M(ans) + "。" };
+}
+function gNewVertex() {
+  var a = pick(NZ), h = ri(-3, 3), k = ri(-4, 4), p = ri(1, 5), q = ri(1, 5), right = Math.random() < .5, up = Math.random() < .5;
+  var dx = right ? p : -p, dy = up ? q : -q, ans = pt(h + dx, k + dy);
+  return { rs: ["x 坐標的方向反了:向右要加、向左要減。", "y 坐標的方向反了:向上要加、向下要減。", "x、y 的方向都反了。向右加、向左減;向上加、向下減。"], whyTh: "จุดยอดเดิมคือ " + M(pt(h, k)) + " เลื่อนไปทางขวาพิกัด x บวก ไปทางซ้ายลบ เลื่อนขึ้นพิกัด y บวก เลื่อนลงลบ ดังนั้นจุดยอดใหม่คือ " + M(ans), rsTh: ["ทิศทางของพิกัด x ผิด: เลื่อนไปทางขวาให้บวก เลื่อนไปทางซ้ายให้ลบ", "ทิศทางของพิกัด y ผิด: เลื่อนขึ้นให้บวก เลื่อนลงให้ลบ", "ทิศทางของทั้ง x และ y ผิด ขวาบวก ซ้ายลบ ขึ้นบวก ลงลบ"], coach: ["第 1 步:公式 " + M("y = a(x − h)<sup>2</sup> + k") + " 的頂點是 " + M("(h, k)") + "。原式 " + M(quad(a, h, k)) + " 的頂點是 " + M(pt(h, k)) + "。", "第 2 步:規則:向右平移,x 坐標加;向左平移,x 坐標減;向上平移,y 坐標加;向下平移,y 坐標減。", "第 3 步:代入:" + M("新 x = " + n(h) + (right ? " + " : " − ") + p) + ";" + M("新 y = " + n(k) + (up ? " + " : " − ") + q) + "。", "換你!算出新的 x 和 y,寫成新頂點,再找選項。"], q: "將 " + M(quad(a, h, k)) + " 的圖形向" + (right ? "右" : "左") + "平移 " + p + " 個單位,再向" + (up ? "上" : "下") + "平移 " + q + " 個單位,新圖形的頂點坐標為何?",
+    opts: [ans, pt(h - dx, k + dy), pt(h + dx, k - dy), pt(h - dx, k - dy)], ans: ans,
+    why: "原頂點是 " + M(pt(h, k)) + "。向右 x 坐標加、向左減;向上 y 坐標加、向下減。所以新頂點為 " + M(ans) + "。" };
+}
+function gShiftBoth() {
+  var a = pick(NZ), p = ri(1, 6), q = ri(1, 6), right = Math.random() < .5, up = Math.random() < .5;
+  var h = right ? p : -p, k = up ? q : -q, ans = quad(a, h, k);
+  return { rs: ["左右方向反了。向右平移是 (x − h),向左平移是 (x + h)。", "上下方向反了。向上平移 k 為正,向下平移 k 為負。", "左右和上下的方向都反了。"], whyTh: "จุดยอดย้ายจาก (0, 0) ไปที่ " + M(pt(h, k)) + " สัมประสิทธิ์ " + n(a) + " ไม่เปลี่ยน ดังนั้นฟังก์ชันใหม่คือ " + M(ans), rsTh: ["ทิศทางซ้ายขวาผิด เลื่อนไปทางขวาเป็น (x − h) เลื่อนไปทางซ้ายเป็น (x + h)", "ทิศทางขึ้นลงผิด เลื่อนขึ้น k เป็นบวก เลื่อนลง k เป็นลบ", "ทิศทางทั้งซ้ายขวาและขึ้นลงผิดหมด"], coach: ["第 1 步:公式:平移後的圖形是 " + M("y = a(x − h)<sup>2</sup> + k") + ",頂點從 " + M("(0, 0)") + " 移到 " + M("(h, k)") + "。", "第 2 步:規則:向右 h 為正、向左 h 為負;向上 k 為正、向下 k 為負。", "第 3 步:這題向" + (right ? "右" : "左") + " " + p + "、向" + (up ? "上" : "下") + " " + q + ",所以 " + M("h = " + n(right ? p : -p) + ",k = " + n(up ? q : -q)) + ",a = " + n(a) + " 不變。", "換你!把 a、h、k 代進公式,寫出新的式子,再找選項。"], q: "將 " + M(quad(a, 0, 0)) + " 的圖形向" + (right ? "右" : "左") + "平移 " + p + " 個單位,再向" + (up ? "上" : "下") + "平移 " + q + " 個單位,得到的二次函數為何?",
+    opts: [ans, quad(a, -h, k), quad(a, h, -k), quad(a, -h, -k)], ans: ans,
+    why: "頂點從 (0, 0) 移到 " + M(pt(h, k)) + ",二次項係數 " + n(a) + " 不變,所以新函數為 " + M(ans) + "。" };
+}
+function gFindA() {
+  var h = ri(-3, 3), k = ri(-4, 4), a = pick(NZ), ans = n(a);
+  var o = [ans].concat(uniqOthers(ans, [-a, a + 1, a - 1, a + 2, a - 2, 2 * a].map(n)));
+  return { diag: function (o) {
+    if (o === n(-a)) return "正負號反了。方程式是 " + M(n(k + a) + " = a " + ks(k)) + ",把常數移到另一邊再算。";
+    return "移項時算錯了。方程式是 " + M(n(k + a) + " = a " + ks(k)) + ",把常數移到另一邊:" + M("a = " + n(k + a) + (k > 0 ? " − " + k : k < 0 ? " + " + (-k) : "")) + "。";
+  }, whyTh: "จุดยอดคือ " + pt(h, k) + " ตั้งสมการเป็น " + M("y = a(" + hword(h) + ")<sup>2</sup> " + (k >= 0 ? "+ " + k : "− " + (-k))) + " แทน x = " + n(h + 1) + ", y = " + n(k + a) + " เพราะ x − h = 1 ได้ " + M(n(k + a) + " = a " + (k >= 0 ? "+ " + k : "− " + (-k))) + " ดังนั้น a = " + n(a), diagTh: function (o) {
+    if (o === n(-a)) return "เครื่องหมายกลับด้าน สมการคือ " + M(n(k + a) + " = a " + ks(k)) + " ย้ายค่าคงที่ไปอีกข้างแล้วคำนวณใหม่";
+    return "ย้ายข้างผิด สมการคือ " + M(n(k + a) + " = a " + ks(k)) + " ย้ายค่าคงที่ไปอีกข้าง: " + M("a = " + n(k + a) + (k > 0 ? " − " + k : k < 0 ? " + " + (-k) : ""));
+  }, coach: ["第 1 步:頂點是 " + M(pt(h, k)) + ",用公式 " + M("y = a(x − h)<sup>2</sup> + k") + ",把 h = " + n(h) + "、k = " + n(k) + " 代進去:" + M("y = a(" + hword(h) + ")<sup>2</sup> " + ks(k)) + "。", "第 2 步:再把通過的點 " + M(pt(h + 1, k + a)) + " 代進去(x = " + n(h + 1) + "、y = " + n(k + a) + "):" + M(n(k + a) + " = a(" + xsub(h + 1, h) + ")<sup>2</sup> " + ks(k)) + "。", "第 3 步:先算括號裡的結果,它是 1;1 的平方還是 1,式子變成 " + M(n(k + a) + " = a " + ks(k)) + "。", "換你!解這個一元一次方程式,求出 a。"], q: "已知二次函數圖形的頂點為 " + M(pt(h, k)) + ",且通過點 " + M(pt(h + 1, k + a)) + ",求二次項係數 a。", opts: o, ans: ans,
+    why: "頂點為 " + pt(h, k) + ",可設 " + M("y = a(" + hword(h) + ")<sup>2</sup> " + (k >= 0 ? "+ " + k : "− " + (-k))) + "。代入 x = " + n(h + 1) + "、y = " + n(k + a) + ",因為 x − h = 1,得 " + M(n(k + a) + " = a " + (k >= 0 ? "+ " + k : "− " + (-k))) + ",所以 a = " + n(a) + "。" };
+}
+function gFindFunc() {
+  var h = nz(-3, 3), k = nz(-4, 4), a = pick(NZ), d = pick([-2, -1, 1, 2]), ans = quad(a, h, k);
+  return { rs: ["h 的正負號看反了。頂點 " + M(pt(h, k)) + " 的 h = " + n(h) + ",括號要寫成 " + M(hword(h)) + "。", "a 的正負號錯了。把點代進去解出來的 a = " + n(a) + "。", "k 的正負號不能改。k 是頂點的 y 坐標,k = " + n(k) + "。"], whyTh: "ตั้งสมการเป็น " + M("y = a(" + hword(h) + ")<sup>2</sup> " + (k >= 0 ? "+ " + k : "− " + (-k))) + " แทนจุด: x − h = " + n(d) + " ได้ " + M(n(k + a * d * d) + " = a × " + (d * d) + " " + (k >= 0 ? "+ " + k : "− " + (-k))) + " ดังนั้น a = " + n(a) + " ฟังก์ชันคือ " + M(ans), rsTh: ["อ่านเครื่องหมายของ h กลับด้าน จุดยอด " + M(pt(h, k)) + " มี h = " + n(h) + " วงเล็บต้องเขียนเป็น " + M(hword(h)), "เครื่องหมายของ a ผิด แทนจุดแล้วแก้สมการได้ a = " + n(a), "เครื่องหมายของ k ห้ามเปลี่ยน k คือพิกัด y ของจุดยอด k = " + n(k)], coach: ["第 1 步:頂點是 " + M(pt(h, k)) + ",用公式 " + M("y = a(x − h)<sup>2</sup> + k") + ",把 h = " + n(h) + "、k = " + n(k) + " 代進去:" + M("y = a(" + hword(h) + ")<sup>2</sup> " + ks(k)) + "。", "第 2 步:再把通過的點 " + M(pt(h + d, k + a * d * d)) + " 代進去(x = " + n(h + d) + "、y = " + n(k + a * d * d) + "):" + M(n(k + a * d * d) + " = a(" + xsub(h + d, h) + ")<sup>2</sup> " + ks(k)) + "。", "第 3 步:先算括號裡的結果 " + M(xsub(h + d, h) + " = " + n(d)) + ",再平方 " + M(pn(d) + "<sup>2</sup> = " + (d * d)) + ",式子變成 " + M(n(k + a * d * d) + " = " + (d * d) + "a " + ks(k)) + "。", "換你!解出 a,再把 a、h、k 放回式子,找對應的選項。"], q: "已知二次函數圖形的頂點為 " + M(pt(h, k)) + ",且通過點 " + M(pt(h + d, k + a * d * d)) + ",此二次函數為何?", opts: [ans, quad(a, -h, k), quad(-a, h, k), quad(a, h, -k)], ans: ans,
+    why: "設 " + M("y = a(" + hword(h) + ")<sup>2</sup> " + (k >= 0 ? "+ " + k : "− " + (-k))) + "。代入點:x − h = " + n(d) + ",所以 " + M(n(k + a * d * d) + " = a × " + (d * d) + " " + (k >= 0 ? "+ " + k : "− " + (-k))) + ",得 a = " + n(a) + ",函數為 " + M(ans) + "。" };
+}
+function gExtreme() {
+  var h = nz(-4, 4), k = nz(-5, 5), a = pick(NZ), up = a > 0;
+  while (h === k) k = nz(-5, 5);
+  function lab(u, top, hk) { return "開口向" + (u ? "上" : "下") + ",有" + (top ? "最高點" : "最低點") + " " + (hk ? pt(h, k) : pt(k, h)); }
+  var ans = lab(up, !up, true);
+  return { rs: ["開口方向看反了:a = " + n(a) + (up ? " > 0,要開口向上" : " < 0,要開口向下") + "。", "開口向上的拋物線,頂點是最低點;開口向下,頂點是最高點。你把它們配錯了。", "頂點坐標的 x、y 放反了。頂點是 (h, k):h = " + n(h) + ",k = " + n(k) + "。"], whyTh: "a = " + n(a) + (up ? " > 0 กราฟหงายขึ้น จุดยอดเป็นจุดต่ำสุด" : " < 0 กราฟคว่ำลง จุดยอดเป็นจุดสูงสุด") + " พิกัดจุดยอดคือ " + M(pt(h, k)), rsTh: ["ทิศทางการเปิดของกราฟผิด: a = " + n(a) + (up ? " > 0 กราฟต้องหงายขึ้น" : " < 0 กราฟต้องคว่ำลง"), "กราฟหงายขึ้น จุดยอดคือจุดต่ำสุด กราฟคว่ำลง จุดยอดคือจุดสูงสุด คุณจับคู่สลับกัน", "พิกัด x กับ y ของจุดยอดสลับกัน จุดยอดคือ (h, k): h = " + n(h) + " k = " + n(k)], coach: ["第 1 步:公式 " + M("y = a(x − h)<sup>2</sup> + k") + " 的頂點是 " + M("(h, k)") + "。a > 0:開口向上,頂點是最低點。a < 0:開口向下,頂點是最高點。", "第 2 步:把題目 " + M(quad(a, h, k)) + " 對照公式:a = " + n(a) + ",k = " + n(k) + "。", "第 3 步:求 h:括號裡是 " + M(hword(h)) + ",寫成 " + M(hword(h) + " = x − ( ? )") + ",? 就是 h。", "換你!判斷開口方向、找出 h,再選出開口和頂點都對的選項。"], q: "關於二次函數 " + M(quad(a, h, k)) + " 的圖形,下列敘述何者正確?", opts: [ans, lab(!up, !up, true), lab(up, up, true), lab(up, !up, false)], ans: ans,
+    why: "a = " + n(a) + (up ? " > 0,開口向上,頂點是最低點" : " < 0,開口向下,頂點是最高點") + ",頂點坐標為 " + M(pt(h, k)) + "。" };
+}
+var POOLS = [
+  [gIsQuad, gEvalY, gArea, gFall],
+  [gOpenDir, gWidest, gMirror, gPointA, gSymPoint],
+  [gShiftUD, gVertexK, gShiftLR, gVertexH, gAxisH],
+  [gVertex, gAxis, gNewVertex, gShiftBoth, gFindA, gFindFunc, gExtreme]
+];
+var TIPS = new Map([
+  [gIsQuad, ["二次函數的樣子是 y = ax² + bx + c,而且 a ≠ 0。", "找出每個式子裡 x 的最高次方。", "最高次剛好是 2 才選;最高次是 1 或 3,或 x 在分母,都不是。"]],
+  [gEvalY, ["把題目給的 x 值,代進式子裡每一個 x。", "負數代入要加括號;先平方,再乘係數。", "最後從左到右加減,算出 y。"]],
+  [gArea, ["先想面積公式:正方形是邊長 × 邊長,長方形是長 × 寬。", "把長、寬都用 x 表示出來。", "相乘展開,看看 x 的最高次方是不是 2。"]],
+  [gFall, ["把題目給的秒數代進 x。", "先算秒數的平方,再乘 4.9。", "最後照式子加減,就是離地高度。"]],
+  [gOpenDir, ["看 x² 前面的係數 a。", "a > 0:開口向上,頂點是最低點。a < 0:開口向下,頂點是最高點。", "y = ax² 的頂點一定在 (0, 0)。"]],
+  [gWidest, ["只看 |a|,也就是去掉正負號後的大小。", "|a| 愈小,開口愈大;|a| 愈大,開口愈小。", "把四個選項的 |a| 排一排,再選出要的那個。"]],
+  [gMirror, ["沿 x 軸對摺,上面的點會翻到下面:(x, y) 變成 (x, −y)。", "所以二次項係數 a 變成 −a。", "只有正負號變,大小不變。"]],
+  [gPointA, ["圖形通過一點,就把那點的 x、y 代進 y = ax²。", "先算 x 的平方。", "解一元一次方程式,求出 a。"]],
+  [gSymPoint, ["這個圖形以 y 軸為對稱軸。", "對稱的兩個點,高度(y 坐標)一樣。", "x 坐標變成相反數。"]],
+  [gShiftUD, ["上下平移,改的是式子最後面的常數。", "向上平移就加,向下平移就減。", "括號裡面的 x 不要動。"]],
+  [gVertexK, ["y = ax² + k 的對稱軸還是 y 軸。", "所以頂點是 (0, k)。", "k 就是最後面的常數,連同正負號一起看。"]],
+  [gShiftLR, ["左右平移,改的是括號裡的 x。", "向右平移 h:換成 (x − h)。向左平移 h:換成 (x + h)。", "最後面的常數項不要動。"]],
+  [gVertexH, ["y = a(x − h)² 的頂點是 (h, 0)。", "看括號:x − 3 代表 h = 3;x + 3 代表 h = −3。", "h 的正負號,跟括號裡看到的相反。"]],
+  [gAxisH, ["對稱軸是通過頂點的鉛直線 x = h。", "括號裡寫 x − h,所以 h 是括號裡的數字變號。", "答案要寫成 x = 某個數。"]],
+  [gVertex, ["式子是 y = a(x − h)² + k 的形式。", "h 看括號,正負號跟括號裡相反。", "k 看最後面的常數,正負號照抄。頂點就是 (h, k)。"]],
+  [gAxis, ["對稱軸是 x = h。", "h 看括號,正負號跟括號裡相反。", "k 跟對稱軸無關,不要選 y = 開頭的。"]],
+  [gNewVertex, ["先找出原本的頂點 (h, k)。", "向右 x 坐標加、向左減;向上 y 坐標加、向下減。", "算完的 (x, y) 就是新頂點。"]],
+  [gShiftBoth, ["平移後,頂點從 (0, 0) 移到 (h, k)。", "向右 h 為正、向左 h 為負;向上 k 為正、向下 k 為負。", "寫成 y = a(x − h)² + k,a 不會變。"]],
+  [gFindA, ["有頂點 (h, k),先設 y = a(x − h)² + k。", "把另一個點的 x、y 代進去。", "解方程式求出 a。"]],
+  [gFindFunc, ["用頂點先設 y = a(x − h)² + k。", "把另一個點代進去,解出 a。", "把 a、h、k 都放回式子,就是答案。"]],
+  [gExtreme, ["先看 a:正的開口向上、有最低點;負的開口向下、有最高點。", "再找頂點 (h, k):h 看括號變號,k 看常數。", "兩件事都對的選項,才是答案。"]]
+]);
+var lastGen = null;
+function genQuestion(d, boss) {
+  var pool = [];
+  if (boss) { for (var i = 0; i <= d; i++) pool = pool.concat(POOLS[i]); } else pool = POOLS[d];
+  var r, tries = 0, g;
+  do {
+    do { g = pick(pool); } while (g === lastGen && pool.length > 1 && tries < 6);
+    r = g(); tries++;
+  } while (new Set(r.opts).size < 4 && tries < 60);
+  lastGen = g;
+  r.tip = TIPS.get(g) || [];
+  r.rmap = {}; r.rmapTh = {};
+  if (r.rs) r.rs.forEach(function (t, i) { r.rmap[r.opts[i + 1]] = t; });
+  if (r.rsTh) r.rsTh.forEach(function (t, i) { r.rmapTh[r.opts[i + 1]] = t; });
+  r.opts = shuffle(r.opts);
+  r.correct = r.opts.indexOf(r.ans);
+  return r;
+}
+/* GEN END */
+
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var SAVE_BASE = "quad-adventure-v1", SAVE = SAVE_BASE + ":none", PKEY = "quad-player-v1";
+  var DG = [
+    { name: "二次函數村", tag: "認識二次函數的意義", color: "var(--d0)", mon: ["代數史萊姆", "一次函數怪", "係數蝙蝠", "變數幽靈", "平方巨人"] },
+    { name: "對稱峽谷", tag: "y = ax² 的圖形", color: "var(--d1)", mon: ["鏡像蝴蝶", "開口蛙", "最低點蟹", "對摺龍蝦", "y 軸守衛"] },
+    { name: "平移森林", tag: "上下左右平移", color: "var(--d2)", mon: ["上移蘑菇", "下沉蛞蝓", "左右猴", "滑動狐狸", "平移樹精"] },
+    { name: "頂點城堡", tag: "y = a(x − h)² + k", color: "var(--d3)", mon: ["頂點騎士", "對稱法師", "括號骷髏", "係數魔像", "拋物線龍王"] }
+  ];
+  var S, B = null, lastTarget = null;
+
+  /* sound effects: synthesized with Web Audio, no audio files */
+  var Snd = (function () {
+    var ctx = null, on = true;
+    try { on = localStorage.getItem("quad-sound") !== "0"; } catch (e) {}
+    var N = { c5: 523, e5: 659, g5: 784, c6: 1047, e6: 1319, g6: 1568 };
+    var SND = {
+      tap: [[520, 0, .06, "square", .05]],
+      start: [[330, 0, .12, "triangle", .1], [495, .1, .16, "triangle", .1]],
+      correct: [[660, 0, .1, "triangle", .14], [990, .09, .18, "triangle", .14], [160, 0, .12, "sawtooth", .08, 70]],
+      wrong: [[220, 0, .28, "sawtooth", .1, 110], [110, .05, .3, "square", .06, 70]],
+      hint: [[440, 0, .12, "sine", .1], [587, .1, .14, "sine", .1]],
+      win: [[N.c5, 0, .16, "triangle", .14], [N.e5, .14, .16, "triangle", .14], [N.g5, .28, .16, "triangle", .14], [N.c6, .42, .4, "triangle", .14]],
+      lose: [[392, 0, .24, "sawtooth", .08], [330, .2, .24, "sawtooth", .08], [262, .4, .24, "sawtooth", .08], [196, .6, .4, "sawtooth", .08]],
+      levelup: [[N.c5, 0, .12, "square", .07], [N.e5, .08, .12, "square", .07], [N.g5, .16, .12, "square", .07], [N.c6, .24, .12, "square", .07], [N.e6, .32, .12, "square", .07], [N.g6, .4, .3, "square", .07]]
+    };
+    function ac() {
+      if (!ctx) {
+        var C = window.AudioContext || window.webkitAudioContext;
+        if (!C) return null;
+        try { ctx = new C(); } catch (e) { return null; }
+      }
+      if (ctx.state === "suspended") { try { ctx.resume(); } catch (e) {} }
+      return ctx;
+    }
+    function tone(c, f, t, d, type, v, to) {
+      var o = c.createOscillator(), g = c.createGain();
+      o.type = type || "sine";
+      o.frequency.setValueAtTime(f, t);
+      if (to) o.frequency.exponentialRampToValueAtTime(to, t + d);
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(v || 0.12, t + 0.01);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + d);
+      o.connect(g); g.connect(c.destination);
+      o.start(t); o.stop(t + d + 0.02);
+    }
+    function play(name) {
+      if (!on || !SND[name]) return;
+      var c = ac();
+      if (!c) return;
+      var t = c.currentTime + 0.01;
+      SND[name].forEach(function (n) { tone(c, n[0], t + n[1], n[2], n[3], n[4], n[5]); });
+    }
+    function label() {
+      var b = $("sndBtn");
+      b.textContent = "音效:" + (on ? "開" : "關");
+      b.setAttribute("aria-pressed", on ? "true" : "false");
+    }
+    function toggle() {
+      on = !on;
+      try { localStorage.setItem("quad-sound", on ? "1" : "0"); } catch (e) {}
+      label();
+      play("tap");
+    }
+    $("sndBtn").addEventListener("click", toggle);
+    label();
+    return { play: play };
+  })();
+
+  function fresh() { return { mode: "easy", xp: 0, gold: 30, clears: [[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]] }; }
+  function load() {
+    try { var s = JSON.parse(localStorage.getItem(SAVE)); if (s && s.clears && s.clears.length === 4) { if (!s.mode) s.mode = "easy"; return s; } } catch (e) {}
+    return fresh();
+  }
+  function save() { try { localStorage.setItem(SAVE, JSON.stringify(S)); } catch (e) {} }
+  function levelOf(xp) {
+    var L = 1, need = 60;
+    while (xp >= need) { xp -= need; L++; need += 30; }
+    return { L: L, cur: xp, need: need };
+  }
+  function maxHP(L) { return 60 + 12 * (L - 1); }
+  function atk(L) { return 10 + 3 * (L - 1); }
+  function stars(n) { return "★★★".slice(0, n) + "☆☆☆".slice(0, 3 - n); }
+  function unlocked(d, s) {
+    if (s > 0) return S.clears[d][s - 1] > 0;
+    return d === 0 || S.clears[d - 1][4] > 0;
+  }
+
+  /* sprites */
+  var HERO = '<svg viewBox="0 0 80 100" aria-hidden="true"><ellipse cx="40" cy="95" rx="24" ry="5" fill="var(--shadow)"/><path d="M20 92 L40 46 L60 92 Z" fill="var(--accent)"/><circle cx="40" cy="34" r="14" fill="#f2c9a0"/><path d="M25 31 Q40 8 55 31 Q40 22 25 31 Z" fill="var(--fg)"/><circle cx="35" cy="36" r="2" fill="#1a1a2e"/><circle cx="45" cy="36" r="2" fill="#1a1a2e"/><line x1="64" y1="96" x2="64" y2="42" stroke="var(--gold)" stroke-width="3" stroke-linecap="round"/><path d="M54 30 Q64 54 74 30" fill="none" stroke="var(--xp)" stroke-width="3.5" stroke-linecap="round"/></svg>';
+  function monsterSVG(color, boss) {
+    return '<svg viewBox="0 0 120 110" style="--dc:' + color + '" aria-hidden="true"><ellipse cx="60" cy="103" rx="42" ry="6" fill="var(--shadow)"/>' +
+      (boss ? '<path d="M28 44 L20 12 L46 30 Z" fill="var(--gold)"/><path d="M92 44 L100 12 L74 30 Z" fill="var(--gold)"/>' : '') +
+      '<path d="M12 101 Q60 -32 108 101 Z" fill="var(--dc)"/><path d="M12 101 Q60 -32 108 101 Z" fill="none" stroke="rgba(0,0,0,.28)" stroke-width="3"/>' +
+      '<circle cx="44" cy="64" r="9" fill="#fff"/><circle cx="76" cy="64" r="9" fill="#fff"/><circle cx="46" cy="66" r="4.5" fill="#1a1a2e"/><circle cx="74" cy="66" r="4.5" fill="#1a1a2e"/>' +
+      '<path d="M46 86 Q60 96 74 86" fill="none" stroke="#1a1a2e" stroke-width="3" stroke-linecap="round"/></svg>';
+  }
+  $("avatar").innerHTML = HERO;
+  $("heroSprite").innerHTML = HERO;
+  function owl(mood) {
+    var ink = "#1a1a2e", eyes;
+    if (mood === "ok") {
+      eyes = '<path d="M23 40 Q30 31 37 40" fill="none" stroke="' + ink + '" stroke-width="3" stroke-linecap="round"/><path d="M43 40 Q50 31 57 40" fill="none" stroke="' + ink + '" stroke-width="3" stroke-linecap="round"/>';
+    } else {
+      eyes = '<circle cx="30" cy="40" r="8.5" fill="#fff"/><circle cx="50" cy="40" r="8.5" fill="#fff"/><circle cx="31" cy="41" r="3.8" fill="' + ink + '"/><circle cx="49" cy="41" r="3.8" fill="' + ink + '"/>';
+      if (mood === "bad") eyes += '<path d="M21 29 L37 33" stroke="' + ink + '" stroke-width="2.5" stroke-linecap="round"/><path d="M59 29 L43 33" stroke="' + ink + '" stroke-width="2.5" stroke-linecap="round"/><path d="M66 36 Q69 41 66 44 Q63 41 66 36 Z" fill="#6ec6ff"/>';
+    }
+    return '<svg viewBox="0 0 80 94" aria-hidden="true"><ellipse cx="40" cy="90" rx="22" ry="3.5" fill="var(--shadow)"/>' +
+      '<ellipse cx="14" cy="62" rx="7" ry="16" fill="var(--accent)" stroke="rgba(0,0,0,.25)" stroke-width="2"/><ellipse cx="66" cy="62" rx="7" ry="16" fill="var(--accent)" stroke="rgba(0,0,0,.25)" stroke-width="2"/>' +
+      '<ellipse cx="40" cy="58" rx="27" ry="29" fill="var(--accent)" stroke="rgba(0,0,0,.25)" stroke-width="2"/><ellipse cx="40" cy="68" rx="16" ry="18" fill="#fff3d6"/>' +
+      '<path d="M12 23 L40 11 L68 23 L40 35 Z" fill="#232a52"/><rect x="30" y="26" width="20" height="9" rx="2" fill="#232a52"/><line x1="64" y1="24" x2="64" y2="37" stroke="#f5b83d" stroke-width="2"/><circle cx="64" cy="39" r="2.6" fill="#f5b83d"/>' +
+      eyes + '<path d="M36 48 L44 48 L40 56 Z" fill="#f5b83d"/>' +
+      '<path d="M32 90 L32 85 M36 90 L36 85 M44 90 L44 85 M48 90 L48 85" stroke="#f5b83d" stroke-width="2.4" stroke-linecap="round"/></svg>';
+  }
+  function renderTutor(mood) {
+    var t = $("tutor");
+    if (!B || !B.easy) { t.hidden = true; return; }
+    t.hidden = false;
+    $("tutorFace").innerHTML = owl(mood);
+    var say = mood === "ok" ? "答對了!你學得真快。" : mood === "bad" ? "沒關係,看看下面的錯題整理,我們再來一次。" : "阿方博士來教你,我們一步一步來:";
+    var steps = B.q.coach || B.q.tip || [];
+    var shown = B.answered ? steps.length : Math.min(B.step || 1, steps.length);
+    var html = "<b>" + say + "</b>" + steps.slice(0, shown).map(function (s) { return '<p class="tstep">' + s + "</p>"; }).join("");
+    if (shown < steps.length) html += '<button class="tnext" type="button">老師,下一步 (' + shown + " / " + steps.length + ")</button>";
+    $("tutorSay").innerHTML = html;
+  }
+  function syncModes() {
+    Array.prototype.forEach.call(document.querySelectorAll(".mode"), function (b) {
+      b.setAttribute("aria-pressed", b.getAttribute("data-m") === S.mode ? "true" : "false");
+    });
+  }
+
+  /* map */
+  function renderHero() {
+    var lv = levelOf(S.xp);
+    $("hLv").textContent = lv.L;
+    $("xpFill").style.width = Math.min(100, lv.cur / lv.need * 100) + "%";
+    $("xpTxt").textContent = lv.cur + " / " + lv.need + " EXP";
+    $("hGold").textContent = S.gold;
+  }
+  function renderMap() {
+    renderHero();
+    syncModes();
+    var h = "";
+    DG.forEach(function (dg, d) {
+      var cl = S.clears[d], done = cl.filter(function (x) { return x > 0; }).length, tot = cl.reduce(function (a, b) { return a + b; }, 0);
+      h += '<section class="dg' + (unlocked(d, 0) ? "" : " lock") + '" style="--dc:' + dg.color + '"><div class="dgh"><span class="dgno">副本 ' + (d + 1) + '</span><h2>' + dg.name + '</h2><p>' + dg.tag + '</p></div><div class="nodes">';
+      for (var s = 0; s < 5; s++) {
+        var boss = s === 4, st = cl[s];
+        h += '<button class="node' + (st > 0 ? " done" : "") + (boss ? " boss" : "") + '" type="button" data-d="' + d + '" data-s="' + s + '"' + (unlocked(d, s) ? "" : " disabled") + ' aria-label="' + dg.name + (boss ? " Boss" : " 第 " + (s + 1) + " 關") + '"><span class="nn">' + (boss ? "王" : s + 1) + '</span><span class="ns">' + stars(st) + '</span></button>';
+      }
+      h += '</div><div class="dgf">' + done + ' / 5 關 · ' + tot + ' / 15 ★</div></section>';
+    });
+    $("dungeons").innerHTML = h;
+  }
+  $("dungeons").addEventListener("click", function (ev) {
+    var b = ev.target.closest(".node");
+    if (b && !b.disabled) startBattle(+b.getAttribute("data-d"), +b.getAttribute("data-s"));
+  });
+
+  function show(which) {
+    $("login").hidden = which !== "login";
+    $("admin").hidden = which !== "admin";
+    $("hero").hidden = which === "login" || which === "admin";
+    $("map").hidden = which !== "map";
+    $("battle").hidden = which !== "battle";
+    $("map").style.display = which === "map" ? "flex" : "none";
+    $("battle").style.display = which === "battle" ? "flex" : "none";
+    window.scrollTo(0, 0);
+  }
+
+  /* battle */
+  function startBattle(d, s) {
+    var boss = s === 4, lv = levelOf(S.xp).L;
+    var easy = S.mode === "easy";
+    var mMax = Math.round((boss ? 90 + 25 * d : 36 + 6 * s + 8 * d) * (easy ? 0.75 : 1));
+    B = { d: d, s: s, boss: boss, mMax: mMax, mHP: mMax, pMax: maxHP(lv), pHP: maxHP(lv), atk: atk(lv),
+          mDmg: Math.round((boss ? 18 + 4 * d : 12 + 3 * d) * (easy ? 0.5 : 1)), easy: easy, wrongs: [], combo: 0, wrong: 0, correct: 0, asked: 0, q: null, answered: false, hint: false, over: false, win: false };
+    lastTarget = [d, s]; tStart();
+    var dg = DG[d];
+    $("battle").style.setProperty("--dc", dg.color);
+    $("bPlace").textContent = dg.name + (B.easy ? " · 輕鬆版" : " · 挑戰版");
+    $("bStage").textContent = (boss ? "Boss 戰 · " : "第 " + (s + 1) + " 關 · ") + dg.mon[s];
+    $("mName").textContent = dg.mon[s];
+    $("monSprite").innerHTML = monsterSVG(dg.color, boss);
+    $("monSprite").className = "sprite" + (boss ? " big" : "");
+    $("result").hidden = true;
+    Snd.play("start");
+    show("battle");
+    bars();
+    nextQuestion();
+  }
+  function bars() {
+    $("pHpFill").style.width = Math.max(0, B.pHP / B.pMax * 100) + "%";
+    $("mHpFill").style.width = Math.max(0, B.mHP / B.mMax * 100) + "%";
+    $("pHpTxt").textContent = Math.max(0, B.pHP) + " / " + B.pMax;
+    $("mHpTxt").textContent = Math.max(0, B.mHP) + " / " + B.mMax;
+    $("combo").textContent = "連擊 ×" + B.combo;
+    renderHero();
+    updateHint();
+  }
+  function updateHint() {
+    var b = $("hintBtn");
+    b.disabled = !B || B.answered || B.hint || S.gold < 15;
+    b.textContent = B && B.hint ? "已使用提示" : "提示 · 15 金幣";
+  }
+  function nextQuestion() {
+    B.q = genQuestion(B.d, B.boss);
+    B.answered = false; B.hint = false; B.asked++; B.step = 1;
+    $("qNo").textContent = "第 " + B.asked + " 題";
+    $("qText").innerHTML = B.q.q;
+    renderTutor("ask");
+    $("opts").innerHTML = B.q.opts.map(function (o, i) {
+      return '<button class="opt" type="button" data-i="' + i + '"><b>' + "ABCD".charAt(i) + '</b><span class="m">' + o + '</span></button>';
+    }).join("");
+    $("explain").hidden = true;
+    updateHint();
+  }
+  function float(cls, text) {
+    var el = document.createElement("div");
+    el.className = "fl " + cls; el.textContent = text;
+    $("floats").appendChild(el);
+    setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, 950);
+  }
+  function shake(el) { el.classList.remove("shake"); void el.offsetWidth; el.classList.add("shake"); }
+
+  $("opts").addEventListener("click", function (ev) {
+    var b = ev.target.closest(".opt");
+    if (!b || !B || B.answered || b.disabled) return;
+    answer(+b.getAttribute("data-i"));
+  });
+  function reasonFor(q, opt) {
+    var t = (q.rmap && q.rmap[opt]) || (q.diag ? q.diag(opt) : null);
+    return t || "計算過程中有地方出錯了。對照下面的重新教學,一步一步再算一次。";
+  }
+  function thFor(q, opt) {
+    var t = (q.rmapTh && q.rmapTh[opt]) || (q.diagTh ? q.diagTh(opt) : null);
+    return t || "คำนวณผิดไปหนึ่งขั้นตอน ลองดูวิธีสอนใหม่ด้านล่าง แล้วคำนวณทีละขั้นอีกครั้ง";
+  }
+  function answer(i) {
+    B.answered = true;
+    var ok = i === B.q.correct, btns = $("opts").children;
+    for (var k = 0; k < btns.length; k++) {
+      btns[k].disabled = true;
+      if (k === B.q.correct) btns[k].classList.add("correct");
+      else if (k === i) btns[k].classList.add("wrong");
+    }
+    var hd = $("exHd"), tx = $("exTxt"), ex = $("explain");
+    renderTutor(ok ? "ok" : "bad");
+    Snd.play(ok ? "correct" : "wrong");
+    if (ok) {
+      var dmg = B.atk + Math.min(B.combo, 5) * 3;
+      B.mHP -= dmg; B.combo++; B.correct++; S.gold += 3;
+      float("dmg", "−" + dmg); shake($("monSprite"));
+      hd.className = "hd g"; hd.textContent = "答對了!造成 " + dmg + " 點傷害,獲得 3 金幣";
+      tx.innerHTML = B.q.why; ex.className = "explain";
+    } else {
+      B.pHP -= B.mDmg; B.combo = 0; B.wrong++;
+      float("hurt", "−" + B.mDmg); shake($("heroSprite"));
+      var chosen = B.q.opts[i], reason = reasonFor(B.q, chosen), reasonTh = thFor(B.q, chosen), okOpt = B.q.opts[B.q.correct];
+      B.wrongs.push({ q: B.q.q, chosen: chosen, ans: okOpt, reason: reason, th: reasonTh });
+      var again = (!B.easy && B.q.coach) ? B.q.coach.slice(0, -1).map(function (s) { return "<p>" + s + "</p>"; }).join("") : "";
+      hd.className = "hd b"; hd.textContent = "錯題整理 · ทบทวนข้อที่ผิด · 受到 " + B.mDmg + " 點傷害";
+      tx.innerHTML = "<p><b>你選的 · คุณเลือก:</b>(" + "ABCD".charAt(i) + ") <span class='m'>" + chosen + "</span></p>" +
+        "<p><b>錯在哪裡 · ผิดตรงไหน:</b>" + reason + "<span class='th'>" + reasonTh + "</span></p>" +
+        "<p><b>重新教你 · สอนใหม่อีกครั้ง:</b></p>" + again + "<p>" + B.q.why + (B.q.whyTh ? "<span class='th'>" + B.q.whyTh + "</span>" : "") + "</p>" +
+        "<p><b>正確答案 · คำตอบที่ถูกต้อง:</b>(" + "ABCD".charAt(B.q.correct) + ") <span class='m'>" + okOpt + "</span></p>";
+      ex.className = "explain bad";
+    }
+    if (B.mHP <= 0) { B.over = true; B.win = true; }
+    else if (B.pHP <= 0) { B.over = true; B.win = false; }
+    $("nextBtn").textContent = B.over ? (B.win ? "領取戰利品" : "查看結果") : "下一題";
+    bars();
+    ex.hidden = false;
+    ex.scrollIntoView({ block: "nearest" });
+  }
+  $("nextBtn").addEventListener("click", function () {
+    Snd.play("tap");
+    if (B.over) finish(); else { nextQuestion(); window.scrollTo(0, 0); }
+  });
+  $("hintBtn").addEventListener("click", function () {
+    if (!B || B.answered || B.hint || S.gold < 15) return;
+    S.gold -= 15; B.hint = true; Snd.play("hint");
+    var wrong = [];
+    for (var i = 0; i < 4; i++) if (i !== B.q.correct) wrong.push(i);
+    shuffle(wrong).slice(0, 2).forEach(function (i) {
+      var b = $("opts").children[i]; b.disabled = true; b.classList.add("gone");
+    });
+    save(); renderHero(); updateHint();
+  });
+  $("retreat").addEventListener("click", function () { save(); pushPlayer(); B = null; renderMap(); show("map"); });
+
+  /* result */
+  function finish() {
+    var before = levelOf(S.xp).L, rows = [], d = B.d, s = B.s;
+    if (B.win) {
+      var st = B.wrong === 0 ? 3 : B.wrong <= 1 ? 2 : 1, first = S.clears[d][s] === 0;
+      var base = 20 + d * 10 + s * 4 + (B.boss ? 40 : 0) + st * 5, xp = Math.round(base * (first ? 1 : 0.4) * (B.easy ? 0.7 : 1)), gold = first ? 20 : 8;
+      S.clears[d][s] = Math.max(S.clears[d][s], st);
+      S.xp += xp; S.gold += gold;
+      rows.push(["答對 / 答錯", B.correct + " / " + B.wrong], ["經驗值", "+" + xp + (first ? "" : "(重玩 40%)")], ["金幣", "+" + gold + "(另含答題所得)"]);
+      $("rTitle").textContent = B.boss ? "討伐成功" : "勝利";
+      $("rStars").textContent = stars(st);
+    } else {
+      rows.push(["答對 / 答錯", B.correct + " / " + B.wrong], ["提示", "回地圖看看冒險筆記,再來一次。"]);
+      $("rTitle").textContent = "敗北";
+      $("rStars").textContent = "";
+    }
+    try {
+      var tot = B.correct + B.wrong, nm = DG[d].name + (B.boss ? " Boss" : " 第" + (s + 1) + "關") + (B.easy ? "·輕鬆" : "·挑戰");
+      finishRound({ stageId: "D" + (d + 1) + "-" + (s + 1) + (B.easy ? "e" : "h"), stageName: nm,
+        score: tot ? Math.round(B.correct / tot * 100) : 0, right: B.correct, total: tot, stars: B.win ? (B.wrong === 0 ? 3 : B.wrong <= 1 ? 2 : 1) : 0,
+        types: [{ key: "q" + (d + 1), label: DG[d].name, right: B.correct, total: tot }] });
+    } catch (e) {}
+    save(); pushPlayer();
+    var after = levelOf(S.xp).L, lv = $("rLevel");
+    if (after > before) {
+      lv.hidden = false;
+      lv.innerHTML = "<b>升級!Lv " + before + " → Lv " + after + "</b><br>生命上限 " + maxHP(before) + " → " + maxHP(after) + ",攻擊 " + atk(before) + " → " + atk(after);
+    } else lv.hidden = true;
+    $("rList").innerHTML = rows.map(function (r) { return "<li><span>" + r[0] + "</span><b>" + r[1] + "</b></li>"; }).join("");
+    var wl = $("rWrongs");
+    if (B.wrongs.length) {
+      wl.hidden = false;
+      wl.innerHTML = '<div class="wtitle">本局錯題整理 · สรุปข้อที่ผิดในรอบนี้</div>' + B.wrongs.slice(0, 6).map(function (w, k) {
+        return '<div class="wrong-item"><div>' + (k + 1) + ". " + w.q + '</div><div>你選:<span class="m">' + w.chosen + '</span></div><div>錯在:' + w.reason + '<span class="th">' + w.th + '</span></div><div>正確:<span class="m">' + w.ans + '</span></div></div>';
+      }).join("");
+    } else wl.hidden = true;
+    var nx = null;
+    if (B.win) { if (s < 4) nx = [d, s + 1]; else if (d < 3) nx = [d + 1, 0]; }
+    $("rNext").hidden = !nx;
+    $("rNext").onclick = function () { if (nx) startBattle(nx[0], nx[1]); };
+    if (B.win && !nx) { $("rTitle").textContent = "全數通關"; }
+    $("result").hidden = false;
+    Snd.play(B.win ? "win" : "lose");
+    if (after > before) setTimeout(function () { Snd.play("levelup"); }, 900);
+    renderHero();
+  }
+  $("rRetry").addEventListener("click", function () { if (lastTarget) startBattle(lastTarget[0], lastTarget[1]); });
+  $("rMap").addEventListener("click", function () { $("result").hidden = true; B = null; renderMap(); show("map"); });
+
+  $("tutorSay").addEventListener("click", function (ev) {
+    if (!ev.target.closest(".tnext") || !B || B.answered) return;
+    B.step = (B.step || 1) + 1; Snd.play("tap"); renderTutor("ask");
+  });
+  $("modes").addEventListener("click", function (ev) {
+    var b = ev.target.closest(".mode");
+    if (!b) return;
+    S.mode = b.getAttribute("data-m"); save(); syncModes(); Snd.play("tap");
+  });
+  var resetArmed = false, resetTimer = null;
+  $("resetBtn").addEventListener("click", function () {
+    var b = $("resetBtn");
+    if (!resetArmed) {
+      resetArmed = true; b.textContent = "再按一次確認重置";
+      resetTimer = setTimeout(function () { resetArmed = false; b.textContent = "重置進度"; }, 3000);
+    } else {
+      clearTimeout(resetTimer); resetArmed = false; b.textContent = "重置進度";
+      S = fresh(); save(); renderMap();
+    }
+  });
+
+  /* ---------- 學號登入 + 教師後台 ---------- */
+  var P = null, DB = null, UID = null, IS_ADMIN = false, syncing = false, dirty = false, syncState = "";
+  var roster = [], unsub = null, admTimer = null;
+  function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+  function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+  function setSync(t) { syncState = t; $("syncNote").textContent = t; }
+  function totals() {
+    var st = 0, cl = 0;
+    S.clears.forEach(function (r) { r.forEach(function (v) { st += v; if (v > 0) cl++; }); });
+    return { st: st, cl: cl };
+  }
+  function pushPlayer() {
+    if (!DB || !UID || !P || !S) return;
+    if (syncing) { dirty = true; return; }
+    syncing = true; dirty = false;
+    var t = totals();
+    var doc = { sid: P.sid, name: P.name, level: levelOf(S.xp).L, xp: S.xp, stars: t.st, cleared: t.cl, mode: S.mode, seen: Date.now() };
+    var ok = true;
+    DB.doc("players/" + UID).set(doc).catch(function () { ok = false; }).then(function () {
+      syncing = false;
+      if (P) setSync(ok ? "已記錄到老師後台" : "未能連線到老師後台(進度只存在這台裝置)");
+      if (dirty) pushPlayer();
+    });
+  }
+  function startPlayer(sid, name) {
+    P = { sid: sid, name: name };
+    lsSet(PKEY, JSON.stringify(P));
+    try { if (/^[A-Za-z0-9_-]{2,12}$/.test(sid)) localStorage.setItem('keyagent_active_student', JSON.stringify({ studentNumber: sid, verified: false })); } catch (e) {}
+    SAVE = SAVE_BASE + ":" + sid.toLowerCase();
+    S = load();
+    $("hName").textContent = name + " · " + sid;
+    setSync(DB && UID ? "正在記錄到老師後台…" : "只存在這台裝置(未連線後台)");
+    renderMap(); show("map");
+    pushPlayer();
+  }
+  function showLogin() {
+    var last = null;
+    try { last = JSON.parse(lsGet(PKEY)); } catch (e) {}
+    $("inSid").value = last && last.sid ? last.sid : "";
+    $("inName").value = last && last.name ? last.name : "";
+    $("loginErr").textContent = "";
+    show("login");
+  }
+  $("loginForm").addEventListener("submit", function (ev) {
+    ev.preventDefault();
+    var sid = $("inSid").value.trim(), name = $("inName").value.trim().replace(/\s+/g, " ");
+    if (!sid) { $("loginErr").textContent = "請輸入學號"; return; }
+    if (!/^[A-Za-z0-9_\-]{1,20}$/.test(sid)) { $("loginErr").textContent = "學號只能用英文字母、數字、- 或 _"; return; }
+    if (!name) { $("loginErr").textContent = "請輸入名字"; return; }
+    Snd.play("tap");
+    startPlayer(sid, name);
+  });
+  $("logoutBtn").addEventListener("click", function () {
+    pushPlayer(); try { localStorage.removeItem('keyagent_active_student'); } catch (e) {} P = null; S = fresh(); B = null; showLogin();
+  });
+
+  function fmtTime(ms) {
+    if (!ms) return "";
+    var d = new Date(ms), p2 = function (n) { return (n < 10 ? "0" : "") + n; };
+    return d.getFullYear() + "-" + p2(d.getMonth() + 1) + "-" + p2(d.getDate()) + " " + p2(d.getHours()) + ":" + p2(d.getMinutes());
+  }
+  function renderRoster() {
+    var q = $("admQ").value.trim().toLowerCase();
+    var rows = roster.filter(function (r) { return !q || String(r.sid).toLowerCase().indexOf(q) >= 0 || String(r.name).toLowerCase().indexOf(q) >= 0; });
+    rows.sort(function (a, b) { return String(a.sid).localeCompare(String(b.sid), undefined, { numeric: true }); });
+    var tb = $("admBody"); tb.textContent = "";
+    rows.forEach(function (r) {
+      var tr = document.createElement("tr");
+      [r.sid, r.name, "Lv " + (r.level || 1), r.xp || 0, "★ " + (r.stars || 0), fmtTime(r.seen)].forEach(function (v, i) {
+        var td = document.createElement("td"); if (i >= 2 && i <= 4) td.className = "n";
+        td.textContent = String(v); tr.appendChild(td);
+      });
+      tb.appendChild(tr);
+    });
+    $("admStat").textContent = "共 " + roster.length + " 位玩家" + (q ? ",符合搜尋 " + rows.length + " 位" : "");
+  }
+  function watchRoster() {
+    if (unsub || !DB || !IS_ADMIN) return;
+    $("admStat").textContent = "載入中…";
+    admTimer = setTimeout(function () { $("admStat").textContent = "暫時連不上資料庫,名單可能不是最新。"; }, 10000);
+    try {
+      unsub = DB.collection("players").onSnapshot(function (snap) {
+        if (!snap.metadata.fromCache) clearTimeout(admTimer);
+        roster = snap.docs.map(function (d) { return d.data() || {}; });
+        renderRoster();
+      }, function () { clearTimeout(admTimer); unsub = null; $("admStat").textContent = "無法讀取名單。"; });
+    } catch (e) { clearTimeout(admTimer); $("admStat").textContent = "無法讀取名單。"; }
+  }
+  $("admBtn").addEventListener("click", function () { watchRoster(); show("admin"); });
+  $("admBack").addEventListener("click", function () { show(P ? "map" : "login"); });
+  $("admQ").addEventListener("input", renderRoster);
+
+  function initCloud() {
+    try {
+      if (!window.claude || !window.claude.use) return;
+      Promise.all([window.claude.use("db"), window.claude.use("user")]).then(function (r) {
+        var U = r[1]; if (!r[0] || !U) return null;
+        return Promise.all([U.id(), U.canEdit()]).then(function (v) {
+          if (!v[0]) return;
+          DB = r[0]; UID = v[0]; IS_ADMIN = !!v[1];
+          if (IS_ADMIN) { $("admBtn").hidden = false; $("loginForm").insertAdjacentHTML("afterend", '<button class="ghost" id="admBtn2" type="button">教師後台</button>'); $("admBtn2").addEventListener("click", function () { watchRoster(); show("admin"); }); }
+          if (P) { setSync("正在記錄到老師後台…"); pushPlayer(); }
+        });
+      }).catch(function () {});
+    } catch (e) {}
+  }
+
+  S = fresh();
+  showLogin();
+  initCloud();
+})();
+</script>
+<script src="../../home-fab.js"></script>
+</body></html>
