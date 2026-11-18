@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#171b3b">
+<title>34課-楊忠蕊（國文勇者學院）</title>
+<style>
+:root{--gold:#ffd77a;--ink:#f8f4ff;--panel:rgba(22,25,59,.95);--line:rgba(255,255,255,.2)}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#10152f;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Noto Sans Thai","Noto Sans TC",sans-serif;touch-action:none}
+#world{position:fixed;inset:0}canvas{display:block}
+#hud{position:fixed;inset:0;pointer-events:none;padding:calc(env(safe-area-inset-top) + 9px) 10px calc(env(safe-area-inset-bottom) + 10px)}
+.top{display:flex;justify-content:space-between;gap:7px;align-items:flex-start}
+.brand,.stats,.hint,.panel{background:var(--panel);border:1px solid var(--line);backdrop-filter:blur(10px);box-shadow:0 8px 28px #05071866}
+.brand{padding:9px 11px;border-radius:14px;max-width:68%}.brand strong{display:block;color:var(--gold);font-size:16px}.brand small{font-size:10px;opacity:.85}
+.stats{padding:8px 10px;border-radius:13px;text-align:right;font-size:11px;line-height:1.65;min-width:104px}.stats b{color:var(--gold)}
+#hint{position:absolute;top:94px;left:50%;transform:translateX(-50%);padding:7px 11px;border-radius:20px;font-size:11px;white-space:nowrap;max-width:94%;overflow:hidden;text-overflow:ellipsis}
+#controls{position:absolute;bottom:calc(env(safe-area-inset-bottom) + 15px);left:12px;display:grid;grid-template-columns:47px 47px 47px;grid-template-rows:47px 47px;gap:5px;pointer-events:auto}
+.ctrl{border:1px solid #ffffff55;border-radius:13px;background:#252b62dd;color:white;font-size:20px;font-weight:bold;touch-action:none}
+#up{grid-column:2;grid-row:1}#left{grid-column:1;grid-row:2}#down{grid-column:2;grid-row:2}#right{grid-column:3;grid-row:2}
+#action{position:absolute;right:15px;bottom:calc(env(safe-area-inset-bottom) + 25px);width:74px;height:74px;border-radius:50%;border:2px solid #ffe4a3;background:linear-gradient(145deg,#f7c65c,#a65a31);color:#281637;font-weight:900;font-size:12px;pointer-events:auto;box-shadow:0 5px 20px #0008}
+#panelWrap{position:fixed;inset:0;background:#080b1dcc;display:none;align-items:center;justify-content:center;padding:14px;z-index:5;overflow:auto}
+.panel{width:min(540px,100%);max-height:92dvh;overflow:auto;border-radius:21px;padding:17px;pointer-events:auto}
+.panel h2{margin:0 0 7px;color:var(--gold);font-size:20px}.panel p{line-height:1.55;margin:8px 0}
+.muted{font-size:11px;opacity:.76}.options{display:grid;gap:8px;margin-top:12px}
+.opt,.mainbtn,.secondary,.pill{border:1px solid #ffffff35;border-radius:12px;padding:11px;background:#30376f;color:white;text-align:left;font-size:14px}
+.opt:disabled{opacity:.7}.mainbtn{background:linear-gradient(120deg,#f1c66a,#bb7946);color:#21152c;font-weight:850;text-align:center;width:100%;margin-top:12px}
+.secondary{background:#272d5e;text-align:center;width:100%;margin-top:8px}
+.pills{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}.pill{border-radius:99px;padding:7px 10px;font-size:12px}.pill.active{background:#f1c66a;color:#24182b}
+#feedback{min-height:25px;color:#ffe19a;font-weight:700;margin-top:9px;line-height:1.5}
+#footerNote{position:absolute;bottom:5px;left:50%;transform:translateX(-50%);font-size:9px;opacity:.62;white-space:nowrap;pointer-events:none}
+.bar{height:8px;background:#ffffff22;border-radius:9px;overflow:hidden}.bar>i{display:block;height:100%;background:linear-gradient(90deg,#9ce7c5,#f5d274);width:0%}
+.field{width:100%;padding:12px;border-radius:11px;border:1px solid #ffffff55;background:#111735;color:white;font-size:16px;margin:6px 0 10px}.stars{display:flex;justify-content:center;gap:7px;margin:12px 0}.star{font-size:35px;border:0;background:transparent;color:#68708f;padding:2px}.star.selected{color:#ffd45e}.student-tag{display:block;font-size:10px;opacity:.9;margin-top:3px}
+@media(min-width:700px){#controls{left:28px;bottom:25px}.stats{font-size:13px}.brand strong{font-size:19px}.panel{padding:22px}}
+</style>
+</head>
+<body>
+<div id="world"></div>
+<div id="hud">
+ <div class="top">
+  <div class="brand"><strong>✦ 國文勇者學院 ✦</strong><small>奇幻冒險 3D・高三國文勇者試煉</small><small class="student-tag" id="studentTag"></small></div>
+  <div class="stats">等級 <b id="level">1</b><br>EXP <b id="xp">0</b><br>金幣 <b id="coins">0</b> 枚</div>
+ </div>
+ <div id="hint" class="hint">用方向鍵移動，靠近島上的光門後按「互動」</div>
+ <div id="controls">
+  <button class="ctrl" id="up">▲</button><button class="ctrl" id="left">◀</button><button class="ctrl" id="down">▼</button><button class="ctrl" id="right">▶</button>
+ </div>
+ <button id="action">互動<br>✦</button>
+ <div id="footerNote">第三課〈蜘蛛之絲〉・第四課〈燈下削筆〉・綜合挑戰</div>
+</div>
+<div id="panelWrap"><div class="panel" id="panel"></div></div>
+<script src="../../sync-client.js"></script>
+<script>
+/* ========== 接上教師後台的程式（整段複製，只改最上面的 GAME_KEY） ========== */
+const GAME_KEY = 'chi-g12-34';            // 遊戲代號：小寫英文／數字／-／_，建議「科目簡碼-遊戲名」
+
+/* 1) 學號：沒有就強迫輸入 */
+function ensureStudent(done) {
+  const no = keyagentGetActiveStudentNumber();
+  if (no) return done(no);
+  const v = (prompt('請輸入你的學號') || '').trim();
+  if (!/^[A-Za-z0-9_-]{2,12}$/.test(v)) return ensureStudent(done);
+  localStorage.setItem('keyagent_active_student', JSON.stringify({ studentNumber: v, verified: false }));
+  done(v);
+}
+
+/* 2) 練習時間：只算「玩完一局」的時間；切到別的分頁不算；中途關掉的那一局不算 */
+let T0 = 0, ACC = 0;
+function tStart()  { ACC = 0; T0 = Date.now(); }
+function tPause()  { if (T0) { ACC += Date.now() - T0; T0 = 0; } }
+function tResume() { if (!T0 && !document.hidden) T0 = Date.now(); }
+function tTake()   { tPause(); const s = Math.min(1800, Math.round(ACC / 1000)); ACC = 0; return s; }
+document.addEventListener('visibilitychange', () => (document.hidden ? tPause() : tResume()));
+
+/* 3) 一局結束時呼叫 finishRound({...})，會自動記錄並送到老師的後台 */
+function finishRound(r) {
+  // r = { stageId:'L1', stageName:'第一課 認字', score:80, right:8, total:10, stars:2(可省略), nick:'小勇者'(可省略),
+  //       types:[{ key:'read', label:'看字讀音', right:5, total:6 }, ...](可省略) }
+  const secs = tTake();
+  keyagentUpdateOtherGame(GAME_KEY, prev => {
+    const stages = Object.assign({}, prev.stages);
+    const s = stages[r.stageId] || {};
+    stages[r.stageId] = {
+      n: r.stageName || r.stageId,
+      bestStars: Math.max(s.bestStars || 0, r.stars || 0),
+      bestScore: Math.max(s.bestScore || 0, r.score || 0),
+      plays: (s.plays || 0) + 1,
+      hist: (s.hist || []).concat([{ at: Date.now(), q: r.total || 0, ok: r.right || 0, s: secs, st: r.stars || 0 }]).slice(-30),   // 每一次的結果（後台點答對率可看）
+      totalSecs: (s.totalSecs || 0) + secs,
+      totalQ: (s.totalQ || 0) + (r.total || 0),
+      totalOk: (s.totalOk || 0) + (r.right || 0)
+    };
+    const q = Object.assign({}, prev.q);
+    (r.types || []).forEach(t => {
+      const k = r.stageId + ':' + t.key, o = q[k] || { n: 0, ok: 0 };
+      q[k] = { n: o.n + (t.total || 0), ok: o.ok + (t.right || 0), label: t.label || t.key };
+    });
+    return {
+      nick: r.nick || prev.nick || '',
+      totalPlays: (prev.totalPlays || 0) + 1,
+      bestScore: Math.max(prev.bestScore || 0, r.score || 0),
+      totalSecs: (prev.totalSecs || 0) + secs,
+      totalQ: (prev.totalQ || 0) + (r.total || 0),
+      totalOk: (prev.totalOk || 0) + (r.right || 0),
+      lastScore: r.score || 0, lastId: r.stageId, lastName: r.stageName || r.stageId, lastAt: Date.now(),
+      stages, q
+    };
+  });
+}
+keyagentInstallPageHideSync();           // 4) 離開頁面時補寄一次
+/* ========== 以上整段不用改 ========== */
+</script>
+<script type="module">
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
+const host=document.getElementById('world'),scene=new THREE.Scene();
+scene.background=new THREE.Color(0x111633);scene.fog=new THREE.Fog(0x111633,28,90);
+const camera=new THREE.PerspectiveCamera(58,innerWidth/innerHeight,.1,180);
+const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,1.7));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;host.appendChild(renderer.domElement);
+scene.add(new THREE.HemisphereLight(0xbccfff,0x39274f,2));
+const sun=new THREE.DirectionalLight(0xffe2b0,2.5);sun.position.set(-10,20,12);sun.castShadow=true;scene.add(sun);
+const mat=(c,r=.8,m=0)=>new THREE.MeshStandardMaterial({color:c,roughness:r,metalness:m});
+const stone=mat(0x39456e),wood=mat(0x704a45),leaf=mat(0x286b61),gold=mat(0xf4c56c,.3,.4),purple=mat(0x9276e8,.35,.2);
+function addBox(p,w,h,d,m,x,y,z){let o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);o.position.set(x,y,z);o.castShadow=true;o.receiveShadow=true;p.add(o);return o}
+function orb(p,r,m,x,y,z,sx=1,sy=1,sz=1){let o=new THREE.Mesh(new THREE.SphereGeometry(r,16,12),m);o.position.set(x,y,z);o.scale.set(sx,sy,sz);o.castShadow=true;p.add(o);return o}
+function makeIsland(x,z,color,label,sub){
+ const g=new THREE.Group();g.position.set(x,0,z);scene.add(g);
+ let cap=new THREE.Mesh(new THREE.CylinderGeometry(5.8,4.2,1.4,9),mat(color));cap.position.y=-.2;cap.castShadow=true;cap.receiveShadow=true;g.add(cap);
+ let cone=new THREE.Mesh(new THREE.ConeGeometry(4.3,4.7,9),stone);cone.position.y=-3;cone.rotation.y=.2;cone.castShadow=true;g.add(cone);
+ for(let i=0;i<5;i++){let a=i*1.2+.3,tx=Math.cos(a)*3,tz=Math.sin(a)*3;addBox(g,.22,1,.22,wood,tx,.55,tz);let t=new THREE.Mesh(new THREE.ConeGeometry(.8,1.8,7),leaf);t.position.set(tx,1.7,tz);t.castShadow=true;g.add(t)}
+ let ring=new THREE.Mesh(new THREE.TorusGeometry(1.05,.12,10,28),gold);ring.position.set(0,1.25,-1);g.add(ring);
+ let portal=new THREE.Mesh(new THREE.CircleGeometry(.9,24),new THREE.MeshBasicMaterial({color:0x7259dd,transparent:true,opacity:.48,side:THREE.DoubleSide}));portal.position.set(0,1.25,-1.02);g.add(portal);
+ addBox(g,2.6,.7,.18,wood,0,.65,3.35);
+ const cv=document.createElement('canvas');cv.width=640;cv.height=128;const cx=cv.getContext('2d');cx.fillStyle='#ffe4a3';cx.font='bold 42px sans-serif';cx.textAlign='center';cx.fillText(label,320,80);
+ const tex=new THREE.CanvasTexture(cv);let sign=new THREE.Mesh(new THREE.PlaneGeometry(2.45,.5),new THREE.MeshBasicMaterial({map:tex,transparent:true}));sign.position.set(0,.68,3.25);g.add(sign);
+ return {group:g,x,z,label,sub};
+}
+const islands=[
+ makeIsland(-10,-6,0x3c967e,'第三課 蜘蛛之絲','善念、慈悲與人性'),
+ makeIsland(10,-7,0x6863a8,'第四課 燈下削筆','心事、面具與真誠'),
+ makeIsland(-1,10,0x9a704c,'兩課綜合試煉','比較主旨與寫法'),
+ makeIsland(12,10,0x9b4c68,'最終魔王','國文勇者總考驗')
+];
+for(let i=0;i<36;i++){let a=Math.random()*6.28,r=18+Math.random()*30,y=1+Math.random()*15;let c=new THREE.Mesh(new THREE.OctahedronGeometry(.13+Math.random()*.18),i%2?gold:purple);c.position.set(Math.cos(a)*r,y,Math.sin(a)*r);scene.add(c)}
+// Player character
+const player=new THREE.Group();scene.add(player);
+let body=new THREE.Mesh(new THREE.CapsuleGeometry(.36,.72,4,8),mat(0x4c6fe0));body.position.y=.8;body.castShadow=true;player.add(body);
+orb(player,.32,mat(0xffd2ae),0,1.48,0);
+let hat=new THREE.Mesh(new THREE.ConeGeometry(.36,.62,8),gold);hat.position.y=2;hat.castShadow=true;player.add(hat);
+let cape=addBox(player,.62,.78,.12,mat(0x9b4f8c),0,.82,.32);
+player.position.set(-10,0,-6);
+const bank=[
+// Lesson 3: Spider's Thread
+{u:3,t:'ง่าย',q:'〈蜘蛛之絲〉的作者是誰？',o:['莊周','芥川龍之介','陳義芝','魯迅'],a:1,e:'第三課作者是日本作家芥川龍之介。',th:'ผู้แต่งเรื่อง “เส้นด้ายแมงมุม” คือ อะคุตางาวะ ริวโนะสุเกะ นักเขียนชาวญี่ปุ่น'},
+{u:3,t:'ง่าย',q:'佛陀從蓮池向下看見了什麼？',o:['枯萎的花','地獄中的景象','一條魚','一座山'],a:1,e:'佛陀由蓮池向下觀看，看到地獄中的情形。',th:'พระพุทธเจ้าทอดพระเนตรลงไปและเห็นภาพในนรก'},
+{u:3,t:'ง่าย',q:'犍陀多曾經放過哪一種生命？',o:['蜘蛛','小鳥','魚','兔子'],a:0,e:'犍陀多曾想踩死蜘蛛，後來想到牠也是生命，便放牠一條生路。',th:'กันธาตะเคยคิดจะเหยียบแมงมุม แต่เปลี่ยนใจและปล่อยมันไป'},
+{u:3,t:'ง่าย',q:'佛陀放下什麼，讓犍陀多向上爬？',o:['一條繩子','一條蜘蛛絲','一根樹枝','一座梯子'],a:1,e:'佛陀放下一條蜘蛛絲，給犍陀多離開地獄的機會。',th:'พระพุทธเจ้าหย่อนเส้นด้ายแมงมุมลงไป เพื่อให้กันธาตะปีนขึ้นจากนรก'},
+{u:3,t:'簡單',q:'〈蜘蛛之絲〉的主角是誰？',o:['釋迦佛','犍陀多','陳義芝','蜘蛛'],a:1,e:'故事主要描寫犍陀多的選擇與遭遇。',th:'ตัวละครหลักของเรื่องคือกันธาตะ'},
+{u:3,t:'簡單',q:'犍陀多看到其他罪人也爬上蜘蛛絲時，怎麼做？',o:['邀請大家一起爬','大喊不准別人爬','把蜘蛛絲剪斷','先爬回地面'],a:1,e:'他自私地認為蜘蛛絲是自己的，不准其他人爬。',th:'เขาตะโกนห้ามคนอื่นปีน เพราะคิดว่าเส้นด้ายเป็นของตนเอง'},
+{u:3,t:'中級',q:'佛陀為什麼給犍陀多離開地獄的機會？',o:['他曾對蜘蛛有一念善心','他很有錢','他認識佛陀','他爬得最快'],a:0,e:'犍陀多曾對蜘蛛生起憐憫之心，放牠一條生路。',th:'เพราะในอดีตเขาเคยมีเมตตาต่อแมงมุมและไว้ชีวิตมัน'},
+{u:3,t:'中級',q:'蜘蛛絲最後斷裂，最能呼應哪一個原因？',o:['天氣太熱','犍陀多只顧自己、不願分享','蜘蛛把絲收回','佛陀忘記了他'],a:1,e:'故事以蜘蛛絲斷裂呈現犍陀多自私、缺乏慈悲的結果。',th:'เส้นด้ายขาดเพราะสะท้อนความเห็นแก่ตัวและการไม่แบ่งปันของกันธาตะ'},
+{u:3,t:'中級',q:'本課最重要的學習重點是什麼？',o:['追求財富','善念的可貴與脆弱，並思考人性','學習爬山','欣賞花朵'],a:1,e:'作品引導讀者思考善念、慈悲與自私的人性。',th:'บทเรียนเน้นคุณค่าของความคิดดี ความเมตตา และการพิจารณาจิตใจมนุษย์'},
+{u:3,t:'中級',q:'下列哪一項最符合犍陀多後來的行為？',o:['無私助人','自私地排斥其他罪人','主動認錯','鼓勵分享'],a:1,e:'他擔心別人一起爬會使蜘蛛絲斷掉，因而大喊阻止。',th:'พฤติกรรมภายหลังของเขาคือเห็นแก่ตัวและกีดกันผู้อื่น'},
+{u:3,t:'高級',q:'蜘蛛絲在故事中最適合象徵什麼？',o:['裝飾品','得救的機會與善念的考驗','財富','時間'],a:1,e:'蜘蛛絲既是離開地獄的機會，也讓犍陀多面對是否願意分享的考驗。',th:'เส้นด้ายเป็นสัญลักษณ์ของโอกาสรอดและบททดสอบว่าเขาจะแบ่งปันหรือไม่'},
+{u:3,t:'高級',q:'作者安排犍陀多曾有善念、後來卻自私，主要形成什麼對比？',o:['善念與自私','白天與黑夜','富有與貧窮','快與慢'],a:0,e:'前後行為形成對比，凸顯一念善心可貴，但也可能因自私而脆弱。',th:'เป็นการเปรียบเทียบความเมตตากับความเห็นแก่ตัว เพื่อเน้นว่าความดีอาจเปราะบางได้'},
+// Lesson 4
+{u:4,t:'簡單',q:'〈燈下削筆〉的作者是誰？',o:['芥川龍之介','陳義芝','李白','莊周'],a:1,e:'第四課選文〈燈下削筆〉的作者是陳義芝。',th:'ผู้แต่งบทกวี “เหลาดินสอใต้แสงไฟ” คือ เฉินอี้จือ'},
+{u:4,t:'簡單',q:'「藏在心底」主要表達什麼？',o:['心事不方便說出口','忘記回家','白天很忙','不喜歡讀書'],a:0,e:'詩句呈現有些事情藏在心裡，不容易說出來。',th:'หมายถึงมีเรื่องในใจที่ไม่สะดวกหรือไม่กล้าพูดออกมา'},
+{u:4,t:'簡單',q:'詩中的「面具」可以象徵什麼？',o:['玩具','人的偽裝','一種樂器','禮物'],a:1,e:'面具象徵在人前的偽裝或虛假的外表。',th:'หน้ากากเป็นสัญลักษณ์ของการเสแสร้งหรือภาพลักษณ์ที่ไม่真实'},
+{u:4,t:'簡單',q:'「影子垂低了頭不願再說話」使用哪一種修辭？',o:['擬人','排比','借代','設問'],a:0,e:'影子被寫成像人一樣會低頭、不說話，這是擬人。',th:'ให้เงามีพฤติกรรมเหมือนคน คือก้มหน้าและไม่พูด เป็นการบุคลาธิษฐาน'},
+{u:4,t:'中級',q:'「趁夜一刀刀削去」中的「削去」較可能象徵什麼？',o:['傷害別人','整理、排除心中的情緒或煩惱','忘掉所有人','買新鉛筆'],a:1,e:'結合全詩，「削去」可理解為整理心中難以說出的情緒。',th:'ในบริบทของบทกวี การเหลาออกสื่อถึงการจัดการความรู้สึกหรือความกังวลในใจ'},
+{u:4,t:'中級',q:'「拾下面具／剝掉虛假的臉皮」主要想表達什麼？',o:['想買面具','希望卸下偽裝、真誠面對自己','想參加派對','不想照鏡子'],a:1,e:'面具象徵偽裝，詩人思考如何放下虛假的外表。',th:'ต้องการถอดหน้ากากแห่งการเสแสร้งและเผชิญหน้ากับตัวเองอย่างจริงใจ'},
+{u:4,t:'中級',q:'詩的最後「向誰表露自己的清明」呈現什麼心情？',o:['想炫耀','希望找到能理解自己、讓自己真誠表達的人','想責怪所有人','完全不在意'],a:1,e:'詩人希望找到對象，坦誠表達內心真正的想法。',th:'ผู้เขียนอยากพบคนที่เข้าใจและสามารถเปิดเผยความคิดที่แท้จริงได้'},
+{u:4,t:'中級',q:'這首詩主要透過什麼方式表達情感？',o:['歷史年表','詩句、意象與象徵','實驗數據','旅遊介紹'],a:1,e:'透過「燈下」「削去」「面具」等意象傳達內心感受。',th:'ใช้ภาพพจน์และสัญลักษณ์ เช่น แสงไฟ การเหลา และหน้ากาก เพื่อสื่ออารมณ์'},
+{u:4,t:'高級',q:'詩中「白天不便細述的事」與「趁夜」形成什麼意味？',o:['夜晚較熱鬧','夜晚成為整理隱藏心事、面對內心的時刻','白天不能工作','作者怕黑'],a:1,e:'夜晚與白天形成對照，呈現夜深時較能面對、整理不易說出口的心事。',th:'กลางคืนตัดกับกลางวัน และเป็นช่วงเวลาที่ผู้เขียนได้ทบทวนความรู้สึกที่พูดออกมาได้ยาก'},
+{u:4,t:'高級',q:'「面具」與「虛假的臉皮」共同指向哪一個主題？',o:['外貌美醜','社會角色中的偽裝與追求真誠','購物','旅行'],a:1,e:'兩個意象都指向放下偽裝、尋求真實自我的想法。',th:'ทั้งสองภาพสื่อถึงการวางหน้ากากทางสังคมและค้นหาความจริงใจของตนเอง'},
+// Combined
+{u:0,t:'中級',q:'兩課共同引導讀者思考什麼？',o:['如何賺錢','如何面對內心與人性','如何烹飪','如何旅行'],a:1,e:'〈蜘蛛之絲〉思考善念、自私與慈悲；〈燈下削筆〉思考內心、偽裝與真誠。',th:'ทั้งสองบทชวนคิดเรื่องจิตใจและความเป็นมนุษย์: บทหนึ่งเน้นเมตตา อีกบทเน้นความจริงใจ'},
+{u:0,t:'中級',q:'〈蜘蛛之絲〉主要透過什麼呈現主旨？',o:['故事情節與人物行為','實驗數據','新聞報導','旅遊介紹'],a:0,e:'作品藉犍陀多的遭遇與選擇呈現人性課題。',th:'เรื่อง “เส้นด้ายแมงมุม” ใช้เหตุการณ์และการกระทำของตัวละครสื่อแนวคิด'},
+{u:0,t:'中級',q:'〈燈下削筆〉主要透過什麼表達情感？',o:['故事對話','詩句、意象與象徵','科學說明','歷史年表'],a:1,e:'現代詩透過意象和象徵傳達內心感受。',th:'บทกวีใช้ถ้อยคำ ภาพพจน์ และสัญลักษณ์ในการถ่ายทอดความรู้สึก'},
+{u:0,t:'高級',q:'哪一組配對最正確？',o:['蜘蛛之絲—偽裝；燈下削筆—爬出地獄','蜘蛛之絲—慈悲與自私；燈下削筆—心事與真誠','兩篇都只談自然景色','兩篇都屬於新聞'],a:1,e:'兩課主題不同，但都引導讀者思考內在的人性與真實。',th:'การจับคู่ที่ถูกต้องคือ เส้นด้ายแมงมุม—เมตตากับเห็นแก่ตัว; เหลาดินสอใต้แสงไฟ—ความในใจกับความจริงใจ'},
+{u:0,t:'高級',q:'若比較兩課的表達方式，何者正確？',o:['兩篇都用實驗報告','一篇用寓意故事，一篇用現代詩意象','兩篇都是歷史傳記','兩篇都只用對話'],a:1,e:'〈蜘蛛之絲〉透過故事情節寓意人性；〈燈下削筆〉透過詩的意象抒發情感。',th:'เรื่องแรกใช้เรื่องเล่าเชิง寓意 ส่วนเรื่องที่สองใช้ภาพพจน์ของบทกวีสื่ออารมณ์'},
+{u:0,t:'高級',q:'如果用一句話連結兩課，哪一項最恰當？',o:['人只要成功就好','既要保有對他人的善意，也要誠實面對自己的內心','不要在晚上讀書','每個人都要寫詩'],a:1,e:'兩課分別從對他人的慈悲與對自己的真誠，提醒讀者思考人性。',th:'ควรมีเมตตาต่อผู้อื่น และซื่อสัตย์ต่อความรู้สึกภายในของตนเอง'},
+{u:3,t:'簡單',q:'佛陀放下的蜘蛛絲，讓犍陀多得到什麼？',o:['離開地獄的機會','一袋金幣','新的衣服','回到家鄉'],a:0,e:'蜘蛛絲是佛陀給犍陀多向上攀爬、離開地獄的機會。',th:'เส้นด้ายเป็นโอกาสให้กันธาตะปีนขึ้นและออกจากนรก'},
+{u:4,t:'簡單',q:'〈燈下削筆〉中「藏在心底」的事情，最接近哪個說法？',o:['容易公開分享的事情','不容易說出口的心事','已經忘記的課文','每天的行程'],a:1,e:'詩句指出有些事情不便細述，只能藏在心底。',th:'เป็นเรื่องในใจที่ไม่สะดวกหรือยากจะพูดออกมา'},
+{u:0,t:'高級',q:'如果你是犍陀多，看到其他罪人也沿蜘蛛絲往上爬，最合適的做法是什麼？',o:['大聲趕走他們','讓大家一起努力，保有慈悲與分享','把蜘蛛絲藏起來','只顧自己先爬'],a:1,e:'合理的回應是願意分享機會，因為慈悲不應只想到自己。',th:'ควรให้ทุกคนมีโอกาสปีนขึ้นไปด้วยกัน แสดงความเมตตาและการแบ่งปัน'}
+];
+const tiers=['簡單','中級','高級'];
+let xp=0,coins=0,level=1,score=0,answered=0,activeIsland=null,questions=[],qi=0,correct=0,questionScore=0,studentId='';
+const panelWrap=document.getElementById('panelWrap'),panel=document.getElementById('panel');
+function show(s){panel.innerHTML=s;panelWrap.style.display='flex'}function close(){panelWrap.style.display='none'}
+function stats(){level=1+Math.floor(xp/100);document.getElementById('level').textContent=level;document.getElementById('xp').textContent=xp;document.getElementById('coins').textContent=coins}
+function nearest(){let best=null,d0=1e9;for(const i of islands){let d=Math.hypot(player.position.x-i.x,player.position.z-i.z);if(d<d0){d0=d;best=i}}return d0<7?best:null}
+function openIsland(i){activeIsland=i;show(`<h2>✦ ${i.label}</h2><p>${i.sub}</p><p>เลือกความยาก แล้วเริ่มการทดสอบทีละข้อ เมื่อเลือกคำตอบจะเห็นเฉลยภาษาจีนและคำอธิบายภาษาไทย</p><div class="pills">${tiers.map((t,n)=>`<button class="pill ${n===0?'active':''}" data-tier="${t}">${t}</button>`).join('')}</div><p class="muted">คะแนน: ตอบถูก +10 คะแนน, +20 EXP และ +5 เหรียญ</p><button class="mainbtn" id="start">เริ่มเล่น</button><button class="secondary" id="back">กลับไปสำรวจ</button>`);
+let tier='簡單';panel.querySelectorAll('[data-tier]').forEach(b=>b.onclick=()=>{tier=b.dataset.tier;panel.querySelectorAll('[data-tier]').forEach(x=>x.classList.toggle('active',x===b))});
+document.getElementById('start').onclick=()=>{let pool=bank.filter(q=>(i===islands[0]?q.u===3:i===islands[1]?q.u===4:i===islands[2]?q.u===0:true)&&q.t===tier);if(i===islands[3])pool=bank.filter(q=>q.t===tier);if(!pool.length){show(`<h2>ยังไม่มีคำถามระดับนี้</h2><p>ลองเลือกระดับอื่นได้เลย</p><button class="mainbtn" id="back2">กลับ</button>`);document.getElementById('back2').onclick=()=>openIsland(i);return}questions=[...pool].sort(()=>Math.random()-.5);qi=0;correct=0;score=0;tStart();ask()};document.getElementById('back').onclick=close}
+function ask(){if(qi>=questions.length){finish();return}let q=questions[qi];show(`<div class="muted">${activeIsland.label}・${q.t}・第 ${qi+1}/${questions.length} 題</div><div class="bar"><i style="width:${qi/questions.length*100}%"></i></div><h2>⚔️ 國文知識對決</h2><p><b>${q.q}</b></p><div class="options">${q.o.map((v,n)=>`<button class="opt" data-a="${n}">${'ＡＢＣＤ'[n]}．${v}</button>`).join('')}</div><div id="feedback"></div><button class="secondary" id="pause">暫停返回地圖</button>`);
+panel.querySelectorAll('[data-a]').forEach(b=>b.onclick=()=>{if(panel.dataset.done==='1')return;panel.dataset.done='1';let ok=+b.dataset.a===q.a;let f=document.getElementById('feedback');if(ok){correct++;score+=10;xp+=20;coins+=5;f.innerHTML=`<span style="color:#9ce7c5">答對了！+10 分、+20 EXP、+5 金幣</span><br>正確答案：${'ＡＢＣＤ'[q.a]}．${q.o[q.a]}<br><b>中文解析：</b>${q.e}<br><b>คำอธิบายภาษาไทย：</b>${q.th}`}else{f.innerHTML=`<span style="color:#ffb2b2">再加油！這題答錯了。</span><br>正確答案：${'ＡＢＣＤ'[q.a]}．${q.o[q.a]}<br><b>中文解析：</b>${q.e}<br><b>คำอธิบายภาษาไทย：</b>${q.th}`}answered++;stats();panel.querySelectorAll('[data-a]').forEach(x=>x.disabled=true);let n=document.createElement('button');n.className='mainbtn';n.textContent=qi===questions.length-1?'查看成績':'下一題';n.onclick=()=>{qi++;ask()};panel.appendChild(n)});
+document.getElementById('pause').onclick=close}
+function finish(){try{const ix=islands.indexOf(activeIsland),tr=questions[0].t,pc=Math.round(correct/questions.length*100);finishRound({stageId:'I'+ix+'-'+tr,stageName:activeIsland.label+'・'+tr,score:pc,right:correct,total:questions.length,stars:pc>=90?3:pc>=70?2:pc>=50?1:0,types:[{key:'q',label:activeIsland.label+'・'+tr,right:correct,total:questions.length}]})}catch(e){}let pct=Math.round(correct/questions.length*100),title=pct>=90?'國文大師':pct>=75?'閱讀高手':pct>=60?'闖關達人':pct>=40?'努力學習者':'再接再厲勇者';show(`<h2>🏆 試煉完成！</h2><p>學號：<b>${escapeHTML(studentId)}</b></p><p>答對 <b>${correct}</b> / ${questions.length} 題（${pct}%）</p><p>本關得分：<b>${score}</b></p><h2 style="text-align:center">${title}</h2><p class="muted">目前等級 ${level}・EXP ${xp}・金幣 ${coins}</p><hr style="border-color:#ffffff33;margin:16px 0"><h2>遊戲滿意度調查</h2><p><b>請問你對這次遊戲的滿意程度？</b></p><div class="stars" id="starChoices">${[1,2,3,4,5].map(n=>`<button type="button" class="star" data-star="${n}" aria-label="${n}顆星">★</button>`).join('')}</div><p id="ratingText" style="text-align:center">請選擇星級</p><p><b>請寫下你的評價理由：</b></p><textarea class="field" id="ratingReason" rows="3" placeholder="請輸入你的想法與建議……"></textarea><button class="mainbtn" id="submitRating" disabled>提交評價</button><button class="secondary" id="again">再挑戰一次</button><button class="secondary" id="map">返回學院地圖</button>`);let rating=0;const choices=panel.querySelectorAll('[data-star]'),reason= document.getElementById('ratingReason'),submit=document.getElementById('submitRating');function validate(){submit.disabled=!(rating>0&&reason.value.trim())}choices.forEach(b=>b.onclick=()=>{rating=Number(b.dataset.star);choices.forEach(x=>x.classList.toggle('selected',Number(x.dataset.star)<=rating));document.getElementById('ratingText').textContent=`${rating} 顆星`;validate()});reason.addEventListener('input',validate);submit.onclick=()=>{const record={studentId,rating,reason:reason.value.trim(),score,correct,total:questions.length,submittedAt:new Date().toISOString()};try{const all=JSON.parse(localStorage.getItem('guowenSurveyRecords')||'[]');all.push(record);localStorage.setItem('guowenSurveyRecords',JSON.stringify(all))}catch(e){}show(`<h2>感謝你的回饋！</h2><p>學號：${escapeHTML(studentId)}</p><p>滿意度：${rating} / 5 顆星</p><p>評價理由：${escapeHTML(reason.value.trim())}</p><p>你的評價已儲存在此裝置的瀏覽器中。</p><button class="mainbtn" id="again2">再挑戰一次</button><button class="secondary" id="map2">返回學院地圖</button>`);document.getElementById('again2').onclick=()=>openIsland(activeIsland);document.getElementById('map2').onclick=close};document.getElementById('again').onclick=()=>openIsland(activeIsland);document.getElementById('map').onclick=close}
+function escapeHTML(v){return String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function welcome(){show(`<h2 style="text-align:center">歡迎來到國文勇者學院！</h2><p style="text-align:center">第一次進入遊戲，請先輸入你的學號。</p><label for="studentInput"><b>請輸入你的學號：</b></label><input class="field" id="studentInput" inputmode="numeric" autocomplete="off" maxlength="20" placeholder="請輸入學號"><button class="mainbtn" id="enterGame" disabled>確認學號，開始遊戲</button>`);const input=document.getElementById('studentInput'),btn=document.getElementById('enterGame');input.addEventListener('input',()=>btn.disabled=!input.value.trim());btn.onclick=()=>{studentId=input.value.trim();document.getElementById('studentTag').textContent=`學號：${studentId}`;close()}}
+
+document.getElementById('action').onclick=()=>{let i=nearest();if(i)openIsland(i);else show(`<h2>尚未接近傳送門</h2><p>使用左下角方向鍵移動角色，靠近浮空島上的光門，再按右下角「互動」。</p><button class="mainbtn" id="ok">知道了</button>`),document.getElementById('ok').onclick=close};
+function bind(id,key){let el=document.getElementById(id);el.addEventListener('pointerdown',e=>{e.preventDefault();keys[key]=true});['pointerup','pointercancel','pointerleave'].forEach(ev=>el.addEventListener(ev,e=>{e.preventDefault();keys[key]=false}))}
+const keys={};bind('up','up');bind('down','down');bind('left','left');bind('right','right');
+addEventListener('keydown',e=>{if(e.key==='ArrowUp'||e.key==='w')keys.up=true;if(e.key==='ArrowDown'||e.key==='s')keys.down=true;if(e.key==='ArrowLeft'||e.key==='a')keys.left=true;if(e.key==='ArrowRight'||e.key==='d')keys.right=true});
+addEventListener('keyup',e=>{if(['ArrowUp','w'].includes(e.key))keys.up=false;if(['ArrowDown','s'].includes(e.key))keys.down=false;if(['ArrowLeft','a'].includes(e.key))keys.left=false;if(['ArrowRight','d'].includes(e.key))keys.right=false});
+function resize(){camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)}addEventListener('resize',resize);
+const clock=new THREE.Clock();function animate(){requestAnimationFrame(animate);let dt=Math.min(clock.getDelta(),.04);let dx=(keys.right?1:0)-(keys.left?1:0),dz=(keys.down?1:0)-(keys.up?1:0);if(dx||dz){let l=Math.hypot(dx,dz);dx/=l;dz/=l;player.position.x+=dx*5*dt;player.position.z+=dz*5*dt;player.rotation.y=Math.atan2(dx,dz)}player.position.x=THREE.MathUtils.clamp(player.position.x,-22,22);player.position.z=THREE.MathUtils.clamp(player.position.z,-22,22);player.position.y=.06+Math.sin(performance.now()*.004)*.05;let target=new THREE.Vector3(player.position.x+10,10,player.position.z+13);camera.position.lerp(target,.06);camera.lookAt(player.position.x,0,player.position.z);islands.forEach((i,n)=>i.group.position.y=Math.sin(performance.now()*.0007+n)*.17);let near=nearest();document.getElementById('hint').textContent=near?`ใกล้เกาะ「${near.label}」แล้ว กดปุ่ม互動เพื่อเริ่ม`: 'ใช้ปุ่มลูกศรสำรวจเกาะลอยฟ้า';renderer.render(scene,camera)}animate();stats();ensureStudent(no=>{studentId=no;document.getElementById('studentTag').textContent=`學號：${studentId}`});
+</script>
+<script src="../../home-fab.js"></script>
+</body>
+</html>
