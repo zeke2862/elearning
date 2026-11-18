@@ -1,0 +1,1171 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>高三國文12-馬雅雯（道劍雙修・神鵰解牛錄）</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;600;700&family=Ma+Shan+Zheng&display=swap');
+
+  :root {
+    --ink: #1a120b;
+    --paper: #f4e9d8;
+    --gold: #c9a227;
+    --blood: #8b1a1a;
+    --jade: #2d5a4a;
+    --mist: rgba(244, 233, 216, 0.92);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Noto Serif TC', serif;
+    background: linear-gradient(160deg, #0f0a06 0%, #1c140c 40%, #2a1f14 100%);
+    color: var(--paper);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* 背景裝飾 */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse at 20% 20%, rgba(201,162,39,0.08) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 80%, rgba(45,90,74,0.1) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  #app {
+    position: relative;
+    z-index: 1;
+    max-width: 920px;
+    margin: 0 auto;
+    padding: 20px 16px 60px;
+  }
+
+  /* ===== 標題區 ===== */
+  header {
+    text-align: center;
+    padding: 30px 10px 20px;
+    border-bottom: 1px solid rgba(201,162,39,0.3);
+    margin-bottom: 24px;
+  }
+  header h1 {
+    font-family: 'Ma Shan Zheng', cursive;
+    font-size: clamp(2.2rem, 6vw, 3.4rem);
+    color: var(--gold);
+    letter-spacing: 0.15em;
+    text-shadow: 0 0 20px rgba(201,162,39,0.4);
+  }
+  header .subtitle {
+    font-size: 0.95rem;
+    color: #b8a88a;
+    margin-top: 8px;
+    letter-spacing: 0.3em;
+  }
+
+  /* ===== 狀態列 ===== */
+  .status-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: space-between;
+    background: rgba(26,18,11,0.85);
+    border: 1px solid rgba(201,162,39,0.35);
+    border-radius: 12px;
+    padding: 14px 18px;
+    margin-bottom: 22px;
+    backdrop-filter: blur(6px);
+  }
+  .stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 70px;
+  }
+  .stat-label {
+    font-size: 0.72rem;
+    color: #9a8b6e;
+    letter-spacing: 0.1em;
+  }
+  .stat-value {
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: var(--gold);
+  }
+  .hp-bar-outer {
+    width: 100%;
+    height: 8px;
+    background: #2a2118;
+    border-radius: 4px;
+    margin-top: 4px;
+    overflow: hidden;
+  }
+  .hp-bar-inner {
+    height: 100%;
+    background: linear-gradient(90deg, #8b1a1a, #c94a4a);
+    border-radius: 4px;
+    transition: width 0.4s ease;
+  }
+  .exp-bar-outer {
+    width: 100%;
+    height: 6px;
+    background: #2a2118;
+    border-radius: 3px;
+    margin-top: 4px;
+    overflow: hidden;
+  }
+  .exp-bar-inner {
+    height: 100%;
+    background: linear-gradient(90deg, #2d5a4a, #4a9a7a);
+    border-radius: 3px;
+    transition: width 0.4s ease;
+  }
+
+  /* ===== 主畫面 ===== */
+  .panel {
+    background: rgba(26,18,11,0.75);
+    border: 1px solid rgba(201,162,39,0.25);
+    border-radius: 14px;
+    padding: 22px 20px;
+    margin-bottom: 18px;
+    backdrop-filter: blur(4px);
+  }
+
+  .story-box {
+    line-height: 1.85;
+    font-size: 1.05rem;
+    color: #e8dcc8;
+    min-height: 120px;
+  }
+  .story-box .speaker {
+    color: var(--gold);
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+  .story-box p { margin-bottom: 12px; }
+
+  /* 按鈕 */
+  .btn-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 18px;
+  }
+  button {
+    font-family: inherit;
+    cursor: pointer;
+    border: none;
+    border-radius: 8px;
+    padding: 12px 22px;
+    font-size: 0.98rem;
+    transition: all 0.2s ease;
+    letter-spacing: 0.05em;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, #c9a227, #a8841a);
+    color: #1a120b;
+    font-weight: 600;
+  }
+  .btn-primary:hover { filter: brightness(1.12); transform: translateY(-1px); }
+  .btn-secondary {
+    background: rgba(45,90,74,0.7);
+    color: #d4e8dc;
+    border: 1px solid rgba(74,154,122,0.5);
+  }
+  .btn-secondary:hover { background: rgba(45,90,74,0.95); }
+  .btn-danger {
+    background: rgba(139,26,26,0.8);
+    color: #f5d0d0;
+  }
+  .btn-ghost {
+    background: transparent;
+    color: #b8a88a;
+    border: 1px solid rgba(184,168,138,0.4);
+  }
+  .btn-ghost:hover { border-color: var(--gold); color: var(--gold); }
+
+  /* 選項 */
+  .options {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 16px;
+  }
+  .option-btn {
+    text-align: left;
+    background: rgba(42,33,24,0.9);
+    color: #e8dcc8;
+    border: 1px solid rgba(201,162,39,0.25);
+    padding: 14px 18px;
+    border-radius: 10px;
+    font-size: 0.98rem;
+    line-height: 1.5;
+  }
+  .option-btn:hover {
+    border-color: var(--gold);
+    background: rgba(50,40,28,0.95);
+  }
+  .option-btn.correct {
+    border-color: #4a9a7a;
+    background: rgba(45,90,74,0.35);
+  }
+  .option-btn.wrong {
+    border-color: #c94a4a;
+    background: rgba(139,26,26,0.3);
+  }
+  .option-btn:disabled { opacity: 0.7; cursor: default; }
+
+  /* 反饋 */
+  .feedback {
+    margin-top: 16px;
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    display: none;
+  }
+  .feedback.show { display: block; }
+  .feedback.ok {
+    background: rgba(45,90,74,0.3);
+    border: 1px solid #4a9a7a;
+    color: #b8e0c8;
+  }
+  .feedback.fail {
+    background: rgba(139,26,26,0.25);
+    border: 1px solid #c94a4a;
+    color: #f0c0c0;
+  }
+
+  /* 地圖 / 章節選擇 */
+  .chapter-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 14px;
+  }
+  .chapter-card {
+    background: rgba(42,33,24,0.85);
+    border: 1px solid rgba(201,162,39,0.3);
+    border-radius: 12px;
+    padding: 18px 16px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .chapter-card:hover:not(.locked) {
+    border-color: var(--gold);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.35);
+  }
+  .chapter-card.locked {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+  .chapter-card .num {
+    font-family: 'Ma Shan Zheng', cursive;
+    font-size: 1.8rem;
+    color: var(--gold);
+    opacity: 0.7;
+  }
+  .chapter-card h3 {
+    font-size: 1.15rem;
+    margin: 6px 0 4px;
+    color: #f0e6d2;
+  }
+  .chapter-card p {
+    font-size: 0.82rem;
+    color: #9a8b6e;
+    line-height: 1.4;
+  }
+  .chapter-card .badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    font-size: 0.7rem;
+    background: var(--jade);
+    color: #d4e8dc;
+    padding: 2px 8px;
+    border-radius: 10px;
+  }
+  .chapter-card .badge.done { background: #4a7a3a; }
+
+  /* 武器 / 境界展示 */
+  .realm-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+  }
+  .realm-tag {
+    font-size: 0.78rem;
+    padding: 4px 10px;
+    border-radius: 20px;
+    background: rgba(201,162,39,0.15);
+    border: 1px solid rgba(201,162,39,0.35);
+    color: var(--gold);
+  }
+  .realm-tag.unlocked { background: rgba(45,90,74,0.3); border-color: #4a9a7a; color: #b8e0c8; }
+
+  /* 結果畫面 */
+  .result-screen {
+    text-align: center;
+    padding: 30px 20px;
+  }
+  .result-screen h2 {
+    font-family: 'Ma Shan Zheng', cursive;
+    font-size: 2.4rem;
+    color: var(--gold);
+    margin-bottom: 12px;
+  }
+
+  /* 隱藏 */
+  .hidden { display: none !important; }
+
+  /* 響應式 */
+  @media (max-width: 600px) {
+    .status-bar { gap: 8px; }
+    .stat { min-width: 60px; }
+    .story-box { font-size: 0.98rem; }
+  }
+
+  /* 動畫 */
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .fade-in { animation: fadeIn 0.4s ease; }
+
+  .log {
+    font-size: 0.85rem;
+    color: #9a8b6e;
+    max-height: 100px;
+    overflow-y: auto;
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px dashed rgba(201,162,39,0.2);
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <h1>道劍雙修</h1>
+    <div class="subtitle">神鵰解牛錄 · 闖關修煉</div>
+  </header>
+
+  <!-- 狀態列 -->
+  <div class="status-bar" id="statusBar">
+    <div class="stat">
+      <span class="stat-label">境界</span>
+      <span class="stat-value" id="playerLevel">初入江湖</span>
+    </div>
+    <div class="stat" style="flex:1; min-width:120px;">
+      <span class="stat-label">心神 <span id="hpText">100/100</span></span>
+      <div class="hp-bar-outer"><div class="hp-bar-inner" id="hpBar" style="width:100%"></div></div>
+    </div>
+    <div class="stat" style="flex:1; min-width:120px;">
+      <span class="stat-label">經驗 <span id="expText">0/50</span></span>
+      <div class="exp-bar-outer"><div class="exp-bar-inner" id="expBar" style="width:0%"></div></div>
+    </div>
+    <div class="stat">
+      <span class="stat-label">悟道</span>
+      <span class="stat-value" id="daoPoint">0</span>
+    </div>
+  </div>
+
+  <!-- 主選單 -->
+  <div id="mainMenu" class="panel fade-in">
+    <div class="story-box">
+      <p class="speaker">【引子】</p>
+      <p>你本是一名青年習武者，因緣際會之下，同時接觸到兩大絕學——莊子〈庖丁解牛〉中「技進乎道」的養生哲理，與金庸《神鵰俠侶》中「劍魔」獨孤求敗「重劍無鋒，大巧不工」的劍道境界。</p>
+      <p>神鵰與庖丁的幽靈同時出現在你面前，要你以「答題闖關」的方式，親身走過這兩條看似不同、實則相通的修煉之路。</p>
+      <p>唯有將「解牛之道」與「重劍之境」融會貫通，方能達到真正的「無劍無刀」之境。</p>
+    </div>
+    <div class="btn-group">
+      <button class="btn-primary" onclick="startGame()">開始修煉</button>
+      <button class="btn-ghost" onclick="showHelp()">遊戲說明</button>
+    </div>
+  </div>
+
+  <!-- 章節選擇 -->
+  <div id="chapterSelect" class="panel hidden fade-in">
+    <h2 style="color:var(--gold); margin-bottom:16px; font-size:1.3rem;">選擇副本</h2>
+    <div class="chapter-grid" id="chapterGrid"></div>
+    <div class="btn-group" style="margin-top:20px;">
+      <button class="btn-ghost" onclick="showInventory()">我的境界與兵器</button>
+      <button class="btn-secondary" onclick="backToMenu()">返回標題</button>
+    </div>
+  </div>
+
+  <!-- 故事 / 答題區 -->
+  <div id="gameArea" class="panel hidden fade-in">
+    <div class="story-box" id="storyText"></div>
+    <div class="options" id="optionsArea"></div>
+    <div class="feedback" id="feedbackBox"></div>
+    <div class="btn-group" id="nextBtnArea" style="display:none;">
+      <button class="btn-primary" id="nextBtn" onclick="nextStep()">繼續</button>
+    </div>
+    <div class="log" id="battleLog"></div>
+  </div>
+
+  <!-- 結果 / 結算 -->
+  <div id="resultArea" class="panel hidden fade-in result-screen">
+    <h2 id="resultTitle">闖關成功</h2>
+    <p id="resultDesc" style="color:#c8b898; margin:12px 0 20px; line-height:1.7;"></p>
+    <div class="btn-group" style="justify-content:center;">
+      <button class="btn-primary" onclick="backToChapters()">返回副本選擇</button>
+    </div>
+  </div>
+
+  <!-- 說明 -->
+  <div id="helpArea" class="panel hidden fade-in">
+    <h2 style="color:var(--gold); margin-bottom:12px;">遊戲說明</h2>
+    <div class="story-box" style="font-size:0.95rem;">
+      <p><strong>目標：</strong>完成所有副本，將「庖丁解牛」與「神鵰重劍」的哲理融會貫通，達成最高境界。</p>
+      <p><strong>系統：</strong></p>
+      <ul style="padding-left:20px; margin:8px 0;">
+        <li><strong>心神</strong>：答錯會消耗心神。心神歸零則本關失敗，需重新挑戰。</li>
+        <li><strong>經驗</strong>：答對獲得經驗，累積後提升境界（等級）。</li>
+        <li><strong>悟道點</strong>：完成重要關卡與最終試煉可獲得，用於解鎖隱藏境界。</li>
+        <li><strong>副本</strong>：分為「庖丁篇」、「劍塚篇」、「融合篇」三大系列。</li>
+      </ul>
+      <p><strong>提示：</strong>所有題目均出自兩課課文、注釋、賞析與自我評量。細心閱讀原文，答題自然得心應手。</p>
+    </div>
+    <div class="btn-group">
+      <button class="btn-primary" onclick="backToMenu()">返回</button>
+    </div>
+  </div>
+
+  <!-- 背包 / 境界 -->
+  <div id="inventoryArea" class="panel hidden fade-in">
+    <h2 style="color:var(--gold); margin-bottom:12px;">我的境界與兵器</h2>
+    <div class="story-box">
+      <p><strong>已領悟境界：</strong></p>
+      <div class="realm-list" id="realmList"></div>
+      <p style="margin-top:16px;"><strong>已獲得兵器：</strong></p>
+      <div class="realm-list" id="weaponList"></div>
+      <p style="margin-top:16px; font-size:0.9rem; color:#9a8b6e;">完成對應關卡後自動解鎖。</p>
+    </div>
+    <div class="btn-group">
+      <button class="btn-ghost" onclick="backToChapters()">返回</button>
+    </div>
+  </div>
+</div>
+
+<script src="../../sync-client.js"></script>
+<script>
+/* ========== 接上教師後台的程式（整段複製，只改最上面的 GAME_KEY） ========== */
+const GAME_KEY = 'chi-g12-12';            // 遊戲代號：小寫英文／數字／-／_，建議「科目簡碼-遊戲名」
+
+/* 1) 學號：沒有就強迫輸入 */
+function ensureStudent(done) {
+  const no = keyagentGetActiveStudentNumber();
+  if (no) return done(no);
+  const v = (prompt('請輸入你的學號') || '').trim();
+  if (!/^[A-Za-z0-9_-]{2,12}$/.test(v)) return ensureStudent(done);
+  localStorage.setItem('keyagent_active_student', JSON.stringify({ studentNumber: v, verified: false }));
+  done(v);
+}
+
+/* 2) 練習時間：只算「玩完一局」的時間；切到別的分頁不算；中途關掉的那一局不算 */
+let T0 = 0, ACC = 0;
+function tStart()  { ACC = 0; T0 = Date.now(); }
+function tPause()  { if (T0) { ACC += Date.now() - T0; T0 = 0; } }
+function tResume() { if (!T0 && !document.hidden) T0 = Date.now(); }
+function tTake()   { tPause(); const s = Math.min(1800, Math.round(ACC / 1000)); ACC = 0; return s; }
+document.addEventListener('visibilitychange', () => (document.hidden ? tPause() : tResume()));
+
+/* 3) 一局結束時呼叫 finishRound({...})，會自動記錄並送到老師的後台 */
+function finishRound(r) {
+  // r = { stageId:'L1', stageName:'第一課 認字', score:80, right:8, total:10, stars:2(可省略), nick:'小勇者'(可省略),
+  //       types:[{ key:'read', label:'看字讀音', right:5, total:6 }, ...](可省略) }
+  const secs = tTake();
+  keyagentUpdateOtherGame(GAME_KEY, prev => {
+    const stages = Object.assign({}, prev.stages);
+    const s = stages[r.stageId] || {};
+    stages[r.stageId] = {
+      n: r.stageName || r.stageId,
+      bestStars: Math.max(s.bestStars || 0, r.stars || 0),
+      bestScore: Math.max(s.bestScore || 0, r.score || 0),
+      plays: (s.plays || 0) + 1,
+      hist: (s.hist || []).concat([{ at: Date.now(), q: r.total || 0, ok: r.right || 0, s: secs, st: r.stars || 0 }]).slice(-30),   // 每一次的結果（後台點答對率可看）
+      totalSecs: (s.totalSecs || 0) + secs,
+      totalQ: (s.totalQ || 0) + (r.total || 0),
+      totalOk: (s.totalOk || 0) + (r.right || 0)
+    };
+    const q = Object.assign({}, prev.q);
+    (r.types || []).forEach(t => {
+      const k = r.stageId + ':' + t.key, o = q[k] || { n: 0, ok: 0 };
+      q[k] = { n: o.n + (t.total || 0), ok: o.ok + (t.right || 0), label: t.label || t.key };
+    });
+    return {
+      nick: r.nick || prev.nick || '',
+      totalPlays: (prev.totalPlays || 0) + 1,
+      bestScore: Math.max(prev.bestScore || 0, r.score || 0),
+      totalSecs: (prev.totalSecs || 0) + secs,
+      totalQ: (prev.totalQ || 0) + (r.total || 0),
+      totalOk: (prev.totalOk || 0) + (r.right || 0),
+      lastScore: r.score || 0, lastId: r.stageId, lastName: r.stageName || r.stageId, lastAt: Date.now(),
+      stages, q
+    };
+  });
+}
+keyagentInstallPageHideSync();           // 4) 離開頁面時補寄一次
+/* ========== 以上整段不用改 ========== */
+</script>
+<script>
+// ==================== 遊戲資料 ====================
+const LEVELS = [
+  { name: "初入江湖", exp: 0 },
+  { name: "小有所成", exp: 50 },
+  { name: "登堂入室", exp: 120 },
+  { name: "融會貫通", exp: 220 },
+  { name: "出神入化", exp: 350 },
+  { name: "返璞歸真", exp: 500 },
+  { name: "無劍無刀", exp: 700 }
+];
+
+const CHAPTERS = [
+  {
+    id: "paoding1",
+    title: "庖丁初試",
+    desc: "認識庖丁解牛的三個階段",
+    series: "庖丁篇",
+    requiredLevel: 0,
+    expReward: 30,
+    daoReward: 1,
+    questions: [
+      {
+        type: "story",
+        text: "你來到一座古老的庖廚之中。空氣中隱約傳來「砉然」「騞然」的節奏聲。一位白衣老人（庖丁的幽靈）緩緩轉過身來。\n\n「年輕人，想學養生之道？先告訴我——我解牛經歷了哪三個階段？」"
+      },
+      {
+        q: "庖丁解牛由生疏到熟練，所經歷的三個階段依序為？",
+        options: [
+          "所見無非全牛 → 未嘗見全牛 → 以神遇而不以目視",
+          "以神遇而不以目視 → 未嘗見全牛 → 所見無非全牛",
+          "良庖歲更刀 → 族庖月更刀 → 刀刃若新發於硎",
+          "批大郤 → 導大窾 → 因其固然"
+        ],
+        answer: 0,
+        explain: "始臣之解牛之時，所見無非全牛者；三年之後，未嘗見全牛也；方今之時，臣以神遇而不以目視。"
+      },
+      {
+        q: "「臣之所好者，道也，進乎技矣」意思最接近？",
+        options: [
+          "我追求的是「道」，已經超越單純的技術層次",
+          "我喜歡的是刀技，比「道」還重要",
+          "技術與道同等重要，沒有先後",
+          "我已經完全放棄技術，只追求玄虛的道"
+        ],
+        answer: 0,
+        explain: "「進乎技」即超越技術，進入「道」的層次。"
+      },
+      {
+        q: "依技藝純熟度由低至高排序，正確的是？",
+        options: [
+          "族庖 → 良庖 → 庖丁",
+          "良庖 → 族庖 → 庖丁",
+          "庖丁 → 良庖 → 族庖",
+          "族庖 → 庖丁 → 良庖"
+        ],
+        answer: 0,
+        explain: "族庖月更刀（折也），良庖歲更刀（割也），庖丁十九年刀刃若新發於硎。"
+      }
+    ]
+  },
+  {
+    id: "paoding2",
+    title: "游刃有餘",
+    desc: "理解「以無厚入有間」與養生之道",
+    series: "庖丁篇",
+    requiredLevel: 1,
+    expReward: 40,
+    daoReward: 1,
+    questions: [
+      {
+        type: "story",
+        text: "庖丁繼續說道：「彼節者有間，而刀刃者無厚，以無厚入有間，恢恢乎其於游刃必有餘地矣！」\n\n你感受到這不僅是解牛，更是處世養生的大智慧。"
+      },
+      {
+        q: "「以無厚入有間」在養生哲學中象徵什麼？",
+        options: [
+          "以個人有限的心神，順應複雜人世中的空隙與規律，游刃有餘",
+          "用最鋒利的刀去砍最硬的骨頭",
+          "完全避開所有困難，什麼都不做",
+          "用厚重的刀去砸開空隙"
+        ],
+        answer: 0,
+        explain: "刀刃象徵個人，牛體結構象徵紛雜人世。「以無厚入有間」即順應自然規律，避開硬碰硬。"
+      },
+      {
+        q: "當庖丁「每至於族，吾見其難為」時，他採取的態度是？",
+        options: [
+          "戒慎恐懼，小心謹慎，視為止、行為遲、動刀甚微",
+          "自信不疑，果決俐落一刀解決",
+          "立刻換刀，改用更重的剁刀",
+          "放棄這頭牛，另找簡單的來解"
+        ],
+        answer: 0,
+        explain: "「怵然為戒，視為止，行為遲，動刀甚微」——遇到困難處更要謹慎專注。"
+      },
+      {
+        q: "文惠君聽完庖丁之言後說「得養生焉」，他所領悟的核心是？",
+        options: [
+          "審慎運刀（處事），不過度勉強，以養護生命、保全身心",
+          "要收藏好刀，避免與人爭執",
+          "選最好的刀就能養生",
+          "解牛本身就是最好的運動"
+        ],
+        answer: 0,
+        explain: "養生之道在於「依乎天理、因其固然」，不強求、不硬碰，才能保身全生。"
+      }
+    ]
+  },
+  {
+    id: "sword1",
+    title: "劍塚初探",
+    desc: "發現獨孤求敗的劍塚與石刻",
+    series: "劍塚篇",
+    requiredLevel: 1,
+    expReward: 35,
+    daoReward: 1,
+    questions: [
+      {
+        type: "story",
+        text: "你循著神鵰的腳印，來到一座衝天峭壁前。壁上「劍塚」二字清晰可見。你運用輕功，踏著青苔小穴攀上平臺。\n\n石刻寫著：「劍魔獨孤求敗既無敵於天下，乃埋劍於斯。嗚呼！群雄俯首，長劍空利，不亦悲夫！」"
+      },
+      {
+        q: "獨孤求敗在劍塚留下的石刻中，「群雄俯首，長劍空利」表達了什麼心情？",
+        options: [
+          "天下無敵後的寂寞與悲涼",
+          "對自己劍術的極度自豪",
+          "後悔練劍太強，想退隱",
+          "嘲笑天下群雄太弱"
+        ],
+        answer: 0,
+        explain: "「不亦悲夫」直接點出他打遍天下後無人能敵的孤獨與悲哀。"
+      },
+      {
+        q: "楊過第一次拿起玄鐵重劍時發生了什麼？",
+        options: [
+          "因劍太重而出乎意料脫手掉落，火花四濺",
+          "輕易舉起並使出全真劍法",
+          "劍立刻斷成兩截",
+          "被神鵰搶走"
+        ],
+        answer: 0,
+        explain: "「只提起數尺，嗆啷一聲，竟然脫手掉下……重量竟自不下七八十斤」。"
+      },
+      {
+        q: "玄鐵重劍下的石刻寫的是？",
+        options: [
+          "重劍無鋒，大巧不工。四十歲前恃之橫行天下。",
+          "凌厲剛猛，無堅不摧。弱冠前以之與河朔群雄爭鋒。",
+          "四十歲後，不滯於物，草木竹石均可為劍。",
+          "紫薇軟劍，三十歲前所用，誤傷義士不祥。"
+        ],
+        answer: 0,
+        explain: "這是第二柄劍（重劍）下的刻文。"
+      }
+    ]
+  },
+  {
+    id: "sword2",
+    title: "五劍境界",
+    desc: "理解獨孤求敗一生用劍的五個階段",
+    series: "劍塚篇",
+    requiredLevel: 2,
+    expReward: 45,
+    daoReward: 2,
+    questions: [
+      {
+        type: "story",
+        text: "神鵰搬開石塊，露出三柄劍與一塊長條石片。你逐一觀看石刻，心中逐漸明白——這不只是劍，更是獨孤求敗一生心境與武學的寫照。"
+      },
+      {
+        q: "獨孤求敗一生用劍的正確順序是？",
+        options: [
+          "利劍 → 紫薇軟劍 → 玄鐵重劍 → 木劍 → 無劍",
+          "重劍 → 利劍 → 軟劍 → 木劍 → 無劍",
+          "軟劍 → 利劍 → 重劍 → 木劍 → 無劍",
+          "利劍 → 重劍 → 軟劍 → 木劍 → 無劍"
+        ],
+        answer: 0,
+        explain: "弱冠前利劍 → 三十歲前軟劍（後棄） → 四十歲前重劍 → 四十歲後木劍 → 漸進無劍勝有劍。"
+      },
+      {
+        q: "「重劍無鋒，大巧不工」最貼近的理解是？",
+        options: [
+          "真正的精巧不在華麗外表與鋒利，而在樸拙自然、內蘊強大的力量",
+          "重劍因為太重所以不能開鋒",
+          "大巧就是要把劍工得極其精美",
+          "無鋒的劍比較安全，適合初學者"
+        ],
+        answer: 0,
+        explain: "這是從「凌厲剛猛」轉向「樸拙不工」的成熟境界。"
+      },
+      {
+        q: "四十歲後「草木竹石均可為劍」代表什麼？",
+        options: [
+          "武藝已不需依賴特定兵器，達到「不滯於物」的自由境界",
+          "他開始喜歡用木頭做劍玩",
+          "因為劍都壞了，只好用草木代替",
+          "他放棄了武學，改種田"
+        ],
+        answer: 0,
+        explain: "「不滯於物……漸進於無劍勝有劍之境」——心中有劍，則萬物皆可為劍。"
+      },
+      {
+        q: "關於紫薇軟劍的敘述，何者正確？",
+        options: [
+          "三十歲前所用，因誤傷義士而棄之深谷",
+          "是獨孤求敗最喜歡、一直使用的劍",
+          "因為太軟所以被楊過輕易折斷",
+          "石片上寫的是「橫行天下」"
+        ],
+        answer: 0,
+        explain: "「紫薇軟劍，三十歲前所用，誤傷義士不祥，悔恨無已，乃棄之深谷。」"
+      }
+    ]
+  },
+  {
+    id: "condor",
+    title: "神鵰試煉",
+    desc: "與神鵰過招，體會重劍真意",
+    series: "劍塚篇",
+    requiredLevel: 3,
+    expReward: 50,
+    daoReward: 2,
+    questions: [
+      {
+        type: "story",
+        text: "神鵰突然叼起重劍放到你手中，接著展翅撲擊！你第一次使用重劍時被震得暈了過去。醒來後吃下神鵰餵的紫色圓囊，頓覺精神大旺。\n\n這一次，你必須真正理解為什麼神鵰要你用「重劍」。"
+      },
+      {
+        q: "神鵰堅持要楊過使用玄鐵重劍，最核心的原因是？",
+        options: [
+          "儘管重劍無鋒、招式平凡，卻能透過紮實的勁力使人難以抗禦",
+          "因為重劍最有挑戰性，吃得苦中苦方為人上人",
+          "重劍夠重夠大，看起來有嚇敵氣勢",
+          "君子不重則不威，必須用重劍才能有威嚴"
+        ],
+        answer: 0,
+        explain: "重劍代表「大巧不工」——捨棄花巧，回歸最本質的力量與穩重。"
+      },
+      {
+        q: "楊過與神鵰過招時，心境從「驚」轉為「喜」、從「鬥」變為「玩」，這呼應了獨孤求敗的哪種進程？",
+        options: [
+          "從追求凌厲剛猛到最終繁華歸於平淡、與對手「遊戲」的從容",
+          "從害怕到勇敢的單純轉變",
+          "他其實一直都很害怕，只是假裝開心",
+          "完全沒有特別的呼應"
+        ],
+        answer: 0,
+        explain: "賞析指出：由驚轉喜、由鬥變玩，巧妙呼應獨孤求敗從修練中領悟人生繁華歸於平淡的進程。"
+      },
+      {
+        q: "楊過斷臂後仍能攀上劍塚，主要依靠什麼？",
+        options: [
+          "古墓派輕功並未減弱，加上意志與智慧找到踏足處",
+          "神鵰直接把他叼上去",
+          "他的右臂其實沒斷，只是裝的",
+          "使用了全真教的梯雲縱"
+        ],
+        answer: 0,
+        explain: "「自己手臂雖折，輕功卻毫不減弱……展開古墓派輕功」並找到青苔小穴作為踏足處。"
+      }
+    ]
+  },
+  {
+    id: "fusion1",
+    title: "技與道",
+    desc: "將庖丁的「技進乎道」與劍魔的境界對照",
+    series: "融合篇",
+    requiredLevel: 3,
+    expReward: 55,
+    daoReward: 3,
+    questions: [
+      {
+        type: "story",
+        text: "庖丁與神鵰同時出現在你面前。\n\n庖丁：「解牛有三境。」\n神鵰（透過意念）：「用劍亦有五階。」\n\n你突然明白——兩者其實走的是同一條路。"
+      },
+      {
+        q: "庖丁的「所見無非全牛 → 未嘗見全牛 → 以神遇」與獨孤求敗的用劍進程，最相似的對應是？",
+        options: [
+          "都從依賴外在形器（全牛／利劍），逐漸捨棄表象，最終達到心神合一、不滯於物的自由",
+          "兩者完全沒有相似之處",
+          "都強調要不斷更換兵器或刀具",
+          "都主張越重越好、越鋒利越好"
+        ],
+        answer: 0,
+        explain: "兩者都是「由技入道」：從執著於形器，到掌握規律，再到物我兩忘的境界。"
+      },
+      {
+        q: "下列哪一組比喻最能同時說明「庖丁解牛」與「重劍無鋒」？",
+        options: [
+          "畢卡索《公牛》系列——從繁複細節不斷取捨，最終只留下最本質的線條",
+          "越戰越強、兵器越換越鋒利",
+          "必須每天練習一萬次才能成功",
+          "找到最貴的兵器就能無敵"
+        ],
+        answer: 0,
+        explain: "課文知識點將畢卡索《公牛》的「取捨」過程與獨孤求敗捨棄名利、表象的進程相對照。"
+      },
+      {
+        q: "「大巧不工」與「依乎天理、因其固然」共同強調的是？",
+        options: [
+          "真正的高明不在於刻意雕琢或硬碰硬，而在於順應自然規律、返璞歸真",
+          "技巧越高越好，必須不斷精進雕琢",
+          "完全不做任何努力，一切隨緣",
+          "要用最複雜的招式才能勝出"
+        ],
+        answer: 0,
+        explain: "兩者都指向「順自然、不強求、回歸本質」的最高境界。"
+      }
+    ]
+  },
+  {
+    id: "final",
+    title: "無劍無刀",
+    desc: "最終試煉：融會貫通，達成最高境界",
+    series: "融合篇",
+    requiredLevel: 4,
+    expReward: 80,
+    daoReward: 5,
+    questions: [
+      {
+        type: "story",
+        text: "峭壁之上，神鵰盤旋；庖廚之中，刀光隱現。你站在兩境交會之處。\n\n一道聲音同時從心中響起：\n「重劍無鋒，大巧不工。」\n「以無厚入有間，恢恢乎其於游刃必有餘地矣。」\n\n現在，請回答最後的問題。"
+      },
+      {
+        q: "完成這趟修煉後，你認為「人生最高的境界」最接近下列哪一項？",
+        options: [
+          "從追求外在鋒芒與成就，逐漸學會捨棄執著，最終能以平常心、順應自然地應對一切",
+          "擁有全世界最鋒利的劍與刀",
+          "永遠保持年輕時的銳氣與鬥志，永不滿足",
+          "完全離開人群，獨自隱居"
+        ],
+        answer: 0,
+        explain: "兩課共同指向：由技入道、由繁入簡、由剛入柔、最終「無劍勝有劍」、「游刃有餘」的自在。"
+      },
+      {
+        q: "若把「選擇兵器／刀具」比喻為「人生的選擇」，下列哪句最能總結兩課的啟示？",
+        options: [
+          "每個選擇都會決定你成為什麼樣的人；真正的成熟是懂得在適當時機放下執著，回歸本質",
+          "一定要選最重、最鋒利的，才能成功",
+          "選擇不重要，只要努力就好",
+          "最好什麼都不選，避免後悔"
+        ],
+        answer: 0,
+        explain: "課文賞析：「使用何種『劍』？出自個人的選擇……選擇的過程中如何做出判斷，端視個人在自省後重新設定的生命意義。」"
+      },
+      {
+        q: "最後一題：你現在手中「該拿什麼」？",
+        options: [
+          "什麼都可以，也可以什麼都沒有——心中有道，則萬物皆器",
+          "一定要玄鐵重劍",
+          "一定要庖丁那把用了十九年的刀",
+          "最好兩樣都拿著，以防萬一"
+        ],
+        answer: 0,
+        explain: "「不滯於物，草木竹石均可為劍」「無劍勝有劍」——真正的自由是不被形器所限。"
+      }
+    ]
+  }
+];
+
+// ==================== 遊戲狀態 ====================
+let RS = {right:0,total:0};
+let state = {
+  level: 0,
+  exp: 0,
+  hp: 100,
+  maxHp: 100,
+  dao: 0,
+  completed: new Set(),
+  realms: new Set(["初入江湖"]),
+  weapons: new Set(),
+  currentChapter: null,
+  currentQ: 0,
+  answering: false
+};
+
+// ==================== 工具函數 ====================
+function save() {
+  localStorage.setItem("daoSwordGame", JSON.stringify({
+    ...state,
+    completed: [...state.completed],
+    realms: [...state.realms],
+    weapons: [...state.weapons]
+  }));
+}
+function load() {
+  const raw = localStorage.getItem("daoSwordGame");
+  if (!raw) return;
+  try {
+    const data = JSON.parse(raw);
+    state.level = data.level || 0;
+    state.exp = data.exp || 0;
+    state.hp = data.hp || 100;
+    state.maxHp = data.maxHp || 100;
+    state.dao = data.dao || 0;
+    state.completed = new Set(data.completed || []);
+    state.realms = new Set(data.realms || ["初入江湖"]);
+    state.weapons = new Set(data.weapons || []);
+  } catch(e) {}
+}
+
+function updateStatus() {
+  document.getElementById("playerLevel").textContent = LEVELS[state.level].name;
+  document.getElementById("hpText").textContent = `${state.hp}/${state.maxHp}`;
+  document.getElementById("hpBar").style.width = `${(state.hp / state.maxHp) * 100}%`;
+  
+  const nextExp = LEVELS[Math.min(state.level + 1, LEVELS.length - 1)].exp;
+  const prevExp = LEVELS[state.level].exp;
+  const need = nextExp - prevExp;
+  const have = state.exp - prevExp;
+  document.getElementById("expText").textContent = `${state.exp}/${nextExp}`;
+  document.getElementById("expBar").style.width = `${Math.min(100, (have / need) * 100)}%`;
+  document.getElementById("daoPoint").textContent = state.dao;
+}
+
+function addExp(amount) {
+  state.exp += amount;
+  while (state.level < LEVELS.length - 1 && state.exp >= LEVELS[state.level + 1].exp) {
+    state.level++;
+    state.realms.add(LEVELS[state.level].name);
+    state.maxHp += 20;
+    state.hp = state.maxHp;
+    log(`【境界提升】你達到了「${LEVELS[state.level].name}」！心神上限提升。`);
+  }
+  updateStatus();
+  save();
+}
+
+function log(msg) {
+  const el = document.getElementById("battleLog");
+  if (!el) return;
+  el.innerHTML = `<div>${msg}</div>` + el.innerHTML;
+}
+
+function show(id) {
+  ["mainMenu","chapterSelect","gameArea","resultArea","helpArea","inventoryArea"].forEach(x => {
+    document.getElementById(x).classList.add("hidden");
+  });
+  document.getElementById(id).classList.remove("hidden");
+}
+
+// ==================== 畫面控制 ====================
+function startGame() {
+  ensureStudent(()=>{ _startGame(); });
+}
+function _startGame() {
+  load();
+  updateStatus();
+  renderChapters();
+  show("chapterSelect");
+}
+
+function backToMenu() {
+  show("mainMenu");
+}
+
+function backToChapters() {
+  state.hp = state.maxHp;
+  updateStatus();
+  renderChapters();
+  show("chapterSelect");
+}
+
+function showHelp() {
+  show("helpArea");
+}
+
+function showInventory() {
+  const realmEl = document.getElementById("realmList");
+  const weaponEl = document.getElementById("weaponList");
+  realmEl.innerHTML = [...state.realms].map(r => `<span class="realm-tag unlocked">${r}</span>`).join("") || "<span class='realm-tag'>尚無</span>";
+  
+  const allWeapons = ["庖丁之刀","無名利劍","紫薇軟劍","玄鐵重劍","腐朽木劍","無劍之意"];
+  weaponEl.innerHTML = allWeapons.map(w => {
+    const unlocked = state.weapons.has(w);
+    return `<span class="realm-tag ${unlocked ? 'unlocked' : ''}">${unlocked ? w : "？？？"}</span>`;
+  }).join("");
+  show("inventoryArea");
+}
+
+function renderChapters() {
+  const grid = document.getElementById("chapterGrid");
+  grid.innerHTML = CHAPTERS.map(ch => {
+    const done = state.completed.has(ch.id);
+    const locked = state.level < ch.requiredLevel && !done;
+    return `
+      <div class="chapter-card ${locked ? 'locked' : ''}" onclick="${locked ? '' : `enterChapter('${ch.id}')`}">
+        ${done ? '<span class="badge done">已通關</span>' : (locked ? '<span class="badge">未解鎖</span>' : '')}
+        <div class="num">${ch.series}</div>
+        <h3>${ch.title}</h3>
+        <p>${ch.desc}</p>
+        <p style="margin-top:6px; font-size:0.75rem; color:#7a6b55;">需求境界：${LEVELS[ch.requiredLevel].name}</p>
+      </div>
+    `;
+  }).join("");
+}
+
+function enterChapter(id) {
+  const ch = CHAPTERS.find(c => c.id === id);
+  if (!ch) return;
+  if (state.level < ch.requiredLevel && !state.completed.has(id)) {
+    alert("境界不足，尚無法進入此副本。");
+    return;
+  }
+  state.currentChapter = ch;
+  state.currentQ = 0;
+  state.answering = false;
+  state.hp = state.maxHp;
+  RS = {right:0,total:0}; tStart();
+  updateStatus();
+  document.getElementById("battleLog").innerHTML = "";
+  show("gameArea");
+  showQuestion();
+}
+
+function showQuestion() {
+  const ch = state.currentChapter;
+  const item = ch.questions[state.currentQ];
+  const storyEl = document.getElementById("storyText");
+  const optEl = document.getElementById("optionsArea");
+  const fb = document.getElementById("feedbackBox");
+  const nextArea = document.getElementById("nextBtnArea");
+  
+  fb.className = "feedback";
+  fb.innerHTML = "";
+  nextArea.style.display = "none";
+  optEl.innerHTML = "";
+  
+  if (item.type === "story") {
+    storyEl.innerHTML = item.text.split("\n").map(p => p ? `<p>${p}</p>` : "").join("");
+    nextArea.style.display = "flex";
+    state.answering = false;
+  } else {
+    storyEl.innerHTML = `<p class="speaker">【試煉問題】</p><p>${item.q}</p>`;
+    item.options.forEach((opt, i) => {
+      const btn = document.createElement("button");
+      btn.className = "option-btn";
+      btn.textContent = `${String.fromCharCode(65 + i)}. ${opt}`;
+      btn.onclick = () => answer(i);
+      optEl.appendChild(btn);
+    });
+    state.answering = true;
+  }
+}
+
+function answer(idx) {
+  if (!state.answering) return;
+  state.answering = false;
+  
+  const ch = state.currentChapter;
+  const item = ch.questions[state.currentQ];
+  const btns = document.querySelectorAll(".option-btn");
+  const fb = document.getElementById("feedbackBox");
+  const nextArea = document.getElementById("nextBtnArea");
+  
+  btns.forEach((b, i) => {
+    b.disabled = true;
+    if (i === item.answer) b.classList.add("correct");
+    if (i === idx && idx !== item.answer) b.classList.add("wrong");
+  });
+  
+  RS.total++; if (idx === item.answer) RS.right++;
+  if (idx === item.answer) {
+    fb.className = "feedback show ok";
+    fb.innerHTML = `✓ 正確！<br>${item.explain}`;
+    addExp(15);
+    log(`答對！經驗 +15`);
+  } else {
+    fb.className = "feedback show fail";
+    fb.innerHTML = `✗ 答錯了。<br>正確答案是 ${String.fromCharCode(65 + item.answer)}。<br>${item.explain}`;
+    state.hp = Math.max(0, state.hp - 25);
+    updateStatus();
+    log(`答錯！心神 -25`);
+    if (state.hp <= 0) {
+      setTimeout(() => failChapter(), 1200);
+      return;
+    }
+  }
+  nextArea.style.display = "flex";
+}
+
+function nextStep() {
+  state.currentQ++;
+  const ch = state.currentChapter;
+  if (state.currentQ >= ch.questions.length) {
+    completeChapter();
+  } else {
+    showQuestion();
+  }
+}
+
+
+function reportRound(ch, passed) {
+  try {
+    const pct = RS.total ? Math.round(RS.right / RS.total * 100) : 0;
+    finishRound({ stageId: ch.id, stageName: ch.title, score: pct, right: RS.right, total: RS.total,
+      stars: passed ? (pct === 100 ? 3 : pct >= 67 ? 2 : 1) : 0,
+      types: [{ key: 'q', label: ch.series + '・' + ch.title, right: RS.right, total: RS.total }] });
+  } catch (e) {}
+}
+function completeChapter() {
+  const ch = state.currentChapter;
+  reportRound(ch, true);
+  state.completed.add(ch.id);
+  addExp(ch.expReward);
+  state.dao += ch.daoReward;
+  
+  // 解鎖兵器與境界
+  if (ch.id === "paoding1" || ch.id === "paoding2") state.weapons.add("庖丁之刀");
+  if (ch.id === "sword1") state.weapons.add("無名利劍");
+  if (ch.id === "sword2") {
+    state.weapons.add("紫薇軟劍");
+    state.weapons.add("玄鐵重劍");
+    state.weapons.add("腐朽木劍");
+  }
+  if (ch.id === "condor") state.weapons.add("玄鐵重劍");
+  if (ch.id === "final") {
+    state.weapons.add("無劍之意");
+    state.realms.add("無劍無刀");
+  }
+  
+  save();
+  updateStatus();
+  
+  document.getElementById("resultTitle").textContent = "闖關成功！";
+  document.getElementById("resultDesc").innerHTML = `
+    你完成了「${ch.title}」。<br>
+    獲得經驗 +${ch.expReward}，悟道點 +${ch.daoReward}。<br>
+    當前境界：<strong>${LEVELS[state.level].name}</strong>
+  `;
+  show("resultArea");
+}
+
+function failChapter() {
+  reportRound(state.currentChapter, false);
+  document.getElementById("resultTitle").textContent = "心神耗盡……";
+  document.getElementById("resultDesc").innerHTML = `
+    你在「${state.currentChapter.title}」中心神耗盡，被迫退出。<br>
+    休息片刻後可再次挑戰。記住：遇到難處時，要像庖丁一樣「怵然為戒」。
+  `;
+  show("resultArea");
+}
+
+// 初始化
+load();
+updateStatus();
+</script>
+<script src="../../home-fab.js"></script>
+</body>
+</html>
