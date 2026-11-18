@@ -135,6 +135,12 @@ input#codeInput:focus{outline:none;border-color:var(--accent);}
     <button class="btn-primary" id="btnLogin">登入</button>
     <div class="status-line" id="statusLine"></div>
 
+    <!-- Google 登入（選用）：沒設定用戶端 ID 時自動隱藏 -->
+    <div id="googleLoginBox" style="display:none;margin-top:14px;text-align:center;">
+      <div class="sub" style="margin-bottom:8px;">已經綁定過 Google？換機子也能接續進度（不想綁定可直接用上面的學號當訪客）</div>
+      <div id="googleBtnLogin" style="display:flex;justify-content:center;"></div>
+    </div>
+
     <div class="conn-row">
       <span class="conn-dot" id="connDot"></span><span id="connText">正在偵測學校主機…</span>
     </div>
@@ -145,6 +151,13 @@ input#codeInput:focus{outline:none;border-color:var(--accent);}
     <div class="who">
       <div class="name disp" id="hubName"></div>
       <div class="tag" id="hubTag"></div>
+    </div>
+    <!-- Google 綁定（選用） -->
+    <div id="googleHubBox" class="tag" style="display:none;margin:8px 0 14px;">
+      <div id="googleHubText" style="margin-bottom:6px;"></div>
+      <div id="googleBtnLink" style="display:flex;"></div>
+      <button class="btn-switch" id="btnGoogleBackup" style="display:none;margin-top:6px;">☁️ 立即備份到 Google</button>
+      <button class="btn-switch" id="btnGoogleUnlink" style="display:none;margin-top:6px;">解除這台裝置的 Google 連結</button>
     </div>
 
     <!-- ====== 電腦科 ====== -->
@@ -592,6 +605,7 @@ function showHub(identity) {
   hub.classList.add("active");
 
   document.getElementById("hubName").textContent = identity.name || `學號 ${identity.studentNumber}`;
+  if (typeof googleRefreshHub === "function") googleRefreshHub();
   const tag = document.getElementById("hubTag");
   if (identity.verified && identity.isDemo) {
     tag.textContent = "🧪 示範帳號（進入遊戲會有「示範模式」面板：無敵、金錢無限、可跳過題目）";
@@ -716,6 +730,11 @@ document.getElementById("btnSwitchUser").addEventListener("click", async () => {
   if (typeof keyagentCloudSyncNow === "function") {
     await keyagentCloudSyncNow();
   }
+  // 換人前：已綁定 Google 的先備份一次，再清掉這台裝置上的 Google 憑證（共用電腦不留給下一位同學）
+  if (typeof keyagentGoogleInfo === "function" && keyagentGoogleInfo()) {
+    try { await keyagentGooglePush(); } catch (e) {}
+    keyagentGoogleUnlink();
+  }
   localStorage.removeItem(ACTIVE_STUDENT_KEY);
   showLoginForm();
   btn.disabled = false;
@@ -732,6 +751,44 @@ window.addEventListener("pagehide", () => {
     keyagentCloudSyncBeacon();
   }
 });
+
+// ===== Google 帳號綁定（選用）：訪客照舊用學號；想換機子接續進度的人才綁定 =====
+async function googleSetupLogin() {
+  if (typeof keyagentGoogleEnabled !== "function" || !keyagentGoogleEnabled()) return;
+  document.getElementById("googleLoginBox").style.display = "block";
+  keyagentGoogleRenderButton(document.getElementById("googleBtnLogin"), async idToken => {
+    setStatus("Google 登入中…");
+    const r = await keyagentGoogleLogin(idToken, "");
+    if (!r.success) { setStatus(r.message || "Google 登入失敗", "err"); return; }
+    if (r.needStudent) { setStatus("這個 Google 還沒綁定學號。請先用學號登入，再到選單按「綁定 Google」。", "err"); return; }
+    showHub({ studentNumber: r.studentNumber, name: null, verified: false, dbId: null, className: null, seatNumber: null, loginAt: Date.now() });
+  });
+}
+async function googleRefreshHub() {
+  const box = document.getElementById("googleHubBox");
+  if (typeof keyagentGoogleEnabled !== "function" || !keyagentGoogleEnabled()) { box.style.display = "none"; return; }
+  box.style.display = "block";
+  const info = keyagentGoogleInfo(), me = keyagentGetActiveStudentNumber();
+  const txt = document.getElementById("googleHubText"), linkBox = document.getElementById("googleBtnLink");
+  const bk = document.getElementById("btnGoogleBackup"), un = document.getElementById("btnGoogleUnlink");
+  if (info && info.studentNumber === me) {
+    txt.textContent = "✅ 已綁定 Google：" + info.email + "（進度會自動備份，換機子用 Google 登入即可接續）";
+    linkBox.innerHTML = ""; bk.style.display = "block"; un.style.display = "block";
+    bk.onclick = async () => { bk.disabled = true; const r = await keyagentGooglePush(); bk.disabled = false;
+      alert(r.success ? "已備份到你的 Google 帳號 ✅" : (r.expired ? "登入已失效，請重新綁定" : (r.message || "備份失敗，請稍後再試"))); googleRefreshHub(); };
+    un.onclick = () => { if (confirm("只會解除這台裝置的連結，雲端備份還在。確定嗎？")) { keyagentGoogleUnlink(); googleRefreshHub(); } };
+  } else {
+    txt.textContent = "👤 目前是訪客：進度只存在這台裝置。想換機子也能接續，可綁定自己的 Google 帳號（選用）。";
+    bk.style.display = "none"; un.style.display = "none";
+    keyagentGoogleRenderButton(linkBox, async idToken => {
+      const r = await keyagentGoogleLogin(idToken, me);
+      if (!r.success) { alert(r.message || "綁定失敗"); return; }
+      if (r.studentNumber !== me) { showHub({ studentNumber: r.studentNumber, name: null, verified: false, dbId: null, className: null, seatNumber: null, loginAt: Date.now() }); return; }
+      alert("綁定成功！之後進度會自動備份 ✅"); googleRefreshHub();
+    });
+  }
+}
+googleSetupLogin();
 
 // 如果之前已經登入過（同一台裝置沒登出），直接跳到選單，不用重打一次學號
 (function restoreSession() {

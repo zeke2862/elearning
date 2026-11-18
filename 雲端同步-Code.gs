@@ -28,6 +28,8 @@ function doPost(e) {
       return jsonOut_({ success: true });
     }
 
+    if (data.action === "gLogin" || data.action === "gPull" || data.action === "gPush") return jsonOut_(gHandle_(data));   // Google 帳號綁定（選用）
+
     try { notifyGuess_(data); } catch (e0) {}   // 學生被「亂猜重開」鎖定時，寄通知給老師（失敗不影響收件）
 
     // 預設情況：這是學生端送來的一筆同步資料
@@ -334,4 +336,79 @@ function gameReport_(e) {
   var byNo = (collectGames_(scope, g)[g]) || {};
   var students = Object.keys(byNo).map(function (no) { checkRec_(byNo[no]); return { studentNumber: no, rec: byNo[no] }; });
   return jsonOut_({ success: true, game: g, generatedAt: new Date().getTime(), students: students });
+}
+
+
+// =====================================================================
+// ===== Google 帳號綁定（選用）：讓學生把進度存在自己的 Google 帳號，換機子可接續 =====
+// 前置設定（只做一次）：「專案設定 → 指令碼屬性」新增 GOOGLE_CLIENT_ID = 你在 Google Cloud 申請的「用戶端 ID」
+// 資料放在分頁「Google帳號」：A=Google帳號代號(sub) B=Email C=學號 D=存檔JSON E=更新時間 F=登入憑證(session)
+// 規則：一個學號只能被一個 Google 帳號綁定（先綁先贏）；沒綁定的人照舊用學號當訪客，完全不受影響。
+// =====================================================================
+const G_SHEET_ = "Google帳號";
+
+function gSheet_() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sh = ss.getSheetByName(G_SHEET_);
+  if (!sh) { sh = ss.insertSheet(G_SHEET_); sh.appendRow(["sub", "Email", "學號", "存檔(JSON)", "更新時間", "session"]); }
+  return sh;
+}
+
+// 向 Google 驗證學生傳來的 id_token 是真的、而且是發給我們這個網站的
+function gVerify_(idToken) {
+  const cid = PropertiesService.getScriptProperties().getProperty("GOOGLE_CLIENT_ID");
+  if (!cid) throw new Error("尚未設定 GOOGLE_CLIENT_ID");
+  const res = UrlFetchApp.fetch("https://oauth2.googleapis.com/tokeninfo?id_token=" + encodeURIComponent(idToken), { muteHttpExceptions: true });
+  if (res.getResponseCode() !== 200) throw new Error("Google 驗證失敗，請重新登入");
+  const t = JSON.parse(res.getContentText());
+  if (t.aud !== cid) throw new Error("這個登入不是發給本網站的");
+  if (Number(t.exp) * 1000 < Date.now()) throw new Error("登入已過期，請重新登入");
+  if (String(t.email_verified) !== "true") throw new Error("這個 Google 帳號的 Email 尚未驗證");
+  return { sub: String(t.sub), email: String(t.email || "") };
+}
+
+function gFindRow_(sh, col, value) {   // 回傳列號（找不到 0）
+  const n = sh.getLastRow(); if (n < 2) return 0;
+  const vals = sh.getRange(2, col, n - 1, 1).getValues();
+  for (let i = 0; i < vals.length; i++) if (String(vals[i][0]) === String(value)) return i + 2;
+  return 0;
+}
+
+function gHandle_(data) {
+  const lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    const sh = gSheet_();
+    if (data.action === "gLogin") {
+      const g = gVerify_(String(data.idToken || ""));
+      let row = gFindRow_(sh, 1, g.sub);
+      if (!row) {
+        const sn = String(data.studentNumber || "").trim();
+        if (!sn) return { success: true, needStudent: true };                 // 這個 Google 還沒綁定學號
+        if (gFindRow_(sh, 3, sn)) return { success: false, message: "這個學號已經綁定在另一個 Google 帳號了，請找老師處理" };
+        sh.appendRow([g.sub, g.email, sn, "", new Date(), ""]);
+        row = sh.getLastRow();
+      }
+      const session = Utilities.getUuid() + Utilities.getUuid();
+      sh.getRange(row, 6).setValue(session);                                   // 每次登入換新憑證（同時間只有最近登入的那台能自動備份）
+      const r = sh.getRange(row, 1, 1, 6).getValues()[0];
+      let save = null; try { save = r[3] ? JSON.parse(r[3]) : null; } catch (e) {}
+      return { success: true, studentNumber: String(r[2]), email: String(r[1]), session: session, save: save };
+    }
+    // gPull / gPush：用登入換到的 session 憑證，不必每次重新跳 Google 視窗
+    const row = data.session ? gFindRow_(sh, 6, data.session) : 0;
+    if (!row) return { success: false, expired: true, message: "Google 登入已失效，請重新登入" };
+    if (data.action === "gPull") {
+      let save = null; try { const s = sh.getRange(row, 4).getValue(); save = s ? JSON.parse(s) : null; } catch (e) {}
+      return { success: true, save: save };
+    }
+    if (data.action === "gPush") {
+      const txt = JSON.stringify(data.save || {});
+      if (txt.length > 45000) return { success: false, message: "存檔太大，無法備份" };
+      sh.getRange(row, 4).setValue(txt); sh.getRange(row, 5).setValue(new Date());
+      return { success: true };
+    }
+    return { success: false, message: "未知動作" };
+  } catch (err) {
+    return { success: false, message: String(err && err.message || err) };
+  } finally { lock.releaseLock(); }
 }

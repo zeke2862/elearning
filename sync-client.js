@@ -226,7 +226,7 @@ let _keyagentPushTimer = null;
 function keyagentSchedulePush(delayMs) {
   if (!keyagentGetActiveStudentNumber()) return;
   clearTimeout(_keyagentPushTimer);
-  _keyagentPushTimer = setTimeout(() => { keyagentCloudSyncNow(); }, delayMs || 2000);
+  _keyagentPushTimer = setTimeout(() => { keyagentCloudSyncNow(); if (typeof keyagentGoogleBackupSoon === "function") keyagentGoogleBackupSoon(); }, delayMs || 2000);
 }
 // 離開遊戲頁面時再送一次（排程中的也一併補上）
 function keyagentInstallPageHideSync() {
@@ -348,3 +348,84 @@ function keyagentMergeProgress(local, cloud){
   return out;
 }
 // ===== /keyagentMergeProgress =====
+
+
+// ============ Google 帳號綁定（選用）============
+// 沒綁定 = 訪客，照舊用學號、進度存在這台裝置（＋原本的雲端同步）。
+// 想「換機子也能接續」的同學：登入後按「綁定 Google」，進度會另外備份在自己的 Google 帳號底下。
+// 設定：把 GOOGLE_CLIENT_ID 換成 Google Cloud 申請的「用戶端 ID」（步驟見「Google登入設定說明.md」）；
+//       沒填的時候，所有 Google 相關按鈕都會自動隱藏，不影響任何功能。
+const GOOGLE_CLIENT_ID = "";
+const SYNC_GOOGLE_KEY = "keyagent_google";   // { session, email, studentNumber }
+
+function keyagentGoogleEnabled() { return !!(GOOGLE_CLIENT_ID && CLOUD_RELAY_URL); }
+function keyagentGoogleInfo() {
+  try { return JSON.parse(localStorage.getItem(SYNC_GOOGLE_KEY) || "null"); } catch (e) { return null; }
+}
+function keyagentGoogleUnlink() { try { localStorage.removeItem(SYNC_GOOGLE_KEY); } catch (e) {} }
+
+async function keyagentGoogleCall(body) {
+  const res = await fetch(CLOUD_RELAY_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(body) });
+  return await res.json();
+}
+
+function keyagentGoogleLoadLib() {
+  return new Promise((resolve, reject) => {
+    if (window.google && google.accounts && google.accounts.id) return resolve();
+    const s = document.createElement("script");
+    s.src = "https://accounts.google.com/gsi/client"; s.async = true;
+    s.onload = () => resolve(); s.onerror = () => reject(new Error("載入 Google 登入失敗，請檢查網路"));
+    document.head.appendChild(s);
+  });
+}
+
+// 在指定的容器裡畫出「用 Google 登入」按鈕；使用者完成後呼叫 onToken(idToken)
+async function keyagentGoogleRenderButton(container, onToken) {
+  if (!keyagentGoogleEnabled() || !container) return false;
+  try {
+    await keyagentGoogleLoadLib();
+    google.accounts.id.initialize({ client_id: GOOGLE_CLIENT_ID, callback: r => r && r.credential && onToken(r.credential) });
+    container.innerHTML = "";
+    google.accounts.id.renderButton(container, { theme: "outline", size: "large", text: "signin_with", locale: "zh-TW" });
+    return true;
+  } catch (e) { return false; }
+}
+
+// 用 Google 憑證登入／綁定。studentNumber 有給＝「把這個學號綁到這個 Google」；沒給＝「這個 Google 已綁過，帶我回去」。
+// 成功回傳 { success:true, studentNumber, email }；這個 Google 還沒綁學號回傳 { needStudent:true }
+async function keyagentGoogleLogin(idToken, studentNumber) {
+  try {
+    const r = await keyagentGoogleCall({ action: "gLogin", idToken, studentNumber: studentNumber || "" });
+    if (!r || !r.success) return { success: false, message: (r && r.message) || "登入失敗" };
+    if (r.needStudent) return { success: true, needStudent: true };
+    localStorage.setItem(SYNC_GOOGLE_KEY, JSON.stringify({ session: r.session, email: r.email, studentNumber: r.studentNumber }));
+    // 換機子的重點：先把雲端備份的進度合併進這台裝置（只增不減），再把合併結果備份回去
+    localStorage.setItem(SYNC_ACTIVE_STUDENT_KEY, JSON.stringify({ studentNumber: r.studentNumber, verified: false, loginAt: Date.now() }));
+    if (r.save) keyagentMergeSaveInto(r.studentNumber, r.save);
+    keyagentGooglePush();
+    return { success: true, studentNumber: r.studentNumber, email: r.email };
+  } catch (e) { return { success: false, message: "連不到雲端，請稍後再試" }; }
+}
+
+// 備份：先把雲端現有的拉下來合併（避免另一台裝置的新進度被蓋掉），再把合併後的整份存回去
+async function keyagentGooglePush() {
+  const g = keyagentGoogleInfo(), sn = keyagentGetActiveStudentNumber();
+  if (!g || !g.session || !sn || g.studentNumber !== sn || !keyagentGoogleEnabled()) return { success: false };
+  try {
+    const pulled = await keyagentGoogleCall({ action: "gPull", session: g.session });
+    if (pulled && pulled.expired) { keyagentGoogleUnlink(); return { success: false, expired: true }; }
+    if (pulled && pulled.save) keyagentMergeSaveInto(sn, pulled.save);
+    const p = keyagentBuildSyncPayload();
+    if (!p) return { success: true };
+    const save = Object.assign({}, p.save || {}, p.other ? { otherGames: p.other } : {});
+    const r = await keyagentGoogleCall({ action: "gPush", session: g.session, save });
+    return { success: !!(r && r.success), message: r && r.message };
+  } catch (e) { return { success: false }; }
+}
+// 自動備份：過關／存檔後呼叫（同一分鐘內只備份一次，不拖慢遊戲）
+let _keyagentGoogleLast = 0;
+function keyagentGoogleBackupSoon() {
+  if (!keyagentGoogleInfo() || Date.now() - _keyagentGoogleLast < 60000) return;
+  _keyagentGoogleLast = Date.now();
+  keyagentGooglePush();
+}
