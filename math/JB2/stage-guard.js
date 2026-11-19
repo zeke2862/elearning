@@ -113,9 +113,17 @@
   /* 切到別的分頁／App（頁面被藏起來）→ 立刻關閉這一局 */
   document.addEventListener('visibilitychange', function () { if (document.hidden) leave(0); });
   /* 縮成小視窗、分割畫面、懸浮視窗（頁面沒被藏起來，只是失去焦點）→ 離開超過 3 秒，回來時關閉這一局 */
-  var since = 0, okSeen = false;
+  var since = 0, okSeen = false, relaxWas = false, relaxLost = false;
+  function relaxOn() { try { return !!(window.RelaxBreak && window.RelaxBreak.active); } catch (e) { return false; } }
   function tick() {
+    /* 休息小遊戲（iframe 在本頁內）進行中／剛結束：焦點在小遊戲裡或剛被收掉，不是學生離開。
+       小遊戲收掉後本頁會暫時沒有焦點（直到學生再點一下），所以結束後要「等到重新取得焦點」才恢復偵測，否則會誤判成離開。 */
+    var rx = relaxOn();
+    if (rx) { relaxWas = true; since = 0; if (!document.hidden) return; }
+    else if (relaxWas) { relaxWas = false; relaxLost = true; since = 0; try { window.focus(); } catch (e) {} }
     var bad = document.hidden || (document.hasFocus && !document.hasFocus());
+    if (bad && relaxLost && !document.hidden) return;   // 小遊戲剛結束、尚未重新取得焦點：先不計
+    if (!bad) relaxLost = false;
     if (bad) { if (okSeen && !since) since = Date.now(); return; }
     okSeen = true;
     if (!since) return;
