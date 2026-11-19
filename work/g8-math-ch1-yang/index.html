@@ -1,0 +1,214 @@
+<!DOCTYPE html><html lang="zh"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>中二數學第一章-楊如蘭（数道登仙）</title>
+<style>
+:root{color-scheme:light;--bg:#efeadb;--fg:#1c2a24;--cd:#fbf8ee;--ac:#2f7d5b;--go:#b07d12;--mu:#6c7468;--ok:#2b9348;--bad:#c1121f;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#10171a;--fg:#e6efe8;--cd:#19262a;--ac:#4fc08d;--go:#e3b341;--mu:#8fa39a;--ok:#5fd07f;--bad:#ff6b6b}}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#10171a;--fg:#e6efe8;--cd:#19262a;--ac:#4fc08d;--go:#e3b341;--mu:#8fa39a;--ok:#5fd07f;--bad:#ff6b6b}
+html,body{margin:0;background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,"PingFang SC","Microsoft YaHei",serif;line-height:1.55}
+#app{max-width:520px;margin:0 auto;padding:14px}h1{margin:6px 0;font-size:26px;letter-spacing:2px}h3{margin:6px 0}
+.cd{background:var(--cd);border-radius:14px;padding:12px;margin:10px 0;box-shadow:0 1px 4px #0002}.mu{color:var(--mu);font-size:13px}
+button{touch-action:manipulation;-webkit-tap-highlight-color:transparent;font:inherit;color:inherit;border:0;border-radius:12px;background:var(--cd);padding:11px 14px;cursor:pointer;box-shadow:0 1px 4px #0003}button:active{transform:scale(.96)}button:disabled{opacity:.45}
+.pr{background:var(--ac);color:#fff;font-weight:700}.w{display:block;width:100%;text-align:left;margin:8px 0}.row{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.q{font-size:19px;font-weight:700;margin:10px 0}.o.ok{background:var(--ok);color:#fff}.o.no{background:var(--bad);color:#fff}
+.ch{display:inline-block;background:var(--cd);border:1px solid var(--go);border-radius:20px;padding:3px 10px;margin:3px;font-size:14px}.go{color:var(--go)}.ok{color:var(--ok)}.bad{color:var(--bad)}
+.big{font-size:56px;text-align:center}.pop{animation:p .6s}@keyframes p{from{transform:scale(.2) rotate(-90deg);opacity:0}}
+.stg{position:relative;height:132px;overflow:hidden;border-radius:14px;background:linear-gradient(#1b2b3a,#2c5a52);margin:8px 0}.stg i{font-style:normal}.stg .hr{position:absolute;left:50%;bottom:0;width:80px;height:104px;margin-left:-40px}
+.stg.idle .hr{animation:fl 2.4s ease-in-out infinite alternate}@keyframes fl{to{transform:translateY(-6px)}}
+.stg.asc .hr{animation:up 1.2s ease-out forwards}@keyframes up{60%{transform:translateY(-32px) scale(1.14);filter:drop-shadow(0 0 14px #ffd966)}to{transform:translateY(-16px) scale(1.07);filter:drop-shadow(0 0 8px #ffd966)}}
+.stg.asc .ray{position:absolute;left:50%;width:100px;margin-left:-50px;top:0;bottom:0;background:linear-gradient(#ffd96600,#ffd966aa,#ffd96600);animation:ry 1.2s ease-out forwards}@keyframes ry{from{opacity:0;transform:scaleX(.2)}40%{opacity:1}to{opacity:.4;transform:scaleX(1)}}
+.stg.hi{background:linear-gradient(#3a2a52,#b07d12)}
+.stg.hurt .hr{animation:hu .8s forwards}@keyframes hu{0%,40%,80%{transform:translateX(-9px) rotate(-7deg)}20%,60%{transform:translateX(9px) rotate(7deg)}to{transform:translateY(5px) rotate(-5deg);filter:grayscale(.6) drop-shadow(0 0 10px #c1121f)}}
+.stg.hurt{background:linear-gradient(#2a1020,#4a0f1a)}.stg .dk{position:absolute;left:50%;top:50%;width:130px;height:130px;margin:-65px;border-radius:50%;background:radial-gradient(#4a0a6a00 35%,#6a0a8acc);animation:sp 1.2s linear infinite}@keyframes sp{to{transform:rotate(360deg) scale(1.1)}}
+.stg .p{position:absolute;bottom:14px;font-size:22px;opacity:0;animation:rs 1.3s ease-out forwards}@keyframes rs{0%{opacity:1}to{opacity:0;transform:translateY(-100px)}}
+.stg .bn{position:absolute;top:8px;width:100%;text-align:center;color:#fff;font-weight:700;text-shadow:0 1px 4px #000}
+.stg.sky{height:180px;background:linear-gradient(#5aa7e0,#dff2ff)}.stg.sky .hr{animation:sk 2.4s ease-out forwards}@keyframes sk{from{transform:translateY(90px)}to{transform:translateY(-26px) scale(1.15);filter:drop-shadow(0 0 16px #ffd966)}}
+.stg .cl{position:absolute;font-size:38px;bottom:-14px;animation:cd 2.4s ease-out forwards}@keyframes cd{to{transform:translateY(-130px);opacity:.3}}.bt button{padding:7px 9px;font-size:13px}.sel{outline:3px solid var(--go)}</style></head><body><div id="app"></div>
+<script src="../../sync-client.js"></script>
+<script>
+/* ========== 接上教師後台的程式（整段複製，只改最上面的 GAME_KEY） ========== */
+const GAME_KEY = 'math-g8-ch1-yang';            // 遊戲代號：小寫英文／數字／-／_，建議「科目簡碼-遊戲名」
+
+/* 1) 學號：沒有就強迫輸入 */
+function ensureStudent(done) {
+  const no = keyagentGetActiveStudentNumber();
+  if (no) return done(no);
+  const v = (prompt('請輸入你的學號') || '').trim();
+  if (!/^[A-Za-z0-9_-]{2,12}$/.test(v)) return ensureStudent(done);
+  localStorage.setItem('keyagent_active_student', JSON.stringify({ studentNumber: v, verified: false }));
+  done(v);
+}
+
+/* 2) 練習時間：只算「玩完一局」的時間；切到別的分頁不算；中途關掉的那一局不算 */
+let T0 = 0, TACC_ = 0;
+function tStart()  { TACC_ = 0; T0 = Date.now(); }
+function tPause()  { if (T0) { TACC_ += Date.now() - T0; T0 = 0; } }
+function tResume() { if (!T0 && !document.hidden) T0 = Date.now(); }
+function tTake()   { tPause(); const s = Math.min(1800, Math.round(TACC_ / 1000)); TACC_ = 0; return s; }
+document.addEventListener('visibilitychange', () => (document.hidden ? tPause() : tResume()));
+
+/* 3) 一局結束時呼叫 finishRound({...})，會自動記錄並送到老師的後台 */
+function finishRound(r) {
+  // r = { stageId:'L1', stageName:'第一課 認字', score:80, right:8, total:10, stars:2(可省略), nick:'小勇者'(可省略),
+  //       types:[{ key:'read', label:'看字讀音', right:5, total:6 }, ...](可省略) }
+  const secs = tTake();
+  keyagentUpdateOtherGame(GAME_KEY, prev => {
+    const stages = Object.assign({}, prev.stages);
+    const s = stages[r.stageId] || {};
+    stages[r.stageId] = {
+      n: r.stageName || r.stageId,
+      bestStars: Math.max(s.bestStars || 0, r.stars || 0),
+      bestScore: Math.max(s.bestScore || 0, r.score || 0),
+      plays: (s.plays || 0) + 1,
+      hist: (s.hist || []).concat([{ at: Date.now(), q: r.total || 0, ok: r.right || 0, s: secs, st: r.stars || 0 }]).slice(-30),   // 每一次的結果（後台點答對率可看）
+      totalSecs: (s.totalSecs || 0) + secs,
+      totalQ: (s.totalQ || 0) + (r.total || 0),
+      totalOk: (s.totalOk || 0) + (r.right || 0)
+    };
+    const q = Object.assign({}, prev.q);
+    (r.types || []).forEach(t => {
+      const k = r.stageId + ':' + t.key, o = q[k] || { n: 0, ok: 0 };
+      q[k] = { n: o.n + (t.total || 0), ok: o.ok + (t.right || 0), label: t.label || t.key };
+    });
+    return {
+      nick: r.nick || prev.nick || '',
+      totalPlays: (prev.totalPlays || 0) + 1,
+      bestScore: Math.max(prev.bestScore || 0, r.score || 0),
+      totalSecs: (prev.totalSecs || 0) + secs,
+      totalQ: (prev.totalQ || 0) + (r.total || 0),
+      totalOk: (prev.totalOk || 0) + (r.right || 0),
+      lastScore: r.score || 0, lastId: r.stageId, lastName: r.stageName || r.stageId, lastAt: Date.now(),
+      stages, q
+    };
+  });
+}
+keyagentInstallPageHideSync();           // 4) 離開頁面時補寄一次
+/* ========== 以上整段不用改 ========== */
+</script>
+<script>
+const rn=(a,b)=>a+Math.floor(Math.random()*(b-a+1)),pk=a=>a[rn(0,a.length-1)],sh=a=>a.map(x=>[Math.random(),x]).sort((x,y)=>x[0]-y[0]).map(x=>x[1]);
+const fm=n=>typeof n=='number'&&n<0?'−'+(-n):String(n),sb=n=>String(n).replace(/\d/g,d=>'₀₁₂₃₄₅₆₇₈₉'[d]);
+const A=n=>'a'+sb(n),seq=(a,d,n)=>Array.from({length:n},(_,i)=>fm(a+i*d)).join(', '),sm=(a,d,n)=>n*(2*a+(n-1)*d)/2;
+function mc(q,c,ds,exp){const o=[fm(c)];for(const d of ds){const s=fm(d);if(!o.includes(s)&&o.length<4)o.push(s)}let t=0;while(o.length<4&&t++<60){const s=fm(Number(c)+rn(-9,9));if(!o.includes(s))o.push(s)}return{q,o:sh(o),a:fm(c),exp}}
+const G={
+e1(){const a=rn(1,20),d=pk([2,3,4,5,-2,-3,-4]),x=a+4*d;return mc(`观察数列:${seq(a,d,4)}, ?  问号应填入?`,x,[x+d,x+1,a+3*d],`相邻两项的差都是 ${fm(d)},所以下一项 = ${fm(a+3*d)} + (${fm(d)}) = ${fm(x)}。`)},
+e2(){const a=rn(1,20),d=pk([2,3,4,5,-2,-3,-4]);return mc(`求等差数列 ${seq(a,d,5)}, … 的公差 d。`,d,[-d,d+1,d-1,2*d],`公差 d = 后项 − 前项 = ${fm(a+d)} − (${fm(a)}) = ${fm(d)}。`)},
+e3(){const a=rn(1,9),d=pk([2,3,4,5]),g=pk([1,2,3]),r=pk([2,3]),s=rn(1,3),ar=seq(a,d,5);return mc('下列哪一个数列是等差数列?',ar,[Array.from({length:5},(_,i)=>g*r**i).join(', '),Array.from({length:5},(_,i)=>(s+i)**2).join(', '),`${a}, ${a+d}, ${a}, ${a+d}, ${a}`],`等差数列的「后项−前项」都相同:${ar} 每次都加 ${d}。其余数列的差不固定。`)},
+e4(){const a=rn(1,20),c=a+2*rn(1,15),x=(a+c)/2;return mc(`若 x 为 ${a}、${c} 的等差中项,求 x。`,x,[a+c,(c-a)/2,x+1],`x = (a+c)/2 = (${a}+${c})/2 = ${x}。`)},
+e5(){const cy=pk(['234','142857','56']),L=cy.length,n=rn(20,60),r=n%L,x=cy[r?r-1:L-1];return mc(`小数 0.${cy}${cy}${cy}…(「${cy}」循环出现),小数点后第 ${n} 位数字是?`,x,[...cy.split(''),..."0123456789"],`每 ${L} 位循环一次。${n}÷${L} 余 ${r},${r?`取循环中第 ${r} 位`:'整除则取循环最后一位'},答案 ${x}。`)},
+e6(){const a=pk([1,2,3,5]),r=pk([2,3,-2]),t=i=>a*r**i;return mc(`观察数列:${[0,1,2,3].map(i=>fm(t(i))).join(', ')}, ?  问号应填入?`,t(4),[t(3)+t(3)-t(2),t(4)+1,t(3)*(r+1)],`后项÷前项 = ${fm(r)}(等比),所以下一项 = ${fm(t(3))}×(${fm(r)}) = ${fm(t(4))}。`)},
+m1(){const a=rn(2,20),d=pk([2,3,4,5,6,-2,-3]),n=rn(8,20),x=a+(n-1)*d;return mc(`等差数列首项 ${A(1)}=${a},公差 d=${fm(d)},求 ${A(n)}。`,x,[a+n*d,a+(n-2)*d,(n-1)*d],`${A(n)} = ${A(1)}+(n−1)d = ${a}+(${n}−1)×(${fm(d)}) = ${fm(x)}。`)},
+m2(){const d=pk([2,3,4,5,-2,-3]),a=rn(1,30),k=rn(6,15),x=a+(k-1)*d;return mc(`等差数列 ${A(1)}=${a},${A(k)}=${fm(x)},求公差 d。`,d,[d+1,d-1,-d],`${fm(x)} = ${a}+(${k}−1)d ⇒ ${fm(x-a)} = ${k-1}d ⇒ d = ${fm(d)}。`)},
+m3(){const a=rn(1,20),d=pk([2,3,4,5]),n=rn(10,40),x=a+(n-1)*d;return mc(`等差数列首项 ${a},公差 ${d},则 ${x} 是第几项?`,n,[n+1,n-1,n+2],`${x} = ${a}+(n−1)×${d} ⇒ n−1 = ${(x-a)/d} ⇒ n = ${n}。`)},
+m4(){const a=rn(-20,20),d=pk([3,4,5,-2]),k=rn(15,40),x=a+(k-1)*d;return mc(`等差数列公差 d=${fm(d)},${A(k)}=${fm(x)},求首项 ${A(1)}。`,a,[x-k*d,x+(k-1)*d,x-(k-2)*d],`${fm(x)} = ${A(1)}+(${k}−1)×(${fm(d)}) ⇒ ${A(1)} = ${fm(x)} − (${fm((k-1)*d)}) = ${fm(a)}。`)},
+m6(){const a=pk([1,2,3,5]),r=pk([2,3]),n=rn(4,7),x=a*r**(n-1);return mc(`等比数列首项 ${A(1)}=${a},公比 r=${r},求 ${A(n)}。`,x,[a*r**n,a*r**(n-2),a*r*n],`${A(n)} = ${A(1)}×r^(n−1) = ${a}×${r}^${n-1} = ${x}。`)},
+m7(){const a=pk([1,2,3]),r=pk([2,3]),n=rn(5,8),x=a*r**(n-1);return mc(`等比数列首项 ${a},公比 ${r},则 ${x} 是第几项?`,n,[n+1,n-1,n+2],`${x} = ${a}×${r}^(n−1) ⇒ ${r}^(n−1) = ${x/a} = ${r}^${n-1} ⇒ n = ${n}。`)},
+m8(){const k=pk([2,3,5]),r=pk([2,3,4]),a=k,c=k*r*r,b=k*r;return mc(`a、b、c 成等比数列且 b>0,a=${a},c=${c},求 b。`,b,[(a+c)/2,b+1,b-1,c-a],`b² = ac = ${a}×${c} = ${a*c} ⇒ b = ${b}(b>0)。`)},
+m9(){const a=pk([2,3,5]),n=rn(5,8),x=a*2**(n-1);return mc(`魔豆发芽后第 1 天高 ${a} 公尺,之后每天都是前一天的 2 倍,第 ${n} 天高几公尺?`,x,[a*2**n,a*2**(n-2),a*2*n],`等比数列 a₁=${a}, r=2 ⇒ ${A(n)} = ${a}×2^${n-1} = ${x}。`)},
+h1(){const a=rn(1,15),d=pk([2,3,4,5]),n=rn(10,30),S=sm(a,d,n);return mc(`等差级数首项 ${a},公差 ${d},求前 ${n} 项的和 S${sb(n)}。`,S,[n*(2*a+(n-1)*d),S+n,S-a],`S = n[2a₁+(n−1)d]/2 = ${n}×[${2*a}+${(n-1)*d}]/2 = ${S}。`)},
+h2(){if(Math.random()<.5){const d=pk([3,4,5,6,7,9]),m=rn(8,14),S=d*m*(m+1)/2;return mc(`求 ${d} + ${2*d} + ${3*d} + … + ${m*d} 的和。`,S,[S+d,S-d,m*(d+m*d)],`共 ${m} 项,S = ${m}×(${d}+${m*d})/2 = ${S}。`)}const k=rn(20,60);return mc(`求 1 + 3 + 5 + … + ${2*k-1} 的和。`,k*k,[k*(k+1),(k+1)**2,k*k-k],`共 ${k} 项,S = ${k}×(1+${2*k-1})/2 = ${k*k}。`)},
+h3(){const a=rn(1,10),n=pk([9,11,13,15,17]),d=pk([2,3,4,5]),x=a+(n-1)*d,S=n*(a+x)/2;return mc(`已知 ${A(1)}=${a},${A(n)}=${x},求前 ${n} 项的和 S${sb(n)}。`,S,[2*S,S+n,S-n],`S = n(a₁+aₙ)/2 = ${n}×(${a}+${x})/2 = ${S}。`)},
+h4(){const f=rn(10,30),d=pk([2,3,4]),n=rn(8,16),l=f+(n-1)*d;return mc(`某剧场第 1 排有 ${f} 个座位,最后一排有 ${l} 个,每排都比前一排多 ${d} 个,共有几排?`,n,[n+1,n-1,n+2],`${l} = ${f}+(n−1)×${d} ⇒ n−1 = ${(l-f)/d} ⇒ n = ${n} 排。`)},
+h5(){const f=rn(10,30),d=pk([2,3,4]),n=rn(8,16),l=f+(n-1)*d,S=n*(f+l)/2;return mc(`某剧场共 ${n} 排,第 1 排 ${f} 个座位,最后一排 ${l} 个,每排递增 ${d} 个,总共有多少座位?`,S,[S+n,S-n,n*(f+l)],`S = n(首项+末项)/2 = ${n}×(${f}+${l})/2 = ${S}。`)},
+h6(){const a=rn(1,10),d=pk([2,3,4,5,6]),n=rn(8,14),S=sm(a,d,n);return mc(`等差级数首项 ${a},前 ${n} 项和 S${sb(n)}=${S},求公差 d。`,d,[d+1,d-1,d+2],`${S} = ${n}[2×${a}+(${n}−1)d]/2 ⇒ ${2*S/n} = ${2*a}+${n-1}d ⇒ d = ${d}。`)},
+h8(){const m=rn(6,10);return mc(`A0 纸面积 1 平方公尺,每对折一次面积变一半。面积约 1/${2**m} 平方公尺的纸,编号是?`,'A'+m,['A'+(m+1),'A'+(m-1),'A'+(m+2)],`面积 = 1/2^k 2^${m} = ${2**m},故编号为 A${m}。`)},
+h9(){const D=pk([100,200,500]),T=pk([2,3]);let n=1;while(3**(n-1)/D<=T)n++;return mc(`等比数列首项 1/${D},公比 3,从第几项起的数会大于 ${T}?`,n,[n+1,n-1,n+2],`${A('n')}=3^(n−1)/${D} > ${T} ⇒ 3^(n−1) > ${D*T}。3^${n-2}=${3**(n-2)} 不够,3^${n-1}=${3**(n-1)} 够大,故从第 ${n} 项起。`)},
+h10(){const m=rn(5,15),e=rn(1,4);return mc(`x、y 的等差中项为 ${m},且 x−y=${2*e},求 x、y 的乘积 xy。`,m*m-e*e,[m*m,m*m+e*e,2*m*e],`x+y = ${2*m},x−y = ${2*e} ⇒ x=${m+e}, y=${m-e},xy = ${m*m-e*e}。`)}};
+const REVIEW=[
+['📜 数列',['依序排成的一列数称为数列;每个数是一「项」:第 1 项 a₁(首项)、第 n 项 aₙ,最后一项称末项。','只知道前几项时,规律可能不止一种(如 1,2,4 可接 8 或 7)。','循环小数:先找循环长度,再用「n ÷ 长度」的余数定位。']],
+['⚔️ 等差数列',['后项−前项 都相同 → 等差数列,此差称公差 d:aₙ₊₁ = aₙ + d。','一般项:aₙ = a₁ + (n−1)d。','等差中项:a、b、c 成等差 ⇒ b = (a+c)/2。']],
+['💎 等差级数',['Sₙ = a₁+a₂+…+aₙ = n(a₁+aₙ)/2 = n[2a₁+(n−1)d]/2。','aₙ = Sₙ − Sₙ₋₁。','应用题:先找出首项、公差、项数,再套公式。']],
+['🌀 等比数列',['后项÷前项 都相同(r≠0) → 等比数列,r 称公比。','一般项:aₙ = a₁ × r^(n−1)。','等比中项:a、b、c 成等比 ⇒ b² = ac。']]];
+const TIERS=[['练气期','简单',1],['筑基期','中等',1.5],['金丹期','高级',2]];
+const LV=[
+{n:'灵木初开',t:0,g:['e1','e5','e3'],rv:0,it:['🗡️','青竹灵剑','法宝']},
+{n:'公差悟道',t:0,g:['e2','e3','e1'],rv:1,it:['🌪️','御风诀','技能']},
+{n:'中项聚灵',t:0,g:['e4','e6','e2'],rv:1,it:['💊','聚灵丹','丹药']},
+{n:'通项之术',t:1,g:['m1','m2'],rv:1,it:['🛡️','护体玉佩','法宝']},
+{n:'逆推演算',t:1,g:['m3','m4','m1'],rv:1,it:['📿','破阵符','符箓']},
+{n:'等比玄功',t:1,g:['m6','m7','m8','m9'],rv:3,it:['👝','乾坤袋','法宝']},
+{n:'级数炼丹',t:2,g:['h1','h2','h3'],rv:2,it:['🔮','九转金丹','丹药']},
+{n:'阵法布局',t:2,g:['h4','h5','h6'],rv:2,it:['⚡','天罡剑阵','技能']},
+{n:'渡劫飞升',t:2,g:['h10','h9','h8','h6','h4'],rv:3,it:['🐉','飞升令','神物']}];
+if(typeof module!='undefined')module.exports={G,LV,REVIEW,TIERS};
+const S=(b,i='')=>`<svg viewBox="0 0 64 64" width="100%" height="100%">${i?`<defs>${i}</defs>`:''}${b}</svg>`;
+const ART=[
+S('<path d="M52 6 L58 12 L26 46 L18 38Z" fill="#8be3a0" stroke="#2f7d5b" stroke-width="2"/><path d="M52 6 L26 46" stroke="#e8fff0" stroke-width="1.5"/><rect x="12" y="38" width="16" height="5" rx="2" transform="rotate(45 20 40)" fill="#c9971c"/><path d="M14 50 L7 57" stroke="#8a5a14" stroke-width="5" stroke-linecap="round"/><circle cx="46" cy="14" r="2" fill="#fff"/>'),
+S('<rect x="10" y="16" width="44" height="32" rx="3" fill="#f3e2b3" stroke="#b07d12" stroke-width="2"/><rect x="6" y="13" width="6" height="38" rx="3" fill="#a5523c"/><rect x="52" y="13" width="6" height="38" rx="3" fill="#a5523c"/><path d="M16 28 Q26 20 34 28 T50 28 M16 38 Q26 30 34 38 T50 38" stroke="#4aa3c9" stroke-width="3" fill="none" stroke-linecap="round"/>'),
+S('<circle cx="32" cy="34" r="17" fill="url(#g1)"/><path d="M14 14 l3 6 6 3 -6 3 -3 6 -3-6 -6-3 6-3z M50 10 l2 4 4 2 -4 2 -2 4 -2-4 -4-2 4-2z" fill="#fff6a8"/><ellipse cx="26" cy="27" rx="5" ry="3" fill="#fff" opacity=".6"/>','<radialGradient id="g1"><stop offset="0" stop-color="#a6f3e0"/><stop offset="1" stop-color="#1f9c8a"/></radialGradient>'),
+S('<path d="M32 50 v10" stroke="#c1121f" stroke-width="3"/><path d="M28 56 l4 6 4-6" fill="#c1121f"/><circle cx="32" cy="28" r="22" fill="#58c99a" stroke="#1f6b4a" stroke-width="3"/><circle cx="32" cy="28" r="8" fill="#10171a"/><path d="M18 18 Q24 10 34 10" stroke="#d6ffec" stroke-width="3" fill="none" stroke-linecap="round"/>'),
+S('<rect x="18" y="4" width="28" height="56" rx="3" fill="#f6d96b" stroke="#b07d12" stroke-width="2"/><path d="M24 14 h16 M32 14 v10 M24 24 h16 M26 34 q6 -6 12 0 q-6 8 -12 0 M32 44 v10 M25 49 h14" stroke="#c1121f" stroke-width="3" fill="none" stroke-linecap="round"/>'),
+S('<path d="M22 8 h20 l-4 8 h-12z" fill="#a5523c"/><path d="M24 16 C6 30 8 58 32 58 C56 58 58 30 40 16z" fill="#c98b4a" stroke="#7a4a1a" stroke-width="2.5"/><path d="M22 18 h20" stroke="#4a2a0a" stroke-width="4"/><path d="M32 30 l3 6 7 1 -5 5 1 7 -6-3 -6 3 1-7 -5-5 7-1z" fill="#ffd966"/>'),
+S('<circle cx="32" cy="34" r="26" fill="#ffd96633" stroke="#e3b341" stroke-width="2" stroke-dasharray="3 3"/><circle cx="32" cy="34" r="15" fill="url(#g7)"/><path d="M32 4 q6 8 0 14 q-6 -6 0 -14z" fill="#ff8a3d"/><g fill="#fff6a8"><circle cx="32" cy="12" r="2"/><circle cx="52" cy="22" r="2"/><circle cx="56" cy="42" r="2"/><circle cx="42" cy="58" r="2"/><circle cx="22" cy="58" r="2"/><circle cx="8" cy="42" r="2"/><circle cx="12" cy="22" r="2"/></g>','<radialGradient id="g7"><stop offset="0" stop-color="#fff2b0"/><stop offset="1" stop-color="#d4a017"/></radialGradient>'),
+S('<circle cx="32" cy="32" r="26" fill="none" stroke="#4aa3c9" stroke-width="2"/><circle cx="32" cy="32" r="6" fill="#e3b341"/><g fill="#cfe8f5" stroke="#2a4f9a" stroke-width="1.5"><path d="M32 4 l5 18 h-10z"/><path d="M58 40 l-18-6 5-9z" transform="rotate(30 32 32)"/><path d="M32 4 l5 18 h-10z" transform="rotate(120 32 32)"/><path d="M32 4 l5 18 h-10z" transform="rotate(240 32 32)"/></g>'),
+S('<rect x="10" y="6" width="44" height="52" rx="12" fill="#e3b341" stroke="#8a5a14" stroke-width="3"/><path d="M16 46 q6 -6 10 0 q6 -8 12 0 q6 -4 10 0" stroke="#fff6a8" stroke-width="3" fill="none"/><text x="32" y="34" font-size="26" font-weight="700" text-anchor="middle" fill="#8a2a14">令</text><circle cx="32" cy="12" r="3" fill="#8a5a14"/>')];
+const DESC=['青竹炼成的灵剑,斩开迷雾般的数列。','一页风之心法,公差是步伐,步步轻盈。','凝聚灵气的丹药,服下则中项自明。','温润玉佩,抵挡一切粗心。','朱砂符箓,可破逆推之阵。','纳须弥于芥子,装得下指数增长。','九转炼成,级数之和尽收丹中。','天罡阵起,万数归一。','持此令牌,即可飞升成仙。'];
+const RLM=[['凡人少年','初入山门'],['练气修士','通关 1 关'],['筑基修士','通关 3 关'],['金丹真人','通关 6 关'],['元婴老祖','通关 9 关']];
+const rki=()=>{const c=nC();return c<1?0:c<3?1:c<6?2:c<9?3:4};
+const bodyP=(c,t,e='#222')=>`<path d="M34 62 L22 92" stroke="${c}" stroke-width="9" stroke-linecap="round"/><path d="M66 62 L78 92" stroke="${c}" stroke-width="9" stroke-linecap="round"/><path d="M28 114 L34 58 Q50 48 66 58 L72 114Z" fill="${c}" stroke="${t}" stroke-width="2"/><rect x="34" y="84" width="32" height="6" fill="${t}"/><circle cx="50" cy="38" r="15" fill="#f6d6b0"/><circle cx="44" cy="40" r="2.4" fill="${e}"/><circle cx="56" cy="40" r="2.4" fill="${e}"/><path d="M45 47 Q50 51 55 47" stroke="#a5523c" fill="none" stroke-width="1.6"/>`;
+const CH=[{n:'青岚·荷衣',d:'灰蓝发髻,耳畔荷花,温柔灵动',h:'#8f9bb3',e:'#4a5a8a',r:'#cfd6e6',t:'#8a96b8',s:'bun',a:'flower'},
+{n:'墨渊·金簪',d:'墨发高束,金簪蓝穗,清冷剑修',h:'#2a1d1d',e:'#6a4a2a',r:'#f4f1e6',t:'#d4a017',s:'pony',a:'pin'},
+{n:'纱莲·凤钗',d:'轻纱遮面,凤钗映额,端庄仙子',h:'#2a1a24',e:'#7a5a3a',r:'#f0eef5',t:'#e3b341',s:'long',a:'veil'},
+{n:'绛绦·墨衣',d:'红绦束发,一袭墨衣,少年书剑',h:'#262033',e:'#4a3a6a',r:'#2a2433',t:'#c1121f',s:'pony',a:'ribbon'},
+{n:'霜蝶·银发',d:'银发红瞳,蝶落发梢,孤傲冷峻',h:'#d9d6e2',e:'#c2185b',r:'#2a2430',t:'#6a4a7a',s:'long',a:'bfly'},
+{n:'白羽·焰瞳',d:'白发橙瞳,玄鸟相伴,朱红道袍',h:'#f2f0f4',e:'#e8873a',r:'#e06b5a',t:'#f6c9b8',s:'long',a:'bird'},
+{n:'樱灵·红瞳',d:'粉发双髻,红瞳灵秀,古风少女',h:'#e8c9c4',e:'#d63a3a',r:'#e06b5a',t:'#ffffff',s:'bun',a:'orn'}];
+const ACC={flower:'<circle cx="65" cy="27" r="5" fill="#f2a6b4"/><circle cx="65" cy="27" r="2" fill="#fff3a0"/>',pin:'<path d="M38 17 L60 10" stroke="#e3b341" stroke-width="2.6"/><path d="M36 42 v14" stroke="#4aa3c9" stroke-width="2"/><circle cx="36" cy="57" r="2.5" fill="#4aa3c9"/>',veil:'<path d="M36 43 Q50 64 64 43 L64 51 Q50 67 36 51Z" fill="#fff" opacity=".75"/><path d="M47 27 l3-5 3 5z" fill="#fff"/><path d="M62 16 l12-9 -2 13z" fill="#e3b341"/>',ribbon:'<path d="M60 20 L68 40 L64 62" stroke="#c1121f" stroke-width="4" fill="none"/>',bfly:'<path d="M24 20 l10-5 -2 10z M24 20 l5 10 -10-3z" fill="#7a1a4a"/>',bird:'<path d="M14 32 q9-12 18 0 q-9-3 -18 0z" fill="#fff" stroke="#c9c9d0"/>',orn:'<path d="M56 16 l10-5 -2 9z" fill="#222"/><circle cx="62" cy="23" r="3.5" fill="#fff"/>'};
+const hero=(rk,cl={},ci)=>{const k=CH[ci==null?(P.ch||0):ci],lg=k.s=='long',bn=k.s=='bun';
+return `<svg viewBox="0 0 100 120" width="100%" height="100%">${rk?`<circle cx="50" cy="62" r="${34+rk*4}" fill="#ffd966" opacity=".25"/>`:''}${rk>3?'<ellipse cx="50" cy="12" rx="14" ry="4" fill="none" stroke="#ffd966" stroke-width="2.5"/>':''}${cl[0]>0?'<path d="M72 34 L90 8" stroke="#8be3a0" stroke-width="4" stroke-linecap="round"/><path d="M70 38 L77 31" stroke="#c9971c" stroke-width="5"/>':''}${lg?`<path d="M33 30 Q20 70 30 108 L42 70Z M67 30 Q80 70 70 108 L58 70Z" fill="${k.h}"/>`:''}${k.s=='pony'?`<path d="M60 22 Q94 30 84 84 Q74 50 60 32Z" fill="${k.h}"/>`:''}${bodyP(k.r,k.t,k.e)}<path d="M35 36 Q36 21 50 21 Q64 21 65 36 Q58 27 50 29 Q42 27 35 36Z" fill="${k.h}"/><circle cx="${bn?64:50}" cy="${bn?24:17}" r="6.5" fill="${k.h}"/>${ACC[k.a]}${cl[3]>0?'<circle cx="50" cy="100" r="6" fill="#58c99a" stroke="#1f6b4a" stroke-width="2"/>':''}${cl[5]>0?'<path d="M64 88 C56 96 58 108 68 108 C78 108 80 96 72 88z" fill="#c98b4a" stroke="#7a4a1a"/>':''}${rk>2?'<circle cx="16" cy="66" r="7" fill="#ffd966"/><circle cx="16" cy="66" r="11" fill="none" stroke="#fff2b0" opacity=".6"/>':''}${rk>3?'<circle cx="86" cy="70" r="7" fill="#f6d6b0"/><path d="M82 66 l-3 -4 M90 66 l3 -4" stroke="#1d1d24" stroke-width="2"/>':''}</svg>`};
+const stage=(a,q)=>{const s=a==null?'idle':a==q.a?'asc'+(L.cb>=5?' hi':''):'hurt';return `<div class="stg ${s}">${s=='idle'?'':s.startsWith('asc')?'<div class="ray"></div><i class="p" style="left:28%">✨</i><i class="p" style="left:44%;animation-delay:.15s">🌟</i><i class="p" style="left:62%;animation-delay:.3s">✨</i><i class="p" style="left:74%;animation-delay:.1s">💫</i>':'<i class="dk"></i><i class="p" style="left:30%">💢</i><i class="p" style="left:66%;animation-delay:.2s">⚡</i>'}<div class="hr">${hero(rki(),P.cl)}</div><div class="bn">${s=='idle'?'':s=='hurt'?'💢 修炼反噬!灵气紊乱':'✨ 灵气飞升!'+(L.cb>1?' '+L.cb+'连击':'')}</div></div>`};
+const mentor=()=>`<svg viewBox="0 0 100 120" width="100%" height="100%">${bodyP('#3a9d8f','#1f6b5f')}<path d="M34 34 Q36 20 50 20 Q64 20 66 34 Q60 26 50 28 Q40 26 34 34Z" fill="#f2f2f2"/><circle cx="50" cy="17" r="6" fill="#f2f2f2"/><path d="M38 46 Q50 76 62 46 Q50 56 38 46Z" fill="#f2f2f2"/><path d="M84 30 V116" stroke="#8a5a14" stroke-width="4"/><circle cx="84" cy="28" r="6" fill="none" stroke="#8a5a14" stroke-width="3"/></svg>`;
+
+
+let P={seen:0,cl:{},sc:0,ok:0,all:0,wr:[]};
+try{Object.assign(P,JSON.parse(localStorage.getItem('sdd')||'{}'))}catch(e){}
+const sv=()=>{try{localStorage.setItem('sdd',JSON.stringify(P))}catch(e){}push()};
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let scr=P.seen?'home':'review',L=null,rs=0;const $=document.getElementById('app');
+const its=()=>LV.filter((l,i)=>P.cl[i]>0).map(l=>l.it),un=i=>i==0||P.cl[i-1]>0,nC=()=>Object.values(P.cl).filter(x=>x>0).length;
+const rank=()=>{const c=nC();return['凡人','练气修士','筑基修士','金丹真人','元婴老祖'][c<1?0:c<3?1:c<6?2:c<9?3:4]};
+const rvH=i=>`<div class="cd"><h3>${REVIEW[i][0]}</h3>${REVIEW[i][1].map(t=>`<div>• ${t}</div>`).join('')}</div>`;
+function go(s){scr=s;draw()}
+function startL(i){const g=LV[i].g,qs=[],seen={};for(let k=0;k<40&&qs.length<5;k++){const q=G[g[qs.length%g.length]]();if(!seen[q.q]){seen[q.q]=1;qs.push(q)}}
+L={i,qs,k:0,ok:0,cb:0,pts:0,ans:null,fin:0};tStart();go('lv')}
+function pick(i){if(!L||L.ans!=null)return;const q=L.qs[L.k],o=q.o[i],m=TIERS[LV[L.i].t][2];L.ans=o;P.all++;
+if(o==q.a){L.ok++;L.cb++;P.ok++;const p=Math.round((10+Math.min(L.cb,5)*2)*m);L.pts+=p;P.sc+=p}
+else{L.cb=0;if(!P.wr.some(w=>w.q==q.q))P.wr.push({lv:LV[L.i].n,q:q.q,m:o,a:q.a,exp:q.exp});P.wr=P.wr.slice(-40)}sv();draw()}
+function nx(){L.k++;L.ans=null;if(L.k>=5){const st=L.ok>=3?L.ok-2:0;L.st=st;L.new=0;if(st>0&&!P.cl[L.i]){L.new=1}P.cl[L.i]=Math.max(P.cl[L.i]||0,st);sv();try{finishRound({stageId:'L'+(L.i+1),stageName:'第'+(L.i+1)+'关 '+LV[L.i].n,score:Math.round(L.ok/5*100),right:L.ok,total:5,stars:st,types:[{key:'q',label:LV[L.i].n,right:L.ok,total:5}]})}catch(e){}L.fin=1}draw()}
+function draw(){let h='';
+if(scr=='review'){h=`<h1>📖 数道登仙</h1><div class="cd row"><div style="width:70px;height:90px">${mentor()}</div><div style="flex:1">「徒儿,你偶得数道秘境。踏入山门前,先温习这些心法。」<div class="mu">——师尊</div></div></div>${REVIEW.map((_,i)=>rvH(i)).join('')}<button class="pr w" onclick="P.seen=1;sv();go(P.ch==null?'cs':'home')">我已温习,选择角色 ▶</button>`}
+else if(scr=='home'){h=`<h1>📖 数道登仙</h1><div class="cd row"><div style="width:70px;height:86px">${hero(rki(),P.cl)}</div><div style="flex:1"><b class="go">${rank()}</b><div class="mu">已渡 ${nC()}/9 关 · 灵石 ${P.sc}</div></div><div class="bt" style="display:flex;flex-wrap:wrap;gap:4px;justify-content:flex-end;max-width:160px"><button onclick="go('cs')">🎭 选角</button><button onclick="go('review')">📖 温习</button> <button onclick="go('dex')">🧙 图鉴</button> <button onclick="go('end')">📜 结算</button></div></div>
+<div class="cd mu">${CS}${DB?` · 道号 <input value="${esc(nick)}" maxlength="12" style="width:7em" onchange="nick=this.value;sv()">`:' (登录并通过邀请打开后可云端同步)'}${ADM?` <button onclick="adm()">🛠 后台</button>`:''}</div><div class="cd"><b>🎒 行囊</b><div>${its().length?its().map(x=>`<span class="ch" title="${x[2]}">${x[0]} ${x[1]}</span>`).join(''):'<span class="mu">尚无物品,通关即得</span>'}</div></div>
+${TIERS.map((t,ti)=>`<h3>${t[0]} · ${t[1]} <span class="mu">灵石×${t[2]}</span></h3>${LV.map((l,i)=>l.t!=ti?'':`<button class="w ${un(i)&&!P.cl[i]?'pr':''}" ${un(i)?'':'disabled'} onclick="startL(${i})"><div class="row"><span>${un(i)?'':'🔒'} 第${i+1}关 ${l.n} ${'⭐'.repeat(P.cl[i]||0)}</span><span>${l.it[0]}</span></div><div class="mu" style="${un(i)&&!P.cl[i]?'color:#fffc':''}">通关奖励:${l.it[1]}(${l.it[2]})</div></button>`).join('')}`).join('')}`}
+else if(scr=='lv'&&!L.fin){const l=LV[L.i],q=L.qs[L.k],a=L.ans;
+if(L.k==0&&a==null&&!L.go){h=`<div class="row" style="justify-content:flex-start"><div style="width:64px;height:64px">${ART[L.i]}</div><h1>第${L.i+1}关 ${l.n}</h1></div><div class="mu">通关奖励:${l.it[1]}(${l.it[2]})</div><div class="mu">${TIERS[l.t][0]}·${TIERS[l.t][1]} — 共5题,答对3题即可渡关</div>${rvH(l.rv)}<button class="pr w" onclick="L.go=1;draw()">开始渡关 ⚔️</button><button class="w" onclick="go('home')">返回</button>`}
+else{h=`<div class="row"><span style="display:flex;align-items:center;gap:6px"><span style="width:34px;height:40px;display:inline-block">${hero(rki(),P.cl)}</span>${l.n} · ${L.k+1}/5</span><span>${L.cb>1?'🔥'+L.cb+'连击 ':''}灵石 ${L.pts}</span></div>${stage(a,q)}<div class="cd"><div class="q">${q.q}</div>${q.o.map((o,i)=>`<button class="w o ${a!=null?(o==q.a?'ok':o==a?'no':''):''}" ${a!=null?'disabled':''} onclick="pick(${i})">${'ABCD'[i]}. ${o}</button>`).join('')}</div>
+${a!=null?`<div class="cd"><b class="${a==q.a?'ok':'bad'}">${a==q.a?'✔ 正确!灵气大涨':'✘ 差一点,道心不乱'}</b><div>${q.exp}</div></div><button class="pr w" onclick="nx()">${L.k==4?'查看结果':'下一题'} ▶</button>`:''}`}}
+else if(scr=='lv'){const l=LV[L.i];h=`<div class="stg ${L.st?'sky':'hurt'}">${L.st?'<i class="cl" style="left:8%">☁️</i><i class="cl" style="left:70%;animation-delay:.5s">☁️</i>':'<i class="dk"></i>'}<div class="hr">${hero(rki(),P.cl)}</div><div class="bn">${L.st?'🌈 飞升渡关!':'💀 走火入魔,修炼反噬'}</div></div>${L.st?`<div class="${L.new?'pop':''}" style="width:90px;height:90px;margin:0 auto">${ART[L.i]}</div>`:''}<h1 style="text-align:center">${L.st?'渡关成功!':'渡关失败'}</h1><div class="cd" style="text-align:center">答对 ${L.ok}/5 · ${'⭐'.repeat(L.st)||'—'} · 获得灵石 ${L.pts}${L.new?`<div class="go"><b>🎁 获得${l.it[2]}:${l.it[1]}!</b></div>`:''}${L.st&&!L.new?'<div class="mu">(奖励已在行囊中)</div>':''}${L.st?'':'<div class="mu">再接再厉,答对 3 题即可渡关</div>'}</div>
+<div class="row"><button style="flex:1" onclick="go('home')">返回山门</button><button class="pr" style="flex:1" onclick="startL(${L.i})">再战本关</button></div>${L.st&&L.i<8?`<button class="w pr" onclick="startL(${L.i+1})">下一关 ▶</button>`:''}`}
+else if(scr=='cs'){h=`<h1>🎭 选择你的修士</h1><div class="mu">点选形象,境界提升后外形会进化</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">${CH.map((k,i)=>`<button class="${(P.ch||0)==i?'sel':''}" style="text-align:center" onclick="P.ch=${i};sv();go('home')"><div style="height:110px">${hero(0,{},i)}</div><b>${k.n}</b><div class="mu" style="font-size:12px">${k.d}</div></button>`).join('')}</div><button class="w" onclick="go('home')">返回</button>`}
+else if(scr=='dex'){const k=rki();h=`<h1>🧙 人物与物品图鉴</h1><h3>境界形态</h3><div class="row" style="align-items:flex-end">${RLM.map((x,i)=>`<div style="text-align:center;flex:1;${i>k?'filter:grayscale(1);opacity:.35':''}"><div style="height:84px">${hero(i,i<=k?P.cl:{})}</div><div style="font-size:12px"><b>${x[0]}</b></div><div class="mu" style="font-size:11px">${x[1]}</div></div>`).join('')}</div>
+<h3>法宝 / 技能 / 丹药</h3>${LV.map((l,i)=>`<div class="cd row" style="justify-content:flex-start;${P.cl[i]>0?'':'filter:grayscale(1);opacity:.45'}"><div style="width:64px;height:64px;flex:none">${ART[i]}</div><div><b>${P.cl[i]>0?l.it[1]:'???'}</b> <span class="mu">${l.it[2]}</span><div class="mu">${P.cl[i]>0?DESC[i]:`通关第${i+1}关「${l.n}」解锁`}</div></div></div>`).join('')}<button class="pr w" onclick="go('home')">返回山门</button>`}
+else if(scr=='adm'){const n=PL.length,av=n?(PL.reduce((s,p)=>s+(p.n||0),0)/n).toFixed(1):0,ta=PL.reduce((s,p)=>s+(p.all||0),0),to=PL.reduce((s,p)=>s+(p.ok||0),0);
+h=`<h1>🛠 后台 · 玩家进度</h1><div class="cd row" style="text-align:center"><div><b class="go">${n}</b><div class="mu">玩家数</div></div><div><b class="go">${av}/9</b><div class="mu">平均通关</div></div><div><b class="go">${ta?Math.round(to/ta*100):0}%</b><div class="mu">总正确率</div></div></div>
+${PL.length?PL.map(p=>`<details class="cd"><summary><b>${esc(p.nick||'玩家'+String(p.id).slice(0,4))}</b> · <span class="go">${esc(p.rk||'凡人')}</span> · ${p.n||0}/9关 · 灵石 ${p.sc||0}<div class="mu">正确率 ${p.all?Math.round(p.ok/p.all*100):0}%(${p.ok||0}/${p.all||0}) · 最近 ${p.upd?new Date(p.upd).toLocaleString('zh-CN'):'-'}</div></summary>
+<div class="bar" style="height:8px;background:#8883;border-radius:6px;margin:6px 0"><i style="display:block;height:100%;width:${(p.n||0)/9*100}%;background:var(--ac);border-radius:6px"></i></div>
+${LV.map((l,i)=>`<div class="mu">${i+1}. ${l.n} ${'⭐'.repeat((p.cl||{})[i]||0)||'—'}</div>`).join('')}
+<div style="margin-top:6px"><b>近期错题(${(p.wr||[]).length})</b></div>${(p.wr||[]).map(w=>`<div class="mu">• ${esc(w.q)} → 答${esc(w.m)}(正确 ${esc(w.a)})</div>`).join('')||'<div class="mu">无</div>'}</details>`).join(''):`<div class="cd mu">${esc(PLm||'读取中…(暂无玩家数据)')}</div>`}
+<button class="pr w" onclick="go('home')">返回</button>`}
+else{const acc=P.all?Math.round(P.ok/P.all*100):0,g=acc>=90?'S':acc>=75?'A':acc>=60?'B':'C';
+h=`<h1>📜 修炼结算</h1><div class="cd" style="text-align:center"><div class="big go">${g}</div><b>${rank()}</b><div>正确率 ${acc}%(${P.ok}/${P.all}) · 灵石 ${P.sc} · 通关 ${nC()}/9</div>${nC()==9?'<div class="go"><b>🐉 九关皆破,飞升成仙!</b></div>':''}</div>
+<div class="cd"><b>🎒 获得物品</b><div>${its().map(x=>`<span class="ch">${x[0]} ${x[1]}</span>`).join('')||'<span class="mu">暂无</span>'}</div></div>
+<h3>📝 错题题解(${P.wr.length})</h3>${P.wr.map(w=>`<div class="cd"><div class="mu">${w.lv}</div><div><b>${w.q}</b></div><div><span class="bad">你的答案:${w.m}</span> · <span class="ok">正确答案:${w.a}</span></div><div>💡 ${w.exp}</div></div>`).join('')||'<div class="cd ok">暂无错题,道心通明!</div>'}
+<button class="pr w" onclick="go('home')">返回山门</button><button class="w" onclick="if(rs){P={seen:1,cl:{},sc:0,ok:0,all:0,wr:[]};sv();rs=0;go('home')}else{rs=1;draw()}">${rs?'再点一次确认:清空存档':'重置存档'}</button>`}
+$.innerHTML=h;window.scrollTo(0,0)}
+let DB=null,UID=null,ADM=0,CS='💾 本机存档',PL=[],PLm='',ex=0,nick='',tmr;
+const stat=()=>({nick,seen:P.seen,cl:P.cl,sc:P.sc,ok:P.ok,all:P.all,wr:P.wr.slice(-20),n:nC(),rk:rank(),ch:P.ch||0,upd:Date.now()});
+function push(){if(!DB||!UID)return;clearTimeout(tmr);tmr=setTimeout(async()=>{try{await DB.doc('players/'+UID).set(stat());CS='☁️ 已同步到账号'}catch(e){CS='⚠️ 云同步失败(本机已存)'}if(scr=='home')draw()},800)}
+function adm(){go('adm');if(ex)return;ex=1;const t=setTimeout(()=>{if(!PL.length){PLm='暂无数据或读取超时';if(scr=='adm')draw()}},10000);
+DB.collection('players').onSnapshot(s=>{clearTimeout(t);PL=s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.upd||0)-(a.upd||0));if(scr=='adm')draw()},e=>{PLm='无权限读取:请用管理员(编辑者)账号打开';if(scr=='adm')draw()})}
+(async()=>{try{const c=window.claude;if(!c)return;const[d,u]=await Promise.all([c.use('db'),c.use('user')]);if(!d||!u)return;UID=await u.id();if(!UID)return;DB=d;nick=(await u.me()).name||'';
+const s=await DB.doc('players/'+UID).get();if(s.exists){const x=s.data();nick=x.nick||nick;if((x.sc||0)>=P.sc){P.cl=JSON.parse(JSON.stringify(x.cl||{}));P.sc=x.sc||0;P.ok=x.ok||0;P.all=x.all||0;P.wr=JSON.parse(JSON.stringify(x.wr||[]));P.seen=x.seen||P.seen;P.ch=x.ch||0}}
+CS='☁️ 已同步到账号';ADM=await u.canEdit();sv();draw()}catch(e){}})();
+ensureStudent(()=>draw());
+window.onerror=(m)=>{const d=document.createElement('div');d.style.cssText='background:#c1121f;color:#fff;padding:8px;font-size:12px';d.textContent='出错:'+m;document.body.prepend(d)};
+</script><script src="../../home-fab.js"></script>
+</body></html>
