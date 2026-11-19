@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>高一345馬從冰（醉翁亭記・水經・種樹郭橐駝傳）</title>
+<style>
+:root{--bg:#eef1ec;--card:#fbfcfa;--ink:#1e2b2b;--mute:#5d6b6b;--line:#cfd8d2;--lotus:#b84a72;--ok:#2f7d57;--okbg:#dff0e6;--bad:#8c2233;--badbg:#f6dfe2;--silver:#8a9ba0;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#10171a;--card:#182226;--ink:#e8efe9;--mute:#9fb0ad;--line:#2d3b3f;--lotus:#e07a9f;--ok:#6fd0a0;--okbg:#17352a;--bad:#ff8fa0;--badbg:#3a1a21;--silver:#9db2b8}}
+:root[data-theme="dark"]{--bg:#10171a;--card:#182226;--ink:#e8efe9;--mute:#9fb0ad;--line:#2d3b3f;--lotus:#e07a9f;--ok:#6fd0a0;--okbg:#17352a;--bad:#ff8fa0;--badbg:#3a1a21;--silver:#9db2b8}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Noto Serif TC","Songti TC","PMingLiU","Source Han Serif TC",serif;line-height:1.7;-webkit-tap-highlight-color:transparent}
+main{max-width:560px;margin:0 auto;padding:20px 18px 40px}
+h1{font-size:30px;line-height:1.3;margin:28px 0 6px;letter-spacing:.08em}
+.sub{color:var(--mute);margin:0 0 24px;font-size:15px}
+.thread{width:2px;height:54px;background:linear-gradient(var(--bg),var(--silver));margin:0 0 0 6px}
+button{font:inherit;color:inherit;cursor:pointer}
+.mode{display:block;width:100%;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin:0 0 12px}
+.mode b{display:block;font-size:19px}
+.mode span{color:var(--mute);font-size:14px}
+.mode:active,.opt:active{transform:scale(.99)}
+.mode:focus-visible,.opt:focus-visible,.next:focus-visible{outline:3px solid var(--lotus);outline-offset:2px}
+.hud{display:flex;justify-content:space-between;align-items:center;font-size:15px;color:var(--mute);margin-bottom:10px}
+.lives{display:flex;gap:5px;align-items:flex-end;height:22px}
+.lives i{display:block;width:3px;height:22px;background:var(--silver);border-radius:2px;transition:all .3s}
+.lives i.cut{height:8px;background:var(--line);transform:rotate(18deg)}
+.bar{height:3px;background:var(--line);border-radius:2px;overflow:hidden;margin-bottom:18px}
+.bar div{height:100%;background:var(--lotus);width:0;transition:width .35s}
+.tag{display:inline-block;font-size:13px;color:var(--lotus);border:1px solid var(--lotus);border-radius:999px;padding:0 10px;margin-bottom:10px}
+.q{font-size:21px;line-height:1.65;margin:0 0 18px;font-weight:600}
+.opt{display:flex;gap:12px;width:100%;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:13px 14px;margin:0 0 10px;font-size:18px;line-height:1.5}
+.opt em{font-style:normal;color:var(--mute);min-width:1.2em}
+.opt.ok{background:var(--okbg);border-color:var(--ok);color:var(--ok)}
+.opt.bad{background:var(--badbg);border-color:var(--bad);color:var(--bad)}
+.opt:disabled{cursor:default}
+.exp{margin:14px 0;padding:12px 14px;border-left:3px solid var(--lotus);background:var(--card);font-size:16px}
+.exp strong{display:block;margin-bottom:2px}
+.next,.big{display:block;width:100%;background:var(--lotus);color:#fff;border:0;border-radius:10px;padding:14px;font-size:18px;margin-top:8px}
+.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.score{font-size:56px;line-height:1.1;margin:6px 0}
+.rev{margin:18px 0 0;padding:0;list-style:none}
+.rev li{border-top:1px solid var(--line);padding:10px 0;font-size:16px}
+.rev small{display:block;color:var(--mute)}
+[hidden]{display:none!important}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<main>
+<section id="home">
+  <div class="thread" aria-hidden="true"></div>
+  <h1>國文闖關</h1>
+  <p class="sub">第三課〈醉翁亭記〉、第四課〈水經〉、第五課〈種樹郭橐駝傳〉。答錯也沒關係，不限次數，一路玩到最後一題。</p>
+  <button class="mode" data-m="3"><b>第三課　醉翁亭記</b><span>歐陽脩・10 題</span></button>
+  <button class="mode" data-m="4"><b>第四課　水經</b><span>簡媜・10 題</span></button>
+  <button class="mode" data-m="5"><b>第五課　種樹郭橐駝傳</b><span>柳宗元・10 題</span></button>
+  <button class="mode" data-m="all"><b>三課綜合挑戰</b><span>從 30 題中隨機抽 15 題</span></button>
+</section>
+
+<section id="quiz" hidden>
+  <div class="hud"><span id="prog"></span><span id="sc"></span><span class="lives" id="lives" aria-label="剩餘的絲"></span></div>
+  <div class="bar"><div id="fill"></div></div>
+  <span class="tag" id="tag"></span>
+  <p class="q" id="q"></p>
+  <div id="opts"></div>
+  <div id="exp" class="exp" hidden></div>
+  <button class="next" id="next" hidden>下一題</button>
+</section>
+
+<section id="end" hidden>
+  <div class="thread" aria-hidden="true"></div>
+  <h1 id="title"></h1>
+  <p class="sub" id="msg"></p>
+  <div class="score" id="final"></div>
+  <p class="sub" id="detail"></p>
+  <ul class="rev" id="rev"></ul>
+  <button class="big" id="again">再玩一次</button>
+  <button class="big ghost" id="menu">回選單</button>
+</section>
+</main>
+
+<script src="../../sync-client.js"></script>
+<script>
+/* ========== 接上教師後台的程式（整段複製，只改最上面的 GAME_KEY） ========== */
+const GAME_KEY = 'chi-g10-345';            // 遊戲代號：小寫英文／數字／-／_，建議「科目簡碼-遊戲名」
+
+/* 1) 學號：沒有就強迫輸入 */
+function ensureStudent(done) {
+  const no = keyagentGetActiveStudentNumber();
+  if (no) return done(no);
+  const v = (prompt('請輸入你的學號') || '').trim();
+  if (!/^[A-Za-z0-9_-]{2,12}$/.test(v)) return ensureStudent(done);
+  localStorage.setItem('keyagent_active_student', JSON.stringify({ studentNumber: v, verified: false }));
+  done(v);
+}
+
+/* 2) 練習時間：只算「玩完一局」的時間；切到別的分頁不算；中途關掉的那一局不算 */
+let T0 = 0, ACC = 0;
+function tStart()  { ACC = 0; T0 = Date.now(); }
+function tPause()  { if (T0) { ACC += Date.now() - T0; T0 = 0; } }
+function tResume() { if (!T0 && !document.hidden) T0 = Date.now(); }
+function tTake()   { tPause(); const s = Math.min(1800, Math.round(ACC / 1000)); ACC = 0; return s; }
+document.addEventListener('visibilitychange', () => (document.hidden ? tPause() : tResume()));
+
+/* 3) 一局結束時呼叫 finishRound({...})，會自動記錄並送到老師的後台 */
+function finishRound(r) {
+  // r = { stageId:'L1', stageName:'第一課 認字', score:80, right:8, total:10, stars:2(可省略), nick:'小勇者'(可省略),
+  //       types:[{ key:'read', label:'看字讀音', right:5, total:6 }, ...](可省略) }
+  const secs = tTake();
+  keyagentUpdateOtherGame(GAME_KEY, prev => {
+    const stages = Object.assign({}, prev.stages);
+    const s = stages[r.stageId] || {};
+    stages[r.stageId] = {
+      n: r.stageName || r.stageId,
+      bestStars: Math.max(s.bestStars || 0, r.stars || 0),
+      bestScore: Math.max(s.bestScore || 0, r.score || 0),
+      plays: (s.plays || 0) + 1,
+      hist: (s.hist || []).concat([{ at: Date.now(), q: r.total || 0, ok: r.right || 0, s: secs, st: r.stars || 0 }]).slice(-30),   // 每一次的結果（後台點答對率可看）
+      totalSecs: (s.totalSecs || 0) + secs,
+      totalQ: (s.totalQ || 0) + (r.total || 0),
+      totalOk: (s.totalOk || 0) + (r.right || 0)
+    };
+    const q = Object.assign({}, prev.q);
+    (r.types || []).forEach(t => {
+      const k = r.stageId + ':' + t.key, o = q[k] || { n: 0, ok: 0 };
+      q[k] = { n: o.n + (t.total || 0), ok: o.ok + (t.right || 0), label: t.label || t.key };
+    });
+    return {
+      nick: r.nick || prev.nick || '',
+      totalPlays: (prev.totalPlays || 0) + 1,
+      bestScore: Math.max(prev.bestScore || 0, r.score || 0),
+      totalSecs: (prev.totalSecs || 0) + secs,
+      totalQ: (prev.totalQ || 0) + (r.total || 0),
+      totalOk: (prev.totalOk || 0) + (r.right || 0),
+      lastScore: r.score || 0, lastId: r.stageId, lastName: r.stageName || r.stageId, lastAt: Date.now(),
+      stages, q
+    };
+  });
+}
+keyagentInstallPageHideSync();           // 4) 離開頁面時補寄一次
+/* ========== 以上整段不用改 ========== */
+</script>
+<script>
+var Q=[
+{l:3,q:"歐陽脩自號「醉翁」，晚年又自號什麼？",o:["六一居士","東坡居士","五柳先生","柳河東"],e:"歐陽脩晚年自號「六一居士」，並把隱居的住所取名為「六一堂」。"},
+{l:3,q:"「醉翁之意不在酒，在乎山水之間也」的意思是？",o:["他真正的快樂來自山水","他其實不會喝酒","他想邀大家去喝酒","他不喜歡山水"],e:"作者說山水之樂「得之心而寓之酒」，快樂是領會於心，再寄託在飲酒上。"},
+{l:3,q:"醉翁亭是誰建造的？",o:["瑯琊山的僧人智僊","太守歐陽脩","滁州的百姓","讓泉的主人"],e:"「作亭者誰？山之僧智僊也。」亭由智僊建造，太守則用自己的別號為它命名。"},
+{l:3,q:"「觥籌交錯」是形容什麼情景？",o:["賓主飲酒作樂的熱鬧情形","宴會結束後的冷清","客人安靜品酒","射箭比賽的緊張氣氛"],e:"觥是酒器，籌是計算數量的器具，酒杯與酒籌交互錯雜，形容飲酒作樂很熱鬧。"},
+{l:3,q:"「水落而石出」形容山間四時中的哪一季？",o:["冬","春","夏","秋"],e:"春：野芳發而幽香；夏：佳木秀而繁陰；秋：風霜高潔；冬：水落而石出。"},
+{l:3,q:"「前者呼，後者應，傴僂提攜」中，「傴僂」指的是誰？",o:["彎腰駝背的老人","牽著走的孩童","背著東西的挑夫","釣魚的漁人"],e:"傴僂指老年人，提攜指被牽著走的孩童，一老一幼都出來遊山，可見百姓安樂。"},
+{l:3,q:"「宴酣之樂，非絲非竹」是說什麼？",o:["宴飲的樂趣不靠音樂助興","宴會上沒有人喝酒","宴會裡只有笛子","大家都不愛音樂"],e:"絲指琴瑟等弦樂，竹指簫笛等管樂。宴飲之樂來自射箭、下棋與飲酒，並非音樂。"},
+{l:3,q:"本文以「樂」字為主線，最深一層、也是主旨所在的是哪一種樂？",o:["太守之樂：為百姓的快樂而快樂","山水之樂","宴酣之樂","禽鳥之樂"],e:"山水之樂、宴酣之樂屬於遊觀之樂；太守之樂則包含百姓豐足之樂與與民同樂的胸懷。"},
+{l:3,q:"「人知從太守遊而樂，而不知太守之樂其樂也」是什麼意思？",o:["滁人只知同遊的快樂，不曉得太守是為他們的幸福而快樂","滁人不喜歡跟太守出遊","太守不喜歡遊山玩水","太守只想獨自享樂"],e:"「樂其樂」是以百姓的快樂為快樂，這才是「與民同樂」的深意。"},
+{l:3,q:"本文首段從「環滁皆山」寫到「醉翁亭」，採用什麼順序？",o:["由遠而近，由大範圍到小範圍","由近而遠，由小到大","由春天寫到冬天","由早晨寫到黃昏"],e:"賞析稱這是「剝筍法」：環滁皆山、瑯琊山、讓泉，最後才寫到醉翁亭。"},
+
+{l:4,q:"〈水經〉選自簡媜的哪一本書？",o:["《水問》","《女兒紅》","《十種寂寞》","《山之音》"],e:"〈水經〉選自《水問》，是簡媜早期散文的代表作。《山之音》是川端康成的小說。"},
+{l:4,q:"作者以「水經」為篇名，是把什麼比喻成水？",o:["愛情","友情","親情","求學歷程"],e:"作者說「我的愛情是一部《水經》」，用河流的流程比喻一段愛情從開始到結束。"},
+{l:4,q:"「水經」原本指的是什麼？",o:["中國第一部記載河流的專著","一本記載水利工程的小說","佛教經典","一首描寫海洋的詩"],e:"水經原為書名，是中國第一部記載河流的專著。"},
+{l:4,q:"〈水經〉共分七節，小標題的開頭與結尾是哪兩個？",o:["經首、卷終","源於寺、吵","水讚、浣衣","去野一個海洋、經首"],e:"全文從「經首」開始，到「卷終」結束，像一部書的篇章。"},
+{l:4,q:"第三節〈去野一個海洋〉用什麼場景烘托熱戀的心情？",o:["陽光溫和的初夏海邊","落葉紛飛的秋天","大雪紛飛的冬夜","下著雨的午後"],e:"「那是初夏，陽光溫和」，作者用充滿陽光的初夏襯托愛情的澎湃與縱身大自然的愉悅。"},
+{l:4,q:"〈水讚〉中「每天給他倒一杯水」主要表現什麼？",o:["熱戀中彼此的關懷與甜蜜","兩人因水而起了爭執","女主角想捉弄對方","男主角口渴難耐"],e:"一杯水引出藏杯、長螞蟻等小故事，看似平凡的細節，卻是深刻的愛情見證。"},
+{l:4,q:"「心有靈犀」的意思是？",o:["比喻情意相通、意念契合","形容一個人很有靈性","比喻力量強大","形容身體強壯"],e:"傳說犀角的白紋可以相通兩端感應靈異，因此用來比喻情意相通。"},
+{l:4,q:"「浣衣」的「浣」是什麼意思？",o:["清洗汙垢","晾曬","縫補","摺疊"],e:"浣讀ㄨㄢˇ，意思是清洗汙垢。第五節寫女主角替男友洗衣，生動描繪她的羞怯。"},
+{l:4,q:"最後這段戀情為何走到「卷終」？",o:["作者無法在愛情中獲得對自我生命的肯定，想追尋自我","男方變心了","兩人家人反對","作者出國留學"],e:"賞析指出，戀情告終的原因來自作者對自我的期許與探求，理智戰勝了感性。"},
+{l:4,q:"「我的愛情是一部《水經》」用了什麼修辭？",o:["譬喻","擬人","誇飾","設問"],e:"把愛情比成《水經》，借彼喻此，是譬喻修辭，也是全文的總喻。"},
+
+{l:5,q:"郭橐駝為什麼被稱為「駝」？",o:["他背部隆起、彎腰走路，形似駱駝","他總是揹著重物","他養了一隻駱駝","他來自駱駝的故鄉"],e:"「病僂，隆然伏行，有類橐駝者」，橐駝是駱駝的別名。"},
+{l:5,q:"柳宗元與韓愈力倡什麼運動，二人並稱「韓柳」？",o:["古文運動","新樂府運動","永貞革新","白話文運動"],e:"柳宗元與韓愈力倡古文運動。他參與的「永貞革新」是政治改革，失敗後被貶永州。"},
+{l:5,q:"郭橐駝說種樹的關鍵是「順木之天，以致其性」，意思是？",o:["順應樹木自然的生長規律，使它依本性生長","用人力加快樹木生長","盡量多澆水施肥","只種容易活的樹"],e:"天指天性、自然的生長規律，致其性是使它按照自己的本性生長。"},
+{l:5,q:"「其土欲故」的「故」是什麼意思？",o:["舊有的，指樹木移植前原本的土","故意","所以","已經過世的"],e:"移植時要用樹木原來生長的舊土，樹才容易適應。"},
+{l:5,q:"「其蒔也若子，其置也若棄」是什麼意思？",o:["種的時候像照顧子女般用心，種完後便像拋棄般不再干預","種樹時嚴厲，種完後很溺愛","種了就丟棄不管","把樹當成孩子養在家中"],e:"根基穩固後就「勿動勿慮，去不復顧」，順其自然，樹的天性才能保全。"},
+{l:5,q:"他植者為什麼種不好樹？",o:["太過愛護與擔心，頻頻查看搖動，反而違背樹的天性","不懂得澆水","土壤太貧瘠","種的樹品種不好"],e:"「雖曰愛之，其實害之；雖曰憂之，其實讎之」，愛得太多、憂得太勤，反而害了樹。"},
+{l:5,q:"「甚者爪其膚以驗其生枯」的「爪」是什麼意思？",o:["用指甲抓、掐","爪子","弄乾","撫摸"],e:"爪在這裡當動詞用，指用指甲抓破樹皮，查看樹是活著還是枯死。"},
+{l:5,q:"郭橐駝把種樹之理引申到「官理」，批評長人者什麼？",o:["喜歡一再發號施令，擾得百姓不得安寧","不肯發布命令","不愛百姓","只顧著種樹"],e:"官吏催耕、督穫、鳴鼓擊木召集百姓，看似憐愛，卻讓百姓「病且怠」。"},
+{l:5,q:"〈種樹郭橐駝傳〉中，「養樹」與「養人」的關係是？",o:["養樹為賓、養人為主，藉賓顯主","養樹為主、養人為賓","兩者毫無關係","兩者並重、平分篇幅"],e:"作者以養樹為賓、養人為主，問者最後說「吾問養樹，得養人術」。"},
+{l:5,q:"柳宗元寫這篇文章主要想表達什麼？",o:["為政應順應民情，適性管理，不要擾民","種樹要用特別的技術","郭橐駝的偉大成就","勸人快點升官"],e:"中唐政治紛亂、法令繁雜，作者借人立論，表達改革政治弊病、順應民性的理想。"}
+];
+Q.forEach(function(x){x.a=x.o[0]});
+var $=function(i){return document.getElementById(i)};
+var st={};
+function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t}return a}
+function show(id){["home","quiz","end"].forEach(function(s){$(s).hidden=s!==id});window.scrollTo(0,0)}
+function start(m){
+  var pool=Q.filter(function(x){return m==="all"||String(x.l)===m});
+  tStart();st={m:m,pool:(m==="all"?shuffle(pool).slice(0,15):shuffle(pool)),i:0,score:0,streak:0,right:0,lives:999,max:0,wrong:[],done:false};
+  show("quiz");draw();
+}
+function lives(){
+  var h="";for(var k=0;k<st.max;k++)h+='<i class="'+(k>=st.lives?"cut":"")+'"></i>';
+  $("lives").innerHTML=h;$("lives").removeAttribute("aria-label");
+}
+function draw(){
+  var x=st.pool[st.i];st.cur=x;
+  $("prog").textContent="第 "+(st.i+1)+" / "+st.pool.length+" 題";
+  $("sc").textContent=st.score+" 分";
+  $("fill").style.width=(st.i/st.pool.length*100)+"%";
+  $("tag").textContent={3:"第三課　醉翁亭記",4:"第四課　水經",5:"第五課　種樹郭橐駝傳"}[x.l];
+  $("q").textContent=x.q;
+  lives();
+  var box=$("opts");box.innerHTML="";
+  shuffle(x.o).forEach(function(t,k){
+    var b=document.createElement("button");b.className="opt";
+    b.innerHTML="<em>"+"ABCD"[k]+"</em><span></span>";b.lastChild.textContent=t;
+    b.onclick=function(){pick(b,t)};box.appendChild(b);
+  });
+  $("exp").hidden=true;$("next").hidden=true;
+}
+function pick(btn,t){
+  var x=st.cur,good=t===x.a;
+  Array.prototype.forEach.call($("opts").children,function(b){
+    b.disabled=true;
+    if(b.lastChild.textContent===x.a)b.classList.add("ok");
+  });
+  if(good){st.streak++;st.right++;st.score+=10+Math.min(st.streak-1,5)*2}
+  else{btn.classList.add("bad");st.streak=0;st.lives--;st.wrong.push({q:x.q,a:x.a,you:t})}
+  $("sc").textContent=st.score+" 分";lives();
+  var last=st.i+1>=st.pool.length||st.lives<=0;
+  $("exp").innerHTML="<strong>"+(good?"答對了！"+(st.streak>1?" 連對 "+st.streak+" 題":""):"答案是：「"+x.a+"」")+"</strong>";
+  var p=document.createElement("span");p.textContent=x.e;$("exp").appendChild(p);
+  $("exp").hidden=false;
+  $("next").textContent=last?"看結果":"下一題";$("next").hidden=false;
+  $("next").focus({preventScroll:true});
+  $("exp").scrollIntoView({block:"nearest",behavior:"smooth"});
+}
+function finish(){
+  var n=st.pool.length,fell=st.lives<=0&&st.i+1<n;
+  var done=fell?st.i+1:n;
+  try{var nm={3:"第三課 醉翁亭記",4:"第四課 水經",5:"第五課 種樹郭橐駝傳",all:"三課綜合挑戰"}[st.m];finishRound({stageId:"L"+st.m,stageName:nm,score:Math.round(st.right/done*100),right:st.right,total:done,stars:st.right/done>=.9?3:st.right/done>=.7?2:st.right/done>=.5?1:0,types:[{key:"q",label:nm,right:st.right,total:done}]})}catch(e){}
+  show("end");
+  $("title").textContent=st.wrong.length===0?"全部答對":"闖關完成";
+  $("msg").textContent=st.wrong.length===0?"一題都沒錯，很棒！":"有些題目還值得複習，看看下面的解析。";
+  $("final").textContent=st.score+" 分";
+  $("detail").textContent="答對 "+st.right+" / "+done+" 題";
+  var r=$("rev");r.innerHTML="";
+  st.wrong.forEach(function(w){
+    var li=document.createElement("li");li.textContent=w.q;
+    var s=document.createElement("small");s.textContent="你選：「"+w.you+"」　正確：「"+w.a+"」";
+    li.appendChild(s);r.appendChild(li);
+  });
+}
+$("next").onclick=function(){
+  if(st.i+1>=st.pool.length||st.lives<=0){finish();return}
+  st.i++;draw();window.scrollTo(0,0);
+};
+document.querySelectorAll(".mode").forEach(function(b){b.onclick=function(){start(b.getAttribute("data-m"))}});
+$("again").onclick=function(){start(st.m)};
+$("menu").onclick=function(){show("home")};
+ensureStudent(function(){});
+</script>
+<script src="../../home-fab.js"></script>
+</body>
+</html>

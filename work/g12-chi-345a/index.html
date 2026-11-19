@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="zh-Hant"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>高三國文345（作者待補）・國文群島冒險</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);--bg:#f6f0e4;--sea:#bcd9e0;--card:#fffaf0;--ink:#2b2a33;--mute:#6b6772;--acc:#2f7f8f;--ok:#2e8b57;--bad:#c0392b;--gold:#d9a521}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#14202b;--sea:#1d3a4a;--card:#1f2e3b;--ink:#eee8dc;--mute:#9fb0bb;--acc:#5fc0d0;--ok:#4fc58a;--bad:#ff7a6b;--gold:#f0c040}}
+:root[data-theme="dark"]{--bg:#14202b;--sea:#1d3a4a;--card:#1f2e3b;--ink:#eee8dc;--mute:#9fb0bb;--acc:#5fc0d0;--ok:#4fc58a;--bad:#ff7a6b;--gold:#f0c040}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;line-height:1.6}
+main{max-width:720px;margin:0 auto;padding:12px}
+h1{font-size:1.25rem;margin:4px 0}
+.bar{display:flex;gap:8px;flex-wrap:wrap;font-size:.9rem;align-items:center}
+.pill{background:var(--card);border-radius:999px;padding:3px 12px}
+.xp{height:8px;background:var(--card);border-radius:4px;overflow:hidden;margin:6px 0}
+.xp i{display:block;height:100%;background:var(--gold);width:0;transition:width .4s}
+svg{width:100%;height:auto;background:var(--sea);border-radius:16px;display:block}
+.isl{cursor:pointer}.isl:hover ellipse.land{filter:brightness(1.1)}
+.isl text{font-size:13px;fill:#2b2a33;pointer-events:none;text-anchor:middle}
+.card{background:var(--card);border-radius:16px;padding:14px;margin-top:12px}
+.npc{color:var(--mute);font-size:.9rem}
+button{font:inherit;color:var(--ink);background:var(--card);border:2px solid var(--acc);border-radius:12px;padding:10px 12px;margin:5px 0;width:100%;text-align:left;cursor:pointer}
+button:hover{background:var(--acc);color:#fff}
+button.ok{background:var(--ok);border-color:var(--ok);color:#fff}button.no{background:var(--bad);border-color:var(--bad);color:#fff}
+button.main{text-align:center;background:var(--acc);color:#fff}
+.note{font-size:.9rem;color:var(--mute)}
+input{font:inherit;padding:8px;border-radius:8px;border:2px solid var(--acc);background:var(--card);color:var(--ink);width:100%}
+.cert{border:4px double var(--gold);text-align:center;padding:18px}
+</style></head><body><main>
+<h1>🏝️ 國文群島冒險</h1>
+<div class="bar"><span class="pill" id="lv"></span><span class="pill" id="xpt"></span><span class="pill" id="bd"></span><span class="pill" id="dif" onclick="lvPick()" style="cursor:pointer"></span><button style="width:auto;padding:3px 12px" onclick="th()">🌗</button></div>
+<div class="xp"><i id="xb"></i></div>
+<svg viewBox="0 0 360 300" id="map" role="img" aria-label="群島地圖"></svg>
+<div class="card" id="box"></div>
+</main>
+<script src="../../sync-client.js"></script>
+<script>
+/* ========== 接上教師後台的程式（整段複製，只改最上面的 GAME_KEY） ========== */
+const GAME_KEY = 'chi-g12-345a';            // 遊戲代號：小寫英文／數字／-／_，建議「科目簡碼-遊戲名」
+
+/* 1) 學號：沒有就強迫輸入 */
+function ensureStudent(done) {
+  const no = keyagentGetActiveStudentNumber();
+  if (no) return done(no);
+  const v = (prompt('請輸入你的學號') || '').trim();
+  if (!/^[A-Za-z0-9_-]{2,12}$/.test(v)) return ensureStudent(done);
+  localStorage.setItem('keyagent_active_student', JSON.stringify({ studentNumber: v, verified: false }));
+  done(v);
+}
+
+/* 2) 練習時間：只算「玩完一局」的時間；切到別的分頁不算；中途關掉的那一局不算 */
+let T0 = 0, ACC = 0;
+function tStart()  { ACC = 0; T0 = Date.now(); }
+function tPause()  { if (T0) { ACC += Date.now() - T0; T0 = 0; } }
+function tResume() { if (!T0 && !document.hidden) T0 = Date.now(); }
+function tTake()   { tPause(); const s = Math.min(1800, Math.round(ACC / 1000)); ACC = 0; return s; }
+document.addEventListener('visibilitychange', () => (document.hidden ? tPause() : tResume()));
+
+/* 3) 一局結束時呼叫 finishRound({...})，會自動記錄並送到老師的後台 */
+function finishRound(r) {
+  // r = { stageId:'L1', stageName:'第一課 認字', score:80, right:8, total:10, stars:2(可省略), nick:'小勇者'(可省略),
+  //       types:[{ key:'read', label:'看字讀音', right:5, total:6 }, ...](可省略) }
+  const secs = tTake();
+  keyagentUpdateOtherGame(GAME_KEY, prev => {
+    const stages = Object.assign({}, prev.stages);
+    const s = stages[r.stageId] || {};
+    stages[r.stageId] = {
+      n: r.stageName || r.stageId,
+      bestStars: Math.max(s.bestStars || 0, r.stars || 0),
+      bestScore: Math.max(s.bestScore || 0, r.score || 0),
+      plays: (s.plays || 0) + 1,
+      hist: (s.hist || []).concat([{ at: Date.now(), q: r.total || 0, ok: r.right || 0, s: secs, st: r.stars || 0 }]).slice(-30),   // 每一次的結果（後台點答對率可看）
+      totalSecs: (s.totalSecs || 0) + secs,
+      totalQ: (s.totalQ || 0) + (r.total || 0),
+      totalOk: (s.totalOk || 0) + (r.right || 0)
+    };
+    const q = Object.assign({}, prev.q);
+    (r.types || []).forEach(t => {
+      const k = r.stageId + ':' + t.key, o = q[k] || { n: 0, ok: 0 };
+      q[k] = { n: o.n + (t.total || 0), ok: o.ok + (t.right || 0), label: t.label || t.key };
+    });
+    return {
+      nick: r.nick || prev.nick || '',
+      totalPlays: (prev.totalPlays || 0) + 1,
+      bestScore: Math.max(prev.bestScore || 0, r.score || 0),
+      totalSecs: (prev.totalSecs || 0) + secs,
+      totalQ: (prev.totalQ || 0) + (r.total || 0),
+      totalOk: (prev.totalOk || 0) + (r.right || 0),
+      lastScore: r.score || 0, lastId: r.stageId, lastName: r.stageName || r.stageId, lastAt: Date.now(),
+      stages, q
+    };
+  });
+}
+keyagentInstallPageHideSync();           // 4) 離開頁面時補寄一次
+/* ========== 以上整段不用改 ========== */
+</script>
+<script>
+const I=[
+{n:"蜘蛛絲島",e:"🕸️",x:80,y:70,c:"#9ccf9a",npc:"釋迦佛的使者",t:"來自〈蜘蛛之絲〉。答對兩題,就能拿到島章。",q:[
+["犍陀多生前唯一做過的一件好事是?",["沒有踩死路邊的小蜘蛛","布施給乞丐","救了落水的孩子"],"他舉腳要踩,卻想:蜘蛛雖小,也是有生命的。"],
+["釋迦佛為什麼看得到地獄?",["蓮花池下面,正好是地獄的底層","他有千里眼","蓮葉會發光"],"課文說,極樂的蓮花池下面恰當地獄的底層。"],
+["依題解,蜘蛛絲象徵什麼?",["希望與救贖","財富與權力","地獄的刑具"],"蜘蛛絲是希望與救贖的象徵。"]]},
+{n:"字音字形島",e:"🔤",x:270,y:70,c:"#e8c98f",npc:"老字典精靈",t:"字音與詞語的考驗。",q:[
+["「花蕊」的「蕊」怎麼唸?",["ㄖㄨㄟˇ","ㄙㄨㄟˇ","ㄖㄨㄟˋ"],"蕊,ㄖㄨㄟˇ。"],
+["「巨擘」的「擘」怎麼唸?",["ㄅㄛˋ","ㄆㄧˋ","ㄇㄛˋ"],"擘,ㄅㄛˋ,原指大拇指,比喻傑出的人物。"],
+["「兀自」的意思是?",["仍然、還是","突然","獨自一人"],"例如:雨停了,他兀自站在門口。"]]},
+{n:"燈下削筆島",e:"🕯️",x:80,y:200,c:"#b7a6d9",npc:"夜讀的詩人",t:"來自〈燈下削筆〉。答對兩題就能過關。",q:[
+["〈燈下削筆〉的作者是?",["陳義芝","辛波絲卡","芥川龍之介"],"陳義芝,花蓮人,著有《不能遺忘的遠方》等。"],
+["「削筆」在詩中強調什麼?",["卸下保護自我的外殼,以本心書寫","筆越尖越好用","文具要常換"],"題解:唯有卸下外殼,才能真正以本心書寫。"],
+["「影子垂低了頭不願再說話」用了什麼修辭?",["擬人","譬喻","排比"],"影子不會垂頭、說話,卻被當成人來寫。"]]},
+{n:"履歷與作者島",e:"📜",x:270,y:200,c:"#f0a99b",npc:"人事主管",t:"作者與詞語綜合題。",q:[
+["「芥川賞」是為了什麼設立?",["紀念芥川,獎勵純文學新秀作家","獎勵翻譯家","獎勵詩人"],"日本文壇為紀念芥川而設。"],
+["〈寫履歷表〉的作者是?",["辛波絲卡","陳義芝","賴祥雲"],"〈寫履歷表〉選自辛波絲卡的作品。"],
+["「欺世盜名」的意思是?",["欺騙世人,竊取名聲","隱姓埋名","名聲遠播"],"欺騙世人,以獲取虛名。"]]}];
+const B={n:"善念與面具島",e:"👑",x:180,y:140,c:"#f2d06b",npc:"閱卷長",t:"最終 Boss:兩課融合。三題全對可得滿分證書!",q:[
+["犍陀多最後未能把握逃脫機會,關鍵是?",["一己的私心","蜘蛛絲太細","釋迦佛改變心意"],"題解:因一己的私心,喪失了逃脫的一線生機。"],
+["〈燈下削筆〉的「面具」象徵?",["人在社會中偽裝自己、保護自己的外殼","節慶的裝飾","演員的戲服"],"摘下面具,就是要面對真實的自己。"],
+["兩課共通的主題最接近?",["面對內心的「私」與「真」","描寫極樂世界","介紹日本文學"],"一個因私心失去機會,一個渴望摘下面具。"]]};
+const M=[[["釋迦佛是在哪裡散步,看見地獄的?",["極樂世界的蓮池邊","地獄的血池邊","三途川畔"],"他在極樂世界的蓮池邊信步漫行。"],["犍陀多是在哪裡看見小蜘蛛的?",["茂密樹林裡的路邊","蓮池邊","針山上"],"他走過茂密的樹林,看見小蜘蛛在路邊爬行。"],["釋迦佛是怎麼放下蜘蛛絲的?",["悄悄地,從玉般的白蓮之間放下","大聲宣告後放下","交給蜘蛛帶下去"],"課文用「悄悄地」,表現慈悲而不張揚。"]],[["「釋迦」的「迦」怎麼唸?",["ㄐㄧㄚ","ㄐㄩㄝˊ","ㄍㄚ"],"釋迦,ㄕˋ ㄐㄧㄚ。"],["「蠕動」的「蠕」怎麼唸?",["ㄖㄨˊ","ㄖㄨㄢˇ","ㄋㄨㄛˋ"],"蠕,ㄖㄨˊ。"],["「晌午」指的是?",["中午","清晨","半夜"],"晌午就是中午。"]],[["陳義芝是哪裡人?",["花蓮","臺北","高雄"],"陳義芝是花蓮人。"],["下列何者「不是」題解提到的現代詩節奏手法?",["嚴格講究平仄與押韻","句式的停頓","跨行跨段"],"現代詩脫離了格律限制,不必嚴格講究平仄與韻腳。"],["「暗恨多深刀削也多深」的意思是?",["怨恨多深,自省就削得多深","筆太硬要用力削","詩人想買新刀"],"呼應「削」的動作:情緒越深,自省越深。"]],[["芥川龍之介後來師事哪位日本文壇巨擘?",["夏目漱石","森鷗外","太宰治"],"課文提到:後師事日本文壇巨擘夏目漱石。"],["《芥川龍之介的世界》的譯者是誰?",["賴祥雲","陳義芝","辛波絲卡"],"譯者賴祥雲,臺北人。"],["〈寫履歷表〉想表達的是?",["人們重視光鮮片面的紀錄,卻忽略生活中真實的處境","教人寫出完美履歷","批評所有公司"],"作者藉履歷表提出省思,肯定個人價值與生活意義。"]],[["釋迦佛為什麼要放下蜘蛛絲?",["想酬報犍陀多的善念,救他出地獄","考驗所有罪人","覺得好玩"],"他想起犍陀多曾救過蜘蛛,想酬報他的善行。"],["〈燈下削筆〉注釋「清明」是?",["心靈清澈明淨","清明節","天氣晴朗"],"詩中的清明指心靈的清澈明淨。"],["蜘蛛絲斷裂的象徵意義最貼切的是?",["善念珍貴,卻也脆弱","善念不值得堅持","神佛不寬容"],"作者透過蜘蛛絲,凸顯善念的珍貴與脆弱。"]]];
+const H=[[["「透過水晶似的水,彷彿看西洋鏡一樣」用了什麼修辭?",["譬喻","擬人","誇飾","設問"],"用「彷彿……一樣」,是明喻。"],["蓮花的潔白、極樂的清香,與地獄底層並寫,主要手法是?",["對比(映襯)","排比","層遞","類疊"],"以極樂的清淨反襯地獄的污濁。"],["作者先寫犍陀多唯一的善行,主要作用是?",["讓善念的珍貴,與後來私心的脆弱形成張力","證明他其實不是壞人","增加地獄的恐怖","介紹蜘蛛的習性"],"他是大強盜,這一點善念才顯得珍貴,也襯出私心之可惜。"]],[["下列「載」字,何者讀音與其他三者不同?",["千載難逢","載浮載沉","載歌載舞","滿載而歸"],"「千載」的載唸ㄗㄞˇ,其餘為ㄗㄞˋ。"],["「他的人生在困境中載浮載沉」最接近下列何意?",["起伏不定,時而浮起時而下沉","一帆風順","滿載而歸","徹底沉沒"],"載浮載沉:時而浮起,時而沉下。"],["哪一個詞語沒有錯別字?",["蠕動","濡動","孺動","懦動"],"正確寫法是「蠕動」。"]],[["詩中的「白天」與深夜對照,主要建構了什麼?",["外在偽裝與內在真實的對照","季節變化","時間流逝很快","工作與休閒"],"白天要應付他人,夜裡才能面對真實的自己。"],["第三節連用「要怎樣才能……什麼時候才敢……向誰……」,效果是?",["層層追問,凸顯自我認同的掙扎與期許","給出明確答案","為了押韻","描寫景物"],"疑問句收束,留下餘韻與省思。"],["「削去虛假的臉皮」與「摘下面具」的關係是?",["都指向卸下偽裝,回到真實的自己","刀象徵戰爭","刀削是傷害他人","兩者無關"],"「削」與「摘」,都是卸下外殼的動作。"]],[["〈寫履歷表〉與〈燈下削筆〉的共通點?",["都在反省外在呈現與真實自我的落差","都在寫職場","都是日本作品","都在描寫風景"],"履歷表是光鮮的片面,面具是偽裝,都與真實的我有落差。"],["芥川被稱為「鬼才」,最合適的原因是?",["擅以冷靜犀利的手法刻劃人性","專寫長篇歷史小說","只寫詩","專事翻譯"],"課文說他以冷靜犀利的手法刻劃人性。"],["下列敘述何者正確?",["芥川生於一八九二年,卒於一九二七年","生於一九二七年,卒於一八九二年","生於昭和二年","卒於明治二十五年"],"生於明治二十五年(一八九二),卒於昭和二年(一九二七)。"]],[["下列何者最能說明〈蜘蛛之絲〉如何「警示人心」?",["微小的善念,一念私心便足以毀掉救贖","神佛不可信","惡人一定受罰","蜘蛛很可憐"],"凸顯善念珍貴與脆弱,達到警示作用。"],["蜘蛛絲是「外來的救援」,〈燈下削筆〉的「筆」更接近?",["內在自我覺察與書寫的工具","外來的懲罰","財富","裝飾品"],"削筆象徵卸下外殼,以本心書寫。"],["以「善念與面具」寫議論,最佳立論是?",["善念珍貴卻脆弱,需不斷自省,才能卸下私心的面具","人人都該戴面具","善念毫無用處","只有詩人才能自省"],"結合兩課:善念要靠自省守護,私心與面具要靠面對真我卸下。"]]];
+const LN={e:"簡單",m:"中級",h:"高級"},XP={e:20,m:30,h:40};
+let S={xp:0,done:{},sc:{},cur:null,qi:0,hit:0,lv:null};
+const gq=()=>S.lv==="e"?(S.cur==="b"?B:I[S.cur]).q:(S.lv==="m"?M:H)[S.cur==="b"?4:S.cur];
+function lvPick(){$("box").innerHTML='<b>選擇難度</b><p class="npc">換難度會重置島章,經驗值保留。</p><button onclick="setLv(\'e\')">🌱 簡單:課文細節與基礎字詞(每題 +20 EXP)</button><button onclick="setLv(\'m\')">⚔️ 中級:出處、字音、作者與題旨(每題 +30 EXP)</button><button onclick="setLv(\'h\')">🔥 高級:修辭、賞析、比較與論述,4 個選項(每題 +40 EXP)</button>'}
+function setLv(l){S.lv=l;S.done={};S.sc={};hud();map();$("box").innerHTML='<b>難度:'+LN[l]+'</b><p class="npc">點地圖上的島嶼開始。集滿 4 枚島章,就能挑戰中央島的最終 Boss。</p>'}
+const $=id=>document.getElementById(id);
+function sh(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function th(){const r=document.documentElement;r.dataset.theme=(r.dataset.theme==="dark"||(!r.dataset.theme&&matchMedia("(prefers-color-scheme:dark)").matches))?"light":"dark"}
+function hud(){const L=Math.floor(S.xp/60)+1;$("lv").textContent="Lv."+L;$("dif").textContent=S.lv?"難度:"+LN[S.lv]+" ⟲":"選難度 ⟲";$("xpt").textContent="EXP "+S.xp;$("bd").textContent="島章 "+Object.keys(S.done).filter(k=>k!=="b").length+"/4";$("xb").style.width=(S.xp%60)/60*100+"%"}
+function map(){const bl=Object.keys(S.done).filter(k=>k!=="b").length<4;
+let h='<path d="M0 270 Q90 250 180 270 T360 270" fill="none" stroke="#ffffff55" stroke-width="3"/>';
+[...I.map((o,i)=>[o,i]),[B,"b"]].forEach(([o,i])=>{const lock=i==="b"&&bl;h+=`<g class="isl" onclick="go('${i}')" opacity="${lock?.55:1}"><ellipse class="land" cx="${o.x}" cy="${o.y+8}" rx="${i==="b"?52:46}" ry="${i==="b"?36:32}" fill="${o.c}" stroke="#fff" stroke-width="3"/><text x="${o.x}" y="${o.y+4}" style="font-size:26px">${lock?"🔒":S.done[i]?"✅":o.e}</text><text x="${o.x}" y="${o.y+30}">${o.n}</text></g>`});
+$("map").innerHTML=h}
+function go(i){if(!S.lv){lvPick();return}const o=i==="b"?B:I[i];
+if(i==="b"&&Object.keys(S.done).filter(k=>k!=="b").length<4){$("box").innerHTML='<b>🔒 中央島尚未開放</b><p class="note">集滿 4 枚島章,才能挑戰最終 Boss。</p>';return}
+S.cur=i;S.qi=0;S.hit=0;tStart();
+$("box").innerHTML=`<b>${o.e} ${o.n}</b><p class="npc">🧑‍🏫 ${o.npc}:「旅人,${o.t}」</p><button class="main" onclick="ask()">開始挑戰</button>`}
+function ask(){const o=S.cur==="b"?B:I[S.cur],q=gq()[S.qi];
+const op=sh(q[1].map((t,k)=>({t,k})));
+$("box").innerHTML=`<p class="note">${o.n}・第 ${S.qi+1}/3 題</p><b>${q[0]}</b>`+op.map((p,j)=>`<button data-k="${p.k}" onclick="pick(this)">${p.t}</button>`).join("")}
+function pick(b){const o=S.cur==="b"?B:I[S.cur],q=gq()[S.qi],ok=b.dataset.k==="0";
+document.querySelectorAll("#box button").forEach(x=>{x.disabled=true;if(x.dataset.k==="0")x.classList.add("ok")});
+if(!ok)b.classList.add("no");else{S.hit++;S.xp+=XP[S.lv]}
+hud();
+const last=S.qi===2;
+$("box").insertAdjacentHTML("beforeend",`<p>${ok?"✅ 答對,+${XP[S.lv]} EXP!":"❌ 再接再厲。"} ${q[2]}</p><button class="main" onclick="${last?"fin()":"S.qi++;ask()"}">${last?"看結果":"下一題"}</button>`)}
+function fin(){const o=S.cur==="b"?B:I[S.cur],need=S.cur==="b"?3:2;
+try{finishRound({stageId:"I"+S.cur+"-"+S.lv,stageName:o.n+"・"+LN[S.lv],score:Math.round(S.hit/3*100),right:S.hit,total:3,stars:S.hit>=3?3:S.hit>=need?2:S.hit>0?1:0,types:[{key:"q"+S.lv,label:"難度"+LN[S.lv],right:S.hit,total:3}]})}catch(e){}
+S.sc[S.cur]=Math.max(S.sc[S.cur]||0,S.hit);
+if(S.hit>=need){S.done[S.cur]=1;S.xp+=S.cur==="b"?60:30}
+hud();map();
+if(S.hit>=need&&S.cur==="b"){cert();return}
+$("box").innerHTML=S.hit>=need?`<b>🎉 取得「${o.n}」島章!</b><p>答對 ${S.hit}/3 題,額外 +30 EXP。</p>`+(Object.keys(S.done).filter(k=>k!=="b").length===4?'<p>🌟 四枚島章集齊,中央島已開放!</p>':'<p class="note">點地圖上其他島嶼繼續冒險。</p>'):`<b>😢 答對 ${S.hit}/3 題,差一點!</b><p class="note">再點一次這座島重新挑戰。</p>`}
+function cert(){const t=Object.values(S.sc).reduce((a,b)=>a+b,0);
+$("box").innerHTML=`<div class="cert"><h2>🏆 冒險證書</h2><p>茲證明</p><input id="nm" placeholder="輸入你的名字" oninput="$('nn').textContent=this.value||'冒險者'"><h3 id="nn">冒險者</h3><p>完成「國文群島冒險」【${LN[S.lv]}】<br>等級 Lv.${Math.floor(S.xp/60)+1}・EXP ${S.xp}・總答對 ${t}/15 題</p><p>${t>=14?"稱號:🏆 筆下人生大師":t>=11?"稱號:🌙 燈下削筆人":"稱號:🕸️ 蜘蛛絲攀登者"}</p></div><button class="main" onclick="location.reload()">再玩一次</button>`}
+ensureStudent(function(){hud();map();lvPick()});
+</script>
+<script src="../../home-fab.js"></script></body></html>
