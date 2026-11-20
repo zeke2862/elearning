@@ -2725,6 +2725,7 @@ var MS_CAT_URL = (function () { try { return new URL('../images/home/catnest-s.w
     },
     // start() 裡呼叫：回傳 true 代表這一局是無極限（題目改成一題一題現場出）
     begin: function (rescue) {
+      try { if (window.JB2Guard) window.JB2Guard.roundStart(!!rescue); } catch (e) {}   // 換題規則：一局開始（stage-guard.js）
       S.ended = false; S.lastType = null; S.taught = 0; S.hints = 0; updateBadge(); var agb0 = document.getElementById('again'); if (agb0) agb0.classList.remove('hide');
       S.active = S.flag && !rescue && S.stars >= CFG.ENDLESS_NEED;
       if (!S.active) restore();
@@ -2757,6 +2758,7 @@ var MS_CAT_URL = (function () { try { return new URL('../images/home/catnest-s.w
     result: function (o) {
       var so = document.getElementById('ms-st-ov'); if (so) so.remove();
       if (o.rescue) { if (S.prac) pracDone(o); return; }
+      try { if (window.JB2Guard) window.JB2Guard.roundEnd(); } catch (e) {}   // 換題規則：一局結算
       var $t = $('#e-title'), $s = $('#e-stars'), $i = $('#e-info');
 
       /* ---- 無極限 ---- */
@@ -3048,10 +3050,30 @@ var MS_CAT_URL = (function () { try { return new URL('../images/home/catnest-s.w
       return origLog.apply(this, arguments);
     };
     window.next = function () {
-      try { if (!inRescue() && !inEndless() && !atEnd() && RB.poll()) return; } catch (e) {}
+      try { if (!window.__jb2Redrawing && !inRescue() && !inEndless() && !atEnd() && RB.poll()) return; } catch (e) {}
       return origNext.apply(this, arguments);
     };
     status('已啟用（第 ' + ch + ' 章：' + pool.games.join('、') + '；每 ' + R.every + ' 題（倍數）或連對 ' + R.streak + ' 題）', false);
   }
   if (document.readyState === 'complete') setup(); else window.addEventListener('load', setup);
 })();
+
+/* ============================================================
+   換題（stage-guard.js 呼叫）：離開畫面回來時，把「還沒作答的這一題」作廢，同題型重新出一題
+   - 已作答（正在看解說）、休息小遊戲中、沒在作答畫面 → 不重抽（回傳 false）
+   - 不扣血、不算答題紀錄；重抽時不會跳出休息小遊戲
+   ============================================================ */
+window.__jb2Redraw = function () {
+  try {
+    var g = document.getElementById('s-game');
+    if (!g || g.classList.contains('hide')) return false;
+    if (typeof q === 'undefined' || !q || typeof lock === 'undefined' || lock) return false;
+    if (window.RelaxBreak && window.RelaxBreak.active) return false;
+    var t = q.type;
+    qs[idx - 1] = Object.assign(gen(t), { type: t });
+    idx--;
+    window.__jb2Redrawing = true;
+    try { next(); } finally { window.__jb2Redrawing = false; }
+    return true;
+  } catch (e) { window.__jb2Redrawing = false; return false; }
+};
