@@ -18,7 +18,7 @@ window.GAME_CONFIG = {
   "expCap": 300,
   "boostMult": 2,
   "expPerLevel": 50,
-  "unlockRatio": 0.5,
+  "unlockRatio": 0.65,
   "priceRound": 10,
   "checkin": {
    "base": 30,
