@@ -458,7 +458,7 @@ addEventListener('message',e=>{
     const old=P[d.id]||{stars:0,best:0},o=old.eb||0;
     if(d.count>o){P[d.id]={...old,eb:d.count};save();toast('🏆 '+d.id+' 無極限新紀錄：'+d.count+' 題！')}
   }
-  if(d.type=='stage-exit'){closeStage();if(d.reason=='left')leftNotice();else if(d.reason=='leave3'||d.reason=='locked')alert(d.msg||'這一關已因離開遊戲畫面 3 次判定失敗，請稍後再挑戰。')}
+  if(d.type=='stage-exit'){closeStage();if(d.reason=='left')leftNotice();else if(d.reason=='leave3'||d.reason=='locked'||d.reason=='viol')alert(d.msg||'這一關已因離開遊戲畫面 3 次判定失敗，請稍後再挑戰。')}
 });
 $('#reset').onclick=()=>{if(confirm('確定要清除所有星星與圖鑑嗎？這個動作無法復原。')){P={};save();render()}};
 addEventListener('resize',()=>{clearTimeout(window._rz);window._rz=setTimeout(renderMap,120)});
