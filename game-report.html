@@ -207,7 +207,9 @@ function views() {
 }
 function cell(r, s) {
   const x = r.st[s.id];
-  if (view === 'stars') { const n = x ? x.bestStars : 0; return n ? `<td class="s${Math.min(5, n)}">${n <= 5 ? '★'.repeat(n) : '★' + n}</td>` : (x ? '<td class="s00" title="有玩，但還沒拿到星">0★</td>' : '<td class="s0">—</td>'); }
+  if (view === 'stars') {   // 星星下面接著顯示最近幾次的答對率變化（點一下看每一次）
+    const n = x ? x.bestStars : 0, tr = histMini(x), hh = x && tr ? ` hh" data-no="${esc(r.no)}" data-sid="${esc(s.id)}" title="最近幾次答對率：${esc(histList(x).map(v => v + '%').join(' → '))}（點一下看每一次的結果）` : '';
+    return n ? `<td class="s${Math.min(5, n)}${hh}">${n <= 5 ? '★'.repeat(n) : '★' + n}${tr}</td>` : (x ? `<td class="s00${hh || '" title="有玩，但還沒拿到星'}">0★${tr}</td>` : '<td class="s0">—</td>'); }
   if (view === 'acc') { const a = x && x.q ? x.ok / x.q : null; return a == null ? '<td class="a0">—</td>' : `<td class="${accCls(a)} hh" data-no="${esc(r.no)}" data-sid="${esc(s.id)}" title="答對 ${x.ok} 題／作答 ${x.q} 題（點一下看每一次的結果）">${Math.round(a * 100)}%<div class="sm">${x.ok}/${x.q}</div>${histMini(x)}</td>`; }
   if (view === 'score') { const n = x ? x.bestScore : 0; return n ? `<td class="t2">${n}</td>` : '<td class="s0">—</td>'; }
   if (view === 'time') { const t = x ? x.secs : 0; return t ? `<td class="t${t < 300 ? 1 : t < 900 ? 2 : 3}" title="${fmtSecs(t)}">${fmtShort(t)}</td>` : '<td class="s0">—</td>'; }
@@ -220,9 +222,10 @@ const stageName = id => { const s = STAGES.find(x => x.id === id); return s ? (s
 const flagMark = r => r.flags.length ? ` <span title="${esc(r.flags.slice(0, 8).map(f => stageName(f.sid) + '：' + f.msg).join('\n'))}" style="color:#c0392b">⚠️${r.flags.length}</span>` : '';
 const fmtDay = t => { if (!t) return '—'; const d = new Date(t); return fmtAt(t) + '（週' + '日一二三四五六'[d.getDay()] + '）'; };
 const pct = h => h.q > 0 ? Math.round(h.ok / h.q * 100) : null;
-function histMini(x) {   // 格子裡的小字：每次答對率，例如 25→50→75
-  const hs = (x.hist || []).filter(h => h.q > 0); if (!hs.length) return '';
-  return `<div class="sm">${hs.slice(-4).map(h => pct(h) + '').join('→')}</div>`;
+const histList = x => ((x && x.hist) || []).filter(h => h.q > 0).slice(-4).map(pct);   // 最近 4 次的答對率（%）
+function histMini(x) {   // 格子裡的小字：最近幾次答對率，例如 25→50→75
+  const l = histList(x); if (!l.length) return '';
+  return `<div class="sm">${l.join('→')}</div>`;
 }
 function bindHist(root) {
   document.querySelectorAll(root + ' td.hh').forEach(td => td.onclick = e => { e.stopPropagation(); showHist(td.dataset.no, td.dataset.sid); });
@@ -259,7 +262,7 @@ function renderProg() {
   $('#v-prog').innerHTML = `<div class="chips"><span class="chip">共 <b>${all.length}</b> 位</span><span class="chip">已玩 <b>${played.length}</b></span><span class="chip">還沒玩 <b>${all.length - played.length}</b></span>${classChips(all)}</div>
   <div class="bar">${vs.length ? `<label>每格顯示 <select id="vw">${vs.map(x => `<option value="${x[0]}">${x[1]}</option>`).join('')}</select></label>` : ''}
   <label>狀態 <select id="st"><option value="">全部</option><option value="p">已玩</option><option value="n">還沒玩</option></select></label>
-  <input type="text" id="q" placeholder="搜尋姓名／學號／遊戲內名稱" style="flex:0 1 220px"><button class="b" id="e-prog">⬇️ 匯出 Excel（CSV）</button></div>
+  <input type="text" id="q" placeholder="搜尋姓名／學號／遊戲內名稱" style="flex:0 1 220px"><button class="b" id="e-prog">⬇️ 匯出 Excel（.xlsx）</button></div>
   <div class="tw"><table><tr><th class="l">班級</th><th>座號</th><th class="l">姓名</th><th>學號</th><th>遊戲內名稱</th><th>練習次數</th><th>練習時間</th>${anyBest ? '<th>最高分</th>' : ''}<th>整體答對率</th><th>最後更新</th>${STAGES.map(stageHead).join('')}</tr>` +
     L.map(r => `<tr class="rw" data-no="${esc(r.no)}"><td class="l">${esc(r.cls)}</td><td>${r.seat || ''}</td><td class="l">${esc(r.name || '—')}${flagMark(r)}</td><td>${esc(r.no)}</td><td>${r.nick ? esc(r.nick) : '<span class="s0">—</span>'}</td><td>${r.played ? r.plays : '—'}</td><td>${r.played && r.secs ? fmtShort(r.secs) : '—'}</td>${anyBest ? `<td>${r.best || '—'}</td>` : ''}<td>${r.acc == null ? '—' : Math.round(r.acc * 100) + '%'}</td><td class="s0">${fmtAt(r.at)}</td>${STAGES.map(s => cell(r, s)).join('')}</tr>`).join('') + '</table></div>';
   if ($('#vw')) { $('#vw').value = view; $('#vw').onchange = () => { view = $('#vw').value; renderProg(); }; }
@@ -267,8 +270,119 @@ function renderProg() {
   $('#st').onchange = renderProg; $('#q').oninput = () => { renderProg(); const q = $('#q'); q.focus(); q.setSelectionRange(q.value.length, q.value.length); };
   $('#v-prog').querySelectorAll('tr.rw').forEach(tr => tr.onclick = () => { oneNo = tr.dataset.no; tab = 'one'; render(); });
   bindHist('#v-prog');
-  $('#e-prog').onclick = () => download(($('#game').value || '遊戲') + '_班級進度表.csv', toCSV([['班級', '座號', '學號', '姓名', '遊戲內名稱', '練習次數', '練習秒數', '最高分', '整體答對率(%)', '最後更新'].concat(...STAGES.map(s => [stageName(s.id) + ' 星', stageName(s.id) + ' 最高分', stageName(s.id) + ' 次數', stageName(s.id) + ' 答對率(%)', stageName(s.id) + ' 練習秒數', stageName(s.id) + ' 每次答對率'])),
-    ...L.map(r => [r.cls, r.seat || '', r.no, r.name, r.nick, r.played ? r.plays : '', r.played ? r.secs : '', r.best || '', r.acc == null ? '' : Math.round(r.acc * 100), r.at ? new Date(r.at).toLocaleString('zh-TW', {hour12: false}) : ''].concat(...STAGES.map(s => { const x = r.st[s.id]; return x ? [x.bestStars || '', x.bestScore || '', x.plays || '', x.q ? Math.round(x.ok / x.q * 100) : '', x.secs || '', (x.hist || []).filter(h => h.q > 0).map(h => pct(h) + '%').join(' → ')] : ['', '', '', '', '', '']; })))]));
+  $('#e-prog').onclick = () => exportProg(L, vs);
+}
+
+/* ===== 匯出 Excel（.xlsx，多個分頁）=====
+   分頁1「網頁畫面」：跟現在網頁上看到的表格一模一樣（同樣的欄位、同樣的「每格顯示」、同樣的篩選結果、顏色、凍結）
+   分頁2「完整資料」：每一關拆成好幾欄的明細（可拿去做統計、排序）
+   檔案是自己組的，不需要額外的外掛。 */
+const XL = (() => {
+  const enc = new TextEncoder();
+  const crcT = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+  const crc = b => { let c = 0xFFFFFFFF; for (let i = 0; i < b.length; i++) c = crcT[(c ^ b[i]) & 255] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; };
+  function zip(files) {   // .xlsx 其實是一個 zip；這裡用「不壓縮」的方式打包
+    const body = [], cen = []; let off = 0;
+    files.forEach(f => {
+      const nm = enc.encode(f.name), d = enc.encode(f.text), c = crc(d);
+      const lh = new DataView(new ArrayBuffer(30)), ch = new DataView(new ArrayBuffer(46));
+      [[0, 4, 0x04034b50], [4, 2, 20], [6, 2, 0x0800], [8, 2, 0], [10, 2, 0], [12, 2, 0x21], [14, 4, c], [18, 4, d.length], [22, 4, d.length], [26, 2, nm.length], [28, 2, 0]].forEach(([o, n, v]) => n === 4 ? lh.setUint32(o, v, true) : lh.setUint16(o, v, true));
+      [[0, 4, 0x02014b50], [4, 2, 20], [6, 2, 20], [8, 2, 0x0800], [10, 2, 0], [12, 2, 0], [14, 2, 0x21], [16, 4, c], [20, 4, d.length], [24, 4, d.length], [28, 2, nm.length], [30, 2, 0], [32, 2, 0], [34, 2, 0], [36, 2, 0], [38, 4, 0], [42, 4, off]].forEach(([o, n, v]) => n === 4 ? ch.setUint32(o, v, true) : ch.setUint16(o, v, true));
+      body.push(new Uint8Array(lh.buffer), nm, d); cen.push(new Uint8Array(ch.buffer), nm);
+      off += 30 + nm.length + d.length;
+    });
+    const cenLen = cen.reduce((a, b) => a + b.length, 0), end = new DataView(new ArrayBuffer(22));
+    [[0, 4, 0x06054b50], [4, 2, 0], [6, 2, 0], [8, 2, files.length], [10, 2, files.length], [12, 4, cenLen], [16, 4, off], [20, 2, 0]].forEach(([o, n, v]) => n === 4 ? end.setUint32(o, v, true) : end.setUint16(o, v, true));
+    const all = body.concat(cen, [new Uint8Array(end.buffer)]), out = new Uint8Array(all.reduce((a, b) => a + b.length, 0));
+    let p = 0; all.forEach(b => { out.set(b, p); p += b.length; });
+    return out;
+  }
+  const xe = s => String(s).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  const col = i => { let s = ''; for (i++; i > 0; i = Math.floor((i - 1) / 26)) s = String.fromCharCode(65 + (i - 1) % 26) + s; return s; };
+  const NS = 'xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"', RNS = 'xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"', HEAD = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n';
+  // sheets: [{name, rows:[[cell]], widths:[], heights:{列index:高度}, freeze:[凍結欄數, 凍結列數]}]；cell = 字串／數字／{v, s:{fill,color,bold,left,wrap}}
+  function build(sheets) {
+    const fonts = ['<font><sz val="11"/><name val="Microsoft JhengHei"/></font>'], fills = ['<fill><patternFill patternType="none"/></fill>', '<fill><patternFill patternType="gray125"/></fill>'], xfs = ['<xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1"/>'], fi = {}, fl = {}, xi = {};
+    const style = st => {
+      st = st || {}; const k = JSON.stringify(st); if (k in xi) return xi[k];
+      const fk = (st.color || '') + '|' + (st.bold ? 1 : 0), flk = st.fill || '';
+      if (!(fk in fi)) { fi[fk] = fonts.length; fonts.push(`<font>${st.bold ? '<b/>' : ''}<sz val="11"/>${st.color ? `<color rgb="${st.color}"/>` : ''}<name val="Microsoft JhengHei"/></font>`); }
+      if (flk && !(flk in fl)) { fl[flk] = fills.length; fills.push(`<fill><patternFill patternType="solid"><fgColor rgb="${flk}"/><bgColor indexed="64"/></patternFill></fill>`); }
+      xi[k] = xfs.length;
+      xfs.push(`<xf numFmtId="0" fontId="${fi[fk]}" fillId="${flk ? fl[flk] : 0}" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="${st.left ? 'left' : 'center'}" vertical="center"${st.wrap ? ' wrapText="1"' : ''}/></xf>`);
+      return xi[k];
+    };
+    const sheetXml = sh => {
+      const [fc, fr] = sh.freeze || [0, 0];
+      const pane = fc || fr ? `<pane${fc ? ` xSplit="${fc}"` : ''}${fr ? ` ySplit="${fr}"` : ''} topLeftCell="${col(fc)}${fr + 1}" activePane="${fc && fr ? 'bottomRight' : fc ? 'topRight' : 'bottomLeft'}" state="frozen"/>` + (fc && fr ? '<selection pane="topRight"/><selection pane="bottomLeft"/><selection pane="bottomRight"/>' : `<selection pane="${fc ? 'topRight' : 'bottomLeft'}"/>`) : '';
+      const cols = (sh.widths || []).map((w, i) => `<col min="${i + 1}" max="${i + 1}" width="${w}" customWidth="1"/>`).join('');
+      const rows = sh.rows.map((r, ri) => {
+        const cs = r.map((c, ci) => {
+          const o = c !== null && typeof c === 'object' ? c : {v: c}, ref = col(ci) + (ri + 1), sid = style(o.s), v = o.v;
+          if (v == null || v === '') return `<c r="${ref}" s="${sid}"/>`;
+          return typeof v === 'number' && isFinite(v) ? `<c r="${ref}" s="${sid}"><v>${v}</v></c>` : `<c r="${ref}" s="${sid}" t="inlineStr"><is><t xml:space="preserve">${xe(v)}</t></is></c>`;
+        }).join('');
+        const h = sh.heights && sh.heights[ri];
+        return `<row r="${ri + 1}"${h ? ` ht="${h}" customHeight="1"` : ''}>${cs}</row>`;
+      }).join('');
+      return `${HEAD}<worksheet ${NS}><sheetViews><sheetView workbookViewId="0"${sheets[0] === sh ? ' tabSelected="1"' : ''}>${pane}</sheetView></sheetViews><sheetFormatPr defaultRowHeight="15"/>${cols ? `<cols>${cols}</cols>` : ''}<sheetData>${rows}</sheetData></worksheet>`;
+    };
+    const sx = sheets.map(sheetXml);   // 先組分頁，才知道用到哪些樣式
+    const styles = `${HEAD}<styleSheet ${NS}><fonts count="${fonts.length}">${fonts.join('')}</fonts><fills count="${fills.length}">${fills.join('')}</fills><borders count="2"><border><left/><right/><top/><bottom/><diagonal/></border><border><left style="thin"><color rgb="FFBFC3D4"/></left><right style="thin"><color rgb="FFBFC3D4"/></right><top style="thin"><color rgb="FFBFC3D4"/></top><bottom style="thin"><color rgb="FFBFC3D4"/></bottom><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="${xfs.length}">${xfs.join('')}</cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>`;
+    const REL = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships';
+    const files = [
+      {name: '[Content_Types].xml', text: `${HEAD}<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>${sheets.map((_, i) => `<Override PartName="/xl/worksheets/sheet${i + 1}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`).join('')}</Types>`},
+      {name: '_rels/.rels', text: `${HEAD}<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="${REL}/officeDocument" Target="xl/workbook.xml"/></Relationships>`},
+      {name: 'xl/workbook.xml', text: `${HEAD}<workbook ${NS} ${RNS}><bookViews><workbookView activeTab="0"/></bookViews><sheets>${sheets.map((sh, i) => `<sheet name="${xe(sh.name)}" sheetId="${i + 1}" r:id="rId${i + 1}"/>`).join('')}</sheets></workbook>`},
+      {name: 'xl/_rels/workbook.xml.rels', text: `${HEAD}<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">${sheets.map((_, i) => `<Relationship Id="rId${i + 1}" Type="${REL}/worksheet" Target="worksheets/sheet${i + 1}.xml"/>`).join('')}<Relationship Id="rId${sheets.length + 1}" Type="${REL}/styles" Target="styles.xml"/></Relationships>`},
+      {name: 'xl/styles.xml', text: styles}
+    ].concat(sx.map((t, i) => ({name: `xl/worksheets/sheet${i + 1}.xml`, text: t})));
+    return zip(files);
+  }
+  const save = (name, bytes) => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([bytes], {type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'})); a.download = name; document.body.appendChild(a); a.click(); a.remove(); };
+  return {build, save};
+})();
+
+/* 網頁上各種格子的顏色（Excel 用淺色版，印出來比較清楚；意思跟網頁相同） */
+const XCOL = {
+  s0: {color: 'FF9AA0B5'}, s00: {fill: 'FFF4C7C0', color: 'FF7A2A1F'}, s1: {fill: 'FFF6E7B4'}, s2: {fill: 'FFCFE8D3'}, s3: {fill: 'FF9FD9BF', bold: 1}, s4: {fill: 'FF9FCFE6', bold: 1}, s5: {fill: 'FFF3D36B', color: 'FF5A4300', bold: 1},
+  a0: {color: 'FF9AA0B5'}, alo: {fill: 'FFF4A99D', bold: 1}, amid: {fill: 'FFFBE7A8'}, ahi: {fill: 'FFBFE5CF'},
+  t1: {fill: 'FFD6DEF5'}, t2: {fill: 'FFB9D0EE'}, t3: {fill: 'FF9FCFE6', bold: 1}
+};
+/* 跟 cell() 一樣的內容，只是換成 Excel 的「樣式＋幾行字」 */
+function cellX(r, s) {
+  const x = r.st[s.id], tr = histList(x).map(v => v + '%').join('→'), mk2 = (c, ...lines) => ({c, lines: lines.filter(Boolean)});
+  if (view === 'stars') { const n = x ? x.bestStars : 0; return n ? mk2('s' + Math.min(5, n), n <= 5 ? '★'.repeat(n) : '★' + n, tr) : x ? mk2('s00', '0★', tr) : mk2('s0', '—'); }
+  if (view === 'acc') { const a = x && x.q ? x.ok / x.q : null; return a == null ? mk2('a0', '—') : mk2(accCls(a), Math.round(a * 100) + '%', x.ok + '/' + x.q, tr); }
+  if (view === 'score') return x && x.bestScore ? mk2('t2', String(x.bestScore)) : mk2('s0', '—');
+  if (view === 'time') { const t = x ? x.secs : 0; return t ? mk2('t' + (t < 300 ? 1 : t < 900 ? 2 : 3), fmtShort(t)) : mk2('s0', '—'); }
+  const p = x ? x.plays : 0; return p ? mk2('t' + (p < 3 ? 1 : p < 6 ? 2 : 3), String(p)) : mk2('s0', '—');
+}
+function exportProg(L, vs) {
+  const anyBest = ROWS.some(r => r.best > 0), game = $('#game').value || '遊戲';
+  const HS = {fill: 'FF252C56', color: 'FFFFFFFF', bold: 1, wrap: 1};
+  // 分頁1：跟網頁一樣
+  const head = ['班級', '座號', '姓名', '學號', '遊戲內名稱', '練習次數', '練習時間'].concat(anyBest ? ['最高分'] : [], ['整體答對率', '最後更新'], STAGES.map(s => s.n || s.id)).map(t => ({v: t, s: HS}));
+  const heights = {0: 32}, rows1 = [head];
+  L.forEach(r => {
+    const dash = {v: '—', s: XCOL.s0}, flag = r.flags.length ? ' ⚠️' + r.flags.length : '';
+    let lines = 1;
+    const fixed = [{v: r.cls, s: {left: 1}}, r.seat || '', {v: (r.name || '—') + flag, s: {left: 1}}, r.no, r.nick ? r.nick : dash, r.played ? r.plays : dash, r.played && r.secs ? fmtShort(r.secs) : dash]
+      .concat(anyBest ? [r.best || dash] : [], [r.acc == null ? '—' : Math.round(r.acc * 100) + '%', {v: fmtAt(r.at), s: XCOL.s0}]);
+    const cells = STAGES.map(s => { const c = cellX(r, s); lines = Math.max(lines, c.lines.length); return {v: c.lines.join('\n'), s: Object.assign({wrap: 1}, XCOL[c.c])}; });
+    if (lines > 1) heights[rows1.length] = lines * 15 + 4;
+    rows1.push(fixed.concat(cells));
+  });
+  const widths = [9, 6, 12, 13, 14, 9, 9].concat(anyBest ? [9] : [], [11, 13], STAGES.map(() => view === 'acc' ? 15 : 12));
+  const vl = (vs.find(x => x[0] === view) || ['', ''])[1].replace(/^[^一-鿿A-Za-z0-9]+/, '');
+  // 分頁2：完整明細（每一關拆成好幾欄）
+  const h2 = ['班級', '座號', '學號', '姓名', '遊戲內名稱', '練習次數', '練習秒數', '最高分', '整體答對率(%)', '最後更新'].concat(...STAGES.map(s => [stageName(s.id) + ' 星', stageName(s.id) + ' 最高分', stageName(s.id) + ' 次數', stageName(s.id) + ' 答對率(%)', stageName(s.id) + ' 練習秒數', stageName(s.id) + ' 每次答對率'])).map(t => ({v: t, s: HS}));
+  const rows2 = [h2].concat(L.map(r => [r.cls, r.seat || '', r.no, r.name, r.nick, r.played ? r.plays : '', r.played ? r.secs : '', r.best || '', r.acc == null ? '' : Math.round(r.acc * 100), r.at ? new Date(r.at).toLocaleString('zh-TW', {hour12: false}) : ''].concat(...STAGES.map(s => { const x = r.st[s.id]; return x ? [x.bestStars || '', x.bestScore || '', x.plays || '', x.q ? Math.round(x.ok / x.q * 100) : '', x.secs || '', (x.hist || []).filter(h => h.q > 0).map(h => pct(h) + '%').join(' → ')] : ['', '', '', '', '', '']; }))));
+  const w2 = [9, 6, 13, 12, 14, 9, 9, 9, 12, 18].concat(...STAGES.map(() => [8, 9, 8, 11, 11, 26]));
+  XL.save(game + '_班級進度表.xlsx', XL.build([
+    {name: '網頁畫面（' + vl + '）', rows: rows1, widths, heights, freeze: [3, 1]},
+    {name: '完整資料（每關明細）', rows: rows2, widths: w2, heights: {0: 32}, freeze: [4, 1]}
+  ]));
 }
 
 /* ===== 題型弱點（有 q 欄位的遊戲才有） ===== */
