@@ -28,7 +28,9 @@ function doPost(e) {
       return jsonOut_({ success: true });
     }
 
-    if (data.action === "gLogin" || data.action === "gPull" || data.action === "gPush") return jsonOut_(gHandle_(data));   // Google 帳號綁定（選用）
+    if (data.action === "gLogin" || data.action === "gPull" || data.action === "gPush") return jsonOut_(gHandle_(data));
+    if (data.action === "submitWork") return jsonOut_(wSubmit_(data));        // 作品投稿
+    if (data.action === "workStatus") return jsonOut_(wSetStatus_(data));   // Google 帳號綁定（選用）
 
     try { notifyGuess_(data); } catch (e0) {}   // 學生被「亂猜重開」鎖定時，寄通知給老師（失敗不影響收件）
 
@@ -51,6 +53,8 @@ function doGet(e) {
   if (e && e.parameter && e.parameter.action === "jb2") return jb2Report_(e);
   if (e && e.parameter && e.parameter.action === "games") return gamesReport_(e);
   if (e && e.parameter && e.parameter.action === "game") return gameReport_(e);
+  if (e && e.parameter && e.parameter.action === "works") return wList_(e);      // 作品投稿：清單
+  if (e && e.parameter && e.parameter.action === "work") return wGet_(e);        // 作品投稿：取一份程式碼
   try {
     const sheet = getSheet_();
     const rows = sheet.getDataRange().getValues();
@@ -411,4 +415,84 @@ function gHandle_(data) {
   } catch (err) {
     return { success: false, message: String(err && err.message || err) };
   } finally { lock.releaseLock(); }
+}
+
+
+// =====================================================================
+// ===== 作品投稿（submit.html 學生投稿／submissions.html 老師管理）=====
+// 為什麼要有？蘋果手機免費版的學生做出的遊戲只能在 Claude 裡自己玩、下載不了。
+// 做法：學生把「複製」下來的程式碼貼到投稿頁 → 存進試算表的「作品投稿」分頁 → 老師在管理頁預覽／下載成 .html。
+//
+// 試算表欄位：A 時間｜B 編號｜C 年級｜D 作品名稱｜E 作者｜F 學號｜G 狀態(new/done)｜H 字數｜I 片段數｜J 以後的欄＝程式碼分段
+// （一格最多放約 5 萬字，所以長的程式碼要切成好幾段放在 J、K、L…欄，讀的時候再接回來）
+//
+// 設定（都在「專案設定 → 指令碼屬性」，選用）：
+//   SUBMIT_CODE ＝投稿碼。有設的話，學生一定要填對才收件，可擋掉亂投稿的人。
+//   老師看／下載投稿：用跟 game-report 同一把密碼（JB2_TOKEN 總管密碼最方便；
+//   REPORT_TOKENS 的範圍要包含 work-submissions，例如  abc123=work-submissions）。
+// =====================================================================
+const W_SHEET_ = "作品投稿";
+const W_CHUNK_ = 40000;        // 每格存的字數（Google 試算表一格上限約 5 萬字）
+const W_MAX_CODE_ = 480000;    // 一份作品最多收 48 萬字（12 段），再大就拒收
+const W_GRADES_ = ["中二", "中三", "高一", "高三", "其他"];
+const W_FIRST_CODE_COL_ = 10;  // J 欄
+
+function wSheet_() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sh = ss.getSheetByName(W_SHEET_);
+  if (!sh) { sh = ss.insertSheet(W_SHEET_); sh.appendRow(["時間", "編號", "年級", "作品名稱", "作者", "學號", "狀態", "字數", "片段數", "程式碼分段…"]); sh.setFrozenRows(1); }
+  return sh;
+}
+function wClean_(v, max) { return String(v == null ? "" : v).replace(/[\r\n\t]+/g, " ").trim().slice(0, max); }
+
+// 學生投稿（doPost 呼叫）
+function wSubmit_(data) {
+  const need = PropertiesService.getScriptProperties().getProperty("SUBMIT_CODE");
+  if (need && String(data.submitCode || "").trim() !== need) return { success: false, message: "投稿碼不對，請向老師確認" };
+  const grade = wClean_(data.grade, 10), title = wClean_(data.title, 60), author = wClean_(data.author, 30), sn = wClean_(data.studentNumber, 20);
+  const code = String(data.code || "");
+  if (W_GRADES_.indexOf(grade) < 0) return { success: false, message: "請選擇年級" };
+  if (!title) return { success: false, message: "請填作品名稱" };
+  if (!author) return { success: false, message: "請填作者姓名" };
+  if (code.length < 200) return { success: false, message: "程式碼太短，可能沒有貼完整" };
+  if (code.length > W_MAX_CODE_) return { success: false, message: "程式碼太大（超過 " + W_MAX_CODE_ + " 字），請老師協助處理" };
+  if (!/<\s*(!doctype|html|body|script)/i.test(code)) return { success: false, message: "這看起來不是網頁程式碼，請回 Claude 按「複製」再貼一次" };
+  const lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    const sh = wSheet_();
+    const chunks = []; for (let i = 0; i < code.length; i += W_CHUNK_) chunks.push(code.slice(i, i + W_CHUNK_));
+    const id = "W" + Utilities.formatDate(new Date(), "Asia/Taipei", "MMddHHmmss") + "-" + Utilities.getUuid().slice(0, 4);
+    sh.appendRow([new Date(), id, grade, title, author, sn, "new", code.length, chunks.length].concat(chunks));
+    return { success: true, id: id, length: code.length };
+  } finally { lock.releaseLock(); }
+}
+
+// 老師端：要先有權限（密碼）
+function wAllowed_(token) {
+  const scope = tokenScope_(token);
+  return !!(scope && scopeAllows_(scope, "work-submissions"));
+}
+function wList_(e) {                // ?action=works&token=…   → 清單（不含程式碼）
+  if (!wAllowed_(e.parameter.token)) return jsonOut_({ success: false, message: "forbidden" });
+  const sh = wSheet_(), n = sh.getLastRow();
+  const rows = n < 2 ? [] : sh.getRange(2, 1, n - 1, 9).getValues();
+  const list = rows.map(function (r) {
+    return { at: r[0] instanceof Date ? r[0].getTime() : 0, id: String(r[1]), grade: String(r[2]), title: String(r[3]), author: String(r[4]), studentNumber: String(r[5]), status: String(r[6]), length: Number(r[7]) || 0 };
+  }).reverse().slice(0, 500);
+  return jsonOut_({ success: true, works: list });
+}
+function wGet_(e) {                 // ?action=work&id=…&token=…  → 這一份的程式碼
+  if (!wAllowed_(e.parameter.token)) return jsonOut_({ success: false, message: "forbidden" });
+  const sh = wSheet_(), row = gFindRow_(sh, 2, e.parameter.id);
+  if (!row) return jsonOut_({ success: false, message: "找不到這份作品" });
+  const parts = Number(sh.getRange(row, 9).getValue()) || 0;
+  const cells = sh.getRange(row, W_FIRST_CODE_COL_, 1, Math.max(parts, 1)).getValues()[0];
+  return jsonOut_({ success: true, code: cells.join("") });
+}
+function wSetStatus_(data) {        // POST action=workStatus {token,id,status}
+  if (!wAllowed_(data.token)) return { success: false, message: "forbidden" };
+  const sh = wSheet_(), row = gFindRow_(sh, 2, data.id);
+  if (!row) return { success: false, message: "找不到這份作品" };
+  sh.getRange(row, 7).setValue(data.status === "done" ? "done" : "new");
+  return { success: true };
 }

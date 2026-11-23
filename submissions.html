@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>作品投稿管理（老師用）</title>
+<style>
+:root{--bg:#f4f3ef;--card:#fff;--tx:#25262b;--mu:#6c6a63;--ac:#3b6fd4;--ok:#2f9e63;--bad:#d64545;--bd:#d9d5ca;color-scheme:light}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#17181c;--card:#22242a;--tx:#eceae4;--mu:#a9a69d;--bd:#383b43;color-scheme:dark}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:"Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif;line-height:1.6}
+main{max-width:1100px;margin:0 auto;padding:16px 16px 60px}
+h1{margin:6px 0 2px;font-size:24px}
+.mu{color:var(--mu);font-size:14px}
+.bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:12px 0}
+input,select,button{font:inherit;color:var(--tx);background:var(--card);border:1.5px solid var(--bd);border-radius:8px;padding:8px 12px}
+input{flex:1 1 220px;min-width:0}
+button{cursor:pointer}
+button.p{background:var(--ac);border-color:var(--ac);color:#fff}
+button.sm{padding:4px 10px;font-size:14px}
+table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--bd);border-radius:10px;overflow:hidden;font-size:15px}
+th,td{padding:8px 10px;border-bottom:1px solid var(--bd);text-align:left;vertical-align:middle}
+th{background:color-mix(in srgb,var(--ac) 10%,var(--card))}
+tr.done td{opacity:.55}
+.badge{font-size:12px;border-radius:99px;padding:1px 8px;border:1px solid var(--bd)}
+.badge.new{background:color-mix(in srgb,#e0a000 25%,var(--card));border-color:#e0a000}
+.tw{overflow:auto}
+dialog{width:min(900px,96vw);height:min(86vh,800px);border:1px solid var(--bd);border-radius:12px;padding:0;background:var(--card);color:var(--tx)}
+dialog::backdrop{background:#0008}
+.dh{display:flex;gap:8px;align-items:center;padding:10px 12px;border-bottom:1px solid var(--bd);flex-wrap:wrap}
+.dh b{flex:1 1 200px}
+iframe{width:100%;height:calc(100% - 58px);border:0;background:#fff}
+#msg{margin:8px 0;font-size:14px}
+</style>
+</head>
+<body>
+<main>
+  <h1>📥 作品投稿管理</h1>
+  <div class="mu">學生在 <b>submit.html</b> 投稿的作品會出現在這裡。可以預覽、下載成 .html，確認後再交給我（或自己）放上網站。</div>
+
+  <div class="bar">
+    <input id="url" type="text" placeholder="接收網址（Apps Script 的 /exec 網址）">
+    <input id="tok" type="password" placeholder="後台密碼">
+    <button class="p" id="load">載入</button>
+    <select id="flt"><option value="all">全部</option><option value="new" selected>只看還沒處理的</option><option value="done">只看已處理</option></select>
+  </div>
+  <div id="msg" class="mu"></div>
+  <div class="tw"><table id="t" hidden>
+    <thead><tr><th>時間</th><th>年級</th><th>作品名稱</th><th>作者</th><th>學號</th><th>字數</th><th>狀態</th><th>操作</th></tr></thead>
+    <tbody id="tb"></tbody>
+  </table></div>
+</main>
+
+<dialog id="dlg">
+  <div class="dh"><b id="dt"></b><button class="sm" id="dcopy">複製程式碼</button><button class="sm" id="ddl">下載 .html</button><button class="sm" id="dx">關閉</button></div>
+  <iframe id="fr" sandbox="allow-scripts allow-forms allow-modals" title="作品預覽"></iframe>
+</dialog>
+
+<script src="./sync-client.js"></script>
+<script>
+(function () {
+  var $ = function (s) { return document.querySelector(s); };
+  var LS = { url: 'gamerep-url', tok: 'gamerep-token' };     // 跟「遊戲教師後台」共用，不用重打
+  function get(k) { try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } }
+  function put(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+  $('#url').value = get(LS.url) || (typeof CLOUD_RELAY_URL !== 'undefined' ? CLOUD_RELAY_URL : '');
+  $('#tok').value = get(LS.tok);
+
+  var WORKS = [], cur = null;
+  function api(q) {
+    var u = $('#url').value.trim();
+    return fetch(u + (u.indexOf('?') >= 0 ? '&' : '?') + q + '&token=' + encodeURIComponent($('#tok').value.trim())).then(function (r) { return r.json(); });
+  }
+  function say(t) { $('#msg').textContent = t; }
+  function fmt(ms) { if (!ms) return ''; var d = new Date(ms), p = function (n) { return (n < 10 ? '0' : '') + n; }; return (d.getMonth() + 1) + '/' + d.getDate() + ' ' + p(d.getHours()) + ':' + p(d.getMinutes()); }
+  function fname(w) { return (w.grade + '-' + w.title + '-' + w.author).replace(/[\\/:*?"<>|\s]+/g, '_') + '.html'; }
+
+  function render() {
+    var f = $('#flt').value, tb = $('#tb'); tb.textContent = '';
+    var list = WORKS.filter(function (w) { return f === 'all' || w.status === f; });
+    list.forEach(function (w) {
+      var tr = document.createElement('tr'); if (w.status === 'done') tr.className = 'done';
+      [fmt(w.at), w.grade, w.title, w.author, w.studentNumber, w.length.toLocaleString()].forEach(function (v) {
+        var td = document.createElement('td'); td.textContent = v; tr.appendChild(td);      // textContent：學生填的字不會被當成網頁執行
+      });
+      var st = document.createElement('td'), b = document.createElement('span');
+      b.className = 'badge ' + w.status; b.textContent = w.status === 'done' ? '已處理' : '新'; st.appendChild(b); tr.appendChild(st);
+      var op = document.createElement('td');
+      [['預覽', function () { open_(w); }], ['下載', function () { getCode(w).then(function (c) { download(w, c); }); }], [w.status === 'done' ? '設為未處理' : '標記已處理', function () { setStatus(w); }]]
+        .forEach(function (p) { var bt = document.createElement('button'); bt.className = 'sm'; bt.textContent = p[0]; bt.onclick = p[1]; bt.style.marginRight = '4px'; op.appendChild(bt); });
+      tr.appendChild(op); tb.appendChild(tr);
+    });
+    $('#t').hidden = false;
+    say('共 ' + WORKS.length + ' 份，目前顯示 ' + list.length + ' 份');
+  }
+  function load() {
+    put(LS.url, $('#url').value.trim()); put(LS.tok, $('#tok').value.trim());
+    say('載入中…');
+    api('action=works').then(function (r) {
+      if (!r.success) { say('❌ ' + (r.message === 'forbidden' ? '密碼不對，或這把密碼沒有「作品投稿」的權限' : (r.message || '失敗'))); return; }
+      WORKS = r.works; render();
+    }).catch(function () { say('❌ 連不上，請檢查網址'); });
+  }
+  function getCode(w) {
+    say('讀取程式碼中…');
+    return api('action=work&id=' + encodeURIComponent(w.id)).then(function (r) { say(''); if (!r.success) throw new Error(r.message); return r.code; })
+      .catch(function (e) { say('❌ ' + e.message); throw e; });
+  }
+  function download(w, code) {
+    var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([code], { type: 'text/html;charset=utf-8' })); a.download = fname(w);
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(function () { URL.revokeObjectURL(a.href); }, 5000);
+  }
+  function open_(w) {
+    getCode(w).then(function (code) {
+      cur = { w: w, code: code }; $('#dt').textContent = w.grade + '・' + w.title + '・' + w.author;
+      // sandbox：預覽時作品被關在「隔離的小房間」裡，碰不到這個網站的資料（學生的程式碼不可信，一定要隔離）
+      $('#fr').srcdoc = code; $('#dlg').showModal();
+    }).catch(function () {});
+  }
+  function setStatus(w) {
+    var s = w.status === 'done' ? 'new' : 'done';
+    fetch($('#url').value.trim(), { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'workStatus', token: $('#tok').value.trim(), id: w.id, status: s }) })
+      .then(function (r) { return r.json(); }).then(function (r) { if (r.success) { w.status = s; render(); } else say('❌ ' + (r.message || '失敗')); });
+  }
+  $('#load').onclick = load; $('#flt').onchange = render;
+  $('#dx').onclick = function () { $('#dlg').close(); $('#fr').srcdoc = ''; };
+  $('#ddl').onclick = function () { if (cur) download(cur.w, cur.code); };
+  $('#dcopy').onclick = function () { if (cur && navigator.clipboard) navigator.clipboard.writeText(cur.code).then(function () { say('已複製程式碼'); }); };
+  if ($('#url').value && $('#tok').value) load();
+})();
+</script>
+</body>
+</html>
