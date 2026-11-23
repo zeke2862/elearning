@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>作品投稿</title>
+<style>
+:root{--bg:#f6f3ee;--card:#fff;--tx:#2b2a28;--mu:#6b675f;--ac:#3b6fd4;--ok:#2f9e63;--bad:#d64545;--bd:#ddd6c8;color-scheme:light;
+  padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1b1c20;--card:#25272d;--tx:#eceae4;--mu:#a9a69d;--bd:#3a3d45;color-scheme:dark}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;line-height:1.65}
+main{max-width:640px;margin:0 auto;padding:18px 16px 60px}
+h1{font-size:24px;margin:8px 0 4px}
+.sub{color:var(--mu);margin:0 0 16px;font-size:15px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:16px;margin:12px 0}
+label{display:block;font-weight:700;margin:12px 0 4px}
+label small{font-weight:400;color:var(--mu)}
+input,select,textarea{width:100%;font:inherit;font-size:16px;color:var(--tx);background:var(--bg);border:1.5px solid var(--bd);border-radius:10px;padding:11px 12px}
+textarea{min-height:200px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;line-height:1.45;white-space:pre;overflow:auto}
+input:focus,select:focus,textarea:focus{outline:3px solid color-mix(in srgb,var(--ac) 40%,transparent);border-color:var(--ac)}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:480px){.row{grid-template-columns:1fr}}
+button{font:inherit;font-size:17px;border:0;border-radius:10px;padding:13px 16px;cursor:pointer}
+.go{width:100%;background:var(--ac);color:#fff;font-weight:700;margin-top:14px}
+.go:disabled{opacity:.5;cursor:not-allowed}
+.paste{background:var(--card);color:var(--ac);border:1.5px solid var(--ac);width:100%;margin:6px 0 8px}
+.msg{margin-top:12px;padding:12px 14px;border-radius:10px;font-size:15px}
+.msg.ok{background:color-mix(in srgb,var(--ok) 18%,var(--card));border:1px solid var(--ok)}
+.msg.bad{background:color-mix(in srgb,var(--bad) 16%,var(--card));border:1px solid var(--bad)}
+.msg.warn{background:color-mix(in srgb,#e0a000 18%,var(--card));border:1px solid #e0a000}
+.cnt{font-size:13px;color:var(--mu);text-align:right}
+ol{padding-left:1.3em;margin:8px 0}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<main>
+  <h1>📤 作品投稿</h1>
+  <p class="sub">把你在 Claude 做好的遊戲交給老師，老師會幫你放上學習網站。</p>
+
+  <div class="card">
+    <b>怎麼投稿？（3 步驟）</b>
+    <ol>
+      <li>回到 Claude，打開你的遊戲，按「<b>複製</b>」（找不到的話，對 Claude 說：「請把完整程式碼放在一個程式碼區塊裡」，再按那個區塊的複製）。</li>
+      <li>回到這一頁，填好下面的資料。</li>
+      <li>按「<b>貼上程式碼</b>」，最後按「<b>送出作品</b>」。</li>
+    </ol>
+  </div>
+
+  <form id="f" class="card" novalidate>
+    <div class="row">
+      <div>
+        <label for="grade">年級</label>
+        <select id="grade"><option value="">請選擇</option><option>中二</option><option>中三</option><option>高一</option><option>高三</option><option>其他</option></select>
+      </div>
+      <div>
+        <label for="author">你的名字</label>
+        <input id="author" maxlength="20" autocomplete="off" placeholder="例如：王小明">
+      </div>
+    </div>
+    <label for="title">作品名稱 <small>（請寫清楚科目和章節）</small></label>
+    <input id="title" maxlength="40" autocomplete="off" placeholder="例如：中二數學第一章">
+    <div class="row">
+      <div>
+        <label for="sn">學號 <small>（選填）</small></label>
+        <input id="sn" maxlength="12" inputmode="numeric" autocomplete="off">
+      </div>
+      <div id="codeBox">
+        <label for="scode">投稿碼 <small>（老師有給才填）</small></label>
+        <input id="scode" maxlength="30" autocomplete="off">
+      </div>
+    </div>
+
+    <label for="code">程式碼</label>
+    <button class="paste" id="paste" type="button">📋 貼上程式碼</button>
+    <textarea id="code" spellcheck="false" placeholder="也可以在這裡長按 → 貼上"></textarea>
+    <div class="cnt" id="cnt">0 字</div>
+    <div id="warn" class="msg warn" hidden></div>
+
+    <button class="go" id="send" type="submit">送出作品</button>
+    <div id="msg" class="msg" hidden role="status"></div>
+  </form>
+</main>
+<script src="./sync-client.js"></script>
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var KEY = 'submit-author';
+  function lsGet(k) { try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } }
+  function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+
+  // 記住名字和年級，下次不用重填（程式碼太大不記）
+  try { var m = JSON.parse(lsGet(KEY) || '{}'); $('author').value = m.author || ''; $('grade').value = m.grade || ''; $('sn').value = m.sn || ''; } catch (e) {}
+
+  function show(cls, text) { var b = $('msg'); b.className = 'msg ' + cls; b.textContent = text; b.hidden = false; }
+
+  // 貼上後檢查程式碼有沒有貼完整（常見問題：手機只複製到一半）
+  function check() {
+    var v = $('code').value, w = $('warn'), n = v.length;
+    $('cnt').textContent = n.toLocaleString() + ' 字';
+    var tips = [];
+    if (n > 0 && n < 200) tips.push('程式碼看起來太短，可能沒有複製完整。');
+    if (n >= 200 && !/<\s*(!doctype|html|body|script)/i.test(v)) tips.push('這看起來不像網頁程式碼（應該要有 <html> 或 <script>）。');
+    if (n >= 200 && !/<\/html>\s*$/i.test(v.trim()) && /<html/i.test(v)) tips.push('最後沒有看到 </html>，可能沒有貼到最後，請回 Claude 重新複製。');
+    w.textContent = tips.join(' '); w.hidden = !tips.length;
+  }
+  $('code').addEventListener('input', check);
+
+  // 「貼上」按鈕：讀剪貼簿（iPhone 會跳出「貼上」確認，按允許即可；不行就長按輸入框貼上）
+  $('paste').addEventListener('click', function () {
+    if (!navigator.clipboard || !navigator.clipboard.readText) { show('warn', '這個瀏覽器不能自動貼上，請在下面的大框框長按，選「貼上」。'); $('code').focus(); return; }
+    navigator.clipboard.readText().then(function (t) {
+      if (!t) { show('warn', '剪貼簿是空的，請先回 Claude 按「複製」。'); return; }
+      $('code').value = t; $('msg').hidden = true; check();
+    }).catch(function () { show('warn', '沒有取得貼上的權限，請在下面的大框框長按，選「貼上」。'); $('code').focus(); });
+  });
+
+  $('f').addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    if (typeof CLOUD_RELAY_URL === 'undefined' || !CLOUD_RELAY_URL) { show('bad', '投稿功能還沒設定好，請告訴老師。'); return; }
+    var d = { action: 'submitWork', grade: $('grade').value, author: $('author').value.trim(), title: $('title').value.trim(),
+              studentNumber: $('sn').value.trim(), submitCode: $('scode').value.trim(), code: $('code').value };
+    if (!d.grade) { show('bad', '請選擇年級'); $('grade').focus(); return; }
+    if (!d.author) { show('bad', '請填你的名字'); $('author').focus(); return; }
+    if (!d.title) { show('bad', '請填作品名稱'); $('title').focus(); return; }
+    if (d.code.length < 200) { show('bad', '請先貼上程式碼'); return; }
+    var btn = $('send'); btn.disabled = true; btn.textContent = '送出中…請不要關掉這一頁';
+    lsSet(KEY, JSON.stringify({ author: d.author, grade: d.grade, sn: d.studentNumber }));
+    // text/plain：不會觸發瀏覽器的「預檢請求」，Apps Script 才收得到（跟成績同步同一個做法）
+    fetch(CLOUD_RELAY_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(d) })
+      .then(function (r) { return r.json(); })
+      .then(function (r) {
+        if (r && r.success) {
+          show('ok', '✅ 投稿成功！收件編號：' + r.id + '（請截圖留著）。老師看到後會幫你放上網站。');
+          $('code').value = ''; check();
+        } else show('bad', '❌ ' + ((r && r.message) || '送出失敗，請再試一次'));
+      })
+      .catch(function () { show('bad', '❌ 連不到網路，程式碼還在框框裡，請檢查網路後再按一次「送出作品」。'); })
+      .then(function () { btn.disabled = false; btn.textContent = '送出作品'; });
+  });
+})();
+</script>
+</body>
+</html>
