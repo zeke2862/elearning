@@ -171,3 +171,11 @@
 - 未做：模式選單與地圖頁的說明文字、答題後的結算頁文字仍為中文；答錯橫幅原本就有的「🌐 ไทย」鈕維持原樣。
 - **數學保衛戰**（zeke2862/MATHTESTJB2，Vercel 那份）本次沒改：該倉庫這次工作階段無法連線。移植方式見 `保衛戰泰文說明-移植說明.md`。
 - 測試方式：用 Playwright 開 `file://` 頁面，31 關 × 中／泰共 62 頁載入無錯誤；小老師每一句在泰文模式皆為泰文。
+
+## 2026-11-27 回饋區（💬 給遊戲的建議）＋ Email 通知
+- 新檔 `jb2-feedback.js`（JB2 與保衛戰共用同一份，data-game 區分）：左側 💬 小圓鈕 → 類型＋文字（中泰雙語、300 字、每學號每天 5 則）→ POST `{action:'feedback'}` 到雲端同步網址；自動附學號／關卡／模式／語言／裝置；離線存 localStorage `jb2-fb-queue`，恢復後補送。視窗開啟時用 window capture 擋住遊戲的鍵盤監聽，數字鍵才打得進去。
+- 已加進 JB2 學生頁 39 頁（總地圖、6 章地圖、31 關、對戰頁）；教師版地圖不加。
+- 後台 `雲端同步-Code.gs`：`fbSubmit_`（寫入「回饋」分頁、防重複、每學號每天 5 則、300 字、公式注入防護）、`fbNotifyUrgent_`（🐞／🌐 立刻寄，每天最多 20 封）、`fbHot_`（同關 24 小時 3 則「新」提醒）、`fbDailyDigest`＋`fbInstallTrigger`（每晚 20:00 彙整）；自動建「回饋統計」分頁。收件人＝指令碼屬性 NOTIFY_EMAIL（不寫進程式碼）。
+- 保衛戰（mathtestjb2 倉庫，分支 claude/feedback-widget）：`js/jb2-feedback.js`＋`js/jb2_fb_hook.js`（包住 G.startNode，記最近 20 分鐘內玩的關卡）；index.html 多兩行。
+- 部署步驟見 `回饋區部署說明.md`（Apps Script 要貼新程式、執行 fbInstallTrigger、重新部署新版本）。
+- 驗證：Node 模擬試算表／信箱測後台邏輯 12 項通過；Playwright 測前端（送出、payload、離線佇列、補送）通過。**尚未做：真的連 Google 帳號的實測**。
