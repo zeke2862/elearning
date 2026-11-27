@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>锦鲤吃莲花</title>
+<style>
+:root{--pond:#0c2b3d;--pond2:#103a50;--koi:#ff7a3d;--koi2:#ffe9d6;--lotus:#ff9ec7;--ink:#d8ecf2;--mute:#7fa6b6;color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root{--pond:#0c2b3d}}
+:root[data-theme="dark"]{--pond:#0c2b3d}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{background:var(--pond);color:var(--ink);font-family:"Noto Serif SC","Songti SC",serif;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:12px;overflow:hidden;touch-action:none}
+h1{font-size:26px;margin:0;font-weight:700;letter-spacing:.12em}
+.bar{display:flex;gap:28px;font-size:15px;color:var(--mute)}
+.bar b{color:var(--ink);font-size:20px;margin-left:6px}
+.wrap{position:relative;width:min(92vw,52vh,420px);aspect-ratio:1}
+canvas{width:100%;height:100%;display:block;border-radius:18px;background:var(--pond2);box-shadow:0 0 0 2px #1d5671}
+.msg{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:rgba(12,43,61,.82);border-radius:18px;text-align:center;padding:20px}
+.msg p{margin:0;font-size:15px;color:var(--mute);line-height:1.6}
+.msg h2{margin:0;font-size:24px}
+button{font:inherit;cursor:pointer;border:0;border-radius:999px;background:var(--koi);color:#2a1206;padding:10px 28px;font-weight:700;font-size:16px}
+button:focus-visible{outline:3px solid var(--koi2);outline-offset:2px}
+.pad{display:grid;grid-template-columns:repeat(3,56px);grid-template-rows:repeat(2,56px);gap:8px}
+.pad button{padding:0;background:#1d5671;color:var(--ink);font-size:22px;border-radius:16px}
+.pad button:active{background:var(--koi);color:#2a1206}
+.pad .u{grid-column:2}.pad .l{grid-column:1;grid-row:2}.pad .d{grid-column:2;grid-row:2}.pad .r{grid-column:3;grid-row:2}
+@media (min-width:700px) and (hover:hover){.pad{display:none}}
+</style>
+</head>
+<body>
+<h1>锦鲤吃莲花</h1>
+<div class="bar"><span>得分<b id="s">0</b></span><span>最高<b id="b">0</b></span></div>
+<div class="wrap">
+<canvas id="c" width="420" height="420"></canvas>
+<div class="msg" id="m"><h2 id="mt">开始游戏</h2><p id="mp">用方向键、滑动屏幕或下方按钮控制锦鲤<br>吃掉莲花，别撞墙，也别咬到自己</p><button id="go">开始</button></div>
+</div>
+<div class="pad"><button class="u" data-d="u" aria-label="上">↑</button><button class="l" data-d="l" aria-label="左">←</button><button class="d" data-d="d" aria-label="下">↓</button><button class="r" data-d="r" aria-label="右">→</button></div>
+<script>
+const N=15,C=document.getElementById('c'),x=C.getContext('2d'),S=C.width/N;
+const $=id=>document.getElementById(id);
+const V={u:[0,-1],d:[0,1],l:[-1,0],r:[1,0]};
+let snake,dir,next,food,score,best=0,timer,speed,running=false;
+try{best=+localStorage.getItem('koi-best')||0}catch(e){}
+$('b').textContent=best;
+function spawn(){do{food=[Math.floor(Math.random()*N),Math.floor(Math.random()*N)]}while(snake.some(p=>p[0]==food[0]&&p[1]==food[1]))}
+function start(){snake=[[7,7],[6,7],[5,7]];dir=next=V.r;score=0;speed=170;$('s').textContent=0;spawn();$('m').style.display='none';running=true;clearInterval(timer);timer=setInterval(tick,speed);draw()}
+function over(){running=false;clearInterval(timer);if(score>best){best=score;$('b').textContent=best;try{localStorage.setItem('koi-best',best)}catch(e){}}
+$('mt').textContent='游戏结束';$('mp').innerHTML='这次吃了 '+score+' 朵莲花'+(score&&score==best?'，新纪录！':'');$('go').textContent='再来一局';$('m').style.display='flex'}
+function tick(){dir=next;const h=[snake[0][0]+dir[0],snake[0][1]+dir[1]];
+if(h[0]<0||h[1]<0||h[0]>=N||h[1]>=N||snake.some(p=>p[0]==h[0]&&p[1]==h[1]))return over();
+snake.unshift(h);
+if(h[0]==food[0]&&h[1]==food[1]){score++;$('s').textContent=score;spawn();if(speed>80){speed-=5;clearInterval(timer);timer=setInterval(tick,speed)}}else snake.pop();
+draw()}
+function draw(){x.clearRect(0,0,C.width,C.height);
+x.strokeStyle='rgba(127,166,182,.12)';x.lineWidth=1;
+for(let i=1;i<N;i++){x.beginPath();x.moveTo(i*S,0);x.lineTo(i*S,C.height);x.moveTo(0,i*S);x.lineTo(C.width,i*S);x.stroke()}
+const fx=food[0]*S+S/2,fy=food[1]*S+S/2;
+x.fillStyle='#2f9e6e';x.beginPath();x.ellipse(fx,fy+3,S*.42,S*.3,0,0,7);x.fill();
+x.fillStyle='#ff9ec7';for(let k=0;k<6;k++){const a=k*Math.PI/3;x.beginPath();x.ellipse(fx+Math.cos(a)*S*.17,fy+Math.sin(a)*S*.17,S*.14,S*.09,a,0,7);x.fill()}
+x.fillStyle='#fff3a8';x.beginPath();x.arc(fx,fy,S*.08,0,7);x.fill();
+snake.forEach((p,i)=>{const r=S*(.46-Math.min(i,10)*.016);x.fillStyle=i%3==1?'#ffe9d6':'#ff7a3d';x.beginPath();x.arc(p[0]*S+S/2,p[1]*S+S/2,r,0,7);x.fill()});
+const h=snake[0],px=-dir[1],py=dir[0];x.fillStyle='#1a0a02';
+for(const s of[-1,1]){x.beginPath();x.arc(h[0]*S+S/2+dir[0]*S*.14+px*s*S*.17,h[1]*S+S/2+dir[1]*S*.14+py*s*S*.17,S*.06,0,7);x.fill()}}
+function turn(k){const d=V[k];if(!d||!running)return;if(d[0]+dir[0]==0&&d[1]+dir[1]==0)return;next=d}
+addEventListener('keydown',e=>{const m={ArrowUp:'u',ArrowDown:'d',ArrowLeft:'l',ArrowRight:'r',w:'u',s:'d',a:'l',d:'r'}[e.key];if(m){e.preventDefault();turn(m)}else if((e.key==' '||e.key=='Enter')&&!running){start()}});
+document.querySelectorAll('.pad button').forEach(b=>b.addEventListener('pointerdown',e=>{e.preventDefault();turn(b.dataset.d)}));
+let t0;addEventListener('touchstart',e=>{t0=e.touches[0]},{passive:true});
+addEventListener('touchend',e=>{if(!t0)return;const t=e.changedTouches[0],dx=t.clientX-t0.clientX,dy=t.clientY-t0.clientY;t0=null;if(Math.max(Math.abs(dx),Math.abs(dy))<24)return;turn(Math.abs(dx)>Math.abs(dy)?(dx>0?'r':'l'):(dy>0?'d':'u'))},{passive:true});
+$('go').onclick=start;
+snake=[[7,7],[6,7],[5,7]];dir=V.r;food=[11,7];draw();
+</script>
+<script src="../../home-fab.js"></script>
+</body>
+</html>
