@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>國文闖關大冒險</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:"微軟正黑體",sans-serif;}
+body{background:#fff9ef;color:#5a3e2b;min-height:100vh;padding:20px;}
+.container{max-width:500px;margin:0 auto;}
+h1{text-align:center;color:#d48c76;margin-bottom:20px;}
+.card{background:#fff;border-radius:20px;padding:25px;box-shadow:0 4px 12px rgba(0,0,0,0.08);margin-bottom:20px;}
+input,button{width:100%;padding:12px;border-radius:10px;border:2px solid #f0d8c8;font-size:16px;margin:8px 0;}
+button{background:#e8a87c;color:#fff;border:none;cursor:pointer;font-weight:bold;transition:0.2s;}
+button:hover{background:#d48c76;}
+.difficulty{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;}
+.diff-btn{flex:1;min-width:100px;}
+.stars{text-align:center;font-size:40px;margin:15px 0;}
+.question{font-size:18px;margin:15px 0;line-height:1.6;}
+.option{display:block;padding:10px;margin:8px 0;background:#f9f2eb;border-radius:8px;cursor:pointer;transition:0.2s;}
+.option:hover{background:#f0d8c8;}
+.option.correct{background:#b8e6b8;}
+.option.wrong{background:#ffd4d4;}
+.hidden{display:none !important;}
+.character{text-align:center;font-size:60px;margin-bottom:10px;}
+.progress-bar{height:8px;background:#f0d8c8;border-radius:4px;margin:10px 0;}
+.progress-fill{height:100%;background:#e8a87c;border-radius:4px;width:0%;transition:0.3s;}
+</style>
+</head>
+<body>
+<div class="container">
+
+<!-- 登入畫面 -->
+<div id="login" class="card">
+  <div class="character">📚</div>
+  <h1>國文闖關大冒險</h1>
+  <p style="text-align:center;margin-bottom:15px;">請輸入你的學號開始冒險</p>
+  <input type="text" id="studentId" placeholder="例如：112233">
+  <button onclick="startGame()">開始遊戲 🎮</button>
+</div>
+
+<!-- 選擇難度 -->
+<div id="selectDiff" class="card hidden">
+  <div class="character">✨</div>
+  <h2 style="text-align:center;margin-bottom:20px;">選擇挑戰難度</h2>
+  <div class="difficulty">
+    <button class="diff-btn" onclick="setDifficulty('easy')">🌱 簡單</button>
+    <button class="diff-btn" onclick="setDifficulty('medium')">🌿 中級</button>
+    <button class="diff-btn" onclick="setDifficulty('hard')">🌳 高級</button>
+  </div>
+</div>
+
+<!-- 遊戲主畫面 -->
+<div id="gameArea" class="card hidden">
+  <div class="character" id="charDisplay">🧚</div>
+  <h3 id="levelTitle" style="text-align:center;margin-bottom:10px;"></h3>
+  <div class="progress-bar"><div class="progress-fill" id="progressBar"></div></div>
+  <p id="qCount" style="text-align:center;color:#888;font-size:14px;"></p>
+  <div class="question" id="questionText"></div>
+  <div id="optionsArea"></div>
+  <p id="feedback" style="text-align:center;margin-top:15px;font-weight:bold;"></p>
+</div>
+
+<!-- 成績單 -->
+<div id="result" class="card hidden">
+  <div class="character">🏆</div>
+  <h2 style="text-align:center;">挑戰完成！</h2>
+  <p style="text-align:center;margin:10px 0;">學號：<span id="showId"></span></p>
+  <p style="text-align:center;font-size:18px;">得分：<span id="scoreText"></span>/<span id="totalText"></span></p>
+  <div class="stars" id="starDisplay"></div>
+  <p style="text-align:center;" id="resultMsg"></p>
+  <br>
+  <button onclick="location.reload()">🔄 重新開始</button>
+</div>
+
+</div>
+
+<script src="../../sync-client.js"></script>
+<script>
+/* ========== 接上教師後台的程式（整段複製，只改最上面的 GAME_KEY） ========== */
+const GAME_KEY = 'chi-g10-123-adv';            // 遊戲代號：小寫英文／數字／-／_，建議「科目簡碼-遊戲名」
+
+/* 1) 學號：沒有就強迫輸入 */
+function ensureStudent(done) {
+  const no = keyagentGetActiveStudentNumber();
+  if (no) return done(no);
+  const v = (prompt('請輸入你的學號') || '').trim();
+  if (!/^[A-Za-z0-9_-]{2,12}$/.test(v)) return ensureStudent(done);
+  localStorage.setItem('keyagent_active_student', JSON.stringify({ studentNumber: v, verified: false }));
+  done(v);
+}
+
+/* 2) 練習時間：只算「玩完一局」的時間；切到別的分頁不算；中途關掉的那一局不算 */
+let T0 = 0, ACC = 0;
+function tStart()  { ACC = 0; T0 = Date.now(); }
+function tPause()  { if (T0) { ACC += Date.now() - T0; T0 = 0; } }
+function tResume() { if (!T0 && !document.hidden) T0 = Date.now(); }
+function tTake()   { tPause(); const s = Math.min(1800, Math.round(ACC / 1000)); ACC = 0; return s; }
+document.addEventListener('visibilitychange', () => (document.hidden ? tPause() : tResume()));
+
+/* 3) 一局結束時呼叫 finishRound({...})，會自動記錄並送到老師的後台 */
+function finishRound(r) {
+  // r = { stageId:'L1', stageName:'第一課 認字', score:80, right:8, total:10, stars:2(可省略), nick:'小勇者'(可省略),
+  //       types:[{ key:'read', label:'看字讀音', right:5, total:6 }, ...](可省略) }
+  const secs = tTake();
+  keyagentUpdateOtherGame(GAME_KEY, prev => {
+    const stages = Object.assign({}, prev.stages);
+    const s = stages[r.stageId] || {};
+    stages[r.stageId] = {
+      n: r.stageName || r.stageId,
+      bestStars: Math.max(s.bestStars || 0, r.stars || 0),
+      bestScore: Math.max(s.bestScore || 0, r.score || 0),
+      plays: (s.plays || 0) + 1,
+      hist: (s.hist || []).concat([{ at: Date.now(), q: r.total || 0, ok: r.right || 0, s: secs, st: r.stars || 0 }]).slice(-30),   // 每一次的結果（後台點答對率可看）
+      totalSecs: (s.totalSecs || 0) + secs,
+      totalQ: (s.totalQ || 0) + (r.total || 0),
+      totalOk: (s.totalOk || 0) + (r.right || 0)
+    };
+    const q = Object.assign({}, prev.q);
+    (r.types || []).forEach(t => {
+      const k = r.stageId + ':' + t.key, o = q[k] || { n: 0, ok: 0 };
+      q[k] = { n: o.n + (t.total || 0), ok: o.ok + (t.right || 0), label: t.label || t.key };
+    });
+    return {
+      nick: r.nick || prev.nick || '',
+      totalPlays: (prev.totalPlays || 0) + 1,
+      bestScore: Math.max(prev.bestScore || 0, r.score || 0),
+      totalSecs: (prev.totalSecs || 0) + secs,
+      totalQ: (prev.totalQ || 0) + (r.total || 0),
+      totalOk: (prev.totalOk || 0) + (r.right || 0),
+      lastScore: r.score || 0, lastId: r.stageId, lastName: r.stageName || r.stageId, lastAt: Date.now(),
+      stages, q
+    };
+  });
+}
+keyagentInstallPageHideSync();           // 4) 離開頁面時補寄一次
+/* ========== 以上整段不用改 ========== */
+</script>
+<script>
+let studentID = "";
+let difficulty = "";
+let currentQ = 0;
+let score = 0;
+let questions = [];
+
+const qBank = {
+  easy: [
+    {q:"「髻」的讀音是？", options:['A. jì','B. máo','C. jié'], ans:0, char:'👧', title:'第一關：白髮精怪'},
+    {q:"「范進中舉」出自哪本書？", options:['A. 西遊記','B. 儒林外史','C. 紅樓夢'], ans:1, char:'📜', title:'第二關：瘋狂書生'},
+    {q:"「醉翁亭記」的作者是？", options:['A. 歐陽修','B. 蘇軾','C. 柳宗元'], ans:0, char:'🍶', title:'第三關：醉翁山神'}
+  ],
+  medium: [
+    {q:"「湮沒」的「湮」讀音是？", options:['A. yān','B. yīn','C. yàn'], ans:0, char:'💧', title:'第四關：水之精靈'},
+    {q:"「重劍無鋒，大巧不工」形容的是誰？", options:['A. 楊過','B. 獨孤求敗','C. 郭靖'], ans:1, char:'⚔️', title:'第五關：劍俠傳說'},
+    {q:"「郭橐駝」的職業是？", options:['A. 種樹人','B. 裁縫','C. 醫生'], ans:0, char:'🌳', title:'第六關：森林守護者'}
+  ],
+  hard: [
+    {q:"「其蒔也若子，其置也若棄」出自？", options:['A. 醉翁亭記','B. 種樹郭橐駝傳','C. 岳陽樓記'], ans:1, char:'📖', title:'終極關：國文大魔王'},
+    {q:"「野芳發而幽香」下一句是？", options:['A. 佳木秀而繁陰','B. 風霜高潔','C. 水落而石出'], ans:0, char:'🌸', title:'終極關：國文大魔王'},
+    {q:"獨孤求敗劍道最高境界是？", options:['A. 利劍','B. 重劍','C. 無劍勝有劍'], ans:2, char:'✨', title:'終極關：國文大魔王'}
+  ]
+};
+
+function startGame(){
+  studentID = document.getElementById('studentId').value.trim();
+  if(!studentID){alert('請輸入學號哦 😊');return;}try{if(/^[A-Za-z0-9_-]{2,12}$/.test(studentID))localStorage.setItem('keyagent_active_student',JSON.stringify({studentNumber:studentID,verified:false}))}catch(e){}
+  document.getElementById('login').classList.add('hidden');
+  document.getElementById('selectDiff').classList.remove('hidden');
+}
+
+function setDifficulty(diff){
+  difficulty = diff;
+  questions = [...qBank[diff]];
+  currentQ = 0; score = 0; tStart();
+  document.getElementById('selectDiff').classList.add('hidden');
+  document.getElementById('gameArea').classList.remove('hidden');
+  showQuestion();
+}
+
+function showQuestion(){
+  const q = questions[currentQ];
+  document.getElementById('charDisplay').textContent = q.char;
+  document.getElementById('levelTitle').textContent = q.title;
+  document.getElementById('qCount').textContent = `第 ${currentQ+1} / ${questions.length} 題`;
+  document.getElementById('progressBar').style.width = `${((currentQ)/questions.length)*100}%`;
+  document.getElementById('questionText').textContent = q.q;
+  document.getElementById('feedback').textContent = '';
+
+  const area = document.getElementById('optionsArea');
+  area.innerHTML = '';
+  q.options.forEach((opt, idx)=>{
+    const div = document.createElement('div');
+    div.className = 'option';
+    div.textContent = opt;
+    div.onclick = ()=>checkAnswer(idx, div);
+    area.appendChild(div);
+  });
+}
+
+function checkAnswer(idx, elem){
+  const q = questions[currentQ];
+  const allOpts = document.querySelectorAll('.option');
+  allOpts.forEach(o=>o.style.pointerEvents='none');
+
+  if(idx === q.ans){
+    score++;
+    elem.classList.add('correct');
+    document.getElementById('feedback').textContent = '✅ 答對啦！';
+  }else{
+    elem.classList.add('wrong');
+    allOpts[q.ans].classList.add('correct');
+    document.getElementById('feedback').textContent = '❌ 答錯囉～';
+  }
+
+  setTimeout(()=>{
+    currentQ++;
+    if(currentQ < questions.length){
+      showQuestion();
+    }else{
+      showResult();
+    }
+  }, 1200);
+}
+
+function showResult(){
+  try{finishRound({stageId:'adv-'+difficulty,stageName:'大冒險・'+difficulty,score:Math.round(score/questions.length*100),right:score,total:questions.length,stars:score==questions.length?3:score/questions.length>=.6?2:1,types:[{key:'q'+difficulty,label:'難度'+difficulty,right:score,total:questions.length}]})}catch(e){}
+  document.getElementById('gameArea').classList.add('hidden');
+  document.getElementById('result').classList.remove('hidden');
+  document.getElementById('showId').textContent = studentID;
+  document.getElementById('scoreText').textContent = score;
+  document.getElementById('totalText').textContent = questions.length;
+
+  const percent = score/questions.length;
+  let stars = '', msg = '';
+  if(percent===1){ stars='⭐⭐⭐⭐⭐';msg='太棒了！滿分！🎉';}
+  else if(percent>=0.8){ stars='⭐⭐⭐⭐☆';msg='很優秀！繼續加油💪';}
+  else if(percent>=0.6){ stars='⭐⭐⭐☆☆';msg='不錯喔！再練練更好✨';}
+  else if(percent>=0.4){ stars='⭐⭐☆☆☆';msg='還有進步空間，加油哦！';}
+  else{ stars='⭐☆☆☆☆';msg='別灰心，再試一次！💖';}
+
+  document.getElementById('starDisplay').textContent = stars;
+  document.getElementById('resultMsg').textContent = msg;
+}
+</script>
+<script src="../../home-fab.js"></script>
+</body>
+</html>

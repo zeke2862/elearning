@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>國文闖關大冒險 3D</title>
+<style>
+:root{--cream:#fff9ef;--ink:#5a3e2b;--rose:#d48c76;--orange:#e8a87c;--line:#f0d8c8;color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--cream:#3b2f40;--ink:#ffeede;--rose:#ffb199;--line:#5b4a5f;color-scheme:dark}}
+:root[data-theme="dark"]{--cream:#3b2f40;--ink:#ffeede;--rose:#ffb199;--line:#5b4a5f;color-scheme:dark}
+*{margin:0;padding:0;box-sizing:border-box;font-family:"Noto Sans TC","微軟正黑體","PingFang TC",sans-serif}
+html,body{height:100%;overflow:hidden;background:#bfe9ff;touch-action:none}
+canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
+.hidden{display:none!important}
+.screen{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(90vw,440px);background:var(--cream);color:var(--ink);border-radius:26px;padding:24px;box-shadow:0 8px 28px rgba(0,0,0,.18);z-index:5;text-align:center}
+.screen h1{color:var(--rose);font-size:26px;margin-bottom:8px}
+.screen p{margin:8px 0;line-height:1.6}
+.big{font-size:56px}
+input,button{width:100%;padding:12px;border-radius:14px;border:2px solid var(--line);font-size:16px;margin:8px 0;background:#fff;color:#5a3e2b}
+button{background:var(--orange);color:#fff;border:0;font-weight:700;cursor:pointer;box-shadow:0 4px 0 #c98a5e}
+button:active{transform:translateY(3px);box-shadow:0 1px 0 #c98a5e}
+.row{display:flex;gap:8px}
+#hud{position:fixed;left:0;right:0;top:0;padding:calc(env(safe-area-inset-top,0px) + 10px) 12px 0;z-index:3;pointer-events:none;display:flex;flex-direction:column;gap:6px;align-items:center}
+.tag{width:min(94vw,520px);display:flex;justify-content:space-between;font-weight:700;color:#5a3e2b;font-size:15px}
+.tag span{background:rgba(255,249,239,.92);padding:4px 12px;border-radius:999px}
+.pb{width:min(94vw,520px);height:8px;background:rgba(255,255,255,.6);border-radius:4px;overflow:hidden}
+.pb i{display:block;height:100%;width:0;background:var(--orange);transition:width .3s}
+#qt{width:min(94vw,520px);background:rgba(255,249,239,.95);color:#5a3e2b;border-radius:18px;padding:10px 14px;font-size:17px;line-height:1.5;font-weight:700;box-shadow:0 4px 14px rgba(0,0,0,.12)}
+#fb{width:min(94vw,520px);text-align:center;font-weight:700;color:#5a3e2b;text-shadow:0 1px 0 #fff;min-height:22px}
+#jb{position:fixed;width:90px;height:90px;border-radius:50%;background:rgba(255,255,255,.35);border:3px solid rgba(255,255,255,.75);display:none;z-index:4;pointer-events:none}
+#jk{position:absolute;left:21px;top:21px;width:42px;height:42px;border-radius:50%;background:rgba(255,255,255,.9)}
+</style>
+</head>
+<body>
+<canvas id="stage"></canvas>
+<div id="hud" class="hidden"><div class="tag"><span id="lv"></span><span id="st">⭐ 0</span></div><div class="pb"><i id="pf"></i></div><div id="qt"></div><div id="fb"></div></div>
+<div id="jb"><div id="jk"></div></div>
+
+<div id="login" class="screen"><div class="big">🐰</div><h1>國文闖關大冒險</h1><p>輸入學號，和小兔一起去冒險吧</p><input type="text" id="sid" placeholder="例如：112233"><button id="b1">出發！🎮</button></div>
+<div id="diff" class="screen hidden"><div class="big">✨</div><h1>選擇冒險難度</h1><div class="row"><button data-d="easy">🌱 簡單</button><button data-d="medium">🌿 中級</button><button data-d="hard">🌳 高級</button></div><p>用方向鍵或 WASD 移動，手機請在螢幕上拖曳。走到正確答案的寶石上就能作答。</p></div>
+<div id="result" class="screen hidden"><div class="big">🏆</div><h1>冒險完成！</h1><p>學號：<span id="rid"></span></p><p style="font-size:20px;font-weight:700">得分 <span id="rs"></span> / <span id="rt"></span></p><div class="big" id="rstar" style="font-size:34px"></div><p id="rmsg"></p><button onclick="location.reload()">🔄 再冒險一次</button></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="../../sync-client.js"></script>
+<script>
+/* ========== 接上教師後台的程式（整段複製，只改最上面的 GAME_KEY） ========== */
+const GAME_KEY = 'chi-g10-123-3d';            // 遊戲代號：小寫英文／數字／-／_，建議「科目簡碼-遊戲名」
+
+/* 1) 學號：沒有就強迫輸入 */
+function ensureStudent(done) {
+  const no = keyagentGetActiveStudentNumber();
+  if (no) return done(no);
+  const v = (prompt('請輸入你的學號') || '').trim();
+  if (!/^[A-Za-z0-9_-]{2,12}$/.test(v)) return ensureStudent(done);
+  localStorage.setItem('keyagent_active_student', JSON.stringify({ studentNumber: v, verified: false }));
+  done(v);
+}
+
+/* 2) 練習時間：只算「玩完一局」的時間；切到別的分頁不算；中途關掉的那一局不算 */
+let T0 = 0, ACC = 0;
+function tStart()  { ACC = 0; T0 = Date.now(); }
+function tPause()  { if (T0) { ACC += Date.now() - T0; T0 = 0; } }
+function tResume() { if (!T0 && !document.hidden) T0 = Date.now(); }
+function tTake()   { tPause(); const s = Math.min(1800, Math.round(ACC / 1000)); ACC = 0; return s; }
+document.addEventListener('visibilitychange', () => (document.hidden ? tPause() : tResume()));
+
+/* 3) 一局結束時呼叫 finishRound({...})，會自動記錄並送到老師的後台 */
+function finishRound(r) {
+  // r = { stageId:'L1', stageName:'第一課 認字', score:80, right:8, total:10, stars:2(可省略), nick:'小勇者'(可省略),
+  //       types:[{ key:'read', label:'看字讀音', right:5, total:6 }, ...](可省略) }
+  const secs = tTake();
+  keyagentUpdateOtherGame(GAME_KEY, prev => {
+    const stages = Object.assign({}, prev.stages);
+    const s = stages[r.stageId] || {};
+    stages[r.stageId] = {
+      n: r.stageName || r.stageId,
+      bestStars: Math.max(s.bestStars || 0, r.stars || 0),
+      bestScore: Math.max(s.bestScore || 0, r.score || 0),
+      plays: (s.plays || 0) + 1,
+      hist: (s.hist || []).concat([{ at: Date.now(), q: r.total || 0, ok: r.right || 0, s: secs, st: r.stars || 0 }]).slice(-30),   // 每一次的結果（後台點答對率可看）
+      totalSecs: (s.totalSecs || 0) + secs,
+      totalQ: (s.totalQ || 0) + (r.total || 0),
+      totalOk: (s.totalOk || 0) + (r.right || 0)
+    };
+    const q = Object.assign({}, prev.q);
+    (r.types || []).forEach(t => {
+      const k = r.stageId + ':' + t.key, o = q[k] || { n: 0, ok: 0 };
+      q[k] = { n: o.n + (t.total || 0), ok: o.ok + (t.right || 0), label: t.label || t.key };
+    });
+    return {
+      nick: r.nick || prev.nick || '',
+      totalPlays: (prev.totalPlays || 0) + 1,
+      bestScore: Math.max(prev.bestScore || 0, r.score || 0),
+      totalSecs: (prev.totalSecs || 0) + secs,
+      totalQ: (prev.totalQ || 0) + (r.total || 0),
+      totalOk: (prev.totalOk || 0) + (r.right || 0),
+      lastScore: r.score || 0, lastId: r.stageId, lastName: r.stageName || r.stageId, lastAt: Date.now(),
+      stages, q
+    };
+  });
+}
+keyagentInstallPageHideSync();           // 4) 離開頁面時補寄一次
+/* ========== 以上整段不用改 ========== */
+</script>
+<script>
+const $=id=>document.getElementById(id);
+const BANK={
+easy:[["「髻」的讀音是？",["jì","máo","jié"],0,"👧","第一關：白髮精怪"],["「范進中舉」出自哪本書？",["西遊記","儒林外史","紅樓夢"],1,"📜","第二關：瘋狂書生"],["「醉翁亭記」的作者是？",["歐陽修","蘇軾","柳宗元"],0,"🍶","第三關：醉翁山神"],["〈桃花源記〉的作者陶淵明，是哪個時代的人？",["東晉","盛唐","北宋"],0,"🌸","第四關：桃花源口"],["〈再別康橋〉的作者是誰？",["徐志摩","鄭愁予","余光中"],0,"🌉","第五關：康橋渡口"]],
+medium:[["「湮沒」的「湮」讀音是？",["yān","yīn","yàn"],0,"💧","第一關：水之精靈"],["「重劍無鋒，大巧不工」形容的是誰？",["楊過","獨孤求敗","郭靖"],1,"⚔️","第二關：劍俠傳說"],["「郭橐駝」的職業是？",["種樹人","裁縫","醫生"],0,"🌳","第三關：森林守護者"],["「黃髮垂髫」的「黃髮」指什麼人？",["老人","外國人","年輕人"],0,"👴","第四關：桃源村民"],["〈再別康橋〉全詩共有幾節？",["七節","五節","九節"],0,"📖","第五關：詩的階梯"]],
+hard:[["「其蒔也若子，其置也若棄」出自？",["醉翁亭記","種樹郭橐駝傳","岳陽樓記"],1,"📖","終極關：國文大魔王"],["「野芳發而幽香」下一句是？",["佳木秀而繁陰","風霜高潔","水落而石出"],0,"🌸","終極關：國文大魔王"],["獨孤求敗劍道最高境界是？",["利劍","重劍","無劍勝有劍"],2,"✨","終極關：國文大魔王"],["「無論魏晉」的「無論」是什麼意思？",["更不用說","不管怎麼樣","沒有討論"],0,"🏯","終極關：國文大魔王"],["聞一多提出新詩「三美」，下列何者屬於？",["建築美","動作美","哲理美"],0,"🎼","終極關：國文大魔王"]]};
+const COL=[0xff8fb1,0xffd36e,0x8fd3f4],BG=['#ffb3c9','#ffe39a','#b5e3fa'],LET=['A','B','C'];
+const shuf=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+let dif='',sid='',qs=[],qi=0,score=0,state='menu',lock=false,opts=[],anim=null,T=0;
+
+/* ---------- 3D scene ---------- */
+const R=new THREE.WebGLRenderer({canvas:$('stage'),antialias:true});R.setPixelRatio(Math.min(devicePixelRatio,2));
+const sc=new THREE.Scene();sc.background=new THREE.Color(0xbfe9ff);sc.fog=new THREE.Fog(0xbfe9ff,30,70);
+const cam=new THREE.PerspectiveCamera(52,1,.1,120);
+sc.add(new THREE.HemisphereLight(0xffffff,0xc8e6a0,.95));
+const dl=new THREE.DirectionalLight(0xffffff,.55);dl.position.set(6,12,8);sc.add(dl);
+const M=c=>new THREE.MeshLambertMaterial({color:c});
+const mesh=(g,c,x=0,y=0,z=0)=>{const m=new THREE.Mesh(g,M(c));m.position.set(x,y,z);return m};
+sc.add(mesh(new THREE.CylinderGeometry(14,14.6,1.2,48),0xa8e6a1,0,-.6,0));
+sc.add(mesh(new THREE.CylinderGeometry(14.6,10,4,48),0xcfa57c,0,-3.2,0));
+const sea=mesh(new THREE.PlaneGeometry(240,240),0x8fd3f4,0,-5,0);sea.rotation.x=-Math.PI/2;sc.add(sea);
+for(let i=0;i<18;i++){const a=i/18*6.283+Math.random()*.3,r=11.5+Math.random()*1.8,s=.8+Math.random()*.6,c=[0x7bd88f,0x5fc47a,0xffb7c5][i%3];
+ const t=new THREE.Group();t.add(mesh(new THREE.CylinderGeometry(.22,.28,1.2,8),0x9b6b43,0,.6,0));t.add(mesh(new THREE.ConeGeometry(1.1,2.4,8),c,0,2.2,0));t.add(mesh(new THREE.ConeGeometry(.8,1.8,8),c,0,3.3,0));
+ t.position.set(Math.cos(a)*r,0,Math.sin(a)*r);t.scale.setScalar(s);sc.add(t)}
+for(let i=0;i<40;i++){const a=Math.random()*6.283,r=Math.random()*11;sc.add(mesh(new THREE.SphereGeometry(.16,8,8),[0xffffff,0xffe066,0xff9ec7,0xc3a6ff][i%4],Math.cos(a)*r,.16,Math.sin(a)*r))}
+const clouds=[];for(let i=0;i<7;i++){const g=new THREE.Group();for(let k=0;k<3;k++){const s=mesh(new THREE.SphereGeometry(1.4-k*.2,10,8),0xffffff,k*1.5-1.5,k%2*.4,0);g.add(s)}g.position.set(-40+Math.random()*80,10+Math.random()*6,-30+Math.random()*40);g.sp=.4+Math.random()*.6;clouds.push(g);sc.add(g)}
+
+const P=new THREE.Group(),body=new THREE.Group();P.add(body);
+const bd=mesh(new THREE.SphereGeometry(.7,24,18),0xffc2d4,0,.75,0);bd.scale.set(1,.9,1);body.add(bd);
+const bl=mesh(new THREE.SphereGeometry(.45,16,12),0xfff4f8,0,.62,.32);bl.scale.z=.6;body.add(bl);
+for(const s of[-1,1]){body.add(mesh(new THREE.SphereGeometry(.09,10,10),0x3a2a2a,s*.24,.98,.6));body.add(mesh(new THREE.SphereGeometry(.03,6,6),0xffffff,s*.22,1.02,.67));
+ const ck=mesh(new THREE.SphereGeometry(.1,10,10),0xff8fb0,s*.42,.8,.5);ck.scale.z=.4;body.add(ck);
+ const ear=mesh(new THREE.SphereGeometry(.18,12,12),0xffc2d4,s*.3,1.7,0);ear.scale.set(1,3,.6);ear.rotation.z=-s*.18;body.add(ear);
+ const ei=mesh(new THREE.SphereGeometry(.1,10,10),0xff9fbc,s*.3,1.7,.08);ei.scale.set(1,2.6,.4);ei.rotation.z=-s*.18;body.add(ei);
+ body.add(mesh(new THREE.SphereGeometry(.2,10,10),0xffa0bd,s*.3,.12,.15))}
+body.add(mesh(new THREE.SphereGeometry(.06,8,8),0xff6f91,0,.84,.68));
+body.add(mesh(new THREE.SphereGeometry(.16,10,10),0xffffff,0,.45,-.65));
+sc.add(P);
+
+function rr(c,x,y,w,h,r){c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath()}
+function label(txt,bg){const c=document.createElement('canvas');c.width=512;c.height=160;const x=c.getContext('2d');
+ rr(x,6,6,500,148,40);x.fillStyle=bg;x.fill();x.lineWidth=6;x.strokeStyle='#ffffff';x.stroke();
+ const n=txt.length;x.font='bold '+(n<=7?70:n<=10?56:44)+'px "Noto Sans TC","Microsoft JhengHei","PingFang TC",sans-serif';x.fillStyle='#5a3e2b';x.textAlign='center';x.textBaseline='middle';x.fillText(txt,256,84);
+ const s=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),transparent:true}));s.scale.set(4.6,1.44,1);s.position.y=3.4;return s}
+const gems=[0,1,2].map(i=>{const g=new THREE.Group();const cr=mesh(new THREE.OctahedronGeometry(.75),COL[i],0,1.3,0);cr.material.emissive=new THREE.Color(COL[i]);cr.material.emissiveIntensity=.35;g.add(cr);g.cr=cr;
+ g.add(mesh(new THREE.CylinderGeometry(1.05,1.05,.15,24),COL[i],0,.07,0));g.visible=false;g.pop=1;sc.add(g);return g});
+
+/* ---------- effects, sound ---------- */
+const PG=new THREE.SphereGeometry(.12,6,6),parts=[];
+function burst(p,c){for(let i=0;i<28;i++){const m=new THREE.Mesh(PG,M(i%2?0xffffff:c));m.position.copy(p);m.position.y+=1.3;sc.add(m);const a=Math.random()*6.283,s=2+Math.random()*3;parts.push({m,vx:Math.cos(a)*s,vy:4+Math.random()*4,vz:Math.sin(a)*s,l:1.1})}}
+let AC;function beep(ok){try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();const o=AC.createOscillator(),g=AC.createGain(),t=AC.currentTime;o.connect(g);g.connect(AC.destination);o.type='triangle';
+ if(ok){o.frequency.setValueAtTime(660,t);o.frequency.setValueAtTime(990,t+.12)}else{o.frequency.setValueAtTime(220,t);o.frequency.linearRampToValueAtTime(150,t+.3)}
+ g.gain.setValueAtTime(.12,t);g.gain.exponentialRampToValueAtTime(.001,t+.4);o.start(t);o.stop(t+.4)}catch(e){}}
+
+/* ---------- game flow ---------- */
+function loadQ(){const q=qs[qi];lock=false;opts=shuf(q[1].map((t,i)=>({t,ok:i==q[2]})));const a0=Math.random()*6.283;
+ gems.forEach((g,i)=>{const a=a0+i*2.094;g.position.set(Math.cos(a)*5.8,0,Math.sin(a)*5.8);
+  if(g.lb){g.remove(g.lb);g.lb.material.map.dispose();g.lb.material.dispose()}
+  g.lb=label(LET[i]+'　'+opts[i].t,BG[i]);g.add(g.lb);g.visible=true;g.pop=0;g.scale.setScalar(.01)});
+ P.position.set(0,0,0);P.rotation.y=Math.PI;
+ $('lv').textContent=q[3]+' '+q[4];$('st').textContent='⭐ '+score;$('pf').style.width=(qi/qs.length*100)+'%';
+ $('qt').textContent='第 '+(qi+1)+'／'+qs.length+' 題　'+q[0];$('fb').textContent=qi==0?'走到正確答案的寶石上吧！':''}
+function pick(i){lock=true;const ok=opts[i].ok;
+ if(ok){score++;burst(gems[i].position,COL[i]);anim={k:'jump',t:0}}else{anim={k:'dizzy',t:0}}
+ beep(ok);$('st').textContent='⭐ '+score;
+ const right=opts.find(o=>o.ok).t;$('fb').textContent=ok?'🎉 答對啦！':'😵 答錯囉～正確答案是「'+right+'」';
+ setTimeout(()=>{qi++;if(qi>=qs.length)finish();else loadQ()},ok?1500:2400)}
+function finish(){try{finishRound({stageId:'3d-'+dif,stageName:'3D大冒險・'+({easy:'簡單',mid:'中級',hard:'高級'}[dif]||dif),score:Math.round(score/qs.length*100),right:score,total:qs.length,stars:score==qs.length?3:score/qs.length>=.6?2:1,types:[{key:'q'+dif,label:'難度'+dif,right:score,total:qs.length}]})}catch(e){}state='result';gems.forEach(g=>g.visible=false);$('hud').classList.add('hidden');$('result').classList.remove('hidden');
+ $('rid').textContent=sid;$('rs').textContent=score;$('rt').textContent=qs.length;const p=score/qs.length;
+ const [s,m]=p==1?['⭐⭐⭐⭐⭐','太棒了！滿分！🎉']:p>=.8?['⭐⭐⭐⭐☆','很優秀！繼續加油 💪']:p>=.6?['⭐⭐⭐☆☆','不錯喔！再練練更好 ✨']:p>=.4?['⭐⭐☆☆☆','還有進步空間，加油哦！']:['⭐☆☆☆☆','別灰心，再試一次！💖'];
+ $('rstar').textContent=s;$('rmsg').textContent=m}
+$('b1').onclick=()=>{sid=$('sid').value.trim();if(!sid){alert('請輸入學號哦 😊');return}try{if(/^[A-Za-z0-9_-]{2,12}$/.test(sid))localStorage.setItem('keyagent_active_student',JSON.stringify({studentNumber:sid,verified:false}))}catch(e){}$('login').classList.add('hidden');$('diff').classList.remove('hidden')};
+document.querySelectorAll('[data-d]').forEach(b=>b.onclick=()=>{dif=b.dataset.d;tStart();qs=shuf(BANK[b.dataset.d]);qi=0;score=0;$('diff').classList.add('hidden');$('hud').classList.remove('hidden');state='play';loadQ()});
+
+/* ---------- input ---------- */
+const keys={};let js=null;
+addEventListener('keydown',e=>{keys[e.key.toLowerCase()]=1;if(e.key.startsWith('Arrow'))e.preventDefault()});addEventListener('keyup',e=>keys[e.key.toLowerCase()]=0);
+addEventListener('touchstart',e=>{if(state!='play'||e.target.closest('.screen'))return;const t=e.touches[0];js={x:t.clientX,y:t.clientY,dx:0,dy:0};$('jb').style.cssText='display:block;left:'+(t.clientX-45)+'px;top:'+(t.clientY-45)+'px'},{passive:true});
+addEventListener('touchmove',e=>{if(!js)return;const t=e.touches[0];let dx=t.clientX-js.x,dy=t.clientY-js.y;const l=Math.hypot(dx,dy);if(l>40){dx*=40/l;dy*=40/l}js.dx=dx/40;js.dy=dy/40;$('jk').style.transform='translate('+dx+'px,'+dy+'px)'},{passive:true});
+addEventListener('touchend',()=>{js=null;$('jb').style.display='none';$('jk').style.transform=''},{passive:true});
+function resize(){R.setSize(innerWidth,innerHeight);cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix()}addEventListener('resize',resize);resize();
+
+/* ---------- loop ---------- */
+const camPos=new THREE.Vector3(0,9,13),look=new THREE.Vector3();let last=performance.now();
+function loop(t){requestAnimationFrame(loop);const dt=Math.min((t-last)/1000,.05);last=t;T+=dt;
+ clouds.forEach(c=>{c.position.x+=c.sp*dt;if(c.position.x>45)c.position.x=-45});
+ gems.forEach((g,i)=>{if(!g.visible)return;if(g.pop<1){g.pop=Math.min(1,g.pop+dt*2.2);const u=g.pop-1;g.scale.setScalar(Math.max(.01,1+2.70158*u*u*u+1.70158*u*u))}
+  g.cr.rotation.y+=dt*1.6;g.cr.position.y=1.3+Math.sin(T*2.2+i)*.2;if(lock&&opts[i]&&opts[i].ok)g.cr.scale.setScalar(1+.25*Math.sin(T*12))});
+ let mx=0,mz=0;
+ if(state=='play'&&!lock){mx=(keys.arrowright||keys.d?1:0)-(keys.arrowleft||keys.a?1:0);mz=(keys.arrowdown||keys.s?1:0)-(keys.arrowup||keys.w?1:0);if(js){mx+=js.dx;mz+=js.dy}}
+ const len=Math.hypot(mx,mz);
+ if(len>.05){const k=Math.min(1,len);mx/=len;mz/=len;P.position.x+=mx*6*k*dt;P.position.z+=mz*6*k*dt;const r=Math.hypot(P.position.x,P.position.z);if(r>13){P.position.x*=13/r;P.position.z*=13/r}
+  let d=Math.atan2(mx,mz)-P.rotation.y;d=Math.atan2(Math.sin(d),Math.cos(d));P.rotation.y+=d*Math.min(1,dt*12);body.position.y=Math.abs(Math.sin(T*13))*.18;body.rotation.z=Math.sin(T*13)*.08}
+ else{body.position.y=Math.sin(T*3)*.03;if(!anim)body.rotation.z*=.8}
+ if(state=='play'&&!lock)gems.forEach((g,i)=>{if(g.visible&&g.pop>=1&&Math.hypot(g.position.x-P.position.x,g.position.z-P.position.z)<1.3&&!lock)pick(i)});
+ if(anim){anim.t+=dt;if(anim.k=='jump'){const u=Math.min(anim.t/.8,1);P.position.y=Math.sin(u*Math.PI)*1.6;body.rotation.y=u*Math.PI*2;if(u>=1){anim=null;P.position.y=0;body.rotation.y=0}}
+  else{body.rotation.z=Math.sin(anim.t*20)*.3;body.rotation.y+=dt*10;if(anim.t>1){anim=null;body.rotation.y=0;body.rotation.z=0}}}
+ for(let i=parts.length-1;i>=0;i--){const p=parts[i];p.l-=dt;p.vy-=12*dt;p.m.position.x+=p.vx*dt;p.m.position.y+=p.vy*dt;p.m.position.z+=p.vz*dt;if(p.l<=0){sc.remove(p.m);p.m.material.dispose();parts.splice(i,1)}}
+ const ar=cam.aspect,kk=ar<1?Math.min(1.9,.75/ar):1;let tp;
+ if(state=='play')tp=new THREE.Vector3(P.position.x*.8,8*kk,P.position.z*.8+10.5*kk);else tp=new THREE.Vector3(Math.sin(T*.2)*17*kk,8.5*kk,Math.cos(T*.2)*17*kk);
+ camPos.lerp(tp,1-Math.pow(.002,dt));cam.position.copy(camPos);look.set(state=='play'?P.position.x*.8:0,1,state=='play'?P.position.z*.8:0);cam.lookAt(look);
+ R.render(sc,cam)}
+requestAnimationFrame(loop);
+</script>
+<script src="../../home-fab.js"></script>
+</body>
+</html>

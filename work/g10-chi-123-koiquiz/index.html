@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>錦鯉國文課</title>
+<style>
+:root{--pond:#0c2b3d;--pond2:#103a50;--koi:#ff7a3d;--ink:#d8ecf2;--mute:#7fa6b6;--a:#ff9ec7;--b:#ffd36e;--c:#9fd8ff;color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root{--pond:#0c2b3d}}
+:root[data-theme="dark"]{--pond:#0c2b3d}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{background:var(--pond);color:var(--ink);font-family:"Noto Serif TC","Songti TC","PMingLiU",serif;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:8px;overflow:hidden;touch-action:none}
+.bar{display:flex;gap:20px;font-size:14px;color:var(--mute);align-items:center}
+.bar b{color:var(--ink);font-size:18px;margin-left:4px}
+#h{color:var(--a);letter-spacing:.1em;font-size:18px}
+.card{width:min(92vw,420px);background:var(--pond2);border-radius:14px;padding:10px 14px;line-height:1.5;font-size:15px;box-shadow:0 0 0 2px #1d5671}
+.chip{font-size:12px;color:var(--mute);margin-bottom:2px}
+.q{font-weight:700;font-size:16px}
+.opts{display:flex;flex-wrap:wrap;gap:4px 16px;margin-top:4px}
+.opts span{white-space:nowrap}
+.opts i{font-style:normal;display:inline-block;width:20px;height:20px;line-height:20px;border-radius:50%;text-align:center;color:#0c2b3d;font-weight:700;font-size:12px;margin-right:5px}
+#fb{min-height:22px;margin-top:4px;font-size:13px;color:var(--mute)}
+.wrap{position:relative;width:min(92vw,38vh,420px);aspect-ratio:1}
+canvas{width:100%;height:100%;display:block;border-radius:18px;background:var(--pond2);box-shadow:0 0 0 2px #1d5671}
+.msg{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:rgba(12,43,61,.88);border-radius:18px;text-align:center;padding:18px}
+.msg p{margin:0;font-size:14px;color:var(--mute);line-height:1.7}
+.msg h2{margin:0;font-size:22px}
+button{font:inherit;cursor:pointer;border:0;border-radius:999px;background:var(--koi);color:#2a1206;padding:10px 28px;font-weight:700;font-size:16px}
+button:focus-visible{outline:3px solid #ffe9d6;outline-offset:2px}
+.pad{display:grid;grid-template-columns:repeat(3,52px);grid-template-rows:repeat(2,52px);gap:6px}
+.pad button{padding:0;background:#1d5671;color:var(--ink);font-size:20px;border-radius:14px}
+.pad button:active{background:var(--koi);color:#2a1206}
+.pad .u{grid-column:2}.pad .l{grid-column:1;grid-row:2}.pad .d{grid-column:2;grid-row:2}.pad .r{grid-column:3;grid-row:2}
+@media (min-width:700px) and (hover:hover){.pad{display:none}}
+</style>
+</head>
+<body>
+<div class="bar"><span>答對<b id="s">0</b>／<span id="n">10</span></span><span id="h">♥♥♥</span><span>最高<b id="b">0</b></span></div>
+<div class="card"><div class="chip" id="ch">第一課・第二課</div><div class="q" id="q">準備好了嗎？</div><div class="opts" id="o"></div><div id="fb"></div></div>
+<div class="wrap">
+<canvas id="c" width="420" height="420"></canvas>
+<div class="msg" id="m"><h2 id="mt">錦鯉國文課</h2><p id="mp">第一課〈桃花源記〉・第二課〈再別康橋〉<br>操控錦鯉吃下正確答案的蓮花<br>答錯或撞牆會扣一顆心，共 3 顆</p><button id="go">開始</button></div>
+</div>
+<div class="pad"><button class="u" data-d="u" aria-label="上">↑</button><button class="l" data-d="l" aria-label="左">←</button><button class="d" data-d="d" aria-label="下">↓</button><button class="r" data-d="r" aria-label="右">→</button></div>
+<script src="../../sync-client.js"></script>
+<script>
+/* ========== 接上教師後台的程式（整段複製，只改最上面的 GAME_KEY） ========== */
+const GAME_KEY = 'chi-g10-123-quiz';            // 遊戲代號：小寫英文／數字／-／_，建議「科目簡碼-遊戲名」
+
+/* 1) 學號：沒有就強迫輸入 */
+function ensureStudent(done) {
+  const no = keyagentGetActiveStudentNumber();
+  if (no) return done(no);
+  const v = (prompt('請輸入你的學號') || '').trim();
+  if (!/^[A-Za-z0-9_-]{2,12}$/.test(v)) return ensureStudent(done);
+  localStorage.setItem('keyagent_active_student', JSON.stringify({ studentNumber: v, verified: false }));
+  done(v);
+}
+
+/* 2) 練習時間：只算「玩完一局」的時間；切到別的分頁不算；中途關掉的那一局不算 */
+let T0 = 0, ACC = 0;
+function tStart()  { ACC = 0; T0 = Date.now(); }
+function tPause()  { if (T0) { ACC += Date.now() - T0; T0 = 0; } }
+function tResume() { if (!T0 && !document.hidden) T0 = Date.now(); }
+function tTake()   { tPause(); const s = Math.min(1800, Math.round(ACC / 1000)); ACC = 0; return s; }
+document.addEventListener('visibilitychange', () => (document.hidden ? tPause() : tResume()));
+
+/* 3) 一局結束時呼叫 finishRound({...})，會自動記錄並送到老師的後台 */
+function finishRound(r) {
+  // r = { stageId:'L1', stageName:'第一課 認字', score:80, right:8, total:10, stars:2(可省略), nick:'小勇者'(可省略),
+  //       types:[{ key:'read', label:'看字讀音', right:5, total:6 }, ...](可省略) }
+  const secs = tTake();
+  keyagentUpdateOtherGame(GAME_KEY, prev => {
+    const stages = Object.assign({}, prev.stages);
+    const s = stages[r.stageId] || {};
+    stages[r.stageId] = {
+      n: r.stageName || r.stageId,
+      bestStars: Math.max(s.bestStars || 0, r.stars || 0),
+      bestScore: Math.max(s.bestScore || 0, r.score || 0),
+      plays: (s.plays || 0) + 1,
+      hist: (s.hist || []).concat([{ at: Date.now(), q: r.total || 0, ok: r.right || 0, s: secs, st: r.stars || 0 }]).slice(-30),   // 每一次的結果（後台點答對率可看）
+      totalSecs: (s.totalSecs || 0) + secs,
+      totalQ: (s.totalQ || 0) + (r.total || 0),
+      totalOk: (s.totalOk || 0) + (r.right || 0)
+    };
+    const q = Object.assign({}, prev.q);
+    (r.types || []).forEach(t => {
+      const k = r.stageId + ':' + t.key, o = q[k] || { n: 0, ok: 0 };
+      q[k] = { n: o.n + (t.total || 0), ok: o.ok + (t.right || 0), label: t.label || t.key };
+    });
+    return {
+      nick: r.nick || prev.nick || '',
+      totalPlays: (prev.totalPlays || 0) + 1,
+      bestScore: Math.max(prev.bestScore || 0, r.score || 0),
+      totalSecs: (prev.totalSecs || 0) + secs,
+      totalQ: (prev.totalQ || 0) + (r.total || 0),
+      totalOk: (prev.totalOk || 0) + (r.right || 0),
+      lastScore: r.score || 0, lastId: r.stageId, lastName: r.stageName || r.stageId, lastAt: Date.now(),
+      stages, q
+    };
+  });
+}
+keyagentInstallPageHideSync();           // 4) 離開頁面時補寄一次
+/* ========== 以上整段不用改 ========== */
+</script>
+<script>
+const Q=[
+{l:1,q:"〈桃花源記〉的作者陶淵明，是哪個時代的人？",o:["東晉","盛唐","北宋"],e:"陶淵明生於東晉末年、卒於劉宋初年，世稱靖節先生。"},
+{l:1,q:"「黃髮垂髫，並怡然自樂」中，「黃髮」指什麼人？",o:["老人","金髮的外國人","年輕人"],e:"黃髮指老人，垂髫指小孩，合起來是老老少少。"},
+{l:1,q:"桃花源中的人自稱，祖先是為了躲避什麼而來？",o:["秦時戰亂","王莽之亂","五胡亂華"],e:"原文說先世避秦時亂，所以才與外界隔絕。"},
+{l:1,q:"「不知有漢，無論魏晉」最能說明什麼？",o:["與世隔絕已久","他們很有學問","漢朝已經滅亡"],e:"連漢朝都不知道，更不用說魏晉，可見隔絕多年。"},
+{l:1,q:"「無論魏晉」的「無論」是什麼意思？",o:["更不用說","不管怎麼樣","沒有討論"],e:"這裡的「無論」是更不必說，和現代的「不論」用法不同。"},
+{l:1,q:"「屋舍儼然」的「儼然」是什麼意思？",o:["整齊的樣子","嚴肅的樣子","好像"],e:"儼然在這裡指房屋排列整齊。"},
+{l:1,q:"漁人離開時「處處誌之」，是為了什麼？",o:["做記號，方便再來","寫日記","畫地圖賣錢"],e:"誌是作記號；漁人想循記號重回，結果仍然迷了路。"},
+{l:1,q:"太守派人隨漁人去尋找桃花源，結果如何？",o:["迷路，再也找不到","順利找到","找到但被趕走"],e:"文中說「遂迷不復得路」，桃花源從此成謎。"},
+{l:1,q:"南陽劉子驥聽說桃花源後，結果怎樣？",o:["打算前往，未成就病死","找到了桃花源","寫了一首詩"],e:"他欣然規劃前往，未能成行，不久病逝，後來就沒人再去尋找。"},
+{l:1,q:"桃花源的描寫，主要寄託作者怎樣的理想？",o:["安樂平等、無戰亂的社會","成仙長生","升官發財"],e:"桃花源中人人怡然自樂，反映作者對亂世的不滿與對理想社會的嚮往。"},
+{l:1,q:"漁人進入桃花源前，先經過一片什麼景象？",o:["夾岸數百步的桃花林","一座古廟","一片竹林"],e:"文中寫忽逢桃花林，夾岸數百步，中無雜樹。"},
+{l:2,q:"〈再別康橋〉的作者是誰？",o:["徐志摩","鄭愁予","余光中"],e:"徐志摩是新月派的代表詩人。"},
+{l:2,q:"徐志摩所屬的文學團體是？",o:["新月社（新月派）","創世紀詩社","藍星詩社"],e:"徐志摩與聞一多等人，是新月派的代表。"},
+{l:2,q:"詩題的「康橋」，指的是英國哪個地方？",o:["劍橋（Cambridge）","牛津","倫敦"],e:"康橋是 Cambridge 的舊譯，徐志摩曾在此遊學。"},
+{l:2,q:"〈再別康橋〉全詩共有幾節？",o:["七節","五節","九節"],e:"全詩七節，每節四行，形式整齊。"},
+{l:2,q:"全詩首末兩節寫法相呼應，這種結構稱為？",o:["首尾呼應","倒敘","層遞"],e:"首節與末節都寫輕輕、悄悄地離去，前後呼應。"},
+{l:2,q:"詩中把河畔的金柳比喻成什麼？",o:["夕陽中的新娘","天上的彩虹","水底的青荇"],e:"以新娘比金柳，帶出明亮柔美的畫面。"},
+{l:2,q:"「夏蟲也為我沉默」，夏蟲被當成人來寫，這是什麼修辭？",o:["擬人（轉化）","誇飾","映襯"],e:"把夏蟲當成人，會為離別而沉默，屬於轉化中的擬人。"},
+{l:2,q:"聞一多為新詩提出「三美」，下列何者屬於三美？",o:["建築美","動作美","哲理美"],e:"三美是音樂美、繪畫美、建築美。"},
+{l:2,q:"整首〈再別康橋〉流露的主要情感是？",o:["淡淡的離愁與眷戀","憤怒與控訴","狂喜與興奮"],e:"詩人用輕柔的語調，寫對康橋的不捨。"},
+{l:2,q:"〈再別康橋〉屬於哪一種文體？",o:["現代詩（新詩）","律詩","樂府詩"],e:"這是用白話寫成的現代詩。"},
+{l:2,q:"〈再別康橋〉收錄於徐志摩的哪一本詩集？",o:["猛虎集","志摩的詩","翡冷翠的一夜"],e:"〈再別康橋〉收錄於《猛虎集》。"}];
+const N=15,TOT=10,C=document.getElementById('c'),x=C.getContext('2d'),S=C.width/N,$=id=>document.getElementById(id);
+const V={u:[0,-1],d:[0,1],l:[-1,0],r:[1,0]},COL=['#ff9ec7','#ffd36e','#9fd8ff'],LET=['A','B','C'],LN=['','第一課〈桃花源記〉','第二課〈再別康橋〉'];
+let AN=0,snake,dir,next,qs,qi,opts,cells,hearts,score,best=0,timer,running=false,lock=false;
+try{best=+localStorage.getItem('koi-quiz-best')||0}catch(e){}
+$('b').textContent=best;$('n').textContent=TOT;
+const shuf=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+function pick(){const a=shuf(Q.filter(q=>q.l==1)).slice(0,TOT/2),b=shuf(Q.filter(q=>q.l==2)).slice(0,TOT/2);return shuf(a.concat(b))}
+function resetSnake(){snake=[[7,7],[6,7],[5,7]];dir=next=V.r}
+function place(){cells=[];let g=0;while(cells.length<3&&g++<500){const p=[Math.floor(Math.random()*N),Math.floor(Math.random()*N)];
+if(snake.some(s=>Math.abs(s[0]-p[0])+Math.abs(s[1]-p[1])<3))continue;
+if(cells.some(c=>Math.abs(c[0]-p[0])+Math.abs(c[1]-p[1])<3))continue;cells.push(p)}}
+function newQ(){const q=qs[qi];opts=shuf(q.o.map((t,i)=>({t,ok:i==0})));place();
+$('ch').textContent=LN[q.l]+'　第 '+(qi+1)+' 題';$('q').textContent=q.q;
+$('o').innerHTML=opts.map((o,i)=>'<span><i style="background:'+COL[i]+'">'+LET[i]+'</i>'+o.t+'</span>').join('');$('fb').textContent='吃下正確答案的蓮花';lock=false;draw()}
+function hud(){$('s').textContent=score;$('h').textContent='♥'.repeat(Math.max(hearts,0))+'♡'.repeat(3-Math.max(hearts,0))}
+function start(){AN=0;tStart();qs=pick();qi=0;score=0;hearts=3;hud();resetSnake();newQ();$('m').style.display='none';running=true;clearInterval(timer);timer=setInterval(tick,210)}
+function end(){running=false;clearInterval(timer);try{finishRound({stageId:'quiz',stageName:'錦鯉國文課',score:AN?Math.round(score/AN*100):0,right:score,total:AN,stars:score>=TOT?3:score>=7?2:score>=4?1:0,types:[{key:'q',label:'錦鯉國文課',right:score,total:AN}]})}catch(e){}if(score>best){best=score;$('b').textContent=best;try{localStorage.setItem('koi-quiz-best',best)}catch(e){}}
+const t=score>=TOT?'全對，太厲害了！':score>=7?'很不錯，再複習一下就滿分':score>=4?'還可以，再看一次課文吧':'加油，先把課文讀熟再來';
+$('mt').textContent=hearts>0?'完成！':'心用完了';$('mp').innerHTML='答對 '+score+' ／ '+TOT+' 題<br>'+t;$('go').textContent='再玩一次';$('m').style.display='flex'}
+function hit(){hearts--;hud();if(hearts<=0)return end();resetSnake();place();$('fb').textContent='撞到了，扣一顆心';draw()}
+function answer(ok,q){lock=true;AN++;if(ok){score++}else{hearts--}hud();
+$('fb').textContent=(ok?'答對了！':'答錯了，正確答案已標出。')+q.e;draw();
+setTimeout(()=>{if(hearts<=0||qi>=TOT-1)return end();qi++;newQ()},ok?1800:2600)}
+function tick(){if(lock)return;dir=next;const h=[snake[0][0]+dir[0],snake[0][1]+dir[1]];
+if(h[0]<0||h[1]<0||h[0]>=N||h[1]>=N||snake.some(p=>p[0]==h[0]&&p[1]==h[1]))return hit();
+snake.unshift(h);const k=cells.findIndex(c=>c[0]==h[0]&&c[1]==h[1]);
+if(k>=0){const ok=opts[k].ok;if(!ok)snake.pop();answer(ok,qs[qi])}else snake.pop();draw()}
+function lotus(p,i,hl){const fx=p[0]*S+S/2,fy=p[1]*S+S/2;
+if(hl){x.strokeStyle='#fff';x.lineWidth=3;x.beginPath();x.arc(fx,fy,S*.5,0,7);x.stroke()}
+x.fillStyle='#2f9e6e';x.beginPath();x.arc(fx,fy,S*.46,0,7);x.fill();
+x.fillStyle=COL[i];x.beginPath();x.arc(fx,fy,S*.36,0,7);x.fill();
+x.fillStyle='#0c2b3d';x.font='bold '+Math.round(S*.5)+'px sans-serif';x.textAlign='center';x.textBaseline='middle';x.fillText(LET[i],fx,fy+1)}
+function draw(){x.clearRect(0,0,C.width,C.height);x.strokeStyle='rgba(127,166,182,.12)';x.lineWidth=1;
+for(let i=1;i<N;i++){x.beginPath();x.moveTo(i*S,0);x.lineTo(i*S,C.height);x.moveTo(0,i*S);x.lineTo(C.width,i*S);x.stroke()}
+if(cells)cells.forEach((p,i)=>lotus(p,i,lock&&opts[i].ok));
+snake.forEach((p,i)=>{const r=S*(.46-Math.min(i,10)*.016);x.fillStyle=i%3==1?'#ffe9d6':'#ff7a3d';x.beginPath();x.arc(p[0]*S+S/2,p[1]*S+S/2,r,0,7);x.fill()});
+const h=snake[0],px=-dir[1],py=dir[0];x.fillStyle='#1a0a02';
+for(const s of[-1,1]){x.beginPath();x.arc(h[0]*S+S/2+dir[0]*S*.14+px*s*S*.17,h[1]*S+S/2+dir[1]*S*.14+py*s*S*.17,S*.06,0,7);x.fill()}}
+function turn(k){const d=V[k];if(!d||!running)return;if(d[0]+dir[0]==0&&d[1]+dir[1]==0)return;next=d}
+addEventListener('keydown',e=>{const m={ArrowUp:'u',ArrowDown:'d',ArrowLeft:'l',ArrowRight:'r',w:'u',s:'d',a:'l',d:'r'}[e.key];if(m){e.preventDefault();turn(m)}else if((e.key==' '||e.key=='Enter')&&!running){start()}});
+document.querySelectorAll('.pad button').forEach(b=>b.addEventListener('pointerdown',e=>{e.preventDefault();turn(b.dataset.d)}));
+let t0;addEventListener('touchstart',e=>{t0=e.touches[0]},{passive:true});
+addEventListener('touchend',e=>{if(!t0)return;const t=e.changedTouches[0],dx=t.clientX-t0.clientX,dy=t.clientY-t0.clientY;t0=null;if(Math.max(Math.abs(dx),Math.abs(dy))<24)return;turn(Math.abs(dx)>Math.abs(dy)?(dx>0?'r':'l'):(dy>0?'d':'u'))},{passive:true});
+$('go').onclick=start;ensureStudent(function(){});resetSnake();cells=[];draw();
+</script>
+<script src="../../home-fab.js"></script>
+</body>
+</html>
