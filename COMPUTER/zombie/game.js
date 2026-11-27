@@ -1642,7 +1642,7 @@ class TommyQGame {
   }
   setCompact(on) {
     if (!!on === !!this.compact) return false;
-    LANE_COUNT = on ? 2 : 5;
+    LANE_COUNT = on ? 1 : 5;   // 手機：只留 1 條跑道（學生專心認字、練拼音）
     LANE_BASE = on ? 118 : 120;
     LANE_STEP = on ? 96 : 72;
     H = on ? 330 : 500;
@@ -1873,6 +1873,15 @@ class TommyQGame {
           this.audio.menuClick();
         } else {
           this._confirmUnitCandidate(barHit.entity, barHit.char);
+        }
+      }
+      // 手機單跑道：點畫面左半邊＝面向左、右半邊＝面向右（取代 ◀▶ 按鈕）
+      if (!barHit && this.compact && this.player && !this.player.dead) {
+        const p = this.player;
+        const wantDir = mx < W / 2 ? -1 : 1;
+        if (p.dir !== wantDir) {
+          p.dir = wantDir;
+          this.targetedEnemies = [];
         }
       }
       // HOME/TOP/BOTTOM ROW 提示小鍵盤：縮小/放大/關閉，關閉後的重新顯示按鈕

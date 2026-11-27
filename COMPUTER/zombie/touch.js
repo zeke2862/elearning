@@ -343,7 +343,7 @@
       const wantNarrow = touchOn && isPortrait();
       if (typeof g.setNarrow === 'function' && !!g.narrow !== wantNarrow && g.setNarrow(wantNarrow)) fit();
     }
-    const wantCompact = touchOn && g.state !== 'MENU' && !g.narrow;   // 直放不用 2 道精簡版
+    const wantCompact = touchOn && g.state !== 'MENU';   // 手機（直放、橫放）玩的時候都用「單跑道」精簡版
     if (!!g.compact !== wantCompact) g.setCompact(wantCompact);
     if (body.classList.contains('tc-compact') !== !!g.compact) {
       body.classList.toggle('tc-compact', !!g.compact);
