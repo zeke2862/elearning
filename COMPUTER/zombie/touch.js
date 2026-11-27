@@ -71,6 +71,14 @@
   function buildKeyboard() {
     const kb = $('tcKeyboard');
     if (!kb || kb.childElementCount) return;
+    // 中文拼音／中文-文章：小狼毫輸入引擎要用「空白鍵／數字鍵選字、Backspace 刪拼音」，
+    // 所以多兩排（只在中文模式顯示）：數字 1～9、0（翻頁），以及 ⌫／空白／↵
+    // 數字列要跟實體鍵盤一樣，放在英文字母列的「上面」，所以先建立、先放進去
+    const nums = el('div', 'tc-krow tc-krow-zh');
+    '1234567890'.split('').forEach((ch) => {
+      const b = el('button', 'tc-btn tc-key', ch); b.type = 'button'; b.tabIndex = -1; b.dataset.key = ch; nums.appendChild(b);
+    });
+    kb.appendChild(nums);
     KB_ROWS.forEach((chars, ri) => {
       const row = el('div', 'tc-krow tc-krow' + ri);
       chars.split('').forEach((ch) => {
@@ -82,13 +90,6 @@
       });
       kb.appendChild(row);
     });
-    // 中文拼音／中文-文章：小狼毫輸入引擎要用「空白鍵／數字鍵選字、Backspace 刪拼音」，
-    // 所以多兩排（只在中文模式顯示）：數字 1～9、0（翻頁），以及 ⌫／空白／↵
-    const nums = el('div', 'tc-krow tc-krow-zh');
-    '1234567890'.split('').forEach((ch) => {
-      const b = el('button', 'tc-btn tc-key', ch); b.type = 'button'; b.tabIndex = -1; b.dataset.key = ch; nums.appendChild(b);
-    });
-    kb.appendChild(nums);
     const ctl = el('div', 'tc-krow tc-krow-zh');
     [['⌫', 'Backspace', 1], ['空白（選字）', ' ', 3], ['↵', 'Enter', 1]].forEach((d) => {
       const b = el('button', 'tc-btn tc-key', d[0]); b.type = 'button'; b.tabIndex = -1; b.dataset.key = d[1]; b.style.flexGrow = d[2]; b.style.fontSize = '1rem'; ctl.appendChild(b);
