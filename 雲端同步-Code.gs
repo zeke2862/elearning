@@ -30,6 +30,7 @@ function doPost(e) {
 
     if (data.action === "gLogin" || data.action === "gPull" || data.action === "gPush") return jsonOut_(gHandle_(data));
     if (data.action === "submitWork") return jsonOut_(wSubmit_(data));        // 作品投稿
+    if (data.action === "feedback") return jsonOut_(fbSubmit_(data));        // 回饋區：學生給遊戲的建議
     if (data.action === "workStatus") return jsonOut_(wSetStatus_(data));   // Google 帳號綁定（選用）
 
     try { notifyGuess_(data); } catch (e0) {}   // 學生被「亂猜重開」鎖定時，寄通知給老師（失敗不影響收件）
@@ -495,4 +496,147 @@ function wSetStatus_(data) {        // POST action=workStatus {token,id,status}
   if (!row) return { success: false, message: "找不到這份作品" };
   sh.getRange(row, 7).setValue(data.status === "done" ? "done" : "new");
   return { success: true };
+}
+
+
+// ============================================================
+// 回饋區：學生在遊戲裡按「💬」送來的建議（jb2-feedback.js）
+//   - 寫進「回饋」分頁（欄位：時間、學號、類型、遊戲、關卡、模式、語言、裝置、內容、處理狀態、老師備註、回報編號、已寄信）
+//   - 「處理狀態」欄有下拉選單：新／已看／已修正／不處理；「回饋統計」分頁自動算出「哪一關被反映最多」
+//   - 通知（寄給指令碼屬性 NOTIFY_EMAIL；沒設就寄給部署這支程式的人）：
+//       🐞 有錯誤、🌐 泰文翻譯不對 → 每則立刻寄（一天最多 20 封，超過的併入每晚彙整）
+//       同一關 24 小時內累積 3 則「新」回饋 → 另寄一封「⚠️ 這一關一直被反映」（每關每天一次）
+//       其他類型 → 每晚 20:00 寄一封「今日彙整」（要先執行一次 fbInstallTrigger 建立排程）
+//   - 防亂送：每個學號一天最多 5 則、每則最多 300 字、同一則（回報編號）不重複收
+// ============================================================
+const FB_SHEET_ = "回饋";
+const FB_TYPES_ = { bug: "🐞 有錯誤", hard: "🤔 看不懂", idea: "💡 想要新功能", trans: "🌐 泰文翻譯不對", like: "👍 我喜歡" };
+const FB_URGENT_ = { bug: 1, trans: 1 };
+const FB_PER_DAY_ = 5, FB_NOSID_PER_DAY_ = 30, FB_MAX_URGENT_MAIL_ = 20, FB_HOT_N_ = 3, FB_COLS_ = 13;
+
+function fbTo_() {
+  return PropertiesService.getScriptProperties().getProperty("NOTIFY_EMAIL") || Session.getEffectiveUser().getEmail();
+}
+function fbDay_(d) { return Utilities.formatDate(d, Session.getScriptTimeZone(), "yyyy-MM-dd"); }
+function fbSafe_(v) {   // 避免有人輸入 =公式 在試算表裡被執行
+  v = String(v == null ? "" : v);
+  return /^[=+\-@]/.test(v) ? "'" + v : v;
+}
+
+function fbSheet_() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sh = ss.getSheetByName(FB_SHEET_);
+  if (!sh) {
+    sh = ss.insertSheet(FB_SHEET_);
+    sh.appendRow(["時間", "學號", "類型", "遊戲", "關卡", "模式", "語言", "裝置", "內容", "處理狀態", "老師備註", "回報編號", "已寄信"]);
+    sh.setFrozenRows(1);
+    sh.getRange("J2:J3000").setDataValidation(SpreadsheetApp.newDataValidation().requireValueInList(["新", "已看", "已修正", "不處理"], true).build());
+    sh.setColumnWidth(9, 420);
+    let st = ss.getSheetByName("回饋統計");
+    if (!st) {
+      st = ss.insertSheet("回饋統計");
+      st.getRange("A1").setValue("各關卡「新」回饋數（由多到少）");
+      st.getRange("A2").setFormula("=IFERROR(QUERY('" + FB_SHEET_ + "'!A:M,\"select E, count(A) where J = '新' and E <> '' group by E order by count(A) desc label E '關卡', count(A) '件數'\",1),\"目前沒有新的回饋\")");
+      st.getRange("D1").setValue("各類型件數");
+      st.getRange("D2").setFormula("=IFERROR(QUERY('" + FB_SHEET_ + "'!A:M,\"select C, count(A) where C <> '' group by C order by count(A) desc label C '類型', count(A) '件數'\",1),\"\")");
+    }
+  }
+  return sh;
+}
+
+function fbSubmit_(d) {
+  const text = String(d.text || "").replace(/\s+/g, " ").trim().slice(0, 300);
+  if (text.length < 2) return { success: false, message: "empty" };
+  const type = FB_TYPES_[d.type] ? d.type : "idea";
+  const sid = String(d.studentNumber || "").replace(/[^0-9A-Za-z_\-]/g, "").slice(0, 20);
+  const cid = String(d.cid || "").slice(0, 40);
+  const lock = LockService.getScriptLock();
+  lock.waitLock(15000);
+  try {
+    const sh = fbSheet_(), last = sh.getLastRow(), now = new Date(), todayStr = fbDay_(now);
+    const from = Math.max(2, last - 399);
+    const rows = last >= 2 ? sh.getRange(from, 1, last - from + 1, FB_COLS_).getValues() : [];
+    let sameSid = 0, noSid = 0;
+    for (let i = 0; i < rows.length; i++) {
+      if (cid && rows[i][11] === cid) return { success: true, message: "duplicate" };
+      if (rows[i][0] instanceof Date && fbDay_(rows[i][0]) === todayStr) {
+        if (sid && String(rows[i][1]) === sid) sameSid++;
+        if (!sid) noSid++;
+      }
+    }
+    if (sid ? sameSid >= FB_PER_DAY_ : noSid >= FB_NOSID_PER_DAY_) return { success: false, message: "limit" };
+
+    const rec = {
+      time: now, sid: sid, type: type, game: d.game === "defense" ? "數學保衛戰" : "JB2召喚師",
+      stage: String(d.stage || "").slice(0, 30), mode: String(d.mode || "").slice(0, 10),
+      lang: d.lang === "th" ? "泰文" : "中文", device: String(d.device || "").slice(0, 6), text: text
+    };
+    sh.appendRow([rec.time, fbSafe_(rec.sid), FB_TYPES_[type], rec.game, fbSafe_(rec.stage), fbSafe_(rec.mode), rec.lang, fbSafe_(rec.device), fbSafe_(rec.text), "新", "", cid, ""]);
+    const row = sh.getLastRow();
+    let mailed = "";
+    try { if (fbNotifyUrgent_(sh, row, rec)) mailed = "Y"; } catch (e1) {}
+    if (mailed) sh.getRange(row, 13).setValue(mailed);
+    try { fbHot_(sh, rec); } catch (e2) {}
+    return { success: true };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function fbRowUrl_(sh, row) { return SpreadsheetApp.getActiveSpreadsheet().getUrl() + "#gid=" + sh.getSheetId() + "&range=A" + row; }
+function fbWhere_(r) { return [r.game, r.stage, r.mode, r.lang, r.device].filter(String).join("・"); }
+
+// 🐞／🌐 立刻通知（一天最多 20 封）
+function fbNotifyUrgent_(sh, row, r) {
+  if (!FB_URGENT_[r.type]) return false;
+  const props = PropertiesService.getScriptProperties(), key = "fbMail_" + fbDay_(new Date());
+  const n = parseInt(props.getProperty(key) || "0", 10);
+  if (n >= FB_MAX_URGENT_MAIL_) return false;
+  props.setProperty(key, String(n + 1));
+  MailApp.sendEmail(fbTo_(), "【回饋】" + FB_TYPES_[r.type] + "｜" + (r.stage || r.game) + (r.mode ? " " + r.mode : "") + (r.sid ? "｜學號 " + r.sid : ""),
+    FB_TYPES_[r.type] + "\n" + fbWhere_(r) + (r.sid ? "\n學號：" + r.sid : "") + "\n\n" + r.text + "\n\n在試算表看這一則：" + fbRowUrl_(sh, row));
+  return true;
+}
+
+// 同一關 24 小時內累積 3 則「新」回饋 → 提醒一次（每關每天一次）
+function fbHot_(sh, r) {
+  if (!r.stage) return;
+  const last = sh.getLastRow(), from = Math.max(2, last - 399);
+  const rows = sh.getRange(from, 1, last - from + 1, FB_COLS_).getValues(), since = Date.now() - 24 * 3600 * 1000;
+  let n = 0;
+  rows.forEach(function (x) { if (x[0] instanceof Date && x[0].getTime() >= since && String(x[4]) === r.stage && x[9] === "新") n++; });
+  if (n < FB_HOT_N_) return;
+  const props = PropertiesService.getScriptProperties(), key = "fbHot_" + r.stage + "_" + fbDay_(new Date());
+  if (props.getProperty(key)) return;
+  props.setProperty(key, "1");
+  MailApp.sendEmail(fbTo_(), "【回饋】⚠️ " + r.stage + " 這一關一直被反映（24 小時內 " + n + " 則）",
+    r.stage + " 在 24 小時內收到 " + n + " 則「新」回饋，可能有題目或說明需要修正。\n\n最新一則：" + FB_TYPES_[r.type] + "\n" + r.text + "\n\n試算表：" + SpreadsheetApp.getActiveSpreadsheet().getUrl());
+}
+
+// 每晚彙整：把還沒寄過信的回饋（含超過每日上限的緊急類型）一次寄出
+function fbDailyDigest() {
+  const sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(FB_SHEET_);
+  if (!sh || sh.getLastRow() < 2) return;
+  const last = sh.getLastRow(), from = Math.max(2, last - 399);
+  const rows = sh.getRange(from, 1, last - from + 1, FB_COLS_).getValues();
+  const items = [];
+  rows.forEach(function (x, i) { if (x[0] instanceof Date && x[12] === "" && x[9] === "新") items.push({ row: from + i, v: x }); });
+  if (!items.length) return;
+  const by = {};
+  items.forEach(function (it) { const k = it.v[4] || "（未註明關卡）"; (by[k] = by[k] || []).push(it); });
+  const lines = [];
+  Object.keys(by).sort(function (a, b) { return by[b].length - by[a].length; }).forEach(function (k) {
+    lines.push("■ " + k + "（" + by[k].length + " 則）");
+    by[k].forEach(function (it) { lines.push("  " + it.v[2] + "｜" + [it.v[3], it.v[5], it.v[6], it.v[7]].filter(String).join("・") + (it.v[1] ? "｜學號 " + it.v[1] : "") + "\n    " + it.v[8]); });
+    lines.push("");
+  });
+  MailApp.sendEmail(fbTo_(), "【回饋】今日彙整：" + items.length + " 則新建議",
+    lines.join("\n") + "\n試算表：" + SpreadsheetApp.getActiveSpreadsheet().getUrl() + "\n（到「回饋統計」分頁看哪一關被反映最多；在「處理狀態」欄改成「已看／已修正」就不會再被列進彙整）");
+  items.forEach(function (it) { sh.getRange(it.row, 13).setValue("D"); });
+}
+
+// 只要執行一次：建立「每天晚上 20 點」自動寄彙整的排程（再執行也不會重複建立）
+function fbInstallTrigger() {
+  ScriptApp.getProjectTriggers().forEach(function (t) { if (t.getHandlerFunction() === "fbDailyDigest") ScriptApp.deleteTrigger(t); });
+  ScriptApp.newTrigger("fbDailyDigest").timeBased().everyDays(1).atHour(20).create();
 }

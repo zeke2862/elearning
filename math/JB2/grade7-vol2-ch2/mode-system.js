@@ -1,3 +1,5 @@
+/* 泰文小老師說明資料（math/JB2/lessons-th.js，31 關共用）：同步載入，沒有這個檔也不影響中文版 */
+(function () { try { var cs = document.currentScript; if (cs && cs.src && !window.LESSONS_TH && document.readyState === 'loading') document.write('<script src="' + cs.src.replace(/[^\/?#]*([?#].*)?$/, '') + '../lessons-th.js?v=1"><\/script>'); } catch (e) {} })();
 /* =====================================================================
    mode-system.js ── 國一下數學戰略地圖：星等制度 + 模式 + 無極限挑戰 + 小老師
    所有關卡 HTML 都會載入這一支（放在同一個資料夾即可）。
@@ -247,6 +249,12 @@ var MS_CAT_URL = (function () { try { return new URL('../images/home/catnest-s.w
   }
 
   function esc(s) { var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+  /* ===== 說明語言（中文／泰文）：教學畫面（小老師說明、老師教我、一步一步解）共用；選擇記在 localStorage jb2-lang ===== */
+  function isTH() { try { return !!(window.JB2TH && JB2TH.lang && JB2TH.lang() === 'th'); } catch (e) { return false; } }
+  function T(zh, th) { return isTH() && th ? th : zh; }
+  function langBar() { return window.JB2TH && JB2TH.langBar ? JB2TH.langBar() : document.createElement('span'); }
+  function onLang(f) { if (window.JB2TH && JB2TH.onLang) JB2TH.onLang(f); }
+  function thSay(h) { return isTH() && window.JB2TH && JB2TH.say ? JB2TH.say(h) : null; }   // 泰文（純文字）；翻不完整時回 null，改顯示中文
 
   /* ------------------------------------------------------------------
      🐱 小老師說明（取代原本的文字複習卡）
@@ -254,27 +262,42 @@ var MS_CAT_URL = (function () { try { return new URL('../images/home/catnest-s.w
      - 看完可勾選「以後不要再自動顯示」（單關或全部），想再看隨時按「🐱 小老師說明」
      ------------------------------------------------------------------ */
   function lessonSteps(L) {
-    var steps = [{ tag: '', text: '嗨！我是智慧貓小老師～開戰前，我用幾句話幫你複習重點！' }];
-    (L.concept || []).forEach(function (t, i) { steps.push({ tag: '🧠 觀念重點 ' + (i + 1), text: t }); });
-    (L.tip || []).forEach(function (t, i) { steps.push({ tag: '💡 作答技巧 ' + (i + 1), text: t }); });
-    steps.push({ tag: '', text: S.pre ? '重點講完囉！準備好就開始答題，加油～' : '重點講完囉！準備好就去選一個模式，點下去就會開打～加油！', last: true });
+    var TL = (window.LESSONS_TH && window.LESSONS_TH[S.sid]) || {};
+    var steps = [{ tag: '', text: '嗨！我是智慧貓小老師～開戰前，我用幾句話幫你複習重點！',
+      th: 'สวัสดี! ฉันคือคุณครูแมวปราชญ์~ ก่อนเริ่มต่อสู้ ฉันจะทบทวนประเด็นสำคัญให้ฟังสั้น ๆ!' }];
+    (L.concept || []).forEach(function (t, i) { steps.push({ tag: '🧠 觀念重點 ' + (i + 1), tagTh: '🧠 ประเด็นสำคัญ ' + (i + 1), text: t, th: (TL.concept || [])[i] }); });
+    (L.tip || []).forEach(function (t, i) { steps.push({ tag: '💡 作答技巧 ' + (i + 1), tagTh: '💡 เคล็ดลับการทำข้อสอบ ' + (i + 1), text: t, th: (TL.tip || [])[i] }); });
+    steps.push({ tag: '', text: S.pre ? '重點講完囉！準備好就開始答題，加油～' : '重點講完囉！準備好就去選一個模式，點下去就會開打～加油！',
+      th: S.pre ? 'สรุปประเด็นเสร็จแล้ว! พร้อมแล้วก็เริ่มตอบคำถามได้เลย สู้ ๆ นะ~' : 'สรุปประเด็นเสร็จแล้ว! พร้อมแล้วไปเลือกโหมด แล้วคลิกเพื่อเริ่มต่อสู้เลย~ สู้ ๆ!', last: true });
     return steps;
   }
   function buildLesson(L, onDone) {
     var steps = lessonSteps(L), i = 0, timer = 0;
     var box = document.createElement('div'); box.className = 'ms-lesson';
     box.innerHTML =
-      '<div class="ms-thead">🐱 智慧貓小老師說明</div>' +
-      '<div class="ms-tstage"><div class="ms-cat talk" id="ms-cat"><span class="cap">🎓</span><img class="face" src="' + MS_CAT_URL + '" alt="智慧貓"><small>小老師</small></div>' +
+      '<div class="ms-thead"><span id="ms-hd"></span></div>' +
+      '<div class="ms-tstage"><div class="ms-cat talk" id="ms-cat"><span class="cap">🎓</span><img class="face" src="' + MS_CAT_URL + '" alt="智慧貓"><small id="ms-cname"></small></div>' +
       '<div class="ms-bubble" id="ms-bub"></div></div>' +
       '<div class="ms-dots" id="ms-dots"></div>' +
       '<div id="ms-vid"></div>' +
-      '<div class="ms-ctl"><button class="btn ghost" id="ms-tskip">⏭ 直接略過</button><button class="btn" id="ms-tnext">下一句 ▶</button></div>' +
+      '<div class="ms-ctl"><button class="btn ghost" id="ms-tskip"></button><button class="btn" id="ms-tnext"></button></div>' +
       '<div class="ms-skip hide" id="ms-skipbox">' +
-      '<label><input type="checkbox" id="ms-sk1"> 這一關以後不要再自動顯示小老師說明</label>' +
-      '<label><input type="checkbox" id="ms-sk2"> 所有關卡都不要再自動顯示（之後可按「🐱 小老師說明」重看）</label></div>';
+      '<label><input type="checkbox" id="ms-sk1"> <span id="ms-sk1t"></span></label>' +
+      '<label><input type="checkbox" id="ms-sk2"> <span id="ms-sk2t"></span></label></div>';
     var bub = box.querySelector('#ms-bub'), cat = box.querySelector('#ms-cat'), dots = box.querySelector('#ms-dots'), nx = box.querySelector('#ms-tnext');
+    box.querySelector('#ms-hd').parentNode.appendChild(langBar());
     dots.innerHTML = steps.map(function () { return '<i></i>'; }).join('');
+    // 目前這一句要顯示的文字／標籤：泰文模式且這一句有泰文才用泰文，否則用中文
+    function curTxt() { var s = steps[i]; return isTH() && s.th ? s.th : s.text; }
+    function curTag() { var s = steps[i]; return isTH() && s.th ? (s.tagTh || '') : s.tag; }
+    function labels() {
+      box.querySelector('#ms-hd').textContent = T('🐱 智慧貓小老師說明', '🐱 คำอธิบายจากคุณครูแมวปราชญ์');
+      box.querySelector('#ms-cname').textContent = T('小老師', 'คุณครู');
+      box.querySelector('#ms-tskip').textContent = T('⏭ 直接略過', '⏭ ข้ามเลย');
+      box.querySelector('#ms-sk1t').textContent = T('這一關以後不要再自動顯示小老師說明', 'ด่านนี้ไม่ต้องแสดงคำอธิบายของคุณครูอัตโนมัติอีก');
+      box.querySelector('#ms-sk2t').textContent = T('所有關卡都不要再自動顯示（之後可按「🐱 小老師說明」重看）', 'ทุกด่านไม่ต้องแสดงอัตโนมัติอีก (ภายหลังกด “🐱 คำอธิบายคุณครู” เพื่อดูอีกครั้งได้)');
+    }
+    labels();
     function finish() {
       lsSet(skipKey(), box.querySelector('#ms-sk1').checked ? '1' : '');
       if (box.querySelector('#ms-sk2').checked) lsSet(SKIP_ALL, '1');
@@ -283,8 +306,9 @@ var MS_CAT_URL = (function () { try { return new URL('../images/home/catnest-s.w
     function show() {
       var s = steps[i]; clearInterval(timer);
       bub.style.animation = 'none'; void bub.offsetWidth; bub.style.animation = '';
-      bub.innerHTML = (s.tag ? '<div class="ms-tag">' + esc(s.tag) + '</div><br>' : '') + '<span id="ms-line"></span>';
-      var line = bub.querySelector('#ms-line'), n = 0, txt = s.text;
+      var tag = curTag();
+      bub.innerHTML = (tag ? '<div class="ms-tag">' + esc(tag) + '</div><br>' : '') + '<span id="ms-line"></span>';
+      var line = bub.querySelector('#ms-line'), n = 0, txt = curTxt();
       Array.prototype.forEach.call(dots.children, function (d, k) { d.classList.toggle('on', k === i); });
       if (REDUCE) { line.textContent = txt; cat.classList.remove('talk'); }
       else {
@@ -292,9 +316,9 @@ var MS_CAT_URL = (function () { try { return new URL('../images/home/catnest-s.w
         timer = setInterval(function () {
           n += 1; line.textContent = txt.slice(0, n);
           if (n >= txt.length) { clearInterval(timer); cat.classList.remove('talk'); }
-        }, 28);
+        }, isTH() ? 16 : 28);
       }
-      nx.textContent = s.last ? '✅ 我懂了，去選模式！' : '下一句 ▶';
+      nx.textContent = s.last ? T('✅ 我懂了，去選模式！', '✅ เข้าใจแล้ว ไปเลือกโหมด!') : T('下一句 ▶', 'ประโยคถัดไป ▶');
       box.querySelector('#ms-skipbox').classList.toggle('hide', !s.last);
       if (s.last && L.video) {
         box.querySelector('#ms-vid').innerHTML = '<div class="ms-video"><iframe src="' + esc(L.video) + '" title="教學影片" loading="lazy" allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture" allowfullscreen></iframe></div>';
@@ -303,13 +327,15 @@ var MS_CAT_URL = (function () { try { return new URL('../images/home/catnest-s.w
     function next() {
       // 打字中再按一下＝先把這一句顯示完
       var line = bub.querySelector('#ms-line');
-      if (line && line.textContent.length < steps[i].text.length && !REDUCE) { clearInterval(timer); line.textContent = steps[i].text; cat.classList.remove('talk'); return; }
+      if (line && line.textContent.length < curTxt().length && !REDUCE) { clearInterval(timer); line.textContent = curTxt(); cat.classList.remove('talk'); return; }
       if (steps[i].last) return finish();
       i++; show();
     }
     nx.onclick = next;
     bub.onclick = function () { if (!steps[i].last) next(); };
     box.querySelector('#ms-tskip').onclick = finish;
+    // 按「中文／ไทย」：目前這一句立刻換語言（核取方塊的勾選狀態不變）
+    onLang(function () { if (!box.isConnected) return false; labels(); show(); });
     show();
     return box;
   }
@@ -326,7 +352,8 @@ var MS_CAT_URL = (function () { try { return new URL('../images/home/catnest-s.w
     if (!L) return;
     var holder = document.createElement('div'); holder.id = 'ms-lesson-holder';
     parent.insertBefore(holder, gate);
-    var replay = document.createElement('button'); replay.className = 'ms-replay'; replay.type = 'button'; replay.textContent = '🐱 小老師說明（再看一次）';
+    var replay = document.createElement('button'); replay.className = 'ms-replay'; replay.type = 'button'; replay.textContent = T('🐱 小老師說明（再看一次）', '🐱 คำอธิบายคุณครู (ดูอีกครั้ง)');
+    onLang(function () { replay.textContent = T('🐱 小老師說明（再看一次）', '🐱 คำอธิบายคุณครู (ดูอีกครั้ง)'); });
     function open() {
       holder.innerHTML = ''; gate.style.display = 'none'; replay.style.display = 'none';
       holder.appendChild(buildLesson(L, function () { holder.innerHTML = ''; gate.style.display = ''; replay.style.display = ''; }));
@@ -493,22 +520,42 @@ var MS_CAT_URL = (function () { try { return new URL('../images/home/catnest-s.w
     d = similar(type, q, q);
     var inner = qInner();
     var steps = [];
-    if (d.hint) steps.push({ say: '💡 先想一下：' + esc(d.hint), show: 'q' });
-    explainSteps(d.explain).forEach(function (h) { steps.push({ say: h, show: 'q' }); });
-    steps.push({ say: '所以答案是 <b>' + esc(d.ans) + '</b>！換你囉～老師再出一題<b>類似的</b>給你做。', show: 'ans', last: true });
+    if (d.hint) steps.push({ say: '💡 先想一下：' + esc(d.hint), thSrc: d.hint, thPre: '💡 คิดสักนิด: ', show: 'q' });
+    explainSteps(d.explain).forEach(function (h) { steps.push({ say: h, thSrc: h, show: 'q' }); });
+    steps.push({ say: '所以答案是 <b>' + esc(d.ans) + '</b>！換你囉～老師再出一題<b>類似的</b>給你做。',
+      thHtml: 'ดังนั้นคำตอบคือ <b>' + esc(d.ans) + '</b>! ถึงตาคุณแล้ว~ คุณครูจะออกโจทย์ที่ <b>คล้ายกัน</b> ให้คุณทำอีกข้อ', show: 'ans', last: true });
+    // 這一步要顯示的內容：泰文模式優先用泰文（純文字，翻不完整就退回中文）
+    function sayOf(s) {
+      if (!isTH()) return s.say;
+      if (s.thHtml) return s.thHtml;
+      var t = s.thSrc != null ? thSay(s.thSrc) : null;
+      return t ? esc((s.thPre || '') + t) : s.say;
+    }
 
     var ov = document.createElement('div'); ov.id = 'ms-teach-ov';
     var box = document.createElement('div'); box.className = 'box'; ov.appendChild(box);
     box.innerHTML =
-      '<div class="ms-thead">🧑‍🏫 老師教我</div>' +
-      '<div id="ms-t0"><div class="ms-bubble" style="margin:6px 0">用了「老師教我」之後，<b>這一局練兵最多拿 ' + CFG.TAUGHT_MAX + ' ⭐</b>（想拿 3 ⭐ 的話，請不要用）。<br>要讓老師示範嗎？</div>' +
-      '<div class="ms-ctl"><button class="btn ghost" id="ms-tno">不用了</button><button class="btn" id="ms-tyes">🐱 好，請老師教我</button></div></div>' +
-      '<div id="ms-t1" class="hide"><div class="ms-tstage"><div class="ms-cat talk" id="ms-tcat"><span class="cap">🎓</span><img class="face" src="' + MS_CAT_URL + '" alt="智慧貓"><small>老師</small></div>' +
+      '<div class="ms-thead"><span id="ms-th-hd"></span></div>' +
+      '<div id="ms-t0"><div class="ms-bubble" id="ms-t0b" style="margin:6px 0"></div>' +
+      '<div class="ms-ctl"><button class="btn ghost" id="ms-tno"></button><button class="btn" id="ms-tyes"></button></div></div>' +
+      '<div id="ms-t1" class="hide"><div class="ms-tstage"><div class="ms-cat talk" id="ms-tcat"><span class="cap">🎓</span><img class="face" src="' + MS_CAT_URL + '" alt="智慧貓"><small id="ms-tcname"></small></div>' +
       '<div class="ms-bubble" id="ms-tbub"></div></div>' +
       '<div class="ms-tq hide" id="ms-tq"><div class="qt" id="ms-tqt"></div><div class="ms-topts" id="ms-topts"></div></div>' +
-      '<div class="ms-ctl"><button class="btn ghost" id="ms-tcancel">取消</button><button class="btn" id="ms-tnext2">下一步 ▶</button></div></div>';
+      '<div class="ms-ctl"><button class="btn ghost" id="ms-tcancel"></button><button class="btn" id="ms-tnext2"></button></div></div>';
     document.body.appendChild(ov);
     var i = 0, $b = function (s) { return box.querySelector(s); };
+    $b('#ms-th-hd').parentNode.appendChild(langBar());
+    function labels() {
+      $b('#ms-th-hd').textContent = T('🧑‍🏫 老師教我', '🧑‍🏫 ครูช่วยสอน');
+      $b('#ms-t0b').innerHTML = isTH()
+        ? 'หลังใช้ “ครูช่วยสอน” <b>รอบฝึกซ้อมนี้จะได้สูงสุด ' + CFG.TAUGHT_MAX + ' ⭐</b> (อยากได้ 3 ⭐ ให้อย่าใช้)<br>ต้องการให้คุณครูสาธิตให้ดูไหม?'
+        : '用了「老師教我」之後，<b>這一局練兵最多拿 ' + CFG.TAUGHT_MAX + ' ⭐</b>（想拿 3 ⭐ 的話，請不要用）。<br>要讓老師示範嗎？';
+      $b('#ms-tno').textContent = T('不用了', 'ไม่ต้อง');
+      $b('#ms-tyes').textContent = T('🐱 好，請老師教我', '🐱 ได้ ช่วยสอนหน่อย');
+      $b('#ms-tcname').textContent = T('老師', 'คุณครู');
+      $b('#ms-tcancel').textContent = T('取消', 'ยกเลิก');
+    }
+    labels();
     function close() { ov.remove(); document.removeEventListener('keydown', onKey); }
     function onKey(e) { if (e.key === 'Escape') close(); }
     document.addEventListener('keydown', onKey);
@@ -523,7 +570,7 @@ var MS_CAT_URL = (function () { try { return new URL('../images/home/catnest-s.w
     function go() {
       var s = steps[i], bub = $b('#ms-tbub'), cat = $b('#ms-tcat');
       bub.style.animation = 'none'; void bub.offsetWidth; bub.style.animation = '';
-      bub.innerHTML = s.say;
+      bub.innerHTML = sayOf(s);
       $b('#ms-tq').classList.toggle('hide', s.show === 'none');
       Array.prototype.forEach.call($b('#ms-topts').children, function (sp) {
         var ok = sp.dataset.v === String(d.ans);
@@ -531,14 +578,16 @@ var MS_CAT_URL = (function () { try { return new URL('../images/home/catnest-s.w
         sp.classList.toggle('dim', s.show === 'ans' && !ok);
       });
       cat.classList.add('talk'); if (!REDUCE) setTimeout(function () { cat.classList.remove('talk'); }, 900); else cat.classList.remove('talk');
-      $b('#ms-tnext2').textContent = s.last ? '✏️ 換我做類似題！' : '下一步 ▶';
+      $b('#ms-tnext2').textContent = s.last ? T('✏️ 換我做類似題！', '✏️ ถึงตาฉันทำข้อคล้ายกัน!') : T('下一步 ▶', 'ขั้นถัดไป ▶');
     }
+    // 按「中文／ไทย」：目前這一步立刻換語言
+    onLang(function () { if (!ov.isConnected) return false; labels(); if (!$b('#ms-t1').classList.contains('hide')) go(); });
     $b('#ms-tnext2').onclick = function () {
       if (steps[i].last) {
         close();
         var sim = similar(type, d, q);
         qs[idx - 1] = sim; idx--; next();
-        var hb = $('#hintbox'); if (hb) { hb.textContent = '🧑‍🏫 老師出了一題「類似的」給你，換你試試看！'; hb.classList.remove('hide'); }
+        var hb = $('#hintbox'); if (hb) { hb.textContent = T('🧑‍🏫 老師出了一題「類似的」給你，換你試試看！', '🧑‍🏫 คุณครูออกโจทย์ที่ “คล้ายกัน” มาให้ ถึงตาคุณลองดู!'); hb.classList.remove('hide'); }
         return;
       }
       i++; go();
@@ -548,7 +597,7 @@ var MS_CAT_URL = (function () { try { return new URL('../images/home/catnest-s.w
   function updateBadge() {
     var b = $('#ms-taught'); if (!b) return;
     b.style.display = S.taught ? '' : 'none';
-    b.textContent = '🧑‍🏫 用了老師教我 → 這局最多 ' + CFG.TAUGHT_MAX + ' ⭐';
+    b.textContent = T('🧑‍🏫 用了老師教我 → 這局最多 ' + CFG.TAUGHT_MAX + ' ⭐', '🧑‍🏫 ใช้ครูช่วยสอนแล้ว → รอบนี้ได้สูงสุด ' + CFG.TAUGHT_MAX + ' ⭐');
   }
 
   /* ------------------------------------------------------------------
@@ -673,37 +722,81 @@ var MS_CAT_URL = (function () { try { return new URL('../images/home/catnest-s.w
     if (bl) bl.insertBefore(ov, bl.querySelector('#say') || null);
     else { ov.classList.add('ms-fixed'); document.body.appendChild(ov); }
   }
+  /* 名詞小卡的泰文（key＝中文詞；顯示時：ไทย（中文）：解釋） */
+  var GLOSS_TH = {
+    '交叉相乘': ['การคูณไขว้', 'พจน์นอก × พจน์นอก ＝ พจน์ใน × พจน์ใน เปลี่ยนสัดส่วนให้เป็นสมการธรรมดา'],
+    '外項': ['พจน์นอก', 'a และ d ที่อยู่นอกสุดของสัดส่วน a : b = c : d'],
+    '內項': ['พจน์ใน', 'b และ c ที่อยู่ตรงกลางของสัดส่วน a : b = c : d'],
+    '移項': ['การย้ายข้าง', 'ย้ายพจน์หนึ่งไปอีกข้างของเครื่องหมายเท่ากับ (หรืออสมการ) ย้ายแล้วต้องเปลี่ยนเครื่องหมาย (＋ เป็น －, － เป็น ＋)'],
+    '代入': ['การแทนค่า', 'แทนตัวไม่ทราบค่าด้วยตัวเลขหรือนิพจน์ที่รู้แล้ว'],
+    '代回': ['การแทนกลับ', 'นำตัวเลขที่คำนวณได้ไปใส่กลับในสมการเดิม เพื่อหาตัวไม่ทราบค่าอีกตัวหนึ่ง'],
+    '消去': ['การกำจัด', 'นำสองสมการมาบวกหรือลบกัน เพื่อให้ตัวไม่ทราบค่าตัวหนึ่งหายไป'],
+    '分配律': ['สมบัติการแจกแจง', 'ตัวเลขนอกวงเล็บต้องคูณกับทุกพจน์ในวงเล็บ'],
+    '去括號': ['การเปิดวงเล็บ', 'ถอดวงเล็บออก แล้วจัดการพจน์ข้างในตามกฎ'],
+    '同類項': ['พจน์คล้าย', 'พจน์ที่มีตัวอักษรเหมือนกัน (ส่วน “พจน์ค่าคงตัว” ที่มีแต่ตัวเลข ก็นับเป็นพจน์คล้ายกันเอง)'],
+    '係數': ['สัมประสิทธิ์', 'ตัวเลขที่อยู่หน้าตัวอักษร (รวมเครื่องหมายบวก/ลบด้วย)'],
+    '常數項': ['พจน์ค่าคงตัว', 'พจน์ที่ไม่มีตัวอักษร มีแต่ตัวเลข'],
+    '「項」': ['พจน์', 'แต่ละส่วนย่อยที่คั่นด้วยเครื่องหมายบวกหรือลบ (เครื่องหมายติดไปกับพจน์นั้น)'],
+    '合計': ['ผลรวม', 'บวกทั้งหมดเข้าด้วยกัน'],
+    '相差': ['ผลต่าง', 'เอาจำนวนมากลบจำนวนน้อย'],
+    '中位數': ['มัธยฐาน', 'จำนวนที่อยู่กลางสุดหลังจากเรียงข้อมูลจากน้อยไปมาก'],
+    '眾數': ['ฐานนิยม', 'จำนวนที่ปรากฏบ่อยที่สุด'],
+    '不超過': ['ไม่เกิน', 'มากที่สุดถึงจำนวนนั้น รวมกรณีที่เท่ากันพอดี (≤)'],
+    '至少': ['อย่างน้อย', 'อย่างน้อยต้องถึงจำนวนนั้น รวมกรณีที่เท่ากันพอดี (≥)']
+  };
   function stUI(ov, getMiss) {
-    var shown = {}, hintI = 0;
+    var shown = {}, hintI = 0, lastSay = null, lastFb = null, glossH = null;
     var $o = function (q2) { return ov.querySelector(q2); };
+    /* 標題、按鈕等固定文字＋「中文／ไทย」切換鈕（切換後這一步的說明、提示、名詞小卡也立刻換語言） */
+    var hd = $o('.ms-thead'), zhHd = hd ? hd.textContent : '', cname = $o('.ms-cat small'), hbtn = $o('#st-hint');
+    if (hd) { hd.textContent = ''; var hs = document.createElement('span'); hd.appendChild(hs); hd.appendChild(langBar()); hd._t = hs; }
+    function labels() {
+      if (hd) hd._t.textContent = isTH() ? (/化簡/.test(zhHd) ? 'คุณครูแมวพาคุณทำทีละขั้น: ทำให้เป็นอย่างง่าย' : 'คุณครูแมวพาคุณแก้ทีละขั้น') : zhHd;
+      if (cname) cname.textContent = T('小老師', 'คุณครู');
+      if (hbtn) hbtn.textContent = T('💡 提示', '💡 คำใบ้');
+    }
+    labels();
+    /* 把一段中文說明顯示出來：泰文模式就換成泰文（翻不完整的整句退回中文，不顯示半中半泰） */
+    function putSay(h) {
+      var b = $o('#st-say'), t = thSay(h);
+      if (t) b.textContent = t; else b.innerHTML = h;
+    }
+    function putFb(h, kind) {
+      var f = $o('#st-fb'), t = null;
+      if (isTH() && window.JB2TH && JB2TH.step) t = JB2TH.step(h);
+      f.className = 'st-fb' + (kind === 'hint' ? ' hint' : '');
+      if (t) f.textContent = t; else f.innerHTML = h;
+      f.style.display = 'block';
+    }
     function fb(h, kind) {
-      var f = $o('#st-fb'); f.className = 'st-fb' + (kind === 'hint' ? ' hint' : ''); f.innerHTML = h; f.style.display = 'block';
-      /* 泰文說明：點錯步驟／要提示時，旁邊多一顆可點的 🌐 ไทย，按下去換成泰文，再按換回中文 */
-      if (window.JB2TH && JB2TH.step) {
-        var zh = h, th = '', on = false, tx = document.createElement('span'), bt = document.createElement('button');
-        tx.innerHTML = zh; f.innerHTML = ''; f.appendChild(tx);
-        bt.type = 'button'; bt.textContent = '🌐 ไทย'; bt.setAttribute('aria-label', 'แปลเป็นภาษาไทย / 切換成泰文說明');
-        bt.style.cssText = 'margin-left:8px;padding:2px 12px;font-size:.85rem;border:1px solid #b06a5a;border-radius:999px;background:#fff;color:#3a1a12;cursor:pointer;vertical-align:middle;font-weight:700';
-        bt.onclick = function (ev) { if (ev) ev.stopPropagation(); if (!th) th = JB2TH.step(zh); on = !on; tx.innerHTML = on ? th : zh; bt.textContent = on ? '🌐 中文' : '🌐 ไทย'; };
-        f.appendChild(bt);
-      }
-      f.style.animation = 'none'; void f.offsetWidth; f.style.animation = '';
+      lastFb = { h: h, kind: kind }; putFb(h, kind);
+      var f = $o('#st-fb'); f.style.animation = 'none'; void f.offsetWidth; f.style.animation = '';
+    }
+    function putGloss() {
+      if (!glossH) return;
+      var out = glossH.map(function (g) {
+        var th = isTH() && GLOSS_TH[g[0]];
+        return th ? '<b>' + th[0] + ' (' + g[0].replace(/[「」]/g, '') + ')</b>：' + th[1] : '<b>' + g[0] + '</b>：' + g[1];
+      });
+      $o('#st-gl').innerHTML = out.length ? '<div class="gl">' + T('📘 名詞小卡', '📘 การ์ดคำศัพท์') + '<br>' + out.join('<br>') + '</div>' : '';
     }
     function gloss(h) {
       var plain = String(h).replace(/<[^>]+>/g, ''), out = [], rest = plain;
-      GLOSS.forEach(function (g) { if (rest.indexOf(g[0]) >= 0 && !shown[g[0]]) { shown[g[0]] = 1; out.push('<b>' + g[0] + '</b>：' + g[1]); rest = rest.split(g[0]).join(''); } });
-      $o('#st-gl').innerHTML = out.length ? '<div class="gl">📘 名詞小卡<br>' + out.join('<br>') + '</div>' : '';
+      GLOSS.forEach(function (g) { if (rest.indexOf(g[0]) >= 0 && !shown[g[0]]) { shown[g[0]] = 1; out.push(g); rest = rest.split(g[0]).join(''); } });
+      glossH = out; putGloss();
     }
     function say(h, kind) {
       if (kind) { fb(h, kind === 'hint' ? 'hint' : 'warn'); return; }
-      var b = $o('#st-say'); b.innerHTML = h; $o('#st-fb').style.display = 'none'; hintI = 0; gloss(h);
+      lastSay = h; lastFb = null; putSay(h); $o('#st-fb').style.display = 'none'; hintI = 0; gloss(h);
     }
     function hint(list) { var l = (list || []).filter(Boolean).concat(GEN_HINTS), k = Math.min(hintI, l.length - 1); fb('💡 ' + l[k], 'hint'); hintI++; }
     function meter(n) {
       var m = $o('#st-meter'); if (!m) return; m.style.display = 'none'; return;
-      m.className = 'st-meter' + (n >= 2 ? ' over' : '');
-      m.textContent = n >= 2 ? '失誤 ' + n + ' 次：這題會記成「答錯」，不過把步驟做完會學得更紮實！' : '失誤 ' + n + ' 次（0～1 次算答對；2 次以上這題算答錯）';
     }
+    onLang(function () {
+      if (!ov.isConnected) return false;
+      labels(); if (lastSay != null) putSay(lastSay); if (lastFb) putFb(lastFb.h, lastFb.kind); putGloss();
+    });
     return { say: say, hint: hint, meter: meter, fb: fb };
   }
   function stFinish(wrongCount, okEq, misses) {
@@ -861,7 +954,7 @@ var MS_CAT_URL = (function () { try { return new URL('../images/home/catnest-s.w
       say((scopeG ? '<b>括號先做</b>：這組括號裡面有同類項，先在括號裡合併，再去括號。<br>' : (gi === 0 && hist.length > 1 ? '括號都拆完了！' : '')) + '先別急著算，我們先<b>找同類項</b>。<br>請點出' + (scopeG ? '括號裡' : '算式中') + '所有的 <b>' + gLabel(g.v) + '</b>，點好後按「確認」。');
       renderChips();
       var el = $o('#st-ch'); el.innerHTML = '';
-      var b = document.createElement('button'); b.type = 'button'; b.className = 'btn'; b.textContent = '✅ 確認';
+      var b = document.createElement('button'); b.type = 'button'; b.className = 'btn'; b.textContent = T('✅ 確認', '✅ ยืนยัน');
       b.onclick = function () {
         var ok = gsel.length === g.ts.length && g.ts.every(function (t) { return gsel.indexOf(t) >= 0; });
         if (ok) { grouped.push(g); colorMap[g.v] = Object.keys(colorMap).length; gi++; el.innerHTML = ''; say('✅ 沒錯！這些都是 ' + (g.v ? g.v + ' 項' : '常數項') + '，同類項分好了。'); gsel = []; renderChips(); setTimeout(classifyNext, 700); return; }
@@ -2705,8 +2798,9 @@ var MS_CAT_URL = (function () { try { return new URL('../images/home/catnest-s.w
       // 練兵專用：老師教我 + 已使用提示
       var tools = $('.tools');
       if (tools && !S.flag) {
-        var tb = document.createElement('button'); tb.className = 'tool'; tb.id = 't-teach'; tb.type = 'button'; tb.textContent = '🧑‍🏫 老師教我'; tb.style.display = 'none';
+        var tb = document.createElement('button'); tb.className = 'tool'; tb.id = 't-teach'; tb.type = 'button'; tb.textContent = T('🧑‍🏫 老師教我', '🧑‍🏫 ครูช่วยสอน'); tb.style.display = 'none';
         tb.onclick = teachOpen; tools.appendChild(tb);
+        onLang(function () { if (!tb.isConnected) return false; tb.textContent = T('🧑‍🏫 老師教我', '🧑‍🏫 ครูช่วยสอน'); });
       }
       var top = $('#s-game .top');
       if (top) { var bd = document.createElement('span'); bd.id = 'ms-taught'; bd.style.display = 'none'; top.appendChild(bd); }
@@ -2784,9 +2878,9 @@ var MS_CAT_URL = (function () { try { return new URL('../images/home/catnest-s.w
         if (!o.fail && acc >= CFG.EASY_STAR3_ACC - 1e-9 && hinted) add += '<br>💡 這一局用了提示，所以是 2 ⭐；不用提示全部答對，就是完美通關！';
         if (S.taught > 0 && !o.fail && stars > CFG.TAUGHT_MAX) {
           stars = CFG.TAUGHT_MAX;
-          add += '<br>🧑‍🏫 這一局用了「老師教我」，最多拿 ' + CFG.TAUGHT_MAX + ' ⭐（想拿 3 ⭐ 就自己挑戰一次吧！）';
+          add += T('<br>🧑‍🏫 這一局用了「老師教我」，最多拿 ' + CFG.TAUGHT_MAX + ' ⭐（想拿 3 ⭐ 就自己挑戰一次吧！）', '<br>🧑‍🏫 รอบนี้ใช้ “ครูช่วยสอน” จึงได้สูงสุด ' + CFG.TAUGHT_MAX + ' ⭐ (อยากได้ 3 ⭐ ก็ลองท้าทายด้วยตัวเองอีกครั้งนะ!)');
         } else if (S.taught > 0) {
-          add += '<br>🧑‍🏫 這一局用了「老師教我」。';
+          add += T('<br>🧑‍🏫 這一局用了「老師教我」。', '<br>🧑‍🏫 รอบนี้ใช้ “ครูช่วยสอน”');
         }
         if (names[o.stars] && names[stars] && o.stars !== stars && $i.textContent.indexOf(names[o.stars]) === 0) $i.textContent = $i.textContent.replace(names[o.stars], names[stars]);
         if (!o.fail && stars >= 1) {

@@ -161,3 +161,21 @@
 - 掛勾：mode-system.js（六章相同）的 begin() 呼叫 JB2Guard.roundStart、result() 呼叫 roundEnd，並提供 window.__jb2Redraw 重抽；地圖頁收到 stage-exit reason 'viol' 會跳提示。
 - 老師後台的「離開次數」（localStorage jb2-leave-v1 的 n／secs）照舊累計，意義改為「換題次數」。「答錯 3.5 秒內重開」的亂猜規則（jb2-guess.js）沒動。
 
+
+## 2026-11-26 教學模式說明：中文／泰文可選（小老師說明、老師教我、一步一步解）
+- 學生在教學畫面標題旁按「中文｜ไทย」切換，選擇記在 localStorage `jb2-lang`（zh／th），三個教學畫面共用；切換時目前這一句立刻換語言。預設中文。
+- 新檔 `lessons-th.js`（math/JB2，31 關共用）：小老師「觀念重點／作答技巧」的泰文，手工翻譯；中文原文仍在各章 `lessons*.js`，句子順序要一一對應。`mode-system.js` 開頭用 document.write 載入它；缺哪一關就自動用中文。
+- `explain-th.js`（六章同一份）新增：語言切換（`JB2TH.lang/setLang/onLang/langBar`）、`JB2TH.say()`（教學正面說明的翻譯，**整句翻得完整才用泰文，翻不完就整句顯示中文**，不顯示半中半泰）、`HINT_TH`（題目提示句對照表，數字用 # 代入）、`FAM`／`STEP2`（一步一步解的句型規則，想補一句就加一行）。
+- `mode-system.js`（六章同一份）：小老師說明、老師教我、一步一步解（含名詞小卡、提示、完成訊息、按鈕與標題）都跟著語言走。
+- 覆蓋率（隨機點擊抽樣，非全部）：老師教我的提示句約 99.7% 為泰文；一步一步解的說明約 92%、提示／點錯回饋約 80% 為泰文，其餘整句退回中文。補法：在 `explain-th.js` 的 STEP2 加規則。
+- 未做：模式選單與地圖頁的說明文字、答題後的結算頁文字仍為中文；答錯橫幅原本就有的「🌐 ไทย」鈕維持原樣。
+- **數學保衛戰**（zeke2862/MATHTESTJB2，Vercel 那份）本次沒改：該倉庫這次工作階段無法連線。移植方式見 `保衛戰泰文說明-移植說明.md`。
+- 測試方式：用 Playwright 開 `file://` 頁面，31 關 × 中／泰共 62 頁載入無錯誤；小老師每一句在泰文模式皆為泰文。
+
+## 2026-11-27 回饋區（💬 給遊戲的建議）＋ Email 通知
+- 新檔 `jb2-feedback.js`（JB2 與保衛戰共用同一份，data-game 區分）：左側 💬 小圓鈕 → 類型＋文字（中泰雙語、300 字、每學號每天 5 則）→ POST `{action:'feedback'}` 到雲端同步網址；自動附學號／關卡／模式／語言／裝置；離線存 localStorage `jb2-fb-queue`，恢復後補送。視窗開啟時用 window capture 擋住遊戲的鍵盤監聽，數字鍵才打得進去。
+- 已加進 JB2 學生頁 39 頁（總地圖、6 章地圖、31 關、對戰頁）；教師版地圖不加。
+- 後台 `雲端同步-Code.gs`：`fbSubmit_`（寫入「回饋」分頁、防重複、每學號每天 5 則、300 字、公式注入防護）、`fbNotifyUrgent_`（🐞／🌐 立刻寄，每天最多 20 封）、`fbHot_`（同關 24 小時 3 則「新」提醒）、`fbDailyDigest`＋`fbInstallTrigger`（每晚 20:00 彙整）；自動建「回饋統計」分頁。收件人＝指令碼屬性 NOTIFY_EMAIL（不寫進程式碼）。
+- 保衛戰（mathtestjb2 倉庫，分支 claude/feedback-widget）：`js/jb2-feedback.js`＋`js/jb2_fb_hook.js`（包住 G.startNode，記最近 20 分鐘內玩的關卡）；index.html 多兩行。
+- 部署步驟見 `回饋區部署說明.md`（Apps Script 要貼新程式、執行 fbInstallTrigger、重新部署新版本）。
+- 驗證：Node 模擬試算表／信箱測後台邏輯 12 項通過；Playwright 測前端（送出、payload、離線佇列、補送）通過。**尚未做：真的連 Google 帳號的實測**。
