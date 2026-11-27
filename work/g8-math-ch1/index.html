@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="zh-Hant"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>中二數學第一章-寸守濤</title>
+<title>中二數學第一章-寸守濤（沉浸闖關）</title>
 <style>
 :root{color-scheme:dark;--bg:#0a0f1f;--bg2:#1a1030;--bg3:#07303a;--tx:#f5f1e8;--mut:#a9b2cb;--gl:rgba(255,255,255,.08);--bd:rgba(255,255,255,.2);--ac:#ffd27a;--ac2:#7ae0ff;--ok:#6ef2b0;--no:#ff7a8e;--sh:rgba(0,0,0,.4);box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 @media (prefers-color-scheme:light){:root:not([data-theme="dark"]){color-scheme:light;--bg:#eef1f8;--bg2:#f6e9dc;--bg3:#dcf1f4;--tx:#1b2036;--mut:#5a627d;--gl:rgba(255,255,255,.55);--bd:rgba(30,40,80,.16);--ac:#b8741a;--ac2:#1c7fa8;--ok:#0f9d63;--no:#d63a55;--sh:rgba(40,50,90,.22)}}
@@ -77,6 +77,9 @@ h1 .ch{color:inherit}
 .mute{position:fixed;top:calc(env(safe-area-inset-top,0px) + 10px);right:12px;z-index:5}
 @media (max-width:380px){.opts{grid-template-columns:1fr}}
 @media (prefers-reduced-motion:reduce){*{animation-duration:.01s!important;animation-iteration-count:1!important}}
+.fi{display:block;width:100%;font:inherit;font-size:17px;padding:12px 14px;margin-bottom:10px;border-radius:14px;border:1px solid var(--bd);background:var(--gl);color:var(--tx);text-align:center;outline:0}.fi:focus{border-color:var(--ac)}
+.d3{height:230px;border-radius:22px;margin:10px 0;overflow:hidden;background:linear-gradient(180deg,rgba(130,200,255,.35),rgba(255,255,255,.05));border:1px solid var(--bd)}.d3.s{height:170px}.d3 canvas{width:100%!important;height:100%!important;display:block}
+.d3,.d3.s{height:auto!important;aspect-ratio:36/17}
 </style></head>
 <body>
 <canvas id="fx"></canvas>
@@ -183,8 +186,13 @@ const L=[
 ["擲一顆骰子，擲出 6 的概率是多少？",["1/6","1/3","1/2","6"],0,"โยนลูกเต๋าหนึ่งลูก ความน่าจะเป็นที่จะได้ 6 เท่ากับเท่าไร","มีผลลัพธ์ทั้งหมด 6 แบบ ได้ 6 แบบเดียว ความน่าจะเป็นคือ 1/6","概率＝有利結果數÷所有可能結果數"],
 ["袋中有 3 個紅球、2 個藍球，隨機抽一個，抽到紅球的概率是多少？",["3/5","2/5","3/2","1/3"],0,"ในถุงมีลูกบอลแดง 3 ลูก น้ำเงิน 2 ลูก หยิบหนึ่งลูก ความน่าจะเป็นที่จะได้ลูกแดงเท่ากับเท่าไร","ลูกแดง 3 ลูกจากทั้งหมด 5 ลูก ความน่าจะเป็นคือ 3/5","紅球 3 個，共 5 個球"],
 ["擲硬幣兩次，兩次都是正面的概率是多少？",["1/4","1/2","1/3","2"],0,"โยนเหรียญสองครั้ง ความน่าจะเป็นที่จะออกหัวทั้งสองครั้งเท่ากับเท่าไร","แต่ละครั้งได้หัว 1/2 ดังนั้นสองครั้งคือ 1/2 × 1/2 = 1/4","獨立事件的概率相乘"]]}];
-let P=[];try{P=JSON.parse(localStorage.getItem('m2q')||'')||[]}catch(e){}P=Array.from({length:L.length},(_,k)=>+P[k]||0);
-const save=()=>{try{localStorage.setItem('m2q',JSON.stringify(P))}catch(e){}};
+let ME=null,P=Array(L.length).fill(0);try{ME=JSON.parse(localStorage.getItem('m2me')||'null')}catch(e){}
+const esc=s=>String(s).replace(/[&<>"']/g,c=>'&#'+c.charCodeAt(0)+';');
+const pk=()=>'m2q_'+(ME?ME.id:'');
+let COIN=0;function loadP(){try{COIN=+localStorage.getItem('m2c_'+ME.id)||0}catch(e){}let a=[];try{a=JSON.parse(localStorage.getItem(pk())||'')||[]}catch(e){}P=Array.from({length:L.length},(_,k)=>+a[k]||0)}
+const save=()=>{try{localStorage.setItem(pk(),JSON.stringify(P))}catch(e){}};
+function setAct(){try{if(ME&&/^[A-Za-z0-9_-]{2,12}$/.test(ME.id))localStorage.setItem('keyagent_active_student',JSON.stringify({studentNumber:ME.id,verified:false}))}catch(e){}}
+if(ME&&ME.id){loadP();setAct()}else ME=null;
 const un=i=>i==0||P[i-1]>=2;
 const stars=n=>[0,1,2].map(k=>`<i class="${k<n?'on':''}">★</i>`).join('');
 const shuf=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
@@ -212,23 +220,26 @@ const scr=h=>{app.innerHTML='<div class="scr">'+h+'</div>';scrollTo(0,0)};
 document.addEventListener('pointermove',e=>{const t=e.target.closest&&e.target.closest('.tilt');if(!t)return;const r=t.getBoundingClientRect(),x=(e.clientX-r.left)/r.width-.5,y=(e.clientY-r.top)/r.height-.5;t.style.transform=`perspective(700px) rotateY(${x*16}deg) rotateX(${-y*16}deg) translateZ(10px)`});
 document.addEventListener('pointerout',e=>{const t=e.target.closest&&e.target.closest('.tilt');if(t)t.style.transform=''});
 /* ---- screens ---- */
-function home(){scr(`<div class="hero">${geo(0,'big')}<h1 id="t"></h1><p class="sub" id="s"></p><button class="btn" id="go">開始闖關</button></div>`);
-reveal($('#t'),'中二數學');reveal($('#s'),'沉浸式闖關・九大關卡・集齊星星',500);$('#go').onclick=()=>{sfx.click();burst(innerWidth/2,innerHeight*.6,24);map()}}
-function map(){scr(`<div class="top"><button class="ib" id="bk">‹</button><h2>選擇關卡</h2><span></span></div><div class="grid">${L.map((l,i)=>{const u=un(i);return`<div class="card glass tilt ${u?'':'lk'}" data-i="${i}" style="animation-delay:${i*.09}s"><div class="ic">${u?l.ic:'🔒'}</div><b>第 ${i+1} 關 · ${l.n}</b><small>${u?l.d:'上一關獲 2 星解鎖'}</small><div class="st">${stars(P[i])}</div></div>`}).join('')}</div>`);
-$('#bk').onclick=()=>{sfx.click();home()};
+function home(){scr(`<div class="hero">${geo(0,'big')}<h1 id="t"></h1><p class="sub" id="s"></p><div class="glass" style="padding:18px;max-width:340px;margin:0 auto"><input id="sid" class="fi" inputmode="numeric" autocomplete="off" placeholder="學號" maxlength="12" value="${ME?esc(ME.id):''}"><input id="snm" class="fi" autocomplete="off" placeholder="姓名" maxlength="20" value="${ME?esc(ME.name):''}"><div id="er" style="min-height:1.5em;margin-bottom:8px;color:var(--no);font-size:14px"></div><button class="btn" id="go">登入並開始闖關</button></div></div>`);
+reveal($('#t'),'中二數學');reveal($('#s'),'沉浸式闖關・九大關卡・集齊星星',500);$('#go').onclick=()=>{const id=$('#sid').value.trim(),nm=$('#snm').value.trim(),er=$('#er');
+if(!id||!nm){er.textContent='請先填寫學號和姓名才能開始喔！';sfx.no();return}
+if(!/^[A-Za-z0-9]{1,12}$/.test(id)){er.textContent='學號只能用數字或英文字母（最多 12 碼）';sfx.no();return}
+ME={id,name:nm};try{localStorage.setItem('m2me',JSON.stringify(ME))}catch(e){}setAct();loadP();sfx.click();burst(innerWidth/2,innerHeight*.6,24);map()}}
+function map(){if(!ME)return home();scr(`<div class="top"><button class="ib" id="bk">‹</button><h2>選擇關卡</h2><span style="font-size:13px;color:var(--mut);text-align:right">${esc(ME.id)} ${esc(ME.name)}<br>🪙 ${COIN}・${rank()}</span></div><div class="d3" id="d3"></div><div class="grid">${L.map((l,i)=>{const u=un(i);return`<div class="card glass tilt ${u?'':'lk'}" data-i="${i}" style="animation-delay:${i*.09}s"><div class="ic">${u?l.ic:'🔒'}</div><b>第 ${i+1} 關 · ${l.n}</b><small>${u?l.d:'上一關獲 2 星解鎖'}</small><div class="st">${stars(P[i])}</div></div>`}).join('')}</div>`);
+$('#bk').onclick=()=>{sfx.click();home()};mount3d('map');
 document.querySelectorAll('.card').forEach(c=>c.onclick=()=>{const i=+c.dataset.i;if(!un(i)){sfx.no();c.classList.remove('shake');void c.offsetWidth;c.classList.add('shake');return}sfx.click();start(i)})}
 let cur;
 function start(i){cur={i,q:0,ok:0};tStart();showQ()}
 function showQ(){const l=L[cur.i],q=l.qs[cur.q],ord=shuf([0,1,2,3]);cur.lock=false;
-scr(`<div class="top"><button class="ib" id="bk">‹</button><h2>${l.n}</h2><span></span></div><div class="dots">${[0,1,2].map(k=>`<i class="${k<cur.q?'done':k==cur.q?'on':''}"></i>`).join('')}</div><div class="qwrap">${geo(cur.i)}</div><div class="q glass" id="q"></div><div class="opts">${ord.map((o,k)=>`<button class="opt" data-o="${o}" style="animation-delay:${.5+k*.08}s">${q[1][o]}</button>`).join('')}</div><div id="fb"></div>`);
-reveal($('#q'),q[0]);$('#bk').onclick=()=>{sfx.click();map()};
+scr(`<div class="top"><button class="ib" id="bk">‹</button><h2>${l.n}</h2><span style="font-size:13px">🪙 <b id="cn">${COIN}</b></span></div><div class="dots">${[0,1,2].map(k=>`<i class="${k<cur.q?'done':k==cur.q?'on':''}"></i>`).join('')}</div><div class="d3 s" id="d3"></div><div class="q glass" id="q"></div><div class="opts">${ord.map((o,k)=>`<button class="opt" data-o="${o}" style="animation-delay:${.5+k*.08}s">${q[1][o]}</button>`).join('')}</div><div id="fb"></div>`);
+reveal($('#q'),q[0]);mount3d('q');$('#bk').onclick=()=>{sfx.click();map()};
 document.querySelectorAll('.opt').forEach(b=>b.onclick=()=>ans(b,q))}
 function ans(b,q){if(cur.lock)return;cur.lock=true;const ok=+b.dataset.o===q[2],all=[...document.querySelectorAll('.opt')];
 all.forEach(o=>{if(+o.dataset.o===q[2])o.classList.add('ok');else if(o!==b)o.classList.add('dim')});
 const last=cur.q==2,nx=`<div class="nx"><button class="btn" id="nx">${last?'查看結果':'下一題 →'}</button></div>`;
-if(ok){cur.ok++;sfx.ok();const r=b.getBoundingClientRect();burst(r.left+r.width/2,r.top+r.height/2);
-$('#fb').innerHTML=`<div class="fb"><div class="msg ok">✔ 答對了！${q[5]}</div>${nx}</div>`}
-else{b.classList.add('no');sfx.no();
+if(ok){cur.ok++;sfx.ok();award();const r=b.getBoundingClientRect();burst(r.left+r.width/2,r.top+r.height/2);
+$('#fb').innerHTML=`<div class="fb"><div class="msg ok">✔ 答對了！${q[5]}<br>🎁 獎勵：🪙 +10（共 ${COIN}）</div>${nx}</div>`}
+else{oops();b.classList.add('no');sfx.no();
 $('#fb').innerHTML=`<div class="fb"><div class="msg no">✘ 再看看正確答案</div><div class="th glass"><div class="tag">🇹🇭 คำแปลภาษาไทย ＋ 中文 · ยังไม่ถูก ไม่เป็นไร!</div><p><b>โจทย์:</b> ${q[3]}</p><p><b>อธิบาย:</b> ${q[4]}</p><div class="zh"><p><b>中文題目：</b>${q[0]}</p><p><b>中文解釋：</b>${q[5]}</p></div></div>${nx}</div>`}
 $('#nx').onclick=()=>{sfx.click();if(last)result();else{cur.q++;showQ()}};
 $('#fb').scrollIntoView({behavior:'smooth',block:'nearest'})}
@@ -238,6 +249,34 @@ reveal($('#rt'),s==3?'完美通關！':s==2?'闖關成功！':s==1?'再接再厲
 for(let k=0;k<s;k++)setTimeout(()=>{sfx.star(k);burst(innerWidth/2+(k-1)*74,innerHeight*.38,22)},500+k*500);
 if(s>=2)setTimeout(sfx.win,500+s*500);if(nu)setTimeout(sfx.unl,1900);
 $('#rt1').onclick=()=>{sfx.click();start(i)};$('#rt3').onclick=()=>{sfx.click();map()};const n=$('#rt2');if(n)n.onclick=()=>{sfx.click();start(i+1)}}
-ensureStudent(()=>home());
+/* ---- Platformer stage ---- */
+const hi=()=>{let k=0;while(k<L.length-1&&un(k+1))k++;return k};
+const rank=()=>COIN>=150?'數學大師':COIN>=50?'數學騎士':'新手探險家';
+let SC,SX,SM='map',px=40,tx=40,jy=0,jt=0,hurt=0,bump=[],pops=[],T=0;const BX=i=>150+i*190,GY=135,SW=360,SH2=170;
+function award(){COIN+=10;try{localStorage.setItem('m2c_'+ME.id,COIN)}catch(e){}const c=$('#cn');if(c)c.textContent=COIN;const i=cur?cur.i:0;jt=1;bump[i]=1;pops.push({x:BX(i),y:GY-84,vy:-2.6,l:70})}
+function oops(){hurt=1;px-=10}
+function mount3d(m){const d=$('#d3');if(!d)return;if(!SC){SC=document.createElement('canvas');SC.width=SW;SC.height=SH2;SX=SC.getContext('2d');loopS()}SM=m;d.appendChild(SC);tx=m=='map'?BX(hi())-42:BX(cur.i)}
+function cloud(x,y){const c=SX;c.beginPath();c.arc(x,y,9,0,7);c.arc(x+11,y-5,12,0,7);c.arc(x+24,y,9,0,7);c.fill()}
+function hero(x,y,run){const c=SX,l=run?Math.sin(T*.5)*3:0;if(hurt>0&&((T/4)|0)%2)return;
+c.fillStyle='#333b66';c.fillRect(x-7+l,y-8,6,8);c.fillRect(x+1-l,y-8,6,8);c.fillStyle='#4a7bff';c.fillRect(x-8,y-20,16,13);c.fillStyle='#ffd9b0';c.fillRect(x-12,y-18,4,8);c.fillRect(x+8,y-18,4,8);
+c.beginPath();c.arc(x,y-27,8,0,7);c.fill();c.fillStyle='#e53935';c.fillRect(x-9,y-37,18,6);c.fillRect(x-2,y-33,13,3);c.fillStyle='#222';c.fillRect(x+3,y-28,2,3)}
+function loopS(){requestAnimationFrame(loopS);if(!SC.parentNode)return;const c=SX;T++;
+px+=(tx-px)*.035;const run=Math.abs(tx-px)>3;if(jt>0){jt-=.035;jy=jt>0?Math.sin((1-jt)*Math.PI)*24:0}
+if(hurt>0)hurt-=.02;const cam=Math.max(0,Math.min(px-110,BX(8)+160-SW));
+const g=c.createLinearGradient(0,0,0,SH2);g.addColorStop(0,'#5ab9ff');g.addColorStop(1,'#d6f1ff');c.fillStyle=g;c.fillRect(0,0,SW,SH2);
+c.fillStyle='rgba(255,255,255,.92)';for(let k=0;k<9;k++)cloud(((k*180-cam*.3-T*.25)%1620+1620)%1620-120,22+(k%3)*16);
+c.fillStyle='#46b35e';for(let k=0;k<12;k++){c.beginPath();c.ellipse(k*210-cam*.5,GY,90,38+(k%3)*12,0,Math.PI,2*Math.PI);c.fill()}
+for(let x=-(cam%24);x<SW;x+=24){c.fillStyle='#b8651b';c.fillRect(x,GY,23,SH2-GY);c.fillStyle='#4cc15b';c.fillRect(x,GY,23,5)}
+for(let i=0;i<9;i++){const pxx=BX(i)+85-cam,h=22+(i%3)*8;if(pxx>-40&&pxx<SW+40){c.fillStyle='#2fa84f';c.fillRect(pxx-12,GY-h,24,h);c.fillRect(pxx-15,GY-h,30,7)}}
+for(let k=0;k<4;k++){const ex=BX(k*2+1)+40+Math.sin(T*.03+k)*34-cam;if(ex<-20||ex>SW+20)continue;const b=Math.abs(Math.sin(T*.2+k))*2;c.fillStyle='#8b5a2b';c.beginPath();c.ellipse(ex,GY-9-b,10,9,0,0,7);c.fill();c.fillStyle='#fff';c.fillRect(ex-6,GY-12-b,4,4);c.fillRect(ex+2,GY-12-b,4,4);c.fillStyle='#4a2c10';c.fillRect(ex-9,GY-3,7,3);c.fillRect(ex+2,GY-3,7,3)}
+const fx=BX(8)+130-cam;c.fillStyle='#eee';c.fillRect(fx,GY-80,3,80);c.fillStyle='#e53935';c.beginPath();c.moveTo(fx+3,GY-80);c.lineTo(fx+27,GY-70);c.lineTo(fx+3,GY-60);c.fill();
+hero(px-cam,GY-jy,run);
+for(let i=0;i<9;i++){const bx=BX(i)-cam;bump[i]=Math.max(0,(bump[i]||0)-.07);if(bx<-30||bx>SW+30)continue;const by=GY-82-bump[i]*8,lk=!un(i);
+c.fillStyle=lk?'#8a8a8a':P[i]>=3?'#ffd23d':'#ffa51f';c.fillRect(bx-14,by,28,28);c.strokeStyle='#7a4a00';c.lineWidth=2;c.strokeRect(bx-14,by,28,28);
+c.fillStyle='#fff';c.textAlign='center';c.font='bold 17px sans-serif';c.fillText(lk?'🔒':P[i]>=1?'★':'?',bx,by+21);c.font='bold 10px sans-serif';c.fillStyle='#17304a';c.fillText('第'+(i+1)+'關',bx,by-4)}
+for(let k=pops.length-1;k>=0;k--){const p=pops[k];p.y+=p.vy;p.vy+=.07;p.l--;if(p.l<=0){pops.splice(k,1);continue}const X=p.x-cam;c.fillStyle='#ffd23d';c.beginPath();c.ellipse(X,p.y,5,7,0,0,7);c.fill();c.strokeStyle='#a66b00';c.lineWidth=1.5;c.stroke();c.font='bold 13px sans-serif';c.fillStyle='#fff';c.strokeStyle='#a66b00';c.strokeText('+10',X+14,p.y-12+p.l*.1);c.fillText('+10',X+14,p.y-12+p.l*.1)}}
+
+home();
 </script>
-<script src="../../home-fab.js"></script></body></html>
+<script src="../../home-fab.js"></script>
+</body></html>
