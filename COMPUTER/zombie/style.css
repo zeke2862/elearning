@@ -983,3 +983,7 @@ body.touch-mode.tc-landscape.tc-compact .bottom-bar-row {
     bottom: var(--zh-bottom, 150px); width: min(62vw, 640px); z-index: 8; padding: 0; margin: 0;
 }
 body.touch-mode.tc-landscape.tc-compact .zh-typing-bar { background: rgba(8, 8, 24, 0.88); border-radius: 10px; }
+
+/* 手機單跑道：不需要上下左右方向鍵（點畫面左／右半邊換方向），把空間讓給輸入區 */
+body.touch-mode .tc-left { display: none !important; }
+body.tc-portrait .tc-right { grid-column: 1 / -1; }
